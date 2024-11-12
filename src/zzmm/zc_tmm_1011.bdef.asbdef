@@ -1,0 +1,20 @@
+projection implementation in class ZBP_C_TMM_1011 unique;
+//strict ( 2 );
+strict;
+use draft;
+define behavior for ZC_TMM_1011 alias ZcTmm1011
+use etag
+
+{
+  use create;
+  use update;
+  use delete;
+
+  use action processLogic;
+
+  use action Edit;
+  use action Activate;
+  use action Discard;
+  use action Resume;
+  use action Prepare;
+}

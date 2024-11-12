@@ -1,0 +1,54 @@
+managed implementation in class ZBP_R_TFI_1022 unique;
+strict ( 2 );
+define behavior for ZR_TFI_1022 alias ZrTfi1022
+persistent table ZTFI_1022
+lock master
+authorization master( global )
+
+{
+  field ( mandatory : create )
+   Yearmonth,
+   Companycode,
+   Plant,
+   Product,
+   Soldtoparty,
+   Accountingdocument,
+   Ledgergllineitem;
+
+  field ( readonly : update )
+   Yearmonth,
+   Companycode,
+   Plant,
+   Product,
+   Soldtoparty,
+   Accountingdocument,
+   Ledgergllineitem;
+
+
+  create;
+  update;
+  delete;
+
+  mapping for ZTFI_1022
+  {
+    Yearmonth = yearmonth;
+    Companycode = companycode;
+    Plant = plant;
+    Product = product;
+    Soldtoparty = soldtoparty;
+    Accountingdocument = accountingdocument;
+    Ledgergllineitem = ledgergllineitem;
+    Companycodetext = companycodetext;
+    Planttext = planttext;
+    Productdescription = productdescription;
+    Businesspartnername = businesspartnername;
+    Profitcenter = profitcenter;
+    Profitcenterlongname = profitcenterlongname;
+    Zamount1 = zamount1;
+    Zamount2 = zamount2;
+    Displaycurrency = displaycurrency;
+    Calendaryear = calendaryear;
+    Calendarmonth = calendarmonth;
+    Accountingdocumenttype = accountingdocumenttype;
+  }
+}

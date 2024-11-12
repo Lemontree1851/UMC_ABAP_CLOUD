@@ -1,0 +1,4 @@
+@EndUserText.label: '連結勘定残高試算表'
+define service ZUI_BDGLACCOUNT_O4 {
+  expose ZC_BDGLACCOUNT;
+}

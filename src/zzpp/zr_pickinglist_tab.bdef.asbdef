@@ -1,0 +1,52 @@
+managed implementation in class zbp_r_pickinglist_tab unique;
+//strict ( 2 );
+strict;
+
+define behavior for ZR_PICKINGLIST_TAB alias PickingList
+persistent table ztpp_1015
+lock master
+authorization master ( instance )
+etag master LocalLastChangedAt
+{
+
+  create;
+  update;
+  delete;
+
+  field ( readonly ) Reservation, ReservationItem;
+
+  static action processLogic parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
+
+  mapping for ztpp_1015
+    {
+      Reservation              = reservation;
+      ReservationItem          = reservation_item;
+      Plant                    = plant;
+      Material                 = material;
+      MaterialGroup            = material_group;
+      LaboratoryOrDesignOffice = laboratory_or_design_office;
+      ExternalProductGroup     = external_product_group;
+      SizeOrDimensionText      = size_or_dimension_text;
+      BaseUnit                 = base_unit;
+      GR_SlipsQuantity         = g_r_slips_quantity;
+      StorageLocationFrom      = storage_location_from;
+      StorageLocationTo        = storage_location_to;
+      StorageLocationFromStock = storage_location_from_stock;
+      StorageLocationToStock   = storage_location_to_stock;
+      TotalRequiredQuantity    = total_required_quantity;
+      TotalShortFallQuantity   = total_short_fall_quantity;
+      TotalTransferQuantity    = total_transfer_quantity;
+      M_CARD_Quantity          = m_c_a_r_d_quantity;
+      M_CARD                   = m_c_a_r_d;
+      DeleteFlag               = delete_flag;
+      CreatedDate              = created_date;
+      CreatedTime              = created_time;
+      CreatedByUser            = created_by_user;
+      CreatedByUserName        = created_by_user_name;
+      LastChangedDate          = last_changed_date;
+      LastChangedTime          = last_changed_time;
+      LastChangedByUser        = last_changed_by_user;
+      LastChangedByUserName    = last_changed_by_user_name;
+      LocalLastChangedAt       = local_last_changed_at;
+    }
+}

@@ -1,0 +1,5 @@
+CLASS zbp_r_wf_purchasereq DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zr_wf_purchasereq.
+ENDCLASS.
+
+CLASS zbp_r_wf_purchasereq IMPLEMENTATION.
+ENDCLASS.

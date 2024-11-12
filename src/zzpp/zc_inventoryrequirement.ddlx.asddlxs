@@ -1,0 +1,33 @@
+@Metadata.layer: #CORE
+annotate entity ZC_InventoryRequirement with
+{
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Plant', element: 'Plant' } }]
+  @Consumption.filter.selectionType: #SINGLE
+  Plant;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_MRPArea', element: 'MRPArea' } }]
+  @Consumption.filter.selectionType: #SINGLE
+  MRPArea;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_MRPControllerVH', element: 'MRPController' } }]
+  MRPController;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_PurchasingGroup', element: 'PurchasingGroup' } }]
+  PurchasingGroup;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductGroup_2', element: 'ProductGroup' } }]
+  ProductGroup;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductType_2', element: 'ProductType' } }]
+  @Consumption.filter.selectionType: #SINGLE
+  ProductType;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+  Product;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Supplier', element: 'Supplier' } }]
+  Supplier;
+
+  @Consumption.filter.selectionType: #SINGLE
+  PeriodEndDate;
+}

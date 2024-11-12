@@ -1,0 +1,5 @@
+@EndUserText.label: 'Service Definition for DNPROCESS'
+define service ZUI_SALESACCEPT_DNPROCESS_O4 {
+  expose ZCE_SALESACCEPT_DNPROCESS as DNProcess;
+  expose I_Customer_VH;
+}

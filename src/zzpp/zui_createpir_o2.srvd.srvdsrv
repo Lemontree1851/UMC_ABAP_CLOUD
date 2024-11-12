@@ -1,0 +1,4 @@
+@EndUserText.label: 'Service Definition for ZCE_CREATEPIR'
+define service ZUI_CREATEPIR_O2 {
+  expose ZCE_CREATEPIR;
+}

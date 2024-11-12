@@ -1,0 +1,5 @@
+@EndUserText.label: '逆ザヤ防止分析'
+define service ZUI_costAnalysis_O2 {
+  expose ZR_COSTANALYSISCOM     as COSTANALYSISCOM;
+  expose ZR_COSTANALYSISPROCESS as COSTANALYSISPROCESS;
+}

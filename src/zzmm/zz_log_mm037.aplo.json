@@ -1,0 +1,13 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "顧客VMI自動処理",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "subobjects": [
+    {
+      "name": "ZZ_LOG_MM037_SUB"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+managed implementation in class ZBP_R_TFI_1004000 unique;
+strict ( 2 );
+with draft;
+define behavior for ZR_TFI_1004000 alias ZrTfi1004000
+persistent table ZTFI_1004
+draft table ZTFI_1004000_D
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master( global )
+
+{
+  field ( mandatory : create )
+   Plant,
+   Material;
+
+  field ( readonly )
+   CreatedBy,
+   CreatedAt,
+   LastChangedBy,
+   LastChangedAt,
+   LocalLastChangedAt;
+
+  field ( readonly : update )
+   Plant,
+   Material;
+
+
+  create;
+  update;
+  delete;
+
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Edit;
+  draft action Resume;
+  draft determine action Prepare;
+
+  mapping for ZTFI_1004
+  {
+    Plant = plant;
+    Material = material;
+    Age = age;
+    Qty = qty;
+    Calendaryear = calendaryear;
+    Calendarmonth = calendarmonth;
+    CreatedBy = created_by;
+    CreatedAt = created_at;
+    LastChangedBy = last_changed_by;
+    LastChangedAt = last_changed_at;
+    LocalLastChangedAt = local_last_changed_at;
+  }
+}

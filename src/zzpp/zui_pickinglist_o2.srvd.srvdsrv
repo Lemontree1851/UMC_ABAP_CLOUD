@@ -1,0 +1,6 @@
+@EndUserText.label: 'Picking List'
+define service ZUI_PICKINGLIST_O2 {
+  expose ZC_PICKINGLIST_STD;
+  expose ZC_PICKINGLIST_TAB;
+  expose ZC_MaterialStockVH;
+}

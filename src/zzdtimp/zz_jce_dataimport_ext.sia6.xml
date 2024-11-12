@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_SIA6" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <SIA6>
+    <MAIN_OBJECT>
+     <NAME>ZZ_JCE_DATAIMPORT_EXT</NAME>
+     <TYPE>SIA6</TYPE>
+     <DESCRIPTION>Read Application Logs</DESCRIPTION>
+     <RESPONSIBLE>CB9980000011</RESPONSIBLE>
+     <MASTER_LANGUAGE>EN</MASTER_LANGUAGE>
+     <MASTER_SYSTEM>JG5</MASTER_SYSTEM>
+     <PACKAGE_REF>
+      <PACKAGE_NAME>ZZDTIMP</PACKAGE_NAME>
+     </PACKAGE_REF>
+     <ABAP_LANGU_VERSION>5</ABAP_LANGU_VERSION>
+    </MAIN_OBJECT>
+    <APP_ID>ZZ_JCE_DATAIMPORT_EXT</APP_ID>
+    <APP_TYPE>EXT</APP_TYPE>
+    <ABAP_LANGUAGE_VERSION>5</ABAP_LANGUAGE_VERSION>
+    <AUTH>
+     <item>
+      <AUTH_OBJECT>S_APPL_LOG</AUTH_OBJECT>
+      <STATUS>U</STATUS>
+      <TEXT>Applications log</TEXT>
+      <AUTH_ITEM>
+       <item>
+        <UUID>WyVKGOv6Hu+c6wilcKV0/A==</UUID>
+        <AUTH_OBJECT>S_APPL_LOG</AUTH_OBJECT>
+        <AUTH_OBJECT_INSTANCE>0001</AUTH_OBJECT_INSTANCE>
+        <TEXT>Applications log</TEXT>
+        <STATUS>U</STATUS>
+        <VALUES>
+         <item>
+          <FIELD>ALG_OBJECT</FIELD>
+          <VALUE>ZZ_LOG_DTIMP</VALUE>
+          <VALUES>
+           <item>
+            <UUID>WyVKGOv6Hu+c6wilcKWU/A==</UUID>
+           </item>
+           <item>
+            <UUID>WyVKGOv6Hu+c6wilcKW0/A==</UUID>
+            <LOW_VALUE>ZZ_LOG_DTIMP</LOW_VALUE>
+           </item>
+          </VALUES>
+          <TEXT>Application log: Object name (Application code)</TEXT>
+          <STATUS>U</STATUS>
+         </item>
+         <item>
+          <FIELD>ALG_SUBOBJ</FIELD>
+          <VALUE>ZZ_LOG_DTIMP_SUB</VALUE>
+          <VALUES>
+           <item>
+            <UUID>WyVKGOv6Hu+c6wilcKXU/A==</UUID>
+           </item>
+           <item>
+            <UUID>WyVKGOv6Hu+c6wilcKX0/A==</UUID>
+            <LOW_VALUE>ZZ_LOG_DTIMP_SUB</LOW_VALUE>
+           </item>
+          </VALUES>
+          <TEXT>Application Log: Subobject</TEXT>
+          <STATUS>U</STATUS>
+         </item>
+         <item>
+          <FIELD>ACTVT</FIELD>
+          <VALUE>Display</VALUE>
+          <VALUES>
+           <item>
+            <UUID>WyVKGOv6Hu+c6wilcKYU/A==</UUID>
+            <LOW_VALUE>03</LOW_VALUE>
+           </item>
+          </VALUES>
+          <TEXT>Activity</TEXT>
+          <STATUS>U</STATUS>
+          <IS_ACTVT>X</IS_ACTVT>
+         </item>
+        </VALUES>
+       </item>
+      </AUTH_ITEM>
+     </item>
+    </AUTH>
+    <PUBLISH_STATUS>p</PUBLISH_STATUS>
+   </SIA6>
+  </asx:values>
+ </asx:abap>
+</abapGit>

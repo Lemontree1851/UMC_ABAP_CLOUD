@@ -1,0 +1,69 @@
+managed implementation in class ZBP_R_TFI_1011000 unique;
+strict ( 2 );
+define behavior for ZR_TFI_1011000 alias ZrTfi1011000
+persistent table ZTFI_1011
+lock master
+authorization master( global )
+
+{
+  field ( mandatory : create )
+   Companycode,
+   Fiscalyear,
+   Period,
+   Customer,
+   Supplier,
+   Profitcenter,
+   Purchasinggroup;
+
+  field ( readonly : update )
+   Companycode,
+   Fiscalyear,
+   Period,
+   Customer,
+   Supplier,
+   Profitcenter,
+   Purchasinggroup;
+
+
+  create;
+  update;
+  delete;
+
+  mapping for ZTFI_1011
+  {
+    Companycode = companycode;
+    Fiscalyear = fiscalyear;
+    Period = period;
+    Customer = customer;
+    Supplier = supplier;
+    Profitcenter = profitcenter;
+    Purchasinggroup = purchasinggroup;
+    Customername = customername;
+    Suppliername = suppliername;
+    Profitcentername = profitcentername;
+    Purgrpamount = purgrpamount;
+    Chargeableamount = chargeableamount;
+    Chargeablerate = chargeablerate;
+    Previousstocktotal = previousstocktotal;
+    Currentstockpaid = currentstockpaid;
+    Currentstocksemi = currentstocksemi;
+    Currentstockfin = currentstockfin;
+    Currentstocktotal = currentstocktotal;
+    Stockchangeamount = stockchangeamount;
+    Paidmaterialcost = paidmaterialcost;
+    Customerrevenue = customerrevenue;
+    Revenue = revenue;
+    Revenuerate = revenuerate;
+    Currency = currency;
+    Gjahr1 = gjahr1;
+    Belnr1 = belnr1;
+    Gjahr2 = gjahr2;
+    Belnr2 = belnr2;
+    Gjahr3 = gjahr3;
+    Belnr3 = belnr3;
+    Gjahr4 = gjahr4;
+    Belnr4 = belnr4;
+    Status = status;
+    Message = message;
+  }
+}

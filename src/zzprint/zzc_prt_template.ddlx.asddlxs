@@ -1,0 +1,74 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Print Template',
+    typeNamePlural: 'Templates',
+    title: { type: #STANDARD , value: 'TemplateID'},
+    description: { type: #STANDARD, value: 'TemplateName' }
+  }
+}
+annotate view ZZC_PRT_TEMPLATE with
+{
+  @UI.facet: [ {
+    id: 'idIdentification',
+    type: #IDENTIFICATION_REFERENCE,
+    label: 'Basic',
+    position: 10
+  } ]
+
+  @UI.hidden: true
+  TemplateUUID;
+
+  @UI.lineItem: [ { position: 10, importance: #MEDIUM, cssDefault.width: '12rem' } ]
+  @UI.selectionField: [{ position: 10 }]
+  @UI.identification: [{ position: 10 }]
+  @EndUserText.label: 'Template ID'
+  TemplateID;
+
+  @UI.lineItem: [ { position: 20, importance: #MEDIUM, cssDefault.width: '14rem' } ]
+  @UI.selectionField: [{ position: 20 }]
+  @UI.identification: [{ position: 20 }]
+  @EndUserText.label: 'Template Name'
+  TemplateName;
+
+  @UI.lineItem: [ { position: 30, importance: #MEDIUM, cssDefault.width: '17rem' } ]
+  @UI.identification: [{ position: 30 }]
+  @EndUserText.label: 'Service Definition'
+  ServiceDefinitionName;
+
+  @UI.lineItem: [ { position: 40, importance: #MEDIUM, cssDefault.width: '20rem' } ]
+  @UI.identification: [{ position: 40 }]
+  @EndUserText.label: 'XDP File'
+  XDPContent;
+
+  @UI.lineItem: [ { position: 50, importance: #MEDIUM, cssDefault.width: '20rem' } ]
+  @UI.identification: [{ position: 50 }]
+  @EndUserText.label: 'XSD File'
+  XSDContent;
+
+  @UI.lineItem: [ { position: 60 , importance: #MEDIUM } ]
+  @UI.selectionField: [{ position: 30 }]
+  @UI.identification: [{ position: 60 }]
+  CreatedBy;
+
+  @UI.lineItem: [ { position: 70 , importance: #MEDIUM } ]
+  @UI.identification: [{ position: 70 }]
+  CreatedAt;
+
+  @UI.identification: [{ position: 80 }]
+  LastChangedBy;
+
+  @UI.identification: [{ position: 90 }]
+  LastChangedAt;
+
+  @UI.hidden: true
+  XDPMimeType;
+  @UI.hidden: true
+  XDPFileName;
+  @UI.hidden: true
+  XSDMimeType;
+  @UI.hidden: true
+  XSDFileName;
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

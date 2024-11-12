@@ -1,0 +1,19 @@
+@Metadata.layer: #CUSTOMER
+@Search.searchable: true
+@UI.headerInfo.title.type: #STANDARD
+@UI.headerInfo.title.value: 'RecoverStatus'
+@UI.headerInfo.description.type: #STANDARD
+@UI.headerInfo.description.value: 'Description'
+annotate entity ZC_RECOVER_STATUS_VH with
+{
+
+  @UI.selectionField: [{ position: 10 }]
+  @UI.lineItem: [{ position: 10, label: 'Recovery Status' }]
+  @Search.defaultSearchElement: true
+  RecoverStatus;
+
+  @UI.selectionField: [{ position: 20 }]
+  @UI.lineItem: [{ position: 20, label: 'Description' }]
+  Description;
+
+};

@@ -1,0 +1,35 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "工程別加工費",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "catalogName": "ZJCE_MFGORDER"
+  },
+  "parameters": {
+    "singleValueParameters": [
+      {
+        "name": "P_COMPAN",
+        "value": ""
+      },
+      {
+        "name": "P_MONTH",
+        "value": ""
+      },
+      {
+        "name": "P_PLANT",
+        "value": ""
+      },
+      {
+        "name": "P_TABLE",
+        "value": ""
+      },
+      {
+        "name": "P_YEAR",
+        "value": ""
+      }
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+@EndUserText.label: 'Service definition for ZZC_PRT_RECORD'
+define service ZUI_PRT_RECORD_O4 {
+  expose ZZC_PRT_RECORD as PrintRecord;
+}

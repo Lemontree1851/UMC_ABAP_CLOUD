@@ -1,0 +1,47 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Approval User',
+    typeNamePlural: 'User',
+    title: { type: #STANDARD , value: 'WorkflowId'},
+    description: { type: #STANDARD , value: 'ApplicationId'}
+  }
+}
+annotate view ZC_WF_ApprovalUser with
+{
+
+  @UI.facet: [
+      {
+        label: 'Approval User',
+        id: 'GeneralInfo',
+        purpose: #STANDARD,
+        position: 10 ,
+        type: #IDENTIFICATION_REFERENCE
+      }
+  ]
+
+  @UI.hidden: true
+  WorkflowId;
+  @UI.hidden: true
+  ApplicationId;
+  @UI.hidden: true
+  Node;
+
+  @UI.lineItem: [{ position: 10, importance: #MEDIUM, cssDefault.width: '10rem' }]
+  @UI.identification: [ { position: 10 } ]
+  @EndUserText.label: 'Sequence No.'
+  Zseq;
+
+  @UI.lineItem: [{ position: 20, importance: #MEDIUM, cssDefault.width: '15rem' }]
+  @UI.identification: [ { position: 20 } ]
+  @EndUserText.label: 'User Name'
+  UserName;
+
+  @UI.lineItem: [{ position: 30, importance: #MEDIUM, cssDefault.width: '20rem' }]
+  @UI.identification: [ { position: 30 } ]
+  @EndUserText.label: 'Email Address'
+  EmailAddress;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

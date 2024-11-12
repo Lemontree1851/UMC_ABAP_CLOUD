@@ -1,0 +1,4 @@
+@EndUserText.label: 'Purchase Price Variance Report'
+define service ZUI_PURCHASEPRICEVARIANCE_O2 {
+  expose ZC_PURCHASEPRICEVARIANCE;
+}

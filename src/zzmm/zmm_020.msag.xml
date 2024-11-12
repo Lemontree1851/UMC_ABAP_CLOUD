@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_MSAG" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <T100A>
+    <ARBGB>ZMM_020</ARBGB>
+    <MASTERLANG>E</MASTERLANG>
+    <STEXT>PO一括入庫</STEXT>
+   </T100A>
+   <T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_020</ARBGB>
+     <MSGNR>000</MSGNR>
+     <TEXT>Purchase order &amp;1 Item &amp;2 have been posted successfully with Doc &amp;3</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_020</ARBGB>
+     <MSGNR>001</MSGNR>
+     <TEXT>Document date is empty</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_020</ARBGB>
+     <MSGNR>002</MSGNR>
+     <TEXT>Posting date is empty</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_020</ARBGB>
+     <MSGNR>003</MSGNR>
+     <TEXT>Purchase order is empty</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_020</ARBGB>
+     <MSGNR>004</MSGNR>
+     <TEXT>Purchase order item is empty</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_020</ARBGB>
+     <MSGNR>005</MSGNR>
+     <TEXT>Batch is empty</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_020</ARBGB>
+     <MSGNR>006</MSGNR>
+     <TEXT>Quantity is empty</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_020</ARBGB>
+     <MSGNR>007</MSGNR>
+     <TEXT>Purchase order &amp;1 item &amp;2 not exists.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_020</ARBGB>
+     <MSGNR>008</MSGNR>
+     <TEXT>Plant is empty</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_020</ARBGB>
+     <MSGNR>009</MSGNR>
+     <TEXT>Storage Location is empty</TEXT>
+    </T100>
+   </T100>
+  </asx:values>
+ </asx:abap>
+</abapGit>

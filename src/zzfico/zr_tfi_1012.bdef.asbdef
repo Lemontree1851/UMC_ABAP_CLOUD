@@ -1,0 +1,35 @@
+managed implementation in class ZBP_R_TFI_1012 unique;
+strict;
+define behavior for ZR_TFI_1012 alias ZrTfi1012
+persistent table ZTFI_1012
+etag master LocalLastChangedAt
+lock master
+authorization master( global )
+
+{
+  field ( readonly )
+   Uuid,
+   CreatedBy,
+   CreatedAt,
+   LastChangedBy,
+   LastChangedAt,
+   LocalLastChangedAt;
+
+  field ( numbering : managed )
+   Uuid;
+
+
+  create;
+  update;
+  delete;
+  static action createPrintFile parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
+  mapping for ZTFI_1012
+  {
+    Uuid = uuid;
+    CreatedBy = created_by;
+    CreatedAt = created_at;
+    LastChangedBy = last_changed_by;
+    LastChangedAt = last_changed_at;
+    LocalLastChangedAt = local_last_changed_at;
+  }
+}

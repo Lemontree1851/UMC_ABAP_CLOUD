@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_FUGR" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <AREAT>Function Group - BC</AREAT>
+   <INCLUDES>
+    <SOBJ_NAME>LZZFG_DTIMP_BCTOP</SOBJ_NAME>
+    <SOBJ_NAME>SAPLZZFG_DTIMP_BC</SOBJ_NAME>
+   </INCLUDES>
+   <FUNCTIONS>
+    <item>
+     <FUNCNAME>ZZFM_DTIMP_TBC1001</FUNCNAME>
+     <SHORT_TEXT>Function Module - Data Import Common Configuration Table</SHORT_TEXT>
+     <IMPORT>
+      <RSIMP>
+       <PARAMETER>IO_DATA</PARAMETER>
+       <OPTIONAL>X</OPTIONAL>
+       <TYP>REF TO DATA</TYP>
+       <REF_CLASS>X</REF_CLASS>
+      </RSIMP>
+      <RSIMP>
+       <PARAMETER>IV_STRUC</PARAMETER>
+       <OPTIONAL>X</OPTIONAL>
+       <TYP>ZZE_STRUCTURENAME</TYP>
+      </RSIMP>
+     </IMPORT>
+     <EXPORT>
+      <RSEXP>
+       <PARAMETER>EO_DATA</PARAMETER>
+       <REFERENCE>X</REFERENCE>
+       <TYP>REF TO DATA</TYP>
+       <REF_CLASS>X</REF_CLASS>
+      </RSEXP>
+     </EXPORT>
+     <DOCUMENTATION>
+      <RSFDO>
+       <PARAMETER>IO_DATA</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+      <RSFDO>
+       <PARAMETER>IV_STRUC</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+      <RSFDO>
+       <PARAMETER>EO_DATA</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+     </DOCUMENTATION>
+    </item>
+   </FUNCTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

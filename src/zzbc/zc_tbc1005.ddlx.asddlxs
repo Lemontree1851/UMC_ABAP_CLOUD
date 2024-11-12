@@ -1,0 +1,72 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Authority Role',
+    typeNamePlural: 'Authority Role'
+  }
+}
+annotate view ZC_TBC1005 with
+{
+
+  @UI.facet: [
+      {
+        label: 'General Information',
+        id: 'GeneralInfo',
+        purpose: #STANDARD,
+        position: 10 ,
+        type: #IDENTIFICATION_REFERENCE
+      },
+      {
+        id: 'idLineItemPlant' ,
+        type : #LINEITEM_REFERENCE ,
+        label : 'Assign User' ,
+        position: 20 ,
+        targetElement: '_User'
+      }
+  ]
+
+  @UI.lineItem: [{ position: 10 }]
+  @UI.selectionField: [{ position: 10 }]
+  @UI.identification: [ { position: 10 } ]
+  @EndUserText.label: 'Role Id'
+  RoleId;
+
+  @UI.lineItem: [{ position: 15 }]
+  @UI.selectionField: [{ position: 15 }]
+  @UI.identification: [ { position: 15 } ]
+  @EndUserText.label: 'Role Name'
+  RoleName;
+
+  @UI.lineItem: [{ position: 20 }]
+  @UI.selectionField: [{ position: 20 }]
+  @UI.identification: [ { position: 20 } ]
+  @EndUserText.label: 'Function Id'
+  FunctionId;
+
+  @UI.lineItem: [{ position: 30 }]
+  @UI.selectionField: [{ position: 30 }]
+  @UI.identification: [ { position: 30 } ]
+  @EndUserText.label: 'Access Id'
+  AccessId;
+
+  @UI.lineItem: [{ position: 40 }]
+  @UI.selectionField: [{ position: 40 }]
+  @UI.identification: [ { position: 40 } ]
+  @EndUserText.label: 'Access Name'
+  AccessName;
+
+  @UI.identification: [ { position: 50 } ]
+  CreatedBy;
+  @UI.identification: [ { position: 60 } ]
+  CreatedAt;
+  @UI.identification: [ { position: 70 } ]
+  LastChangedBy;
+  @UI.identification: [ { position: 80 } ]
+  LastChangedAt;
+
+  @UI.hidden: true
+  RoleUuid;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

@@ -1,0 +1,4 @@
+@EndUserText.label: 'Fixed Asset Print'
+define service ZUI_FIXEDASSETPRINT {
+  expose ZC_FIXEDASSETPRINT as FIXEDASSETPRINT;
+}

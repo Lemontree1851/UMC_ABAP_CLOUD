@@ -1,0 +1,249 @@
+<tt:transform xmlns:tt="http://www.sap.com/transformation-templates">
+  <tt:root name="ZR_ACCOUNTINGDOC_PRTS"/>
+  <tt:template>
+    <Form>
+      <ZR_ACCOUNTINGDOC_PRTS>
+        <ITEMS>
+          <tt:loop ref="ZR_ACCOUNTINGDOC_PRTS">
+            <ZR_ACCOUNTINGDOC_PRT>
+              <COMPANYCODE>
+                <tt:value ref="$ref.companycode"/>
+              </COMPANYCODE>
+              <FISCALYEAR>
+                <tt:value ref="$ref.fiscalyear"/>
+              </FISCALYEAR>
+              <ACCOUNTINGDOCUMENT>
+                <tt:value ref="$ref.accountingdocument"/>
+              </ACCOUNTINGDOCUMENT>
+
+              <_HEADER>
+                <ZR_ACCOUNTINGDOC_PRT_H>
+                  <COMPANYCODE>
+                    <tt:value ref="$ref._HEADER.companycode"/>
+                  </COMPANYCODE>
+                  <FISCALYEAR>
+                    <tt:value ref="$ref._HEADER.fiscalyear"/>
+                  </FISCALYEAR>
+                  <ACCOUNTINGDOCUMENT>
+                    <tt:value ref="$ref._HEADER.accountingdocument"/>
+                  </ACCOUNTINGDOCUMENT>
+                  <DOCUMENTDATE>
+                    <tt:value ref="$ref._HEADER.documentdate"/>
+                  </DOCUMENTDATE>
+                  <POSTINGDATE>
+                    <tt:value ref="$ref._HEADER.postingdate"/>
+                  </POSTINGDATE>
+                  <ACCOUNTINGDOCUMENTHEADERTEXT>
+                    <tt:value ref="$ref._HEADER.accountingdocumentheadertext"/>
+                  </ACCOUNTINGDOCUMENTHEADERTEXT>
+                  <ACCOUNTINGDOCCREATEDBYUSER>
+                    <tt:value ref="$ref._HEADER.accountingdoccreatedbyuser"/>
+                  </ACCOUNTINGDOCCREATEDBYUSER>
+                  <CREATIONTIME>
+                    <tt:value ref="$ref._HEADER.creationtime"/>
+                  </CREATIONTIME>
+                  <ACCOUNTINGDOCUMENTCREATIONDATE>
+                    <tt:value ref="$ref._HEADER.accountingdocumentcreationdate"/>
+                  </ACCOUNTINGDOCUMENTCREATIONDATE>
+                  <LASTCHANGEDATE>
+                    <tt:value ref="$ref._HEADER.lastchangedate"/>
+                  </LASTCHANGEDATE>
+                  <LEDGERGROUP>
+                    <tt:value ref="$ref._HEADER.ledgergroup"/>
+                  </LEDGERGROUP>
+                  <FISCALPERIOD>
+                    <tt:value ref="$ref._HEADER.fiscalperiod"/>
+                  </FISCALPERIOD>
+                  <ACCOUNTINGDOCUMENTTYPE>
+                    <tt:value ref="$ref._HEADER.accountingdocumenttype"/>
+                  </ACCOUNTINGDOCUMENTTYPE>
+                  <ACCOUNTINGDOCUMENTTYPENAME>
+                    <tt:value ref="$ref._HEADER.accountingdocumenttypename"/>
+                  </ACCOUNTINGDOCUMENTTYPENAME>
+                  <ACCOUNTINGDOCUMENTCATEGORY>
+                    <tt:value ref="$ref._HEADER.accountingdocumentcategory"/>
+                  </ACCOUNTINGDOCUMENTCATEGORY>
+                  <COMPANYCODETEXT>
+                    <tt:value ref="$ref._HEADER.companycodetext"/>
+                  </COMPANYCODETEXT>
+                  <TRANSACTIONCURRENCY>
+                    <tt:value ref="$ref._HEADER.transactioncurrency"/>
+                  </TRANSACTIONCURRENCY>
+                  <DEBITAMOUNTINTRANSCRCY>
+                    <tt:value ref="$ref._HEADER.debitamountintranscrcy"/>
+                  </DEBITAMOUNTINTRANSCRCY>
+                  <CREDITAMOUNTINTRANSCRCY>
+                    <tt:value ref="$ref._HEADER.creditamountintranscrcy"/>
+                  </CREDITAMOUNTINTRANSCRCY>
+                  <PARKEDBYUSERNAME>
+                    <tt:value ref="$ref._HEADER.parkedbyusername"/>
+                  </PARKEDBYUSERNAME>
+                  <WORKITEM>
+                    <tt:value ref="$ref._HEADER.workitem"/>
+                  </WORKITEM>
+                  <CREATEDBYUSERNAME>
+                    <tt:value ref="$ref._HEADER.createdbyusername"/>
+                  </CREATEDBYUSERNAME>
+                  <ACCOUNTINGDOCCREATIONDATE_W>
+                    <tt:value ref="$ref._HEADER.accountingdoccreationdate_w"/>
+                  </ACCOUNTINGDOCCREATIONDATE_W>
+                  <ACCOUNTINGDOCCATEGORY_W>
+                    <tt:value ref="$ref._HEADER.accountingdoccategory_w"/>
+                  </ACCOUNTINGDOCCATEGORY_W>
+                  <ACCOUNTINGDOCUMENTSTATUSNAME>
+                    <tt:value ref="$ref._HEADER.accountingdocumentstatusname"/>
+                  </ACCOUNTINGDOCUMENTSTATUSNAME>
+                  <WRKFLWTSKCREATIONUTCDATETIME>
+                    <tt:value ref="$ref._HEADER.wrkflwtskcreationutcdatetime"/>
+                  </WRKFLWTSKCREATIONUTCDATETIME>
+
+                            <REVERSEDOCUMENT>
+                    <tt:value ref="$ref._HEADER.reversedocument"/>
+                  </REVERSEDOCUMENT>
+                                    <REVERSEDOCUMENTFISCALYEAR>
+                    <tt:value ref="$ref._HEADER.reversedocumentfiscalyear"/>
+                  </REVERSEDOCUMENTFISCALYEAR>
+
+
+                  <ACCOUNTINGDOCUMENTITEM>
+                    <tt:value ref="$ref._HEADER.accountingdocumentitem"/>
+                  </ACCOUNTINGDOCUMENTITEM>
+                  <ASSIGNMENTREFERENCE>
+                    <tt:value ref="$ref._HEADER.assignmentreference"/>
+                  </ASSIGNMENTREFERENCE>
+                  <BILLOFEXCHANGEISSUEDATE>
+                    <tt:value ref="$ref._HEADER.billofexchangeissuedate"/>
+                  </BILLOFEXCHANGEISSUEDATE>
+                  <BILLOFEXCHANGEDOMICILETEXT>
+                    <tt:value ref="$ref._HEADER.billofexchangedomiciletext"/>
+                  </BILLOFEXCHANGEDOMICILETEXT>
+                  <DUECALCULATIONBASEDATE>
+                    <tt:value ref="$ref._HEADER.duecalculationbasedate"/>
+                  </DUECALCULATIONBASEDATE>
+                                <PAGE_NUM>
+                <tt:value ref="$ref._HEADER.page_num"/>
+              </PAGE_NUM>
+              <TOTAL_PAGE_NUM>
+                <tt:value ref="$ref._HEADER.total_page_num"/>
+              </TOTAL_PAGE_NUM>
+                            <PRINT_USER>
+                <tt:value ref="$ref._HEADER.print_user"/>
+              </PRINT_USER>
+                </ZR_ACCOUNTINGDOC_PRT_H>
+              </_HEADER>
+              <_ITEM>
+                <tt:loop ref="$ref._ITEM">
+                  <ZR_ACCOUNTINGDOC_PRT_I>
+                    <COMPANYCODE>
+                      <tt:value ref="$ref.companycode"/>
+                    </COMPANYCODE>
+                    <FISCALYEAR>
+                      <tt:value ref="$ref.fiscalyear"/>
+                    </FISCALYEAR>
+                    <ACCOUNTINGDOCUMENT>
+                      <tt:value ref="$ref.accountingdocument"/>
+                    </ACCOUNTINGDOCUMENT>
+                    <LEDGERGLLINEITEM>
+                      <tt:value ref="$ref.ledgergllineitem"/>
+                    </LEDGERGLLINEITEM>
+                    <YY1_F_FINS1Z01_COB>
+                      <tt:value ref="$ref.yy1_f_fins1z01_cob"/>
+                    </YY1_F_FINS1Z01_COB>
+                    <YY1_F_FINS1Z02_COB>
+                      <tt:value ref="$ref.yy1_f_fins1z02_cob"/>
+                    </YY1_F_FINS1Z02_COB>
+                    <YY1_F_FINS2Z01_COB>
+                      <tt:value ref="$ref.yy1_f_fins2z01_cob"/>
+                    </YY1_F_FINS2Z01_COB>
+                    <YY1_F_FINS2Z02_COB>
+                      <tt:value ref="$ref.yy1_f_fins2z02_cob"/>
+                    </YY1_F_FINS2Z02_COB>
+                    <GLACCOUNT>
+                      <tt:value ref="$ref.glaccount"/>
+                    </GLACCOUNT>
+                    <GLACCOUNTNAME>
+                      <tt:value ref="$ref.glaccountname"/>
+                    </GLACCOUNTNAME>
+                    <DOCUMENTITEMTEXT>
+                      <tt:value ref="$ref.documentitemtext"/>
+                    </DOCUMENTITEMTEXT>
+                    <TAXCODE>
+                      <tt:value ref="$ref.taxcode"/>
+                    </TAXCODE>
+                    <PROFITCENTER>
+                      <tt:value ref="$ref.profitcenter"/>
+                    </PROFITCENTER>
+                    <COSTCENTER>
+                      <tt:value ref="$ref.costcenter"/>
+                    </COSTCENTER>
+                    <EXCHANGERATE>
+                      <tt:value ref="$ref.exchangerate"/>
+                    </EXCHANGERATE>
+                    <FINANCIALACCOUNTTYPE>
+                      <tt:value ref="$ref.financialaccounttype"/>
+                    </FINANCIALACCOUNTTYPE>
+                    <CUSTOMER>
+                      <tt:value ref="$ref.customer"/>
+                    </CUSTOMER>
+                    <CUSTOMERNAME>
+                      <tt:value ref="$ref.customername"/>
+                    </CUSTOMERNAME>
+                    <SUPPLIER>
+                      <tt:value ref="$ref.supplier"/>
+                    </SUPPLIER>
+                    <SUPPLIERNAME>
+                      <tt:value ref="$ref.suppliername"/>
+                    </SUPPLIERNAME>
+                    <BP>
+                      <tt:value ref="$ref.bp"/>
+                    </BP>
+                    <BPNAME>
+                      <tt:value ref="$ref.bpname"/>
+                    </BPNAME>
+                    <TRANSACTIONCURRENCY>
+                      <tt:value ref="$ref.transactioncurrency"/>
+                    </TRANSACTIONCURRENCY>
+                    <DEBITCREDITCODE>
+                      <tt:value ref="$ref.debitcreditcode"/>
+                    </DEBITCREDITCODE>
+                    <AMOUNTINTRANSACTIONCURRENCY>
+                      <tt:value ref="$ref.amountintransactioncurrency"/>
+                    </AMOUNTINTRANSACTIONCURRENCY>
+                    <DEBITAMOUNTINTRANSCRCY>
+                      <tt:value ref="$ref.debitamountintranscrcy"/>
+                    </DEBITAMOUNTINTRANSCRCY>
+                    <CREDITAMOUNTINTRANSCRCY>
+                      <tt:value ref="$ref.creditamountintranscrcy"/>
+                    </CREDITAMOUNTINTRANSCRCY>
+                    <MASTERFIXEDASSET>
+                      <tt:value ref="$ref.masterfixedasset"/>
+                    </MASTERFIXEDASSET>
+                    <FIXEDASSET>
+                      <tt:value ref="$ref.fixedasset"/>
+                    </FIXEDASSET>
+                    <FIXEDASSETDESCRIPTION>
+                      <tt:value ref="$ref.fixedassetdescription"/>
+                    </FIXEDASSETDESCRIPTION>
+                    <COMPANYCODECURRENCY>
+                      <tt:value ref="$ref.companycodecurrency"/>
+                    </COMPANYCODECURRENCY>
+                    <AMOUNTINCOMPANYCODECURRENCY>
+                      <tt:value ref="$ref.amountincompanycodecurrency"/>
+                    </AMOUNTINCOMPANYCODECURRENCY>
+                    <DEBITAMOUNTINCOCODECRCY>
+                      <tt:value ref="$ref.debitamountincocodecrcy"/>
+                    </DEBITAMOUNTINCOCODECRCY>
+                    <CREDITAMOUNTINCOCODECRCY>
+                      <tt:value ref="$ref.creditamountincocodecrcy"/>
+                    </CREDITAMOUNTINCOCODECRCY>
+
+                  </ZR_ACCOUNTINGDOC_PRT_I>
+                </tt:loop>
+              </_ITEM>
+            </ZR_ACCOUNTINGDOC_PRT>
+          </tt:loop>
+        </ITEMS>
+      </ZR_ACCOUNTINGDOC_PRTS>
+    </Form>
+  </tt:template>
+</tt:transform>

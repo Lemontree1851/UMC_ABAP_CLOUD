@@ -1,0 +1,4 @@
+@EndUserText.label: 'Order Forecast Partition'
+define service ZUI_OFPARTITION_O2 {
+  expose ZCE_OFPARTITION as OFPartition;
+}

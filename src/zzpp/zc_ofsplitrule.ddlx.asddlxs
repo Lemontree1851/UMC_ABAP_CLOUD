@@ -1,0 +1,78 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'OF Split Rule',
+    typeNamePlural: 'OF Split Rule',
+    title: { type: #STANDARD , value: 'SplitMaterial'},
+    description: { type: #STANDARD , value: 'Plant'}
+  }
+}
+annotate view ZC_OFSPLITRULE with
+{
+  @UI.facet: [ {
+      id: 'idIdentification',
+      type: #IDENTIFICATION_REFERENCE,
+      label: 'Basic',
+      position: 10
+    } ]
+
+  @UI.lineItem: [ { position: 05, importance: #HIGH } ]
+  @UI.selectionField: [{ position: 05 }]
+  @UI.identification: [{ position: 05 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Customer', element: 'Customer' } }]
+  Customer;
+
+  @UI.lineItem: [ { position: 10, importance: #HIGH } ]
+  @UI.selectionField: [{ position: 10 }]
+  @UI.identification: [{ position: 10 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+  SplitMaterial;
+
+  @UI.lineItem: [ { position: 20, importance: #HIGH, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [{ position: 20 }]
+  @UI.identification: [{ position: 20 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Plant', element: 'Plant' } }]
+  Plant;
+
+  @UI.lineItem: [ { position: 30, importance: #HIGH, cssDefault.width: '8rem' } ]
+  @UI.identification: [{ position: 30 }]
+  @EndUserText.label: 'Ship Unit'
+  ShipUnit;
+
+  @UI.lineItem: [ { position: 40, importance: #HIGH, cssDefault.width: '8rem' } ]
+  @UI.identification: [{ position: 40 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_SPLITUNITVH', element: 'value_low' } }]
+  @EndUserText.label: 'Split Unit'
+  SplitUnit;
+
+  @UI.lineItem: [ { position: 45, importance: #HIGH, cssDefault.width: '8rem' } ]
+  @UI.identification: [{ position: 45, label: 'Valid End (YYYY/MM)' }]
+  @EndUserText.label: 'Valid End'
+  ValidEnd;
+
+  @UI.selectionField: [{ position: 25 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_MRPControllerVH', element: 'MRPController' } }]
+  MRPResponsible;
+
+  @UI.lineItem: [ { position: 50, importance: #HIGH, cssDefault.width: '8rem' } ]
+  @UI.selectionField: [{ position: 30 }]
+  @UI.identification: [{ position: 50 }]
+  @EndUserText.label: 'Delete Flag'
+  DeleteFlag;
+
+  @UI.lineItem: [ { position: 60, importance: #HIGH, cssDefault.width: '15rem' } ]
+  @UI.identification: [{ position: 60 }]
+  CreatedBy;
+
+  @UI.lineItem: [ { position: 70, importance: #HIGH } ]
+  @UI.identification: [{ position: 70 }]
+  CreatedAt;
+
+  @UI.lineItem: [ { position: 80, importance: #HIGH, cssDefault.width: '15rem' } ]
+  @UI.identification: [{ position: 80 }]
+  LastChangedBy;
+
+  @UI.lineItem: [ { position: 90, importance: #HIGH } ]
+  @UI.identification: [{ position: 90 }]
+  LastChangedAt;
+}

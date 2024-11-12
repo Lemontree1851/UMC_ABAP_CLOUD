@@ -1,0 +1,5 @@
+@EndUserText.label: 'Print Material Requisition'
+define service ZUI_MATERIALREQUISITION_PRT_O4 {
+  expose ZR_MATERIALREQUISITION_PRT_H;
+  expose ZR_MATERIALREQUISITION_PRT_I;
+}

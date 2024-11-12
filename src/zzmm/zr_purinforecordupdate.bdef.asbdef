@@ -1,0 +1,91 @@
+managed implementation in class zbp_r_purinforecordupdate unique;
+strict ( 2 );
+
+define behavior for ZR_PURINFORECORDUPDATE alias PurInfoRecordUpdate
+persistent table ztmm_1004
+lock master
+authorization master ( instance )
+etag master LocalLastChangedAt
+{
+  field ( readonly )
+  UUID,
+  Status,
+  Message,
+  CreatedAt,
+  CreatedBy,
+  LastChangedAt,
+  LastChangedBy,
+  LocalLastChangedAt;
+
+  field ( numbering : managed )
+  UUID;
+
+  create;
+  update;
+  delete;
+
+  association _Item { create; }
+
+  static action processLogic parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
+
+  mapping for ztmm_1004
+    {
+      UUID                           = uuid;
+      PurchasingInfoRecord           = purchasinginforecord;
+      Supplier                       = supplier;
+      Material                       = material;
+      PurchasingOrganization         = purchasingorganization;
+      Plant                          = plant;
+      PurchasingInfoRecordCategory   = purchasinginforecordcategory;
+      SupplierMaterialNumber         = suppliermaterialnumber;
+      SupplierSubrange               = suppliersubrange;
+      SupplierMaterialGroup          = suppliermaterialgroup;
+      SupplierCertOriginCountry      = suppliercertorigincountry;
+      SupplierCertOriginRegion       = suppliercertoriginregion;
+      SuplrCertOriginClassfctnNumber = suplrcertoriginclassfctnnumber;
+      PurgDocOrderQuantityUnit       = purgdocorderquantityunit;
+      OrderItemQtyToBaseQtyDnmntr    = orderitemqtytobaseqtydnmntr;
+      OrderItemQtyToBaseQtyNmrtr     = orderitemqtytobaseqtynmrtr;
+      MaterialPlannedDeliveryDurn    = materialplanneddeliverydurn;
+      StandardPurchaseOrderQuantity  = standardpurchaseorderquantity;
+      MinimumPurchaseOrderQuantity   = minimumpurchaseorderquantity;
+      ShippingInstruction            = shippinginstruction;
+      UnlimitedOverdeliveryIsAllowed = unlimitedoverdeliveryisallowed;
+      InvoiceIsGoodsReceiptBased     = invoiceisgoodsreceiptbased;
+      SupplierConfirmationControlKey = supplierconfirmationcontrolkey;
+      TaxCode                        = taxcode;
+      Currency                       = currency;
+      NetPriceAmount                 = netpriceamount;
+      MaterialPriceUnitQty           = materialpriceunitqty;
+      PurchaseOrderPriceUnit         = purchaseorderpriceunit;
+      OrdPriceUnitToOrderUnitDnmntr  = ordpriceunittoorderunitdnmntr;
+      OrderPriceUnitToOrderUnitNmrtr = orderpriceunittoorderunitnmrtr;
+      PricingDateControl             = pricingdatecontrol;
+      IncotermsClassification        = incotermsclassification;
+      IncotermsLocation1             = incotermslocation1;
+      IncotermsLocation2             = incotermslocation2;
+      ConditionValidityStartDate     = conditionvaliditystartdate;
+      PriceValidityEndDate           = pricevalidityenddate;
+      Xflag                          = xflag;
+      Status                         = status;
+      Message                        = message;
+      CreatedBy                      = created_by;
+      CreatedAt                      = created_at;
+      LastChangedBy                  = last_changed_by;
+      LastChangedAt                  = last_changed_at;
+      LocalLastChangedAt             = local_last_changed_at;
+
+    }
+}
+
+define behavior for ZR_PURINFORECORDUPDATEITEM alias PurInfoRecordUpdateItem
+persistent table ztmm_1005
+lock dependent by _Header
+authorization dependent by _Header
+//etag master <field_name>
+{
+  update;
+  delete;
+  field ( readonly ) UUID;
+  association _Header;
+}

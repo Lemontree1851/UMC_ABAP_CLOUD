@@ -1,0 +1,4 @@
+@EndUserText.label: 'Print Demo'
+define service ZUI_PRT_DEMO_O4 {
+  expose ZZR_PRT_DEMO;
+}

@@ -1,0 +1,35 @@
+managed implementation in class zbp_r_orderforecast unique;
+strict ( 1 );
+
+define behavior for ZR_ORDERFORECAST //alias <alias_name>
+persistent table ztpp_1012
+lock master
+authorization master ( instance )
+//etag master <field_name>
+{
+  create;
+  update;
+  delete;
+
+  field ( readonly ) Uuid;
+
+  static action processLogic parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
+
+  mapping for ztpp_1012
+    {
+      Uuid               = uuid;
+      Customer           = customer;
+      Material           = material;
+      Plant              = plant;
+      MaterialByCustomer = material_by_customer;
+      RequirementDate    = requirement_date;
+      RequirementQty     = requirement_qty;
+      UnitOfMeasure      = unit_of_measure;
+      Remark             = remark;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}

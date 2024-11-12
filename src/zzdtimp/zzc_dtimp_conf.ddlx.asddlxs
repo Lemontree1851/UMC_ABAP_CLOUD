@@ -1,0 +1,120 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Data Import Configuration',
+    typeNamePlural: 'Configurations',
+    title: { type: #STANDARD , value: 'Object'},
+    description: { type: #STANDARD, value: 'ObjectName' }
+  },
+  presentationVariant: [{
+    sortOrder: [ { by: 'Object', direction: #ASC } ],
+    visualizations: [ { type: #AS_LINEITEM } ]
+  }]
+}
+annotate view ZZC_DTIMP_CONF with
+{
+  @UI.facet: [ {
+    id: 'idBasicCollection',
+    type: #COLLECTION,
+    label: 'Basic',
+    position: 10
+  },{
+    id: 'idBasic',
+    type: #FIELDGROUP_REFERENCE,
+    targetQualifier: 'idQualifier_Basic',
+    parentId: 'idBasicCollection',
+    position: 10
+  },{
+    id: 'idFunctionsCollection',
+    type: #COLLECTION,
+    label: 'ABAP Functions',
+    position: 20
+  },{
+    id: 'idFunctions',
+    type: #FIELDGROUP_REFERENCE,
+    parentId: 'idFunctionsCollection',
+    targetQualifier: 'idQualifier_Functions',
+    position: 10
+  },{
+    id: 'idProcessingCollection',
+    type: #COLLECTION,
+    label: 'File Processing',
+    position: 30
+  },{
+    id: 'idProcessing',
+    type: #FIELDGROUP_REFERENCE,
+    parentId: 'idProcessingCollection',
+    targetQualifier: 'idQualifier_Processing',
+    position: 10
+  },{
+    id: 'idTemplateCollection',
+    type: #COLLECTION,
+    label: 'Template Area',
+    position: 40
+  },{
+    id: 'idTemplate',
+    type: #FIELDGROUP_REFERENCE,
+    parentId: 'idTemplateCollection',
+    targetQualifier: 'idQualifier_Template',
+    position: 10
+  } ]
+  @EndUserText.label: 'Configuration UUID'
+  UuidConf;
+
+  @UI.lineItem: [ { position: 10 , importance: #MEDIUM, cssDefault.width: '15rem' } ]
+  @UI.selectionField: [{ position: 10 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Basic', position: 10 }]
+  @EndUserText.label: 'Import Object'
+  Object;
+
+  @UI.lineItem: [ { position: 20 , importance: #MEDIUM, cssDefault.width: '18rem' } ]
+  @UI.selectionField: [{ position: 20 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Basic', position: 20 }]
+  @EndUserText.label: 'Import Object Name'
+  ObjectName;
+
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Functions', position: 10 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZZR_DTIMP_FUNC', element: 'FunctionModuleName' }}]
+  @EndUserText.label: 'Function Module Name'
+  FunctionName;
+
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Functions', position: 20 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZZR_DTIMP_STRUC', element: 'StructureName' }}]
+  @EndUserText.label: 'Structure Name'
+  StructureName;
+
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Processing', position: 10 }]
+  @EndUserText.label: 'Sheet Name'
+  SheetName;
+
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Processing', position: 20 }]
+  @EndUserText.label: 'Reading From Line'
+  StartRow;
+
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Processing', position: 30 }]
+  @EndUserText.label: 'Reading From Column(A/B/C)'
+  StartColumn;
+
+  @UI.lineItem: [ { position: 35 , importance: #MEDIUM, cssDefault.width: '25rem' } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Template', position: 10 }]
+  @EndUserText.label: 'Template'
+  TemplateContent;
+
+  @UI.lineItem: [ { position: 40 , importance: #MEDIUM, cssDefault.width: '14rem' } ]
+  @UI.selectionField: [{ position: 30 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Basic', position: 30 }]
+  CreatedBy;
+
+  @UI.lineItem: [ { position: 50 , importance: #MEDIUM } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Basic', position: 40 }]
+  CreatedAt;
+
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Basic', position: 50 }]
+  LastChangedBy;
+
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Basic', position: 60 }]
+  LastChangedAt;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

@@ -1,0 +1,7 @@
+@EndUserText.label: 'Workflow Management'
+define service ZUI_WF_MANAGE_O4 {
+  expose ZC_WF_ApprovalPath    as ApprovalPath;
+  expose ZC_WF_ApprovalNode    as ApprovalNode;
+  expose ZC_WF_ApprovalUser    as ApprovalUser;
+  expose ZC_WF_ApprovalHistory as ApprovalHistory;
+}

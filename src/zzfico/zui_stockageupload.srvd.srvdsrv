@@ -1,0 +1,4 @@
+@EndUserText.label: 'Inventory Aging Upload'
+define service ZUI_STOCKAGEUPLOAD {
+  expose ZC_STOCKAGEUPLOAD as STOCKAGEUPLOAD;
+}

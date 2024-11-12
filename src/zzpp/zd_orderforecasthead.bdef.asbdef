@@ -1,0 +1,12 @@
+abstract;
+strict ( 2 );
+with hierarchy;
+
+define behavior for ZD_ORDERFORECASTHEAD //alias <alias_name>
+{
+  association _Item;
+}
+
+define behavior for ZD_ORDERFORECASTITEM //alias <alias_name>
+{
+}

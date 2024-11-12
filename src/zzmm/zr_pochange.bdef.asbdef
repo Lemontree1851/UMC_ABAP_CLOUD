@@ -1,0 +1,76 @@
+managed implementation in class zbp_r_pochange unique;
+strict ( 2 );
+
+define behavior for ZR_POCHANGE alias POChange
+persistent table ztmm_1007
+lock master
+authorization master ( global )
+etag master LocalLastChangedAt
+{
+  field ( readonly )
+  UUID,
+  Status,
+  Message,
+  CreatedAt,
+  CreatedBy,
+  LastChangedAt,
+  LastChangedBy,
+  LocalLastChangedAt;
+
+  field ( numbering : managed )
+  UUID;
+
+  create;
+  update;
+  delete;
+
+  static action processLogic parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
+
+  mapping for ztmm_1007
+    {
+      UUID                           = uuid;
+      PurchaseOrder                  = purchaseorder;
+      PurchaseOrderItem              = purchaseorderitem;
+      CompanyCode                    = companycode;
+      PurchasingOrganization         = purchasingorganization;
+      PurchasingGroup                = purchasinggroup;
+      Currency                       = currency;
+      PurchasingDocumentDeletionCode = purchasingdocumentdeletioncode;
+      AccountAssignmentCategory      = accountassignmentcategory;
+      PurchaseOrderItemCategory      = purchaseorderitemcategory;
+      Material                       = material;
+      PurchaseOrderItemText          = purchaseorderitemtext;
+      MaterialGroup                  = materialgroup;
+      OrderQuantity                  = orderquantity;
+      ScheduleLineDeliveryDate       = schedulelinedeliverydate;
+      NetPriceAmount                 = netpriceamount;
+      OrderPriceUnit                 = orderpriceunit;
+      Plant                          = plant;
+      StorageLocation                = storagelocation;
+      RequisitionerName              = requisitionername;
+      RequirementTracking            = requirementtracking;
+      IsReturnItem                   = isreturnitem;
+      InternationalArticleNumber     = internationalarticlenumber;
+      DiscountInKindEligibility      = discountinkindeligibility;
+      TaxCode                        = taxcode;
+      IsCompletelyDelivered          = iscompletelydelivered;
+      PricingDateControl             = pricingdatecontrol;
+      PurgDocPriceDate               = purgdocpricedate;
+      GLAccount                      = glaccount;
+      CostCenter                     = costcenter;
+      MasterFixedAsset               = masterfixedasset;
+      FixedAsset                     = fixedasset;
+      OrderID                        = orderid;
+      WBSElementInternalID_2         = wbselementinternalid_2;
+      LongText                       = longtext;
+      Status                         = status;
+      Message                        = message;
+      PurchaseOrderUnit              = purchaseorderunit;
+      CreatedBy                      = created_by;
+      CreatedAt                      = created_at;
+      LastChangedBy                  = last_changed_by;
+      LastChangedAt                  = last_changed_at;
+      LocalLastChangedAt             = local_last_changed_at;
+    }
+
+}

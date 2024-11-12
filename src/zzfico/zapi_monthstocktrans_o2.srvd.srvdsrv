@@ -1,0 +1,9 @@
+@EndUserText.label: '月別在庫推移'
+@ObjectModel: {
+  leadingEntity: {
+    name: 'ZC_MONTHSTOCKTRANS'
+  }
+}
+define service ZAPI_MONTHSTOCKTRANS_O2 {
+  expose ZC_MONTHSTOCKTRANS;
+}

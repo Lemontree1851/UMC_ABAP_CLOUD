@@ -1,0 +1,64 @@
+managed implementation in class zbp_r_salesacceptance unique;
+strict ( 2 );
+
+define behavior for ZR_SALESACCEPTANCE alias SalesAcceptance
+persistent table ztsd_1002
+lock master
+authorization master ( global )
+etag master LocalLastChangedAt
+{
+  field ( readonly )
+  UUID,
+  Status,
+  Message,
+  CreatedAt,
+  CreatedBy,
+  LastChangedAt,
+  LastChangedBy,
+  LocalLastChangedAt;
+
+  create;
+  update;
+  delete;
+
+  field ( numbering : managed )
+  UUID;
+
+  static action processLogic parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
+
+  mapping for ztsd_1002
+    {
+      UUID                 = uuid;
+      SalesOrganization    = salesorganization;
+      Customer             = customer;
+      PeriodType           = periodtype;
+      AcceptPeriod         = acceptperiod;
+      CustomerPO           = customerpo;
+      ItemNo               = itemno;
+      AcceptPeriodFrom     = acceptperiodfrom;
+      AcceptPeriodTo       = acceptperiodto;
+      UMCProductCode       = umcproductcode;
+      CustomerMaterial     = customermaterial;
+      CustomerMaterialText = customermaterialtext;
+      ReceiptDate          = receiptdate;
+      AcceptDate           = acceptdate;
+      AcceptQty            = acceptqty;
+      ReceiptQty           = receiptqty;
+      UnqualifiedQty       = unqualifiedqty;
+      UndersupplyQty       = undersupplyqty;
+      AcceptPrice          = acceptprice;
+      AccceptAmount        = accceptamount;
+      Currency             = currency;
+      TaxRate              = taxrate;
+      OutsideData          = outsidedata;
+      Status               = status;
+      FinishStatus         = finishstatus;
+      Message              = message;
+      Unit                 = unit;
+      CreatedBy            = created_by;
+      CreatedAt            = created_at;
+      LastChangedBy        = last_changed_by;
+      LastChangedAt        = last_changed_at;
+      LocalLastChangedAt   = local_last_changed_at;
+    }
+}

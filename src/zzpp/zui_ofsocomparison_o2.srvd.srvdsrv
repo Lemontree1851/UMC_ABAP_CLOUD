@@ -1,0 +1,4 @@
+@EndUserText.label: 'OFとSO比較照会'
+define service ZUI_ofsocomparison_O2 {
+  expose ZR_OFSOCOMPARISON as OFSOCOMPARISON;
+}

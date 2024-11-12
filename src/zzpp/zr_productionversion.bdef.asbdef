@@ -1,0 +1,54 @@
+managed implementation in class zbp_r_productionversion unique;
+//strict ( 2 );
+strict;
+
+define behavior for ZR_PRODUCTIONVERSION alias ProductionVersion
+persistent table ztpp_1007
+lock master
+etag master LocalLastChangedAt
+authorization master ( global )
+
+{
+  field ( readonly )
+  UUID,
+  CreatedAt,
+  CreatedBy,
+  LastChangedAt,
+  LastChangedBy,
+  LocalLastChangedAt;
+
+  field ( numbering : managed )
+  UUID;
+
+  create;
+  update;
+  delete;
+
+  static action processLogic parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
+
+  mapping for ztpp_1007
+    {
+      UUID                       = uuid;
+      Material                   = material;
+      Plant                      = plant;
+      Productionversion          = productionversion;
+      Productionversiontext      = productionversiontext;
+      Validitystartdate          = validitystartdate;
+      Validityenddate            = validityenddate;
+      Billofoperationstype       = billofoperationstype;
+      Billofoperationsgroup      = billofoperationsgroup;
+      Billofoperationsvariant    = billofoperationsvariant;
+      Billofmaterialvariantusage = billofmaterialvariantusage;
+      Billofmaterialvariant      = billofmaterialvariant;
+      Productionline             = productionline;
+      Issuingstoragelocation     = issuingstoragelocation;
+      Receivingstoragelocation   = receivingstoragelocation;
+      Status                     = status;
+      Message                    = message;
+      CreatedBy                  = created_by;
+      CreatedAt                  = created_at;
+      LastChangedBy              = last_changed_by;
+      LastChangedAt              = last_changed_at;
+      LocalLastChangedAt         = local_last_changed_at;
+    }
+}

@@ -1,0 +1,65 @@
+managed implementation in class ZBP_R_TMM_1011 unique;
+//strict ( 2 );
+strict;
+with draft;
+define behavior for ZR_TMM_1011 alias ZrTmm1011
+persistent table ZTMM_1011
+draft table ZTMM_1011_D
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master( global )
+
+{
+  field ( readonly )
+   Uuid,
+   CreatedBy,
+   CreatedAt,
+   LastChangedBy,
+   LastChangedAt,
+   LocalLastChangedAt;
+
+  field ( numbering : managed )
+   Uuid;
+
+
+  create;
+  update;
+  delete;
+
+  static action processLogic parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
+
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Edit;
+  draft action Resume;
+  draft determine action Prepare;
+
+  mapping for ZTMM_1011
+  {
+    Uuid = uuid;
+    DocumentDate = document_date;
+    PostingDate = posting_date;
+    MaterialDocumentHeaderText = material_document_header_text;
+    PurchaseOrder = purchase_order;
+    PurchaseOrderItem = purchase_order_item;
+    OrderKey = order_key;
+    QuantityInEntryUnit = quantity_in_entry_unit;
+    EntryUnit = entry_unit;
+    GoodsMovementType = goods_movement_type;
+    GoodsMovementCode = goods_movement_code;
+    InventoryTransactionType = inventory_transaction_type;
+    Plant = plant;
+    StorageLocation = storage_location;
+    Batch = batch;
+    MaterialDocument = material_document;
+    MaterialDocumentYear = material_document_year;
+    MaterialDocumentItem = material_document_item;
+    Status = status;
+    Message = message;
+    CreatedBy = created_by;
+    CreatedAt = created_at;
+    LastChangedBy = last_changed_by;
+    LastChangedAt = last_changed_at;
+    LocalLastChangedAt = local_last_changed_at;
+  }
+}

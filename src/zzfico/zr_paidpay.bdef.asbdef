@@ -1,0 +1,52 @@
+managed implementation in class zbp_r_paidpay unique;
+strict;
+
+define behavior for ZR_PAIDPAY alias PaidPay
+persistent table ztfi_1007
+lock master
+authorization master ( global )
+etag master LocalLastChangedAt
+{
+  field ( readonly )
+  UUID,
+  Status,
+  Message,
+  CreatedAt,
+  CreatedBy,
+  LastChangedAt,
+  LastChangedBy,
+  LocalLastChangedAt;
+
+  field ( numbering : managed )
+  UUID;
+
+  create;
+  update;
+  delete;
+
+  static action processLogic parameter ZD_PARAMETERSFORPAIDPAY result [1] ZD_PARAMETERSFORPAIDPAY;
+
+  mapping for ztfi_1007
+    {
+      UUID               = uuid;
+      CompanyCode        = companycode;
+      FiscalYear         = fiscalyear;
+      Period             = period;
+      ProfitCenter       = profitcenter;
+      BusinessPartner    = businesspartner;
+      PurchasingGroup    = purchasinggroup;
+      PreStockAmt        = prestockamt;
+      BegPurGrpAmt       = begpurgrpamt;
+      BegChgMaterialAmt  = begchgmaterialamt;
+      BegCustomerRev     = begcustomerrev;
+      BegRev             = begrev;
+      Currency           = currency;
+      Status             = status;
+      Message            = message;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}

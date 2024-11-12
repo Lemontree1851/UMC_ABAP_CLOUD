@@ -1,0 +1,6 @@
+@EndUserText.label: 'Manufacturing Order List'
+define service ZUI_MFGORDER {
+  expose ZC_MFGORDER_001 as MFGORDER1;
+  expose ZC_MFGORDER_002 as MFGORDER2;
+  expose ZC_MFGORDER_003 as MFGORDER3;
+}

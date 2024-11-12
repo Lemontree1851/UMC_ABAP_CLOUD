@@ -1,0 +1,276 @@
+@Metadata.layer: #CORE
+@UI.headerInfo.title.type: #STANDARD
+@UI.headerInfo.title.value: 'Uuid'
+@UI.headerInfo.description.type: #STANDARD
+@UI.headerInfo.description.value: 'Uuid'
+annotate view ZC_TMM_1011 with
+{
+  @EndUserText.label: 'Uuid'
+  @UI.facet: [ {
+    label: 'General Information',
+    id: 'GeneralInfo',
+    purpose: #STANDARD,
+    position: 10 ,
+    type: #IDENTIFICATION_REFERENCE
+  } ]
+  @UI.identification: [ {
+    position: 10 ,
+    label: 'UUID'
+  } ]
+  @UI.lineItem: [ {
+    position: 10 ,
+    label: 'UUID'
+  } ]
+  @UI.selectionField: [ {
+    position: 10
+  } ]
+  Uuid;
+
+  @UI.identification: [ {
+    position: 20 ,
+    label: 'Belegdatum'
+  } ]
+  @UI.lineItem: [ {
+    position: 20 ,
+    label: 'Belegdatum'
+  } ]
+  @UI.selectionField: [ {
+    position: 20
+  } ]
+  DocumentDate;
+
+  @UI.identification: [ {
+    position: 30 ,
+    label: 'Buchungsdatum'
+  } ]
+  @UI.lineItem: [ {
+    position: 30 ,
+    label: 'Buchungsdatum'
+  } ]
+  @UI.selectionField: [ {
+    position: 30
+  } ]
+  PostingDate;
+
+  @UI.identification: [ {
+    position: 40 ,
+    label: 'Belegkopftext'
+  } ]
+  @UI.lineItem: [ {
+    position: 40 ,
+    label: 'Belegkopftext'
+  } ]
+  @UI.selectionField: [ {
+    position: 40
+  } ]
+  MaterialDocumentHeaderText;
+
+  @UI.identification: [ {
+    position: 50 ,
+    label: 'Purchasing Doc.'
+  } ]
+  @UI.lineItem: [ {
+    position: 50 ,
+    label: 'Purchasing Doc.'
+  } ]
+  @UI.selectionField: [ {
+    position: 50
+  } ]
+  //PurchaseOrder;
+  OrderKey;
+
+//  @UI.identification: [ {
+//    position: 60 ,
+//    label: 'Position'
+//  } ]
+//  @UI.lineItem: [ {
+//    position: 60 ,
+//    label: 'Position'
+//  } ]
+//  @UI.selectionField: [ {
+//    position: 60
+//  } ]
+//  PurchaseOrderItem;
+
+  @UI.identification: [ {
+    position: 70 ,
+    label: 'Menge'
+  } ]
+  @UI.lineItem: [ {
+    position: 70 ,
+    label: 'Menge'
+  } ]
+  @UI.selectionField: [ {
+    position: 70
+  } ]
+  QuantityInEntryUnit;
+
+  @UI.identification: [ {
+    position: 80 ,
+    label: 'Werk'
+  } ]
+  @UI.lineItem: [ {
+    position: 80 ,
+    label: 'Werk'
+  } ]
+  @UI.selectionField: [ {
+    position: 80
+  } ]
+  Plant;
+
+  @UI.identification: [ {
+    position: 90 ,
+    label: 'Location'
+  } ]
+  @UI.lineItem: [ {
+    position: 90 ,
+    label: 'Location'
+  } ]
+  @UI.selectionField: [ {
+    position: 90
+  } ]
+  StorageLocation;
+
+  @UI.identification: [ {
+    position: 100 ,
+    label: 'Charge'
+  } ]
+  @UI.lineItem: [ {
+    position: 100 ,
+    label: 'Charge'
+  } ]
+  @UI.selectionField: [ {
+    position: 100
+  } ]
+  Batch;
+
+  @UI.identification: [ {
+    position: 110 ,
+    label: 'Material Doc.'
+  } ]
+  @UI.lineItem: [ {
+    position: 110 ,
+    label: 'Material Doc.'
+  } ]
+  @UI.selectionField: [ {
+    position: 110
+  } ]
+  MaterialDocument;
+
+  @UI.identification: [ {
+    position: 120 ,
+    label: 'Mat. Doc. Year'
+  } ]
+  @UI.lineItem: [ {
+    position: 120 ,
+    label: 'Mat. Doc. Year'
+  } ]
+  @UI.selectionField: [ {
+    position: 120
+  } ]
+  MaterialDocumentYear;
+
+  @UI.identification: [ {
+    position: 130 ,
+    label: 'Mat. Doc.Item'
+  } ]
+  @UI.lineItem: [ {
+    position: 130 ,
+    label: 'Mat. Doc.Item'
+  } ]
+  @UI.selectionField: [ {
+    position: 130
+  } ]
+  MaterialDocumentItem;
+
+  @UI.identification: [ {
+    position: 140 ,
+    label: 'Nachrichtentyp'
+  } ]
+  @UI.lineItem: [ {
+    position: 140 ,
+    label: 'Nachrichtentyp'
+  } ]
+  @UI.selectionField: [ {
+    position: 140
+  } ]
+  Status;
+
+  @UI.identification: [ {
+    position: 150 ,
+    label: 'Zzkey'
+  } ]
+  @UI.lineItem: [ {
+    position: 150 ,
+    label: 'Zzkey'
+  } ]
+  @UI.selectionField: [ {
+    position: 150
+  } ]
+  Message;
+
+  @UI.identification: [ {
+    position: 160 ,
+    label: 'Created By'
+  } ]
+  @UI.lineItem: [ {
+    position: 160 ,
+    label: 'Created By'
+  } ]
+  @UI.selectionField: [ {
+    position: 160
+  } ]
+  CreatedBy;
+
+  @UI.identification: [ {
+    position: 170 ,
+    label: 'Created On'
+  } ]
+  @UI.lineItem: [ {
+    position: 170 ,
+    label: 'Created On'
+  } ]
+  @UI.selectionField: [ {
+    position: 170
+  } ]
+  CreatedAt;
+
+  @UI.identification: [ {
+    position: 180 ,
+    label: 'Changed By'
+  } ]
+  @UI.lineItem: [ {
+    position: 180 ,
+    label: 'Changed By'
+  } ]
+  @UI.selectionField: [ {
+    position: 180
+  } ]
+  LastChangedBy;
+
+  @UI.identification: [ {
+    position: 190 ,
+    label: 'Changed On'
+  } ]
+  @UI.lineItem: [ {
+    position: 190 ,
+    label: 'Changed On'
+  } ]
+  @UI.selectionField: [ {
+    position: 190
+  } ]
+  LastChangedAt;
+
+  @UI.identification: [ {
+    position: 200 ,
+    label: 'Changed On'
+  } ]
+  @UI.lineItem: [ {
+    position: 200 ,
+    label: 'Changed On'
+  } ]
+  @UI.selectionField: [ {
+    position: 200
+  } ]
+  LocalLastChangedAt;
+}

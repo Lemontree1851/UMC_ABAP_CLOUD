@@ -1,0 +1,4 @@
+@EndUserText.label: 'Manufacturing Order Infomation Report'
+define service ZUI_MFGORDERINFO_O4 {
+  expose ZC_MFGORDERINFO as MfgOrderInfo;
+}

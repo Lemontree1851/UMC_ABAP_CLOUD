@@ -1,0 +1,65 @@
+managed implementation in class zbp_r_routingupload unique;
+//strict ( 2 );
+strict;
+
+define behavior for ZR_ROUTINGUPLOAD alias RoutingUpload
+persistent table ztpp_1006
+lock master
+etag master LocalLastChangedAt
+authorization master ( global )
+
+{
+  field ( readonly )
+  UUID,
+  CreatedAt,
+  CreatedBy,
+  LastChangedAt,
+  LastChangedBy,
+  LocalLastChangedAt;
+
+  field ( numbering : managed )
+  UUID;
+
+  create;
+  update;
+  delete;
+
+  static action processLogic parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
+
+  mapping for ztpp_1006
+    {
+      UUID                      = uuid;
+      Product                   = product;
+      Plant                     = plant;
+      ValidityStartDate         = validitystartdate;
+      BillOfOperationsDesc      = billofoperationsdesc;
+      ProductionRouting         = productionrouting;
+      BillOfOperationsUsage     = billofoperationsusage;
+      BillOfOperationsStatus    = billofoperationsstatus;
+      ResponsiblePlannerGroup   = responsibleplannergroup;
+      Operation                 = operation;
+      WorkCenter                = workcenter;
+      OperationControlProfile   = operationcontrolprofile;
+      OperationText             = operationtext;
+      StandardWorkQuantity1     = standardworkquantity1;
+      StandardWorkQuantityUnit1 = standardworkquantityunit1;
+      StandardWorkQuantity2     = standardworkquantity2;
+      StandardWorkQuantityUnit2 = standardworkquantityunit2;
+      StandardWorkQuantity3     = standardworkquantity3;
+      StandardWorkQuantityUnit3 = standardworkquantityunit3;
+      StandardWorkQuantity4     = standardworkquantity4;
+      StandardWorkQuantityUnit4 = standardworkquantityunit4;
+      StandardWorkQuantity5     = standardworkquantity5;
+      StandardWorkQuantityUnit5 = standardworkquantityunit5;
+      StandardWorkQuantity6     = standardworkquantity6;
+      StandardWorkQuantityUnit6 = standardworkquantityunit6;
+      NumberOfTimeTickets       = numberoftimetickets;
+      Status                    = status;
+      Message                   = message;
+      CreatedBy                 = created_by;
+      CreatedAt                 = created_at;
+      LastChangedBy             = last_changed_by;
+      LastChangedAt             = last_changed_at;
+      LocalLastChangedAt        = local_last_changed_at;
+    }
+}

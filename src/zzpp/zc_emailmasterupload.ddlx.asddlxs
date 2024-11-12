@@ -1,0 +1,72 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Email Master Management',
+    typeNamePlural: 'Email Master',
+    title: { type: #STANDARD , value: 'UUID'},
+    description: { type: #STANDARD , value: 'UUID'}
+  }
+}
+annotate view ZC_EMAILMASTERUPLOAD with
+{
+  @UI.facet: [ {
+    label: 'General Information',
+    id: 'GeneralInfo',
+    purpose: #STANDARD,
+    position: 10 ,
+    type: #IDENTIFICATION_REFERENCE
+  } ]
+
+  @UI.hidden: true
+  UUID;
+
+  @UI.lineItem: [ { position: 10, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @UI.identification: [ { position: 10 } ]
+  @UI.selectionField: [ { position: 10  } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_PlantVH', element: 'Plant' } }]
+  Plant;
+
+  @UI.lineItem: [ { position: 20, importance: #MEDIUM, cssDefault.width: '15rem' } ]
+  @UI.identification: [ { position: 20 } ]
+  @UI.selectionField: [ { position: 20  } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Customer_VH', element: 'Customer' } }]
+  Customer;
+
+  @UI.lineItem: [ { position: 30, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @UI.identification: [ { position: 30 } ]
+  @UI.selectionField: [ { position: 30  } ]
+  @EndUserText.label: 'Receiver'
+  Receiver;
+
+  @UI.lineItem: [ { position: 40, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @UI.identification: [ { position: 40 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_EMAILCOPYVH', element: 'value_low' } }]
+  @EndUserText.label: 'Receiver Type'
+  ReceiverType;
+
+  @UI.lineItem: [ { position: 50, importance: #MEDIUM, cssDefault.width: '15rem' } ]
+  @UI.identification: [ { position: 50 } ]
+  @EndUserText.label: 'Mail Address'
+  MailAddress;
+
+  @UI.lineItem: [ { position: 60, importance: #LOW, cssDefault.width: '15rem' } ]
+  @UI.identification: [ { position: 60 } ]
+  @UI.selectionField: [ { position: 40  } ]
+  CreatedBy;
+
+  @UI.lineItem: [ { position: 70, importance: #LOW, cssDefault.width: '10rem' } ]
+  @UI.identification: [ { position: 70 } ]
+  CreatedAt;
+
+  @UI.lineItem: [ { position: 80, importance: #LOW, cssDefault.width: '15rem' } ]
+  @UI.identification: [ { position: 80 } ]
+  @UI.selectionField: [ { position: 50  } ]
+  LastChangedBy;
+
+  @UI.lineItem: [ { position: 90, importance: #LOW, cssDefault.width: '10rem' } ]
+  @UI.identification: [ { position: 90 } ]
+  LastChangedAt;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

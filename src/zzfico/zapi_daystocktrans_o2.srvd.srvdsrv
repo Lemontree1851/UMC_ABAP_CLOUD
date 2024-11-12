@@ -1,0 +1,4 @@
+@EndUserText.label: '日別在庫推移'
+define service ZAPI_DAYSTOCKTRANS_O2 {
+  expose ZC_DAYSTOCKTRANS;
+}

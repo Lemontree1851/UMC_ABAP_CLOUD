@@ -1,0 +1,62 @@
+@Metadata.layer: #CORE
+annotate entity ZC_SALESDOCUMENTLIST with
+{
+
+  @Consumption.valueHelpDefinition: [ { entity: { element: 'SalesOrganization', name: 'I_SalesOrganization' } } ]
+  SalesOrganization;
+
+  @Consumption.valueHelpDefinition: [ { entity: { element: 'SalesDocument', name: 'I_SalesDocumentStdVH' } } ]
+  SalesDocument;
+
+  @Consumption.valueHelpDefinition: [ { entity: { element: 'Customer', name: 'I_Customer_VH' } } ]
+  SoldToParty;
+
+  @Consumption.valueHelpDefinition: [ { entity: { element: 'SalesDocumentType', name: 'ZC_SalesDocumentTypeVH' } } ]
+  SalesDocumentType;
+
+  @Consumption.valueHelpDefinition: [ { entity: { element: 'SalesDocApprovalStatus', name: 'ZC_SalesDocApprovalStatusVH' } } ]
+  SalesDocApprovalStatus;
+
+  @Consumption.filter.selectionType: #RANGE
+  YY1_SalesDocType_SDH;
+
+  @Consumption.filter.selectionType: #RANGE
+  PurchaseOrderByCustomer;
+
+  @Consumption.valueHelpDefinition: [ { entity: { element: 'Product', name: 'I_ProductStdVH' } } ]
+  Product;
+
+  @Consumption.valueHelpDefinition: [ { entity: { element: 'Plant', name: 'I_PlantStdVH' } } ]
+  Plant;
+
+  @Consumption.filter.selectionType: #RANGE
+  RequestedDeliveryDate;
+
+  @Consumption.filter.selectionType: #RANGE
+  SalesDocumentDate;
+
+  @Consumption.filter.selectionType: #RANGE
+  ConfirmedDeliveryDate;
+
+  @Consumption.filter.selectionType: #RANGE
+  CreationDateItem;
+
+  @Consumption.filter.selectionType: #SINGLE
+  Indicator1; //DN未発行
+
+  @Consumption.filter.selectionType: #SINGLE
+  Indicator2; //DN未出庫
+
+  @Consumption.filter.selectionType: #SINGLE
+  Indicator3; //外部移転未記載
+
+  @Consumption.filter.selectionType: #SINGLE
+  Indicator4; //未請求
+
+  @Consumption.filter.selectionType: #SINGLE
+  Indicator5; //請求済
+
+  @Consumption.filter.selectionType: #SINGLE
+  Indicator6; //拒否項目の表示
+
+}

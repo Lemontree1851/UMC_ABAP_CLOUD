@@ -1,0 +1,198 @@
+@Metadata.layer: #CORE
+@UI.headerInfo.title.type: #STANDARD
+@UI.headerInfo.title.value: 'RecoveryManagementNumber'
+@UI.headerInfo.description.type: #STANDARD
+@UI.headerInfo.description.value: 'RecoveryManagementNumber'
+@Search.searchable: true
+annotate view ZC_TBI_RECY_INFO001 with
+{
+  @UI.facet: [ {
+    label: 'General Information',
+    id: 'GeneralInfo',
+    purpose: #STANDARD,
+    position: 10 ,
+    type: #IDENTIFICATION_REFERENCE
+  } ]
+
+
+  @UI.hidden
+  @UI.lineItem: [{ label: 'Create', type: #FOR_ACTION , dataAction: 'create_recycle', importance: #HIGH }]
+  Uuid;
+
+  @UI.identification: [ {
+    position: 10 ,
+    label: 'Recovery Management Number'
+  } ]
+  @UI.lineItem: [ {
+    position: 10 ,
+    label: 'Recovery Management Number'
+  } ]
+  @UI.selectionField: [ {
+    position: 40
+  } ]
+  @Search.defaultSearchElement: true
+  //@UI.lineItem: [{ type: #FOR_ACTION , dataAction: 'create_recycle', importance: #HIGH }]
+  RecoveryManagementNumber;
+
+  @UI.identification: [ {
+  position: 20 ,
+  label: 'Company'
+  } ]
+  @UI.lineItem: [ {
+    position: 20 ,
+    label: 'Company'
+  } ]
+  @UI.selectionField: [ {
+    position: 20
+  } ]
+  CompanyCode;
+
+  //  @UI.identification: [ {
+  //  position: 30 ,
+  //  label: 'Company Name'
+  //  } ]
+  //  @UI.lineItem: [ {
+  //    position: 30 ,
+  //    label: 'Company Name'
+  //  } ]
+  //  CompanyName;
+
+  @UI.identification: [ {
+    position: 40 ,
+    label: 'Recovery Type'
+  } ]
+  @UI.lineItem: [ {
+    position: 40 ,
+    label: 'Recovery Type'
+  } ]
+  @UI.selectionField: [ {
+    position: 10
+  } ]
+  RecoveryType;
+
+  @UI.hidden
+  RecoveryNum;
+
+  @UI.identification: [ {
+    position: 50 ,
+    label: 'Customer'
+  } ]
+  @UI.lineItem: [ {
+    position: 50 ,
+    label: 'Customer'
+  } ]
+  @UI.selectionField: [ {
+    position: 30
+  } ]
+  Customer;
+
+  //  @EndUserText.label: 'CustomerName'
+  //  @UI.identification: [ {
+  //    position: 60 ,
+  //    label: 'Customer Name'
+  //  } ]
+  //  @UI.lineItem: [ {
+  //    position: 60 ,
+  //    label: 'Customer Name'
+  //  } ]
+  //  CustomerName;
+
+  @UI.identification: [ {
+  position: 70 ,
+  label: 'Recovery Year'
+  } ]
+  @UI.lineItem: [ {
+    position: 70 ,
+    label: 'Recovery Year'
+  } ]
+  @UI.selectionField: [ {
+    position: 50
+  } ]
+  RecoveryYear;
+
+  @EndUserText.label: 'Machine'
+  @UI.identification: [ {
+    position: 80 ,
+    label: 'Machine'
+  } ]
+  @UI.lineItem: [ {
+    position: 80 ,
+    label: 'Machine'
+  } ]
+  Machine;
+
+  @UI.identification: [ {
+  position: 90 ,
+  label: 'Created By'
+  } ]
+  @UI.lineItem: [ {
+    position: 90 ,
+    label: 'Created By'
+  } ]
+  CreatedBy;
+
+  @UI.identification: [ {
+    position: 100 ,
+    label: 'Created On'
+  } ]
+  @UI.lineItem: [ {
+    position: 100 ,
+    label: 'Created On'
+  } ]
+  CreatedDate;
+
+  @EndUserText.label: 'RecoveryNecessaryAmount'
+  @UI.identification: [ {
+    label: 'Recovery Necessary Amount',
+    position: 110
+  } ]
+  @UI.lineItem: [ {
+    label: 'Recovery Necessary Amount',
+    position: 110
+  } ]
+  RecoveryNecessaryAmount;
+
+  @EndUserText.label: 'RecoveryAlready'
+  @UI.identification: [ {
+  label: 'Recovery Already',
+    position: 120
+  } ]
+  @UI.lineItem: [ {
+  label: 'Recovery Already',
+    position: 120
+  } ]
+  RecoveryAlready;
+
+  @UI.identification: [ {
+    position: 130 ,
+    label: 'Recycle Progress (%)'
+  } ]
+  @UI.lineItem: [ {
+    position: 130 ,
+    label: 'Recycle Progress (%)'
+  } ]
+  RecoveryPercentage;
+
+  @UI.identification: [ {
+    position: 140
+  } ]
+  @UI.lineItem: [ {
+    position: 140
+  } ]
+  RecoveryStatus;
+
+  @UI.hidden
+  Currency;
+
+  @UI.hidden
+  CreatedAt;
+
+  @UI.hidden
+  LastChangedBy;
+
+  @UI.hidden
+  LastChangedAt;
+
+  @UI.hidden
+  LocalLastChangedAt;
+}

@@ -1,0 +1,6 @@
+@EndUserText.label: 'Service definition for ZZC_DTIMP_FILES'
+define service ZUI_DTIMP_FILES_O4 {
+  expose ZZC_DTIMP_FILES as Files;
+  expose ZZC_DTIMP_CONF  as Configuration;
+  expose ZZC_DTIMP_LOGS  as Logs;
+}

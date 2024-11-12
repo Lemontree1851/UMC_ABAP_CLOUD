@@ -1,0 +1,8 @@
+@EndUserText.label: 'Permission Access'
+define service ZUI_PERMISSION_ACCESS_O4 {
+  expose ZC_TBC1004   as User;
+  expose ZC_TBC1005   as Role;
+  expose ZC_TBC1006   as AssignPlant;
+  expose ZC_TBC1007   as AssignRole;
+  expose ZC_TBC1007_1;
+}

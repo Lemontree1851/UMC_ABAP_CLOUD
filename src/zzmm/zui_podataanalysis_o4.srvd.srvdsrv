@@ -1,0 +1,4 @@
+@EndUserText.label: 'PO状況分析レポート'
+define service ZUI_PODATAANALYSIS_O4 {
+  expose ZR_PODATAANALYSIS as PODataAnalysis;
+}

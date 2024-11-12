@@ -1,0 +1,84 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Print Record',
+    typeNamePlural: 'Print Record',
+    title: { type: #STANDARD , value: 'TemplateName'},
+    description: { type: #STANDARD, value: 'RecordUUID' }
+  },
+  presentationVariant: [{
+    sortOrder: [ { by: 'CreatedAt', direction: #DESC } ],
+    visualizations: [ { type: #AS_LINEITEM } ]
+  }]
+}
+annotate view ZZC_PRT_RECORD with
+{
+  @UI.facet: [ {
+    id: 'idIdentification',
+    type: #IDENTIFICATION_REFERENCE,
+    label: 'Record',
+    position: 10
+  } ]
+
+  @UI.hidden: true
+  RecordUUID;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZZC_PRT_TEMPLATE', element: 'TemplateUUID' },
+                 additionalBinding: [{ element: 'TemplateID', localElement: 'TemplateID', usage: #RESULT },
+                                     { element: 'TemplateName', localElement: 'TemplateName', usage: #RESULT }] }]
+  @UI.identification: [{ position: 10 }]
+  @EndUserText.label: 'Template UUID'
+  TemplateUUID;
+
+  @UI.lineItem: [ { position: 10, importance: #MEDIUM, cssDefault.width: '12rem' } ]
+  @UI.selectionField: [{ position: 10 }]
+  @UI.identification: [{ position: 20 }]
+  @EndUserText.label: 'Template ID'
+  TemplateID;
+
+  @UI.lineItem: [ { position: 20, importance: #MEDIUM, cssDefault.width: '14rem' } ]
+  @UI.selectionField: [{ position: 20 }]
+  @UI.identification: [{ position: 30 }]
+  @EndUserText.label: 'Template Name'
+  TemplateName;
+
+  @UI.lineItem: [ { position: 30, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @UI.identification: [{ position: 40 }]
+  @EndUserText.label: 'Is External Provided Data'
+  IsExternalProvidedData;
+
+  @UI.lineItem: [ { position: 40, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.identification: [{ position: 50 }]
+  @EndUserText.label: 'External Provided Data'
+  ExternalProvidedData;
+
+  @UI.lineItem: [ { position: 50, importance: #MEDIUM, cssDefault.width: '15rem' } ]
+  @UI.identification: [{ position: 60 }]
+  @EndUserText.label: 'Provided Keys'
+  ProvidedKeys;
+
+  @UI.lineItem: [ { position: 60, importance: #MEDIUM, cssDefault.width: '20rem' } ]
+  @UI.identification: [{ position: 70 }]
+  @EndUserText.label: 'PDF File'
+  PDFContent;
+
+  @UI.lineItem: [ { position: 70 , importance: #LOW } ]
+  @UI.selectionField: [{ position: 30 }]
+  @UI.identification: [{ position: 80 }]
+  CreatedBy;
+
+  @UI.lineItem: [ { position: 80 , importance: #LOW } ]
+  @UI.identification: [{ position: 90 }]
+  CreatedAt;
+
+  @UI.hidden: true
+  DataMimeType;
+  @UI.hidden: true
+  DataFileName;
+  @UI.hidden: true
+  PDFMimeType;
+  @UI.hidden: true
+  PDFFileName;
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

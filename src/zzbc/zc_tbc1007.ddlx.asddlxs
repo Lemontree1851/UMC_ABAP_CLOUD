@@ -1,0 +1,47 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Role',
+    typeNamePlural: 'Role'
+  }
+}
+annotate view ZC_TBC1007 with
+{
+
+  @UI.hidden: true
+  Uuid;
+  @UI.hidden: true
+  UserUuid;
+  @UI.hidden: true
+  RoleUuid;
+
+  @UI.lineItem: [{ position: 10, cssDefault.width: '10rem' }]
+  @Consumption.valueHelpDefinition: [{ entity: {name: 'ZC_TBC1005' , element: 'RoleId' },
+               additionalBinding: [{ localElement: 'RoleUuid', element: 'RoleUuid', usage: #RESULT },
+                                   { localElement: 'RoleName', element: 'RoleName', usage: #RESULT },
+                                   { localElement: 'FunctionId', element: 'FunctionId', usage: #RESULT },
+                                   { localElement: 'AccessId', element: 'AccessId', usage: #RESULT },
+                                   { localElement: 'AccessName', element: 'AccessName', usage: #RESULT }]
+  }]
+  @EndUserText.label: 'Role Id'
+  RoleId;
+
+  @UI.lineItem: [{ position: 15 }]
+  @EndUserText.label: 'Role Name'
+  RoleName;
+
+  @UI.lineItem: [{ position: 20 }]
+  @EndUserText.label: 'Function Id'
+  FunctionId;
+
+  @UI.lineItem: [{ position: 30 }]
+  @EndUserText.label: 'Access Id'
+  AccessId;
+
+  @UI.lineItem: [{ position: 40 }]
+  @EndUserText.label: 'Access Name'
+  AccessName;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

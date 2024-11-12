@@ -1,0 +1,36 @@
+@Metadata.layer: #CORE
+annotate entity ZC_PICKINGLIST_TAB with
+{
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_PICKINGLIST_RESERVATIONVH', element: 'Reservation' } }]
+  Reservation;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Plant', element: 'Plant' } }]
+  Plant;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+  Material;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_StorageLocationStdVH', element: 'StorageLocation' } }]
+  StorageLocationTo;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_StorageLocationStdVH', element: 'StorageLocation' } }]
+  StorageLocationFrom;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductGroup_2', element: 'ProductGroup' } }]
+  MaterialGroup;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_DocumentInfoRecordLbtryOffc', element: 'LaboratoryOrDesignOffice' } }]
+  LaboratoryOrDesignOffice;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ExtProdGrp', element: 'ExternalProductGroup' } }]
+  ExternalProductGroup;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_BOOLEAN_VH', element: 'value_low' } }]
+  DeleteFlag;
+
+  @Consumption.filter.selectionType: #INTERVAL
+  CreatedDate;
+
+  @Consumption.filter.selectionType: #INTERVAL
+  LastChangedDate;
+}

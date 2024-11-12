@@ -1,0 +1,4 @@
+@EndUserText.label: 'BOMのレポート'
+define service ZUI_BOM_O4 {
+  expose ZR_BOM as BOM;
+}

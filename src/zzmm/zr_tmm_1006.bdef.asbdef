@@ -1,0 +1,105 @@
+managed implementation in class zbp_r_tmm_1006 unique;
+strict;
+
+define behavior for ZR_TMM_1006 alias PurchaseReq
+persistent table ztmm_1006
+lock master
+authorization master ( global )
+//etag master <field_name>
+{
+  create;
+  update;
+  delete;
+
+  field ( readonly )
+  UUID,
+  PrNo,
+  PrItem,
+  CreatedAt,
+  LocalCreatedBy,
+  LocalCreatedAt,
+  LocalLastChangedBy,
+  LocalLastChangedAt,
+  LatCahangedAt;
+  field ( numbering : managed ) UUID;
+  static action batchProcess parameter zr_upload_parameter result [1] zr_upload_parameter;
+
+  static action createPurchaseOrder parameter zr_upload_parameter result[1] zr_upload_parameter;
+
+  validation checkRecords on save
+  {
+    field PrType,
+    OrderType,
+    Supplier,
+    CompanyCode,
+    PurchaseOrg,
+    PurchaseGrp,
+    MatId,
+    Quantity,
+    Price,
+    IsLink,
+    Kyoten,
+    BuyPurpoose;
+    create; }
+
+  mapping for ztmm_1006
+    {
+      UUID                         = uuid;
+      ApplyDepart                  = apply_depart;
+      PrNo                         = pr_no;
+      PrItem                       = pr_item;
+      PrType                       = pr_type;
+      OrderType                    = order_type;
+      Supplier                     = supplier;
+      CompanyCode                  = company_code;
+      PurchaseOrg                  = purchase_org;
+      PurchaseGrp                  = purchase_grp;
+      Plant                        = plant;
+      Currency                     = currency;
+      ItemCategory                 = item_category;
+      AccountType                  = account_type;
+      MatID                        = mat_id;
+      MatDesc                      = mat_desc;
+      MaterialGroup                = material_group;
+      Quantity                     = quantity;
+      Unit                         = unit;
+      Price                        = price;
+      UnitPrice                    = unit_price;
+      DeliveryDate                 = delivery_date;
+      Location                     = location;
+      ReturnItem                   = return_item;
+      Free                         = free;
+      GlAccount                    = gl_account;
+      CostCenter                   = cost_center;
+      WbsElemnt                    = wbs_elemnt;
+      AssetNo                      = asset_no;
+      Tax                          = tax;
+      ItemText                     = item_text;
+      PrBy                         = pr_by;
+      TrackNo                      = track_no;
+      Ean                          = ean;
+      CustomerRec                  = customer_rec;
+      AssetOri                     = asset_ori;
+      MemoText                     = memo_text;
+      BuyPurpoose                  = buy_purpoose;
+      ApproveStatus                = approve_status;
+      IsLink                       = is_link;
+      PurchaseOrder                = purchase_order;
+      PurchaseOrderItem            = purchase_order_item;
+      Kyoten                       = kyoten;
+      IsApprove                    = is_approve;
+      DocumentInfoRecordDocType    = document_info_record_doc_type;
+      DocumentInfoRecordDocNumber  = document_info_record_doc_numbe;
+      DocumentInfoRecordDocVersion = document_info_record_doc_versi;
+      DocumentInfoRecordDocPart    = document_info_record_doc_part;
+      ApplyDate                    = apply_date;
+      ApplyTime                    = apply_time;
+      CreatedAt                    = created_at;
+      LocalCreatedBy               = local_created_by;
+      LocalCreatedAt               = local_created_at;
+      LocalLastChangedBy           = local_last_changed_by;
+      LocalLastChangedAt           = local_last_changed_at;
+      LatCahangedAt                = lat_cahanged_at;
+    }
+
+}

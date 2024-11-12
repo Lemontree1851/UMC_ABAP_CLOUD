@@ -1,0 +1,4 @@
+@EndUserText.label: 'Source List'
+define service ZUI_PURCHASINGSOURCELIST_O4 {
+  expose ZC_PURCHASINGSOURCELIST as SourceList;
+}

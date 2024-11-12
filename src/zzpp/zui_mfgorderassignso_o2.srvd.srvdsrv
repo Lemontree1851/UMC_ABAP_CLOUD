@@ -1,0 +1,6 @@
+@EndUserText.label: 'Manufacturing Order Assign SO'
+define service ZUI_MFGORDERASSIGNSO_O2 {
+  expose ZC_MFGORDERASSIGNSO     as MfgOrder;
+  expose ZC_MFGORDERASSIGNSOITEM as AssignSOItem;
+  expose ZC_ProductVH;
+}

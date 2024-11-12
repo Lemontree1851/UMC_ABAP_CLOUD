@@ -1,0 +1,11 @@
+@EndUserText: {
+  label: 'Service Definition for ZC_TFI_1021'
+}
+@ObjectModel: {
+  leadingEntity: {
+    name: 'ZC_TFI_1021'
+  }
+}
+define service ZAPI_TFI_1021_O2 {
+  expose ZC_TFI_1021;
+}

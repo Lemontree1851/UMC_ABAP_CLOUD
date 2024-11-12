@@ -1,0 +1,4 @@
+@EndUserText.label: 'OF Split Rule'
+define service ZUI_OFSPLITRULE_O4 {
+  expose ZC_OFSPLITRULE as SplitRule;
+}

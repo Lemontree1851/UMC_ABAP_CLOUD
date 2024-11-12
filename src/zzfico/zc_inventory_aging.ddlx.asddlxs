@@ -1,0 +1,16 @@
+@Metadata.layer: #CORE
+annotate entity ZC_INVENTORY_AGING with
+
+{
+  @Consumption.valueHelpDefinition: [ { entity: { element: 'CompanyCode', name: 'I_CompanyCodeVH' } } ]
+  CompanyCode;
+
+  @Consumption.filter.selectionType: #SINGLE
+  FiscalYear;
+
+  @Consumption.filter.selectionType: #SINGLE
+  FiscalPeriod;
+
+  @Consumption.valueHelpDefinition: [ { entity: { element: 'Ledger', name: 'ZC_LedgerVH' } } ]
+  Ledger;
+}

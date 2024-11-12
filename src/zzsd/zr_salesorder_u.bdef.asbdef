@@ -1,0 +1,17 @@
+unmanaged implementation in class zbp_r_salesorder_u unique;
+strict ( 2 );
+
+define behavior for ZR_SALESORDER_U alias SalesOrderForDN
+//late numbering
+lock master
+authorization master ( instance )
+//etag master <field_name>
+{
+  create;
+  update;
+  delete;
+
+  field ( readonly ) SalesOrder, SalesOrderItem;
+
+  action createDeliveryOrder parameter ZD_PARAMETERSFORDN result [1] $self;
+}

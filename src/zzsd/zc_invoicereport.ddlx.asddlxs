@@ -1,0 +1,76 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: '請求書出力',
+    typeNamePlural: '請求書出力'
+  }
+}
+annotate entity ZC_INVOICEREPORT with
+{
+  @UI.selectionField: [{ position: 5 }]
+  @UI.lineItem: [{ position: 15 }]
+  BillingDocument;
+  @UI.lineItem: [{ position: 20 }]
+  BillingDocumentItem;
+  @UI.selectionField: [{ position: 10 }]
+  @UI.lineItem: [{ position: 48 }]
+  BillingDocumentType;
+  @UI.selectionField: [{ position: 40 }]
+  @UI.lineItem: [{ position: 40 }]
+  BillingDocumentDate;
+//  BillingDocumentItemText;
+  @UI.selectionField: [{ position: 20 }]
+  @UI.lineItem: [{ position: 30 }]
+  SoldToParty;
+  @UI.selectionField: [{ position: 25 }]
+  @UI.lineItem: [{ position: 5 }]
+  SalesOrganization;
+  @UI.selectionField: [{ position: 15 }]
+  @UI.lineItem: [{ position: 25 }]
+  BillToParty;
+  @UI.lineItem: [{ position: 35 }]
+  ShippingPoint;
+  @UI.selectionField: [{ position: 30 }]
+  @UI.lineItem: [{ position: 10 }]
+  SalesOffice;
+  @UI.selectionField: [{ position: 60 }]
+  @UI.lineItem: [{ position: 50 }]
+  Product;
+//  BillingQuantity;
+//  BillingQuantityUnit;
+  @UI.selectionField: [{ position: 35 }]
+  @UI.lineItem: [{ position: 45 }]
+  OverallSDProcessStatus;
+  @UI.selectionField: [{ position: 50 }]
+  @UI.lineItem: [{ position: 53 }]
+  CreatedByUser;
+  @UI.selectionField: [{ position: 55 }]
+  @UI.lineItem: [{ position: 55 }]
+  CreationDate;
+//  NetAmount;
+//  TransactionCurrency;
+  @UI.selectionField: [{ position: 65 }]
+  @UI.lineItem: [{ position: 57 }]
+  SalesDocument;
+  @UI.lineItem: [{ position: 61 }]
+  NetAmount10;
+  @UI.lineItem: [{ position: 63 }]
+  NetAmountTax10;
+  @UI.lineItem: [{ position: 65 }]
+  NetAmountIncludeTax10;
+  @UI.lineItem: [{ position: 67 }]
+  NetAmountExclude;
+//  SalesDocumentItem;
+//  TotalNetAmount;
+//  MaterialByCustomer;
+//  CompanyCodeParameterValue;
+//  PostalCode;
+//  CityName;
+//  CustomerName;
+//  FaxNumber;
+//  TelephoneNumber1;
+//  UnitPrice;
+//  ConditionQuantity;
+//  ConditionQuantityUnit;
+//  TaxRate;
+}

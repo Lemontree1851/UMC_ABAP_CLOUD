@@ -1,0 +1,66 @@
+managed implementation in class zbp_r_bomupload unique;
+//strict ( 2 );
+strict;
+
+define behavior for ZR_BOMUPLOAD alias BomUpload
+persistent table ztpp_1002
+lock master
+etag master LocalLastChangedAt
+authorization master ( global )
+{
+
+  field ( readonly )
+  UUID,
+  CreatedAt,
+  CreatedBy,
+  LastChangedAt,
+  LastChangedBy,
+  LocalLastChangedAt;
+
+  field ( numbering : managed )
+  UUID;
+
+  create;
+  update;
+  delete;
+
+  static action processLogic parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
+
+  mapping for ztpp_1002
+    {
+      UUID                          = uuid;
+      Material                      = material;
+      Plant                         = plant;
+      BillOfMaterialVariantUsage    = billofmaterialvariantusage;
+      BillOfMaterialVariant         = billofmaterialvariant;
+      HeaderValidityStartDate       = headervaliditystartdate;
+      BOMHeaderQuantityInBaseUnit   = bomheaderquantityinbaseunit;
+      BOMHeaderText                 = bomheadertext;
+      BOMAlternativeText            = bomalternativetext;
+      BillOfMaterialStatus          = billofmaterialstatus;
+      BillOfMaterialItemNumber      = billofmaterialitemnumber;
+      BillOfMaterialItemCategory    = billofmaterialitemcategory;
+      BillOfMaterialComponent       = billofmaterialcomponent;
+      BillOfMaterialItemQuantity    = billofmaterialitemquantity;
+      BillOfMaterialItemUnit        = billofmaterialitemunit;
+      BOMItemSorter                 = bomitemsorter;
+      ComponentScrapInPercent       = componentscrapinpercent;
+      AlternativeItemGroup          = alternativeitemgroup;
+      AlternativeItemPriority       = alternativeitempriority;
+      AlternativeItemStrategy       = alternativeitemstrategy;
+      UsageProbabilityPercent       = usageprobabilitypercent;
+      BOMItemDescription            = bomitemdescription;
+      BOMItemText2                  = bomitemtext2;
+      ProdOrderIssueLocation        = prodorderissuelocation;
+      BOMItemIsCostingRelevant      = bomitemiscostingrelevant;
+      BOMSubItemInstallationPoint   = bomsubiteminstallationpoint;
+      BillOfMaterialSubItemQuantity = billofmaterialsubitemquantity;
+      Status                        = status;
+      Message                       = message;
+      CreatedBy                     = created_by;
+      CreatedAt                     = created_at;
+      LastChangedBy                 = last_changed_by;
+      LastChangedAt                 = last_changed_at;
+      LocalLastChangedAt            = local_last_changed_at;
+    }
+}

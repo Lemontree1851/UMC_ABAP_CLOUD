@@ -1,0 +1,23 @@
+@EndUserText: {
+  label: 'Service Definition for BI003'
+}
+@ObjectModel: {
+  leadingEntity: {
+    name: 'ZC_TBI_RECY_INFO001'
+  }
+}
+define service ZUI_TBI_RECY_INFO001_O4 {
+  expose ZC_RECOVER_TYPE_VH;
+  expose ZC_RECOVER_STATUS_VH;
+  expose ZC_RECOVERY_NUMBER_VH;
+  expose ZC_BI003_REPORT_001;
+  expose ZC_BI003_REPORT_002;
+  expose ZC_BI003_REPORT_003;
+  expose ZC_BI003_REPORT_004;
+  expose ZC_BI003_REPORT_005;
+  expose ZC_BI003_REPORT_001_JOB;
+  expose ZC_BI003_REPORT_002_JOB;
+  expose ZC_BI003_REPORT_003_JOB;
+  expose ZC_BI003_REPORT_004_JOB;
+  expose ZC_BI003_REPORT_005_JOB;
+}

@@ -1,0 +1,50 @@
+managed implementation in class zbp_r_ofsplitrule unique;
+strict ( 1 );
+with draft;
+
+define behavior for ZR_OFSPLITRULE alias SplitRule
+persistent table ztpp_1008
+draft table ztpp_1008_d
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master ( global )
+
+{
+
+  field ( mandatory ) Customer, SplitMaterial, Plant, SplitUnit;
+
+  field ( readonly )
+  CreatedAt,
+  CreatedBy,
+  LastChangedAt,
+  LastChangedBy,
+  LocalLastChangedAt;
+
+  create;
+  update;
+  delete;
+
+  static action processLogic parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
+
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Edit;
+  draft action Resume;
+  draft determine action Prepare;
+
+  mapping for ztpp_1008
+    {
+      Customer           = customer;
+      SplitMaterial      = split_material;
+      Plant              = plant;
+      ShipUnit           = ship_unit;
+      SplitUnit          = split_unit;
+      ValidEnd           = valid_end;
+      DeleteFlag         = delete_flag;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}

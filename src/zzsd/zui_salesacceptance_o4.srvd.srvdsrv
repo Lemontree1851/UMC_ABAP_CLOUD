@@ -1,0 +1,4 @@
+@EndUserText.label: 'Sales Acceptance'
+define service ZUI_SALESACCEPTANCE_O4 {
+  expose ZC_SALESACCEPTANCE as SalesAcceptance;
+}

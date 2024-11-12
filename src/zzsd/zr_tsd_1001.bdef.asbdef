@@ -1,0 +1,56 @@
+managed implementation in class ZBP_R_TSD_1001 unique;
+strict ( 2 );
+with draft;
+define behavior for ZR_TSD_1001
+persistent table ztsd_1001
+draft table ZTSD_1001_D
+etag master LocalLastChangedAt
+lock master total etag LatCahangedAt
+authorization master( global )
+
+{
+  field ( mandatory : create )
+   Customer,
+   BillingToParty,
+   Plant;
+
+  field ( readonly )
+   LocalCreatedAt,
+   LocalCreatedBy,
+   LatCahangedAt,
+   LocalLastChangedAt,
+   LocalLastChangedBy;
+
+  field ( readonly : update )
+   Customer,
+   BillingToParty,
+   Plant;
+
+
+  create;
+  update;
+  delete;
+
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+
+  mapping for ZTSD_1001
+  {
+    Customer = customer;
+    BillingToParty = billing_to_party;
+    Plant = plant;
+    IssueStorageLocation = issue_storage_location;
+    FinishedStorageLocation = finished_storage_location;
+    ReturnStorageLocation = return_storage_location;
+    RepairStorageLocation = repair_storage_location;
+    VimStorageLocation = vim_storage_location;
+    LocalCreatedBy = local_created_by;
+    LocalCreatedAt = local_created_at;
+    LocalLastChangedBy = local_last_changed_by;
+    LocalLastChangedAt = local_last_changed_at;
+    LatCahangedAt = lat_cahanged_at;
+  }
+}

@@ -1,0 +1,58 @@
+managed implementation in class ZZCL_PRT_TEMPLATE unique;
+strict ( 2 );
+with draft;
+
+define behavior for ZZR_PRT_TEMPLATE alias Template
+persistent table zzt_prt_template
+draft table zzt_prt_templ_d
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master ( global )
+
+{
+  field ( readonly )
+  TemplateUUID,
+  CreatedAt,
+  CreatedBy,
+  LastChangedAt,
+  LastChangedBy,
+  LocalLastChangedAt;
+
+  field ( numbering : managed )
+  TemplateUUID;
+
+  field ( mandatory )
+  TemplateID,
+  ServiceDefinitionName;
+
+  create;
+  update;
+  delete;
+
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+
+  determination createXSDFile on save { field ServiceDefinitionName; }
+
+  mapping for zzt_prt_template
+    {
+      TemplateUUID          = template_uuid;
+      TemplateID            = template_id;
+      TemplateName          = template_name;
+      ServiceDefinitionName = service_definition_name;
+      XDPMimeType           = xdp_mime_type;
+      XDPFileName           = xdp_file_name;
+      XDPContent            = xdp_content;
+      XSDMimeType           = xsd_mime_type;
+      XSDFileName           = xsd_file_name;
+      XSDContent            = xsd_content;
+      CreatedBy             = created_by;
+      CreatedAt             = created_at;
+      LastChangedBy         = last_changed_by;
+      LastChangedAt         = last_changed_at;
+      LocalLastChangedAt    = local_last_changed_at;
+    }
+}

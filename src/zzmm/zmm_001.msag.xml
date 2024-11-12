@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_MSAG" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <T100A>
+    <ARBGB>ZMM_001</ARBGB>
+    <MASTERLANG>E</MASTERLANG>
+    <STEXT>MM - Message Class</STEXT>
+   </T100A>
+   <T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>000</MSGNR>
+     <TEXT>&amp;1 &amp;2 &amp;3 &amp;4</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>001</MSGNR>
+     <TEXT>Material Document created successfully but Database insert failed</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>002</MSGNR>
+     <TEXT>Material Document created failed</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>003</MSGNR>
+     <TEXT>Material Document canceled failed</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>004</MSGNR>
+     <TEXT>Material Document canceled successfully but Database delete failed</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>005</MSGNR>
+     <TEXT>Other Error</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>006</MSGNR>
+     <TEXT>A source list is created.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>007</MSGNR>
+     <TEXT>Material &amp;1 Plant &amp;2 created failed.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>008</MSGNR>
+     <TEXT>Your changes have been saved.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>009</MSGNR>
+     <TEXT>Please enter the field &quot;&amp;1&quot;</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>010</MSGNR>
+     <TEXT>Info Record Create failed.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>011</MSGNR>
+     <TEXT>Purchase Order changed successfully</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>012</MSGNR>
+     <TEXT>購買申請番号&amp;1明細&amp;2は登録されました</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>013</MSGNR>
+     <TEXT>Purchase Order &amp;1 changed successfully</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>014</MSGNR>
+     <TEXT>Please maintain taxcode &amp;1 in ztbc_1001</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>015</MSGNR>
+     <TEXT>A source list is deleted.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>016</MSGNR>
+     <TEXT>購買発注&amp;1 会社コードは1400から1100に切り替えました</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>017</MSGNR>
+     <TEXT>購買発注&amp;1 会社コードは1400から1100に切り替えられなかったので、チェックしてください</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>018</MSGNR>
+     <TEXT>購買伝票&amp;1登録成功しました。</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>019</MSGNR>
+     <TEXT>購買申請番号&amp;1明細&amp;2は連携対象ではありません</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>020</MSGNR>
+     <TEXT>購買伝票が作成されました</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>021</MSGNR>
+     <TEXT>顧客VMI自動処理は処理済ですので、チェックしてください</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>022</MSGNR>
+     <TEXT>UUID &amp;1 处理成功: &amp;2 &amp;3</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>023</MSGNR>
+     <TEXT>UUID &amp;1 处理失败: &amp;2</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>024</MSGNR>
+     <TEXT>没有需要处理的顾客VMI</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>025</MSGNR>
+     <TEXT>アップロード単価&amp;1は購買情報マスタ単価&amp;2と違います。置き換えるかをチェックしてください</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>026</MSGNR>
+     <TEXT>単価を取得できません。チェックしてください</TEXT>
+    </T100>
+   </T100>
+  </asx:values>
+ </asx:abap>
+</abapGit>

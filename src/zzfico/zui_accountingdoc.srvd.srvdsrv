@@ -1,0 +1,4 @@
+@EndUserText.label: '仕訳印刷'
+define service ZUI_ACCOUNTINGDOC {
+  expose ZC_ACCOUNTINGDOC;
+}

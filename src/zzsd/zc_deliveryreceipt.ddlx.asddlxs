@@ -1,0 +1,66 @@
+@Metadata.layer: #CORE
+annotate entity ZC_DeliveryReceipt
+  with 
+{
+  @UI.selectionField: [{ position: 5 }]
+  @UI.lineItem: [{ position: 15 }]
+  DeliveryDocument;
+  @UI.lineItem: [{ position: 20 }]
+  DeliveryDocumentItem;
+  @UI.selectionField: [{ position: 70 }]
+  @UI.lineItem: [{ position: 60 }]
+  ReferenceSDDocument;
+//  ReferenceSDDocumentItem;
+//  DeliveryDocumentItemText;
+  @UI.selectionField: [{ position: 15 }]
+  @UI.lineItem: [{ position: 80 }]
+  OverallSDProcessStatus;
+  @UI.selectionField: [{ position: 10 }]
+  @UI.lineItem: [{ position: 45 }]
+  DeliveryDocumentType;
+  @UI.selectionField: [{ position: 20 }]
+  @UI.lineItem: [{ position: 30 }]
+  ShippingPoint;
+  @UI.selectionField: [{ position: 35 }]
+  @UI.lineItem: [{ position: 65 }]
+  SoldToParty;
+  @UI.selectionField: [{ position: 40 }]
+  @UI.lineItem: [{ position: 25 }]
+  ShipToParty;
+  @UI.selectionField: [{ position: 30 }]
+  @UI.lineItem: [{ position: 40 }]
+  IntcoExtPlndTransfOfCtrlDteTme;
+  @UI.selectionField: [{ position: 45 }]
+  @UI.lineItem: [{ position: 70 }]
+  CreatedByUser;
+  @UI.selectionField: [{ position: 50 }]
+  @UI.lineItem: [{ position: 35 }]
+  DeliveryDate;
+  @UI.selectionField: [{ position: 55 }]
+  @UI.lineItem: [{ position: 75 }]
+  CreationDate;
+  @UI.selectionField: [{ position: 60 }]
+  @UI.lineItem: [{ position: 5 }]
+  SalesOrganization;
+  @UI.selectionField: [{ position: 65 }]
+  @UI.lineItem: [{ position: 10 }]
+  SalesOffice;
+  @UI.selectionField: [{ position: 25 }]
+  @UI.lineItem: [{ position: 50 }]
+  Material;
+  @UI.selectionField: [{ position: 75 }]
+  @UI.lineItem: [{ position: 55 }]
+  MaterialByCustomer;
+//  ActualDeliveryQuantity;
+//  DeliveryQuantityUnit;
+//  ConditionRateValue;
+//  ConditionQuantity;
+//  ConditionQuantityUnit;
+//  ConditionCurrency;
+//  ConditionAmount;
+//  TransactionCurrency;
+//  PostalCode;
+//  CityName;
+//  CustomerName;
+  
+}

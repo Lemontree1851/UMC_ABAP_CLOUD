@@ -1,0 +1,154 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Routing List',
+    typeNamePlural: 'Routing List',
+    title: { type: #STANDARD , value: 'Product'},
+    description: { type: #STANDARD , value: 'Plant'}
+  }
+}
+annotate entity ZC_ROUTINGLIST with
+{
+
+  @UI.lineItem: [ { position: 10, importance: #MEDIUM } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+  @UI.selectionField: [ { position: 20 } ]
+  Product;
+
+  @UI.lineItem: [ { position: 20, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @UI.selectionField: [ { position: 10 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Plant', element: 'Plant' } }]
+  Plant;
+
+  @UI.lineItem: [ { position: 110, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @EndUserText.label: 'Operation'
+  Operation;
+
+  @UI.lineItem: [ { position: 30, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @UI.selectionField: [ { position: 30 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_MRPControllerVH', element: 'MRPController' } }]
+  MRPResponsible;
+
+  @UI.lineItem: [ { position: 40, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  ProcurementType;
+
+  @UI.lineItem: [ { position: 50, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  SpecialProcurementType;
+
+  @UI.lineItem: [ { position: 60, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [ { position: 40 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ProductionSupervisorVH', element: 'ProductionSupervisor' } }]
+  @EndUserText.label: 'Production Supervisor'
+  ProductionSupervisor;
+
+  @UI.lineItem: [ { position: 70, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  ProductionInvtryManagedLoc;
+
+  @UI.lineItem: [ { position: 80, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @EndUserText.label: 'Task List Type'
+  BillOfOperationsType;
+
+  @UI.lineItem: [ { position: 90, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @EndUserText.label: 'Group'
+  BillOfOperationsGroup;
+
+  @UI.lineItem: [ { position: 100, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @EndUserText.label: 'Group Counter'
+  BillOfOperationsVariant;
+
+  @UI.lineItem: [ { position: 120, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  OperationControlProfile;
+
+  @UI.lineItem: [ { position: 130, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @UI.selectionField: [ { position: 50 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_WorkCenter', element: 'WorkCenter' } }]
+  WorkCenter;
+
+  @UI.lineItem: [ { position: 140, importance: #MEDIUM } ]
+  OperationText;
+
+  @UI.lineItem: [ { position: 150, importance: #MEDIUM } ]
+  @EndUserText.label: 'Costing Lot Size'
+  CostingLotSize;
+
+  @UI.lineItem: [ { position: 160, importance: #MEDIUM, cssDefault.width: '13rem' } ]
+  @EndUserText.label: 'Standard Work Quantity1'
+  StandardWorkQuantity1;
+  @UI.lineItem: [ { position: 165, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @EndUserText.label: 'Work Unit1'
+  StandardWorkQuantityUnit1;
+  @UI.lineItem: [ { position: 170, importance: #MEDIUM } ]
+  @EndUserText.label: 'Activity Type1'
+  CostCtrActivityType1;
+
+  @UI.lineItem: [ { position: 180, importance: #MEDIUM, cssDefault.width: '13rem' } ]
+  @EndUserText.label: 'Standard Work Quantity2'
+  StandardWorkQuantity2;
+  @UI.lineItem: [ { position: 185, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @EndUserText.label: 'Work Unit2'
+  StandardWorkQuantityUnit2;
+  @UI.lineItem: [ { position: 190, importance: #MEDIUM } ]
+  @EndUserText.label: 'Activity Type2'
+  CostCtrActivityType2;
+
+  @UI.lineItem: [ { position: 200, importance: #MEDIUM, cssDefault.width: '13rem' } ]
+  @EndUserText.label: 'Standard Work Quantity3'
+  StandardWorkQuantity3;
+  @UI.lineItem: [ { position: 205, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @EndUserText.label: 'Work Unit3'
+  StandardWorkQuantityUnit3;
+  @UI.lineItem: [ { position: 210, importance: #MEDIUM } ]
+  @EndUserText.label: 'Activity Type3'
+  CostCtrActivityType3;
+
+  @UI.lineItem: [ { position: 220, importance: #MEDIUM, cssDefault.width: '13rem' } ]
+  @EndUserText.label: 'Standard Work Quantity4'
+  StandardWorkQuantity4;
+  @UI.lineItem: [ { position: 225, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @EndUserText.label: 'Work Unit4'
+  StandardWorkQuantityUnit4;
+  @UI.lineItem: [ { position: 230, importance: #MEDIUM } ]
+  @EndUserText.label: 'Activity Type4'
+  CostCtrActivityType4;
+
+  @UI.lineItem: [ { position: 240, importance: #MEDIUM, cssDefault.width: '13rem' } ]
+  @EndUserText.label: 'Standard Work Quantity5'
+  StandardWorkQuantity5;
+  @UI.lineItem: [ { position: 245, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @EndUserText.label: 'Work Unit5'
+  StandardWorkQuantityUnit5;
+  @UI.lineItem: [ { position: 250, importance: #MEDIUM } ]
+  @EndUserText.label: 'Activity Type5'
+  CostCtrActivityType5;
+
+  @UI.lineItem: [ { position: 260, importance: #MEDIUM, cssDefault.width: '13rem' } ]
+  @EndUserText.label: 'Standard Work Quantity6'
+  StandardWorkQuantity6;
+  @UI.lineItem: [ { position: 265, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @EndUserText.label: 'Work Unit6'
+  StandardWorkQuantityUnit6;
+  @UI.lineItem: [ { position: 270, importance: #MEDIUM } ]
+  @EndUserText.label: 'Activity Type6'
+  CostCtrActivityType6;
+
+  @UI.lineItem: [ { position: 155, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @EndUserText.label: 'No. of Time Tickets'
+  NumberOfTimeTickets;
+
+  @UI.lineItem: [ { position: 290, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @UI.selectionField: [ { position: 60 } ]
+  IsMarkedForDeletion;
+
+  @UI.lineItem: [ { position: 300, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 70 } ]
+  @Consumption.filter.selectionType: #SINGLE
+  @EndUserText.label: 'Validity Start Date'
+  ValidityStartDate;
+
+  @UI.lineItem: [ { position: 310, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 80 } ]
+  @Consumption.filter.selectionType: #SINGLE
+  @EndUserText.label: 'Validity End Date'
+  ValidityEndDate;
+
+}

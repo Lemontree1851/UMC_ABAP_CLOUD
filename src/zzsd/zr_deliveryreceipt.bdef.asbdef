@@ -1,0 +1,20 @@
+unmanaged implementation in class zbp_r_deliveryreceipt unique;
+strict ( 1 );
+
+define behavior for ZR_DELIVERYRECEIPT alias DeliveryReceipt
+//late numbering
+lock master
+authorization master ( instance )
+//etag master <field_name>
+{
+  create;
+  update;
+  delete;
+  field ( readonly ) DeliveryDocument, DeliveryDocumentItem;
+  //印刷
+  static action printDeliveryReceiptNo parameter ZR_UPLOAD_PARAMETER result[0..*] $self;
+  //订正印刷
+  static action reprintDeliveryReceiptNo parameter ZR_UPLOAD_PARAMETER result[0..*] $self;
+  //删除请求书编号
+  static action deleteDeliveryReceiptNo parameter ZR_UPLOAD_PARAMETER result[0..*] $self;
+}

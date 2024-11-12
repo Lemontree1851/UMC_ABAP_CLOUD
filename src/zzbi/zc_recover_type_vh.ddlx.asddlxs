@@ -1,0 +1,19 @@
+@Metadata.layer: #CUSTOMER
+@Search.searchable: true
+@UI.headerInfo.title.type: #STANDARD
+@UI.headerInfo.title.value: 'RecoverType'
+@UI.headerInfo.description.type: #STANDARD
+@UI.headerInfo.description.value: 'Description'
+annotate entity ZC_RECOVER_TYPE_VH with
+{
+
+  @UI.selectionField: [{ position: 10 }]
+  @UI.lineItem: [{ position: 10, label: 'Recovery Type' }]
+  @Search.defaultSearchElement: true
+  RecoverType;
+
+  @UI.selectionField: [{ position: 20 }]
+  @UI.lineItem: [{ position: 20, label: 'Description' }]
+  Description;
+
+};

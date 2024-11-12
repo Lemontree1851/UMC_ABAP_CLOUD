@@ -1,0 +1,19 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "回収進捗管理",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "className": "ZCL_BI003_JOB"
+  },
+  "parameters": [
+    {
+      "name": "S_BUKRS"
+    },
+    {
+      "name": "S_YEAR"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+@EndUserText.label: '与信管理表'
+define service ZUI_creditmantable_O4 {
+  expose ZR_CREDITMANTABLE as CREDITMANTABLE;
+}

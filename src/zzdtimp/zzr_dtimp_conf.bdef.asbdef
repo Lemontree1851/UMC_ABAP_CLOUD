@@ -1,0 +1,72 @@
+managed implementation in class ZZCL_DTIMP_CONF unique;
+//strict ( 2 );
+strict;
+with draft;
+
+define behavior for ZZR_DTIMP_CONF alias Configuration
+persistent table zzt_dtimp_conf
+draft table zzt_dtimp_conf_d
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master ( global )
+{
+  field ( readonly )
+  UuidConf,
+  CreatedAt,
+  CreatedBy,
+  LastChangedAt,
+  LastChangedBy,
+  LocalLastChangedAt;
+
+  field ( numbering : managed )
+  UuidConf;
+
+  field ( mandatory )
+  Object,
+  FunctionName,
+  StructureName,
+  SheetName,
+  StartRow,
+  StartColumn,
+  TemplateContent;
+
+  create;
+  update;
+  delete ( precheck );
+
+  validation validationMandatory on save
+  { create; update; field Object,
+    FunctionName,
+    StructureName,
+    SheetName,
+    StartColumn,
+    TemplateContent; }
+
+  determination fillStartRow on modify { create; update; }
+
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+
+  mapping for zzt_dtimp_conf
+    {
+      UuidConf           = uuid_conf;
+      Object             = object;
+      ObjectName         = object_name;
+      FunctionName       = function_name;
+      StructureName      = structure_name;
+      TemplateMimeType   = template_mime_type;
+      TemplateName       = template_name;
+      TemplateContent    = template_content;
+      SheetName          = sheet_name;
+      StartRow           = start_row;
+      StartColumn        = start_column;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}

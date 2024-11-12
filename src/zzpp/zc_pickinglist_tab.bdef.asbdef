@@ -1,0 +1,12 @@
+projection;
+//strict ( 2 );
+strict;
+
+define behavior for ZC_PICKINGLIST_TAB alias PickingList
+{
+//  use create;
+//  use update;
+//  use delete;
+
+  use action processLogic;
+}

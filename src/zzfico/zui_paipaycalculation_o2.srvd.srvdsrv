@@ -1,0 +1,4 @@
+@EndUserText.label: '有償支給純額計算処理'
+define service ZUI_PAIPAYCALCULATION_O2 {
+  expose ZR_PAIDPAYCALCULATION as PaidPayCalculation;
+}

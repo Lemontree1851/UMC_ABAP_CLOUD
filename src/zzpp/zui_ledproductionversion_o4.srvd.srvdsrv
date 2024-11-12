@@ -1,0 +1,11 @@
+@EndUserText: {
+  label: 'Service Definition for ZC_LEDPRODUCTIONVERSION'
+}
+@ObjectModel: {
+  leadingEntity: {
+    name: 'ZC_LEDPRODUCTIONVERSION'
+  }
+}
+define service ZUI_LEDPRODUCTIONVERSION_O4 provider contracts odata_v4_ui {
+  expose ZC_LEDPRODUCTIONVERSION;
+}

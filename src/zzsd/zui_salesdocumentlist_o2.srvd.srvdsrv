@@ -1,0 +1,4 @@
+@EndUserText.label: '受注管理レポート'
+define service ZUI_SALESDOCUMENTLIST_O2 {
+  expose ZC_SALESDOCUMENTLIST as SalesDocumentList;
+}

@@ -1,0 +1,4 @@
+@EndUserText.label: 'Routing List'
+define service ZUI_ROUTINGLIST_O4 {
+  expose ZC_ROUTINGLIST;
+}

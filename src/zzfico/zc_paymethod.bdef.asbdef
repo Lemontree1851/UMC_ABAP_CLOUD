@@ -1,0 +1,13 @@
+projection;
+strict;
+
+define behavior for ZC_PAYMETHOD alias PayMethod
+//use etag
+{
+  use create;
+  use update;
+  use delete;
+
+  use action processLogic;
+  use action processSearch;
+}

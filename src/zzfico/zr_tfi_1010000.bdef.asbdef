@@ -1,0 +1,102 @@
+managed implementation in class ZBP_R_TFI_1010000 unique;
+strict ( 2 );
+define behavior for ZR_TFI_1010000 alias ZrTfi1010000
+persistent table ZTFI_1010
+lock master
+authorization master( global )
+
+{
+  field ( mandatory : create )
+   Companycode,
+   Fiscalyear,
+   Period,
+   Customer,
+   Supplier,
+   Product,
+   Profitcenter,
+   Purchasinggroup,
+   Zeile;
+
+  field ( readonly : update )
+   Companycode,
+   Fiscalyear,
+   Period,
+   Customer,
+   Supplier,
+   Product,
+   Profitcenter,
+   Purchasinggroup,
+   Zeile;
+
+
+  create;
+  update;
+  delete;
+
+  mapping for ZTFI_1010
+  {
+    Companycode = companycode;
+    Fiscalyear = fiscalyear;
+    Period = period;
+    Customer = customer;
+    Supplier = supplier;
+    Product = product;
+    Profitcenter = profitcenter;
+    Purchasinggroup = purchasinggroup;
+    Zeile = zeile;
+    Customername = customername;
+    Suppliername = suppliername;
+    Profitcentername = profitcentername;
+    Productdescription = productdescription;
+    Upperproduct01 = upperproduct01;
+    Valuationclass01 = valuationclass01;
+    Cost01 = cost01;
+    Valuationquantity01 = valuationquantity01;
+    Upperproduct02 = upperproduct02;
+    Valuationclass02 = valuationclass02;
+    Cost02 = cost02;
+    Valuationquantity02 = valuationquantity02;
+    Upperproduct03 = upperproduct03;
+    Valuationclass03 = valuationclass03;
+    Cost03 = cost03;
+    Valuationquantity03 = valuationquantity03;
+    Upperproduct04 = upperproduct04;
+    Valuationclass04 = valuationclass04;
+    Cost04 = cost04;
+    Valuationquantity04 = valuationquantity04;
+    Upperproduct05 = upperproduct05;
+    Valuationclass05 = valuationclass05;
+    Cost05 = cost05;
+    Valuationquantity05 = valuationquantity05;
+    Upperproduct06 = upperproduct06;
+    Valuationclass06 = valuationclass06;
+    Cost06 = cost06;
+    Valuationquantity06 = valuationquantity06;
+    Upperproduct07 = upperproduct07;
+    Valuationclass07 = valuationclass07;
+    Cost07 = cost07;
+    Valuationquantity07 = valuationquantity07;
+    Upperproduct08 = upperproduct08;
+    Valuationclass08 = valuationclass08;
+    Cost08 = cost08;
+    Valuationquantity08 = valuationquantity08;
+    Upperproduct09 = upperproduct09;
+    Valuationclass09 = valuationclass09;
+    Cost09 = cost09;
+    Valuationquantity09 = valuationquantity09;
+    Upperproduct10 = upperproduct10;
+    Valuationclass10 = valuationclass10;
+    Cost10 = cost10;
+    Valuationquantity10 = valuationquantity10;
+    Materialcost2000 = materialcost2000;
+    Materialcost3000 = materialcost3000;
+    Purgrpamount = purgrpamount;
+    Chargeableamount = chargeableamount;
+    Previousstockamount = previousstockamount;
+    Currentstockamount = currentstockamount;
+    Customerrevenue = customerrevenue;
+    Revenue = revenue;
+    Unitofmeasure = unitofmeasure;
+    Currency = currency;
+  }
+}

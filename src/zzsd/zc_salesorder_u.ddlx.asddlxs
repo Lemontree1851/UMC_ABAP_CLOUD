@@ -1,0 +1,41 @@
+@Metadata.layer: #CORE
+@UI: {
+    headerInfo: {
+        typeName: 'Sales',
+        typeNamePlural: 'Sales',
+        title: { type: #STANDARD, label: 'Sales Info', value: 'SalesOrder' }
+    }
+}
+//前端使用freestyle 所以目前这里只设置filter
+annotate entity ZC_SALESORDER_U with
+{
+  @UI.selectionField: [{ position: 55 }]
+  SalesOrder;
+  @Consumption.filter:{ mandatory: true }
+  @UI.selectionField: [{ position: 5 }]
+  SalesOrganization;
+  //交货类型
+  //交货类型描述
+  @UI.selectionField: [{ position: 15 }]
+  SoldToParty;
+  @UI.selectionField: [{ position: 20 }]
+  BillingToParty;
+  @UI.selectionField: [{ position: 35 }]
+  Material;
+  @UI.selectionField: [{ position: 40 }]
+  MaterialByCustomer;
+  @Consumption.filter:{ mandatory: true }
+  @UI.selectionField: [{ position: 10 }]
+  Plant;
+  @UI.selectionField: [{ position: 25 }]
+  ShipToParty;
+  //库存地点
+  @UI.selectionField: [{ position: 30 }]
+  SalesOrderType;
+  @UI.selectionField: [{ position: 45 }]
+  DeliveryDate;
+  @UI.selectionField: [{ position: 50 }]
+  CreationDate;
+
+
+}

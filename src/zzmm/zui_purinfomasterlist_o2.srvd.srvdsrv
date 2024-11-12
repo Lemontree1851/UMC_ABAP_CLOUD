@@ -1,0 +1,4 @@
+@EndUserText.label: 'MM-018購買情報マスタ一覧'
+define service ZUI_PURINFOMASTERLIST_O2 {
+  expose ZR_PURINFOMASTERLIST as PurInfoMaster;
+}

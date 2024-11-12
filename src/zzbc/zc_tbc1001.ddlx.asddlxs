@@ -1,0 +1,158 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Common Configuration',
+    typeNamePlural: 'Common Configuration',
+    title: { type: #STANDARD , value: 'ZID'}
+  }
+}
+annotate view ZC_TBC1001 with
+{
+  @UI.facet: [ {
+      id: 'idKeysCollection',
+      type: #COLLECTION,
+      label: 'Keys',
+      position: 10
+    },{
+      id: 'idKeys',
+      type: #FIELDGROUP_REFERENCE,
+      targetQualifier: 'idQualifier_Keys',
+      parentId: 'idKeysCollection',
+      position: 10
+    },{
+      id: 'idValuesCollection',
+      type: #COLLECTION,
+      label: 'Values',
+      position: 20
+    },{
+      id: 'idValues',
+      type: #FIELDGROUP_REFERENCE,
+      parentId: 'idValuesCollection',
+      targetQualifier: 'idQualifier_Values',
+      position: 10
+    }]
+
+  @UI.lineItem: [ { position: 10, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @UI.selectionField: [{ position: 10 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Keys', position: 10 }]
+  @EndUserText.label: 'Configuration ID'
+  ZID;
+
+  @UI.lineItem: [ { position: 20, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [{ position: 20 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Keys', position: 20 }]
+  @EndUserText.label: 'Key1'
+  Zkey1;
+
+  @UI.lineItem: [ { position: 30, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [{ position: 30 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Keys', position: 30 }]
+  @EndUserText.label: 'Key2'
+  Zkey2;
+
+  @UI.lineItem: [ { position: 40, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [{ position: 40 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Keys', position: 40 }]
+  @EndUserText.label: 'Key3'
+  Zkey3;
+
+  @UI.lineItem: [ { position: 50, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [{ position: 50 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Keys', position: 50 }]
+  @EndUserText.label: 'Key4'
+  Zkey4;
+
+  @UI.lineItem: [ { position: 60, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [{ position: 60 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Keys', position: 60 }]
+  @EndUserText.label: 'Key5'
+  Zkey5;
+
+  @UI.lineItem: [ { position: 70, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [{ position: 70 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Keys', position: 70 }]
+  @EndUserText.label: 'Key6'
+  Zkey6;
+
+  @UI.lineItem: [ { position: 80, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [{ position: 80 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Keys', position: 80 }]
+  @EndUserText.label: 'Key7'
+  Zkey7;
+
+  @UI.lineItem: [ { position: 90, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [{ position: 90 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Keys', position: 90 }]
+  @EndUserText.label: 'Key8'
+  Zkey8;
+
+  @UI.lineItem: [ { position: 100, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [{ position: 100 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Keys', position: 100 }]
+  @EndUserText.label: 'Key9'
+  Zkey9;
+
+  @UI.lineItem: [ { position: 110, importance: #MEDIUM, label: 'Sequence No.' } ]
+  @UI.selectionField: [{ position: 110 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Keys', position: 110 }]
+  @EndUserText.label: 'Sequence No.(1、2、3...)'
+  Zseq;
+
+  @UI.lineItem: [ { position: 120, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Values', position: 120 }]
+  @EndUserText.label: 'Value1'
+  Zvalue1;
+
+  @UI.lineItem: [ { position: 130, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Values', position: 130 }]
+  @EndUserText.label: 'Value2'
+  Zvalue2;
+
+  @UI.lineItem: [ { position: 140, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Values', position: 140 }]
+  @EndUserText.label: 'Value3'
+  Zvalue3;
+
+  @UI.lineItem: [ { position: 150, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Values', position: 150 }]
+  @EndUserText.label: 'Value4'
+  Zvalue4;
+
+  @UI.lineItem: [ { position: 160, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Values', position: 160 }]
+  @EndUserText.label: 'Value5'
+  Zvalue5;
+
+  @UI.lineItem: [ { position: 170, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Values', position: 170 }]
+  @EndUserText.label: 'Value6'
+  Zvalue6;
+
+  @UI.lineItem: [ { position: 180, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Values', position: 180 }]
+  @EndUserText.label: 'Value7'
+  Zvalue7;
+
+  @UI.lineItem: [ { position: 190, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Values', position: 190 }]
+  @EndUserText.label: 'Value8'
+  Zvalue8;
+
+  @UI.lineItem: [ { position: 200, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Values', position: 200 }]
+  @EndUserText.label: 'Value9'
+  Zvalue9;
+
+  @UI.lineItem: [ { position: 210, importance: #MEDIUM } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Values', position: 210 }]
+  @EndUserText.label: 'Remark'
+  Zremark;
+
+  @UI.lineItem: [ { position: 220, importance: #MEDIUM } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Values', position: 220 }]
+  @EndUserText.label: 'Program Desc.'
+  Zprogram;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

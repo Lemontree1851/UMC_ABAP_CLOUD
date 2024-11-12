@@ -1,0 +1,13 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "Application Log of Data Import",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "subobjects": [
+    {
+      "name": "ZZ_LOG_DTIMP_SUB"
+    }
+  ]
+}

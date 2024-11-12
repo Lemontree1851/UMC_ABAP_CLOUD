@@ -1,0 +1,67 @@
+managed implementation in class ZZCL_PRT_RECORD unique;
+strict;
+with draft;
+
+define behavior for ZZR_PRT_RECORD alias Record
+persistent table zzt_prt_record
+draft table zzt_prt_record_d
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master ( global )
+with additional save
+
+{
+  field ( readonly )
+  RecordUUID,
+  PDFMimeType,
+  PDFFileName,
+  PDFContent,
+  CreatedAt,
+  CreatedBy,
+  LastChangedAt,
+  LastChangedBy,
+  LocalLastChangedAt;
+
+  field ( numbering : managed )
+  RecordUUID;
+
+  field ( mandatory )
+  TemplateUUID;
+
+  create;
+  update;
+  delete;
+
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+
+  determination createPrintFile on save { create; }
+
+  static factory action createPrintRecord parameter ZZR_PRT_PARAMETER [1];
+
+  static action sendEmail parameter ZZR_SENDEMAIL_PARAMETER result [1] ZZR_SENDEMAIL_PARAMETER;
+
+  static action mergerPDF parameter ZZR_MERGER_PARAMETER result [1] ZZR_MERGER_PARAMETER;
+
+  mapping for zzt_prt_record
+    {
+      RecordUUID             = record_uuid;
+      TemplateUUID           = template_uuid;
+      IsExternalProvidedData = is_external_provided_data;
+      DataMimeType           = data_mime_type;
+      DataFileName           = data_file_name;
+      ExternalProvidedData   = external_provided_data;
+      ProvidedKeys           = provided_keys;
+      PDFMimeType            = pdf_mime_type;
+      PDFFileName            = pdf_file_name;
+      PDFContent             = pdf_content;
+      CreatedBy              = created_by;
+      CreatedAt              = created_at;
+      LastChangedBy          = last_changed_by;
+      LastChangedAt          = last_changed_at;
+      LocalLastChangedAt     = local_last_changed_at;
+    }
+}

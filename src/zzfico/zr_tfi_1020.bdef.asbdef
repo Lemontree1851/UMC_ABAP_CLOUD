@@ -1,0 +1,72 @@
+managed implementation in class ZBP_R_TFI_1020 unique;
+strict ( 2 );
+define behavior for ZR_TFI_1020 alias ZrTfi1020
+persistent table ztfi_1020
+lock master
+authorization master ( global )
+
+{
+  field ( mandatory : create )
+  Yearmonth,
+  Companycode,
+  Plant,
+  Product,
+  Businesspartner,
+  Profitcenter,
+  Costcenter,
+  Activitytype,
+  Orderid;
+
+  field ( readonly : update )
+  Yearmonth,
+  Companycode,
+  Plant,
+  Product,
+  Businesspartner,
+  Profitcenter,
+  Costcenter,
+  Activitytype,
+  Orderid;
+
+  create;
+  update;
+  delete;
+
+  mapping for ztfi_1020
+    {
+      Yearmonth                 = yearmonth;
+      Companycode               = companycode;
+      Plant                     = plant;
+      Product                   = product;
+      Businesspartner           = businesspartner;
+      Profitcenter              = profitcenter;
+      Costcenter                = costcenter;
+      Activitytype              = activitytype;
+      Companycodetext           = companycodetext;
+      Planttext                 = planttext;
+      Productdescription        = productdescription;
+      Mfgorderconfirmedyieldqty = mfgorderconfirmedyieldqty;
+      Productionunit            = productionunit;
+      Businesspartnername       = businesspartnername;
+      Profitcenterlongname      = profitcenterlongname;
+      Costcenterdescription     = costcenterdescription;
+      Costctractivitytypename   = costctractivitytypename;
+      Department                = department;
+      Productionsupervisor      = productionsupervisor;
+      Planqtyincostsourceunit   = planqtyincostsourceunit;
+      Actualqtyincostsourceunit = actualqtyincostsourceunit;
+      Unitofmeasure             = unitofmeasure;
+      Plancostrate              = plancostrate;
+      Actualcostrate            = actualcostrate;
+      Currency1                 = currency1;
+      Currency2                 = currency2;
+      CostRateScaleFactor1  = costratescalefactor1;
+      CostRateScaleFactor2  = costratescalefactor2;
+      Totalactualcost           = totalactualcost;
+      Actualcost1pc             = actualcost1pc;
+      Calendaryear              = calendaryear;
+      Calendarmonth             = calendarmonth;
+      Orderid                   = orderid;
+      Producedproduct           = producedproduct;
+    }
+}

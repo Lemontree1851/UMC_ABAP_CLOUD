@@ -1,0 +1,4 @@
+@EndUserText.label: 'LED生産計画の構成品目提案'
+define service ZUI_LEDPLANNEDORDER_O4 {
+  expose ZR_LEDPLANNEDORDERCOMPONENT;
+}

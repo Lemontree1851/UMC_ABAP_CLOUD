@@ -1,0 +1,4 @@
+@EndUserText.label: '出荷伝票外部移転の日付一括更新'
+define service ZUI_DNDATEBATCHUPDATE_O2 {
+  expose ZC_DNDATEBATCHUPDATE as DeliveryDocumentList;
+}

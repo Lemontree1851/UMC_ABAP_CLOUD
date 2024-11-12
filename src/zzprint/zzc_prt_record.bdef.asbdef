@@ -1,0 +1,22 @@
+projection;
+strict;
+use draft;
+
+define behavior for ZZC_PRT_RECORD alias Record
+use etag
+
+{
+  use create;
+  use update;
+  use delete;
+
+  use action Edit;
+  use action Activate;
+  use action Discard;
+  use action Resume;
+  use action Prepare;
+
+  use action createPrintRecord;
+  use action sendEmail;
+  use action mergerPDF;
+}

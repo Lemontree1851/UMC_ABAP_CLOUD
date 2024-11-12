@@ -1,0 +1,4 @@
+@EndUserText.label: 'TEST'
+define service ZUI_UPLOADPR_O4 {
+  expose ZC_TMM_1006;
+}

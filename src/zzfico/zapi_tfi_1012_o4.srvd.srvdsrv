@@ -1,0 +1,11 @@
+@EndUserText: {
+  label: 'Service Definition for ZC_TFI_1012'
+}
+@ObjectModel: {
+  leadingEntity: {
+    name: 'ZC_TFI_1012'
+  }
+}
+define service ZAPI_TFI_1012_O4 provider contracts odata_v4_webapi {
+  expose ZC_TFI_1012;
+}

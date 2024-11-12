@@ -1,0 +1,133 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Data Import Files',
+    typeNamePlural: 'Files',
+    title: { type: #STANDARD , value: 'UuidFile'},
+    description: { type: #STANDARD, value: 'ObjectName' }
+  },
+  presentationVariant: [{
+    sortOrder: [ { by: 'CreatedAt', direction: #DESC } ],
+    visualizations: [ { type: #AS_LINEITEM } ]
+  }]
+}
+annotate view ZZC_DTIMP_FILES with
+{
+  @UI.facet: [ {
+    id: 'idBasicCollection',
+    type: #COLLECTION,
+    label: 'Basic',
+    position: 10
+  },{
+    id: 'idBasic',
+    type: #FIELDGROUP_REFERENCE,
+    targetQualifier: 'idQualifier_Basic',
+    parentId: 'idBasicCollection',
+    position: 10
+  },{
+    id: 'idJobLogCollection',
+    type: #COLLECTION,
+    label: 'Job Information',
+    position: 20
+  },{
+    id: 'idJobLog',
+    type: #FIELDGROUP_REFERENCE,
+    parentId: 'idJobLogCollection',
+    targetQualifier: 'idQualifier_JobLog',
+    position: 10
+  },{
+    id: 'idFileCollection',
+    type: #COLLECTION,
+    label: 'Upload File',
+    position: 30
+  },{
+    id: 'idFile',
+    type: #FIELDGROUP_REFERENCE,
+    parentId: 'idFileCollection',
+    targetQualifier: 'idQualifier_File',
+    position: 10
+  },{
+    id: 'idApplicationLogItem',
+    type: #LINEITEM_REFERENCE,
+    label: 'Application Log',
+    position: 40,
+    targetElement: '_ApplicationLog'
+  } ]
+
+  @EndUserText.label: 'File UUID'
+  UuidFile;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZZC_DTIMP_CONF_VH', element: 'UuidConf' },
+               additionalBinding: [{ element: 'Object', localElement: 'Object', usage: #RESULT },
+                                   { element: 'ObjectName', localElement: 'ObjectName', usage: #RESULT },
+                                   { element: 'TemplateMimeType', localElement: 'TemplateMimeType', usage: #RESULT },
+                                   { element: 'TemplateName', localElement: 'TemplateName', usage: #RESULT }] }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Basic', position: 10 }]
+  @EndUserText.label: 'Import Object UUID'
+  UuidConf;
+
+  @UI.selectionField: [{ position: 10 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Basic', position: 20 }]
+  @EndUserText.label: 'Import Object'
+  Object;
+
+  @UI.lineItem: [ { position: 10 , importance: #MEDIUM, cssDefault.width: '18rem' } ]
+  @UI.selectionField: [{ position: 20 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Basic', position: 30 }]
+  @EndUserText.label: 'Import Object Name'
+  ObjectName;
+
+  @UI.lineItem: [ { position: 20 , importance: #MEDIUM, cssDefault.width: '20rem' } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_File', position: 10 }]
+  @EndUserText.label: 'Upload File'
+  FileContent;
+
+  @UI.lineItem: [ { position: 30, importance:#MEDIUM, cssDefault.width: '8rem',
+                    criticality:'JobStatusCriticality' }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_JobLog', position: 10, criticality: 'JobStatusCriticality' }]
+  @EndUserText.label: 'Job Status'
+  JobStatusText;
+
+  @UI.lineItem: [ { position: 40, importance:#MEDIUM, cssDefault.width: '8rem',
+                    criticality:'LogStatusCriticality',
+                    type:#WITH_URL,
+                    url:'ApplicationLogUrl' }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_JobLog', position: 20,
+                     criticality: 'LogStatusCriticality',
+                     type: #WITH_URL,
+                     url:'ApplicationLogUrl' }]
+  @EndUserText.label: 'Log Status'
+  LogStatusText;
+
+  @UI.lineItem: [ { position: 50 , importance: #MEDIUM, cssDefault.width: '14rem' } ]
+  @UI.selectionField: [{ position: 30 }]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Basic', position: 50 }]
+  CreatedBy;
+
+  @UI.lineItem: [ { position: 60 , importance: #MEDIUM } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Basic', position: 60 }]
+  CreatedAt;
+
+  @UI.lineItem: [ { position: 70 , importance: #MEDIUM } ]
+  @EndUserText.label: 'Job Name'
+  JobName;
+
+  @UI.lineItem: [ { position: 80 , importance: #MEDIUM } ]
+  @EndUserText.label: 'Job Count'
+  JobCount;
+
+  @UI.lineItem: [ { position: 90 , importance: #MEDIUM } ]
+  @EndUserText.label: 'Log Handle'
+  LogHandle;
+
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Basic', position: 40 }]
+  @EndUserText.label: 'Template'
+  TemplateContent;
+
+  @UI.hidden: true
+  TemplateMimeType;
+  @UI.hidden: true
+  TemplateName;
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

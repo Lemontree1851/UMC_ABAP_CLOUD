@@ -1,0 +1,135 @@
+managed implementation in class zbp_r_tbc1004 unique;
+strict ( 2 );
+with draft;
+
+define behavior for ZR_TBC1004 alias User
+persistent table ztbc_1004
+draft table ztbc_1004_d
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master ( instance )
+{
+  create;
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) UserUuid;
+  field ( readonly )
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field ( mandatory : create, readonly : update ) UserId;
+  field ( mandatory ) Mail;
+
+  validation validationUserId on save ##NOT_ASSIGNED_TO_DETACT { field UserId; create; }
+  validation validationEmail on save ##NOT_ASSIGNED_TO_DETACT { field Mail; create; update; }
+
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+
+  association _AssignPlant { create; with draft; }
+  association _AssignRole { create; with draft; }
+
+  mapping for ztbc_1004
+    {
+      UserUuid           = user_uuid;
+      UserId             = user_id;
+      Mail               = mail;
+      Department         = department;
+      UserName           = user_name;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}
+
+define behavior for ZR_TBC1006 alias AssignPlant
+persistent table ztbc_1006
+draft table ztbc_1006_d
+lock dependent by _User
+authorization dependent by _User
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) Uuid;
+  field ( readonly )
+  UserUuid,
+  PlantName,
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field ( mandatory ) Plant;
+
+  validation validatePlant on save ##NOT_ASSIGNED_TO_DETACT { field Plant; create; update; }
+
+  association _User { with draft; }
+
+  mapping for ztbc_1006
+    {
+      Uuid               = uuid;
+      UserUuid           = user_uuid;
+      Plant              = plant;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}
+
+define behavior for ZR_TBC1007 alias AssignRole
+persistent table ztbc_1007
+draft table ztbc_1007_d
+lock dependent by _User
+authorization dependent by _User
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) Uuid;
+  field ( readonly )
+  UserUuid,
+  RoleUuid,
+  RoleName,
+  FunctionId,
+  AccessId,
+  AccessName,
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field ( mandatory ) RoleId;
+
+  validation validateRoleId on save ##NOT_ASSIGNED_TO_DETACT { field RoleId; create; update; }
+  determination setRoleUuid on save { field RoleId; }
+
+  association _User { with draft; }
+
+  mapping for ztbc_1007
+    {
+      Uuid               = uuid;
+      UserUuid           = user_uuid;
+      RoleUuid           = role_uuid;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}

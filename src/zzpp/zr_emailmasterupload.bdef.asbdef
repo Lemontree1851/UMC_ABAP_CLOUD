@@ -1,0 +1,52 @@
+managed implementation in class ZBP_R_EMAILMASTERUPLOAD unique;
+strict ( 2 );
+with draft;
+
+define behavior for ZR_EMAILMASTERUPLOAD alias ZrEmailmasterupload
+persistent table ztpp_1011
+draft table ztpp_1011_d
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master ( global )
+
+{
+  field ( readonly )
+  UUID,
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field ( numbering : managed )
+  UUID;
+
+  field ( mandatory ) Plant, Customer, Receiver, MailAddress;
+
+  create;
+  update;
+  delete;
+
+  validation validationFields on save { create; update; }
+
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Edit;
+  draft action Resume;
+  draft determine action Prepare;
+
+  mapping for ztpp_1011
+    {
+      UUID               = uuid;
+      Plant              = plant;
+      Customer           = customer;
+      Receiver           = receiver;
+      ReceiverType       = receiver_type;
+      MailAddress        = mail_address;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}

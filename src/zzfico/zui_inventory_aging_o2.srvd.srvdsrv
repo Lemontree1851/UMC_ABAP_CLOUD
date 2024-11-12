@@ -1,0 +1,4 @@
+@EndUserText.label: '長期滞在＆低価法レポート'
+define service ZUI_INVENTORY_AGING_O2 {
+  expose ZC_INVENTORY_AGING as InventoryAging;
+}

@@ -1,0 +1,51 @@
+managed implementation in class zbp_r_purchasingsourcelist unique;
+strict ( 2 );
+
+define behavior for ZR_PURCHASINGSOURCELIST alias SourceList
+persistent table ztmm_1001
+lock master
+authorization master ( global )
+etag master LocalLastChangedAt
+{
+  field ( readonly )
+  UUID,
+  Status,
+  Message,
+  CreatedAt,
+  CreatedBy,
+  LastChangedAt,
+  LastChangedBy,
+  LocalLastChangedAt;
+
+  field ( numbering : managed )
+  UUID;
+
+  create;
+  update;
+  delete;
+
+  static action processLogic parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
+
+  mapping for ztmm_1001
+    {
+      UUID                    = uuid;
+      Material                = material;
+      Plant                   = plant;
+      SourceListRecord        = sourcelistrecord;
+      ValidityStartDate       = validitystartdate;
+      ValidityEndDate         = validityenddate;
+      Supplier                = supplier;
+      PurchasingOrganization  = purchasingorganization;
+      SupplierIsFixed         = supplierisfixed;
+      SourceOfSupplyIsBlocked = sourceofsupplyisblocked;
+      MrpSourcingControl      = mrpsourcingcontrol;
+      Xflag                   = xflag;
+      Status                  = status;
+      Message                 = message;
+      CreatedBy               = created_by;
+      CreatedAt               = created_at;
+      LastChangedBy           = last_changed_by;
+      LastChangedAt           = last_changed_at;
+      LocalLastChangedAt      = local_last_changed_at;
+    }
+}

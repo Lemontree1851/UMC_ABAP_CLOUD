@@ -1,0 +1,4 @@
+@EndUserText.label: 'Service definition for ZC_ROUTINGUPLOAD'
+define service ZUI_ROUTINGUPLOAD_O4 {
+  expose ZC_ROUTINGUPLOAD as RoutingUpload;
+}

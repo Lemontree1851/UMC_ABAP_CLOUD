@@ -1,0 +1,4 @@
+@EndUserText.label: 'Inventoy Aging Upload'
+define service ZUI_INAGEACCOUNT_O4 {
+  expose ZC_INAGEUPLOAD as INAGEUPLOAD;
+}

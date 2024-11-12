@@ -1,0 +1,246 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'MR申請/副資材廃棄管理',
+    typeNamePlural: 'MR申請/副資材廃棄管理',
+    title: { type: #STANDARD , value: 'MaterialRequisitionNo'},
+    description: { type: #STANDARD , value: 'Type'}
+  }
+}
+@UI.lineItem: [ { criticality: 'Criticality' } ]
+annotate view ZC_MATERIALREQUISITION with
+{
+
+  @UI.lineItem: [ { position: 10, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 30 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_MaterialRequisitionVH', element: 'MaterialRequisitionNo' } }]
+  @EndUserText.label: 'Requisition No.'
+  MaterialRequisitionNo;
+
+  @UI.lineItem: [ { position: 20, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [ { position: 20 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ApplicationTypeVH', element: 'Zvalue1' } }]
+  @EndUserText.label: 'Type'
+  Type;
+
+  @UI.lineItem: [ { position: 30, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @UI.selectionField: [ { position: 40 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ApplicationStatusVH', element: 'Zvalue1' } }]
+  @EndUserText.label: 'MR Status'
+  MRStatus;
+
+  @UI.lineItem: [ { position: 40, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @UI.selectionField: [ { position: 50 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ApplicationPostingStatusVH', element: 'Zvalue1' } }]
+  @EndUserText.label: 'Posting Status'
+  PostingStatus;
+
+  @UI.lineItem: [ { position: 45, importance: #MEDIUM, cssDefault.width: '12rem' } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ApplicationPostingStatusVH', element: 'Zvalue1' } }]
+  @EndUserText.label: 'UWMS_311 Posting Status'
+  UWMS_PostStatus;
+
+  @UI.lineItem: [ { position: 50, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [ { position: 10 } ]
+  //  @Consumption.filter.mandatory:true
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_PlantVH', element: 'Plant' } }]
+  @EndUserText.label: 'Plant'
+  Plant;
+
+  @UI.lineItem: [ { position: 60, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 60 } ]
+  @Consumption.filter.selectionType: #INTERVAL
+  @EndUserText.label: 'Requisition Date'
+  RequisitionDate;
+
+  @UI.lineItem: [ { position: 70, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 70 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_CostCenterVH', element: 'CostCenter' } }]
+  @EndUserText.label: 'Cost Center'
+  CostCenter;
+
+  @UI.lineItem: [ { position: 80, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 80 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ApplicationReceiverVH', element: 'Receiver' } }]
+  @EndUserText.label: 'Receiver'
+  Receiver;
+
+  @UI.lineItem: [ { position: 90, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 90 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Customer_VH', element: 'Customer' } }]
+  @EndUserText.label: 'Customer'
+  Customer;
+
+  @UI.lineItem: [ { position: 100, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 100 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ManufacturingOrderProductVH', element: 'ManufacturingOrder' } }]
+  @EndUserText.label: 'Manufacturing Order'
+  ManufacturingOrder;
+
+  @UI.lineItem: [ { position: 110, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 110 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ManufacturingOrderProductVH', element: 'Product' } }]
+  @EndUserText.label: 'ManufOrder Product'
+  Product;
+
+  @UI.lineItem: [ { position: 120, importance: #MEDIUM, cssDefault.width: '8rem' } ]
+  @UI.selectionField: [ { position: 120 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ManufacturingOrderClosedVH', element: 'Zvalue1' }}]
+  @EndUserText.label: 'Order Is Closed'
+  OrderIsClosed;
+
+  @UI.lineItem: [ { position: 130, importance: #MEDIUM } ]
+  @EndUserText.label: 'Item No.'
+  ItemNo;
+
+  @UI.lineItem: [ { position: 140, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 130 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ProductVH', element: 'Material' }}]
+  @EndUserText.label: 'Material'
+  Material;
+
+  @UI.lineItem: [ { position: 150, importance: #MEDIUM } ]
+  @EndUserText.label: 'Quantity'
+  Quantity;
+
+  @UI.lineItem: [ { position: 160, importance: #MEDIUM, cssDefault.width: '15rem' } ]
+  @UI.selectionField: [ { position: 140 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_StorageLocationStdVH', element: 'StorageLocation' } }]
+  @EndUserText.label: 'Storage Location'
+  StorageLocation;
+
+  @UI.lineItem: [ { position: 170, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [ { position: 150 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_LineWarehouseStatusVH', element: 'Zvalue1' }}]
+  @EndUserText.label: 'Line Warehouse Status'
+  LineWarehouseStatus;
+
+  @UI.lineItem: [ { position: 180, importance: #MEDIUM } ]
+  @EndUserText.label: 'Standard Price'
+  StandardPrice;
+
+  @UI.lineItem: [ { position: 190, importance: #MEDIUM } ]
+  @EndUserText.label: 'Total Amount'
+  TotalAmount;
+
+  @UI.lineItem: [ { position: 191, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @EndUserText.label: 'Location'
+  Location;
+
+  @UI.lineItem: [ { position: 192, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @EndUserText.label: 'Reason'
+  Reason;
+
+  @UI.lineItem: [ { position: 193, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @EndUserText.label: 'Remark'
+  Remark;
+
+  @UI.lineItem: [ { position: 200, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 160 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_MaterialDocumentHeader_2', element: 'MaterialDocument' } }]
+  @EndUserText.label: 'Material Document'
+  MaterialDocument;
+
+  @UI.lineItem: [ { position: 210, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [ { position: 260 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_GoodsMovementTypeVH', element: 'GoodsMovementType' } }]
+  @EndUserText.label: 'Goods Movement Type'
+  GoodsMovementType;
+
+  @UI.lineItem: [ { position: 220, importance: #MEDIUM, cssDefault.width: '20rem' } ]
+  @UI.selectionField: [ { position: 180 } ]
+  @EndUserText.label: 'Created By'
+  ItemCreatedByUser;
+
+  @UI.selectionField: [ { position: 190 } ]
+  @Consumption.filter.selectionType: #INTERVAL
+  @EndUserText.label: 'Created At'
+  HeaderCreatedDate;
+
+  @UI.lineItem: [ { position: 230, importance: #MEDIUM } ]
+  @EndUserText.label: 'Created At'
+  ItemCreatedDate;
+
+  @UI.lineItem: [ { position: 240, importance: #MEDIUM, cssDefault.width: '20rem' } ]
+  @UI.selectionField: [ { position: 200 } ]
+  @EndUserText.label: 'Last Changed By'
+  ItemLastChangedByUser;
+
+  @UI.lineItem: [ { position: 250, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [ { position: 210 } ]
+  @Consumption.filter.selectionType: #INTERVAL
+  @EndUserText.label: 'Last Changed At'
+  ItemLastChangedDate;
+
+  @UI.lineItem: [ { position: 260, importance: #MEDIUM, cssDefault.width: '20rem' } ]
+  @UI.selectionField: [ { position: 220 } ]
+  @EndUserText.label: 'Last Approved By'
+  LastApprovedByUser;
+
+  @UI.lineItem: [ { position: 270, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 230 } ]
+  @Consumption.filter.selectionType: #INTERVAL
+  @EndUserText.label: 'Last Approved Date'
+  LastApprovedDate;
+
+  @UI.lineItem: [ { position: 280, importance: #MEDIUM, cssDefault.width: '20rem' } ]
+  @UI.selectionField: [ { position: 240 } ]
+  @EndUserText.label: 'Posting By'
+  PostingByUser;
+
+  @UI.lineItem: [ { position: 290, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 250 } ]
+  @Consumption.filter.selectionType: #INTERVAL
+  @EndUserText.label: 'Posting Date'
+  PostingDate;
+
+  @UI.lineItem: [ { position: 310, importance: #MEDIUM, cssDefault.width: '12rem' } ]
+  @EndUserText.label: 'Cancel Material Document'
+  CancelMaterialDocument;
+
+  @UI.lineItem: [ { position: 320, importance: #MEDIUM, cssDefault.width: '20rem' } ]
+  @EndUserText.label: 'Cancelled By'
+  CancelledByUser;
+
+  @UI.lineItem: [ { position: 330, importance: #MEDIUM, cssDefault.width: '10rem' } ]
+  @UI.selectionField: [ { position: 270 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_DeleteFlagVH', element: 'Zvalue1' }}]
+  @EndUserText.label: 'Delete Flag'
+  ItemDeleteFlag;
+
+  @EndUserText.label: 'Header Delete Flag'
+  HeaderDeleteFlag;
+  @EndUserText.label: 'Last Approved Time'
+  LastApprovedTime;
+  @EndUserText.label: 'Posting Time'
+  PostingTime;
+  @EndUserText.label: 'Header Created Time'
+  HeaderCreatedTime;
+  @EndUserText.label: 'Header Created By'
+  HeaderCreatedByUser;
+  @EndUserText.label: 'Header Created By User Name'
+  HeaderCreatedByUserName;
+  @EndUserText.label: 'Header Last Changed Date'
+  HeaderLastChangedDate;
+  @EndUserText.label: 'Header Last Changed Time'
+  HeaderLastChangedTime;
+  @EndUserText.label: 'Header Last Changed By'
+  HeaderLastChangedByUser;
+  @EndUserText.label: 'Header Last Changed By User Name'
+  HeaderLastChangedByUserName;
+  @EndUserText.label: 'Base Unit'
+  BaseUnit;
+  @EndUserText.label: 'Price Unit Qty'
+  PriceUnitQty;
+  @EndUserText.label: 'Item Created Time'
+  ItemCreatedTime;
+  @EndUserText.label: 'Item Last Changed Time'
+  ItemLastChangedTime;
+
+  @Consumption.filter.hidden: true
+  @UI.hidden: true
+  Currency;
+  @Consumption.filter.hidden: true
+  @UI.hidden: true
+  Criticality;
+}

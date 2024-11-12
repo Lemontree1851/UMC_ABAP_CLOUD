@@ -1,0 +1,62 @@
+@Metadata.layer: #CORE
+annotate view ZC_MFGORDERASSIGNSOITEM with
+{
+
+  @UI.lineItem: [{ position: 10 }]
+  RequestedDeliveryDate;
+
+  @UI.lineItem: [{ position: 20, cssDefault.width: '8rem' }]
+  @EndUserText.label: 'Sales Order'
+  SalesOrder;
+
+  @UI.lineItem: [{ position: 30, cssDefault.width: '8rem' }]
+  @EndUserText.label: 'SO Item'
+  SalesOrderItem;
+
+  @UI.lineItem: [{ position: 40 }]
+  @EndUserText.label: 'Item Material'
+  Material;
+
+  @UI.lineItem: [{ position: 50, cssDefault.width: '10rem' }]
+  @EndUserText.label: 'Item Quantity'
+  RequestedQuantityInBaseUnit;
+
+  @UI.lineItem: [{ position: 60, cssDefault.width: '10rem' }]
+  @EndUserText.label: 'Customer PO.'
+  PurchaseOrderByCustomer;
+
+  @UI.lineItem: [{ position: 70, cssDefault.width: '10rem' }]
+  @EndUserText.label: 'Assign Quantity'
+  AssignQty;
+
+  @UI.lineItem: [{ position: 80, cssDefault.width: '10rem' }]
+  @EndUserText.label: 'Unassign Quantity'
+  UnAssignQty;
+
+  @UI.lineItem: [{ position: 90, cssDefault.width: '12rem' }]
+  @EndUserText.label: 'Total Assign Quantity'
+  TotalAssignQty;
+
+  @UI.hidden: true
+  Plant;
+  @UI.hidden: true
+  ManufacturingOrder;
+  @UI.hidden: true
+  Sequence;
+  @UI.hidden: true
+  ProductionSupervisor;
+  @UI.hidden: true
+  MRPController;
+  @UI.hidden: true
+  MfgOrderPlannedStartDate;
+  @UI.hidden: true
+  MfgOrderPlannedTotalQty;
+  @UI.hidden: true
+  ProductionUnit;
+  @UI.hidden: true
+  Remark;
+  @UI.hidden: true
+  BaseUnit;
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

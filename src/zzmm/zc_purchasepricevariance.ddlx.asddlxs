@@ -1,0 +1,90 @@
+@Metadata.layer: #CORE
+annotate view ZC_PURCHASEPRICEVARIANCE with
+{
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_PurchaseOrderAPI01', element: 'PurchaseOrder' } }]
+  PurchaseOrder;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Supplier', element: 'Supplier' } }]
+  Supplier;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_PurchasingGroup', element: 'PurchasingGroup' } }]
+  PurchasingGroup;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+  Material;
+
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Plant', element: 'Plant' } }]
+  Plant;
+
+  @Consumption.filter.selectionType: #INTERVAL
+  PurgDocPriceDate;
+
+  @Consumption.filter.hidden: true
+  PurchaseOrderItem;
+  @Consumption.filter.hidden: true
+  PurchasingGroupName;
+  @Consumption.filter.hidden: true
+  OrganizationBPName1;
+  @Consumption.filter.hidden: true
+  DocumentCurrency;
+  @Consumption.filter.hidden: true
+  PurchaseOrderItemText;
+  @Consumption.filter.hidden: true
+  SupplierMaterialNumber;
+  @Consumption.filter.hidden: true
+  OrderQuantity;
+  @Consumption.filter.hidden: true
+  ScheduleLineDeliveryDate;
+  @Consumption.filter.hidden: true
+  NetPriceQuantity;
+  @Consumption.filter.hidden: true
+  StorageLocation;
+  @Consumption.filter.hidden: true
+  StorageLocationName;
+  @Consumption.filter.hidden: true
+  PricingDateControl;
+  @Consumption.filter.hidden: true
+  PricingDateControlText;
+  @Consumption.filter.hidden: true
+  CurrentPrice;
+  @Consumption.filter.hidden: true
+  PricingDateControl2;
+  @Consumption.filter.hidden: true
+  PricingDateControl2Text;
+  @Consumption.filter.hidden: true
+  Currency;
+  @Consumption.filter.hidden: true
+  ConditionValidityStartDate;
+  @Consumption.filter.hidden: true
+  ConditionValidityEndDate;
+  @Consumption.filter.hidden: true
+  ConditionQuantity;
+  @Consumption.filter.hidden: true
+  NewPrice;
+  @Consumption.filter.hidden: true
+  DeliveryDate;
+  @Consumption.filter.hidden: true
+  PostingDate;
+  @Consumption.filter.hidden: true
+  YY1_CUSTOMERMATERIAL_PRD;
+  @Consumption.filter.hidden: true
+  Difference;
+  @Consumption.filter.hidden: true
+  PurchaseOrderStr;
+  @Consumption.filter.hidden: true
+  PriceDate;
+  @Consumption.filter.hidden: true
+  CompanyCode;
+  @Consumption.filter.hidden: true
+  PurchasingOrganization;
+  @Consumption.filter.hidden: true
+  PurchaseOrderItemCategory;
+  @Consumption.filter.hidden: true
+  PurchaseOrderDate;
+  @Consumption.filter.hidden: true
+  PurchasingInfoRecord;
+  @Consumption.filter.hidden: true
+  NetPriceAmount;
+  @Consumption.filter.hidden: true
+  PurchaseOrderQuantityUnit;
+}

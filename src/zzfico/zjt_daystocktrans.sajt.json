@@ -1,0 +1,23 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "日別在庫推移",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "catalogName": "ZJCE_DAYSTOCKTRANS"
+  },
+  "parameters": {
+    "valueRangesParameters": [
+      {
+        "name": "P_COMPAN",
+        "valueRanges": []
+      },
+      {
+        "name": "P_PLANT",
+        "valueRanges": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+@EndUserText.label: 'PO Acceptance'
+define service ZUI_POACCEPTANCE_O4 {
+  expose ZR_POACCEPTANCE;
+}

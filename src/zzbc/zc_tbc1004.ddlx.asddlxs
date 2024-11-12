@@ -1,0 +1,71 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Authority User',
+    typeNamePlural: 'Authority User',
+    title: { type: #STANDARD , value: 'UserId'}
+  }
+}
+annotate view ZC_TBC1004 with
+{
+
+  @UI.facet: [
+      {
+        label: 'General Information',
+        id: 'GeneralInfo',
+        purpose: #STANDARD,
+        position: 10 ,
+        type: #IDENTIFICATION_REFERENCE
+      },
+      {
+        id: 'idLineItemPlant' ,
+        type : #LINEITEM_REFERENCE ,
+        label : 'Assign Plant' ,
+        position: 20 ,
+        targetElement: '_AssignPlant'
+      },
+      {
+        id: 'idLineItemRole' ,
+        type : #LINEITEM_REFERENCE ,
+        label : 'Assign Role' ,
+        position: 30 ,
+        targetElement: '_AssignRole'
+      }
+  ]
+
+  @UI.lineItem: [{ position: 10 }]
+  @UI.selectionField: [{ position: 10 }]
+  @UI.identification: [ { position: 10 } ]
+  @EndUserText.label: 'User Id'
+  UserId;
+
+  @UI.lineItem: [{ position: 20 }]
+  @UI.selectionField: [{ position: 20 }]
+  @UI.identification: [ { position: 20 } ]
+  @EndUserText.label: 'User Name'
+  UserName;
+
+  @UI.lineItem: [{ position: 30 }]
+  @UI.selectionField: [{ position: 30 }]
+  @UI.identification: [ { position: 30 } ]
+  @EndUserText.label: 'Mail'
+  Mail;
+
+  @UI.lineItem: [{ position: 40 }]
+  @UI.selectionField: [{ position: 40 }]
+  @UI.identification: [ { position: 40 } ]
+  @EndUserText.label: 'Department'
+  Department;
+
+  @UI.identification: [ { position: 50 } ]
+  CreatedBy;
+  @UI.identification: [ { position: 60 } ]
+  CreatedAt;
+  @UI.identification: [ { position: 70 } ]
+  LastChangedBy;
+  @UI.identification: [ { position: 80 } ]
+  LastChangedAt;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

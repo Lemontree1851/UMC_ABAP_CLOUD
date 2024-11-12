@@ -1,0 +1,668 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_MSAG" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <T100A>
+    <ARBGB>ZPP_001</ARBGB>
+    <MASTERLANG>E</MASTERLANG>
+    <STEXT>PP - Message Class</STEXT>
+   </T100A>
+   <T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>000</MSGNR>
+     <TEXT>&amp;1 &amp;2 &amp;3 &amp;4</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>001</MSGNR>
+     <TEXT>プラントを送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>002</MSGNR>
+     <TEXT>プラント&amp;1存在しません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>003</MSGNR>
+     <TEXT>作業区&amp;1存在しません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>004</MSGNR>
+     <TEXT>プラント&amp;1作業区&amp;2存在しません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>005</MSGNR>
+     <TEXT>製造指図或いは前回送信時間は送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>006</MSGNR>
+     <TEXT>製造指図と前回送信時間は一つしか送信できません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>007</MSGNR>
+     <TEXT>プラント&amp;1製造指図&amp;2存在しません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>008</MSGNR>
+     <TEXT>プラント&amp;1製造指図連携成功 &amp;2 件！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>009</MSGNR>
+     <TEXT>プラント&amp;1作業区連携成功 &amp;2 件！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>010</MSGNR>
+     <TEXT>Please enter the &amp;1.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>011</MSGNR>
+     <TEXT>品目或いは前回送信時間は送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>012</MSGNR>
+     <TEXT>品目と前回送信時間は一つしか送信できません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>013</MSGNR>
+     <TEXT>プラント&amp;1品目&amp;2存在しません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>014</MSGNR>
+     <TEXT>BOMマスタ連携成功 &amp;1 件！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>015</MSGNR>
+     <TEXT>製造指図を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>016</MSGNR>
+     <TEXT>製造指図&amp;1は既に完了（TECO）しました！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>017</MSGNR>
+     <TEXT>入出庫予定が存在しません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>018</MSGNR>
+     <TEXT>製造指図&amp;1の入出庫予定&amp;2の明細が見つかりません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>019</MSGNR>
+     <TEXT>作業確認番号を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>020</MSGNR>
+     <TEXT>確認カウンタを送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>021</MSGNR>
+     <TEXT>作業確認番号&amp;1確認カウンタ&amp;2存在しません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>022</MSGNR>
+     <TEXT>作業実績は既に取消しました！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>023</MSGNR>
+     <TEXT>入出庫伝票は取得できません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>024</MSGNR>
+     <TEXT>保管場所&amp;1の品目&amp;2の在庫は利用できません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>025</MSGNR>
+     <TEXT>製造指図&amp;1の構成品目の在庫を参照してください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>026</MSGNR>
+     <TEXT>UMESIDを送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>027</MSGNR>
+     <TEXT>作業実績取消は失敗しました：</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>028</MSGNR>
+     <TEXT>作業実績取消は成功しました！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>029</MSGNR>
+     <TEXT>Please enter the correct &amp;1.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>030</MSGNR>
+     <TEXT>Material &amp;1 not existed in Plant &amp;2.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>031</MSGNR>
+     <TEXT>作業番号を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>032</MSGNR>
+     <TEXT>歩留数量を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>033</MSGNR>
+     <TEXT>確認済作業数量 1を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>034</MSGNR>
+     <TEXT>確認済作業数量単位 1を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>035</MSGNR>
+     <TEXT>確認済作業数量 2を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>036</MSGNR>
+     <TEXT>確認済作業数量単位 2を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>037</MSGNR>
+     <TEXT>確認済作業数量 3を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>038</MSGNR>
+     <TEXT>確認済作業数量単位 3を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>039</MSGNR>
+     <TEXT>確認済作業数量 4を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>040</MSGNR>
+     <TEXT>確認済作業数量単位 4を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>041</MSGNR>
+     <TEXT>確認済作業数量 5を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>042</MSGNR>
+     <TEXT>確認済作業数量単位 5を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>043</MSGNR>
+     <TEXT>確認済作業数量 6を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>044</MSGNR>
+     <TEXT>確認済作業数量単位 6を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>045</MSGNR>
+     <TEXT>転記日付を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>046</MSGNR>
+     <TEXT>確認テキストを送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>047</MSGNR>
+     <TEXT>製造指図&amp;1の作業番号&amp;2が存在しません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>048</MSGNR>
+     <TEXT>作業実績確認が成功しました！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>049</MSGNR>
+     <TEXT>作業実績確認が失敗しました：</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>050</MSGNR>
+     <TEXT>品目&amp;1が足りません、不足数量は&amp;2！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>051</MSGNR>
+     <TEXT>品目は全て足りています、生産実績取消は可能です！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>052</MSGNR>
+     <TEXT>Application NO. &amp;1 is created.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>053</MSGNR>
+     <TEXT>会社コードを送信してください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>054</MSGNR>
+     <TEXT>BP或いは前回送信時間を送信してください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>055</MSGNR>
+     <TEXT>BPと前回送信時間を一つしか送信できません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>056</MSGNR>
+     <TEXT>会社コード&amp;1は存在しません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>057</MSGNR>
+     <TEXT>会社コード&amp;1 BPマスタ連携成功 &amp;2 件！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>058</MSGNR>
+     <TEXT>プラント&amp;1品目マスタ連携成功 &amp;2 件！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>059</MSGNR>
+     <TEXT>前回送信時間を送信していください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>060</MSGNR>
+     <TEXT>The data is not the latest, please search again.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>061</MSGNR>
+     <TEXT>Application No. &amp;1 was changed successfully.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>062</MSGNR>
+     <TEXT>Application No. &amp;1 has been approved.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>063</MSGNR>
+     <TEXT>Application No. &amp;1 has been deleted.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>064</MSGNR>
+     <TEXT>Application No. &amp;1 was deleted successfully.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>065</MSGNR>
+     <TEXT>Application No. &amp;1 was approved and emailed successfully.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>066</MSGNR>
+     <TEXT>製造指図&amp;1の生産実績明細が見つかりません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>067</MSGNR>
+     <TEXT>Application No. &amp;1 was not approved.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>068</MSGNR>
+     <TEXT>Application No. &amp;1 was cancelled approval successfully.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>069</MSGNR>
+     <TEXT>Application No. &amp;1 was resent email successfully.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>070</MSGNR>
+     <TEXT>Application No. &amp;1 printing failed, please contact technical support.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>071</MSGNR>
+     <TEXT>プラント&amp;1製造指図&amp;2生産実績連携成功 &amp;3 件！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>072</MSGNR>
+     <TEXT>作業確認はマイルストーン確認ではありません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>073</MSGNR>
+     <TEXT>製造指図&amp;1の品目は存在しません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>074</MSGNR>
+     <TEXT>Application No. &amp;1 was printed successfully.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>075</MSGNR>
+     <TEXT>Application No. &amp;1 has been posted/cancelled and can&apos;t be revoked.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>076</MSGNR>
+     <TEXT>Application No. &amp;1 has not been posted.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>077</MSGNR>
+     <TEXT>Application No. &amp;1 &amp;2 has an error.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>078</MSGNR>
+     <TEXT>製造指図&amp;1作業番号&amp;2の生産実績が見つかりません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>079</MSGNR>
+     <TEXT>Application No. &amp;1 has been posted/cancelled.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>080</MSGNR>
+     <TEXT>&amp;1 registration was successful.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>081</MSGNR>
+     <TEXT>Application No. &amp;1 was posted successfully.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>082</MSGNR>
+     <TEXT>Application No. &amp;1 was cancelled successfully.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>083</MSGNR>
+     <TEXT>There is same Valid-End-Date data existed, Please check the input data.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>084</MSGNR>
+     <TEXT>&amp;1 &amp;2 not existed.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>085</MSGNR>
+     <TEXT>SAP Material could’t be found, Please check the &amp;1.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>086</MSGNR>
+     <TEXT>The Plan Qty of the Production Order is more than the Total Assigned Qty.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>087</MSGNR>
+     <TEXT>Please assign Sales Order to this Production Order.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>088</MSGNR>
+     <TEXT>データ連携成功！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>089</MSGNR>
+     <TEXT>対象データ取得無し！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>090</MSGNR>
+     <TEXT>PIR registered.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>091</MSGNR>
+     <TEXT>Reservation &amp;1 &amp;2 &amp;3 successfully.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>092</MSGNR>
+     <TEXT>No. &amp;1 Plant &amp;2 Storage Location &amp;3 not existed.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>093</MSGNR>
+     <TEXT>Please enter the Customer.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>094</MSGNR>
+     <TEXT>Please enter the Plant.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>095</MSGNR>
+     <TEXT>Please enter the Material.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>096</MSGNR>
+     <TEXT>Mateiral &amp;1 not exsited in Plant &amp;2.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>097</MSGNR>
+     <TEXT>Customer not exist.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>098</MSGNR>
+     <TEXT>Component &amp;1 not existed in Plant &amp;2.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>099</MSGNR>
+     <TEXT>Production Order &amp;1: &amp;2</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>100</MSGNR>
+     <TEXT>Production Order &amp;1 was released successfully.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>101</MSGNR>
+     <TEXT>不足品目がある。</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>102</MSGNR>
+     <TEXT>更新できました。</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>103</MSGNR>
+     <TEXT>Mail destination master not found.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>104</MSGNR>
+     <TEXT>Application No. &amp;1 was approved successfully.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>105</MSGNR>
+     <TEXT>The amount has exceeded &amp;1 JPY. Please apply to Kitone.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>106</MSGNR>
+     <TEXT>The Qty of SubItem is different from the Component Qty.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>107</MSGNR>
+     <TEXT>Application No. &amp;1 is 311 Inventory movement is not posted, please check.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>108</MSGNR>
+     <TEXT>会社コード&amp;1に対し、BP &amp;2は存在しません！</TEXT>
+    </T100>
+   </T100>
+  </asx:values>
+ </asx:abap>
+</abapGit>

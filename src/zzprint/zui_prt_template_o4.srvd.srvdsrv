@@ -1,0 +1,4 @@
+@EndUserText.label: 'Service definition for ZZC_PRT_TEMPLATE'
+define service ZUI_PRT_TEMPLATE_O4 {
+  expose ZZC_PRT_TEMPLATE as Template;
+}

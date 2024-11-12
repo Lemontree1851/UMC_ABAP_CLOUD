@@ -1,0 +1,4 @@
+@EndUserText.label: 'Service Definition for ZC_EMAILMASTERUPLOAD'
+define service ZUI_EMAILMASTERUPLOAD_O4 {
+  expose ZC_EMAILMASTERUPLOAD;
+}

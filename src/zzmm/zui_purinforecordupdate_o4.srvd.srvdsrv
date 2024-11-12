@@ -1,0 +1,5 @@
+@EndUserText.label: 'Pur Info Record Update'
+define service ZUI_PURINFORECORDUPDATE_O4 {
+  expose ZC_PURINFORECORDUPDATE     as PurInfoRecordUpdate;
+  expose ZC_PURINFORECORDUPDATEITEM as PurInfoRecordUpdateItem;
+}

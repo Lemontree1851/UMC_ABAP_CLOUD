@@ -1,0 +1,9 @@
+projection implementation in class ZBP_C_TFI_1020 unique;
+strict ( 2 );
+define behavior for ZC_TFI_1020 alias ZcTfi1020
+
+{
+  use create;
+  use update;
+  use delete;
+}

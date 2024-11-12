@@ -1,0 +1,4 @@
+@EndUserText.label: 'Binding GLAccount Upload'
+define service ZUI_BINDGLUPLOAD_O4 {
+  expose ZC_BINDGLUPLOAD as BDGLUpload;
+}

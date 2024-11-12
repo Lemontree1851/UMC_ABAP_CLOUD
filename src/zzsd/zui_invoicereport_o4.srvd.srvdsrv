@@ -1,0 +1,4 @@
+@EndUserText.label: '請求書出力'
+define service ZUI_INVOICEREPORT_O4 {
+  expose ZC_INVOICEREPORT as InvoiceReport;
+}

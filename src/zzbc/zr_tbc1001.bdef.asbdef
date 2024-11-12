@@ -1,0 +1,63 @@
+managed implementation in class ZBP_R_TBC1001 unique;
+strict ( 2 );
+with draft;
+
+define behavior for ZR_TBC1001 alias CommonConfig
+persistent table ztbc_1001
+draft table ztbc_1001_d
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master ( global )
+
+{
+  field ( readonly )
+  CreatedAt,
+  CreatedBy,
+  LastChangedAt,
+  LastChangedBy,
+  LocalLastChangedAt;
+
+  field ( mandatory : create ) ZID, Zseq, Zprogram;
+  field ( readonly : update ) ZID, Zseq;
+
+  create;
+  update ( precheck );
+  delete ( precheck );
+
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+
+  mapping for ztbc_1001
+    {
+      ZID                = zid;
+      Zseq               = zseq;
+      Zkey1              = zkey1;
+      Zkey2              = zkey2;
+      Zkey3              = zkey3;
+      Zkey4              = zkey4;
+      Zkey5              = zkey5;
+      Zkey6              = zkey6;
+      Zkey7              = zkey7;
+      Zkey8              = zkey8;
+      Zkey9              = zkey9;
+      Zvalue1            = zvalue1;
+      Zvalue2            = zvalue2;
+      Zvalue3            = zvalue3;
+      Zvalue4            = zvalue4;
+      Zvalue5            = zvalue5;
+      Zvalue6            = zvalue6;
+      Zvalue7            = zvalue7;
+      Zvalue8            = zvalue8;
+      Zvalue9            = zvalue9;
+      Zremark            = zremark;
+      Zprogram           = zprogram;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}

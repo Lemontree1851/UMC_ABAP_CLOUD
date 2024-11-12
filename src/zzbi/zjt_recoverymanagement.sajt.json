@@ -1,0 +1,23 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "回収進捗管理",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "catalogName": "ZJCE_RECOVERYMANAGEMENT"
+  },
+  "parameters": {
+    "valueRangesParameters": [
+      {
+        "name": "S_BUKRS",
+        "valueRanges": []
+      },
+      {
+        "name": "S_YEAR",
+        "valueRanges": []
+      }
+    ]
+  }
+}

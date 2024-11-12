@@ -1,0 +1,4 @@
+@EndUserText.label: 'Service Definition for Sales Order'
+define service ZUI_SalesOrder_U {
+  expose ZC_SALESORDER_U as SalesOrderForDN;
+}

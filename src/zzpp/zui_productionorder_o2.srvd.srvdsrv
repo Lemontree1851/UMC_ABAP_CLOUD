@@ -1,0 +1,4 @@
+@EndUserText.label: 'Production Order'
+define service ZUI_PRODUCTIONORDER_O2 {
+  expose ZC_ProductionOrder as ProductionOrder;
+}

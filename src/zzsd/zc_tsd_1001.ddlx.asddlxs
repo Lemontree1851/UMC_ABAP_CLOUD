@@ -1,0 +1,105 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Shipment Location', 
+    typeNamePlural: 'Shipment Location'
+  }
+}
+annotate view ZC_TSD_1001 with
+{
+  @UI.facet: [ {
+    id: 'idIdentification', 
+    type: #IDENTIFICATION_REFERENCE, 
+    label: 'Shipment Location', 
+    position: 10 
+  } ]
+  @UI.lineItem: [ {
+    position: 10 , 
+    importance: #MEDIUM
+  } ]
+  @UI.identification: [ {
+    position: 10 
+  } ]
+  @UI.selectionField: [{position: 5}]
+  Customer;
+  
+  @UI.lineItem: [ {
+    position: 20 , 
+    importance: #MEDIUM,
+    cssDefault:{ width: '7rem' }
+  } ]
+  @UI.identification: [ {
+    position: 20 
+  } ]
+  @UI.selectionField: [{position: 10}]
+  BillingToParty;
+  
+  @UI.lineItem: [ {
+    position: 30 , 
+    importance: #MEDIUM,
+    cssDefault:{ width: '4rem' }
+  } ]
+  @UI.identification: [ {
+    position: 30 
+  } ]
+  @UI.selectionField: [{position: 15}]
+  Plant;
+  
+  @UI.lineItem: [ {
+    position: 40 , 
+    importance: #MEDIUM,
+    cssDefault:{ width: '6rem' }
+  } ]
+  @UI.identification: [ {
+    position: 40 ,
+    label: 'Issue Storage Location'
+  } ]
+  IssueStorageLocation;
+  
+  @UI.lineItem: [ {
+    position: 50 , 
+    importance: #MEDIUM,
+    cssDefault:{ width: '7rem' }
+  } ]
+  @UI.identification: [ {
+    position: 50 ,
+    label: 'Finished Storage Location'
+  } ]
+  FinishedStorageLocation;
+  
+  @UI.lineItem: [ {
+    position: 60 , 
+    importance: #MEDIUM,
+    cssDefault:{ width: '6rem' }
+  } ]
+  @UI.identification: [ {
+    position: 60 , 
+    label: 'Return Storage Location'
+  } ]
+  ReturnStorageLocation;
+  
+  @UI.lineItem: [ {
+    position: 70 , 
+    importance: #MEDIUM,
+    cssDefault:{ width: '6rem' }
+  } ]
+  @UI.identification: [ {
+    position: 70 , 
+    label: 'Repair Storage Location'
+  } ]
+  RepairStorageLocation;
+  
+  @UI.lineItem: [ {
+    position: 80 , 
+    importance: #MEDIUM,
+    cssDefault:{ width: '6rem' }
+  } ]
+  @UI.identification: [ {
+    position: 80 , 
+    label: 'VimStorageLocation'
+  } ]
+  VimStorageLocation;
+  
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

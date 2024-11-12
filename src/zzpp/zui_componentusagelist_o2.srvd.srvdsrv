@@ -1,0 +1,4 @@
+@EndUserText.label: '部品使用先一覧レポート'
+define service ZUI_COMPONENTUSAGELIST_O2 {
+  expose ZC_COMPONENTUSAGELIST as ComponentUsageList;
+}

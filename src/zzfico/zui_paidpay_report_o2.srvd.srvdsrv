@@ -1,0 +1,4 @@
+@EndUserText.label: 'Query for paidpay upload'
+define service ZUI_PAIDPAY_REPORT_O2 {
+  expose ZR_PAIDPAY_REPORT as PaidPayReport;
+}

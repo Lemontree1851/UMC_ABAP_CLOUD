@@ -1,0 +1,21 @@
+projection;
+strict ( 2 );
+
+define behavior for ZC_PURINFORECORDUPDATE alias PurInfoRecordUpdate
+{
+  use create;
+  use update;
+  use delete;
+
+  use action processLogic;
+
+  use association _Item { create; }
+}
+
+define behavior for ZC_PURINFORECORDUPDATEITEM alias PurInfoRecordUpdateItem
+{
+  use update;
+  use delete;
+
+  use association _Header;
+}

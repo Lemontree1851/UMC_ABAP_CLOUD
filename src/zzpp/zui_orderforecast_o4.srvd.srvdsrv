@@ -1,0 +1,4 @@
+@EndUserText.label: 'Order Forecast'
+define service ZUI_ORDERFORECAST_O4 {
+  expose ZC_ORDERFORECAST;
+}

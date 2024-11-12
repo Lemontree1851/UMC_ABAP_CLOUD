@@ -1,0 +1,132 @@
+managed implementation in class zbp_r_wf_approvalpath unique;
+strict ( 2 );
+with draft;
+
+define behavior for ZR_WF_ApprovalPath alias ApprovalPath
+persistent table ztbc_1008
+draft table ztbc_1008_d
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master ( instance )
+{
+  create;
+  update;
+  delete;
+
+  field ( mandatory : create, readonly : update ) WorkflowId, ApplicationId;
+
+  field ( readonly )
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+
+  association _ApprovalNode { create; with draft; }
+
+  mapping for ztbc_1008
+    {
+      WorkflowId         = workflow_id;
+      ApplicationId      = application_id;
+      PrType             = pr_type;
+      ApplyDepart        = apply_depart;
+      OrderType          = order_type;
+      BuyPurpose         = buy_purpose;
+      Location           = location;
+      Knttp              = knttp;
+      CostCenter         = cost_center;
+      AmountFrom         = amount_from;
+      AmountTo           = amount_to;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}
+
+define behavior for ZR_WF_ApprovalNode alias ApprovalNode
+persistent table ztbc_1009
+draft table ztbc_1009_d
+lock dependent by _ApprovalPath
+authorization dependent by _ApprovalPath
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+
+  field ( mandatory : create, readonly : update ) Node;
+  field ( readonly )
+  WorkflowId,
+  ApplicationId,
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  association _ApprovalPath { with draft; }
+  association _ApprovalUser { create; with draft; }
+
+  mapping for ztbc_1009
+    {
+      WorkflowId         = workflow_id;
+      ApplicationId      = application_id;
+      Node               = node;
+      NodeName           = node_name;
+      AutoConver         = auto_conver;
+      Active             = active;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}
+
+define behavior for ZR_WF_ApprovalUser alias ApprovalUser
+persistent table ztbc_1010
+draft table ztbc_1010_d
+lock dependent by _ApprovalPath
+authorization dependent by _ApprovalPath
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+
+  field ( mandatory : create, readonly : update ) Zseq;
+
+  field ( readonly )
+  WorkflowId,
+  ApplicationId,
+  Node,
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  association _ApprovalPath { with draft; }
+  association _ApprovalNode { with draft; }
+
+  mapping for ztbc_1010
+    {
+      WorkflowId         = workflow_id;
+      ApplicationId      = application_id;
+      Node               = node;
+      Zseq               = zseq;
+      UserName           = user_name;
+      EmailAddress       = email_address;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}

@@ -1,0 +1,13 @@
+projection;
+//strict ( 2 );
+strict;
+
+define behavior for ZC_DNDATEBATCHUPDATE alias DeliveryDocumentList
+use etag
+{
+  use create;
+  use update;
+  use delete;
+
+  use action batchProcess;
+}

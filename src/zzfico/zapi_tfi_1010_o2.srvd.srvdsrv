@@ -1,0 +1,5 @@
+@EndUserText: {label: '有償支給品純額計算（品番単位）'}
+@ObjectModel: {leadingEntity: {name: 'ZC_TFI_1010000'}}
+define service ZAPI_TFI_1010_O2 {
+  expose ZC_TFI_1010000;
+}

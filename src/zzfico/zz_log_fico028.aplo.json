@@ -1,0 +1,14 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "代理購買仕訳生成",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "subobjects": [
+    {
+      "name": "ZZ_LOG_FICO028_SUB",
+      "description": "代理購買仕訳生成"
+    }
+  ]
+}

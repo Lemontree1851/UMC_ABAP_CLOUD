@@ -1,0 +1,65 @@
+managed implementation in class zbp_r_tbc1005 unique;
+strict ( 2 );
+with draft;
+
+define behavior for ZR_TBC1005 alias Role
+persistent table ztbc_1005
+draft table ztbc_1005_d
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master ( instance )
+{
+  create;
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) RoleUuid;
+  field ( readonly )
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field ( mandatory : create, readonly : update ) RoleId;
+
+  validation validationRoleId on save { field RoleId; create; }
+
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+
+  association _User;
+
+  mapping for ztbc_1005
+    {
+      RoleUuid           = role_uuid;
+      RoleId             = role_id;
+      RoleName           = role_name;
+      FunctionId         = function_id;
+      AccessId           = access_id;
+      AccessName         = access_name;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}
+
+define behavior for ZR_TBC1007_1 alias User
+draft table ztbc_1007_1_d
+lock dependent by _Role
+authorization dependent by _Role
+with unmanaged save
+{
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) Uuid;
+  field ( readonly ) RoleUuid;
+
+  association _Role;
+}

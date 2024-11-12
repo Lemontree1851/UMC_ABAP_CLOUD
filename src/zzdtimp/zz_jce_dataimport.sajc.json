@@ -1,0 +1,16 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "Job Catalog Entry of Data Import",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "className": "ZZCL_DTIMP_PROCESS"
+  },
+  "parameters": [
+    {
+      "name": "P_ID"
+    }
+  ]
+}

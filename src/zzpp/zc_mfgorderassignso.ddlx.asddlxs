@@ -1,0 +1,111 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: '製造指図と受注の割当管理',
+    typeNamePlural: '製造指図と受注の割当管理',
+    title: { type: #STANDARD , value: 'ManufacturingOrder'},
+    description:{ type: #STANDARD, value: 'ProductionPlant'  }
+  }
+}
+annotate view ZC_MFGORDERASSIGNSO with
+{
+  @UI.facet: [
+      {
+        label: 'General Information',
+        id: 'GeneralInfo',
+        purpose: #STANDARD,
+        position: 10 ,
+        type: #IDENTIFICATION_REFERENCE
+      },
+      {
+        id: 'idLineSOItem' ,
+        type : #LINEITEM_REFERENCE ,
+        label : 'Assign SO Item' ,
+        position: 20 ,
+        targetElement: '_AssignSOItem'
+      }
+  ]
+
+  @UI.lineItem: [{ position: 10 }]
+  @UI.selectionField: [{ position: 10 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_PlantVH', element: 'Plant' } }]
+  @EndUserText.label: 'Plant'
+  ProductionPlant;
+
+  @UI.lineItem: [{ position: 20, cssDefault.width: '8rem' }]
+  @UI.selectionField: [{ position: 20 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_MRPControllerVH', element: 'MRPController' } }]
+  MRPController;
+
+  @UI.lineItem: [{ position: 30, cssDefault.width: '10rem' }]
+  @UI.selectionField: [{ position: 30 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ProductionSupervisorVH', element: 'ProductionSupervisor' } }]
+  ProductionSupervisor;
+
+  @UI.lineItem: [{ position: 40 }]
+  @UI.selectionField: [{ position: 40 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+  @UI.identification: [ { position: 10 } ]
+  Material;
+
+  @UI.lineItem: [{ position: 50, cssDefault.width: '10rem' }]
+  @Consumption.filter.hidden: true
+  ProductionVersion;
+
+  @UI.lineItem: [{ position: 60 }]
+  @UI.selectionField: [{ position: 60 }]
+  ManufacturingOrder;
+
+  @UI.lineItem: [{ position: 70 }]
+  @UI.selectionField: [{ position: 70 }]
+  @UI.identification: [ { position: 30 } ]
+  @Consumption.filter.selectionType: #INTERVAL
+  MfgOrderPlannedStartDate;
+
+  @UI.lineItem: [{ position: 80 }]
+  @UI.identification: [ { position: 20 } ]
+  @Consumption.filter.hidden: true
+  @EndUserText.label: 'Production Planned Quantity'
+  MfgOrderPlannedTotalQty;
+
+  @UI.identification: [ { position: 40 } ]
+  @Consumption.filter.hidden: true
+  @EndUserText.label: 'Available Assign Quantity'
+  AvailableAssignQty;
+
+  @UI.lineItem: [{ position: 90 }]
+  @UI.selectionField: [{ position: 100 }]
+  @UI.identification: [ { position: 50 } ]
+  OrderIsReleased;
+
+  @UI.lineItem: [{ position: 100 }]
+  @Consumption.filter.hidden: true
+  @EndUserText.label: 'Assign Quantity'
+  AssignQty;
+
+  @UI.lineItem: [{ position: 110, cssDefault.width: '8rem' }]
+  @UI.selectionField: [{ position: 90 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_SalesDocumentStdVH', element: 'SalesDocument' } }]
+  @EndUserText.label: 'Sales Order'
+  SalesOrder;
+
+  @UI.lineItem: [{ position: 120, cssDefault.width: '8rem' }]
+  @Consumption.filter.hidden: true
+  @EndUserText.label: 'SO Item'
+  SalesOrderItem;
+
+  @UI.lineItem: [{ position: 130, cssDefault.width: '10rem' }]
+  @Consumption.filter.hidden: true
+  @EndUserText.label: 'Customer PO.'
+  PurchaseOrderByCustomer;
+
+  @UI.lineItem: [{ position: 140, cssDefault.width: '10rem' }]
+  @Consumption.filter.hidden: true
+  @EndUserText.label: 'SO Item Quantity'
+  RequestedQuantityInBaseUnit;
+
+  @UI.hidden: true
+  Sequence;
+  @UI.hidden: true
+  ProductionUnit;
+}

@@ -1,0 +1,42 @@
+managed implementation in class zbp_r_generatejournalentry unique;
+strict;
+with draft;
+
+define behavior for ZR_GenerateJournalEntry //alias <alias_name>
+persistent table ztfi_1017
+draft table ztfi_1017_d
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master ( instance )
+with additional save
+
+{
+  create;
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) Uuid;
+  field ( readonly ) CompanyCode, FiscalYear, AccountingDocument;
+
+  determination Post on save { create; field JsonData; }
+
+  draft action Resume;
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft determine action Prepare;
+
+  mapping for ztfi_1017
+    {
+      UUID               = uuid;
+      CompanyCode        = company_code;
+      FiscalYear         = fiscal_year;
+      AccountingDocument = accounting_document;
+      JsonData           = json_data;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}

@@ -1,0 +1,5 @@
+@EndUserText.label: 'Inventory Requirement Report'
+define service ZUI_INVENTORYREQUIREMENT_O2 {
+  expose ZC_InventoryRequirement;
+  expose ZC_TBC1001;
+}

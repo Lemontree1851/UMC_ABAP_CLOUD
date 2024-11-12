@@ -1,0 +1,18 @@
+@EndUserText.label: '支払方法変更'
+define service ZUI_PAYMETHOD_O4 {
+  expose ZC_PAYMETHOD                   as PaymentMethod;
+  expose ZC_PlantVH;
+  expose ZC_MaterialRequisitionVH;
+  expose ZC_ApplicationTypeVH;
+  expose ZC_CostCenterVH;
+  expose I_Customer_VH;
+  expose ZC_ApplicationReceiverVH;
+  expose ZC_ManufacturingOrderProductVH;
+  expose ZC_ProductVH;
+  expose I_StorageLocationStdVH;
+  expose ZC_PaymentMethodVH;
+  expose I_CompanyCodeVH;
+  expose ZC_SupplierCompanyVH;
+  expose I_BusinessPartnerVH;
+  expose I_SupplierCompany;
+}

@@ -1,0 +1,4 @@
+@EndUserText.label: 'BOM Upload'
+define service ZUI_BOMUPLOAD_O4 {
+  expose ZC_BOMUPLOAD as BomUpload;
+}

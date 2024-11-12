@@ -1,0 +1,97 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Approval Path',
+    typeNamePlural: 'Approval Path',
+    title: { type: #STANDARD , value: 'WorkflowId'},
+    description: { type: #STANDARD , value: 'ApplicationId'}
+  }
+}
+annotate view ZC_WF_ApprovalPath with
+{
+
+  @UI.facet: [
+      {
+        label: 'Approval Path',
+        id: 'GeneralInfo',
+        purpose: #STANDARD,
+        position: 10 ,
+        type: #IDENTIFICATION_REFERENCE
+      },
+      {
+        id: 'idNode' ,
+        type : #LINEITEM_REFERENCE ,
+        label : 'Approval Node' ,
+        position: 20 ,
+        targetElement: '_ApprovalNode'
+      }
+  ]
+
+  @UI.lineItem: [{ position: 10, importance: #MEDIUM, cssDefault.width: '10rem' }]
+  @UI.identification: [ { position: 10 } ]
+  @UI.selectionField: [{ position: 10 }]
+  @EndUserText.label: 'Workflow Id'
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_WF_WorkflowID_VH', element: 'Zvalue1' } }]
+  WorkflowId;
+
+  @UI.lineItem: [{ position: 20, importance: #MEDIUM }]
+  @UI.identification: [ { position: 20 } ]
+  @UI.selectionField: [{ position: 20 }]
+  @EndUserText.label: 'Application Id'
+  ApplicationId;
+
+  @UI.lineItem: [{ position: 30, importance: #MEDIUM, cssDefault.width: '10rem' }]
+  @UI.identification: [ { position: 30 } ]
+  @EndUserText.label: 'PR Type'
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_WF_PrType_VH', element: 'Zvalue1' } }]
+  PrType;
+
+  @UI.lineItem: [{ position: 40, importance: #MEDIUM, cssDefault.width: '10rem' }]
+  @UI.identification: [ { position: 40 } ]
+  @EndUserText.label: 'Apply Depart'
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_WF_ApplyDepart_VH', element: 'Zvalue1' } }]
+  ApplyDepart;
+
+  @UI.lineItem: [{ position: 50, importance: #MEDIUM, cssDefault.width: '10rem' }]
+  @UI.identification: [ { position: 50 } ]
+  @EndUserText.label: 'Order Type'
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_WF_OrderType_VH', element: 'Zvalue1' } }]
+  OrderType;
+
+  @UI.lineItem: [{ position: 60, importance: #MEDIUM, cssDefault.width: '10rem' }]
+  @UI.identification: [ { position: 60 } ]
+  @EndUserText.label: 'Buy Purpose'
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_WF_BuyPurpose_VH', element: 'Zvalue1' } }]
+  BuyPurpose;
+
+  @UI.lineItem: [{ position: 70, importance: #MEDIUM, cssDefault.width: '10rem' }]
+  @UI.identification: [ { position: 70 } ]
+  @EndUserText.label: 'Location'
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_WF_Location_VH', element: 'Zvalue1' } }]
+  Location;
+
+  @UI.lineItem: [{ position: 80, importance: #MEDIUM, cssDefault.width: '13rem' }]
+  @UI.identification: [ { position: 80 } ]
+  @EndUserText.label: 'Acc. Assignment Category'
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_WF_KNTTP_VH', element: 'Zvalue1' } }]
+  Knttp;
+
+  @UI.lineItem: [{ position: 90, importance: #MEDIUM, cssDefault.width: '10rem' }]
+  @UI.identification: [ { position: 90 } ]
+  @EndUserText.label: 'Cost Center'
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_CostCenterStdVH', element: 'CostCenter' } }]
+  CostCenter;
+
+  @UI.lineItem: [{ position: 100, importance: #MEDIUM, cssDefault.width: '10rem' }]
+  @UI.identification: [ { position: 100 } ]
+  @EndUserText.label: 'Amount From'
+  AmountFrom;
+
+  @UI.lineItem: [{ position: 110, importance: #MEDIUM, cssDefault.width: '10rem' }]
+  @UI.identification: [ { position: 110 } ]
+  @EndUserText.label: 'Amount To'
+  AmountTo;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

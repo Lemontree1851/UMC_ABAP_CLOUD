@@ -1,0 +1,5 @@
+@EndUserText.label: 'Pur Info Record'
+define service ZUI_PURINFORECORD_O4 {
+  expose ZC_PURINFORECORDHEADER as PurInfoRecordHeader;
+  expose ZC_PURINFORECORDITEM   as PurInfoRecordItem;
+}

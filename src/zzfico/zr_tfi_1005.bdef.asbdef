@@ -1,0 +1,73 @@
+managed implementation in class ZBP_R_TFI_1005 unique;
+strict ( 2 );
+with draft;
+define behavior for ZR_TFI_1005 alias ZrTfi1005
+persistent table ZTFI_1005
+draft table ZTFI_1005_D
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master( global )
+
+{
+  field ( mandatory : create )
+   Accountingdocument,
+   Fiscalyear,
+   Accountingdocumentitem,
+   Companycode;
+
+  field ( readonly )
+   Uuid,
+   CreatedBy,
+   CreatedAt,
+   LastChangedBy,
+   LastChangedAt,
+   LocalLastChangedAt;
+
+  field ( numbering : managed )
+   Uuid;
+
+  field ( readonly : update )
+   Accountingdocument,
+   Fiscalyear,
+   Accountingdocumentitem,
+   Companycode;
+
+
+  create;
+  update;
+  delete;
+
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Edit;
+  draft action Resume;
+  draft determine action Prepare;
+
+  mapping for ZTFI_1005
+  {
+    Uuid = uuid;
+    Accountingdocument = accountingdocument;
+    Fiscalyear = fiscalyear;
+    Accountingdocumentitem = accountingdocumentitem;
+    Companycode = companycode;
+    Postingdate = postingdate;
+    Amountincompanycodecurrency = amountincompanycodecurrency;
+    Companycodecurrency = companycodecurrency;
+    Accountingclerkphonenumber = accountingclerkphonenumber;
+    Accountingclerkfaxnumber = accountingclerkfaxnumber;
+    PaymentmethodA = paymentmethod_a;
+    Conditiondate1 = conditiondate1;
+    Supplier = supplier;
+    Lastdate = lastdate;
+    Netduedate = netduedate;
+    Paymentmethod = paymentmethod;
+    Paymentterms = paymentterms;
+    Status = status;
+    Message = message;
+    CreatedBy = created_by;
+    CreatedAt = created_at;
+    LastChangedBy = last_changed_by;
+    LastChangedAt = last_changed_at;
+    LocalLastChangedAt = local_last_changed_at;
+  }
+}

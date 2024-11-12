@@ -1,0 +1,4 @@
+@EndUserText.label: 'PO Change'
+define service ZUI_POCHANGE_O4 {
+  expose ZC_POCHANGE as POChange;
+}

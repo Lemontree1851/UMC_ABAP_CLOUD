@@ -1,0 +1,76 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: '製造指図情報の出力',
+    typeNamePlural: '製造指図情報の出力'
+  }
+}
+annotate view ZC_MFGORDERINFO with
+{
+  @UI.lineItem: [{ position: 10 }]
+  @UI.selectionField: [{ position: 10 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_PlantVH', element: 'Plant' } }]
+  @EndUserText.label: 'Plant'
+  ProductionPlant;
+
+  @UI.lineItem: [{ position: 20 }]
+  @UI.selectionField: [{ position: 20 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_MfgOrderStdVH', element: 'ManufacturingOrder' } }]
+  ManufacturingOrder;
+
+  @UI.lineItem: [{ position: 30, cssDefault.width: '10rem' }]
+  @UI.selectionField: [{ position: 40 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ProductionSupervisorVH', element: 'ProductionSupervisor' } }]
+  ProductionSupervisor;
+
+  @UI.lineItem: [{ position: 40 }]
+  @UI.selectionField: [{ position: 30 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+  @EndUserText.label: 'Production Material'
+  Material;
+
+  @UI.lineItem: [{ position: 50 }]
+  @EndUserText.label: 'Material Description'
+  MaterialDescription;
+
+  @UI.selectionField: [{ position: 50 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_MRPControllerVH', element: 'MRPController' } }]
+  MRPController;
+
+  @UI.lineItem: [{ position: 60, cssDefault.width: '10rem' }]
+  @EndUserText.label: 'Version'
+  @Consumption.filter.hidden: true
+  FinalVersion;
+
+  @UI.lineItem: [{ position: 70 }]
+  @EndUserText.label: 'Order Quantity'
+  MfgOrderPlannedTotalQty;
+
+  @UI.lineItem: [{ position: 80 }]
+  Batch;
+
+  @UI.lineItem: [{ position: 90 }]
+  MfgOrderConfirmedYieldQty;
+
+  @UI.lineItem: [{ position: 100 }]
+  @EndUserText.label: 'Status'
+  StatusName;
+
+  @UI.lineItem: [{ position: 110 }]
+  @UI.selectionField: [{ position: 60 }]
+  @Consumption.filter.selectionType: #INTERVAL
+  MfgOrderPlannedStartDate;
+
+  @UI.lineItem: [{ position: 120 }]
+  @UI.selectionField: [{ position: 70 }]
+  @Consumption.filter.selectionType: #INTERVAL
+  MfgOrderPlannedEndDate;
+
+  @UI.lineItem: [{ position: 130 }]
+  SalesOrder;
+
+  @UI.hidden: true
+  ProductionUnit;
+  @UI.hidden: true
+  ProductionVersion;
+}

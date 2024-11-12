@@ -1,0 +1,4 @@
+@EndUserText.label: 'ECNレポート'
+define service ZUI_ECN_O4 {
+  expose ZR_ECN as ECN;
+}

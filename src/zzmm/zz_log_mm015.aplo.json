@@ -1,0 +1,13 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "会社コードの自動切替",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "subobjects": [
+    {
+      "name": "ZZ_LOG_MM015_SUB"
+    }
+  ]
+}

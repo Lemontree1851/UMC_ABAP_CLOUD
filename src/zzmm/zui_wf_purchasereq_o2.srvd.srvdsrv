@@ -1,0 +1,5 @@
+@EndUserText.label: 'Purchase Requisition Workflow Items'
+define service ZUI_WF_PURCHASEREQ_O2 {
+  expose ZC_WF_PURCHASEREQ     as PurchaseReq;
+  expose ZC_WF_PURCHASEREQITEM as PurchaseReqItem;
+}

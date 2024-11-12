@@ -1,0 +1,4 @@
+@EndUserText.label: 'MM-013棚卸検数結果一括登録'
+define service ZUI_PHYSICALINVENTORYUPLOAD_O4 {
+  expose ZC_PHYSICALINVENTORYUPLOAD as PhysicalInventoryUpload;
+}

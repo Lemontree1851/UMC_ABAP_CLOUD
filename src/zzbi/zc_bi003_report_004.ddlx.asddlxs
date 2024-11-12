@@ -1,0 +1,145 @@
+@Metadata.layer: #CUSTOMER
+@Search.searchable: true
+@UI.headerInfo.title.type: #STANDARD
+@UI.headerInfo.title.value: 'RecoveryManagementNumber'
+@UI.headerInfo.description.type: #STANDARD
+@UI.headerInfo.description.value: 'RecoveryManagementNumber'
+annotate entity ZC_BI003_REPORT_004 with
+{
+
+  @UI.facet: [ { label: 'General Information', id: 'collInfoFacet', purpose: #STANDARD, position: 10 , type: #COLLECTION },
+               { label: 'Purchase Order', id: 'collPoFacet', purpose: #STANDARD, position: 20, type: #COLLECTION},
+               { label: 'Billing', id: 'collbillingFacet', purpose: #STANDARD, position: 30, type: #COLLECTION},
+               { id: 'recoveryFacet', purpose: #STANDARD, position: 30, type: #FIELDGROUP_REFERENCE, parentId: 'collInfoFacet', targetQualifier: 'recovery'},
+               { id: 'poFacet', purpose: #STANDARD, position: 40, type: #FIELDGROUP_REFERENCE, parentId: 'collPoFacet', targetQualifier: 'po'},
+               { id: 'billingFacet', purpose: #STANDARD, position: 50, type: #FIELDGROUP_REFERENCE, parentId: 'collbillingFacet', targetQualifier: 'billing' },
+               { id: 'headerFacet', purpose: #HEADER, position: 60, type: #FIELDGROUP_REFERENCE, targetQualifier: 'header' }
+
+             ]
+
+
+
+  @UI.lineItem: [{ position: 20, label: 'Company' }]
+  @UI.selectionField: [{ position: 20 }]
+  @UI.fieldGroup: [{ position: 20, type: #STANDARD, qualifier: 'recovery', label: 'Company' }]
+  CompanyCode;
+
+  @UI.selectionField: [{ position: 10 }]
+  FiscalYear;
+
+
+
+  @UI.lineItem: [{ position: 10, label: 'Period' }]
+  @UI.fieldGroup: [{ position: 10, type: #STANDARD, qualifier: 'recovery', label: 'Fiscal Period' }]
+  FiscalYearPeriod;
+
+  @UI.selectionField: [{ position: 20 }]
+  FiscalMonth;
+
+  @UI.lineItem: [{ position: 30, label: 'Recovery Management Number'}]
+  @UI.selectionField: [{ position: 30 }]
+  @Search.defaultSearchElement: true
+  @UI.fieldGroup: [{ position: 30, type: #STANDARD, qualifier: 'recovery', label: 'Recovery Management Number' }]
+  RecoveryManagementNumber;
+
+  @UI.lineItem: [{ position: 40, label: 'Purchase Order'}]
+  @UI.fieldGroup: [{ position: 40, type: #STANDARD, qualifier: 'po', label: 'Purchase Order' },
+                   { position: 10, label: 'Purchase Order', qualifier: 'header'}
+                  ]
+  PurchaseOrder;
+
+  @UI.lineItem: [{ position: 50, label: 'Purchase Order Item'}]
+  @UI.fieldGroup: [{ position: 50, type: #STANDARD, qualifier: 'po', label: 'Purchase Order Item' },
+                   { position: 20, label: 'Purchase Order Item', qualifier: 'header'}
+                  ]
+  PurchaseOrderItem;
+
+  @UI.lineItem: [{ position: 60, label: 'Material'}]
+  @UI.fieldGroup: [{ position: 60, type: #STANDARD, qualifier: 'po', label: 'Material' }]
+  Material;
+
+  @UI.lineItem: [{ position: 70, label: 'Product Group'}]
+  @UI.fieldGroup: [{ position: 70, type: #STANDARD, qualifier: 'po', label: 'Product Group' }]
+  ProductGroup;
+
+  @UI.lineItem: [{ position: 100, label: 'GL Account'}]
+  @UI.fieldGroup: [{ position: 80, type: #STANDARD, qualifier: 'po', label: 'GL Account' }]
+  GLAccount;
+
+  @UI.lineItem: [{ position: 110, label: 'Fixed Asset'}]
+  @UI.fieldGroup: [{ position: 90, type: #STANDARD, qualifier: 'po', label: 'Fixed Asset' }]
+  FixedAsset;
+
+  @UI.lineItem: [{ position: 120, label: 'Purchase Order Quantity'}]
+  @UI.fieldGroup: [{ position: 100, type: #STANDARD, qualifier: 'po', label: 'Purchase Order Quantity' }]
+  OrderQuantity;
+
+  @UI.lineItem: [{ position: 130, label: 'Purchase Order NetPrice'}]
+  @UI.fieldGroup: [{ position: 110, type: #STANDARD, qualifier: 'po', label: 'Purchase Order NetPrice' }]
+  NetPriceAmount;
+
+  @UI.lineItem: [{ position: 140, label: 'Recovery Necessary Amount'}]
+  @UI.fieldGroup: [{ position: 120, type: #STANDARD, qualifier: 'po', label: 'Recovery Necessary Amount' }]
+  RecoveryNecessaryAmount;
+
+  @UI.lineItem: [{ position: 150, label: 'Billing Document'}]
+  @UI.fieldGroup: [{ position: 10, type: #STANDARD, qualifier: 'billing', label: 'Billing Document' },
+                   { position: 50, label: 'Billing Document', qualifier: 'header'}
+                  ]
+  BillingDocument;
+
+  @UI.lineItem: [{ position: 160, label: 'Billing Document Item'}]
+  @UI.fieldGroup: [{ position: 20, type: #STANDARD, qualifier: 'billing', label: 'Billing Document Item' },
+                   { position: 60, label: 'Accounting Document Item', qualifier: 'header'}
+                  ]
+  BillingDocumentItem;
+
+  @UI.lineItem: [{ position: 170, label: 'Billing Document Date'}]
+  @UI.fieldGroup: [{ position: 30, type: #STANDARD, qualifier: 'billing', label: 'Billing Document Date'}]
+  BillingDocumentDate;
+
+  @UI.lineItem: [{ position: 180, label: 'Billing Product'}]
+  @UI.fieldGroup: [{ position: 40, type: #STANDARD, qualifier: 'billing', label: 'Billing Product'}]
+  BillingProduct;
+
+  @UI.lineItem: [{ position: 190, label: 'Profit Center'}]
+  @UI.fieldGroup: [{ position: 50, type: #STANDARD, qualifier: 'billing', label: 'Profit Center'}]
+  ProfitCenter;
+
+  @UI.lineItem: [{ position: 200, label: 'Condition Type'}]
+  @UI.fieldGroup: [{ position: 60, type: #STANDARD, qualifier: 'billing', label: 'Condition Type'}]
+  ConditionType;
+
+  @UI.lineItem: [{ position: 210, label: 'Condition Rate Amount'}]
+  @UI.fieldGroup: [{ position: 70, type: #STANDARD, qualifier: 'billing', label: 'Condition Rate Amount'}]
+  ConditionRateAmount;
+
+  @UI.lineItem: [{ position: 220, label: 'Billing Price'}]
+  @UI.fieldGroup: [{ position: 80, type: #STANDARD, qualifier: 'billing', label: 'Billing Price'}]
+  BillingPrice;
+
+  //@UI.lineItem: [{ position: 230, label: 'Transaction Currency'}]
+  @UI.fieldGroup: [{ position: 90, type: #STANDARD, qualifier: 'billing', label: 'Transaction Currency'}]
+  TransactionCurrency;
+
+  @UI.lineItem: [{ position: 240, label: 'Billing Quantity'}]
+  @UI.fieldGroup: [{ position: 100, type: #STANDARD, qualifier: 'billing', label: 'Billing Quantity'}]
+  BillingQuantity;
+
+  @UI.lineItem: [{ position: 250, label: 'Recovery Amount'}]
+  @UI.fieldGroup: [{ position: 110, type: #STANDARD, qualifier: 'billing', label: 'Recovery Amount'}]
+  RecoveryAmount; //BillingTotalAmount;
+
+  @UI.lineItem: [{ position: 280, label: 'Sales Document'}]
+  @UI.fieldGroup: [{ position: 120, type: #STANDARD, qualifier: 'billing', label: 'Sales Document'}]
+  SalesOrderDocument;
+
+  @UI.lineItem: [{ position: 290, label: 'Sales Document Item'}]
+  @UI.fieldGroup: [{ position: 130, type: #STANDARD, qualifier: 'billing', label: 'Sales Document Item'}]
+  SalesOrderDocumentItem;
+
+  @UI.lineItem: [{ position: 300, label: 'Customer'}]
+  @UI.fieldGroup: [{ position: 140, type: #STANDARD, qualifier: 'billing', label: 'Customer'}]
+  Customer;
+
+}

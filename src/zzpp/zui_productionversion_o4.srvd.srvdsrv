@@ -1,0 +1,4 @@
+@EndUserText.label: 'Production Version Upload'
+define service ZUI_PRODUCTIONVERSION_O4 {
+  expose ZC_PRODUCTIONVERSION as ProductionVersion;
+}

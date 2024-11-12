@@ -1,0 +1,52 @@
+managed implementation in class ZBP_R_TFI_1021 unique;
+strict ( 2 );
+define behavior for ZR_TFI_1021 alias ZrTfi1021
+persistent table ZTFI_1021
+lock master
+authorization master( global )
+
+{
+  field ( mandatory : create )
+   Yearmonth,
+   Companycode,
+   Plant,
+   Product,
+   Soldtoparty,
+   Orderid,
+   Orderitem;
+
+  field ( readonly : update )
+   Yearmonth,
+   Companycode,
+   Plant,
+   Product,
+   Soldtoparty,
+   Orderid,
+   Orderitem;
+
+
+  create;
+  update;
+  delete;
+
+  mapping for ZTFI_1021
+  {
+    Yearmonth = yearmonth;
+    Companycode = companycode;
+    Plant = plant;
+    Product = product;
+    Soldtoparty = soldtoparty;
+    Orderid = orderid;
+    Orderitem = orderitem;
+    Companycodetext = companycodetext;
+    Planttext = planttext;
+    Productdescription = productdescription;
+    Businesspartnername = businesspartnername;
+    Salesperformanceactualquantity = salesperformanceactualquantity;
+    Salesperfactualquantityunit = salesperfactualquantityunit;
+    Salesperfactlamtindspcurrency = salesperfactlamtindspcurrency;
+    Displaycurrency = displaycurrency;
+    Calendaryear = calendaryear;
+    Calendarmonth = calendarmonth;
+  }
+}

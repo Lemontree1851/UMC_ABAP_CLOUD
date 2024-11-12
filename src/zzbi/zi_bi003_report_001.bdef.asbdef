@@ -1,0 +1,66 @@
+managed implementation in class zbp_i_bi003_report_001 unique;
+strict ( 2 );
+
+define behavior for ZI_BI003_REPORT_001 //alias <alias_name>
+persistent table ztbi_recy_info
+lock master
+authorization master ( instance )
+//etag master <field_name>
+{
+  create;
+  update;
+  delete;
+
+  field ( readonly )
+  RecoveryManagementNumber,
+
+  CreatedDate,
+
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field (numbering : managed ) Uuid;
+
+  field ( mandatory : create ) CompanyCode, Customer, RecoveryType, RecoveryYear;
+
+  field ( readonly )
+  Uuid, RecoveryNecessaryAmount, RecoveryAlready, CustomerName, CompanyName, CreatedName, Currency, RecoveryPercentage;
+
+  field (readonly : update ) RecoveryType, RecoveryYear;
+
+  validation validate_input on save { create; }
+
+  determination determine_detail on save { create; field CompanyCode, Customer; }
+
+  mapping for ztbi_recy_info
+    {
+      Uuid                     = uuid;
+      RecoveryManagementNumber = recovery_management_number;
+      RecoveryType             = recovery_type;
+      RecoveryNum              = recovery_num;
+      CompanyCode              = company_code;
+      CompanyName              = company_name;
+      Customer                 = customer;
+      CustomerName             = customer_name;
+      RecoveryYear             = recovery_year;
+      //RecoveryMonth = recovery_month;
+      //RecoveryPeriod = recovery_period;
+      Machine                  = machine;
+      //RecoveryNecessaryAmount = recovery_necessary_amount;
+      RecoveryAlready          = recovery_already;
+      Currency                 = currency;
+      RecoveryPercentage       = recovery_percentage;
+      RecoveryStatus           = recovery_status;
+      CreatedBy                = created_by;
+      CreatedName              = created_name;
+      CreatedDate              = created_date;
+      CreatedAt                = created_at;
+      LastChangedBy            = last_changed_by;
+      LastChangedAt            = last_changed_at;
+      LocalLastChangedAt       = local_last_changed_at;
+    }
+
+}
