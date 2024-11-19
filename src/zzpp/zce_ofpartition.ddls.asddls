@@ -1,9 +1,9 @@
 @EndUserText.label: 'Order Forecast Partition'
 @ObjectModel.query.implementedBy: 'ABAP:ZCL_OFPARTITION'
 define root custom entity ZCE_OFPARTITION
-  with parameters
-    //      @Consumption.hidden: true
-    SplitRange : char13
+  //  with parameters
+  //    //      @Consumption.hidden: true
+  //    SplitRange : char13
 {
   key Customer           : kunnr;
   key Plant              : werks_d;
@@ -16,5 +16,6 @@ define root custom entity ZCE_OFPARTITION
       Unit               : meins;
       ProcessStart       : abap.char(8);
       ProcessEnd         : abap.char(8);
+      SplitRange         : char13;
 
 }

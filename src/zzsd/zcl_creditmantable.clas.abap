@@ -9,11 +9,7 @@ CLASS zcl_creditmantable DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
-
-
+CLASS zcl_creditmantable IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
 
     DATA:
@@ -28,6 +24,7 @@ CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
       ls_salesorganization LIKE LINE OF lr_salesorganization,
       lr_customer          TYPE RANGE OF zr_creditmantable-customer,
       lS_customer          LIKE LINE OF lr_customer,
+      lv_termsno           TYPE char10,
       lv_zyear             TYPE zr_creditmantable-zyear.
     DATA:
       lv_rowno  TYPE n LENGTH 4,
@@ -86,16 +83,24 @@ CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
       payment~bslndtecalcaddlmnths          AS addlmnths,   "追加月
       payment~cashdiscount1days             AS cadays,      "日数
       customerpay~customerpaymenttermsname  AS terms        "回収条件-支払条件
+
+*      payment~paymentterms,
+*      payment~PaymentTermsValidityMonthDay,
+*      ' ' AS creditsegmentcurrency,
+*      ' ' AS limitamount ,"与信限度額
+*      ' ' AS addlmnths,   "追加月
+*      ' ' AS cadays,      "日数
+*      ' ' AS terms        "回収条件-支払条件
  FROM i_salesorganization WITH PRIVILEGED ACCESS AS sales
- LEFT OUTER JOIN i_customercompany WITH PRIVILEGED ACCESS AS customerc
+ INNER JOIN i_customercompany WITH PRIVILEGED ACCESS AS customerc
               ON customerc~companycode = sales~companycode
- LEFT OUTER JOIN i_creditmanagementaccount  WITH PRIVILEGED ACCESS AS creditm
+ INNER JOIN i_creditmanagementaccount  WITH PRIVILEGED ACCESS AS creditm
               ON creditm~creditsegment   = sales~salesorganization
              AND creditm~businesspartner = customerc~customer
- LEFT OUTER JOIN i_customersalesarea        WITH PRIVILEGED ACCESS AS customers
+ INNER JOIN i_customersalesarea        WITH PRIVILEGED ACCESS AS customers
               ON customers~salesorganization = sales~salesorganization
              AND customers~customer          = customerc~customer
- LEFT OUTER JOIN i_customer                 WITH PRIVILEGED ACCESS AS customer
+ INNER JOIN i_customer                 WITH PRIVILEGED ACCESS AS customer
               ON customer~customer = customerc~customer
  LEFT OUTER JOIN i_creditmanagementaccount  WITH PRIVILEGED ACCESS AS credit
               ON credit~creditsegment   = sales~salesorganization
@@ -104,6 +109,7 @@ CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
               ON payment~paymentterms = customerc~paymentterms
  LEFT OUTER JOIN i_customerpaymenttermstext WITH PRIVILEGED ACCESS AS customerpay
               ON customerpay~customerpaymentterms = payment~paymentterms
+             AND customerpay~Language = 'J'
            WHERE sales~salesorganization IN @lr_salesorganization
              AND customerc~customer  IN @lr_customer
 
@@ -170,8 +176,11 @@ CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
 
       CLEAR ls_data.
       ls_data-customer           = <lfs_customer>-customer.
-      ls_data-customername           = <lfs_customer>-customername.
+      ls_data-customer = |{ ls_data-customer alpha = out }|.
+      ls_data-customername       = <lfs_customer>-customername.
       ls_data-limitamount        = <lfs_customer>-limitamount .
+      ls_data-currency           = <lfs_customer>-creditsegmentcurrency.
+
       ls_data-zymonth1          = lv_zyear && '年度1月'.
       ls_data-zymonth2          = lv_zyear && '年度2月'.
       ls_data-zymonth3          = lv_zyear && '年度3月'.
@@ -191,7 +200,8 @@ CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
         IF <lfs_customerg>-cadays = 0.
 
           ls_data-terms1     = <lfs_customerg>-addlmnths.
-          ls_data-termstext1 = ls_data-terms1 && 'か月後回収'.
+          lv_termsno = |{ ls_data-terms1 alpha = out }|.
+          ls_data-termstext1 = lv_termsno && 'か月後回収'.
 
 *         日数がゼロ以外の場合
         ELSE.
@@ -199,7 +209,8 @@ CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
           lv_day = <lfs_customerg>-cadays / 30.
           lv_day = ceil( lv_day ).
           ls_data-terms1     = lv_day + <lfs_customerg>-addlmnths.
-          ls_data-termstext1 = ls_data-terms1 && 'か月後回収'.
+          lv_termsno = |{ ls_data-terms1 alpha = out }|.
+          ls_data-termstext1 = lv_termsno && 'か月後回収'.
         ENDIF.
 
 *         回収条件-支払条件
@@ -800,4 +811,5 @@ CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
     io_response->set_data( lt_data ).
 
   ENDMETHOD.
+
 ENDCLASS.

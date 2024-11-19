@@ -45,7 +45,7 @@ define root view entity ZZC_DTIMP_FILES
            @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZZCL_DTIMP_GET_STATUS'
   virtual  LogStatusCriticality : abap.int1,
            @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZZCL_DTIMP_GET_STATUS'
-  virtual  ApplicationLogUrl    : abap.string( 256 ),
+  virtual  ApplicationLogUrl    : abap.string( 1000 ),
 
            _Configuration : redirected to ZZC_DTIMP_CONF,
            _ApplicationLog

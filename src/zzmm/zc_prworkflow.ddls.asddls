@@ -8,6 +8,7 @@ define root view entity ZC_PRWORKFLOW
 
    key   ApplyDepart,
    key   PrNo,
+   key   UserZseq,
       UUID,
       PrItem,
       PrType,
@@ -64,5 +65,9 @@ define root view entity ZC_PRWORKFLOW
       LocalCreatedAt,
       LocalLastChangedBy,
       LocalLastChangedAt,
-      LatCahangedAt
+      LatCahangedAt,
+      WorkflowId,
+      InstanceId,
+      ApplicationId,
+      EmailAddress
 }

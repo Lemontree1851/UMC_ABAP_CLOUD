@@ -9,6 +9,7 @@ define root custom entity ZC_ProductionOrder
 {
       @UI.lineItem             : [ { position: 30, label: 'プラント'} ]
       @UI.selectionField       : [ { position: 10 } ]
+      @Consumption.filter      : { mandatory: true }
       @Consumption.valueHelpDefinition: [ { entity: { element: 'Plant', name: 'I_PlantStdVH' } } ]
       @EndUserText.label       : 'プラント'
   key Plant                    : werks_d;
@@ -76,7 +77,6 @@ define root custom entity ZC_ProductionOrder
       @EndUserText.label       : 'メッセージ'
       Message                  : abap.char( 220 );
 
-      //      @UI.lineItem             : [ { type: #FOR_ACTION, dataAction: 'Release', label: '製造指図発行' } ]
       @UI.hidden               : true
       ProductionUnit           : meins;
       @UI.hidden               : true

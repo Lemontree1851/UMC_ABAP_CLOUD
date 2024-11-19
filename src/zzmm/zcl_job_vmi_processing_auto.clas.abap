@@ -61,27 +61,27 @@ CLASS ZCL_JOB_VMI_PROCESSING_AUTO IMPLEMENTATION.
     "获取日志对象
     init_application_log( ).
 
-    DATA:
-      lt_ztmm_1010 TYPE STANDARD TABLE OF ztmm_1010,
-      ls_ztmm_1010 TYPE ztmm_1010,
-      lv_timestamp TYPE timestamp.
-
-    GET TIME STAMP FIELD lv_timestamp.
-    ls_ztmm_1010-uuid = lv_timestamp.
-    CONDENSE ls_ztmm_1010-uuid.
-    ls_ztmm_1010-material = 'ZTEST_RAW001'.
-    ls_ztmm_1010-quantity = 1.
-    ls_ztmm_1010-unit = 'ST'.
-    ls_ztmm_1010-storagelocation = 'A02Y'.
-    ls_ztmm_1010-plant = '1100'.
-    ls_ztmm_1010-customer = '0000010002'.
-    ls_ztmm_1010-documentdate = cl_abap_context_info=>get_system_date( ).
-    ls_ztmm_1010-postingdate = cl_abap_context_info=>get_system_date( ).
-    ls_ztmm_1010-created_at = lv_timestamp.
-    ls_ztmm_1010-created_by = sy-uname.
-
-    MODIFY ztmm_1010 FROM @ls_ztmm_1010.
-    COMMIT WORK AND WAIT.
+*    DATA:
+*      lt_ztmm_1010 TYPE STANDARD TABLE OF ztmm_1010,
+*      ls_ztmm_1010 TYPE ztmm_1010,
+*      lv_timestamp TYPE timestamp.
+*
+*    GET TIME STAMP FIELD lv_timestamp.
+*    ls_ztmm_1010-uuid = lv_timestamp.
+*    CONDENSE ls_ztmm_1010-uuid.
+*    ls_ztmm_1010-material = 'ZTEST_RAW001'.
+*    ls_ztmm_1010-quantity = 1.
+*    ls_ztmm_1010-unit = 'ST'.
+*    ls_ztmm_1010-storagelocation = 'A02Y'.
+*    ls_ztmm_1010-plant = '1100'.
+*    ls_ztmm_1010-customer = '0000010002'.
+*    ls_ztmm_1010-documentdate = cl_abap_context_info=>get_system_date( ).
+*    ls_ztmm_1010-postingdate = cl_abap_context_info=>get_system_date( ).
+*    ls_ztmm_1010-created_at = lv_timestamp.
+*    ls_ztmm_1010-created_by = sy-uname.
+*
+*    MODIFY ztmm_1010 FROM @ls_ztmm_1010.
+*    COMMIT WORK AND WAIT.
 
     TRY.
         zcl_vmi_processing_auto=>execute(
@@ -139,31 +139,6 @@ CLASS ZCL_JOB_VMI_PROCESSING_AUTO IMPLEMENTATION.
 
 
   METHOD if_oo_adt_classrun~main.
-
-*    DATA:
-*      lt_ztmm_1010 TYPE STANDARD TABLE OF ztmm_1010,
-*      ls_ztmm_1010 TYPE ztmm_1010,
-*      lv_timestamp TYPE timestamp.
-
-*    DELETE FROM ztmm_1010 WHERE processed = @abap_true.
-*    COMMIT ENTITIES.
-
-*    GET TIME STAMP FIELD lv_timestamp.
-*    ls_ztmm_1010-uuid = lv_timestamp.
-*    CONDENSE ls_ztmm_1010-uuid.
-*    ls_ztmm_1010-material = 'ZTEST_RAW001'.
-*    ls_ztmm_1010-quantity = 1.
-*    ls_ztmm_1010-unit = 'ST'.
-*    ls_ztmm_1010-storagelocation = 'A02Y'.
-*    ls_ztmm_1010-plant = '1100'.
-*    ls_ztmm_1010-customer = '0000010002'.
-*    ls_ztmm_1010-documentdate = cl_abap_context_info=>get_system_date( ).
-*    ls_ztmm_1010-postingdate = cl_abap_context_info=>get_system_date( ).
-*    ls_ztmm_1010-created_at = lv_timestamp.
-*    ls_ztmm_1010-created_by = sy-uname.
-*
-*    MODIFY ztmm_1010 FROM @ls_ztmm_1010.
-*    COMMIT WORK AND WAIT.
 
     "for debugger
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.

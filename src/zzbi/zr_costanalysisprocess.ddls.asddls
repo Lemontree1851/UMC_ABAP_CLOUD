@@ -14,16 +14,25 @@ define root custom entity ZR_COSTANALYSISPROCESS
       Customer           : abap.char( 10 );                               
       CustomerName       : abap.char( 40 );   
       CompanycodeText    : abap.char( 40 ); 
-      PlantText          : abap.char( 40 ); 
-      EstimatedPrice_SMT : abap.char( 6 );                                   
-      EstimatedPrice_AI  : abap.char( 6 );                                
-      EstimatedPrice_FAT : abap.char( 6 );                             
-      ActualPrice_SMT    : abap.char( 6 );                          
-      ActualPrice_AI     : abap.char( 6 );                       
-      ActualPrice_FAT    : abap.char( 6 );                      
-      Currency           : abap.char( 6 );                          
+      PlantText          : abap.char( 40 );   
+      @Semantics : { amount : {currencyCode: 'Currency'} } 
+      EstimatedPrice_SMT : abap.curr(15,2);   
+      @Semantics : { amount : {currencyCode: 'Currency'} }                           
+      EstimatedPrice_AI  : abap.curr(15,2);   
+      @Semantics : { amount : {currencyCode: 'Currency'} }                             
+      EstimatedPrice_FAT : abap.curr(15,2);   
+      @Semantics : { amount : {currencyCode: 'Currency'} }                           
+      ActualPrice_SMT    : abap.curr(15,2);   
+      @Semantics : { amount : {currencyCode: 'Currency'} }                          
+      ActualPrice_AI     : abap.curr(15,2);   
+      @Semantics : { amount : {currencyCode: 'Currency'} }                     
+      ActualPrice_FAT    : abap.curr(15,2);                       
+      Currency           : waerk;                           
       BillingQuantity    : abap.char( 6 );                         
-      BillingQuantityUnit: abap.char( 2 );                                  
+      BillingQuantityUnit: abap.char( 2 );
+      sales_number        : abap.char(25);
+      quo_version         : abap.char(25);
+      sales_d_no          : abap.char(25);                                   
        
       
 }

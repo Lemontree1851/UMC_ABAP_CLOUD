@@ -13,8 +13,9 @@ define view entity ZI_BI003_REPORT_REC_NEC_AMT_GP
   as select from ZI_BI003_REPORT_003_PO( p_recover_type:'IN' )
 {
   key RecoveryManagementNumber,
+  key _Matdoc.FiscalYearPeriod as FiscalYearPeriod,
 
-      _CompanyCode.Currency as CompanyCurrency,
+      _CompanyCode.Currency    as CompanyCurrency,
 
       @Semantics.amount.currencyCode: 'CompanyCurrency'
       @EndUserText: { label:  'Recovery Necessary Amount', quickInfo: 'Recovery Necessary Amount' }
@@ -24,10 +25,11 @@ define view entity ZI_BI003_REPORT_REC_NEC_AMT_GP
                          target_currency => _CompanyCode.Currency
                  ) as abap.dec( 16, 2 ) ) * OrderQuantity
              as dmbtr
-           )   )            as TotalGroupAmount
+           )   )               as TotalGroupAmount
 }
 where
   _Product.ProductGroup = $parameters.p_product_group
 group by
   RecoveryManagementNumber,
+  _Matdoc.FiscalYearPeriod,
   _CompanyCode.Currency

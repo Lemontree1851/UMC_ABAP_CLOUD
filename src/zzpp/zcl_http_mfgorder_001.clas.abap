@@ -640,6 +640,32 @@ CLASS ZCL_HTTP_MFGORDER_001 IMPLEMENTATION.
           MOVE-CORRESPONDING ls_manufacturingorderoperation TO ls_routing.
           TRY.
               ls_routing-_operation_unit = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out iv_input = ls_routing-_operation_unit ).
+
+              ls_routing-_op_work_quantity_unit1        = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
+                                               iv_input = ls_routing-_op_work_quantity_unit1 ).
+              ls_routing-_op_work_quantity_unit2        = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
+                                               iv_input = ls_routing-_op_work_quantity_unit2 ).
+              ls_routing-_op_work_quantity_unit3        = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
+                                               iv_input = ls_routing-_op_work_quantity_unit3 ).
+              ls_routing-_op_work_quantity_unit4        = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
+                                               iv_input = ls_routing-_op_work_quantity_unit4 ).
+              ls_routing-_op_work_quantity_unit5        = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
+                                               iv_input = ls_routing-_op_work_quantity_unit5 ).
+              ls_routing-_op_work_quantity_unit6        = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
+                                               iv_input = ls_routing-_op_work_quantity_unit6 ).
+
+              ls_routing-workcenterstandardworkqtyunit1 = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
+                                               iv_input = ls_routing-workcenterstandardworkqtyunit1 ).
+              ls_routing-workcenterstandardworkqtyunit2 = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
+                                               iv_input = ls_routing-workcenterstandardworkqtyunit2 ).
+              ls_routing-workcenterstandardworkqtyunit3 = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
+                                               iv_input = ls_routing-workcenterstandardworkqtyunit3 ).
+              ls_routing-workcenterstandardworkqtyunit4 = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
+                                               iv_input = ls_routing-workcenterstandardworkqtyunit4 ).
+              ls_routing-workcenterstandardworkqtyunit5 = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
+                                               iv_input = ls_routing-workcenterstandardworkqtyunit5 ).
+              ls_routing-workcenterstandardworkqtyunit6 = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
+                                               iv_input = ls_routing-workcenterstandardworkqtyunit6 ).
             CATCH zzcx_custom_exception INTO lo_root_exc.
           ENDTRY.
           APPEND ls_routing TO ls_res-_data-_routing.

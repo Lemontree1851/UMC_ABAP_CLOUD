@@ -5,6 +5,12 @@ define root view entity ZR_PRWORKFLOWLINK
   as select from ztmm_1006
     inner join   ZR_PRWORKFLOW_SUM on  ztmm_1006.apply_depart = ZR_PRWORKFLOW_SUM.ApplyDepart_sum
                                    and ztmm_1006.pr_no        = ZR_PRWORKFLOW_SUM.PrNo_sum
+
+  //association [0..*] to ZR_WF_ApprovalHistory as _ApprovalHistory on  ztmm_1006.workflow_id    = _ApprovalHistory.WorkflowId
+  //                                                                and ztmm_1006.instance_id    = _ApprovalHistory.InstanceId
+  //                                                                and ztmm_1006.application_id = _ApprovalHistory.ApplicationId
+
+
 {
   key ztmm_1006.uuid                           as UUID,
       ztmm_1006.apply_depart                   as ApplyDepart,
@@ -67,5 +73,9 @@ define root view entity ZR_PRWORKFLOWLINK
       ztmm_1006.local_last_changed_at          as LocalLastChangedAt,
       @Semantics.systemDateTime.lastChangedAt: true
       ztmm_1006.lat_cahanged_at                as LatCahangedAt,
-      ZR_PRWORKFLOW_SUM.amount_sum             as AmountSum
+      ZR_PRWORKFLOW_SUM.amount_sum             as AmountSum,
+      ztmm_1006.workflow_id                    as WorkflowId,
+      ztmm_1006.instance_id                    as InstanceId,
+      ztmm_1006.application_id                 as ApplicationId   
+ 
 }

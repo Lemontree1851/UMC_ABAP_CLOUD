@@ -2,9 +2,7 @@
 "BASEINFO":
 {
 "FROM":
-[
-"ZR_AGENCYPURCHASING"
-],
+[],
 "ASSOCIATED":
 [],
 "BASE":

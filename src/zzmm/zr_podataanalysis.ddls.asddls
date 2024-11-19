@@ -8,7 +8,7 @@
         } }
 define custom entity ZR_PODATAANALYSIS
 {
-      @UI                           : { lineItem: [ { position: 10, label: '購買発注番号' } ], selectionField: [ { position: 20 } ] }
+      @UI                           : { lineItem: [ { position: 10, label: '購買発注番号' } ], selectionField: [ { position: 10 } ] }
       @Consumption.filter           : { mandatory: false }
       @EndUserText.label            : '購買発注番号'
   key PurchaseOrder                 : abap.char(10);
@@ -26,12 +26,12 @@ define custom entity ZR_PODATAANALYSIS
       @EndUserText.label            : '伝票タイプ' 
       PurchaseOrderType             : abap.char(4);
       
-      @UI                           : { lineItem: [ { position: 40, label: '発注-明細番号' } ], selectionField: [ { position: 10 } ] }
+      @UI                           : { lineItem: [ { position: 40, label: '発注-明細番号' } ], selectionField: [ { position: 20 } ] }
       @Consumption.filter           : { mandatory: false }
       @EndUserText.label            : '発注-明細番号'
       POPOItem                      :abap.char(15);
       
-      @UI                           : { lineItem: [ { position: 50, label: '仕入先' } ], selectionField: [ { position: 10 } ] }
+      @UI                           : { lineItem: [ { position: 50, label: '仕入先' } ], selectionField: [ { position: 30 } ] }
       @Consumption.filter           : { mandatory: false }
       @EndUserText.label            : '仕入先'      
       Supplier                      : abap.char(10);
@@ -48,7 +48,7 @@ define custom entity ZR_PODATAANALYSIS
       @EndUserText.label            : '得意先名称'
       Customer                      : abap.char(10);
       
-      @UI                           : { lineItem: [ { position: 90, label: '購買グループ' } ], selectionField: [ { position: 10 } ] }
+      @UI                           : { lineItem: [ { position: 90, label: '購買グループ' } ], selectionField: [ { position: 40 } ] }
       @Consumption.filter           : { mandatory: false }
       @EndUserText.label            : '購買グループ'      
       PurchasingGroup               : abap.char(3);
@@ -61,12 +61,12 @@ define custom entity ZR_PODATAANALYSIS
       @EndUserText.label            : 'MRPコントロール'
       MRPResponsible                : abap.char(3);
       
-      @UI                           : { lineItem: [ { position: 120, label: 'コントロール名称' } ], selectionField: [ { position: 20 } ] }
+      @UI                           : { lineItem: [ { position: 120, label: 'コントロール名称' } ], selectionField: [ { position: 70 } ] }
       @Consumption.filter           : { mandatory: false }
       @EndUserText.label            : 'MRP管理者'
       MRPControllerName             : abap.char(18);
       
-      @UI                           : { lineItem: [ { position: 130, label: '品目' } ], selectionField: [ { position: 20 } ] }
+      @UI                           : { lineItem: [ { position: 130, label: '品目' } ], selectionField: [ { position: 50 } ] }
       @Consumption.filter           : { mandatory: false }
       @EndUserText.label            : '品目コード'
       Material                      : abap.char(18);
@@ -108,12 +108,16 @@ define custom entity ZR_PODATAANALYSIS
       @Semantics.unitOfMeasure      : true
       PurchaseOrderQuantityUnit     : abap.unit(3);
       
-      @UI                           : { lineItem: [ { position: 220, label: 'PO納期' } ]}
-      @EndUserText.label            : 'PO納期'
+      @UI                           : { lineItem: [ { position: 220, label: 'PO納期' } ], selectionField: [ { position: 100 } ]}
+      @Consumption.filter           : { mandatory: false }
+      @Consumption.filter:          { selectionType: #INTERVAL, multipleSelections: false }
+      @EndUserText.label            : '納入日付'
       ScheduleLineDeliveryDate      : abap.dats;
       
-      @UI                           : { lineItem: [ { position: 230, label: 'PO発行日' } ]}
-      @EndUserText.label            : 'PO発行日'
+      @UI                           : { lineItem: [ { position: 230, label: 'PO発行日' } ],selectionField: [ { position: 90 } ]}
+      @Consumption.filter           : { mandatory: false }
+      @Consumption.filter:          { selectionType: #INTERVAL, multipleSelections: false }
+      @EndUserText.label            : '伝票日付'
       PurchaseOrderDate             : abap.dats;
       
       @UI                           : { lineItem: [ { position: 230, label: 'PO単価' } ]}
@@ -149,7 +153,9 @@ define custom entity ZR_PODATAANALYSIS
       @EndUserText.label            : '品目グループ'
       MaterialGroup                 : abap.char(9);
       
-      @UI                           : { lineItem: [ { position: 310, label: '回答納期' } ]}
+      @UI                           : { lineItem: [ { position: 310, label: '回答納期' } ] , selectionField: [ { position: 130 } ]} 
+      @Consumption.filter           : { mandatory: false }
+      @Consumption.filter:          { selectionType: #INTERVAL, multipleSelections: false }
       @EndUserText.label            : '回答納期'
       DeliveryDate                  : abap.dats;
       
@@ -182,12 +188,12 @@ define custom entity ZR_PODATAANALYSIS
       @EndUserText.label            : '登録者'
       CreatedByUser                 : abap.char(12);
       
-      @UI                           : { lineItem: [ { position: 390, label: 'プラント' } ], selectionField: [ { position: 10 } ] }
+      @UI                           : { lineItem: [ { position: 390, label: 'プラント' } ], selectionField: [ { position: 60 } ] }
       @Consumption.filter           : { selectionType: #SINGLE, multipleSelections: false, mandatory: false }
       @EndUserText.label            : 'プラント'      
       Plant                         : werks_d;
       
-      @UI                           : { lineItem: [ { position: 400, label: '保管場所' } ]}
+      @UI                           : { lineItem: [ { position: 400, label: '保管場所' } ], selectionField: [ { position: 140 } ]}
       @EndUserText.label            : '保管場所'
       StorageLocation               : lgort_d;
       
@@ -262,6 +268,10 @@ define custom entity ZR_PODATAANALYSIS
       @EndUserText.label             : '項目テキスト'
       PlainLongText1                 : abap.char(255);   
       
+      @UI                            : { lineItem: [ { position: 555, label: '注文書発行' } ]}
+      @EndUserText.label             : '注文書発行'
+      Porelease                      : abap.char(10);  
+      
       @UI                            : { lineItem: [ { position: 560, label: ' 生産計画日付' } ]}
       @EndUserText.label             : ' 生産計画日付'
       MRPElementReschedulingDate     : abap.dats;    
@@ -284,5 +294,42 @@ define custom entity ZR_PODATAANALYSIS
       @EndUserText.label             : 'PurchaseOrderItemCategory' 
       @UI.hidden: true        
       PurchaseOrderItemCategory      : abap.char(1);
-     
+      
+      
+      @UI                           : { lineItem: [ { position: 590, label: 'PO連携担当者' } ], selectionField: [ { position: 20 } ] }
+      @Consumption.filter           : { mandatory: false }
+      @EndUserText.label            : 'PO連携担当者'
+      CorrespncInternalReference                      : abap.char(12);
+      
+      @UI                           : { lineItem: [ { position: 60, label: '仕入先品目コード' } ], selectionField: [ { position: 80 } ] }
+      @Consumption.filter           : { mandatory: false }
+      @EndUserText.label            : '仕入先品目コード'
+      SupplierMaterialNumber                      : abap.char(35);     
+
+      @UI                           : { lineItem: [ { position: 630, label: '基軸通貨' } ], selectionField: [ { position: 150 } ] }
+      @Consumption.filter           : { mandatory: false }
+      @EndUserText.label            : '基軸通貨'
+      IncotermsClassification       : abap.char(35); 
+      
+      
+      @UI                           : { lineItem: [ { position: 640, label: '承認区分' } ], selectionField: [ { position: 160 } ] }
+      @Consumption.filter.selectionType: #SINGLE
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_POAPPROVEVH', element: 'Zvalue1' } }]
+      @EndUserText.label            : '承認区分'
+      WorkflowTaskResult            : abap.char(1); 
+      
+      @UI                           : { lineItem: [ { position: 650, label: '承認テキスト' } ]}
+      @EndUserText.label            : '承認テキスト'
+      Taskresulttext                : abap.char(15); 
+ 
+      @UI                           : { selectionField: [ { position: 170 } ] }
+      @Consumption.filter.selectionType: #SINGLE
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_POREMAINVH', element: 'Zvalue1' } }]
+      @EndUserText.label            : 'PO残⁼0 制限'
+      ponokodis                       : abap.char( 1 ); 
+      
+      
+      
+      
+        
 }

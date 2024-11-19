@@ -288,11 +288,11 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
         ENDIF.
 
         "Check confirmation text of input parameter must be valuable
-        IF ls_ztpp_1004-confirmationtext IS INITIAL.
+        "IF ls_ztpp_1004-confirmationtext IS INITIAL.
           "確認テキストを送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 046 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
+          "MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 046 INTO ls_res-_msg.
+          "RAISE EXCEPTION TYPE cx_abap_api_state.
+        "ENDIF.
 
         "Check plant of input parameter must be existent
         SELECT COUNT(*)
@@ -414,6 +414,7 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
 
       MOVE-CORRESPONDING ls_ztpp_1004 TO ls_ztpp_1005.
       ls_ztpp_1005-msgitemno = lc_count_10.
+      ls_ztpp_1005-message   = ls_res-_msg.
       APPEND ls_ztpp_1005 TO lt_ztpp_1005.
 
       "Modify database of log

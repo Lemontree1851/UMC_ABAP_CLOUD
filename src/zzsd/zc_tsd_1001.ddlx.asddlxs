@@ -1,8 +1,8 @@
 @Metadata.layer: #CORE
 @UI: {
   headerInfo: {
-    typeName: 'Shipment Location', 
-    typeNamePlural: 'Shipment Location'
+    typeName: '出荷保管場', 
+    typeNamePlural: '出荷保管場'
   }
 }
 annotate view ZC_TSD_1001 with
@@ -51,10 +51,9 @@ annotate view ZC_TSD_1001 with
     cssDefault:{ width: '6rem' }
   } ]
   @UI.identification: [ {
-    position: 40 ,
-    label: 'Issue Storage Location'
+    position: 40 
   } ]
-  IssueStorageLocation;
+  issuestoragelocation;
   
   @UI.lineItem: [ {
     position: 50 , 
@@ -62,8 +61,7 @@ annotate view ZC_TSD_1001 with
     cssDefault:{ width: '7rem' }
   } ]
   @UI.identification: [ {
-    position: 50 ,
-    label: 'Finished Storage Location'
+    position: 50 
   } ]
   FinishedStorageLocation;
   
@@ -73,8 +71,7 @@ annotate view ZC_TSD_1001 with
     cssDefault:{ width: '6rem' }
   } ]
   @UI.identification: [ {
-    position: 60 , 
-    label: 'Return Storage Location'
+    position: 60 
   } ]
   ReturnStorageLocation;
   
@@ -84,8 +81,7 @@ annotate view ZC_TSD_1001 with
     cssDefault:{ width: '6rem' }
   } ]
   @UI.identification: [ {
-    position: 70 , 
-    label: 'Repair Storage Location'
+    position: 70 
   } ]
   RepairStorageLocation;
   
@@ -95,10 +91,9 @@ annotate view ZC_TSD_1001 with
     cssDefault:{ width: '6rem' }
   } ]
   @UI.identification: [ {
-    position: 80 , 
-    label: 'VimStorageLocation'
+    position: 80 
   } ]
-  VimStorageLocation;
+  vimstoragelocation;
   
   @UI.hidden: true
   LocalLastChangedAt;

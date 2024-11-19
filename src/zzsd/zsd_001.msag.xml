@@ -102,7 +102,7 @@
      <SPRSL>E</SPRSL>
      <ARBGB>ZSD_001</ARBGB>
      <MSGNR>015</MSGNR>
-     <TEXT>検収数不能小于受注残数</TEXT>
+     <TEXT>収数は受注残数を下回る。確認してください。</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>
@@ -133,6 +133,12 @@
      <ARBGB>ZSD_001</ARBGB>
      <MSGNR>020</MSGNR>
      <TEXT>出荷伝票&amp;1更新成功しました</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZSD_001</ARBGB>
+     <MSGNR>021</MSGNR>
+     <TEXT>出荷伝票&amp;1は内部転記済みのため、実績日は更新できない。</TEXT>
     </T100>
    </T100>
   </asx:values>

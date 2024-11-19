@@ -43,11 +43,13 @@ CLASS zcl_query_componentusagelist IMPLEMENTATION.
       ls_billofmaterialcomponent   LIKE LINE OF lr_billofmaterialcomponent,
       ls_productmanufacturernumber LIKE LINE OF lr_productmanufacturernumber,
       ls_suppliermaterialnumber    LIKE LINE OF lr_suppliermaterialnumber,
-      ls_profilecode               LIKE LINE OF lr_profilecode,
       ls_data                      TYPE zc_componentusagelist,
-      ls_finalproductinfo          TYPE ty_finalproductinfo.
+      ls_finalproductinfo          TYPE ty_finalproductinfo,
+      lv_nodisplaynonproduct       TYPE abap_boolean.
 
     CONSTANTS:
+      lc_sign_i           TYPE string VALUE 'I',
+      lc_option_eq        TYPE string VALUE 'EQ',
       lc_producttype_zfrt TYPE string VALUE 'ZFRT',
       lc_profilecode_z5   TYPE string VALUE 'Z5',
       lc_alpha_in         TYPE string VALUE 'IN',
@@ -80,16 +82,15 @@ CLASS zcl_query_componentusagelist IMPLEMENTATION.
             APPEND ls_suppliermaterialnumber TO lr_suppliermaterialnumber.
             CLEAR ls_suppliermaterialnumber.
           WHEN 'NODISPLAYNONPRODUCT'.
-            IF str_rec_l_range-low = abap_true.
-              MOVE-CORRESPONDING str_rec_l_range TO ls_profilecode.
-              ls_profilecode-low = lc_profilecode_z5.
-              APPEND ls_profilecode TO lr_profilecode.
-              CLEAR ls_profilecode.
-            ENDIF.
+            lv_nodisplaynonproduct = str_rec_l_range-low.
           WHEN OTHERS.
         ENDCASE.
       ENDLOOP.
     ENDLOOP.
+
+    IF lv_nodisplaynonproduct = abap_true.
+      lr_profilecode = VALUE #( sign = lc_sign_i option = lc_option_eq ( low = lc_profilecode_z5 ) ).
+    ENDIF.
 
     "Obtain data of bill of material component
     SELECT a~product,

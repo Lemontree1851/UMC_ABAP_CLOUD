@@ -24,18 +24,19 @@ define root custom entity ZR_OFSOCOMPARISON
       Customer           : abap.char( 10 );
       @UI                : { lineItem: [ { position: 30, label: '品目' } ], selectionField: [ { position: 30 } ] }
       @EndUserText.label : '品目'
-      @Consumption.valueHelpDefinition: [ { entity: { element: 'Material', name: 'ZC_BOMMaterialVH' } } ]
+      @Consumption.valueHelpDefinition: [ { entity: { element: 'Product', name: 'I_PRODUCTPLANTBASIC' } } ]
       Material           : matnr;
       @UI                : { lineItem: [ { position: 40, label: '品目テキスト' } ]}
       @EndUserText.label : '品目テキスト'
       MaterialName       : maktx;
       @UI                : { lineItem: [ { position: 50, label: '得意先品目' } ], selectionField: [ { position: 40 } ] }
       @EndUserText.label : '得意先品目'
-      @Consumption.valueHelpDefinition: [ { entity: { element: 'Material', name: 'ZC_BOMMaterialVH' } } ]
+//      @Consumption.valueHelpDefinition: [ { entity: { element: 'Product', name: 'I_CustomerMaterial_2' } } ]
       MATERIALBYCUSTOMER : matnr;
       @UI                : { lineItem: [ { position: 60, label: '登録日付' } ]}
       @EndUserText.label : '登録日付'
       CREATED_AT         : abap.char( 8 );
+      created_ats        : abp_creation_tstmpl;
 
       @Semantics.quantity.unitOfMeasure : 'unit_of_measure'
       @UI                : { lineItem: [ { position: 70, label: '所要数1' } ]}

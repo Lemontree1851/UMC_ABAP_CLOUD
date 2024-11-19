@@ -13,6 +13,8 @@ define root view entity ZC_WF_ApprovalHistory
       Operator,
       ApprovalStatus,
       Remark,
+      EmailAddress,
+      Del,
       CreatedBy,
       CreatedAt,
       LastChangedBy,

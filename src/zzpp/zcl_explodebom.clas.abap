@@ -81,7 +81,11 @@ CLASS zcl_explodebom DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_explodebom IMPLEMENTATION.
+
+
+CLASS ZCL_EXPLODEBOM IMPLEMENTATION.
+
+
   METHOD get_data.
     DATA:
       lt_bomlist                  TYPE STANDARD TABLE OF ty_bomlist,

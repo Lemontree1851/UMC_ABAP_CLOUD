@@ -21,19 +21,19 @@ CLASS lsc_zzr_dtimp_files IMPLEMENTATION.
       lt_files = CORRESPONDING #( update-files ).
     ENDIF.
 
-    SELECT  uuidfile
-      FROM zzc_dtimp_files
+    SELECT uuid_file
+      FROM zzt_dtimp_start
        FOR ALL ENTRIES IN @lt_files
-     WHERE uuidfile = @lt_files-uuidfile
-      INTO TABLE @DATA(lt_files_old).
+     WHERE uuid_file = @lt_files-uuidfile
+      INTO TABLE @DATA(lt_files_start).
 
-    SORT lt_files_old BY uuidfile.
+    SORT lt_files_start BY uuid_file.
 
     LOOP AT lt_files ASSIGNING FIELD-SYMBOL(<lfs_file>) WHERE filecontent IS NOT INITIAL.
       CLEAR: ls_job_start_info,
              lt_job_parameters.
 
-      READ TABLE lt_files_old TRANSPORTING NO FIELDS WITH KEY uuidfile = <lfs_file>-uuidfile BINARY SEARCH.
+      READ TABLE lt_files_start TRANSPORTING NO FIELDS WITH KEY uuid_file = <lfs_file>-uuidfile BINARY SEARCH.
       IF sy-subrc = 0.
         EXIT.
       ENDIF.
@@ -56,6 +56,13 @@ CLASS lsc_zzr_dtimp_files IMPLEMENTATION.
               ev_jobname             = lv_job_name
               ev_jobcount            = lv_job_count ).
 
+          GET TIME STAMP FIELD DATA(lv_timestamp).
+          INSERT INTO zzt_dtimp_start VALUES @( VALUE #( uuid_file       = <lfs_file>-uuidfile
+                                                         created_by      = sy-uname
+                                                         created_at      = lv_timestamp
+                                                         last_changed_by = sy-uname
+                                                         last_changed_at = lv_timestamp
+                                                         local_last_changed_at = lv_timestamp ) ).
         CATCH cx_apj_rt INTO DATA(lo_apj_rt).
 
           APPEND VALUE #( uuidfile = <lfs_file>-uuidfile

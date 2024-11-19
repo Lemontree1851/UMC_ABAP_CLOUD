@@ -7,5 +7,21 @@
   },
   "generalInformation": {
     "catalogName": "ZJCE_AGENCYPURCHASING"
+  },
+  "parameters": {
+    "valueRangesParameters": [
+      {
+        "name": "P_COM",
+        "valueRanges": []
+      },
+      {
+        "name": "P_COM2",
+        "valueRanges": []
+      },
+      {
+        "name": "P_ZPOSTI",
+        "valueRanges": []
+      }
+    ]
   }
 }

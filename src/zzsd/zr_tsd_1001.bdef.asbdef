@@ -11,7 +11,7 @@ authorization master( global )
 {
   field ( mandatory : create )
    Customer,
-   BillingToParty,
+//   BillingToParty,
    Plant;
 
   field ( readonly )
@@ -42,11 +42,11 @@ authorization master( global )
     Customer = customer;
     BillingToParty = billing_to_party;
     Plant = plant;
-    IssueStorageLocation = issue_storage_location;
+    PartsStorageLocation = parts_storage_location;
     FinishedStorageLocation = finished_storage_location;
     ReturnStorageLocation = return_storage_location;
     RepairStorageLocation = repair_storage_location;
-    VimStorageLocation = vim_storage_location;
+    VmiStorageLocation = vmi_storage_location;
     LocalCreatedBy = local_created_by;
     LocalCreatedAt = local_created_at;
     LocalLastChangedBy = local_last_changed_by;

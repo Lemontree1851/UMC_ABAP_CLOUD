@@ -75,13 +75,13 @@ CLASS lhc_dnprocess IMPLEMENTATION.
         CASE <fs_record>-filetype.
             "アラクサラネットワークス株式会社
           WHEN '0'.
-            READ TABLE lt_bc1001 INTO DATA(ls_bc1001) WITH KEY zid = 'ZSD001'.
+            READ TABLE lt_bc1001 INTO DATA(ls_bc1001) WITH KEY zid = 'ZSD002'.
             IF sy-subrc = 0.
               <fs_record>-soldtoparty = ls_bc1001-zvalue1.
             ENDIF.
             "日立オムロンターミナルソリューションズ株式会社
           WHEN '1' OR '2'.
-            READ TABLE lt_bc1001 INTO ls_bc1001 WITH KEY zid = 'ZSD002'
+            READ TABLE lt_bc1001 INTO ls_bc1001 WITH KEY zid = 'ZSD001'
               zvalue1 = <fs_record>-purchasefrom zvalue2 = <fs_record>-soldto.
             IF sy-subrc = 0.
               <fs_record>-soldtoparty = ls_bc1001-zvalue3.
@@ -114,9 +114,10 @@ CLASS lhc_dnprocess IMPLEMENTATION.
       IF sy-subrc = 0.
         ls_result-%param-purchasefrom = record_temp-purchasefrom.
         ls_result-%param-soldto = record_temp-soldto.
+        ls_result-%param-productbypurchase = record_temp-product.
         ls_result-%param-acceptdate = record_temp-acceptdate.
         ls_result-%param-acceptquantity = record_temp-acceptquantity.
-        ls_result-%param-acceptunit = record_temp-acceptunit."前端不会传入此字段
+        ls_result-%param-acceptunit = record_temp-acceptunit."前端不会传入此字段,所以此字段无值
       ENDIF.
 
       "校验 検収数＜受注残数 时报错
@@ -279,8 +280,8 @@ CLASS lhc_dnprocess IMPLEMENTATION.
 
           "修改行项目
           "TOFIX 目前库存地点逻辑未确定，先填充固定值A622，后续复制SD-015的库存地点的逻辑
-          LOOP AT records INTO record_temp WHERE DeliveryDocument = ls_response-d-delivery_document.
-            data(lv_param) = |DeliveryDocument='{ record_temp-DeliveryDocument }',DeliveryDocumentItem='{ record_temp-DeliveryDocumentItem }'|.
+          LOOP AT records INTO record_temp WHERE deliverydocument = ls_response-d-delivery_document.
+            DATA(lv_param) = |DeliveryDocument='{ record_temp-deliverydocument }',DeliveryDocumentItem='{ record_temp-deliverydocumentitem }'|.
             lv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryItem({ lv_param })?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
             lv_requestbody = |\{"d":\{"StorageLocation":"A622"\}\}|."由于目前只修改一个字段，所以直接构建字符串
             zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
@@ -292,7 +293,7 @@ CLASS lhc_dnprocess IMPLEMENTATION.
               is_error = abap_true.
             ENDIF.
           ENDLOOP.
-          if is_error = abap_false.
+          IF is_error = abap_false.
             "获取ETag
             lv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader('{ ls_response-d-delivery_document }')?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
             zzcl_common_utils=>get_api_etag(  EXPORTING iv_odata_version = 'V2'
@@ -300,9 +301,9 @@ CLASS lhc_dnprocess IMPLEMENTATION.
                                               IMPORTING ev_status_code   = lv_status_code
                                                         ev_response      = lv_response
                                                         ev_etag          = DATA(lv_etag) ).
-            if lv_status_code <> 200.
+            IF lv_status_code <> 200.
               is_error = abap_true.
-            else.
+            ELSE.
               "过账DN
               lv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/PostGoodsIssue?DeliveryDocument='{ ls_response-d-delivery_document }'|.
               zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
@@ -313,8 +314,8 @@ CLASS lhc_dnprocess IMPLEMENTATION.
               IF lv_status_code <> 200.
                 is_error = abap_true.
               ENDIF.
-            endif.
-          endif.
+            ENDIF.
+          ENDIF.
         ELSE.
           is_error = abap_true.
         ENDIF.

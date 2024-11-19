@@ -268,6 +268,9 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
            n~salesdocumentrjcnreasonname,
            a~yy1_salesdoctype_sdh,
            b~yy1_managementno_sdi,
+           b~yy1_managementno_1_sdi,
+           b~yy1_managementno_2_sdi,
+           b~yy1_managementno_3_sdi,
 
            b~orderrelatedbillingstatus,
            b~requestedquantityinbaseunit,
@@ -377,19 +380,21 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
         INTO TABLE @DATA(lt_salesdocitempricingelement).
 
       "Obtain data of delivery document item
-      SELECT deliverydocument,
-             deliverydocumentitem,
-             referencesddocument,
-             referencesddocumentitem,
-             goodsmovementstatus,
-             goodsmovementtype,
-             actualdeliveredqtyinbaseunit,
-
-             deliveryrelatedbillingstatus
-        FROM i_deliverydocumentitem WITH PRIVILEGED ACCESS
+      SELECT a~deliverydocument,
+             a~deliverydocumentitem,
+             a~referencesddocument,
+             a~referencesddocumentitem,
+             a~goodsmovementstatus,
+             a~goodsmovementtype,
+             a~actualdeliveredqtyinbaseunit,
+             a~deliveryrelatedbillingstatus,
+             b~intcoextplndtransfofctrldtetme
+        FROM i_deliverydocumentitem WITH PRIVILEGED ACCESS AS a
+       INNER JOIN i_deliverydocument WITH PRIVILEGED ACCESS AS b
+          ON b~deliverydocument = a~deliverydocument
          FOR ALL ENTRIES IN @lt_salesdocumentitem
-       WHERE referencesddocument = @lt_salesdocumentitem-salesdocument
-         AND referencesddocumentitem = @lt_salesdocumentitem-salesdocumentitem
+       WHERE a~referencesddocument = @lt_salesdocumentitem-salesdocument
+         AND a~referencesddocumentitem = @lt_salesdocumentitem-salesdocumentitem
         INTO TABLE @DATA(lt_deliverydocumentitem).
       IF sy-subrc = 0.
         "Obtain data of billing document item(DN billing)
@@ -486,31 +491,31 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
 
       "未請求
       IF lv_indicator4 = abap_true.
-        "Read data of delivery document item
-        READ TABLE lt_deliverydocumentitem INTO DATA(ls_deliverydocumentitem) WITH KEY referencesddocument = ls_salesdocumentitem-salesdocument
-                                                                                       referencesddocumentitem = ls_salesdocumentitem-salesdocumentitem
-                                                                                       goodsmovementstatus = lsc_status-c
-                                                                                       goodsmovementtype = lsc_gmtype-b601
-                                                                              BINARY SEARCH.
-        IF sy-subrc = 0.
-          IF  ls_deliverydocumentitem-deliveryrelatedbillingstatus NOT IN lr_relatedbillingstatus
-          AND ls_salesdocumentitem-orderrelatedbillingstatus NOT IN lr_relatedbillingstatus.
-            CONTINUE.
-          ENDIF.
-        ELSE.
+        IF ls_salesdocumentitem-orderrelatedbillingstatus NOT IN lr_relatedbillingstatus.
           "Read data of delivery document item
-          READ TABLE lt_deliverydocumentitem INTO ls_deliverydocumentitem WITH KEY referencesddocument = ls_salesdocumentitem-salesdocument
-                                                                                   referencesddocumentitem = ls_salesdocumentitem-salesdocumentitem
-                                                                                   goodsmovementstatus = lsc_status-c
-                                                                                   goodsmovementtype = lsc_gmtype-b687
-                                                                          BINARY SEARCH.
+          READ TABLE lt_deliverydocumentitem INTO DATA(ls_deliverydocumentitem) WITH KEY referencesddocument = ls_salesdocumentitem-salesdocument
+                                                                                         referencesddocumentitem = ls_salesdocumentitem-salesdocumentitem
+                                                                                         goodsmovementstatus = lsc_status-c
+                                                                                         goodsmovementtype = lsc_gmtype-b601
+                                                                                BINARY SEARCH.
           IF sy-subrc = 0.
-            IF  ls_deliverydocumentitem-deliveryrelatedbillingstatus NOT IN lr_relatedbillingstatus
-            AND ls_salesdocumentitem-orderrelatedbillingstatus NOT IN lr_relatedbillingstatus.
+            IF ls_deliverydocumentitem-deliveryrelatedbillingstatus NOT IN lr_relatedbillingstatus.
               CONTINUE.
             ENDIF.
           ELSE.
-            CONTINUE.
+            "Read data of delivery document item
+            READ TABLE lt_deliverydocumentitem INTO ls_deliverydocumentitem WITH KEY referencesddocument = ls_salesdocumentitem-salesdocument
+                                                                                     referencesddocumentitem = ls_salesdocumentitem-salesdocumentitem
+                                                                                     goodsmovementstatus = lsc_status-c
+                                                                                     goodsmovementtype = lsc_gmtype-b687
+                                                                            BINARY SEARCH.
+            IF sy-subrc = 0.
+              IF ls_deliverydocumentitem-deliveryrelatedbillingstatus NOT IN lr_relatedbillingstatus.
+                CONTINUE.
+              ENDIF.
+            ELSE.
+              CONTINUE.
+            ENDIF.
           ENDIF.
         ENDIF.
       ENDIF.
@@ -737,38 +742,63 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
                 ENDIF.
               ENDIF.
 
-              "Read data of material document item(GoodsMovementType 601)
-              READ TABLE lt_materialdocumentitem TRANSPORTING NO FIELDS WITH KEY deliverydocument = ls_deliverydocumentitem-deliverydocument
-                                                                                 deliverydocumentitem = ls_deliverydocumentitem-deliverydocumentitem
-                                                                                 goodsmovementtype = lsc_gmtype-b601
-                                                                                 debitcreditcode = lsc_debitcreditcode-h
-                                                                        BINARY SEARCH.
-              IF sy-subrc = 0.
-                DATA(lv_flag_b601) = abap_true.
-              ENDIF.
+              IF ls_deliverydocumentitem-intcoextplndtransfofctrldtetme = 0.
+                "Read data of material document item(GoodsMovementType 601)
+                READ TABLE lt_materialdocumentitem TRANSPORTING NO FIELDS WITH KEY deliverydocument = ls_deliverydocumentitem-deliverydocument
+                                                                                   deliverydocumentitem = ls_deliverydocumentitem-deliverydocumentitem
+                                                                                   goodsmovementtype = lsc_gmtype-b601
+                                                                                   debitcreditcode = lsc_debitcreditcode-h
+                                                                          BINARY SEARCH.
+                IF sy-subrc = 0.
+                  DATA(lv_flag_b601) = abap_true.
+                ENDIF.
 
-              "Read data of material document item(GoodsMovementType 687)
-              READ TABLE lt_materialdocumentitem TRANSPORTING NO FIELDS WITH KEY deliverydocument = ls_deliverydocumentitem-deliverydocument
-                                                                                 deliverydocumentitem = ls_deliverydocumentitem-deliverydocumentitem
-                                                                                 goodsmovementtype = lsc_gmtype-b687
-                                                                                 debitcreditcode = lsc_debitcreditcode-h
-                                                                        BINARY SEARCH.
-              IF sy-subrc = 0.
-                DATA(lv_flag_b687) = abap_true.
-              ENDIF.
+                "Read data of material document item(GoodsMovementType 687)
+                READ TABLE lt_materialdocumentitem TRANSPORTING NO FIELDS WITH KEY deliverydocument = ls_deliverydocumentitem-deliverydocument
+                                                                                   deliverydocumentitem = ls_deliverydocumentitem-deliverydocumentitem
+                                                                                   goodsmovementtype = lsc_gmtype-b687
+                                                                                   debitcreditcode = lsc_debitcreditcode-h
+                                                                          BINARY SEARCH.
+                IF sy-subrc = 0.
+                  DATA(lv_flag_b687) = abap_true.
+                ENDIF.
 
-              IF lv_flag_b601 = abap_true AND lv_flag_b687 = abap_true.
-                ls_data-enternaltansferqtyinbaseunit = ls_deliverydocumentitem-actualdeliveredqtyinbaseunit .
-              ENDIF.
+                IF lv_flag_b601 = abap_true AND lv_flag_b687 = abap_true.
+                  lv_value = ls_deliverydocumentitem-actualdeliveredqtyinbaseunit.
+                  CONDENSE lv_value NO-GAPS.
+                  SHIFT lv_value RIGHT DELETING TRAILING '0'.
+                  SHIFT lv_value RIGHT DELETING TRAILING '.'. "小数点是.
+                  SHIFT lv_value LEFT DELETING LEADING space.
 
-              IF ( lv_flag_b601 = abap_false AND lv_flag_b687 = abap_true )
-              OR ( lv_flag_b601 = abap_false AND lv_flag_b687 = abap_false ).
-                ls_data-noenternaltansferqtyinbaseunit = ls_deliverydocumentitem-actualdeliveredqtyinbaseunit .
-              ENDIF.
+                  CONCATENATE lv_value lv_baseunit INTO ls_data-externaltansferqtyinbaseunit SEPARATED BY space.
+                ENDIF.
 
-              CLEAR:
-                lv_flag_b601,
-                lv_flag_b687.
+                IF ( lv_flag_b601 = abap_false AND lv_flag_b687 = abap_true )
+                OR ( lv_flag_b601 = abap_false AND lv_flag_b687 = abap_false ).
+                  lv_value = ls_deliverydocumentitem-actualdeliveredqtyinbaseunit.
+                  CONDENSE lv_value NO-GAPS.
+                  SHIFT lv_value RIGHT DELETING TRAILING '0'.
+                  SHIFT lv_value RIGHT DELETING TRAILING '.'. "小数点是.
+                  SHIFT lv_value LEFT DELETING LEADING space.
+
+                  CONCATENATE lv_value lv_baseunit INTO ls_data-noexternaltansferqtyinbaseunit SEPARATED BY space.
+                ENDIF.
+
+                IF ls_data-externaltansferqtyinbaseunit IS INITIAL.
+                  CONCATENATE '0' lv_baseunit INTO ls_data-externaltansferqtyinbaseunit SEPARATED BY space.
+                ENDIF.
+
+                IF ls_data-noexternaltansferqtyinbaseunit IS INITIAL.
+                  CONCATENATE '0' lv_baseunit INTO ls_data-noexternaltansferqtyinbaseunit SEPARATED BY space.
+                ENDIF.
+
+                CLEAR:
+                  lv_flag_b601,
+                  lv_flag_b687.
+              ELSE.
+                ls_data-externaltansferqtyinbaseunit   = lc_symbol_hyphen.
+                ls_data-noexternaltansferqtyinbaseunit = lc_symbol_hyphen.
+              ENDIF.
             ENDIF.
 
             lv_actualdelqtyinbaseunit = lv_actualdelqtyinbaseunit + ls_deliverydocumentitem-actualdeliveredqtyinbaseunit.

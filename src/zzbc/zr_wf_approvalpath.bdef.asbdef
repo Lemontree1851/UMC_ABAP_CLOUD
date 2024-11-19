@@ -38,7 +38,7 @@ authorization master ( instance )
       ApplyDepart        = apply_depart;
       OrderType          = order_type;
       BuyPurpose         = buy_purpose;
-      Location           = location;
+      Kyoten             = kyoten;
       Knttp              = knttp;
       CostCenter         = cost_center;
       AmountFrom         = amount_from;

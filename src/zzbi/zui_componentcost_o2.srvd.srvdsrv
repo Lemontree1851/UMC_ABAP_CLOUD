@@ -1,0 +1,4 @@
+@EndUserText.label: '逆ザヤ防止分析（部品費）'
+define service ZUI_COMPONENTCOST_O2 {
+  expose ZC_COMPONENTCOST;
+}

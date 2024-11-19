@@ -11,33 +11,33 @@ define root view entity ZR_MFGORDERASSIGNSOITEM
                                                                        and $projection.SalesOrderItem = _ScheduleLine.SalesOrderItem
                                                                        and _ScheduleLine.ScheduleLine = '0001'
 {
-  key plant                                            as Plant,
-  key manufacturing_order                              as ManufacturingOrder,
-  key sales_order                                      as SalesOrder,
-  key sales_order_item                                 as SalesOrderItem,
-  key sequence                                         as Sequence,
-      production_supervisor                            as ProductionSupervisor,
-      m_r_p_controller                                 as MRPController,
-      material                                         as Material,
-      mfg_order_planned_start_date                     as MfgOrderPlannedStartDate,
+  key plant                                                              as Plant,
+  key manufacturing_order                                                as ManufacturingOrder,
+  key sales_order                                                        as SalesOrder,
+  key sales_order_item                                                   as SalesOrderItem,
+  key sequence                                                           as Sequence,
+      production_supervisor                                              as ProductionSupervisor,
+      m_r_p_controller                                                   as MRPController,
+      material                                                           as Material,
+      mfg_order_planned_start_date                                       as MfgOrderPlannedStartDate,
       @Semantics.quantity.unitOfMeasure: 'ProductionUnit'
-      mfg_order_planned_total_qty                      as MfgOrderPlannedTotalQty,
-      production_unit                                  as ProductionUnit,
+      mfg_order_planned_total_qty                                        as MfgOrderPlannedTotalQty,
+      production_unit                                                    as ProductionUnit,
       @Semantics.quantity.unitOfMeasure: 'ProductionUnit'
-      assign_qty                                       as AssignQty,
-      remark                                           as Remark,
-      created_at                                       as CreatedAt,
-      created_by                                       as CreatedBy,
-      last_changed_at                                  as LastChangedAt,
-      last_changed_by                                  as LastChangedBy,
-      local_last_changed_at                            as LocalLastChangedAt,
+      assign_qty                                                         as AssignQty,
+      remark                                                             as Remark,
+      created_at                                                         as CreatedAt,
+      created_by                                                         as CreatedBy,
+      last_changed_at                                                    as LastChangedAt,
+      last_changed_by                                                    as LastChangedBy,
+      local_last_changed_at                                              as LocalLastChangedAt,
 
       _SOItem.PurchaseOrderByCustomer,
       @Semantics.quantity.unitOfMeasure: 'BaseUnit'
       _SOItem.RequestedQuantityInBaseUnit,
       _SOItem.BaseUnit,
       @Semantics.quantity.unitOfMeasure: 'ProductionUnit'
-      _SOItem.RequestedQuantityInBaseUnit - assign_qty as UnAssignQty,
+      _SOItem.RequestedQuantityInBaseUnit - _SumAssignQty.TotalAssignQty as UnAssignQty,
 
       _SumAssignQty,
       _SOItem,

@@ -96,7 +96,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
             purc_info_org_plant~purchasingorganization,
             purc_info_org_plant~pricevalidityenddate,
             purc_info_org_plant~materialpriceunitqty,
-            purc_info_org_plant~netpriceamount
+            purc_info_org_plant~netpriceamount,
+            purc_info_org_plant~currency
           FROM i_purchasinginforecordapi01 WITH PRIVILEGED ACCESS AS purc_info
           LEFT JOIN i_purginforecdorgplntdataapi01 WITH PRIVILEGED ACCESS AS purc_info_org_plant
             ON purc_info~purchasinginforecord = purc_info_org_plant~purchasinginforecord
@@ -120,7 +121,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
             IF sy-subrc = 0.
               ls_purginforecd-netpriceamount = zzcl_common_utils=>conversion_amount(
                                                                     iv_alpha = 'OUT'
-                                                                    iv_currency = 'JPY'
+                                                                    iv_currency = ls_purginforecd-currency
                                                                     iv_input = ls_purginforecd-netpriceamount ).
               IF ls_purginforecd-materialpriceunitqty <> 0.
                 lv_upload_price = record-price / record-unitprice.
@@ -263,6 +264,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                       memotext
                       buypurpoose
                       islink
+                      suppliermat
+                      polinkby
                       purchaseorder
                       purchaseorderitem
                       kyoten
@@ -578,15 +581,16 @@ CLASS lhc_purchasereq IMPLEMENTATION.
       END OF ty_purchase_order_item,
       "PO抬头结构
       BEGIN OF ty_purchase_order,
-        purchase_order          TYPE i_purchaseordertp_2-purchaseorder,
-        purchase_order_type     TYPE i_purchaseordertp_2-purchaseordertype,
-        purchase_order_date     TYPE i_purchaseordertp_2-purchaseorderdate,
-        company_code            TYPE i_purchaseordertp_2-companycode,
-        purchasing_organization TYPE i_purchaseordertp_2-purchasingorganization,
-        purchasing_group        TYPE i_purchaseordertp_2-purchasinggroup,
-        supplier                TYPE i_purchaseordertp_2-supplier,
-        document_currency       TYPE i_purchaseordertp_2-documentcurrency,
-        to_purchase_order_item  TYPE TABLE OF ty_purchase_order_item WITH DEFAULT KEY,
+        purchase_order               TYPE i_purchaseordertp_2-purchaseorder,
+        purchase_order_type          TYPE i_purchaseordertp_2-purchaseordertype,
+        purchase_order_date          TYPE i_purchaseordertp_2-purchaseorderdate,
+        company_code                 TYPE i_purchaseordertp_2-companycode,
+        purchasing_organization      TYPE i_purchaseordertp_2-purchasingorganization,
+        purchasing_group             TYPE i_purchaseordertp_2-purchasinggroup,
+        supplier                     TYPE i_purchaseordertp_2-supplier,
+        document_currency            TYPE i_purchaseordertp_2-documentcurrency,
+        correspnc_internal_reference TYPE i_purchaseordertp_2-correspncinternalreference,
+        to_purchase_order_item       TYPE TABLE OF ty_purchase_order_item WITH DEFAULT KEY,
       END OF ty_purchase_order,
       " 这种格式的可能只适用于odata v2的api
 *      BEGIN OF ty_response,
@@ -634,6 +638,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
       ls_request-purchasing_group = record_key-purchasegrp.
       ls_request-supplier = record_key-supplier.
       ls_request-document_currency = record_key-currency.
+      ls_request-correspnc_internal_reference = record_key-polinkby.
       "行项目数据
       CLEAR ls_request-to_purchase_order_item.
       CLEAR lt_mm1006.

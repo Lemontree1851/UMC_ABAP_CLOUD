@@ -6,15 +6,10 @@ define view entity ZR_PRWORKFLOW_SUM
 
   key     apply_depart as ApplyDepart_sum,
   key     pr_no        as PrNo_sum,
-
-          sum( price * quantity /  
-          (
-              case  unit_price
-              when 0 then 1
-              else unit_price
-              end
-          )
-          )            as amount_sum
+          sum( case when unit_price <> 0
+                  then price * quantity / unit_price
+                  else 0
+               end )   as amount_sum
 
 }
 group by

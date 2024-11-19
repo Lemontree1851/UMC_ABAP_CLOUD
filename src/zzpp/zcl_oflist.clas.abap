@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_oflist IMPLEMENTATION.
+CLASS ZCL_OFLIST IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

@@ -38,6 +38,8 @@ public section.
         MIN_DELIVERY_QTY     TYPE  C  LENGTH  13   ,
         MANUF_CODE           TYPE  C  LENGTH  40   ,
         PUR_GROUP_NAME       TYPE  C  LENGTH  18   ,
+        SupplierPhoneNumber  type c LENGTH 16,
+        SupplierMaterialNumber type c LENGTH 35 ,
 
       END OF ty_response,
 
@@ -104,10 +106,10 @@ CLASS ZCL_HTTP_PRDATA_001 IMPLEMENTATION.
 
     FROM i_purchaserequisitionitemapi01 WITH PRIVILEGED ACCESS as a
     LEFT JOIN i_supplier WITH PRIVILEGED ACCESS as b
-    on b~supplier = a~supplier
+    on b~supplier = a~FixedSupplier
     LEFT JOIN I_PurchasingInfoRecordApi01 WITH PRIVILEGED ACCESS as c
     on c~Material = a~Material
-    and c~Supplier = a~Supplier
+    and c~Supplier = a~FixedSupplier
     LEFT JOIN I_PurgInfoRecdOrgPlntDataApi01 WITH PRIVILEGED ACCESS AS d
     on d~PurchasingOrganization = a~Plant
     and d~Plant = a~plant
@@ -117,14 +119,28 @@ CLASS ZCL_HTTP_PRDATA_001 IMPLEMENTATION.
     LEFT JOIN I_PurchasingGroup WITH PRIVILEGED ACCESS as f
     on f~PurchasingGroup = a~PurchasingGroup
 
-*    WHERE
-*      a~deliverydate >= @lv_pre_month
-*      AND c~IsDeleted <> 'X'
-*      AND D~IsMarkedForDeletion <> 'X'
     INTO TABLE @DATA(lt_pr).
 
+    SELECT * FROM i_purchasinginforecordapi01 WITH PRIVILEGED ACCESS
+
+        WHERE isdeleted <> 'X'
+        into TABLE @data(lt_phno) .
+
+
     if lt_pr is not INITIAL.
+
         LOOP AT LT_PR INTO DATA(LW_PR).
+
+            READ TABLE lt_phno into data(lw_phno) with key supplier = lw_pr-FixedSupplier Material = lw_pr-Material.
+
+
+                if sy-subrc = 0.
+                    ls_response-SupplierPhoneNumber = lw_phno-SupplierPhoneNumber.
+                    ls_response-suppliermaterialnumber = lw_phno-SupplierMaterialNumber.
+                ENDIF.
+
+
+
             ls_response-PR_NUMBER           =   LW_PR-PurchaseRequisition           .
             ls_response-D_NO                =   LW_PR-PurchaseRequisitionItem       .
             ls_response-PUR_GROUP           =   LW_PR-PurchasingGroup               .
@@ -145,7 +161,11 @@ CLASS ZCL_HTTP_PRDATA_001 IMPLEMENTATION.
             ls_response-ARRANGE_END_DATE    =   LW_PR-DeliveryDate.
             ls_response-PLANT               =   LW_PR-Plant.
             ls_response-ARRANGE_QTY         =   LW_PR-RequestedQuantity.
+
             ls_response-NAME1               =   LW_PR-BusinessPartnerName1.
+
+
+
             ls_response-MIN_DELIVERY_QTY    =   LW_PR-MinimumPurchaseOrderQuantity.
             ls_response-MANUF_CODE          =   LW_PR-ProductManufacturerNumber.
             ls_response-PUR_GROUP_NAME      =   LW_PR-PurchasingGroupName.

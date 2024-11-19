@@ -31,6 +31,15 @@ define root view entity ZC_DNDATEBATCHUPDATE
       IntcoIntPlndTransfOfCtrlDteTme,
       IntcoIntActlTransfOfCtrlDteTme,
       YY1_SalesDocType_DLH,
+      @Consumption.hidden: true
       Status,
-      Message
+      @Consumption.hidden: true
+      Message,
+      @Consumption.hidden: true
+      DeliveryDocument2,
+      @Consumption.hidden: true
+      DeliveryDocument4
+      
 }
+where DeliveryDocument4 is not initial
+//  and DeliveryDocument4 is initial

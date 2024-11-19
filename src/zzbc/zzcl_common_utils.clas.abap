@@ -25,6 +25,16 @@ CLASS zzcl_common_utils DEFINITION
              token_type   TYPE string,
            END OF ty_token_response.
 
+    TYPES:BEGIN OF ts_add_column,
+            name  TYPE string,
+            types TYPE string,
+          END OF ts_add_column,
+          tt_add_coll TYPE STANDARD TABLE OF ts_add_column WITH EMPTY KEY,
+          BEGIN OF ts_dyn_name,
+            name TYPE string,
+          END OF ts_dyn_name,
+          tt_dyn_name TYPE STANDARD TABLE OF ts_dyn_name WITH EMPTY KEY.
+
     CLASS-DATA: BEGIN OF date,
                   j(4),
                   m(2),
@@ -58,7 +68,7 @@ CLASS zzcl_common_utils DEFINITION
                                iv_contenttype_value  TYPE string OPTIONAL
                      EXPORTING VALUE(ev_status_code) TYPE if_web_http_response=>http_status-code
                                VALUE(ev_response)    TYPE string
-                               VALUE(ev_etag)           TYPE string,
+                               VALUE(ev_etag)        TYPE string,
 
       "! Request API for OData V4
       request_api_v4 IMPORTING iv_path               TYPE string
@@ -70,7 +80,8 @@ CLASS zzcl_common_utils DEFINITION
                                iv_etag               TYPE string OPTIONAL
                                iv_contenttype_value  TYPE string OPTIONAL
                      EXPORTING VALUE(ev_status_code) TYPE if_web_http_response=>http_status-code
-                               VALUE(ev_response)    TYPE string,
+                               VALUE(ev_response)    TYPE string
+                               VALUE(ev_etag)        TYPE string,
 
       "! Conversion exit for Material INPUT/OUTPUT
       "! @parameter iv_alpha | (IN or OUT)
@@ -136,11 +147,12 @@ CLASS zzcl_common_utils DEFINITION
       "! Method get working day
       "! @parameter iv_date       | Date
       "! @parameter iv_next       | Next/Current working day
+      "! @parameter iv_plant      | Plant
       "! @parameter rv_workingday | Working day
-      get_workingday IMPORTING iv_date               TYPE datum
-                               iv_next               TYPE abap_boolean DEFAULT abap_false
-                               iv_factorycalendar_id TYPE cl_fhc_calendar_runtime=>ty_fcal_id DEFAULT 'Z_JP'
-                     RETURNING VALUE(rv_workingday)  TYPE datum,
+      get_workingday IMPORTING iv_date              TYPE datum
+                               iv_next              TYPE abap_boolean DEFAULT abap_false
+                               iv_plant             TYPE werks_d
+                     RETURNING VALUE(rv_workingday) TYPE datum,
 
       "! Method Check if the date is valid
       "! @parameter iv_date  | Date
@@ -172,20 +184,21 @@ CLASS zzcl_common_utils DEFINITION
                                    day              TYPE i DEFAULT 0
                          RETURNING VALUE(calc_date) TYPE datum,
 
-      get_usap_access_token IMPORTING iv_token_url          TYPE string
-                                      iv_client_id          TYPE string
-                                      iv_client_secret      TYPE string
-                            EXPORTING VALUE(ev_status_code) TYPE if_web_http_response=>http_status-code
-                                      VALUE(ev_response)    TYPE string
-                                      VALUE(es_response)    TYPE ty_token_response,
+      get_access_token IMPORTING iv_token_url          TYPE string
+                                 iv_client_id          TYPE string
+                                 iv_client_secret      TYPE string
+                       EXPORTING VALUE(ev_status_code) TYPE if_web_http_response=>http_status-code
+                                 VALUE(ev_response)    TYPE string
+                                 VALUE(es_response)    TYPE ty_token_response,
 
-      get_usap_cdata IMPORTING iv_odata_url          TYPE string
-                               iv_odata_filter       TYPE string OPTIONAL
-                               iv_token_url          TYPE string
-                               iv_client_id          TYPE string
-                               iv_client_secret      TYPE string
-                     EXPORTING VALUE(ev_status_code) TYPE if_web_http_response=>http_status-code
-                               VALUE(ev_response)    TYPE string,
+      get_externalsystems_cdata IMPORTING iv_odata_url          TYPE string
+                                          iv_odata_filter       TYPE string OPTIONAL
+                                          iv_token_url          TYPE string OPTIONAL
+                                          iv_client_id          TYPE string OPTIONAL
+                                          iv_client_secret      TYPE string OPTIONAL
+                                          iv_no_authorization   TYPE abap_boolean OPTIONAL
+                                EXPORTING VALUE(ev_status_code) TYPE if_web_http_response=>http_status-code
+                                          VALUE(ev_response)    TYPE string,
 
       get_api_etag IMPORTING iv_odata_version      TYPE string
                              iv_path               TYPE string
@@ -206,7 +219,20 @@ CLASS zzcl_common_utils DEFINITION
                                        VALUE(decimals)      TYPE any
                                        VALUE(denominator)   TYPE any
                                        VALUE(numerator)     TYPE any
-                                       VALUE(output)        TYPE any.
+                                       VALUE(output)        TYPE any,
+
+*&--Begin use for create dynamic table
+      get_all_fields     IMPORTING VALUE(is_table) TYPE any
+                                   VALUE(it_type)  TYPE tt_add_coll
+                         RETURNING VALUE(rv_value) TYPE REF TO data,
+
+      set_datadescr      IMPORTING VALUE(iv_types) TYPE string
+                         RETURNING VALUE(rv_descr) TYPE REF TO cl_abap_datadescr,
+*&--End use for create dynamic table
+      is_workingday IMPORTING iv_plant             TYPE werks_d
+                              iv_date              TYPE datum
+                    RETURNING VALUE(rv_workingday) TYPE abap_bool.
+
   PROTECTED SECTION.
   PRIVATE SECTION.
 
@@ -612,7 +638,7 @@ CLASS zzcl_common_utils IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD get_usap_access_token.
+  METHOD get_access_token.
     TRY.
         DATA(lo_http_destination) = cl_http_destination_provider=>create_by_url( iv_token_url ).
         DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_http_destination ).
@@ -640,15 +666,18 @@ CLASS zzcl_common_utils IMPLEMENTATION.
   ENDMETHOD.                                             "#EC CI_VALPAR
 
 
-  METHOD get_usap_cdata.
-    get_usap_access_token( EXPORTING iv_token_url     = iv_token_url
-                                     iv_client_id     = iv_client_id
-                                     iv_client_secret = iv_client_secret
-                           IMPORTING ev_status_code   = ev_status_code
-                                     ev_response      = ev_response
-                                     es_response      = DATA(ls_response) ).
-    IF ls_response IS INITIAL.
-      RETURN.
+  METHOD get_externalsystems_cdata.
+
+    IF iv_no_authorization = abap_false.
+      get_access_token( EXPORTING iv_token_url     = iv_token_url
+                                  iv_client_id     = iv_client_id
+                                  iv_client_secret = iv_client_secret
+                        IMPORTING ev_status_code   = ev_status_code
+                                  ev_response      = ev_response
+                                  es_response      = DATA(ls_response) ).
+      IF ls_response IS INITIAL.
+        RETURN.
+      ENDIF.
     ENDIF.
 
     TRY.
@@ -656,7 +685,10 @@ CLASS zzcl_common_utils IMPLEMENTATION.
         DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_http_destination ).
         DATA(lo_request) = lo_http_client->get_http_request( ).
 
-        lo_request->set_header_field( i_name = 'Authorization' i_value = |{ ls_response-token_type } { ls_response-access_token }| ).
+        IF iv_no_authorization = abap_false.
+          lo_request->set_header_field( i_name = 'Authorization' i_value = |{ ls_response-token_type } { ls_response-access_token }| ).
+        ENDIF.
+
         lo_request->set_header_field( i_name = 'Accept' i_value = 'application/json' ).
 
         IF iv_odata_filter IS NOT INITIAL.
@@ -678,54 +710,71 @@ CLASS zzcl_common_utils IMPLEMENTATION.
   METHOD get_workingday.
     DATA lv_date TYPE datum.
 
-    TRY.
-        DATA(lo_fcal_run) = cl_fhc_calendar_runtime=>create_factorycalendar_runtime( iv_factorycalendar_id = iv_factorycalendar_id ).
-        DATA(lv_flag) = lo_fcal_run->is_date_workingday( iv_date = iv_date ).
+    SELECT SINGLE factorycalendarid
+      FROM i_factorycalendarbasic WITH PRIVILEGED ACCESS AS a
+      JOIN i_plant AS b ON b~factorycalendar = a~factorycalendarlegacyid
+     WHERE b~plant = @iv_plant
+      INTO @DATA(lv_factorycalendar_id).
+    IF sy-subrc = 0.
+      TRY.
+          DATA(lo_fcal_run) = cl_fhc_calendar_runtime=>create_factorycalendar_runtime( iv_factorycalendar_id = lv_factorycalendar_id ).
+          DATA(lv_flag) = lo_fcal_run->is_date_workingday( iv_date = iv_date ).
 
-        " is a holiday
-        IF lv_flag IS INITIAL.
-          TRY.
-              cl_scal_utils=>date_get_week(
-                EXPORTING
-                  iv_date = iv_date
-                IMPORTING
-                  ev_year = DATA(lv_year)
-                  ev_week = DATA(lv_week) ).
+          " is a holiday
+          IF lv_flag = abap_false.
+*            TRY.
+*                cl_scal_utils=>date_get_week(
+*                  EXPORTING
+*                    iv_date = iv_date
+*                  IMPORTING
+*                    ev_year = DATA(lv_year)
+*                    ev_week = DATA(lv_week) ).
+*
+*                IF lv_week = 52.
+*                  lv_year += 1.
+*                  lv_week = 1.
+*                ELSE.
+*                  lv_week += 1.
+*                ENDIF.
+*
+*                cl_scal_utils=>week_get_first_day(
+*                  EXPORTING
+*                    iv_year      = lv_year
+*                    iv_week      = lv_week
+*                    iv_year_week = |{ lv_year }{ lv_week }|
+*                  IMPORTING
+*                    ev_date      = rv_workingday ).
+*
+*              CATCH cx_scal INTO DATA(lx_scal).
+*                "handle exception
+*                DATA(lv_text) = lx_scal->get_text( ).
+*            ENDTRY.
 
-              IF lv_week = 52.
-                lv_year += 1.
-                lv_week = 1.
-              ELSE.
-                lv_week += 1.
+            lv_date = iv_date.
+            DO.
+              lv_date += 1.
+              IF lo_fcal_run->is_date_workingday( iv_date = lv_date ).
+                rv_workingday = lv_date.
+                EXIT.
               ENDIF.
+            ENDDO.
 
-              cl_scal_utils=>week_get_first_day(
-                EXPORTING
-                  iv_year      = lv_year
-                  iv_week      = lv_week
-                  iv_year_week = |{ lv_year }{ lv_week }|
-                IMPORTING
-                  ev_date      = rv_workingday ).
+            " not is holiday, get next working day
+          ELSEIF iv_next = abap_true.
+            lv_date = iv_date + 1.
+            rv_workingday = get_workingday( iv_date  = lv_date
+                                            iv_next  = abap_false
+                                            iv_plant = iv_plant ).
 
-            CATCH cx_scal INTO DATA(lx_scal).
-              "handle exception
-              DATA(lv_text) = lx_scal->get_text( ).
-          ENDTRY.
-
-          " not is holiday, get next working day
-        ELSEIF iv_next = abap_true.
-          lv_date = iv_date + 1.
-          rv_workingday = get_workingday( iv_date = lv_date
-                                          iv_next = abap_false ).
-
-          " not is holiday, get current working day
-        ELSE.
-          rv_workingday = iv_date.
-        ENDIF.
-      CATCH cx_fhc_runtime INTO DATA(lx_err).
-        "handle exception
-        lv_text = lx_err->get_text( ).
-    ENDTRY.
+            " not is holiday, get current working day
+          ELSE.
+            rv_workingday = iv_date.
+          ENDIF.
+        CATCH cx_fhc_runtime INTO DATA(lx_err).
+          "handle exception
+          DATA(lv_text) = lx_err->get_text( ).
+      ENDTRY.
+    ENDIF.
   ENDMETHOD.
 
 
@@ -762,7 +811,6 @@ CLASS zzcl_common_utils IMPLEMENTATION.
 *        DATA(lv_text) = lx_bcs_mail->get_longtext(  ).
 *        "handle exception
 *    ENDTRY.
-    out->write( get_workingday( '20240924' ) ).
   ENDMETHOD.
 
 
@@ -961,6 +1009,9 @@ CLASS zzcl_common_utils IMPLEMENTATION.
         ev_status_code = lo_response->get_status( )-code.
         ev_response = lo_response->get_text(  ).
 
+        IF iv_method = if_web_http_client=>get.
+          ev_etag = lo_response->get_header_field( i_name = 'etag' ).
+        ENDIF.
         lo_http_client->close(  ).
 
       CATCH cx_web_message_error INTO DATA(lx_web_message_error).
@@ -1015,6 +1066,48 @@ CLASS zzcl_common_utils IMPLEMENTATION.
                                                 units_missing        = 06
                                                 unit_in_not_found    = 07
                                                 unit_out_not_found   = 08 ).
+  ENDMETHOD.
+
+  METHOD get_all_fields.
+    DATA: ref_table_des TYPE REF TO cl_abap_structdescr,
+          lt_comp       TYPE cl_abap_structdescr=>component_table.
+
+    ref_table_des ?= cl_abap_typedescr=>describe_by_name( is_table ).
+    lt_comp  = ref_table_des->get_components( ).
+
+    APPEND LINES OF VALUE cl_abap_structdescr=>component_table(
+           FOR is_type IN it_type ( name = is_type-name
+                                    type = set_datadescr( is_type-types ) ) ) TO lt_comp.
+
+    DATA(lo_new_type) = cl_abap_structdescr=>create( lt_comp ).
+    DATA(lo_new_tab) = cl_abap_tabledescr=>create(
+                        p_line_type  = lo_new_type
+                        p_table_kind = cl_abap_tabledescr=>tablekind_std
+                        p_unique     = abap_false ).
+
+    CREATE DATA rv_value TYPE HANDLE lo_new_tab.
+  ENDMETHOD.
+
+  METHOD set_datadescr.
+    rv_descr ?= cl_abap_elemdescr=>describe_by_name( iv_types ).
+  ENDMETHOD.
+
+  METHOD is_workingday.
+    rv_workingday = abap_false.
+    SELECT SINGLE factorycalendarid
+      FROM i_factorycalendarbasic WITH PRIVILEGED ACCESS AS a
+      JOIN i_plant AS b ON b~factorycalendar = a~factorycalendarlegacyid
+     WHERE b~plant = @iv_plant
+      INTO @DATA(lv_factorycalendar_id).
+    IF sy-subrc = 0.
+      TRY.
+          DATA(lo_fcal_run) = cl_fhc_calendar_runtime=>create_factorycalendar_runtime( iv_factorycalendar_id = lv_factorycalendar_id ).
+          rv_workingday = lo_fcal_run->is_date_workingday( iv_date = iv_date ).
+        CATCH cx_fhc_runtime INTO DATA(lx_err).
+          "handle exception
+          DATA(lv_text) = lx_err->get_text( ).
+      ENDTRY.
+    ENDIF.
   ENDMETHOD.
 
 ENDCLASS.

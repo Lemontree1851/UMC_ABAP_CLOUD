@@ -63,6 +63,8 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
               lr_requisitiondate[ 1 ]-option = zzcl_common_utils=>lc_range_option_le.
             WHEN 'STORAGELOCATIONTO'.
               DATA(lr_storagelocationto) = ls_filter_cond-range.
+            WHEN 'STORAGELOCATIONFROM'.
+              DATA(lr_storagelocationfrom) = ls_filter_cond-range.
             WHEN 'MATERIAL'.
               lr_material = VALUE #( FOR range IN ls_filter_cond-range (
                      sign   = range-sign
@@ -221,6 +223,7 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
         JOIN @lt_temp3 AS order ON  order~plant = stock~plant
                                 AND order~material = stock~material
        WHERE stock~storagelocation IS NOT INITIAL
+         AND stock~storagelocation IN @lr_storagelocationfrom
        GROUP BY stock~plant,
                 stock~material,
                 stock~storagelocation,
@@ -357,13 +360,13 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
             CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
             CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
             CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
-            zzcl_common_utils=>get_usap_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/INV03_HT_LIST|
-                                                         iv_odata_filter  = lv_filter
-                                                         iv_token_url     = CONV #( ls_config-zvalue3 )
-                                                         iv_client_id     = CONV #( ls_config-zvalue4 )
-                                                         iv_client_secret = CONV #( ls_config-zvalue5 )
-                                               IMPORTING ev_status_code   = DATA(lv_status_code)
-                                                         ev_response      = DATA(lv_response) ).
+            zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/INV03_HT_LIST|
+                                                                    iv_odata_filter  = lv_filter
+                                                                    iv_token_url     = CONV #( ls_config-zvalue3 )
+                                                                    iv_client_id     = CONV #( ls_config-zvalue4 )
+                                                                    iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                          IMPORTING ev_status_code   = DATA(lv_status_code)
+                                                                    ev_response      = DATA(lv_response) ).
             IF lv_status_code = 200.
               xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
 *                ( xco_cp_json=>transformation->pascal_case_to_underscore )
@@ -434,6 +437,7 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
     " Filtering
     zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
                                            it_excluded = VALUE #( ( fieldname = 'REQUISITIONDATE' )
+                                                                  ( fieldname = 'STORAGELOCATIONFROM' )
                                                                   ( fieldname = 'MATERIAL' ) )
                                  CHANGING  ct_data     = lt_data ).
     "Sort

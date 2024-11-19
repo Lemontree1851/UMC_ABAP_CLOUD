@@ -4,6 +4,57 @@ CLASS zcl_http_podata_003 DEFINITION
 
   PUBLIC SECTION.
     TYPES:
+
+      BEGIN OF ts_workflow,
+
+        SAPBusinessObjectNodeKey1     TYPE  string,
+        WorkflowInternalID            TYPE  string,
+        WorkflowExternalStatus        TYPE  string,
+
+      END OF ts_workflow,
+
+      tt_workflow TYPE STANDARD TABLE OF ts_workflow WITH DEFAULT KEY,
+
+      BEGIN OF ts_workflow_d,
+        results TYPE tt_workflow,
+      END OF ts_workflow_d,
+
+      BEGIN OF ts_workflow_api,
+        d TYPE ts_workflow_d,
+      END OF ts_workflow_api,
+*---------------------------------------------------------------------------
+      BEGIN OF ts_workflowdetail,
+
+        WorkflowInternalID         TYPE  string,
+        WorkflowTaskInternalID     TYPE  string,
+        WorkflowTaskResult         TYPE  string,
+
+      END OF ts_workflowdetail,
+
+      tt_workflowdetail TYPE STANDARD TABLE OF ts_workflowdetail WITH DEFAULT KEY,
+
+      BEGIN OF ts_workflowdetail_d,
+        results TYPE tt_workflowdetail,
+      END OF ts_workflowdetail_d,
+
+      BEGIN OF ts_workflowdetail_api,
+        d TYPE ts_workflowdetail_d,
+      END OF ts_workflowdetail_api,
+*---------------------------------------------------------------------------
+      Begin of ty_confirmation,
+
+                 PurchaseOrder                       type string,
+                 PurchaseOrderItem                   type string,
+                 SequentialNmbrOfSuplrConf           type string,
+                 DeliveryDate                        type string,
+                 ConfirmedQuantity                   type string,
+                 MRPRelevantQuantity                 type string,
+                 SupplierConfirmationExtNumber       type string,
+
+      END OF TY_confirmation,
+
+      tt_confimation TYPE STANDARD TABLE OF ty_confirmation WITH EMPTY KEY,
+
       BEGIN OF ty_response,
         purchaseorder                  TYPE c LENGTH  10,
         supplier                       TYPE c LENGTH  10,
@@ -21,20 +72,27 @@ CLASS zcl_http_podata_003 DEFINITION
         orderquantity                  TYPE c LENGTH  13,
         purchaseorderquantityunit      TYPE c LENGTH  3,
         netpricequantity               TYPE c LENGTH  5,
+        netpriceamount                 TYPE c length  16,
         netamount                      TYPE c LENGTH  16,
-        grossamount                    TYPE c LENGTH  16,
         storagelocation                TYPE c LENGTH  4,
         storagelocationname            TYPE c LENGTH  20,
         textobjecttype                 TYPE c LENGTH  4,
-        plainlongtext                  TYPE c LENGTH  10,
+        plainlongtext                  TYPE string,
         schedulelinedeliverydate       TYPE c LENGTH  8,
         SupplierMaterialNumber         type c LENGTH 18,
+        InternationalArticleNumber     type c length 12,
+        RequisitionerName              type c length 12,
+        CorrespncInternalReference     type c length 12,
 
+
+        _confirmation type STANDARD TABLE OF  ty_confirmation WITH EMPTY KEY,
 
       END OF ty_response,
 
       BEGIN OF ty_output,
+
         items TYPE STANDARD TABLE OF ty_response WITH EMPTY KEY,
+
       END OF ty_output.
 
     INTERFACES if_http_service_extension .
@@ -42,22 +100,28 @@ CLASS zcl_http_podata_003 DEFINITION
   PRIVATE SECTION.
 
     DATA:
-*          ls_req            TYPE ty_request,
+
+
+
+      lt_workflow_api TYPE STANDARD TABLE OF ts_workflow,
+      lt_workflowdetail_api TYPE STANDARD TABLE OF ts_workflowdetail,
+      ls_res_workflow type ts_workflow_api,
+      ls_res_workflowdetail TYPE ts_workflowdetail_api,
+
       lv_error(1)       TYPE c,
       lv_text           TYPE string,
       ls_response       TYPE ty_response,
+      lw_confirmation    type ty_confirmation,
       es_response       TYPE ty_output,
       lc_header_content TYPE string VALUE 'content-type',
       lc_content_type   TYPE string VALUE 'text/json'.
 
 ENDCLASS.
 
-
-
 CLASS zcl_http_podata_003 IMPLEMENTATION.
 
-
   METHOD if_http_service_extension~handle_request.
+
     DATA:
       lt_polog type TABLE of ztmm_1002,
       lw_polog TYPE ztmm_1002.
@@ -100,10 +164,14 @@ DATA: lv_date       TYPE D,
            b~orderquantity,
            b~purchaseorderquantityunit,
            b~netpricequantity,
+           b~netpriceamount,
            b~netamount,
-           b~grossamount,
            b~storagelocation,
            b~SupplierMaterialNumber,
+
+           b~InternationalArticleNumber,
+           b~RequisitionerName,
+
            c~storagelocationname,
            b~purchasingdocumentdeletioncode,
            a~supplier,
@@ -112,6 +180,7 @@ DATA: lv_date       TYPE D,
            a~creationdate,
            a~createdbyuser,
            a~lastchangedatetime,
+           a~CorrespncInternalReference,
            d~textobjecttype,
            d~plainlongtext,
            e~schedulelinedeliverydate
@@ -127,193 +196,166 @@ DATA: lv_date       TYPE D,
       LEFT JOIN i_purordschedulelineapi01 WITH PRIVILEGED ACCESS AS e
         ON b~purchaseorder = e~purchaseorder
        AND b~purchaseorderitem = e~purchaseorderitem
-     WHERE a~purgreleasesequencestatus <> 'X'
-*       and d~TextObjectType = 'F01'
-        and a~LastChangeDateTime >= @lv_timestampl
-
+     WHERE a~LastChangeDateTime >= @lv_timestampl
       INTO TABLE @data(lt_poitem).
+
+*--------------------------------------------------------------just for test
+
+*--------------------------------------------------------------just for test
+
+      if  lt_poitem is NOT INITIAL.
+
+         data(lt_poitem_copy) = lt_poitem.
+
+         SORT lt_poitem_copy by purchaseorder purchaseorderitem.
+
+         DELETE ADJACENT DUPLICATES FROM lt_poitem_copy COMPARING purchaseorder purchaseorderitem.
+
+         SELECT  purchaseorder,
+                 purchaseorderItem,
+                 SequentialNmbrOfSuplrConf,
+                 DeliveryDate,
+                 ConfirmedQuantity,
+                 MRPRelevantQuantity,
+                 SupplierConfirmationExtNumber
+
+            FROM I_POSupplierConfirmationAPI01 WITH PRIVILEGED ACCESS
+             FOR ALL ENTRIES IN @lt_poitem_copy
+           WHERE Purchaseorder = @lt_poitem_copy-purchaseorder
+             and purchaseorderitem = @lt_poitem_copy-purchaseorderItem
+            INto  TABLE @DATA(lt_confirmation).
+
+      ENDIF.
 
       SELECT * FROM i_purchaseorderitemnotetp_2 WITH PRIVILEGED ACCESS
       where TextObjectType = 'F01'
       into TABLE @data(lt_note).
 
-*   ①購買伝票ヘッダ
-*    SELECT
-*        PurchaseOrder,
-*        Supplier,
-*        PurchasingDocumentDeletionCode,
-*        PurchaseOrderDate,
-*        CreationDate,
-*        CreatedByUser,
-*        LastChangeDateTime
-*     FROM I_PurchaseOrderAPI01 WITH PRIVILEGED ACCESS
-*     where PurchaseOrder IN @lr_where
-*     into table @data(lt_po).
-
-*     DATA:
-*       LV_LASTCHANGEDATETIME TYPE STRING.
-*
-**    ①LastChangeDateTime ＞ 前回取得データに最も新しいLastChangeDateTime
-*     LOOP AT LT_PO INTO DATA(LW_PO).
-*       IF LW_PO-LastChangeDateTime < lv_lastdate.
-*       DELETE LT_PO.
-*       ENDIF.
-*     ENDLOOP.
-
-*     data(lt_po1) = lt_po[].
-*     if lt_po1 is not INITIAL.
-*        sort lt_po1 by purchaseorder DESCENDING.
-*        DELETE ADJACENT DUPLICATES FROM lt_po1 COMPARING purchaseorder.
-*
-*     ENDIF.
-
-**    ②購買伝票明細
-*     select
-*       PurchaseOrder,
-*       PurchaseOrderItem,
-*       DocumentCurrency,
-*       Material,
-*       PurchaseOrderItemText,
-*       OrderQuantity,
-*       PurchaseOrderQuantityUnit,
-*       NetPriceQuantity,
-*       NetAmount,
-*       GrossAmount,
-*       A~StorageLocation,
-*       B~StorageLocationName,
-*       PurchasingDocumentDeletionCode
-*     from I_PurchaseOrderItemAPI01 WITH PRIVILEGED ACCESS as A
-*     LEFT JOIN I_StorageLocation WITH PRIVILEGED ACCESS as B
-*     on A~StorageLocation = B~StorageLocation
-*     FOR ALL ENTRIES IN @lt_po1
-*     where purchaseorder = @lt_po1-PurchaseOrder
-*     into table @data(lt_poitem).
-
-*      SELECT
-*       PurchaseOrder,
-*       PurchaseOrderItem,
-*       TextObjectType,
-*       PlainLongText
-*     from I_PurchaseOrderItemNoteTP_2 WITH PRIVILEGED ACCESS
-*     FOR ALL ENTRIES IN @lt_po1
-*     where purchaseorder = @lt_po1-PurchaseOrder
-*     INTO TABLE @DATA(LT_ITEMNOTE).
-
-*    SELECT
-*       purchaseorder,
-*       purchaseorderitem,
-*       schedulelinedeliverydate
-*    FROM i_purordschedulelineapi01 WITH PRIVILEGED ACCESS
-*    FOR ALL ENTRIES IN @lt_po1
-*    WHERE purchaseorder = @lt_po1-purchaseorder
-*    INTO TABLE @DATA(lt_poscl).
-
-*    SELECT
-*      purchaseorder ,
-*      purchaseorderitem  ,
-*      changetimes  ,
-*      orderquantity  ,
-*      schedulelinedeliverydate    ,
-*      netamount    ,
-*      purchasingdocumentdeletioncode ,
-*      createdbyuser   ,
-*      creationdate   ,
-*      lastchangedate
-*     FROM ztmm_1002 WITH PRIVILEGED ACCESS              "#EC CI_NOWHERE
-*     INTO TABLE @DATA(lt_polog_all)
-*     .
-*
-*    SELECT
-*        purchaseorder ,
-*        purchaseorderitem  ,
-*        MAX( changetimes ) AS changetimes
-*    FROM ztmm_1002  WITH PRIVILEGED ACCESS              "#EC CI_NOWHERE
-*    GROUP BY purchaseorder, purchaseorderitem
-*    INTO TABLE @DATA(lt_pologmax)
-*    .
-*
-*    SELECT
-*          purchaseorder ,
-*          purchaseorderitem  ,
-*          changetimes  ,
-*          orderquantity  ,
-*          schedulelinedeliverydate    ,
-*          netamount    ,
-*          purchasingdocumentdeletioncode ,
-*          createdbyuser   ,
-*          creationdate   ,
-*          lastchangedate
-*    FROM ztmm_1002  WITH PRIVILEGED ACCESS              "#EC CI_NOWHERE
-*    INTO TABLE @DATA(lt_polog).
-*
-*    "只留下changetimes 最大的一条。
-*    LOOP AT lt_polog INTO DATA(lw_polog1).
-*
-*      READ TABLE lt_pologmax INTO DATA(lw_pologmax) WITH KEY purchaseorder = lw_polog1-purchaseorder
-*                 purchaseorderitem = lw_polog1-purchaseorderitem.
-*      IF lw_polog1-changetimes <> lw_pologmax-changetimes.
-*        DELETE lt_polog.
-*
-*      ENDIF.
-*
-*    ENDLOOP.
-*
     DATA:
       lt_result TYPE STANDARD TABLE OF ty_response,
       lw_result TYPE ty_response.
-*
-**    添加条目到传出表中。
-*    LOOP AT lt_poitem INTO DATA(lw_poitem).
-*      MOVE-CORRESPONDING lw_poitem TO lw_result.
-*      APPEND lw_result TO lt_result.
-*    ENDLOOP.
-*
-*    LOOP AT lt_result INTO lw_result.
-*
-*      READ TABLE lt_po INTO DATA(lw_po1) WITH KEY purchaseorder = lw_result-purchaseorder.
-*      MOVE-CORRESPONDING lw_po TO lw_result.
-*
-*      READ TABLE lt_itemnote  INTO DATA(lw_itemnote) WITH KEY purchaseorder = lw_result-purchaseorder
-*                                                              purchaseorderitem = lw_result-purchaseorderitem.
-*      MOVE-CORRESPONDING lw_itemnote TO lw_result.
-*
-*      READ TABLE lt_poscl INTO DATA(lw_poscl) WITH KEY  purchaseorder = lw_result-purchaseorder
-*                                                        purchaseorderitem = lw_result-purchaseorderitem.
-*
-*      MODIFY lt_result FROM lw_result.
-*      CLEAR lw_result.
-*
-*    ENDLOOP.
-*
-*    LOOP AT lt_result INTO lw_result.
-*      READ TABLE lt_polog INTO DATA(lw_polog2) WITH KEY purchaseorder = lw_result-purchaseorder
-*                                                 purchaseorderitem = lw_result-purchaseorderitem.
-*
-*      IF lw_result-orderquantity            = lw_polog2-orderquantity
-*        AND  lw_result-schedulelinedeliverydate = lw_polog2-schedulelinedeliverydate
-*        AND  lw_result-netamount                = lw_polog2-netamount
-*        OR   lw_result-purchasingdocumentdeletioncode = 'X'.
-*        DELETE lt_result.
-*      ENDIF.
-*    ENDLOOP.
+
+
+  data:
+         lv_path           TYPE string,
+         lv_path1          TYPE String.
+
+
+*     审批状态取得取得
+      lv_path = |/YY1_WORKFLOWSTATUSOVERVIEW_CDS/YY1_WorkflowStatusOverview|.
+      "Call API
+      zzcl_common_utils=>request_api_v2(
+        EXPORTING
+          iv_path        = lv_path
+          iv_method      = if_web_http_client=>get
+          iv_format      = 'json'
+        IMPORTING
+          ev_status_code = DATA(lv_stat_code1)
+          ev_response    = DATA(lv_resbody_api1) ).
+      /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
+                               CHANGING data = ls_res_workflow ).
+
+      IF lv_stat_code1 = '200' AND ls_res_workflow-d-results IS NOT INITIAL.
+
+        APPEND LINES OF ls_res_workflow-d-results TO lt_workflow_api.
+
+      ENDIF.
+
+*      审批详情取得
+
+      lv_path1 = |/YY1_WORKFLOWSTATUSDETAILS_CDS/YY1_WorkflowStatusDetails|.
+      "Call API
+      zzcl_common_utils=>request_api_v2(
+        EXPORTING
+          iv_path        = lv_path1
+          iv_method      = if_web_http_client=>get
+          iv_format      = 'json'
+        IMPORTING
+          ev_status_code = DATA(lv_stat_code2)
+          ev_response    = DATA(lv_resbody_api2) ).
+      /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api2
+                               CHANGING data = ls_res_workflowdetail ).
+
+      IF lv_stat_code1 = '200' AND ls_res_workflowdetail-d-results IS NOT INITIAL.
+
+        APPEND LINES OF ls_res_workflowdetail-d-results TO lt_workflowdetail_api.
+
+      ENDIF.
+
+      if lt_workflowdetail_api is NOT INITIAL.
+
+          SORT lt_workflowdetail_api by WorkflowInternalID WorkflowTaskInternalID DESCENDING.
+
+          DELETE ADJACENT DUPLICATES FROM lt_workflowdetail_api COMPARING WorkflowInternalID.
+
+      ENDIF.
+
+    data:lv_response type c .
+
+
 
     LOOP AT lt_poitem INTO DATA(lw_poitems).
 
-      MOVE-CORRESPONDING lw_poitems to lw_result.
+        READ TABLE lt_workflow_api into data(lw_workflow) WITH KEY SAPBusinessObjectNodeKey1 = lw_poitems-purchaseorder.
 
-      READ TABLE lt_note into data(lw_note) WITH KEY purchaseorder = lw_poitems-purchaseorder purchaseorderitem = lw_poitems-purchaseorderitem.
-      if  sy-subrc = 0.
-      lw_result-plainlongtext = lw_note-PlainLongText .
-      ENDIF.
+            if sy-subrc = 0.
+               READ TABLE lt_workflowdetail_api into data(lw_workflow_d) WITH key WorkflowInternalID = lw_workflow-WorkflowInternalID.
+
+               "如果能在detail中取到WorkflowTaskInternalID
+               if sy-subrc = 0.
+
+                 if lw_workflow_d-workflowtaskresult = 'RELEASED'.
+
+                    lv_response = 'X'.
+
+                 ELSE.
+
+                    lv_response = ''.
+
+                 ENDIF.
+
+               "当取不到internalid 的时候
+               else.
+                 "直接判断WorkflowTaskExternalStatus是不是COMPLETED
+                 if lw_workflow-workflowexternalstatus = 'COMPLETED'.
+                 "如果是，则是传出对象。
+                    lv_response = 'X'.
+
+                 else.
+                 "如果不是completed 则不是传出对象。
+                    lv_response = ''.
+                 endif.
+
+               ENDIF.
+
+            else.
+
+                lv_response = ''.
+
+            ENDIF.
+
+            "只有是传出对象的时候才会去传出
+            if  lv_response = 'X'.
+
+              MOVE-CORRESPONDING lw_poitems to lw_result.
+
+              READ TABLE lt_note into data(lw_note) WITH KEY purchaseorder = lw_poitems-purchaseorder purchaseorderitem = lw_poitems-purchaseorderitem.
+              if  sy-subrc = 0.
+              lw_result-plainlongtext = lw_note-PlainLongText .
+              ENDIF.
 
 
-       DATA(lv_unit1) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lw_result-purchaseorderquantityunit ).
+               DATA(lv_unit1) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lw_result-purchaseorderquantityunit ).
 
-         lw_result-purchaseorderquantityunit = lv_unit1.
+                 lw_result-purchaseorderquantityunit = lv_unit1.
 
-      append lw_result to lt_result.
+              append lw_result to lt_result.
 
+              clear lw_result.
 
+            ENDIF.
+
+            clear:lv_response,lw_result,lw_note,lw_workflow,lw_workflow_d.
 
     ENDLOOP.
 
@@ -330,20 +372,34 @@ DATA: lv_date       TYPE D,
       ls_response-purchaseorderitem                  = lw_result-purchaseorderitem              .
       ls_response-documentcurrency                   = lw_result-documentcurrency               .
       ls_response-material                           = lw_result-material                       .
-      ls_response-plant                           = lw_result-plant                       .
+      ls_response-plant                              = lw_result-plant                       .
       ls_response-purchaseorderitemtext              = lw_result-purchaseorderitemtext          .
       ls_response-orderquantity                      = lw_result-orderquantity                  .
       ls_response-purchaseorderquantityunit          = lw_result-purchaseorderquantityunit      .
       ls_response-netpricequantity                   = lw_result-netpricequantity               .
-      ls_response-netamount                          = lw_result-netamount                      .
-      ls_response-grossamount                        = lw_result-grossamount                    .
+
+      if  lw_result-documentcurrency = 'JPY'.
+        ls_response-netpriceamount                   = lw_result-netpriceamount * 100           .
+        ls_response-netamount                        = lw_result-netamount  * 100               .
+      ELSE.
+        ls_response-netpriceamount                   = lw_result-netpriceamount                 .
+        ls_response-netamount                        = lw_result-netamount                      .
+      ENDIF.
+
+
       ls_response-storagelocation                    = lw_result-storagelocation                .
       ls_response-storagelocationname                = lw_result-storagelocationname            .
       ls_response-textobjecttype                     = lw_result-textobjecttype                 .
       ls_response-plainlongtext                      = lw_result-plainlongtext                  .
       ls_response-schedulelinedeliverydate           = lw_result-schedulelinedeliverydate       .
       ls_response-SupplierMaterialNumber             = lw_result-SupplierMaterialNumber         .
+
+      ls_response-InternationalArticleNumber         = lw_result-InternationalArticleNumber.
+      ls_response-RequisitionerName                  = lw_result-RequisitionerName.
+      ls_response-CorrespncInternalReference = lw_result-CorrespncInternalReference.
+
       CONDENSE ls_response-purchaseorder                  .
+
       CONDENSE ls_response-supplier                       .
       CONDENSE ls_response-companycode                    .
       CONDENSE ls_response-purchasingdocumentdeletioncode .
@@ -360,15 +416,43 @@ DATA: lv_date       TYPE D,
       CONDENSE ls_response-purchaseorderquantityunit      .
       CONDENSE ls_response-netpricequantity               .
       CONDENSE ls_response-netamount                      .
-      CONDENSE ls_response-grossamount                    .
+      CONDENSE ls_response-netpriceamount                    .
       CONDENSE ls_response-storagelocation                .
       CONDENSE ls_response-storagelocationname            .
       CONDENSE ls_response-textobjecttype                 .
       CONDENSE ls_response-plainlongtext                  .
       CONDENSE ls_response-schedulelinedeliverydate       .
       CONDENSE ls_response-SupplierMaterialNumber       .
+      CONDENSE ls_response-InternationalArticleNumber     .
+      CONDENSE ls_response-RequisitionerName     .
+      condense ls_response-CorrespncInternalReference .
+
+
+      loop AT lt_confirmation INTO data(lw_confadd) WHERE purchaseorder = lw_result-purchaseorder and purchaseorderitem = lw_result-purchaseorderitem .
+
+        lw_confirmation-PurchaseOrder                               =  lw_confadd-PurchaseOrder                  .
+        lw_confirmation-PurchaseOrderItem                           =  lw_confadd-PurchaseOrderItem              .
+        lw_confirmation-SequentialNmbrOfSuplrConf                   =  lw_confadd-SequentialNmbrOfSuplrConf      .
+        lw_confirmation-DeliveryDate                                =  lw_confadd-DeliveryDate                   .
+        lw_confirmation-ConfirmedQuantity                           =  lw_confadd-ConfirmedQuantity              .
+        lw_confirmation-MRPRelevantQuantity                         =  lw_confadd-MRPRelevantQuantity            .
+        lw_confirmation-SupplierConfirmationExtNumber               =  lw_confadd-SupplierConfirmationExtNumber  .
+
+        CONDENSE  lw_confirmation-PurchaseOrder                 .
+        CONDENSE  lw_confirmation-PurchaseOrderItem             .
+        CONDENSE  lw_confirmation-SequentialNmbrOfSuplrConf     .
+        CONDENSE  lw_confirmation-DeliveryDate                  .
+        CONDENSE  lw_confirmation-ConfirmedQuantity             .
+        CONDENSE  lw_confirmation-MRPRelevantQuantity           .
+        CONDENSE  lw_confirmation-SupplierConfirmationExtNumber .
+
+        APPEND lw_confirmation to ls_response-_confirmation.
+        clear lw_confirmation.
+      ENDLOOP.
 
       APPEND ls_response TO es_response-items.
+      clear ls_response.
+
     ENDLOOP.
 
     IF lt_result IS INITIAL.

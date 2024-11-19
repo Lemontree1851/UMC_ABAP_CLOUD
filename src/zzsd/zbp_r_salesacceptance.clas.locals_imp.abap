@@ -320,7 +320,6 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
         <lfs_data>-status = 'E'.
         <lfs_data>-message = TEXT-013.
-        EXIT.
       ENDLOOP.
     ELSE.
 * Insert process
@@ -386,13 +385,11 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
         LOOP AT ct_data ASSIGNING <lfs_data>.
           <lfs_data>-status = 'S'.
           <lfs_data>-message = TEXT-017.  "Insert Successfully
-          EXIT.
         ENDLOOP.
       ELSE.
         LOOP AT ct_data ASSIGNING <lfs_data>.
           <lfs_data>-status = 'E'.
           <lfs_data>-message = TEXT-018.  "Insert failed
-          EXIT.
         ENDLOOP.
       ENDIF.
     ENDIF.
@@ -421,7 +418,6 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
         <lfs_data>-status = 'E'.
         <lfs_data>-message = TEXT-013. "指定得意先且つ指定期間の検収データは既に登録しました。
-        EXIT.
       ENDLOOP.
       RETURN.
     ENDIF.
@@ -438,7 +434,6 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'E'.
         <lfs_data>-message = TEXT-014.  "指定得意先且つ指定期間の検収データは既に照合済み
-        EXIT.
       ENDLOOP.
       RETURN.
     ENDIF.
@@ -511,13 +506,11 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'S'.
         <lfs_data>-message = TEXT-019.  "Update successfully
-        EXIT.
       ENDLOOP.
     ELSE.
       LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'E'.
         <lfs_data>-message = TEXT-020.  "Update failed
-        EXIT.
       ENDLOOP.
     ENDIF.
   ENDMETHOD.
@@ -545,7 +538,6 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
         <lfs_data>-status = 'E'.
         <lfs_data>-message = TEXT-013. "指定得意先且つ指定期間の検収データは既に登録しました。
-        EXIT.
       ENDLOOP.
       RETURN.
     ENDIF.
@@ -562,7 +554,6 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'E'.
         <lfs_data>-message = TEXT-014.  "指定得意先且つ指定期間の検収データは既に照合済み
-        EXIT.
       ENDLOOP.
       RETURN.
     ENDIF.
@@ -574,13 +565,11 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
         LOOP AT ct_data ASSIGNING <lfs_data>.
           <lfs_data>-status = 'S'.
           <lfs_data>-message = TEXT-021.  "Delete successfully
-          EXIT.
         ENDLOOP.
       ELSE.
         LOOP AT ct_data ASSIGNING <lfs_data>.
           <lfs_data>-status = 'E'.
           <lfs_data>-message = TEXT-022.  "Delete failed
-          EXIT.
         ENDLOOP.
       ENDIF.
     ENDIF.
@@ -609,7 +598,6 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
         <lfs_data>-status = 'E'.
         <lfs_data>-message = TEXT-013. "指定得意先且つ指定期間の検収データは既に登録しました。
-        EXIT.
       ENDLOOP.
       RETURN.
     ENDIF.
@@ -626,7 +614,6 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'E'.
         <lfs_data>-message = TEXT-014.  "指定得意先且つ指定期間の検収データは既に照合済み
-        EXIT.
       ENDLOOP.
       RETURN.
     ENDIF.
@@ -687,13 +674,11 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'S'.
         <lfs_data>-message = TEXT-023.  "Update successfully
-        EXIT.
       ENDLOOP.
     ELSE.
       LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'E'.
         <lfs_data>-message = TEXT-024.  "Update failed
-        EXIT.
       ENDLOOP.
     ENDIF.
   ENDMETHOD.

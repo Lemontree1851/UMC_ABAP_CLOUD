@@ -15,7 +15,7 @@ annotate view ZC_PURCHASEPRICEVARIANCE with
 
   @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Plant', element: 'Plant' } }]
   Plant;
-
+  
   @Consumption.filter.selectionType: #INTERVAL
   PurgDocPriceDate;
 
@@ -29,8 +29,6 @@ annotate view ZC_PURCHASEPRICEVARIANCE with
   DocumentCurrency;
   @Consumption.filter.hidden: true
   PurchaseOrderItemText;
-  @Consumption.filter.hidden: true
-  SupplierMaterialNumber;
   @Consumption.filter.hidden: true
   OrderQuantity;
   @Consumption.filter.hidden: true

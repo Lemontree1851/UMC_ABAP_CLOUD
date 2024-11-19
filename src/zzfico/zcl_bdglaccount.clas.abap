@@ -20,7 +20,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_bdglaccount IMPLEMENTATION.
+CLASS ZCL_BDGLACCOUNT IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -58,13 +58,13 @@ CLASS zcl_bdglaccount IMPLEMENTATION.
         companycode                    TYPE string,
         glaccount                      TYPE ztfi_1002-glaccount,
         startingbalanceamtincocodecrcy TYPE dmbtr,
-        startingbalanceamtincocode     TYPE string,
+        startingbalanceamtincocode     TYPE waerk,
         debitamountincocodecrcy        TYPE dmbtr,
-        debitamountincocode            TYPE string,
+        debitamountincocode            TYPE waerk,
         creditamountincocodecrcy       TYPE dmbtr,
-        creditamountincocode           TYPE string,
+        creditamountincocode           TYPE waerk,
         endingbalanceamtincocodecrcy   TYPE dmbtr,
-        endingbalanceamtincocode       TYPE string,
+        endingbalanceamtincocode       TYPE waerk,
 
       END OF ty_results,
       BEGIN OF ty_collect,
@@ -73,13 +73,13 @@ CLASS zcl_bdglaccount IMPLEMENTATION.
         financialstatement             TYPE ztfi_1002-financialstatement,
         glaccount                      TYPE ztfi_1002-glaccount,
         startingbalanceamtincocodecrcy TYPE dmbtr,
-        startingbalanceamtincocode     TYPE string,
+        startingbalanceamtincocode     TYPE waerk,
         debitamountincocodecrcy        TYPE dmbtr,
-        debitamountincocode            TYPE string,
+        debitamountincocode            TYPE waerk,
         creditamountincocodecrcy       TYPE dmbtr,
-        creditamountincocode           TYPE string,
+        creditamountincocode           TYPE waerk,
         endingbalanceamtincocodecrcy   TYPE dmbtr,
-        endingbalanceamtincocode       TYPE string,
+        endingbalanceamtincocode       TYPE waerk,
 
       END OF ty_collect,
       tt_results TYPE STANDARD TABLE OF ty_results WITH DEFAULT KEY,
@@ -213,7 +213,7 @@ CLASS zcl_bdglaccount IMPLEMENTATION.
 
 *
 *      "从会计科目表明细中提取主要材料和辅助材料的帐户和金额合计
-      lv_path = |/C_TRIALBALANCE_CDS/C_TRIALBALANCE(P_FromPostingDate=datetime'{ lv_from }',P_ToPostingDate=datetime'{ lv_to }')/Results?$top=50&$filter=Ledger%20eq%20'{ lv_ledger }'%20%20and%20CompanyCode%20eq%20'{ lv_companycode }'|.
+      lv_path = |/C_TRIALBALANCE_CDS/C_TRIALBALANCE(P_FromPostingDate=datetime'{ lv_from }',P_ToPostingDate=datetime'{ lv_to }')/Results?&$filter=Ledger%20eq%20'{ lv_ledger }'%20%20and%20CompanyCode%20eq%20'{ lv_companycode }'|.
 
       lv_path = lv_path && '&$select=Ledger,CompanyCode,GLAccount,StartingBalanceAmtInCoCodeCrcy, StartingBalanceAmtInCoCodeCrcy_E, DebitAmountInCoCodeCrcy,'.
       lv_path = lv_path && 'DebitAmountInCoCodeCrcy_E, CreditAmountInCoCodeCrcy, CreditAmountInCoCodeCrcy_E,EndingBalanceAmtInCoCodeCrcy, EndingBalanceAmtInCoCodeCrcy_E'.
@@ -243,7 +243,25 @@ CLASS zcl_bdglaccount IMPLEMENTATION.
 
       LOOP AT ls_res_api-d-results INTO DATA(ls_result1).
         ls_result1-glaccount =  |{ ls_result1-glaccount ALPHA = IN }|.
-        MODIFY ls_res_api-d-results FROM ls_result1 TRANSPORTING glaccount.
+        ls_result1-startingbalanceamtincocodecrcy = zzcl_common_utils=>conversion_amount(
+                                  iv_alpha = 'IN'
+                                  iv_currency = ls_result1-startingbalanceamtincocode
+                                  iv_input = ls_result1-startingbalanceamtincocodecrcy ).
+        ls_result1-creditamountincocodecrcy  = zzcl_common_utils=>conversion_amount(
+                          iv_alpha = 'IN'
+                          iv_currency = ls_result1-creditamountincocode
+                          iv_input = ls_result1-creditamountincocodecrcy  ).
+        ls_result1-endingbalanceamtincocodecrcy  = zzcl_common_utils=>conversion_amount(
+                            iv_alpha = 'IN'
+                            iv_currency = ls_result1-endingbalanceamtincocode
+                            iv_input = ls_result1-endingbalanceamtincocodecrcy ).
+        ls_result1-debitamountincocodecrcy  = zzcl_common_utils=>conversion_amount(
+                            iv_alpha = 'IN'
+                            iv_currency = ls_result1-debitamountincocode
+                            iv_input = ls_result1-debitamountincocodecrcy  ).
+
+        MODIFY ls_res_api-d-results FROM ls_result1 TRANSPORTING glaccount startingbalanceamtincocodecrcy
+        creditamountincocodecrcy endingbalanceamtincocodecrcy debitamountincocodecrcy.
       ENDLOOP.
 
 
@@ -286,6 +304,8 @@ INTO TABLE @DATA(lt_glaccount).
 
       LOOP AT lt_collect INTO ls_collect .
 
+      clear ls_bdglaccount.
+
 
         ls_bdglaccount-ledger = ls_collect-ledger.
         ls_bdglaccount-companycode = ls_collect-companycode.
@@ -321,8 +341,8 @@ INTO TABLE @DATA(lt_glaccount).
           ls_bdglaccount-calendaryear = lv_calendaryear.
           ls_bdglaccount-calendarmonth  = lv_calendarmonth .
           ls_bdglaccount-glaccount = '合計'.
-          ls_bdglaccount-financialstatementitem = ''.
-          CLEAR ls_bdglaccount-financialstatementitemdesc.
+          "ls_bdglaccount-financialstatementitem = ''.
+          "CLEAR ls_bdglaccount-financialstatementitemdesc.
           CLEAR ls_bdglaccount-glaccountdesc.
           READ TABLE lt_collect1 INTO DATA(ls_collect1) WITH KEY financialstatement = ls_collect-financialstatement.
           IF sy-subrc = 0.

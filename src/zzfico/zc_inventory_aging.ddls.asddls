@@ -22,17 +22,17 @@ define root custom entity ZC_INVENTORY_AGING
       @Semantics.quantity.unitOfMeasure: 'BaseUnit'
       ValuationQuantity    : menge_d;
       BaseUnit             : meins;
-      //      @Semantics.amount.currencyCode : 'Currency'
+      @Semantics.amount.currencyCode : 'Currency'
       ActualCost           : abap.dec( 15, 2 );
-      //      @Semantics.amount.currencyCode : 'Currency'
+      @Semantics.amount.currencyCode : 'Currency'
       InventoryAmount      : abap.dec( 15, 2 );
-      //      @Semantics.amount.currencyCode : 'Currency'
+      @Semantics.amount.currencyCode : 'Currency'
       ValuationUnitPrice   : abap.dec( 15, 2 );
-      //      @Semantics.amount.currencyCode : 'Currency'
+      @Semantics.amount.currencyCode : 'Currency'
       ValuationAmount      : abap.dec( 15, 2 );
-      //      @Semantics.amount.currencyCode : 'Currency'
+      @Semantics.amount.currencyCode : 'Currency'
       ValuationAfterAmount : abap.dec( 15, 2 );
-      //      @Semantics.amount.currencyCode : 'Currency'
+      @Semantics.amount.currencyCode : 'Currency'
       ValuationLoss        : abap.dec( 15, 2 );
       Currency             : waers;
       @Semantics.quantity.unitOfMeasure: 'BaseUnit'

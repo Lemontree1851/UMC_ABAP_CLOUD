@@ -45,8 +45,9 @@ CLASS lhc_inventoryaging DEFINITION INHERITING FROM cl_abap_behavior_handler.
       END OF ty_ztfi_1019.
 
     CONSTANTS:
-      lc_event_recalculate TYPE string VALUE 'RECALCULATE',
+      lc_event_recalculate TYPE string VALUE 'ReCalculate',
       lc_debitcreditcode_s TYPE string VALUE 'S',
+      lc_fiyearvariant_v3  TYPE string VALUE 'V3',
       lc_dd_01             TYPE n LENGTH 2 VALUE '01',
       lc_month_1           TYPE i VALUE '1',
       lc_month_3           TYPE i VALUE '3'.
@@ -107,11 +108,16 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
       lv_ledger                     TYPE zc_inventory_aging-ledger,
       lv_goodsissueqty              TYPE i_materialdocumentitem_2-quantityinbaseunit,
       lv_qty                        TYPE ztfi_1004-qty,
-      lv_begindate_month            TYPE d,
-      lv_enddate_month              TYPE d,
-      lv_date_lastmonth             TYPE d.
+      lv_timestampl                 TYPE timestampl,
+      lv_fiscalyearperiod           TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
+      lv_fiscalyear_last            TYPE i_fiscalyearperiodforvariant-fiscalyear,
+      lv_fiscalperiod_last          TYPE i_fiscalyearperiodforvariant-fiscalperiod,
+      lv_fiscalperiodstartdate      TYPE d,
+      lv_fiscalperiodenddate        TYPE d,
+      lv_age                        TYPE i.
 
-    IF cs_data-filterdata-fiscalyear = '2025' AND cs_data-filterdata-fiscalperiod = '2'.
+*    IF cs_data-filterdata-fiscalyear = '2025' AND cs_data-filterdata-fiscalperiod = '002'.
+    IF cs_data-filterdata-fiscalyear = '2024' AND cs_data-filterdata-fiscalperiod = '005'.
       SELECT a~plant,
              a~material,
              a~age,
@@ -120,26 +126,64 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
        INNER JOIN i_productvaluationareavh WITH PRIVILEGED ACCESS AS b
           ON b~valuationarea = a~plant
        INNER JOIN i_ledgercompanycodecrcyroles WITH PRIVILEGED ACCESS AS c
-          ON c~companycode = c~companycode
+          ON c~companycode = b~companycode
        WHERE a~calendaryear = @cs_data-filterdata-fiscalyear
-         AND a~calendarmonth = @cs_data-filterdata-fiscalperiod
+         AND a~calendarmonth = @cs_data-filterdata-fiscalperiod+1(2)
          AND b~companycode = @cs_data-filterdata-companycode
          AND c~ledger = @cs_data-filterdata-ledger
         INTO TABLE @DATA(lt_ztfi_1004_tmp).
+      IF sy-subrc = 0.
+        "Obtain data of inventory amount for fiscal period
+        SELECT costestimate,
+               material,
+               valuationarea,
+               valuationquantity,
+               amountincompanycodecurrency
+          FROM i_inventoryamtbyfsclperd( p_fiscalperiod = @cs_data-filterdata-fiscalperiod, p_fiscalyear = @cs_data-filterdata-fiscalyear ) WITH PRIVILEGED ACCESS
+           FOR ALL ENTRIES IN @lt_ztfi_1004_tmp
+         WHERE valuationarea = @lt_ztfi_1004_tmp-plant
+           AND material = @lt_ztfi_1004_tmp-material
+           AND companycode = @cs_data-filterdata-companycode
+           AND ledger = @cs_data-filterdata-ledger
+           AND invtryvalnspecialstocktype <> 'T'
+           AND invtryvalnspecialstocktype <> 'E'
+           AND valuationquantity <> 0
+           AND amountincompanycodecurrency <> 0
+          INTO TABLE @lt_inventoryamtbyfsclperd.
+
+        LOOP AT lt_inventoryamtbyfsclperd INTO DATA(ls_inventoryamtbyfsclperd).
+          CLEAR ls_inventoryamtbyfsclperd-costestimate.
+          COLLECT ls_inventoryamtbyfsclperd INTO lt_inventoryamtbyfsclperd_sum.
+        ENDLOOP.
+      ENDIF.
+
+      SORT lt_inventoryamtbyfsclperd_sum BY valuationarea material.
 
       LOOP AT lt_ztfi_1004_tmp INTO DATA(ls_ztfi_1004_tmp).
-        ls_ztfi_1019_db-ledger       = cs_data-filterdata-ledger.
-        ls_ztfi_1019_db-companycode  = cs_data-filterdata-companycode.
-        ls_ztfi_1019_db-plant        = ls_ztfi_1004_tmp-plant.
-        ls_ztfi_1019_db-fiscalyear   = cs_data-filterdata-fiscalyear.
-        ls_ztfi_1019_db-fiscalperiod = cs_data-filterdata-fiscalperiod.
-        ls_ztfi_1019_db-product      = ls_ztfi_1004_tmp-material.
-        ls_ztfi_1019_db-age          = ls_ztfi_1004_tmp-age.
-        ls_ztfi_1019_db-qty          = ls_ztfi_1004_tmp-qty.
-        CONDENSE ls_ztfi_1019_db-age.
+        CLEAR ls_inventoryamtbyfsclperd.
 
-        APPEND ls_ztfi_1019_db TO lt_ztfi_1019_db.
-        CLEAR ls_ztfi_1019_db.
+        "Read data of inventory amount for fiscal period
+        READ TABLE lt_inventoryamtbyfsclperd_sum INTO ls_inventoryamtbyfsclperd WITH KEY valuationarea = ls_ztfi_1004_tmp-plant
+                                                                                         material = ls_ztfi_1004_tmp-material
+                                                                                BINARY SEARCH.
+        IF ls_inventoryamtbyfsclperd-valuationquantity <> 0.
+          ls_ztfi_1019_db-ledger       = cs_data-filterdata-ledger.
+          ls_ztfi_1019_db-companycode  = cs_data-filterdata-companycode.
+          ls_ztfi_1019_db-plant        = ls_ztfi_1004_tmp-plant.
+          ls_ztfi_1019_db-fiscalyear   = cs_data-filterdata-fiscalyear.
+          ls_ztfi_1019_db-fiscalperiod = cs_data-filterdata-fiscalperiod.
+          ls_ztfi_1019_db-product      = ls_ztfi_1004_tmp-material.
+          ls_ztfi_1019_db-age          = ls_ztfi_1004_tmp-age.
+          ls_ztfi_1019_db-qty          = ls_ztfi_1004_tmp-qty.
+          CONDENSE ls_ztfi_1019_db-age.
+
+          GET TIME STAMP FIELD lv_timestampl.
+          ls_ztfi_1019_db-last_changed_by = ''.
+          ls_ztfi_1019_db-last_changed_at = lv_timestampl.
+          ls_ztfi_1019_db-local_last_changed_at = lv_timestampl.
+          APPEND ls_ztfi_1019_db TO lt_ztfi_1019_db.
+          CLEAR ls_ztfi_1019_db.
+        ENDIF.
       ENDLOOP.
     ELSE.
       lv_companycode  = cs_data-filterdata-companycode.
@@ -166,10 +210,10 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
           ON d~product = c~product
         LEFT OUTER JOIN i_producttypetext_2 WITH PRIVILEGED ACCESS AS e
           ON e~producttype = d~producttype
-         AND e~language = 'J'"@sy-langu
+         AND e~language = @sy-langu
         LEFT OUTER JOIN i_productdescription WITH PRIVILEGED ACCESS AS f
           ON f~product = c~product
-         AND f~language = 'J'"@sy-langu
+         AND f~language = @sy-langu
        WHERE a~companycode = @lv_companycode
         INTO TABLE @DATA(lt_productplantbasic).
       IF sy-subrc = 0.
@@ -191,7 +235,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
            AND amountincompanycodecurrency <> 0
           INTO TABLE @lt_inventoryamtbyfsclperd.
 
-        LOOP AT lt_inventoryamtbyfsclperd INTO DATA(ls_inventoryamtbyfsclperd).
+        LOOP AT lt_inventoryamtbyfsclperd INTO ls_inventoryamtbyfsclperd.
           CLEAR ls_inventoryamtbyfsclperd-costestimate.
           COLLECT ls_inventoryamtbyfsclperd INTO lt_inventoryamtbyfsclperd_sum.
         ENDLOOP.
@@ -219,30 +263,16 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
       ENDIF.
 
       IF lt_productplantbasic IS NOT INITIAL.
-        lv_begindate_month = lv_fiscalyear && lv_fiscalperiod+1(2) && lc_dd_01.
+        lv_fiscalyearperiod = lv_fiscalyear && lv_fiscalperiod.
 
-        "Get date of last month(subtract 1 month)
-        zzcl_common_utils=>calc_date_subtract(
-          EXPORTING
-            date      = lv_begindate_month
-            month     = lc_month_1
-          RECEIVING
-            calc_date = lv_date_lastmonth ).
-
-        "Get month begin date(add 3 month)
-        zzcl_common_utils=>calc_date_add(
-          EXPORTING
-            date      = lv_begindate_month
-            month     = lc_month_3
-          RECEIVING
-            calc_date = lv_begindate_month ).
-
-        "Get month end date
-        zzcl_common_utils=>get_enddate_of_month(
-          EXPORTING
-            iv_date           = lv_begindate_month
-          RECEIVING
-            rv_month_end_date = lv_enddate_month ).
+        "Obtain data of fiscal year period for fiscal year variant
+        SELECT SINGLE
+               fiscalperiodstartdate,
+               fiscalperiodenddate
+          FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+         WHERE fiscalyearvariant = @lc_fiyearvariant_v3
+           AND fiscalyearperiod = @lv_fiscalyearperiod
+          INTO (@lv_fiscalperiodstartdate,@lv_fiscalperiodenddate).
 
         SELECT plant,
                material,
@@ -272,7 +302,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
            AND a~plant = @lt_productplantbasic-valuationarea
            AND a~material = @lt_productplantbasic-product
            AND a~issgorrcvgspclstockind <> 'T'
-           AND postingdate BETWEEN @lv_begindate_month AND @lv_enddate_month
+           AND postingdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
            AND NOT EXISTS ( SELECT materialdocument FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
                              WHERE reversedmaterialdocumentyear = a~materialdocumentyear
                                AND reversedmaterialdocument = a~materialdocument
@@ -295,8 +325,18 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
           CLEAR ls_goosmovment.
         ENDLOOP.
 
-        DATA(lv_fiscalyear_lastmonth) = lv_date_lastmonth+0(4).
-        DATA(lv_fiscalperiod_lastmonth) = lv_date_lastmonth+4(2).
+        "Obtain data of fiscal year period for fiscal year variant
+        SELECT SINGLE
+               fiscalyear,
+               fiscalperiod
+          FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+         WHERE fiscalyearvariant = @lc_fiyearvariant_v3
+           AND nextfiscalperiod = @lv_fiscalperiod
+           AND nextfiscalperiodfiscalyear = @lv_fiscalyear
+          INTO (@lv_fiscalyear_last,@lv_fiscalperiod_last).
+
+*        DATA(lv_fiscalyear_lastmonth) = lv_date_lastmonth+0(4).
+*        DATA(lv_fiscalperiod_lastmonth) = lv_date_lastmonth+4(2).
 
         SELECT plant,
                product,
@@ -306,15 +346,19 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
            FOR ALL ENTRIES IN @lt_productplantbasic
          WHERE plant = @lt_productplantbasic-valuationarea
            AND product = @lt_productplantbasic-product
-           AND fiscalyear = @lv_fiscalyear_lastmonth
-           AND fiscalperiod = @lv_fiscalperiod_lastmonth
+           AND fiscalyear = @lv_fiscalyear_last
+           AND fiscalperiod = @lv_fiscalperiod_last
           INTO TABLE @lt_ztfi_1019.
 
         LOOP AT lt_ztfi_1019 INTO DATA(ls_ztfi_1019).
-          ls_ztfi_1019-age = ls_ztfi_1019-age + 1.
+          lv_age = ls_ztfi_1019-age.
+          lv_age = lv_age + 1.
 
-          IF ls_ztfi_1019-age > 36.
-            ls_ztfi_1019-age = 36.
+          ls_ztfi_1019-age = lv_age.
+          CONDENSE ls_ztfi_1019-age.
+
+          IF lv_age > 36.
+            ls_ztfi_1019-age = '36'.
           ENDIF.
 
           COLLECT ls_ztfi_1019 INTO lt_ztfi_1019_tmp.
@@ -337,7 +381,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
          WHERE a~companycode = @lt_productplantbasic-companycode
            AND a~plant = @lt_productplantbasic-valuationarea
            AND a~goodsmovementtype = '309'
-           AND postingdate BETWEEN @lv_begindate_month AND @lv_enddate_month
+           AND postingdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
            AND NOT EXISTS ( SELECT materialdocument FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
                              WHERE reversedmaterialdocumentyear = a~materialdocumentyear
                                AND reversedmaterialdocument = a~materialdocument
@@ -359,7 +403,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
           "当月入库的合计库存数量的库龄是1个月
           ls_ztfi_1019_cal-plant   = ls_inventoryamtbyfsclperd-valuationarea.
           ls_ztfi_1019_cal-product = ls_inventoryamtbyfsclperd-material.
-          ls_ztfi_1019_cal-age     = 1.
+          ls_ztfi_1019_cal-age     = '1'.
           ls_ztfi_1019_cal-qty     = ls_goosmovment-receipt.
           APPEND ls_ztfi_1019_cal TO lt_ztfi_1019_cal.
           CLEAR ls_ztfi_1019_cal.
@@ -394,7 +438,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
           "当月的库存数量对应的库龄就是1个月
           ls_ztfi_1019_cal-plant   = ls_inventoryamtbyfsclperd-valuationarea.
           ls_ztfi_1019_cal-product = ls_inventoryamtbyfsclperd-material.
-          ls_ztfi_1019_cal-age     = 1.
+          ls_ztfi_1019_cal-age     = '1'.
           ls_ztfi_1019_cal-qty     = ls_inventoryamtbyfsclperd-valuationquantity.
           APPEND ls_ztfi_1019_cal TO lt_ztfi_1019_cal.
           CLEAR ls_ztfi_1019_cal.
@@ -425,6 +469,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
               ls_ztfi_1019_cal-product = <fs_ztfi_1019_cal>-product.
               ls_ztfi_1019_cal-qty     = <fs_ztfi_1019_cal>-qty.
               ls_ztfi_1019_cal-age     = ls_ztfi_1004-age.
+              CONDENSE ls_ztfi_1019_cal-age.
               COLLECT ls_ztfi_1019_cal INTO lt_ztfi_1019_cal_tmp.
               CLEAR ls_ztfi_1019_cal.
 
@@ -434,6 +479,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
               ls_ztfi_1019_cal-product = <fs_ztfi_1019_cal>-product.
               ls_ztfi_1019_cal-qty     = lv_qty.
               ls_ztfi_1019_cal-age     = ls_ztfi_1004-age.
+              CONDENSE ls_ztfi_1019_cal-age.
               COLLECT ls_ztfi_1019_cal INTO lt_ztfi_1019_cal_tmp.
               CLEAR ls_ztfi_1019_cal.
 
@@ -545,8 +591,6 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
 
       DELETE lt_ztfi_1019_cal WHERE qty = 0.
 
-      DATA lv_timestampl TYPE timestampl.
-
       GET TIME STAMP FIELD lv_timestampl.
 
       LOOP AT lt_ztfi_1019_cal INTO ls_ztfi_1019_cal.
@@ -561,8 +605,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         CONDENSE ls_ztfi_1019-age.
 
         ls_ztfi_1019_db-last_changed_by = ''.
-        ls_ztfi_1019_db-last_changed_at = ''.
-        ls_ztfi_1019_db-local_last_changed_at = ''.
+        ls_ztfi_1019_db-last_changed_at = lv_timestampl.
+        ls_ztfi_1019_db-local_last_changed_at = lv_timestampl.
         APPEND ls_ztfi_1019_db TO lt_ztfi_1019_db.
         CLEAR ls_ztfi_1019_db.
       ENDLOOP.
@@ -571,7 +615,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
     IF lt_ztfi_1019_db IS NOT INITIAL.
       MODIFY ztfi_1019 FROM TABLE @lt_ztfi_1019_db.
     ENDIF.
-
+*    DELETE FROM ztfi_1019 WHERE fiscalyear = '2024'.
   ENDMETHOD.
 ENDCLASS.
 

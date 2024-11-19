@@ -20,6 +20,7 @@ define root view entity ZC_MFGORDERASSIGNSO
       OrderIsReleased,
       AssignQty,
       PurchaseOrderByCustomer,
+      ItemMaterial,
       RequestedQuantityInBaseUnit,
       AvailableAssignQty,
 

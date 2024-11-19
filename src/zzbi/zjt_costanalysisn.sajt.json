@@ -1,0 +1,29 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "BI004 逆ザヤ防止分析",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "catalogName": "ZJCE_COSTANALYSISN"
+  },
+  "parameters": {
+    "singleValueParameters": [
+      {
+        "name": "P_Month",
+        "value": ""
+      },
+      {
+        "name": "P_Year",
+        "value": ""
+      }
+    ],
+    "valueRangesParameters": [
+      {
+        "name": "P_Plant",
+        "valueRanges": []
+      }
+    ]
+  }
+}

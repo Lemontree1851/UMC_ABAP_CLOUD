@@ -62,7 +62,7 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
       lv_tabix       TYPE i,
       lv_flg         TYPE c LENGTH 1,
       lv_count       TYPE i,
-      lv_rate(5)     TYPE p DECIMALS 5,
+      lv_rate        TYPE i,
       lv_diff1       TYPE i,
       lv_diff2       TYPE i.
 
@@ -112,7 +112,8 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
         INTO TABLE @DATA(lt_ztbc_1001).
 
 * Get PO data
-      SELECT a~purchaseorder,
+      IF lv_complete = 'X'.
+        SELECT a~purchaseorder,
              a~purchaseordertype,
              a~purchaseorderdate,
              a~companycode,
@@ -150,9 +151,52 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
          AND b~material IN @lr_matnr
          AND b~plant IN @lr_werks
          AND b~purgdocpricedate IN @lr_pricedate
-         AND b~iscompletelydelivered = @lv_complete
+         AND b~iscompletelydelivered = @space
          AND b~netpriceamount IN @lr_netpr
         INTO TABLE @DATA(lt_po).
+      ELSE.
+        SELECT a~purchaseorder,
+             a~purchaseordertype,
+             a~purchaseorderdate,
+             a~companycode,
+             a~purchasingorganization,
+             a~purchasinggroup,
+             a~supplier,
+             a~documentcurrency,
+             a~exchangerate,
+             b~purchaseorderitem,
+             b~materialgroup,
+             b~material,
+             b~suppliermaterialnumber,
+             b~purchaseorderitemtext,
+             b~plant,
+             b~purchaseorderquantityunit,
+             b~netpricequantity,
+             b~requirementtracking,
+             b~requisitionername,
+             b~orderpriceunit,
+             b~pricingdatecontrol,
+             b~purchasinginforecord,
+             b~accountassignmentcategory,
+             b~netamount,
+             b~orderquantity,
+             b~netpriceamount,
+             b~taxcode,
+             b~purgdocpricedate
+        FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS AS a
+          INNER JOIN i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS AS b
+          ON ( a~purchaseorder = b~purchaseorder )
+       WHERE a~purchaseorder IN @lr_ebeln
+         AND a~purchasinggroup IN @lr_ekgrp
+         AND a~supplier IN @lr_lifnr
+         AND b~purchasingdocumentdeletioncode = @space
+         AND b~material IN @lr_matnr
+         AND b~plant IN @lr_werks
+         AND b~purgdocpricedate IN @lr_pricedate
+         AND b~netpriceamount IN @lr_netpr
+        INTO TABLE @lt_po.
+
+      ENDIF.
 
       IF lt_po IS NOT INITIAL.
 * Get Product
@@ -366,9 +410,9 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
           IF <lfs_inv>-purchaseorder = ls_mat-purchaseorder
          AND <lfs_inv>-purchaseorderitem = ls_mat-purchaseorderitem.
             <lfs_inv>-del = 'X'.
-            ls_pur-fiscalyear = ls_inv-fiscalyear.
-            ls_pur-supplierinvoice = ls_inv-supplierinvoice.
-            ls_pur-supplierinvoiceitem = ls_inv-supplierinvoiceitem.
+            ls_pur-fiscalyear = <lfs_inv>-fiscalyear.
+            ls_pur-supplierinvoice = <lfs_inv>-supplierinvoice.
+            ls_pur-supplierinvoiceitem = <lfs_inv>-supplierinvoiceitem.
           ENDIF.
         ENDIF.
         ls_pur-purchaseorder = ls_mat-purchaseorder.
@@ -426,7 +470,7 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
           ls_output-purchasinggroup = ls_po-purchasinggroup.
           ls_output-supplier = ls_po-supplier.
           ls_output-documentcurrency = ls_po-documentcurrency.
-          ls_output-documentdate = ls_po-purchaseorderdate.
+          ls_output-purchaseorderdate = ls_po-purchaseorderdate.
           ls_output-purchaseordertype = ls_po-purchaseordertype.
           ls_output-exchangerate = ls_po-exchangerate.
           ls_output-material = ls_po-material.
@@ -455,7 +499,7 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
           ELSE.
             lv_netpr = ls_po-netpriceamount / ls_po-netpricequantity.
             ls_output-netprice1 = lv_netpr.     "発注単価
-            ls_output-netprice2 = lv_netpr_jp.  "取引通貨単価
+            ls_output-netprice2 = lv_netpr.  "取引通貨単価
             lv_netpr = lv_netpr * ls_po-exchangerate.
             ls_output-netprice3 = lv_netpr.     "円換算後単価(PO)
           ENDIF.
@@ -574,6 +618,10 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
              WITH KEY zvalue1 = ls_po-taxcode.
         IF sy-subrc = 0.
           lv_rate = ls_1001-zvalue2.   "Tax rate
+          IF lv_rate <> 0.
+            ls_output-taxrate = lv_rate && '%'.
+            CONDENSE ls_output-taxrate NO-GAPS.
+          ENDIF.
         ENDIF.
 
         READ TABLE lt_ekbe INTO ls_ekbe
@@ -608,11 +656,25 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
         IF sy-subrc = 0.
           ls_output-invoicingparty = ls_invoice-invoicingparty.
           ls_output-duecalculationbasedate = ls_invoice-duecalculationbasedate.
-          ls_output-vat2 = ls_output-vat1 * ls_invoice-exchangerate.
-          ls_output-netamount3 = ls_output-invoiceamount * ls_invoice-exchangerate.
-          ls_output-netamount3 = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
+          lv_netpr = ls_output-vat1 * ls_invoice-exchangerate.
+          lv_netpr = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
                                                   iv_currency = ls_po-documentcurrency
-                                                  iv_input = ls_output-netamount3 ).
+                                                  iv_input = lv_netpr ).
+          IF lv_netpr >= 0.
+            ls_output-vat2 = lv_netpr.
+          ELSE.
+            ls_output-vat2 = |{ lv_netpr SIGN = LEFTPLUS }|.
+          ENDIF.
+
+          lv_netpr = ls_output-invoiceamount * ls_invoice-exchangerate.
+          lv_netpr = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
+                                                  iv_currency = ls_po-documentcurrency
+                                                  iv_input = lv_netpr ).
+          IF lv_netpr >= 0.
+            ls_output-netamount3 = lv_netpr.
+          ELSE.
+            ls_output-netamount3 = |{ lv_netpr SIGN = LEFTPLUS }|.
+          ENDIF.
         ENDIF.
 
         READ TABLE lt_bkpf INTO DATA(ls_bkpf)
@@ -646,7 +708,7 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
           ls_output-purchasinggroup = ls_po-purchasinggroup.
           ls_output-supplier = ls_po-supplier.
           ls_output-documentcurrency = ls_po-documentcurrency.
-          ls_output-documentdate = ls_po-purchaseorderdate.
+          ls_output-purchaseorderdate = ls_po-purchaseorderdate.
           ls_output-purchaseordertype = ls_po-purchaseordertype.
           ls_output-exchangerate = ls_po-exchangerate.
           ls_output-material = ls_po-material.
@@ -737,8 +799,8 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
                         supplierinvoice supplierinvoiceitem.
 
       " Filtering
-      zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
-                                   CHANGING  ct_data     = lt_output ).
+*      zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
+*                                   CHANGING  ct_data     = lt_output ).
 
       IF io_request->is_total_numb_of_rec_requested(  ) .
         io_response->set_total_number_of_records( lines( lt_output ) ).

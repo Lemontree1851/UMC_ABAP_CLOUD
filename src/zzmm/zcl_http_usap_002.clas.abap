@@ -91,7 +91,9 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_usap_002 IMPLEMENTATION.
+CLASS ZCL_HTTP_USAP_002 IMPLEMENTATION.
+
+
   METHOD if_http_service_extension~handle_request.
     DATA:
       ls_outbound TYPE ts_outbound,
@@ -134,6 +136,7 @@ CLASS zcl_http_usap_002 IMPLEMENTATION.
       DATA(lt_post) = ls_post_in-to_post-items.
 
       LOOP AT lt_post INTO DATA(ls_post).
+        CLEAR: lv_etag.
         ls_post-delivery = |{ ls_post-delivery ALPHA = IN }|.
         DATA(lv_parameter) = '''' && ls_post-delivery && ''''.
 * update gr date
@@ -155,7 +158,7 @@ CLASS zcl_http_usap_002 IMPLEMENTATION.
           CLEAR: ls_response.
           CONTINUE.
         ELSE.
-          zzcl_common_utils=>request_api_v4( EXPORTING iv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader({ lv_parameter })|
+          zzcl_common_utils=>request_api_v2( EXPORTING iv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader({ lv_parameter })|
                                                  iv_method      = if_web_http_client=>patch
                                                  iv_body        = lv_reqbody_api
                                        IMPORTING ev_status_code = lv_status_code
@@ -164,10 +167,7 @@ CLASS zcl_http_usap_002 IMPLEMENTATION.
                             EXPORTING json = lv_response
                             CHANGING data = ls_res_api ).
           IF lv_status_code = 204. " patch
-            ls_response-_status = 'S'.
-            ls_response-_message = 'Update date sucsessful'.
-            APPEND ls_response TO es_response-items.
-            CLEAR: ls_response.
+
           ELSE.
             ls_response-_status = 'E'.
             ls_response-_message = 'Update date fail'.
@@ -177,13 +177,20 @@ CLASS zcl_http_usap_002 IMPLEMENTATION.
           ENDIF.
         ENDIF.
 * Post
+        CLEAR: lv_etag.
         zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader({ lv_parameter })|
                                                      iv_method      = if_web_http_client=>get
                                                      iv_etag        = lv_etag
                                            IMPORTING ev_status_code = lv_status_code
                                                      ev_response    = lv_response
                                                      ev_etag        = lv_etag ).
-        IF lv_etag IS NOT INITIAL.
+        IF lv_etag IS INITIAL.
+          ls_response-_status = 'E'.
+          ls_response-_message = 'No Etag for post'.
+          APPEND ls_response TO es_response-items.
+          CLEAR: ls_response.
+          CONTINUE.
+        ELSE.
           zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = |/API_OUTBOUND_DELIVERY_SRV;v=0002/PostGoodsIssue?DeliveryDocument={ lv_parameter }&sap-language={ lv_langu }|
                                                        iv_method      = if_web_http_client=>post
                                                        iv_etag        = lv_etag
@@ -194,15 +201,8 @@ CLASS zcl_http_usap_002 IMPLEMENTATION.
                             EXPORTING json = lv_response
                             CHANGING data = ls_res_api ).
           IF lv_status_code = 200. " Post
-            APPEND LINES OF ls_res_api-d-results TO lt_result.
-            LOOP AT lt_result INTO DATA(ls_result).
-              lv_text = ls_result-systemmessagevariable1
-                      && ls_result-systemmessagevariable2
-                      && ls_result-systemmessagevariable3
-                      && ls_result-systemmessagevariable4.
-            ENDLOOP.
             ls_response-_status = 'S'.
-            ls_response-_message = lv_text.
+            ls_response-_message = 'Posted successful'.
             APPEND ls_response TO es_response-items.
             CLEAR: ls_response.
           ELSE.
@@ -211,11 +211,6 @@ CLASS zcl_http_usap_002 IMPLEMENTATION.
             APPEND ls_response TO es_response-items.
             CLEAR: ls_response.
           ENDIF.
-        ELSE.
-          ls_response-_status = 'E'.
-          ls_response-_message = 'No Etag for GR'.
-          APPEND ls_response TO es_response-items.
-          CLEAR: ls_response.
         ENDIF.
       ENDLOOP.
     ELSE.
@@ -239,15 +234,15 @@ CLASS zcl_http_usap_002 IMPLEMENTATION.
                             EXPORTING json = lv_response
                             CHANGING data = ls_res_api ).
         IF lv_status_code = 200. "
-          APPEND LINES OF ls_res_api-d-results TO lt_result.
-          LOOP AT lt_result INTO ls_result.
-            lv_text = ls_result-systemmessagevariable1
-                    && ls_result-systemmessagevariable2
-                    && ls_result-systemmessagevariable3
-                    && ls_result-systemmessagevariable4.
-          ENDLOOP.
+*          APPEND LINES OF ls_res_api-d-results TO lt_result.
+*          LOOP AT lt_result INTO ls_result.
+*            lv_text = ls_result-systemmessagevariable1
+*                    && ls_result-systemmessagevariable2
+*                    && ls_result-systemmessagevariable3
+*                    && ls_result-systemmessagevariable4.
+*          ENDLOOP.
           ls_response-_status = 'S'.
-          ls_response-_message = lv_text.
+          ls_response-_message = 'Reserve successful'.
           APPEND ls_response TO es_response-items.
           CLEAR: ls_response.
         ELSE.

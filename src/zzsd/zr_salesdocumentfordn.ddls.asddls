@@ -5,8 +5,8 @@ define root view entity ZR_SALESDOCUMENTFORDN
   association [0..1] to I_DeliveryBlockReasonText as _DeliveryBlockReasonText on  $projection.DeliveryBlockReason   = _DeliveryBlockReasonText.DeliveryBlockReason
                                                                               and _DeliveryBlockReasonText.Language = $session.system_language
   association [0..1] to I_BusinessPartner         as _SoldToPartyName         on  $projection.SoldToParty = _SoldToPartyName.BusinessPartner
-  association [0..1] to I_BusinessPartner         as _BillToPartyName         on  $projection.BillToParty = _BillToPartyName.BusinessPartner
-  association [0..1] to I_BusinessPartner         as _ShipToPartyName         on  $projection.ShipToParty = _ShipToPartyName.BusinessPartner
+  association [0..1] to I_BusinessPartner         as _BillToPartyName         on  $projection.billtoparty = _BillToPartyName.BusinessPartner
+  association [0..1] to I_BusinessPartner         as _ShipToPartyName         on  $projection.shiptoparty = _ShipToPartyName.BusinessPartner
 {
   key SalesDocument,
   key _Item.SalesDocumentItem,
@@ -14,9 +14,10 @@ define root view entity ZR_SALESDOCUMENTFORDN
       PurchaseOrderByCustomer,
       DeliveryBlockReason,
       SoldToParty,
-      _Partner[ PartnerFunction = 'BP' ].Customer       as BillToParty,
-      _Item._Partner[ PartnerFunction = 'SH' ].Customer as ShipToParty,
-
+      _Item.BillToParty,
+      _Item.ShipToParty,
+//      _Partner[ PartnerFunction = 'WE' ].Customer       as BillToParty,
+//      _Item._Partner[ PartnerFunction = 'RE' ].Customer as ShipToParty,
       _Item,
       _DeliveryBlockReasonText,
       _BillToPartyName,

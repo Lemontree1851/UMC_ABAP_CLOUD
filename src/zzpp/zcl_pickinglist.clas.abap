@@ -12,8 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PICKINGLIST IMPLEMENTATION.
-
+CLASS zcl_pickinglist IMPLEMENTATION.
 
   METHOD if_sadl_exit_calc_element_read~calculate.
     TYPES: BEGIN OF lty_detail.
@@ -46,10 +45,11 @@ CLASS ZCL_PICKINGLIST IMPLEMENTATION.
              document~reservationitem,
              document~goodsmovementtype,
              SUM( document~quantityinbaseunit ) AS quantityinbaseunit
-        FROM i_materialdocumentitem_2 AS document
+        FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS AS document
         JOIN @lt_temp AS a ON  a~reservation = document~reservation
                            AND a~reservationitem = document~reservationitem
        WHERE document~goodsmovementtype IN ( '311','312' )
+         AND document~materialdocumentitem = '0001'
        GROUP BY document~reservation,
                 document~reservationitem,
                 document~goodsmovementtype
@@ -60,7 +60,7 @@ CLASS ZCL_PICKINGLIST IMPLEMENTATION.
       SELECT document~reservation,
              document~reservationitem,
              SUM( document~resvnitmrequiredqtyinbaseunit ) AS resvnitmrequiredqtyinbaseunit
-        FROM i_reservationdocumentitem AS document
+        FROM i_reservationdocumentitem WITH PRIVILEGED ACCESS AS document
         JOIN @lt_temp AS a ON  a~reservation = document~reservation
                            AND a~reservationitem = document~reservationitem
        WHERE document~goodsmovementtype = '311'
@@ -106,6 +106,8 @@ CLASS ZCL_PICKINGLIST IMPLEMENTATION.
                                                                          BINARY SEARCH.
         IF sy-subrc = 0.
           DATA(lv_quantity1) = ls_materialdocument-quantityinbaseunit.
+        ELSE.
+          CLEAR lv_quantity1.
         ENDIF.
 
         READ TABLE lt_materialdocument INTO ls_materialdocument WITH KEY reservation = <fs_original_data>-reservation
@@ -114,6 +116,8 @@ CLASS ZCL_PICKINGLIST IMPLEMENTATION.
                                                                          BINARY SEARCH.
         IF sy-subrc = 0.
           DATA(lv_quantity2) = ls_materialdocument-quantityinbaseunit.
+        ELSE.
+          CLEAR lv_quantity2.
         ENDIF.
 
         READ TABLE lt_reservationdocument INTO DATA(ls_reservationdocument) WITH KEY reservation = <fs_original_data>-reservation
@@ -121,6 +125,8 @@ CLASS ZCL_PICKINGLIST IMPLEMENTATION.
                                                                                      BINARY SEARCH.
         IF sy-subrc = 0.
           DATA(lv_quantity3) = ls_reservationdocument-resvnitmrequiredqtyinbaseunit.
+        ELSE.
+          CLEAR lv_quantity3.
         ENDIF.
 
         IF lv_quantity1 - lv_quantity2 = 0.
@@ -179,7 +185,7 @@ CLASS ZCL_PICKINGLIST IMPLEMENTATION.
     ct_calculated_data = CORRESPONDING #( lt_original_data ).
   ENDMETHOD.
 
-
   METHOD if_sadl_exit_calc_element_read~get_calculation_info.
   ENDMETHOD.
+
 ENDCLASS.

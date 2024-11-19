@@ -160,6 +160,7 @@ CLASS lhc_zr_ledproductionversion IMPLEMENTATION.
       MODIFY ztpp_1017 FROM @ls_pp1017.
       IF sy-subrc = 0.
         <lfs_data>-status = 'S'.
+        MESSAGE s080(zpp_001) INTO <lfs_data>-message. " 登録成功しました。
       ELSE.
         <lfs_data>-status = 'E'.
         MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <lfs_data>-message WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.

@@ -53,47 +53,47 @@ define root custom entity ZC_SALESDOCUMENTLIST
       PriceDetnExchangeRate          : abap.dec( 9, 5 );
       ExchangeRateDate               : wwert_d;
       //      @Semantics.amount.currencyCode : 'ConditionCurrencyPPR0'
-      ConditionRateValuePPR0         : abap.dec( 24, 9 );
+      ConditionRateValuePPR0         : abap.dec( 24, 2 );
       ConditionCurrencyPPR0          : waers;
-      //      @Semantics.amount.currencyCode : 'TransactionCurrency'
+      @Semantics.amount.currencyCode : 'TransactionCurrency'
       ConditionAmountPPR0            : abap.dec( 15, 2 );
-      ConditionRateValueTTX1         : abap.dec( 24, 9 );
-      //      @Semantics.amount.currencyCode : 'TransactionCurrency'
+      ConditionRateValueTTX1         : abap.dec( 24, 2 );
+      @Semantics.amount.currencyCode : 'TransactionCurrency'
       ConditionAmountTTX1            : abap.dec( 15, 2 );
       //      @Semantics.amount.currencyCode : 'ConditionCurrencyZPFC'
-      ConditionRateValueZPFC         : abap.dec( 24, 9 );
+      ConditionRateValueZPFC         : abap.dec( 24, 2 );
       ConditionCurrencyZPFC          : waers;
-      //      @Semantics.amount.currencyCode : 'TransactionCurrency'
+      @Semantics.amount.currencyCode : 'TransactionCurrency'
       ConditionAmountZPFC            : abap.dec( 15, 2 );
       //      @Semantics.amount.currencyCode : 'ConditionCurrencyZPST'
-      ConditionRateValueZPST         : abap.dec( 24, 9 );
+      ConditionRateValueZPST         : abap.dec( 24, 2 );
       ConditionCurrencyZPST          : waers;
-      //      @Semantics.amount.currencyCode : 'TransactionCurrency'
+      @Semantics.amount.currencyCode : 'TransactionCurrency'
       ConditionAmountZPST            : abap.dec( 15, 2 );
       //      @Semantics.amount.currencyCode : 'ConditionCurrencyZPIN'
-      ConditionRateValueZPIN         : abap.dec( 24, 9 );
+      ConditionRateValueZPIN         : abap.dec( 24, 2 );
       ConditionCurrencyZPIN          : waers;
-      //      @Semantics.amount.currencyCode : 'TransactionCurrency'
+      @Semantics.amount.currencyCode : 'TransactionCurrency'
       ConditionAmountZPIN            : abap.dec( 15, 2 );
       //      @Semantics.amount.currencyCode : 'ConditionCurrencyZPSB'
-      ConditionRateValueZPSB         : abap.dec( 24, 9 );
+      ConditionRateValueZPSB         : abap.dec( 24, 2 );
       ConditionCurrencyZPSB          : waers;
-      //      @Semantics.amount.currencyCode : 'TransactionCurrency'
+      @Semantics.amount.currencyCode : 'TransactionCurrency'
       ConditionAmountZPSB            : abap.dec( 15, 2 );
       //      @Semantics.amount.currencyCode : 'ConditionCurrencyZPSS'
-      ConditionRateValueZPSS         : abap.dec( 24, 9 );
+      ConditionRateValueZPSS         : abap.dec( 24, 2 );
       ConditionCurrencyZPSS          : waers;
-      //      @Semantics.amount.currencyCode : 'TransactionCurrency'
+      @Semantics.amount.currencyCode : 'TransactionCurrency'
       ConditionAmountZPSS            : abap.dec( 15, 2 );
       //      @Semantics.amount.currencyCode : 'ConditionCurrencyZPCM'
-      ConditionRateValueZPCM         : abap.dec( 24, 9 );
+      ConditionRateValueZPCM         : abap.dec( 24, 2 );
       ConditionCurrencyZPCM          : waers;
-      //      @Semantics.amount.currencyCode : 'TransactionCurrency'
+      @Semantics.amount.currencyCode : 'TransactionCurrency'
       ConditionAmountZPCM            : abap.dec( 15, 2 );
       //      @Semantics.amount.currencyCode : 'ConditionCurrencyZPGP'
-      ConditionRateValueZPGP         : abap.dec( 24, 9 );
+      ConditionRateValueZPGP         : abap.dec( 24, 2 );
       ConditionCurrencyZPGP          : waers;
-      //      @Semantics.amount.currencyCode : 'TransactionCurrency'
+      @Semantics.amount.currencyCode : 'TransactionCurrency'
       ConditionAmountZPGP            : abap.dec( 15, 2 );
       YY1_ItemRemarks_1_SDI          : abap.char(70);
       @Semantics.quantity.unitOfMeasure : 'OrderQuantityUnit'
@@ -106,10 +106,8 @@ define root custom entity ZC_SALESDOCUMENTLIST
       NoComplDeliveredQtyInBaseUnit  : menge_d;
       InternalTansferQtyInBaseUnit   : abap.char(20); //menge_d;
       NoInternalTansferQtyInBaseUnit : abap.char(20); //menge_d;
-      @Semantics.quantity.unitOfMeasure : 'BaseUnit'
-      EnternalTansferQtyInBaseUnit   : menge_d;
-      @Semantics.quantity.unitOfMeasure : 'BaseUnit'
-      NoEnternalTansferQtyInBaseUnit : menge_d;
+      ExternalTansferQtyInBaseUnit   : abap.char(20); //menge_d;
+      NoExternalTansferQtyInBaseUnit : abap.char(20); //menge_d;
       @Semantics.quantity.unitOfMeasure : 'BaseUnit'
       BillingQuantityInBaseUnit      : menge_d;
       @Semantics.quantity.unitOfMeasure : 'BaseUnit'
@@ -122,6 +120,9 @@ define root custom entity ZC_SALESDOCUMENTLIST
       SalesDocumentRjcnReasonName    : bezei40;
       YY1_SalesDocType_SDH           : abap.char(4);
       YY1_ManagementNo_SDI           : abap.char(18);
+      YY1_ManagementNo_1_SDI         : abap.char(18);
+      YY1_ManagementNo_2_SDI         : abap.char(18);
+      YY1_ManagementNo_3_SDI         : abap.char(18);
 
       //filter field
       RequestedDeliveryDate          : abap.dats;

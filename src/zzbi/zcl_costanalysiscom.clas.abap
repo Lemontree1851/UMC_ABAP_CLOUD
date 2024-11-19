@@ -19,12 +19,16 @@ CLASS zcl_costanalysiscom IMPLEMENTATION.
     DATA:
       lr_companycode TYPE RANGE OF zr_costanalysiscom-companycode,
       lv_zyear       TYPE zr_costanalysiscom-zyear,
-      lv_zmonth      TYPE zr_costanalysiscom-zmonth,
+      lv_zmonth      TYPE N LENGTH 2,
       lr_product     TYPE RANGE OF zr_costanalysiscom-MATERIAL,
       lr_customer    TYPE RANGE OF zr_costanalysiscom-customer,
       ls_companycode LIKE LINE OF lr_companycode,
       ls_product     LIKE LINE OF lr_product,
       ls_customer    LIKE LINE OF lr_customer,
+      lr_zyear       TYPE RANGE OF zr_costanalysiscom-zyear,
+      ls_zyear       LIKE LINE OF lr_zyear,
+      lr_zmonth       TYPE RANGE OF zr_costanalysiscom-zmonth,
+      ls_zmonth       LIKE LINE OF lr_zmonth,
       lv_kunnr       TYPE kunnr.
 
     TRY.
@@ -40,8 +44,20 @@ CLASS zcl_costanalysiscom IMPLEMENTATION.
                 APPEND ls_companycode TO lr_companycode.
               WHEN 'ZYEAR'.
                 lv_zyear = str_rec_l_range-low.
+
+                CLEAR ls_zyear.
+                ls_zyear-sign   = 'I'.
+                ls_zyear-option = 'EQ'.
+                ls_zyear-low    = lv_zyear.
+                APPEND ls_zyear TO lr_zyear.
               WHEN 'ZMONTH'.
                 lv_zmonth = str_rec_l_range-low.
+
+                CLEAR ls_zmonth.
+                ls_zmonth-sign   = 'I'.
+                ls_zmonth-option = 'EQ'.
+                ls_zmonth-low    = lv_zmonth.
+                APPEND ls_zmonth TO lr_zmonth.
               WHEN 'MATERIAL'.
                 CLEAR ls_product.
                 ls_product-sign   = 'I'.
@@ -92,14 +108,17 @@ CLASS zcl_costanalysiscom IMPLEMENTATION.
            movingaverageprice,
            currency,
            billingquantity,
-           billingquantityunit
+           billingquantityunit,
+           sales_number,
+           quo_version,
+           sales_d_no
       FROM ztbi_1001
      WHERE companycode in @lr_companycode
-       and zyear        = @lv_zyear
-       and zmonth       = @lv_zmonth
+       and zyear       in @lr_zyear
+       and zmonth      in @lr_zmonth
        and product     in @lr_product
        and customer    in @lr_customer
-      into TABLE @lt_data.
+      into CORRESPONDING FIELDS OF TABLE @lt_data.
 
     io_response->set_total_number_of_records( lines( lt_data ) ).
 

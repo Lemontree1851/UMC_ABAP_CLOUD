@@ -224,9 +224,8 @@ define root custom entity ZR_POACCEPTANCE
       TaxCode                        : mwskz;
 
       @UI                            : { lineItem: [ { position: 360 } ] }
-      @Semantics.amount.currencyCode : 'DocumentCurrency'
       @EndUserText.label             : '{@i18n>TaxRate}'
-      TaxRate                        : abap.curr(11,2);
+      TaxRate                        : abap.char(9);
 
       //入出庫伝票の登録日付
       @UI                            : { lineItem: [ { position: 370 } ] }
@@ -323,9 +322,8 @@ define root custom entity ZR_POACCEPTANCE
 
       //円換算後税額（檢收）
       @UI                            : { lineItem: [ { position: 570 } ] }
-      @Semantics.amount.currencyCode : 'DocumentCurrency'
       @EndUserText.label             : '{@i18n>VAT2}'
-      VAT2                           : abap.curr(13,2);
+      VAT2                           : abap.char(13);
 
       //参照伝票
       @UI                            : { lineItem: [ { position: 580 } ] }

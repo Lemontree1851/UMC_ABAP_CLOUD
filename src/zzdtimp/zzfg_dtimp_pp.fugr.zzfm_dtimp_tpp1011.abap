@@ -102,6 +102,8 @@ FUNCTION zzfm_dtimp_tpp1011.
       MODIFY ztpp_1011 FROM @ls_data.
       IF sy-subrc = 0.
         COMMIT WORK AND WAIT.
+        <line>-('Type') = 'S'.
+        <line>-('Message') = 'Success'.
       ELSE.
         ROLLBACK WORK.
         MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.

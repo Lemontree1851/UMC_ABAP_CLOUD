@@ -4,18 +4,18 @@ annotate entity ZC_COMPONENTUSAGELIST with
   @Consumption.valueHelpDefinition: [ { entity: { element: 'Plant', name: 'I_PlantStdVH' } } ]
   Plant;
 
+  @Consumption.valueHelpDefinition: [ { entity: { element: 'Product', name: 'I_ProductStdVH' } } ]
+  BillOfMaterialComponent;
+  
   @Consumption.filter.selectionType: #RANGE
   ProductManufacturerNumber;
   
-  @Consumption.valueHelpDefinition: [ { entity: { element: 'Product', name: 'I_ProductStdVH' } } ]
-  BillOfMaterialComponent;
-
   @Consumption.filter.selectionType: #RANGE
   SupplierMaterialNumber;
   
   @Consumption.filter: { selectionType: #SINGLE }
   NoDisplayNonProduct;
 
-  @Consumption.filter: { selectionType: #SINGLE }
-  DisplayPurchasingInfo;
+//  @Consumption.filter: { selectionType: #SINGLE }
+//  DisplayPurchasingInfo;
 }

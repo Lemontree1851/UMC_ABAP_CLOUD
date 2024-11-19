@@ -15,30 +15,20 @@
       <RSIMP>
        <PARAMETER>IO_DATA</PARAMETER>
        <OPTIONAL>X</OPTIONAL>
-       <TYP>REF TO DATA</TYP>
-       <REF_CLASS>X</REF_CLASS>
-      </RSIMP>
-      <RSIMP>
-       <PARAMETER>IV_STRUC</PARAMETER>
-       <OPTIONAL>X</OPTIONAL>
-       <TYP>ZZE_STRUCTURENAME</TYP>
+       <REFERENCE>X</REFERENCE>
+       <TYP>ZZS_DTIMP_TFI005</TYP>
       </RSIMP>
      </IMPORT>
      <EXPORT>
       <RSEXP>
        <PARAMETER>EO_DATA</PARAMETER>
        <REFERENCE>X</REFERENCE>
-       <TYP>REF TO DATA</TYP>
-       <REF_CLASS>X</REF_CLASS>
+       <TYP>ZZS_DTIMP_TFI005</TYP>
       </RSEXP>
      </EXPORT>
      <DOCUMENTATION>
       <RSFDO>
        <PARAMETER>IO_DATA</PARAMETER>
-       <KIND>P</KIND>
-      </RSFDO>
-      <RSFDO>
-       <PARAMETER>IV_STRUC</PARAMETER>
        <KIND>P</KIND>
       </RSFDO>
       <RSFDO>

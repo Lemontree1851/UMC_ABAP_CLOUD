@@ -1,0 +1,4 @@
+@EndUserText.label: '逆ザヤ防止分析（加工費）'
+define service ZUI_PROCESSINGCOST_O2 {
+  expose ZC_PROCESSINGCOST;
+}

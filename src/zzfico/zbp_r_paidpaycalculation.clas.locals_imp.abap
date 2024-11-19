@@ -220,6 +220,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       ls_kunnramt     TYPE ts_kunnramt,
       lt_bom          TYPE STANDARD TABLE OF ts_bom,
       ls_bom          TYPE ts_bom,
+      lt_bom_temp     TYPE STANDARD TABLE OF ts_bom,
       lt_matnrcost    TYPE STANDARD TABLE OF ts_matnrcost,
       ls_matnrcost    TYPE ts_matnrcost,
       ls_request      TYPE lty_request,
@@ -284,16 +285,16 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
 
     "Filter 6th = 'D'
     LOOP AT lt_product INTO DATA(ls_product).
-      DATA(lv_matnr) = zzcl_common_utils=>conversion_matn1(
-                                            EXPORTING iv_alpha = 'OUT'
-                                                      iv_input = ls_product-product ).
+*      DATA(lv_matnr) = zzcl_common_utils=>conversion_matn1(
+*                                            EXPORTING iv_alpha = 'OUT'
+*                                                      iv_input = ls_product-product ).
 *      IF lv_matnr+0(5) <> 'D'.
 *        DELETE lt_product.
 *        CONTINUE.
 *      ENDIF.
-      lv_length = strlen( lv_matnr ).
+      lv_length = strlen( ls_product-product ).
       lv_length = lv_length - 1.
-      IF lv_matnr+lv_length(1) <> '2'.
+      IF ls_product-product+lv_length(1) <> '2'.
         DELETE lt_product.
         CONTINUE.
       ENDIF.
@@ -304,14 +305,16 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       SELECT product,
              plant,
              mrpresponsible
-        FROM i_productplantmrp WITH PRIVILEGED ACCESS
+        FROM i_productplantbasic WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_product
-       WHERE product = @lt_product-product
-         AND plant = @lt_product-plant
+       WHERE plant = @lt_product-plant
         INTO TABLE @lt_mrp.
 
       LOOP AT lt_mrp ASSIGNING FIELD-SYMBOL(<lfs_mrp>).
         DATA(lv_len) = strlen( <lfs_mrp>-mrpresponsible ) - 2.
+        IF lv_len < 0.
+          CONTINUE.
+        ENDIF.
         lrs_sort-sign = 'I'.
         lrs_sort-option = 'EQ'.
         lrs_sort-low = <lfs_mrp>-mrpresponsible+lv_len(2).
@@ -327,6 +330,10 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         CLEAR: lrs_ekgrp.
       ENDLOOP.
     ENDIF.
+    SORT lr_sort BY low.
+    DELETE ADJACENT DUPLICATES FROM lr_sort COMPARING low.
+    SORT lr_ekgrp BY low.
+    DELETE ADJACENT DUPLICATES FROM lr_ekgrp COMPARING low.
 
 * 2.04 得意先BPコード
     IF lr_sort IS NOT INITIAL.
@@ -351,13 +358,11 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
 * 2.08 利益センタ
       SELECT product,
              plant,
-             companycode,
              profitcenter
-        FROM i_profitcentertoproduct WITH PRIVILEGED ACCESS
+        FROM i_productplantbasic WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_product
        WHERE product = @lt_product-product
          AND plant = @lt_product-plant
-         AND companycode = @cv_bukrs
         INTO TABLE @DATA(lt_prctr).
       IF sy-subrc = 0.
 * 2.09 利益センタのテキスト
@@ -477,51 +482,53 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     lv_to = lv_nextmonth - 1.
 
 * 2.15 有償支給品の仕入れ金額
-    SELECT purchaseorder,
-           purchaseorderitem,
-           accountassignmentnumber,
-           purchasinghistorydocumenttype,
-           purchasinghistorydocumentyear,
-           purchasinghistorydocument,
-           purchasinghistorydocumentitem,
-           debitcreditcode,
-           material,
-           plant,
-           purordamountincompanycodecrcy,
-           purchasinggroup
-      FROM c_purchaseorderhistorydex WITH PRIVILEGED ACCESS
-      FOR ALL ENTRIES IN @lt_chgamt_matnr
-     WHERE purchaseorder = @lt_chgamt_matnr-ebeln
-       AND purchaseorderitem = @lt_chgamt_matnr-ebelp
-       AND ( purchasinghistorycategory = 'Q'
-          OR purchasinghistorycategory = 'N' )
-       AND ( postingdate >= @lv_from
-         AND postingdate <= @lv_to )
-      INTO TABLE @DATA(lt_ekbe_matnr).
-
+    IF lt_chgamt_tmp2 IS NOT INITIAL.
+      SELECT purchaseorder,
+             purchaseorderitem,
+             accountassignmentnumber,
+             purchasinghistorydocumenttype,
+             purchasinghistorydocumentyear,
+             purchasinghistorydocument,
+             purchasinghistorydocumentitem,
+             debitcreditcode,
+             material,
+             plant,
+             purordamountincompanycodecrcy,
+             purchasinggroup
+        FROM c_purchaseorderhistorydex WITH PRIVILEGED ACCESS
+        FOR ALL ENTRIES IN @lt_chgamt_tmp2
+       WHERE purchaseorder = @lt_chgamt_tmp2-ebeln
+         AND purchaseorderitem = @lt_chgamt_tmp2-ebelp
+         AND ( purchasinghistorycategory = 'Q'
+            OR purchasinghistorycategory = 'N' )
+         AND ( postingdate >= @lv_from
+           AND postingdate <= @lv_to )
+        INTO TABLE @DATA(lt_ekbe_matnr).
+    ENDIF.
 * 2.16 購買グループ単位の仕入れ金額
-    SELECT purchaseorder,
-           purchaseorderitem,
-           accountassignmentnumber,
-           purchasinghistorydocumenttype,
-           purchasinghistorydocumentyear,
-           purchasinghistorydocument,
-           purchasinghistorydocumentitem,
-           debitcreditcode,
-           material,
-           plant,
-           purordamountincompanycodecrcy,
-           purchasinggroup
-      FROM c_purchaseorderhistorydex WITH PRIVILEGED ACCESS
-      FOR ALL ENTRIES IN @lt_chgamt_ekgrp
-     WHERE purchaseorder = @lt_chgamt_ekgrp-ebeln
-       AND purchaseorderitem = @lt_chgamt_ekgrp-ebelp
-       AND ( purchasinghistorycategory = 'Q'
-          OR purchasinghistorycategory = 'N' )
-       AND ( postingdate >= @lv_from
-         AND postingdate <= @lv_to )
-      INTO TABLE @DATA(lt_ekbe_ekgrp).
-
+    IF lt_chgamt_tmp1 IS NOT INITIAL.
+      SELECT purchaseorder,
+             purchaseorderitem,
+             accountassignmentnumber,
+             purchasinghistorydocumenttype,
+             purchasinghistorydocumentyear,
+             purchasinghistorydocument,
+             purchasinghistorydocumentitem,
+             debitcreditcode,
+             material,
+             plant,
+             purordamountincompanycodecrcy,
+             purchasinggroup
+        FROM c_purchaseorderhistorydex WITH PRIVILEGED ACCESS
+        FOR ALL ENTRIES IN @lt_chgamt_tmp1
+       WHERE purchaseorder = @lt_chgamt_tmp1-ebeln
+         AND purchaseorderitem = @lt_chgamt_tmp1-ebelp
+         AND ( purchasinghistorycategory = 'Q'
+            OR purchasinghistorycategory = 'N' )
+         AND ( postingdate >= @lv_from
+           AND postingdate <= @lv_to )
+        INTO TABLE @DATA(lt_ekbe_ekgrp).
+    ENDIF.
 * 3.01-3.08 BOM番号
     DATA(lt_product_tmp) = lt_product[].
     DO.
@@ -598,10 +605,11 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       ENDIF.
 
 * Check costbom with material bom
-      SORT lt_costbomexpode BY billofmaterialcomponent.
+      SORT lt_costbomexpode BY billofmaterialcomponent billofmaterialvariant.
       LOOP AT lt_up INTO DATA(ls_up).
         READ TABLE lt_costbomexpode
-             WITH KEY billofmaterialcomponent = ls_up-billofmaterialcomponent BINARY SEARCH
+             WITH KEY billofmaterialcomponent = ls_up-billofmaterialcomponent
+                      billofmaterialvariant = ls_up-billofmaterialvariant BINARY SEARCH
              TRANSPORTING NO FIELDS.
         IF sy-subrc <> 0.
           DELETE lt_up.
@@ -665,15 +673,20 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
                  WITH KEY plant = ls_expode-plant
                           (lv_field_son) = ls_up-billofmaterialcomponent BINARY SEARCH.
             IF sy-subrc = 0.
+              DATA(lv_tabix) = sy-tabix.
               ASSIGN COMPONENT lv_field OF STRUCTURE ls_bom TO <fs>.
               <fs> = ls_expode-material.
+              APPEND ls_bom TO lt_bom.
+              DELETE lt_bom_tmp INDEX lv_tabix.
+              CONTINUE.
             ENDIF.
-            APPEND ls_bom TO lt_bom.
             CLEAR: ls_bom.
           ENDIF.
         ENDLOOP.
       ENDIF.
-
+      IF lt_bom_tmp IS NOT INITIAL.
+        APPEND LINES OF lt_bom_tmp TO lt_bom_temp.
+      ENDIF.
       CLEAR: lt_product_tmp.
       LOOP AT lt_expode INTO ls_expode.
         ls_product-product = ls_expode-material.
@@ -682,6 +695,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         CLEAR: ls_product.
       ENDLOOP.
     ENDDO.
+    APPEND LINES OF lt_bom_temp TO lt_bom.
 
     SORT lr_bom BY low.
     DELETE ADJACENT DUPLICATES FROM lr_bom COMPARING low.
@@ -878,12 +892,9 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       INTO TABLE @DATA(lt_bseg_bukrs).
 
 * edit purchasing group
-    SORT lt_ekgrp BY purchasinggroup.
     LOOP AT lt_mrp INTO ls_mrp.
-      lv_len = strlen( <lfs_mrp>-mrpresponsible ) - 2.
-      DATA(lv_2) = <lfs_mrp>-mrpresponsible+lv_len(2).
       READ TABLE lt_ekgrp INTO DATA(ls_ekgrp)
-           WITH KEY purchasinggroup+1(2) = lv_2 BINARY SEARCH.
+           WITH KEY purchasinggroup+1(2) = ls_mrp-mrpresponsible+1(2).
       IF sy-subrc = 0.
         ls_purgroup-plant = ls_mrp-plant.
         ls_purgroup-product = ls_mrp-product.
@@ -1341,6 +1352,8 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     SORT lt_invtotalamt BY matnr plant.
     SORT lt_kunnramt BY profitcenter customer.
     SORT lt_matnrcost BY plant matnr.
+    SORT lt_chgamt_ekgrp BY ekgrp.
+    SORT lt_chgamt_matnr BY matnr plant.
 
     LOOP AT lt_product INTO ls_product.
       "会社コード
@@ -1357,10 +1370,12 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       IF sy-subrc = 0.
         READ TABLE lt_bp INTO ls_bp
              WITH KEY searchterm2 = ls_mrp-sort BINARY SEARCH.
-        ls_1010-customer = ls_bp-businesspartner.
-        ls_1010-customername = ls_bp-businesspartnername.
-        ls_1010-supplier = ls_bp-businesspartner.
-        ls_1010-suppliername = ls_bp-businesspartnername.
+        IF sy-subrc = 0.
+          ls_1010-customer = ls_bp-businesspartner.
+          ls_1010-customername = ls_bp-businesspartnername.
+          ls_1010-supplier = ls_bp-businesspartner.
+          ls_1010-suppliername = ls_bp-businesspartnername.
+        ENDIF.
       ENDIF.
       "有償支給品番
       ls_1010-product = ls_product-product.
@@ -1396,10 +1411,10 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       READ TABLE lt_ztfi_1009 INTO DATA(ls_1009)
            WITH KEY profitcenter = ls_1010-profitcenter
                     purchasinggroup = ls_1010-purchasinggroup BINARY SEARCH.
-      IF sy-subrc <> 0.
+      IF sy-subrc = 0.
         ls_1010-purgrpamount = ls_1010-purgrpamount + ls_1009-begpurgrpamt. "期首購買グループ仕入れ金額
         ls_1010-chargeableamount = ls_1010-chargeableamount + ls_1009-begchgmaterialamt. "期首有償支給品仕入れ金額
-        ls_1010-customerrevenue = ls_1010-customername + ls_1009-begcustomerrev. "期首得意先の総売上高
+        ls_1010-customerrevenue = ls_1010-customerrevenue + ls_1009-begcustomerrev. "期首得意先の総売上高
         ls_1010-revenue = ls_1010-revenue + ls_1009-begrev. "期首会社レベルの総売上高
       ELSE.
         READ TABLE lt_ztfi_1011 INTO DATA(ls_1011)
@@ -1408,7 +1423,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         IF sy-subrc = 0.
           ls_1010-purgrpamount = ls_1010-purgrpamount + ls_1011-purgrpamount. "期首購買グループ仕入れ金額
           ls_1010-chargeableamount = ls_1010-chargeableamount + ls_1011-chargeableamount."期首有償支給品仕入れ金額
-          ls_1010-customerrevenue = ls_1010-customername + ls_1011-customerrevenue. "期首得意先の総売上高
+          ls_1010-customerrevenue = ls_1010-customerrevenue + ls_1011-customerrevenue. "期首得意先の総売上高
           ls_1010-revenue = ls_1010-revenue + ls_1011-revenue. "期首会社レベルの総売上高
         ENDIF.
       ENDIF.
@@ -1421,7 +1436,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
 
       READ TABLE lt_chgamt_matnr INTO ls_chgamt_matnr
            WITH KEY matnr = ls_product-product
-                    plant = ls_product-plant.
+                    plant = ls_product-plant BINARY SEARCH.
       IF sy-subrc = 0.
         ls_1010-chargeableamount = ls_1010-chargeableamount + ls_chgamt_matnr-amount.
       ENDIF.
@@ -1435,7 +1450,9 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         READ TABLE lt_1011 INTO DATA(ls_tmp)
              WITH KEY profitcenter = ls_1010-profitcenter
                       purchasinggroup = ls_1010-purchasinggroup BINARY SEARCH.
-        ls_1010-previousstockamount = ls_tmp-currentstocktotal.
+        IF sy-subrc = 0.
+          ls_1010-previousstockamount = ls_tmp-currentstocktotal.
+        ENDIF.
       ENDIF.
       "在庫金額（当期末）-有償支給品
       READ TABLE lt_invtotalamt INTO ls_invtotalamt

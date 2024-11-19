@@ -12,18 +12,8 @@ ENDCLASS.
 
 
 
-CLASS zcl_get_invoicereport_longtext IMPLEMENTATION.
-  METHOD if_sadl_exit_calc_element_read~get_calculation_info.
-    IF iv_entity = 'ZC_INVOICEREPORT'.
-      LOOP AT it_requested_calc_elements ASSIGNING FIELD-SYMBOL(<fs_calc_element>).
-        CASE <fs_calc_element>.
-          WHEN 'REMITADDRESS'.
-            INSERT `BILLINGDOCUMENT` INTO TABLE et_requested_orig_elements.
+CLASS ZCL_GET_INVOICEREPORT_LONGTEXT IMPLEMENTATION.
 
-        ENDCASE.
-      ENDLOOP.
-    ENDIF.
-  ENDMETHOD.
 
   METHOD if_sadl_exit_calc_element_read~calculate.
 
@@ -63,5 +53,18 @@ CLASS zcl_get_invoicereport_longtext IMPLEMENTATION.
     ENDLOOP.
 
     ct_calculated_data = CORRESPONDING #(  lt_original_data ).
+  ENDMETHOD.
+
+
+  METHOD if_sadl_exit_calc_element_read~get_calculation_info.
+    IF iv_entity = 'ZC_INVOICEREPORT'.
+      LOOP AT it_requested_calc_elements ASSIGNING FIELD-SYMBOL(<fs_calc_element>).
+        CASE <fs_calc_element>.
+          WHEN 'REMITADDRESS'.
+            INSERT `BILLINGDOCUMENT` INTO TABLE et_requested_orig_elements.
+
+        ENDCASE.
+      ENDLOOP.
+    ENDIF.
   ENDMETHOD.
 ENDCLASS.

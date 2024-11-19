@@ -8,4 +8,8 @@ define behavior for ZC_PRWORKFLOW alias PurchaseReq
   use delete;
   use action batchProcess;
   use action createPurchaseOrder;
+  use action AcceptPRWF;
+  use action RejectPRWF;
+  use action Application;
+  use action Revoke;
 }

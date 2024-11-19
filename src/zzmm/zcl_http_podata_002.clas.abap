@@ -1328,92 +1328,128 @@ public section.
 
       "EKKO   購買発注
       BEGIN OF ty_output_EKKO,
+        message type string,
         items TYPE STANDARD TABLE OF ty_EKKO WITH EMPTY KEY,
+
       END OF ty_output_EKKO,
 
       "EKPO   購買発注明細
       BEGIN OF ty_output_EKPO,
+      message type string,
         items TYPE STANDARD TABLE OF ty_EKPO WITH EMPTY KEY,
+
       END OF ty_output_EKPO,
 
       "EKET   納入日程行
       BEGIN OF ty_output_EKET,
+      message type string,
         items TYPE STANDARD TABLE OF ty_EKET WITH EMPTY KEY,
+
       END OF ty_output_EKET,
 
       "EKBE 購買発注履歴
       BEGIN OF ty_output_EKBE,
+      message type string,
         items TYPE STANDARD TABLE OF ty_EKBE WITH EMPTY KEY,
+
       END OF ty_output_EKBE,
 
       "EKKN 購買発注の勘定設定
       BEGIN OF ty_output_EKKN,
+      message type string,
         items TYPE STANDARD TABLE OF ty_EKKN WITH EMPTY KEY,
+
       END OF ty_output_EKKN,
 
       "MARA 製品
       BEGIN OF ty_output_MARA,
+              message type string,
         items TYPE STANDARD TABLE OF ty_MARA WITH EMPTY KEY,
+
       END OF ty_output_MARA,
 
       "MAKT 製品テキスト
       BEGIN OF ty_output_MAKT,
+              message type string,
         items TYPE STANDARD TABLE OF ty_MAKT WITH EMPTY KEY,
+
       END OF ty_output_MAKT,
 
       "MARD 製品保管場所
       BEGIN OF ty_output_MARD,
+              message type string,
         items TYPE STANDARD TABLE OF ty_MARD WITH EMPTY KEY,
+
       END OF ty_output_MARD,
 
       "T024D MRP 管理者
       BEGIN OF ty_output_T024D,
+              message type string,
         items TYPE STANDARD TABLE OF ty_T024D WITH EMPTY KEY,
+
       END OF ty_output_T024D,
 
       "T001L 保管場所
       BEGIN OF ty_output_T001L,
+              message type string,
         items TYPE STANDARD TABLE OF ty_T001L WITH EMPTY KEY,
+
       END OF ty_output_T001L,
 
       "MARC 製品プラント
       BEGIN OF ty_output_MARC,
+              message type string,
         items TYPE STANDARD TABLE OF ty_MARC WITH EMPTY KEY,
+
       END OF ty_output_MARC,
 
       "MKAL 製造バージョン
       BEGIN OF ty_output_MKAL,
+              message type string,
         items TYPE STANDARD TABLE OF ty_MKAL WITH EMPTY KEY,
+
       END OF ty_output_MKAL,
 
       "AFKO 製造指図
       BEGIN OF ty_output_AFKO,
+              message type string,
         items TYPE STANDARD TABLE OF ty_AFKO WITH EMPTY KEY,
+
       END OF ty_output_AFKO,
 
       "AFPO 製造指図明細
       BEGIN OF ty_output_AFPO,
+              message type string,
         items TYPE STANDARD TABLE OF ty_AFPO WITH EMPTY KEY,
+
       END OF ty_output_AFPO,
 
       "PLPO 品質検査計画作業のバージョン
       BEGIN OF ty_output_PLPO,
+              message type string,
         items TYPE STANDARD TABLE OF ty_PLPO WITH EMPTY KEY,
+
       END OF ty_output_PLPO,
 
       "RESB 入出庫予定伝票明細
       BEGIN OF ty_output_RESB,
+              message type string,
         items TYPE STANDARD TABLE OF ty_RESB WITH EMPTY KEY,
+
       END OF ty_output_RESB,
 
       "AFVC 指図内作業
       BEGIN OF ty_output_AFVC,
+              message type string,
         items TYPE STANDARD TABLE OF ty_AFVC WITH EMPTY KEY,
+
       END OF ty_output_AFVC,
 
       "MBEW製品評価
       BEGIN OF ty_output_MBEW,
+              message type string,
         items TYPE STANDARD TABLE OF ty_MBEW WITH EMPTY KEY,
+
       END OF ty_output_MBEW.
 
   interfaces IF_HTTP_SERVICE_EXTENSION .
@@ -1439,7 +1475,8 @@ private section.
     lv_end_date   TYPE sy-datum,
     lv_temp(14)   TYPE c,
     lv_starttime  TYPE p LENGTH 16 DECIMALS 0,
-    lv_endtime    TYPE p LENGTH 16 DECIMALS 0.
+    lv_endtime    TYPE p LENGTH 16 DECIMALS 0,
+    lv_count      type i.
 
 ENDCLASS.
 
@@ -1563,6 +1600,8 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_ekko IS NOT INITIAL.
           LOOP  AT lt_ekko INTO DATA(ls_ekko).
+
+            lv_count = lv_count + 1.
 
             es_ekko-purchaseorder                          = ls_ekko-purchaseorder                       .
             es_ekko-purchaseordertype                      = ls_ekko-purchaseordertype                   .
@@ -1694,6 +1733,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_ekko-message = |{ lv_count }件は送信されました。|.
 
           DATA(lv_json_string) = xco_cp_json=>data->from_abap( es_response_ekko )->to_string( ).
           response->set_text( lv_json_string ).
@@ -1712,6 +1752,8 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_ekpo IS NOT INITIAL.
           LOOP  AT lt_ekpo INTO DATA(ls_ekpo).
+            lv_count = lv_count + 1.
+
             es_ekpo-purchaseorder                          =      ls_ekpo-purchaseorder                    .
             es_ekpo-purchaseorderitem                      =      ls_ekpo-purchaseorderitem                .
             es_ekpo-purchaseorderitemuniqueid              =      ls_ekpo-purchaseorderitemuniqueid        .
@@ -1993,10 +2035,12 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             CONDENSE es_ekpo-br_isproducedinhouse              .
             APPEND es_ekpo TO es_response_ekpo-items.
 
+
           ENDLOOP.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_ekpo-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_ekpo )->to_string( ).
           response->set_text( lv_json_string ).
@@ -2015,6 +2059,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_eket IS NOT INITIAL.
           LOOP  AT lt_eket INTO DATA(ls_eket).
+            lv_count = lv_count + 1.
             es_eket-purchaseorder                        = ls_eket-purchaseorder                    .
             es_eket-purchaseorderitem                    = ls_eket-purchaseorderitem                .
             es_eket-purchaseorderscheduleline            = ls_eket-purchaseorderscheduleline        .
@@ -2087,6 +2132,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_eket-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_eket )->to_string( ).
           response->set_text( lv_json_string ).
@@ -2105,6 +2151,8 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_ekbe IS NOT INITIAL.
           LOOP  AT lt_ekbe INTO DATA(ls_ekbe).
+
+            lv_count = lv_count + 1.
             es_ekbe-purchaseorder                                 = ls_ekbe-purchaseorder                     .
             es_ekbe-purchaseorderitem                             = ls_ekbe-purchaseorderitem                 .
             es_ekbe-accountassignmentnumber                       = ls_ekbe-accountassignmentnumber           .
@@ -2226,6 +2274,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_ekbe-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_ekbe )->to_string( ).
           response->set_text( lv_json_string ).
@@ -2244,6 +2293,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_ekkn IS NOT INITIAL.
           LOOP AT lt_ekkn INTO DATA(ls_ekkn).
+            lv_count = lv_count + 1.
             es_ekkn-purchaseorder                    = ls_ekkn-purchaseorder.
             es_ekkn-purchaseorderitem                = ls_ekkn-purchaseorderitem.
             es_ekkn-accountassignmentnumber          = ls_ekkn-accountassignmentnumber.
@@ -2361,6 +2411,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_ekkn-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_ekkn )->to_string( ).
           response->set_text( lv_json_string ).
@@ -2379,6 +2430,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_mara IS NOT INITIAL.
           LOOP AT lt_mara INTO DATA(ls_mara).
+          lv_count = lv_count + 1.
             es_mara-product                           = ls_mara-product.
             es_mara-productexternalid                 = ls_mara-productexternalid.
             es_mara-productoid                        = ls_mara-productoid.
@@ -2669,6 +2721,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_mara-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_mara )->to_string( ).
           response->set_text( lv_json_string ).
@@ -2687,6 +2740,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_makt IS NOT INITIAL.
           LOOP  AT lt_makt INTO DATA(ls_makt).
+          lv_count = lv_count + 1.
 
             es_makt-product                                     = ls_makt-product                         .
             es_makt-language                                    = ls_makt-language                        .
@@ -2702,6 +2756,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_makt-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_makt )->to_string( ).
           response->set_text( lv_json_string ).
@@ -2720,6 +2775,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_mard IS NOT INITIAL.
           LOOP  AT lt_mard INTO DATA(ls_mard).
+          lv_count = lv_count + 1.
             es_mard-product                            = ls_mard-product                              .
             es_mard-plant                              = ls_mard-plant                                .
             es_mard-storagelocation                    = ls_mard-storagelocation                      .
@@ -2770,6 +2826,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_mard-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_mard )->to_string( ).
           response->set_text( lv_json_string ).
@@ -2790,6 +2847,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_t024d IS NOT INITIAL.
           LOOP  AT lt_t024d INTO DATA(ls_t024d).
+          lv_count = lv_count + 1.
             es_t024d-plant                        = ls_t024d-plant                              .
             es_t024d-mrpcontroller                = ls_t024d-mrpcontroller                      .
             es_t024d-mrpcontrollername            = ls_t024d-mrpcontrollername                  .
@@ -2814,6 +2872,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_t024d-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_t024d )->to_string( ).
           response->set_text( lv_json_string ).
@@ -2832,6 +2891,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_t001l IS NOT INITIAL.
           LOOP  AT lt_t001l INTO DATA(ls_t001l).
+          lv_count = lv_count + 1.
             es_t001l-plant                        = ls_t001l-plant                      .
             es_t001l-storagelocation               = ls_t001l-storagelocation             .
             es_t001l-storagelocationname           = ls_t001l-storagelocationname         .
@@ -2858,6 +2918,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_t001l-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_t001l )->to_string( ).
           response->set_text( lv_json_string ).
@@ -2876,6 +2937,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_marc IS NOT INITIAL.
           LOOP  AT lt_marc INTO DATA(ls_marc).
+          lv_count = lv_count + 1.
             es_marc-product                          = ls_marc-product                          .
             es_marc-plant                            = ls_marc-plant                            .
             es_marc-purchasinggroup                  = ls_marc-purchasinggroup                  .
@@ -3016,6 +3078,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_marc-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_marc )->to_string( ).
           response->set_text( lv_json_string ).
@@ -3033,6 +3096,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_mkal IS NOT INITIAL.
           LOOP  AT lt_mkal INTO DATA(ls_mkal).
+          lv_count = lv_count + 1.
             es_mkal-material                                        = ls_mkal-material                           .
             es_mkal-plant                                           = ls_mkal-plant                              .
             es_mkal-productionversion                               = ls_mkal-productionversion                  .
@@ -3143,6 +3207,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_mkal-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_mkal )->to_string( ).
           response->set_text( lv_json_string ).
@@ -3161,6 +3226,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_afko IS NOT INITIAL.
           LOOP  AT lt_afko INTO DATA(ls_afko).
+          lv_count = lv_count + 1.
             es_afko-manufacturingorder                   = ls_afko-manufacturingorder                 .
             es_afko-manufacturingorderitem               = ls_afko-manufacturingorderitem             .
             es_afko-manufacturingordercategory           = ls_afko-manufacturingordercategory         .
@@ -3459,6 +3525,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_afko-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_afko )->to_string( ).
           response->set_text( lv_json_string ).
@@ -3477,6 +3544,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_afpo IS NOT INITIAL.
           LOOP  AT lt_afpo INTO DATA(ls_afpo).
+          lv_count = lv_count + 1.
             es_afpo-manufacturingorder                = ls_afpo-manufacturingorder               .
             es_afpo-manufacturingorderitem            = ls_afpo-manufacturingorderitem           .
             es_afpo-manufacturingordercategory        = ls_afpo-manufacturingordercategory       .
@@ -3693,6 +3761,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_afpo-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_afpo )->to_string( ).
           response->set_text( lv_json_string ).
@@ -3745,6 +3814,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_plpo IS NOT INITIAL.
           LOOP  AT lt_plpo INTO DATA(ls_plpo).
+          lv_count = lv_count + 1.
             es_plpo-inspectionplangroup             = ls_plpo-inspectionplangroup             .
             es_plpo-boooperationinternalid          = ls_plpo-boooperationinternalid          .
             es_plpo-booopinternalversioncounter     = ls_plpo-booopinternalversioncounter     .
@@ -3817,6 +3887,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_plpo-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_plpo )->to_string( ).
           response->set_text( lv_json_string ).
@@ -3835,6 +3906,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_resb IS NOT INITIAL.
           LOOP  AT lt_resb INTO DATA(ls_resb).
+          lv_count = lv_count + 1.
             es_resb-reservation                        = ls_resb-reservation                       .
             es_resb-reservationitem                    = ls_resb-reservationitem                   .
             es_resb-recordtype                         = ls_resb-recordtype                        .
@@ -4168,6 +4240,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_resb-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_resb )->to_string( ).
           response->set_text( lv_json_string ).
@@ -4282,6 +4355,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_afvc IS NOT INITIAL.
           LOOP  AT lt_afvc INTO DATA(ls_afvc).
+          lv_count = lv_count + 1.
             es_afvc-orderinternalid                     = ls_afvc-orderinternalid                    .
             es_afvc-orderoperationinternalid            = ls_afvc-orderoperationinternalid           .
             es_afvc-sequence                            = ls_afvc-sequence                           .
@@ -4480,6 +4554,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_afvc-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_afvc )->to_string( ).
           response->set_text( lv_json_string ).
@@ -4500,6 +4575,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_mbew IS NOT INITIAL.
           LOOP  AT lt_mbew INTO DATA(ls_mbew).
+          lv_count = lv_count + 1.
             es_mbew-Product                            = ls_mbew-Product                            .
             es_mbew-ValuationArea                      = ls_mbew-ValuationArea                      .
             es_mbew-ValuationType                      = ls_mbew-ValuationType                      .
@@ -4570,6 +4646,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           "respond with success payload
           response->set_status( '200' ).
+          es_response_mbew-message = |{ lv_count }件は送信されました。|.
 
           lv_json_string = xco_cp_json=>data->from_abap( es_response_mbew )->to_string( ).
           response->set_text( lv_json_string ).

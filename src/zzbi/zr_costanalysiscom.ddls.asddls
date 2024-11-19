@@ -18,15 +18,22 @@ define root custom entity ZR_COSTANALYSISCOM
       Quantity           : abap.char( 6 );       
       @Consumption.valueHelpDefinition: [ { entity: { name: 'I_Customer_VH', element: 'Customer' } } ]                      
       Customer           : abap.char( 10 );                               
-      CustomerName       : abap.char( 40 );                                   
-      EstimatedPrice     : abap.char( 15 );                                   
-      FinalPrice         : abap.char( 15 );                               
+      CustomerName       : abap.char( 40 );   
+      @Semantics : { amount : {currencyCode: 'Currency'} }                                
+      EstimatedPrice     : abap.curr(15,2);    
+      @Semantics : { amount : {currencyCode: 'Currency'} }                               
+      FinalPrice         : abap.curr(15,2);                            
       FinalPostingDate   : abap.char( 8 );                                       
       FinalSupplier      : abap.char( 10 );                                   
-      FixedSupplier      : abap.char( 40 );                                   
-      StandardPrice      : abap.char( 6 );                                   
-      MovingAveragePrice : abap.char( 6 );                                       
-      Currency           : abap.char( 6 );                               
+      FixedSupplier      : abap.char( 40 );    
+      @Semantics : { amount : {currencyCode: 'Currency'} }                                     
+      StandardPrice      : abap.curr(15,2);   
+      @Semantics : { amount : {currencyCode: 'Currency'} }                          
+      MovingAveragePrice : abap.curr(15,2);                              
+      Currency           : waerk;         
       BillingQuantity    : abap.char( 15 );                                   
-      BillingQuantityUnit: abap.char( 2 );                                       
+      BillingQuantityUnit: abap.char( 2 );
+      sales_number        : abap.char(25);
+      quo_version         : abap.char(25);
+      sales_d_no          : abap.char(25);                                       
 }

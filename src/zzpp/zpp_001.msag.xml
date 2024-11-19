@@ -96,7 +96,7 @@
      <SPRSL>E</SPRSL>
      <ARBGB>ZPP_001</ARBGB>
      <MSGNR>014</MSGNR>
-     <TEXT>BOMマスタ連携成功 &amp;1 件！</TEXT>
+     <TEXT>BOMマスタデータ连携成功 &amp;1 件！削除された代替BOM &amp;2 件！</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>
@@ -528,13 +528,13 @@
      <SPRSL>E</SPRSL>
      <ARBGB>ZPP_001</ARBGB>
      <MSGNR>086</MSGNR>
-     <TEXT>The Plan Qty of the Production Order is more than the Total Assigned Qty.</TEXT>
+     <TEXT>製造指図の生産計画数が割当合計数より多くなる。</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZPP_001</ARBGB>
      <MSGNR>087</MSGNR>
-     <TEXT>Please assign Sales Order to this Production Order.</TEXT>
+     <TEXT>当該製造指図に受注を割当してください。</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>
@@ -606,13 +606,13 @@
      <SPRSL>E</SPRSL>
      <ARBGB>ZPP_001</ARBGB>
      <MSGNR>099</MSGNR>
-     <TEXT>Production Order &amp;1: &amp;2</TEXT>
+     <TEXT>製造指図 &amp;1: &amp;2</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZPP_001</ARBGB>
      <MSGNR>100</MSGNR>
-     <TEXT>Production Order &amp;1 was released successfully.</TEXT>
+     <TEXT>製造指図 &amp;1 発行できました。</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>
@@ -624,7 +624,7 @@
      <SPRSL>E</SPRSL>
      <ARBGB>ZPP_001</ARBGB>
      <MSGNR>102</MSGNR>
-     <TEXT>更新できました。</TEXT>
+     <TEXT>提案が受入できました。</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>

@@ -1,5 +1,5 @@
 projection;
-strict ( 2 );
+strict;
 
 define behavior for ZC_SALESACCEPTANCE alias SalesAcceptance
 {

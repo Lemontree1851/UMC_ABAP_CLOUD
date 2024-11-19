@@ -1,0 +1,23 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "BI004 逆ザヤ防止分析",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "className": "ZCL_JOB_COSTANALYSIS_N"
+  },
+  "parameters": [
+    {
+      "name": "P_Plant",
+      "mandatory": true
+    },
+    {
+      "name": "P_Year"
+    },
+    {
+      "name": "P_Month"
+    }
+  ]
+}

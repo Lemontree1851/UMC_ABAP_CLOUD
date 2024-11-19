@@ -19,6 +19,8 @@ define root view entity ZR_WF_ApprovalHistory
       operator              as Operator,
       approval_status       as ApprovalStatus,
       remark                as Remark,
+      email_address         as EmailAddress,
+      del                   as Del,
       created_by            as CreatedBy,
       created_at            as CreatedAt,
       last_changed_by       as LastChangedBy,

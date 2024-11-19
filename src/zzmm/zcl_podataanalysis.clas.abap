@@ -9,14 +9,50 @@ CLASS zcl_podataanalysis DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
-
-
+CLASS zcl_podataanalysis IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
 
     TYPES:
+
+      BEGIN OF ts_workflow,
+
+        SAPBusinessObjectNodeKey1     TYPE  string,
+        WorkflowInternalID            TYPE  string,
+        WorkflowExternalStatus        TYPE  string,
+
+      END OF ts_workflow,
+
+      tt_workflow TYPE STANDARD TABLE OF ts_workflow WITH DEFAULT KEY,
+
+      BEGIN OF ts_workflow_d,
+        results TYPE tt_workflow,
+      END OF ts_workflow_d,
+
+      BEGIN OF ts_workflow_api,
+        d TYPE ts_workflow_d,
+      END OF ts_workflow_api,
+*---------------------------------------------------------------------------
+      BEGIN OF ts_workflowdetail,
+
+        WorkflowInternalID         TYPE  string,
+        WorkflowTaskInternalID     TYPE  string,
+        WorkflowTaskResult         TYPE  string,
+
+      END OF ts_workflowdetail,
+
+      tt_workflowdetail TYPE STANDARD TABLE OF ts_workflowdetail WITH DEFAULT KEY,
+
+      BEGIN OF ts_workflowdetail_d,
+        results TYPE tt_workflowdetail,
+      END OF ts_workflowdetail_d,
+
+      BEGIN OF ts_workflowdetail_api,
+        d TYPE ts_workflowdetail_d,
+      END OF ts_workflowdetail_api,
+
+
+
+
       BEGIN OF ty_tline,
         tdformat TYPE c LENGTH 2,
         tdline   TYPE c LENGTH 132,
@@ -67,6 +103,7 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
 
 **********************************************************************
     TYPES:
+
       BEGIN OF ts_mrp_api,  "api structue
 
         material                   TYPE matnr,
@@ -75,13 +112,16 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
         mrpavailablequantity       TYPE c LENGTH 16,
         mrpelement                 TYPE c LENGTH 12,
         mrpelementitem             TYPE c LENGTH 5,
-        mrpelementavailyorrqmtdate TYPE string,
+        mrpelementavailyorrqmtdate TYPE sy-datum,
         mrpelementcategory         TYPE c LENGTH 2,
         mrpelementdocumenttype     TYPE c LENGTH 4,
         productionversion          TYPE c LENGTH 4,
         sourcemrpelement           TYPE c LENGTH 12,
-        mrpelementreschedulingdate TYPE string,
+        mrpelementreschedulingdate TYPE sy-datum,
         exceptionmessagenumber     TYPE string,
+        MRPElementScheduleLine     type N length 4,
+        ExceptionMessageText       type string,
+
 
       END OF ts_mrp_api,
 
@@ -105,7 +145,46 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
       BEGIN OF ts_res_mrp_api,
         d     TYPE ts_mrp_d,
         error TYPE ts_error,
-      END OF ts_res_mrp_api.
+      END OF ts_res_mrp_api,
+
+      BEGIN OF ts_mrp_api_boi,  "api structue
+        material                   TYPE matnr,
+        mrpplant                   TYPE werks_d,
+        mrpelementopenquantity(9)  TYPE p DECIMALS 3,
+        mrpavailablequantity(9)    TYPE p DECIMALS 3,
+        mrpelement                 TYPE c LENGTH 12,
+        mrpelementavailyorrqmtdate TYPE string,
+        mrpelementcategory         TYPE c LENGTH 2,
+        mrpelementdocumenttype     TYPE c LENGTH 4,
+        productionversion          TYPE c LENGTH 4,
+        sourcemrpelement           TYPE c LENGTH 12,
+        mrpelementitem             type c length 6,
+        MRPElementScheduleLine type c LENGTH 4,
+        exceptionmessagenumber    type c LENGTH 2,
+      END OF ts_mrp_api_boi,
+      tt_mrp_api_boi TYPE STANDARD TABLE OF ts_mrp_api_boi WITH DEFAULT KEY,
+
+*----------------------------------------------uweb调用参考 pickinglist。
+      BEGIN OF ty_response_res,
+             id   TYPE string,
+             OBJECT_TYPE     TYPE string,
+             OBJECT     TYPE string,
+             OBJECT_LINK    TYPE string,
+             OBJECT_VERSION TYPE string,
+             FILE_TYPE TYPE string,
+             FILE_NAME TYPE string,
+             CD_TIME TYPE string,
+             CD_BY TYPE string,
+
+      END OF ty_response_res,
+
+     BEGIN OF ty_response_d,
+             results TYPE TABLE OF ty_response_res WITH DEFAULT KEY,
+           END OF ty_response_d,
+
+      BEGIN OF ty_response,
+             d TYPE ty_response_d,
+      END OF ty_response.
 
 **********************************************************************
     DATA:
@@ -124,7 +203,7 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
       lr_purchasinggroup TYPE RANGE OF zr_podataanalysis-purchasinggroup     ,       "購買グループ
       lr_material        TYPE RANGE OF zr_podataanalysis-material            ,       "品目
       lr_plant           TYPE RANGE OF zr_podataanalysis-plant               ,       "プラント
-      lr_mrpctname  TYPE RANGE OF zr_podataanalysis-MRPControllerName      ,       "MRP管理者
+      lr_mrpctname       TYPE RANGE OF zr_podataanalysis-mrpcontrollername      ,       "MRP管理者
       lr_createdbyuser   TYPE RANGE OF zr_podataanalysis-createdbyuser       ,       "登録者
       ls_purchaseorder   LIKE LINE OF  lr_purchaseorder,
       ls_poitem          LIKE LINE OF  lr_poitem,
@@ -137,6 +216,24 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
       ls_res_api         TYPE ty_res_api.
 
 
+   data:
+        lr_CORRESPNCINTERNALREFERENCE    type range of  I_PurchaseOrderAPI01-CORRESPNCINTERNALREFERENCE,
+        lr_SUPPLIERMATERIALNUMBER        type range of  I_PurchaseOrderItemAPI01-SUPPLIERMATERIALNUMBER    ,
+        lr_PURCHASEORDERDATE             type range of  I_PurchaseOrderAPI01-PURCHASEORDERDATE         ,
+        lr_SCHEDULELINEDELIVERYDATE      type range of  I_PurOrdScheduleLineAPI01-SCHEDULELINEDELIVERYDATE ,
+        lr_DELIVERYDATE                  type range of  I_POSupplierConfirmationAPI01-DELIVERYDATE           ,
+        lr_STORAGELOCATION               type range of  I_PurchaseOrderItemAPI01-STORAGELOCATION          ,
+        lr_INCOTERMSCLASSIFICATION       type range of  I_PurchaseOrderItemAPI01-INCOTERMSCLASSIFICATION   ,
+        lr_WORKFLOWTASKRESULT            type range of  char12 ,
+        ls_CORRESPNCINTERNALREFERENCE  like line of lr_CORRESPNCINTERNALREFERENCE,
+        ls_SUPPLIERMATERIALNUMBER      like line of lr_SUPPLIERMATERIALNUMBER    ,
+        ls_PURCHASEORDERDATE           like line of lr_PURCHASEORDERDATE         ,
+        ls_SCHEDULELINEDELIVERYDATE    like line of lr_SCHEDULELINEDELIVERYDATE  ,
+        ls_DELIVERYDATE                like line of lr_DELIVERYDATE              ,
+        ls_STORAGELOCATION             like line of lr_STORAGELOCATION           ,
+        ls_INCOTERMSCLASSIFICATION     like line of lr_INCOTERMSCLASSIFICATION   ,
+        ls_WORKFLOWTASKRESULT          like line of lr_WORKFLOWTASKRESULT     .
+
     DATA: lr_new_range TYPE RANGE OF zr_podataanalysis-purchasinggroup, " 新的 range 表
           ls_new_range LIKE LINE OF lr_new_range,                     " 新的 range 表的条目
           ls_old_range LIKE LINE OF lr_purchasinggroup.               " 原来的 range 表的条目
@@ -148,7 +245,7 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
         lv_dur TYPE i .
 
     DATA:
-        LV_MRPDate TYPE D.
+        lv_mrpdate TYPE d.
 
     DATA:
       lo_root_exc TYPE REF TO cx_root,
@@ -173,6 +270,21 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
       lr_sup TYPE RANGE OF i_purchaseorderapi01-supplier,
       ls_sup LIKE LINE OF lr_sup.
 
+    DATA:
+      lt_workflow_api TYPE STANDARD TABLE OF ts_workflow,
+      lt_workflowdetail_api TYPE STANDARD TABLE OF ts_workflowdetail,
+      ls_res_workflow type ts_workflow_api,
+      ls_res_workflowdetail TYPE ts_workflowdetail_api.
+
+    data:
+          lt_mrp_api_boi      TYPE STANDARD TABLE OF ts_mrp_api_boi,
+      ls_mrp_api_boi      TYPE ts_mrp_api_boi.
+
+    data:lv_conf TYPE n LENGTH 4.
+
+    DATA:  lt_uweb_api TYPE STANDARD TABLE OF ty_response_res ,
+          ls_response TYPE ty_response.
+
     IF io_request->is_data_requested( ).
       TRY.
           "Get and add filter
@@ -184,6 +296,8 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
       DATA(lv_skip)   = io_request->get_paging( )->get_offset( ).
       DATA(lt_fields) = io_request->get_requested_elements( ).
       DATA(lt_sort)   = io_request->get_sort_elements( ).
+
+      DATA(lv_poalldis) = '1'. "1全部显示，2po=残 3 po不等于残
 
       LOOP AT lt_filter_cond INTO DATA(ls_filter_cond).
 
@@ -246,9 +360,66 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
               APPEND ls_mrpctname TO lr_mrpctname.
               CLEAR ls_mrpctname.
             WHEN 'CREATEDBYUSER'.
+
               MOVE-CORRESPONDING str_rec_l_range TO ls_createdbyuser.
               APPEND ls_createdbyuser TO lr_createdbyuser.
               CLEAR ls_createdbyuser.
+
+            When 'CORRESPNCINTERNALREFERENCE'.  "PO連携担当者
+              MOVE-CORRESPONDING str_rec_l_range TO ls_CORRESPNCINTERNALREFERENCE.
+              APPEND ls_CORRESPNCINTERNALREFERENCE TO lr_CORRESPNCINTERNALREFERENCE.
+              CLEAR ls_CORRESPNCINTERNALREFERENCE.
+
+            when 'SUPPLIERMATERIALNUMBER'."仕入先品目コード
+
+              MOVE-CORRESPONDING str_rec_l_range TO ls_SUPPLIERMATERIALNUMBER.
+              APPEND ls_SUPPLIERMATERIALNUMBER TO lr_SUPPLIERMATERIALNUMBER.
+              CLEAR ls_SUPPLIERMATERIALNUMBER.
+
+            when 'PURCHASEORDERDATE'."伝票日付
+
+              MOVE-CORRESPONDING str_rec_l_range TO ls_PURCHASEORDERDATE.
+              APPEND ls_PURCHASEORDERDATE TO lr_PURCHASEORDERDATE.
+              CLEAR ls_PURCHASEORDERDATE.
+
+            when 'SCHEDULELINEDELIVERYDATE'."納入日付
+
+              MOVE-CORRESPONDING str_rec_l_range TO ls_SCHEDULELINEDELIVERYDATE.
+              APPEND ls_SCHEDULELINEDELIVERYDATE TO lr_SCHEDULELINEDELIVERYDATE.
+              CLEAR ls_SCHEDULELINEDELIVERYDATE.
+
+            when 'DELIVERYDATE'."回答納期
+
+              MOVE-CORRESPONDING str_rec_l_range TO ls_DELIVERYDATE.
+              APPEND ls_DELIVERYDATE TO lr_DELIVERYDATE.
+              CLEAR ls_DELIVERYDATE.
+
+            when 'STORAGELOCATION'."保管場所
+
+              MOVE-CORRESPONDING str_rec_l_range TO ls_STORAGELOCATION.
+              APPEND ls_STORAGELOCATION TO lr_STORAGELOCATION.
+              CLEAR ls_STORAGELOCATION.
+
+            when 'INCOTERMSCLASSIFICATION'."基軸通貨
+
+              MOVE-CORRESPONDING str_rec_l_range TO ls_INCOTERMSCLASSIFICATION.
+              APPEND ls_INCOTERMSCLASSIFICATION TO lr_INCOTERMSCLASSIFICATION.
+              CLEAR ls_INCOTERMSCLASSIFICATION.
+
+            when 'WORKFLOWTASKRESULT'."承認区分
+
+              MOVE-CORRESPONDING str_rec_l_range TO ls_WORKFLOWTASKRESULT.
+              APPEND ls_WORKFLOWTASKRESULT TO lr_WORKFLOWTASKRESULT.
+              CLEAR ls_WORKFLOWTASKRESULT.
+
+            when 'PONOKODIS'.
+
+              IF str_rec_l_range-low = '2'.
+                lv_poalldis = '2'.
+              ELSEif str_rec_l_range-low = '3'.
+                lv_poalldis = '3'.
+              ENDIF.
+
             WHEN OTHERS.
 
           ENDCASE.
@@ -260,15 +431,17 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
       SELECT a~purchaseordertype                  ,
              a~supplier                           ,
              a~purchasinggroup                    ,
-             a~purchaseorderdate                  ,
+             a~purchaseorderdate                  ,             "伝票日付
              a~documentcurrency                   ,
              a~purchasingorganization             ,
              a~createdbyuser                      ,
+             a~CorrespncInternalReference         ,  "1117 追加PO連携担当者
+
 
 
              l~purchaseorderitem                  ,
              l~purchaseorder                      ,
-             l~deliverydate                       ,
+             l~deliverydate                       , "回答納期
              l~sequentialnmbrofsuplrconf          ,
              l~supplierconfirmationextnumber      ,
              l~confirmedquantity                  ,
@@ -291,14 +464,16 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
              b~materialgroup                      ,
              b~netamount                          ,
              b~plant                              ,
-             b~storagelocation                    ,
+             b~storagelocation                    ,"保管場所
              b~iscompletelydelivered              ,
              b~taxcode                            ,
              b~pricingdatecontrol                 ,
+             b~IncotermsClassification            ,"基軸通貨
 
              b~netpricequantity                   ,
-             b~NetPriceAmount                     ,
-             b~PurchaseOrderItemCategory          ,
+             b~netpriceamount                     ,
+             b~purchaseorderitemcategory          ,
+             b~SupplierMaterialNumber             ,                               "1117 追加仕入先品目コード
 
              c~suppliername   AS     suppliername1,                               "仕入先名称
              "c~suppliername   AS     suppliername2,
@@ -317,13 +492,13 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
              h~storagelocationname                ,                               "2.8　保管場所テキスト
 
              i~productionmemopageformat           ,                               "基板取り数
-             i~ProductionOrInspectionMemoTxt      ,                               "2.9　基板取数(製造/検査メモ)
+             i~productionorinspectionmemotxt      ,                               "2.9　基板取数(製造/検査メモ)
 
              j~supplierrespsalespersonname        ,                               "2.10　下請対象 販売担当者
 
              k~lotsizeroundingquantity            ,                               "2.11　丸め数量
 
-             m~schedulelinedeliverydate           ,
+             m~schedulelinedeliverydate           ,                               "納入日付
              m~roughgoodsreceiptqty
 
         FROM i_posupplierconfirmationapi01 WITH PRIVILEGED ACCESS AS l
@@ -367,10 +542,38 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
          AND c~supplier IN @lr_sup
          AND a~purchasinggroup IN @lr_purchasinggroup
          AND b~material IN @lr_material
+         and b~SupplierMaterialNumber in @lr_SupplierMaterialNumber
          AND b~plant IN @lr_plant
+         and b~StorageLocation in @lr_StorageLocation
+         and b~IncotermsClassification in @lr_IncotermsClassification
          AND a~createdbyuser IN @lr_createdbyuser
+         and a~CorrespncInternalReference in @lr_CorrespncInternalReference
+         and a~PurchaseOrderDate in @lr_PurchaseOrderDate
+         and m~ScheduleLineDeliveryDate in @lr_ScheduleLineDeliveryDate
+         and l~deliverydate in @lr_deliverydate
 *        AND N~Language =
         INTO TABLE @DATA(lt_result) .
+
+
+
+        zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |http://220.248.121.53:11380/srv/odata/v2/TableService/SYS_T13_ATTACHMENT|
+                                                                iv_no_authorization = abap_true
+                                                      IMPORTING ev_status_code   = DATA(lv_status_code_uweb)
+                                                                ev_response      = DATA(lv_response_uweb) ).
+        IF lv_status_code_uweb = 200.
+          xco_cp_json=>data->from_string( lv_response_uweb )->apply( VALUE #(
+*            ( xco_cp_json=>transformation->pascal_case_to_underscore )
+            ( xco_cp_json=>transformation->boolean_to_abap_bool )
+          ) )->write_to( REF #( ls_response ) ).
+
+          IF ls_response-d-results IS NOT INITIAL.
+
+          APPEND LINES OF ls_response-d-results TO lt_uweb_api.
+
+          ENDIF.
+
+        ENDIF.
+
 
 *     购买组取值
       IF lr_purchasinggroup IS NOT INITIAL.
@@ -388,10 +591,10 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
       ENDIF.
 
       "2.6　メーカー名
-      SELECT SupplierName ,
-             Supplier
-        FROM I_Supplier WITH PRIVILEGED ACCESS
-        into  table @DATA(lt_maker).
+      SELECT suppliername ,
+             supplier
+        FROM i_supplier WITH PRIVILEGED ACCESS
+        INTO  TABLE @DATA(lt_maker).
 
       SELECT customer ,
              addresssearchterm2
@@ -429,7 +632,116 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
         INTO TABLE @DATA(lt_longtext_1).
 
       "mrp管理者 控制
-      DELETE lt_result WHERE MRPResponsible not IN lr_mrpctname.
+      DELETE lt_result WHERE mrpresponsible NOT IN lr_mrpctname.
+
+      "承認区分
+
+  data:
+         lv_pathoverview           TYPE string,
+         lv_pathdetails          TYPE String.
+
+         if lt_result is NOT INITIAL.
+
+             data(lt_result_1) = lt_result.
+
+             SORT lt_result_1 by material plant.
+
+             DELETE ADJACENT DUPLICATES FROM lt_result_1 COMPARING material plant.
+
+         ENDIF.
+
+         if lt_result_1 is  NOT INITIAL.
+
+            loop at lt_result_1 into data(lw_result_1).
+
+                lv_path = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?$filter=Material eq '{ lw_result_1-material }' and MRPPlant eq '{ lw_result_1-plant }' and MRPArea eq '{ lw_result_1-plant }'|.
+
+                zzcl_common_utils=>request_api_v2(
+                      EXPORTING
+                        iv_path        = lv_path
+                        iv_method      = if_web_http_client=>get
+                      IMPORTING
+                        ev_status_code = DATA(lv_stat_code)
+                        ev_response    = DATA(lv_resbody_api) ).
+
+                /ui2/cl_json=>deserialize(
+                                EXPORTING json = lv_resbody_api
+                                CHANGING data = ls_res_mrp_api ).
+
+                IF lv_stat_code = '200' AND ls_res_mrp_api-d-results IS NOT INITIAL.
+                  APPEND LINES OF ls_res_mrp_api-d-results TO lt_mrp_api.
+                ENDIF.
+
+                clear ls_res_mrp_api.
+
+            ENDLOOP.
+
+            if  lt_mrp_api is NOT INITIAL.
+
+              LOOP AT lt_mrp_api ASSIGNING FIELD-SYMBOL(<fs_mrp>) .
+
+                <fs_mrp>-mrpelementitem = |{ <fs_mrp>-mrpelementitem ALPHA = IN }|.
+
+*                if <fs_mrp>-MRPElementScheduleLine is not INITIAL.
+*                <fs_mrp>-MRPElementScheduleLine = |{ <fs_mrp>-MRPElementScheduleLine ALPHA = IN }|.
+*                ENDIF.
+
+              ENDLOOP.
+
+            ENDIF.
+
+         ENDIF.
+
+*     审批状态取得取得
+      lv_pathoverview = |/YY1_WORKFLOWSTATUSOVERVIEW_CDS/YY1_WorkflowStatusOverview|.
+      "Call API
+      zzcl_common_utils=>request_api_v2(
+        EXPORTING
+          iv_path        = lv_pathoverview
+          iv_method      = if_web_http_client=>get
+          iv_format      = 'json'
+        IMPORTING
+          ev_status_code = DATA(lv_stat_codeo)
+          ev_response    = DATA(lv_resbody_apio) ).
+      /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_apio
+                               CHANGING data = ls_res_workflow ).
+
+      IF lv_stat_codeo = '200' AND ls_res_workflow-d-results IS NOT INITIAL.
+
+        APPEND LINES OF ls_res_workflow-d-results TO lt_workflow_api.
+
+      ENDIF.
+
+*      审批详情取得
+
+      lv_pathdetails = |/YY1_WORKFLOWSTATUSDETAILS_CDS/YY1_WorkflowStatusDetails|.
+      "Call API
+      zzcl_common_utils=>request_api_v2(
+        EXPORTING
+          iv_path        = lv_pathdetails
+          iv_method      = if_web_http_client=>get
+          iv_format      = 'json'
+        IMPORTING
+          ev_status_code = DATA(lv_stat_coded)
+          ev_response    = DATA(lv_resbody_apid) ).
+      /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_apid
+                               CHANGING data = ls_res_workflowdetail ).
+
+      IF lv_stat_coded = '200' AND ls_res_workflowdetail-d-results IS NOT INITIAL.
+
+        APPEND LINES OF ls_res_workflowdetail-d-results TO lt_workflowdetail_api.
+
+      ENDIF.
+
+      if lt_workflowdetail_api is NOT INITIAL.
+
+          SORT lt_workflowdetail_api by WorkflowInternalID WorkflowTaskInternalID DESCENDING.
+
+          DELETE ADJACENT DUPLICATES FROM lt_workflowdetail_api COMPARING WorkflowInternalID.
+
+      ENDIF.
+
+    data:lv_response type c .
 
       LOOP  AT lt_result INTO DATA(lw_result).
 
@@ -439,42 +751,25 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
         READ TABLE lt_customer INTO DATA(lw_customer) WITH KEY addresssearchterm2 = lw_result-purchasinggroup+1(2).
         IF sy-subrc = 0.
           lw_data-customer = lw_customer-customer.
-          clear lw_customer.
-        else.
-            lw_data-customer = ''.
-        ENDIF.
-        clear lw_customer.
-
-        "2.12　生産可能日付   生産可能日付=回答納期＋入庫処理時間（稼働日）
-        CLEAR lv_dur.
-        lv_dur = lw_result-goodsreceiptdurationindays.  "入庫処理時間（稼働日）
-
-        IF lv_dur <> 0 AND lw_result-deliverydate IS NOT INITIAL.
-          lw_data-possibleproductiondate = zzcl_common_utils=>calc_date_add(
-            EXPORTING
-              date  = lw_result-deliverydate  "回答納期
-              day   = lv_dur                  "入庫処理時間（稼働日）
-            ).
-
-
+          CLEAR lw_customer.
         ELSE.
-
-          lw_data-possibleproductiondate = lw_result-deliverydate.
-
+          lw_data-customer = ''.
         ENDIF.
-        case lw_data-PurchaseOrderItemCategory.
+        CLEAR lw_customer.
 
-        when '0'.
-        data(lv_PurCate) = '0'.
+        CASE lw_data-purchaseorderitemcategory.
 
-        WHEN '3'.
+          WHEN '0'.
+            DATA(lv_purcate) = '0'.
 
-            lv_PurCate = '3'.
-        when '2'.
+          WHEN '3'.
 
-            lv_PurCate = '2'.
+            lv_purcate = '3'.
+          WHEN '2'.
 
-        when OTHERS.
+            lv_purcate = '2'.
+
+          WHEN OTHERS.
 
         ENDCASE.
 
@@ -483,81 +778,116 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
         READ TABLE lt_purginfo INTO DATA(lw_purginfo) WITH KEY purchasinginforecord   = lw_result-purchasinginforecord
                                                                purchasingorganization = lw_result-purchasingorganization
                                                                plant                  = lw_result-plant
-                                                               PurchasingInfoRecordCategory = lv_PurCate .
+                                                               purchasinginforecordcategory = lv_purcate .
 
         IF sy-subrc = 0.
 
-        if lw_purginfo-shippinginstruction is INITIAL.
-            data(lv_error1q) = 'x'.
-        endif.
+          IF lw_purginfo-shippinginstruction IS INITIAL.
+            DATA(lv_error1q) = 'x'.
+          ENDIF.
 
           READ TABLE lt_shipping INTO DATA(lw_shipping) WITH KEY shippinginstruction = lw_purginfo-shippinginstruction.  "出荷指示
 
           IF sy-subrc = 0.
             "NCNR、CANCELルール
             lw_data-shippinginstructionname  =  lw_shipping-shippinginstructionname.
-            clear:lw_shipping.
+            CLEAR:lw_shipping.
 
-          else.
+          ELSE.
             lw_data-shippinginstructionname = ''.
 
           ENDIF.
-          clear:lw_shipping.
+          CLEAR:lw_shipping.
 
 
-        else.
+        ELSE.
 
-            lw_data-shippinginstructionname = ''.
+          lw_data-shippinginstructionname = ''.
 
         ENDIF.
 
-        clear:lw_shipping.
+        CLEAR:lw_shipping.
         CLEAR lw_purginfo.
 
-        DATA(lv_a) = lw_result-material.
-        DATA(lv_b) = lw_result-plant.
-        DATA(lv_c) = lw_result-purchaseorder.
-        DATA(lv_d) = lw_result-purchaseorderitem.
-        IF lw_result-sequentialnmbrofsuplrconf IS INITIAL.
+*        DATA(lv_a) = lw_result-material.
+*        DATA(lv_b) = lw_result-plant.
+*        DATA(lv_c) = lw_result-purchaseorder.
+*        DATA(lv_d) = lw_result-purchaseorderitem.
+*
+*        lv_path = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?$filter=Material eq '{ lv_a }' and MRPPlant eq '{ lv_b }' and MRPArea eq '{ lv_b }'|.
+*
+*        zzcl_common_utils=>request_api_v2(
+*              EXPORTING
+*                iv_path        = lv_path
+*                iv_method      = if_web_http_client=>get
+*              IMPORTING
+*                ev_status_code = DATA(lv_stat_code)
+*                ev_response    = DATA(lv_resbody_api) ).
+*
+*        /ui2/cl_json=>deserialize(
+*                        EXPORTING json = lv_resbody_api
+*                        CHANGING data = ls_res_mrp_api ).
+*
+*        CLEAR: lt_mrp_api.
 
-          DATA(lv_e) = | & MRPElementScheduleLine eq '{ lw_result-sequentialnmbrofsuplrconf }'|.
-        ELSE.
-          lv_e = | & MRPElementCategory eq 'BE' |.
-        ENDIF.
-
-        lv_path = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?$filter=Material eq '{ lv_a }' & MRPPlant eq '{ lv_b }' & MRPArea eq '{ lv_b }' & MRPElement eq '{ lv_c }' & MRPElementItem eq '{ lv_d }' { lv_e }|.
-
-        zzcl_common_utils=>request_api_v2(
-              EXPORTING
-                iv_path        = lv_path
-                iv_method      = if_web_http_client=>get
-              IMPORTING
-                ev_status_code = DATA(lv_stat_code)
-                ev_response    = DATA(lv_resbody_api) ).
-
-        /ui2/cl_json=>deserialize(
-                        EXPORTING json = lv_resbody_api
-                        CHANGING data = ls_res_mrp_api ).
-
-        CLEAR: lt_mrp_api,ls_res_mrp_api.
-        IF lv_stat_code = '200' AND ls_res_mrp_api-d-results IS NOT INITIAL.
-          APPEND LINES OF ls_res_mrp_api-d-results TO lt_mrp_api.
-        ENDIF.
-
-        CLEAR: lv_path ,lv_stat_code .
-
-        LOOP AT lt_mrp_api ASSIGNING FIELD-SYMBOL(<fs_mrp>).
-
-          <fs_mrp>-mrpelementitem = |{ <fs_mrp>-mrpelementitem ALPHA = IN }|.
-
-        ENDLOOP.
+*        IF lv_stat_code = '200' AND ls_res_mrp_api-d-results IS NOT INITIAL.
+*          APPEND LINES OF ls_res_mrp_api-d-results TO lt_mrp_api.
+*
+*          DELETE lt_mrp_api WHERE MRPElement <> lw_result-purchaseorder.
+*          DELETE lt_mrp_api WHERE MRPElementItem <> lw_result-purchaseorderitem.
+*
+*            IF lw_result-sequentialnmbrofsuplrconf IS not INITIAL.
+*
+*              DELETE lt_mrp_api WHERE MRPElementScheduleLine <> lw_result-sequentialnmbrofsuplrconf.
+*            ELSE.
+*
+*              DELETE lt_mrp_api WHERE MRPElementCategory <> 'BE'.
+*
+*            ENDIF.
+*
+*        ENDIF.
+*
+*        if lt_mrp_api is NOT INITIAL.
+*
+*          LOOP AT lt_mrp_api ASSIGNING FIELD-SYMBOL(<fs_mrp>) .
+*
+*            <fs_mrp>-mrpelementitem = |{ <fs_mrp>-mrpelementitem ALPHA = IN }|.
+*
+*          ENDLOOP.
+*
+*        ENDIF.
+*
+*        CLEAR: lv_path ,lv_stat_code ,ls_res_mrp_api.
 
 *          "2.19 例外
 *          "2.20 注意
 
-        READ TABLE lt_mrp_api INTO DATA(lw_mrp) WITH KEY mrpelement = lw_result-purchaseorder mrpelementitem = lw_result-purchaseorderitem.
+        IF lw_result-sequentialnmbrofsuplrconf IS not INITIAL.
 
-        IF sy-subrc = 0.
+            READ TABLE lt_mrp_api INTO DATA(lw_mrp) WITH KEY mrpelement = lw_result-purchaseorder
+                                                             mrpelementitem = lw_result-purchaseorderitem
+                                                             MRPElementScheduleLine = lw_result-sequentialnmbrofsuplrconf
+                                                             .
+
+            if sy-subrc = 0.
+                data(lv_getnop) = 'X'.
+            ELSE.
+                lv_getnop = ''.
+            ENDIF.
+
+            ELSE.
+
+            READ TABLE lt_mrp_api INTO lw_mrp with key mrpelement = lw_result-purchaseorder mrpelementitem = lw_result-purchaseorderitem  MRPElementCategory = 'BE'.
+
+            if sy-subrc = 0.
+                lv_getnop = 'X'.
+            ELSE.
+                lv_getnop = ''.
+            ENDIF.
+
+        ENDIF.
+
+        if lv_getnop = 'X'.
 
           CASE lw_mrp-exceptionmessagenumber.
 
@@ -578,103 +908,204 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
               lw_data-attention  = ''.
           ENDCASE.
 
-          if lw_mrp-mrpelementreschedulingdate is NOT INITIAL.
+          IF lw_mrp-mrpelementreschedulingdate IS NOT INITIAL.
             lw_data-mrpelementreschedulingdate = lw_mrp-mrpelementreschedulingdate.
           ENDIF.
 
-          if LW_MRP-MRPElementAvailyOrRqmtDate is NOT INITIAL and lw_data-mrpelementreschedulingdate is not INITIAL .
+          if lw_mrp-MRPElementAvailyOrRqmtDate is NOT INITIAL.
+*
+*          data(lv_possi) = CONV string( lw_mrp-MRPElementAvailyOrRqmtDate DIV 1000000 ) .
 
-                lv_dur = LW_MRP-MRPElementAvailyOrRqmtDate.   "入庫処理時間
-                "購買納入日付
+              lw_data-possibleproductiondate =  lw_mrp-MRPElementAvailyOrRqmtDate.
 
-                LW_DATA-MRPDILIVERYDATE = zzcl_common_utils=>calc_date_subtract(
-                  EXPORTING
-                    date      = lw_data-mrpelementreschedulingdate
+              if lw_mrp-exceptionmessagetext is NOT INITIAL.
 
-                    day       = lv_dur
+                  data(lv_length) = STRLEN( lw_mrp-exceptionmessagetext ).
 
-                ).
+                  if lv_length > 24 and lv_length <> 34.
 
-                LW_DATA-MRPDILIVERYDATE = zzcl_common_utils=>get_workingday( iv_date = LW_DATA-MRPDILIVERYDATE
-                                                                        iv_next = abap_false ).
+                      data(lv_yy) = lw_mrp-exceptionmessagetext+30(2).
+                      data(lv_dd) = lw_mrp-exceptionmessagetext+27(2).
+                      data(lv_mm) = lw_mrp-exceptionmessagetext+24(2).
+                      data(lv_date) = |20{ lv_yy }{ lv_mm }{ lv_dd } |.
+                      lw_data-MRPDILIVERYDATE = lv_date.
 
-            ELSE.
-                if lw_mrp-mrpelementreschedulingdate is NOT INITIAL.
-                       LW_DATA-MRPDILIVERYDATE =  lw_mrp-mrpelementreschedulingdate.
+                      clear:lv_yy,lv_dd,lv_mm,lv_date.
 
-
-                ENDIF.
-
-            ENDIF.
-
-         ENDIF.
-         clear  lw_mrp.
-
-          "LW_DATA-MRPDILIVERYDATE  = LW_MRP-MRPElementAvailyOrRqmtDate - 1.  calc_date_subtract
-
-
-*          "2.21 MC要求
- if lw_data-schedulelinedeliverydate is NOT INITIAL and ls_res_api-d-mrpelementreschedulingdate is NOT INITIAL.
-        IF lw_data-attention <> ''.
-
-          IF lw_data-attention = 'CANCEL'.
-            lw_data-mcrequire = 'CANCEL'.
-
-          ELSE.
-
-
-
-                IF lw_data-schedulelinedeliverydate < ls_res_api-d-mrpelementreschedulingdate.
-                  lw_data-mcrequire = 'PUSH OUT'.
-                ELSEIF lw_data-schedulelinedeliverydate > ls_res_api-d-mrpelementreschedulingdate.
-                  lw_data-mcrequire = 'PULL IN'.
-
-                ELSE.
-                  lw_data-mcrequire = ''.
-
-                ENDIF.
-
-
-          ENDIF.
-
-        ELSE.
-
-          IF lw_data-schedulelinedeliverydate < lw_data-deliverydate.
-
-            lw_data-mcrequire = 'PUSH OUT'.
-          ELSEIF lw_data-schedulelinedeliverydate =  lw_data-deliverydate.
-            lw_data-mcrequire = ''.
-          ENDIF.
-
-          IF lw_data-deliverydate <> ''.
-            IF lw_data-schedulelinedeliverydate >  lw_data-deliverydate.
-              lw_data-mcrequire = 'PULL IN'.
-
-            ELSE.
-              IF lw_data-schedulelinedeliverydate >  lw_data-deliverydate.
-                lw_data-mcrequire = ''.
+                  ENDIF.
 
               ENDIF.
+          ENDIF.
+
+*           "2.12　生産可能日付   生産可能日付=回答納期＋入庫処理時間（稼働日） 然后需要使用工厂日期
+*        CLEAR lv_dur.
+*        lv_dur = lw_result-goodsreceiptdurationindays.  "入庫処理時間（稼働日）
+*
+*        IF lv_dur <> 0 AND lw_result-deliverydate IS NOT INITIAL.
+*          lw_data-possibleproductiondate = zzcl_common_utils=>calc_date_add(
+
+
+*            EXPORTING
+*              date  = lw_result-deliverydate  "回答納期
+*              day   = lv_dur                  "入庫処理時間（稼働日）
+*            ).
+*
+*          lw_data-possibleproductiondate = zzcl_common_utils=>get_workingday( iv_date = lw_data-possibleproductiondate
+*                                                        iv_next = abap_false
+*                                                        iv_plant = lw_data-plant ).
+*
+*        ELSE.
+*
+*          "采用
+*          lw_data-possibleproductiondate = zzcl_common_utils=>get_workingday( iv_date = lw_result-deliverydate
+*                                                        iv_next = abap_false
+*                                                        iv_plant = lw_data-plant ).
+*
+*        ENDIF.
+
+
+
+          IF lw_mrp-mrpelementavailyorrqmtdate IS NOT INITIAL AND lw_data-mrpelementreschedulingdate IS NOT INITIAL .
+
+*            lv_dur = lw_mrp-mrpelementavailyorrqmtdate.   "入庫処理時間
+            "購買納入日付
+
+*            lw_data-mrpdiliverydate = zzcl_common_utils=>calc_date_subtract(
+*              EXPORTING
+*                date      = lw_data-mrpelementreschedulingdate
+*
+*                day       = lv_dur
+*
+*            ).
+*
+*            lw_data-mrpdiliverydate = zzcl_common_utils=>get_workingday( iv_date = lw_data-mrpdiliverydate
+*                                                                    iv_next = abap_false
+*                                                                    iv_plant = lw_data-plant ).
+
+          ELSE.
+            IF lw_mrp-mrpelementreschedulingdate IS NOT INITIAL.
+              lw_data-mrpdiliverydate =  lw_mrp-mrpelementreschedulingdate.
+
+
             ENDIF.
 
           ENDIF.
 
         ENDIF.
-    ENDIF.
+
+        CLEAR  lw_mrp.
+
+        "LW_DATA-MRPDILIVERYDATE  = LW_MRP-MRPElementAvailyOrRqmtDate - 1.  calc_date_subtract
+
+
+*          "2.21 MC要求
+        IF lw_data-schedulelinedeliverydate IS NOT INITIAL AND lw_data-mrpelementreschedulingdate IS NOT INITIAL.
+          IF lw_data-attention <> ''.
+
+            IF lw_data-attention = 'CANCEL'.
+              lw_data-mcrequire = 'CANCEL'.
+
+            ELSE.
+
+
+
+              IF lw_data-schedulelinedeliverydate < lw_data-mrpelementreschedulingdate.
+                lw_data-mcrequire = 'PUSH OUT'.
+              ELSEIF lw_data-schedulelinedeliverydate > lw_data-mrpelementreschedulingdate.
+                lw_data-mcrequire = 'PULL IN'.
+
+              ELSE.
+                lw_data-mcrequire = ''.
+
+              ENDIF.
+
+
+            ENDIF.
+
+          ELSE.
+
+            IF lw_data-schedulelinedeliverydate < lw_data-deliverydate.
+
+              lw_data-mcrequire = 'PUSH OUT'.
+            ELSEIF lw_data-schedulelinedeliverydate =  lw_data-deliverydate.
+              lw_data-mcrequire = ''.
+            ENDIF.
+
+            IF lw_data-deliverydate <> ''.
+              IF lw_data-schedulelinedeliverydate >  lw_data-deliverydate.
+                lw_data-mcrequire = 'PULL IN'.
+
+              ELSE.
+                IF lw_data-schedulelinedeliverydate >  lw_data-deliverydate.
+                  lw_data-mcrequire = ''.
+
+                ENDIF.
+              ENDIF.
+
+            ENDIF.
+
+          ENDIF.
+        ENDIF.
+
+
+
+
+        "2.26 承認サイト
+        "lw_data-WorkflowTaskResut
+
+        READ TABLE lt_workflow_api into data(lw_workflow) WITH KEY SAPBusinessObjectNodeKey1 = lw_data-purchaseorder.
+
+            if sy-subrc = 0.
+               READ TABLE lt_workflowdetail_api into data(lw_workflow_d) WITH key WorkflowInternalID = lw_workflow-WorkflowInternalID.
+
+               "如果能在detail中取到WorkflowTaskInternalID
+               if sy-subrc = 0.
+
+                 if lw_workflow_d-workflowtaskresult = 'RELEASED'.
+
+                    lw_data-WorkflowTaskResult = '2'.
+                    lw_data-Taskresulttext = '承認済'.
+
+                 ELSEif lw_workflow_d-workflowtaskresult = 'REJECTED' or lw_workflow_d-workflowtaskresult = ''.
+
+                    lw_data-WorkflowTaskResult = 'D'.
+                    lw_data-Taskresulttext = '未承認'.
+
+                 ENDIF.
+
+               else.
+                 "直接判断WorkflowTaskExternalStatus是不是COMPLETED
+                 if lw_workflow-workflowexternalstatus = 'COMPLETED'.
+                 "如果是，则是传出对象。
+
+                    lw_data-WorkflowTaskResult = '2'.
+                    lw_data-Taskresulttext = '承認済'.
+
+                 endif.
+
+               ENDIF.
+
+            else.
+
+            ENDIF.
+
+            clear:  lw_workflow      ,lw_workflow_d.
 
         APPEND lw_data TO lt_data.
 
       ENDLOOP.
 
+      DELETE lt_data WHERE WorkflowTaskResult not in lr_WorkflowTaskResult.
+
       LOOP AT lt_data ASSIGNING FIELD-SYMBOL(<fs_data>).
 
-        READ TABLE lt_maker into data(lw_maker) with KEY Supplier = <fs_data>-Manufacturer.
-            if  sy-subrc = 0.
-                <fs_data>-SupplierName2 = lw_maker-SupplierName.
+        READ TABLE lt_maker INTO DATA(lw_maker) WITH KEY supplier = <fs_data>-manufacturer.
+        IF  sy-subrc = 0.
+          <fs_data>-suppliername2 = lw_maker-suppliername.
 
-            ENDIF.
+        ENDIF.
 
-            CLEar lw_maker.
+        CLEAR lw_maker.
 
 
         "输出时的内外部转换
@@ -682,7 +1113,7 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
         <fs_data>-material = |{ <fs_data>-material ALPHA = OUT }|. "品目
         <fs_data>-manufacturermaterial = |{ <fs_data>-manufacturermaterial ALPHA = OUT }|. "内部品目
         <fs_data>-purchaseorderquantityunit =  |{ <fs_data>-purchaseorderquantityunit ALPHA = OUT }|.
-        <fs_data>-Customer = |{ <fs_data>-Customer ALPHA = OUT }|.  "得意先名称
+        <fs_data>-customer = |{ <fs_data>-customer ALPHA = OUT }|.  "得意先名称
 
         "unit in and out transfer
         TRY.
@@ -704,16 +1135,16 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
         CASE <fs_data>-documentcurrency.
 
           WHEN 'JPY'.
-            <fs_data>-netprice = <fs_data>-NetPriceAmount * 100 / <fs_data>-netpricequantity.
-            <fs_data>-netamount = <fs_data>-NetPrice * <fs_data>-ConfirmedQuantity.
+            <fs_data>-netprice = <fs_data>-netpriceamount * 100 / <fs_data>-netpricequantity.
+            <fs_data>-netamount = <fs_data>-netprice * <fs_data>-confirmedquantity.
 
-            <fs_data>-netamount  = round( val = <fs_data>-netamount dec = 0 mode = cl_abap_math=>ROUND_HALF_UP ).
+            <fs_data>-netamount  = round( val = <fs_data>-netamount dec = 0 mode = cl_abap_math=>round_half_up ).
 
 
           WHEN OTHERS.
-            <fs_data>-netprice =  <fs_data>-NetPriceAmount / <fs_data>-netpricequantity.
-            <fs_data>-netamount = <fs_data>-NetPrice * <fs_data>-ConfirmedQuantity.
-            <fs_data>-netamount  = round( val = <fs_data>-netamount dec = 2 mode = cl_abap_math=>ROUND_HALF_UP ).
+            <fs_data>-netprice =  <fs_data>-netpriceamount / <fs_data>-netpricequantity.
+            <fs_data>-netamount = <fs_data>-netprice * <fs_data>-confirmedquantity.
+            <fs_data>-netamount  = round( val = <fs_data>-netamount dec = 2 mode = cl_abap_math=>round_half_up ).
 
         ENDCASE.
 
@@ -722,7 +1153,7 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
         IF sy-subrc = 0.
           <fs_data>-plainlongtext1 =  ls_longtext-plainlongtext.
         ENDIF.
-        clear ls_longtext.
+        CLEAR ls_longtext.
 
         "項目テキスト
         READ TABLE lt_longtext_1 INTO DATA(ls_longtext1) WITH KEY purchaseorder = <fs_data>-purchaseorder.
@@ -730,9 +1161,22 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
         IF sy-subrc = 0 .
           <fs_data>-plainlongtext = ls_longtext1-plainlongtext.
         ENDIF.
-        clear ls_longtext1.
+        CLEAR ls_longtext1.
 
       ENDLOOP.
+
+      if lv_poalldis = '2'.  "hai
+
+        DELETE lt_data WHERE ponokoru <> 0.
+
+      ELSEif lv_poalldis = '3'."iie
+
+        DELETE lt_data WHERE ponokoru = 0.
+
+      else.
+
+
+      ENDIF.
 
       "Page
       DATA(lv_start) = lv_skip + 1.

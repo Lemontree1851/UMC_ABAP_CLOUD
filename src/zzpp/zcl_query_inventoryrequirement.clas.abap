@@ -12,7 +12,8 @@ ENDCLASS.
 
 
 
-CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
+CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
+
 
   METHOD if_rap_query_provider~select.
     TYPES: BEGIN OF ty_metadata,
@@ -40,7 +41,13 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
              source_m_r_p_element_category TYPE i_supplydemanditemtp-sourcemrpelementcategory,
              source_m_r_p_element_item     TYPE i_supplydemanditemtp-sourcemrpelementitem,
              sourcemrpelementscheduleline  TYPE i_supplydemanditemtp-sourcemrpelementscheduleline,
-             high_level_material           TYPE string,
+             high_level_material           TYPE matnr,
+             product                       TYPE matnr,
+             yearmonth(6)                  TYPE n,
+             yearweek(6)                   TYPE n,
+             update_seq                    TYPE sy-index,
+             balance_9                     TYPE menge_d,
+             balance_r                     TYPE menge_d,
            END OF ty_record,
            BEGIN OF ty_result,
              results TYPE TABLE OF ty_record WITH DEFAULT KEY,
@@ -50,47 +57,55 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
              d     TYPE ty_result,
            END OF ty_response.
 
-    TYPES: BEGIN OF ty_horizontal,
-             plant                          TYPE string,
+*    TYPES: BEGIN OF ty_horizontal,
+*             plant                          TYPE string,
+*             m_r_p_controller               TYPE string,
+*             m_r_p_controller_name          TYPE string,
+*             m_r_p_area                     TYPE string,
+*             purchasing_group               TYPE string,
+*             a_b_c_indicator                TYPE string,
+*             external_product_group         TYPE string,
+*             lot_sizing_procedure           TYPE string,
+*             product_group                  TYPE string,
+*             product                        TYPE string,
+*             product_description            TYPE string,
+*             industry_standard_name         TYPE string,
+*             e_o_l_group                    TYPE string,
+*             is_main_product                TYPE string,
+*             supplier                       TYPE string,
+*             supplier_name                  TYPE string,
+*             supplier_material_number       TYPE string,
+*             product_manufacturer_number    TYPE string,
+*             manufacturer_number            TYPE string,
+*             material_planned_delivery_durn TYPE string,
+*             minimum_purchase_order_qty     TYPE string,
+*             supplier_price                 TYPE string,
+*             standard_price                 TYPE string,
+*             supplier_certorigin_country    TYPE string,
+*             shipment_notice_qty            TYPE string, " 出荷通知数量
+*             out_of_stock_date              TYPE string, " 欠品日付
+*             safety_stock                   TYPE string, " 安全在庫
+*             stock_qty                      TYPE string, " 在庫数量
+*             classification                 TYPE string, " 分類
+*             past_qty                       TYPE string, " 過去
+*             future_qty                     TYPE string, " 未来
+*             total_qty                      TYPE string, " 合計
+*           END OF ty_horizontal.
+
+    TYPES: BEGIN OF ty_vertical,
+             plant                          TYPE werks_d,
              m_r_p_controller               TYPE string,
              m_r_p_controller_name          TYPE string,
              m_r_p_area                     TYPE string,
-             purchasing_group               TYPE string,
-             a_b_c_indicator                TYPE string,
-             external_product_group         TYPE string,
-             lot_sizing_procedure           TYPE string,
-             product_group                  TYPE string,
-             product                        TYPE string,
+             product                        TYPE matnr,
              product_description            TYPE string,
-             industry_standard_name         TYPE string,
-             e_o_l_group                    TYPE string,
-             is_main_product                TYPE string,
-             supplier                       TYPE string,
-             supplier_name                  TYPE string,
-             supplier_material_number       TYPE string,
-             product_manufacturer_number    TYPE string,
-             manufacturer_number            TYPE string,
-             material_planned_delivery_durn TYPE string,
-             minimum_purchase_order_qty     TYPE string,
-             supplier_price                 TYPE string,
-             standard_price                 TYPE string,
-             supplier_certorigin_country    TYPE string,
-             classification                 TYPE string,
-           END OF ty_horizontal,
-           BEGIN OF ty_vertical,
-             plant                          TYPE string,
-             m_r_p_controller               TYPE string,
-             m_r_p_controller_name          TYPE string,
-             m_r_p_area                     TYPE string,
-             product                        TYPE string,
-             product_description            TYPE string,
-             m_r_p_elements                 TYPE string,
-             date                           TYPE string,
-             required_qty                   TYPE string, " 所要数
-             stock_qty                      TYPE string, " 在庫数
-             supplied_qty                   TYPE string, " 供給数
-             available_stock                TYPE string, " 利用可能在庫
-             remaining_qty                  TYPE string, " 在庫残数
+             m_r_p_elements                 TYPE string,  " MRP要素
+             date                           TYPE string,  " 日付
+             required_qty                   TYPE menge_d, " 所要数
+             stock_qty                      TYPE menge_d, " 在庫数
+             supplied_qty                   TYPE menge_d, " 供給数
+             available_stock                TYPE menge_d, " 利用可能在庫
+             remaining_qty                  TYPE menge_d, " 在庫残数
              supplier                       TYPE string,
              supplier_name                  TYPE string,
              status                         TYPE string,
@@ -105,18 +120,28 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
              supplier_material_number       TYPE string,
              product_manufacturer_number    TYPE string,
              manufacturer_number            TYPE string,
-             material_planned_delivery_durn TYPE string,
-             minimum_purchase_order_qty     TYPE string,
-             supplier_price                 TYPE string,
-             standard_price                 TYPE string,
+             material_planned_delivery_durn TYPE plifz,
+             minimum_purchase_order_qty     TYPE menge_d,
+             supplier_price                 TYPE i_purginforecdorgplntdataapi01-netpriceamount,
+             standard_price                 TYPE i_purginforecdorgplntdataapi01-netpriceamount,
              supplier_certorigin_country    TYPE string,
            END OF ty_vertical.
+
+    TYPES:BEGIN OF ty_outofstockdate,
+            product TYPE matnr,
+            date    TYPE string,
+          END OF ty_outofstockdate,
+          BEGIN OF ty_update_sequence,
+            sequence TYPE sy-index,
+            quantity TYPE menge_d,
+          END OF ty_update_sequence.
 
     CONSTANTS: lc_classification_0 TYPE string VALUE `0.FORECAST`,
                lc_classification_1 TYPE string VALUE `1.SUPPLY`,
                lc_classification_5 TYPE string VALUE `5.DEMAND`,
                lc_classification_9 TYPE string VALUE `9.BALANCE`,
-               lc_classification_r TYPE string VALUE `R.BALANCE`.
+               lc_classification_r TYPE string VALUE `R.BALANCE`,
+               lc_classification_s TYPE string VALUE `SUBDEMAND`.
 
     CONSTANTS: lc_config_zpp015 TYPE ztbc_1001-zid VALUE `ZPP015`,
                lc_config_zpp016 TYPE ztbc_1001-zid VALUE `ZPP016`,
@@ -134,19 +159,37 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                lc_str_no(2)    TYPE c VALUE `No`,
                lc_str_main(4)  TYPE c VALUE `MAIN`.
 
-    DATA: lt_data       TYPE TABLE OF zc_inventoryrequirement,
-          ls_horizontal TYPE ty_horizontal,
-          lt_horizontal TYPE TABLE OF ty_horizontal,
-          ls_vertical   TYPE ty_vertical,
-          lt_vertical   TYPE TABLE OF ty_vertical.
+    DATA: lt_data            TYPE TABLE OF zc_inventoryrequirement,
+          ls_horizontal      TYPE zspp_1003, "ty_horizontal,
+          lt_horizontal      TYPE TABLE OF zspp_1003, "ty_horizontal,
+          ls_vertical        TYPE ty_vertical,
+          lt_vertical        TYPE TABLE OF ty_vertical,
+          lt_dynamic_col     TYPE zzcl_common_utils=>tt_add_coll,
+          lt_outofstockdate  TYPE TABLE OF ty_outofstockdate,
+          lt_update_sequence TYPE TABLE OF ty_update_sequence.
 
     DATA: lr_config_category  TYPE RANGE OF i_supplydemanditemtp-mrpelementcategory,
           lr_config_stocktype TYPE RANGE OF i_stockquantitycurrentvalue_2-inventorystocktype.
 
     DATA: ls_response TYPE ty_response.
 
-    DATA: lv_count  TYPE i,
-          lv_filter TYPE string.
+    DATA: lv_periodenddate   TYPE datum,
+          lv_filter          TYPE string,
+          lv_count           TYPE sy-index,
+          lv_sequence        TYPE sy-index,
+          lv_quantity        TYPE menge_d,
+          lv_col_date        TYPE datum,
+          lv_begin_month(2)  TYPE n,
+          lv_end_month(2)    TYPE n,
+          lv_col_month(2)    TYPE n,
+          lv_past_9balance   TYPE menge_d,
+          lv_past_rbalance   TYPE menge_d,
+          lv_future_9balance TYPE menge_d,
+          lv_future_rbalance TYPE menge_d,
+          lv_sum_9balance    TYPE menge_d,
+          lv_sum_rbalance    TYPE menge_d.
+
+    FIELD-SYMBOLS <table> TYPE STANDARD TABLE.
 
     IF io_request->is_data_requested( ).
       TRY.
@@ -183,7 +226,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               WHEN 'DISPLAYUNIT'.
                 DATA(lv_displayunit) = ls_filter_cond-range[ 1 ]-low.
               WHEN 'PERIODENDDATE'.
-                DATA(lv_periodenddate) = ls_filter_cond-range[ 1 ]-low.
+                lv_periodenddate = ls_filter_cond-range[ 1 ]-low.
               WHEN 'DISPLAYDIMENSION'.
                 DATA(lv_displaydimension) = ls_filter_cond-range[ 1 ]-low.
               WHEN 'SELECTIONRULE'.
@@ -244,26 +287,25 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
         INTO TABLE @DATA(lt_fixed_data).
 
       IF lt_fixed_data IS NOT INITIAL.
+        SORT lt_fixed_data BY product.
 
         " Begin 購買関連情報取得
-        IF lv_showinformation = abap_true.
-          SELECT purchasinginforecord,
-                 purchasingorganization,
-                 purchasinginforecordcategory,
-                 plant,
-                 minimumpurchaseorderquantity AS minimum_purchase_order_qty,
-                 materialplanneddeliverydurn AS material_planned_delivery_durn,
-                 netpriceamount,
-                 currency,
-                 materialpriceunitqty
-            FROM i_purginforecdorgplntdataapi01 WITH PRIVILEGED ACCESS
-             FOR ALL ENTRIES IN @lt_fixed_data
-           WHERE purchasinginforecord = @lt_fixed_data-purchasinginforecord
-             AND plant = @lt_fixed_data-plant
-             AND ismarkedfordeletion IS INITIAL
-            INTO TABLE @DATA(lt_purginforecdorgplntdata).
-          SORT lt_purginforecdorgplntdata BY plant purchasinginforecord.
-        ENDIF.
+        SELECT purchasinginforecord,
+               purchasingorganization,
+               purchasinginforecordcategory,
+               plant,
+               minimumpurchaseorderquantity AS minimum_purchase_order_qty,
+               materialplanneddeliverydurn AS material_planned_delivery_durn,
+               netpriceamount,
+               currency,
+               materialpriceunitqty
+          FROM i_purginforecdorgplntdataapi01 WITH PRIVILEGED ACCESS
+           FOR ALL ENTRIES IN @lt_fixed_data
+         WHERE purchasinginforecord = @lt_fixed_data-purchasinginforecord
+           AND plant = @lt_fixed_data-plant
+           AND ismarkedfordeletion IS INITIAL
+          INTO TABLE @DATA(lt_purginforecdorgplntdata).
+        SORT lt_purginforecdorgplntdata BY plant purchasinginforecord.
         " End 購買関連情報取得
 
         " Begin 在庫データ取得
@@ -305,6 +347,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
           ENDIF.
         ENDLOOP.
         lv_filter = |{ lv_filter })|.
+
         zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
                                                      iv_method      = if_web_http_client=>get
                                                      iv_select      = lv_select
@@ -323,8 +366,8 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
           REPLACE ALL OCCURRENCES OF `)\/`        IN lv_response  WITH ``.
 
           xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
-            ( xco_cp_json=>transformation->pascal_case_to_underscore )
-            ( xco_cp_json=>transformation->boolean_to_abap_bool )
+             ( xco_cp_json=>transformation->pascal_case_to_underscore )
+             ( xco_cp_json=>transformation->boolean_to_abap_bool )
           ) )->write_to( REF #( ls_response ) ).
 
           DATA(lt_mrpdata) = ls_response-d-results.
@@ -338,7 +381,18 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                           iv_unix_timestamp = <lfs_mrpdata>-mrpelementavailyorrqmtdatestr / 1000
                        )->get_moment( )->as( xco_cp_time=>format->abap )->value+0(8).
             ENDIF.
-            <lfs_mrpdata>-material = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = <lfs_mrpdata>-material ).
+            <lfs_mrpdata>-product = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = <lfs_mrpdata>-material ).
+
+            <lfs_mrpdata>-yearmonth = <lfs_mrpdata>-mrpelementavailyorrqmtdate+0(6).
+            TRY.
+                cl_scal_utils=>date_get_week(
+                  EXPORTING
+                    iv_date = <lfs_mrpdata>-mrpelementavailyorrqmtdate
+                  IMPORTING
+                    ev_year_week = <lfs_mrpdata>-yearweek ).
+              CATCH cx_scal.
+                "handle exception
+            ENDTRY.
           ENDLOOP.
           SORT lt_mrpdata BY material.
         ENDIF.
@@ -389,6 +443,22 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
           DATA(lt_safety_stock) = lt_mrpdata.
           DELETE lt_safety_stock WHERE m_r_p_element_category <> lc_mrpelement_category_sh.
 
+          " Begin 安全在庫集約
+          IF lv_whether = lc_str_yes.
+            ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+            SELECT a~material,
+                   a~m_r_p_area,
+                   a~m_r_p_plant,
+                   SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+              FROM @lt_safety_stock AS a
+             GROUP BY a~material,
+                      a~m_r_p_area,
+                      a~m_r_p_plant
+              INTO TABLE @DATA(lt_sum_safety_stock).
+            SORT lt_sum_safety_stock BY material.
+          ENDIF.
+          " End 安全在庫集約
+
           " 購買依頼のデータ取得（Forecast行）
           DATA(lt_forecast) = lt_mrpdata.
           DELETE lt_forecast WHERE m_r_p_element_category <> lc_mrpelement_category_ba.
@@ -409,6 +479,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
           " End 過去のForecast取得
 
           " Begin 指定期間内のForecast取得
+          " By Day
           ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
           SELECT a~material,
                  a~m_r_p_area,
@@ -423,6 +494,38 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                     a~mrpelementavailyorrqmtdate
             INTO TABLE @DATA(lt_period_forecast).
           SORT lt_period_forecast BY material mrpelementavailyorrqmtdate.
+
+          " By Week
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 a~yearweek,
+                 SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+            FROM @lt_forecast AS a
+           WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant,
+                    a~yearweek
+            INTO TABLE @DATA(lt_week_forecast).
+          SORT lt_week_forecast BY material yearweek.
+
+          " By Month
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 a~yearmonth,
+                 SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+            FROM @lt_forecast AS a
+           WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant,
+                    a~yearmonth
+            INTO TABLE @DATA(lt_month_forecast).
+          SORT lt_month_forecast BY material yearmonth.
           " End 指定期間内のForecast取得
 
           " Begin 未来のForecast取得
@@ -468,7 +571,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
             ##ITAB_KEY_IN_SELECT
             SELECT DISTINCT
                    plannedorder,
-                   product
+                   i_plannedorder~product
               FROM i_plannedorder
               JOIN @lt_filter_mrpdata_sb AS a ON i_plannedorder~plannedorder = a~source_m_r_p_element
               INTO TABLE @DATA(lt_plannedorder).
@@ -484,25 +587,102 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               INTO TABLE @DATA(lt_manufacturingorder).
             SORT lt_manufacturingorder BY manufacturingorder.
           ENDIF.
+
+          SORT lt_filter_mrpdata BY product mrpelementavailyorrqmtdate.
+
+          CLEAR: lt_outofstockdate, lv_sequence.
+          LOOP AT lt_filter_mrpdata INTO DATA(ls_filter_mrpdata)
+                                    GROUP BY ( product = ls_filter_mrpdata-product )
+                                    ASSIGNING FIELD-SYMBOL(<lfs_filter_mrpdata_group>).
+
+            CLEAR: lt_update_sequence, lv_quantity.
+            READ TABLE lt_sum_stockinfo INTO DATA(ls_sum_stockinfo)
+                                         WITH KEY product = <lfs_filter_mrpdata_group>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              lv_quantity += ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
+            ENDIF.
+
+            READ TABLE lt_sum_safety_stock INTO DATA(ls_sum_safety_stock)
+                                           WITH KEY material = <lfs_filter_mrpdata_group>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              lv_quantity += ls_sum_safety_stock-m_r_p_element_open_quantity.
+            ENDIF.
+
+            LOOP AT GROUP <lfs_filter_mrpdata_group> ASSIGNING FIELD-SYMBOL(<lfs_filter_mrpdata>).
+              " 上位品目
+              IF <lfs_filter_mrpdata>-m_r_p_element_category = lc_mrpelement_category_sb.
+                READ TABLE lt_plannedorder INTO DATA(ls_plannedorder)
+                                            WITH KEY plannedorder = <lfs_filter_mrpdata>-source_m_r_p_element
+                                            BINARY SEARCH.
+                IF sy-subrc = 0.
+                  <lfs_filter_mrpdata>-high_level_material = ls_plannedorder-product.
+                ELSE.
+                  CLEAR ls_plannedorder.
+                ENDIF.
+              ELSEIF <lfs_filter_mrpdata>-m_r_p_element_category = lc_mrpelement_category_ar.
+                READ TABLE lt_manufacturingorder INTO DATA(ls_manufacturingorder)
+                                                  WITH KEY manufacturingorder = <lfs_filter_mrpdata>-source_m_r_p_element
+                                                  BINARY SEARCH.
+                IF sy-subrc = 0.
+                  <lfs_filter_mrpdata>-high_level_material = ls_manufacturingorder-product.
+                ELSE.
+                  CLEAR ls_manufacturingorder.
+                ENDIF.
+              ENDIF.
+
+              " 累加
+              lv_quantity += <lfs_filter_mrpdata>-m_r_p_element_open_quantity.
+
+              " 9.BALANCE
+              <lfs_filter_mrpdata>-balance_9 = lv_quantity.
+
+              " 计算 R.BALANCE 用
+              IF <lfs_filter_mrpdata>-m_r_p_element_category = lc_mrpelement_category_la. " 出荷通知
+                APPEND VALUE #( sequence = lv_sequence
+                                quantity = <lfs_filter_mrpdata>-m_r_p_element_open_quantity ) TO lt_update_sequence.
+                lv_sequence += 1.
+              ELSE.
+                <lfs_filter_mrpdata>-update_seq = lv_sequence.
+              ENDIF.
+
+              " 最初欠品日付
+              IF <lfs_filter_mrpdata>-balance_9 < 0 AND NOT line_exists( lt_outofstockdate[ product = <lfs_filter_mrpdata_group>-product ] ).
+                APPEND VALUE #( product = <lfs_filter_mrpdata_group>-product
+                                date    = <lfs_filter_mrpdata>-mrpelementavailyorrqmtdate+0(4) && '/' &&
+                                          <lfs_filter_mrpdata>-mrpelementavailyorrqmtdate+4(2) && '/' &&
+                                          <lfs_filter_mrpdata>-mrpelementavailyorrqmtdate+6(2)
+                ) TO lt_outofstockdate.
+              ENDIF.
+            ENDLOOP.
+
+            SORT lt_update_sequence BY sequence.
+            LOOP AT GROUP <lfs_filter_mrpdata_group> ASSIGNING <lfs_filter_mrpdata> WHERE update_seq IS NOT INITIAL.
+              READ TABLE lt_update_sequence INTO DATA(ls_update_sequence)
+                                             WITH KEY sequence = <lfs_filter_mrpdata>-update_seq BINARY SEARCH.
+              IF sy-subrc = 0.
+                <lfs_filter_mrpdata>-balance_r = <lfs_filter_mrpdata>-balance_9 + ls_update_sequence-quantity.
+              ELSE.
+                CLEAR ls_update_sequence.
+              ENDIF.
+            ENDLOOP.
+          ENDLOOP.
           " End MRP計画データ集約
 
-          " Begin 安全在庫集約
-          IF lv_whether = lc_str_yes.
-            ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
-            SELECT a~material,
-                   a~m_r_p_area,
-                   a~m_r_p_plant,
-                   SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
-              FROM @lt_safety_stock AS a
-             GROUP BY a~material,
-                      a~m_r_p_area,
-                      a~m_r_p_plant
-              INTO TABLE @DATA(lt_sum_safety_stock).
-            SORT lt_sum_safety_stock BY material.
-          ENDIF.
-          " End 安全在庫集約
-
           " Begin 出荷通知数量取得
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+            FROM @lt_filter_mrpdata AS a
+           WHERE mrpelementavailyorrqmtdate >= @lv_system_date
+             AND m_r_p_element_category = @lc_mrpelement_category_la
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant
+            INTO TABLE @DATA(lt_ship_qty).
+          SORT lt_ship_qty BY material.
+
           ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
           SELECT a~material,
                  a~m_r_p_area,
@@ -516,8 +696,8 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                     a~m_r_p_area,
                     a~m_r_p_plant,
                     a~mrpelementavailyorrqmtdate
-            INTO TABLE @DATA(lt_ship_notification).
-          SORT lt_ship_notification BY material mrpelementavailyorrqmtdate.
+            INTO TABLE @DATA(lt_ship_qty_date).
+          SORT lt_ship_qty_date BY material mrpelementavailyorrqmtdate.
           " End 出荷通知数量取得
 
           " Begin「過去」のSUPPLYデータ処理
@@ -536,6 +716,90 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
           SORT lt_past_supply BY material.
           " End「過去」のSUPPLYデータ処理
 
+          " Begin 指定期間内のSUPPLY取得
+          " By Day
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 a~mrpelementavailyorrqmtdate,
+                 SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+            FROM @lt_filter_mrpdata AS a
+           WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+             AND m_r_p_element_open_quantity > 0
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant,
+                    a~mrpelementavailyorrqmtdate
+            INTO TABLE @DATA(lt_period_supply).
+          SORT lt_period_supply BY material mrpelementavailyorrqmtdate.
+
+          " By Week
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 a~yearweek,
+                 SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+            FROM @lt_filter_mrpdata AS a
+           WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+             AND m_r_p_element_open_quantity > 0
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant,
+                    a~yearweek
+            INTO TABLE @DATA(lt_week_supply).
+          SORT lt_week_supply BY material yearweek.
+
+          " By Month
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 a~yearmonth,
+                 SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+            FROM @lt_filter_mrpdata AS a
+           WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+             AND m_r_p_element_open_quantity > 0
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant,
+                    a~yearmonth
+            INTO TABLE @DATA(lt_month_supply).
+          SORT lt_month_supply BY material yearmonth.
+          " End 指定期間内のSUPPLY取得
+
+          " Begin 列「未来」のSUPPLYデータ処理
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+            FROM @lt_filter_mrpdata AS a
+           WHERE mrpelementavailyorrqmtdate > @lv_periodenddate
+             AND m_r_p_element_open_quantity > 0
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant
+            INTO TABLE @DATA(lt_future_supply).
+          SORT lt_future_supply BY material.
+          " End 列「未来」のSUPPLYデータ処理
+
+          " Begin 列「合計」のSUPPLYデータ処理
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+            FROM @lt_filter_mrpdata AS a
+           WHERE m_r_p_element_open_quantity > 0
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant
+            INTO TABLE @DATA(lt_sum_supply).
+          SORT lt_sum_supply BY material.
+          " End 列「合計」のSUPPLYデータ処理
+
           " Begin「過去」のDEMANDデータ処理
           ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
           SELECT a~material,
@@ -552,16 +816,264 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
           SORT lt_past_demand BY material.
           " End 「過去」のDEMANDデータ処理
 
-          " Begin
-          " End
+          " Begin 指定期間内のDEMAND取得
+          " By Day
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 a~mrpelementavailyorrqmtdate,
+                 SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+            FROM @lt_filter_mrpdata AS a
+           WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+             AND m_r_p_element_open_quantity < 0
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant,
+                    a~mrpelementavailyorrqmtdate
+            INTO TABLE @DATA(lt_period_demand).
+          SORT lt_period_demand BY material mrpelementavailyorrqmtdate.
 
-          " Begin
-          " End
+          " By Week
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 a~yearweek,
+                 SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+            FROM @lt_filter_mrpdata AS a
+           WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+             AND m_r_p_element_open_quantity < 0
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant,
+                    a~yearweek
+            INTO TABLE @DATA(lt_week_demand).
+          SORT lt_week_demand BY material yearweek.
 
-          " Begin
-          " End
+          " By Month
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 a~yearmonth,
+                 SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+            FROM @lt_filter_mrpdata AS a
+           WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+             AND m_r_p_element_open_quantity < 0
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant,
+                    a~yearmonth
+            INTO TABLE @DATA(lt_month_demand).
+          SORT lt_month_demand BY material yearmonth.
+          " End 指定期間内のDEMAND取得
+
+          " Begin 列「未来」のDEMANDデータ処理
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+            FROM @lt_filter_mrpdata AS a
+           WHERE mrpelementavailyorrqmtdate > @lv_periodenddate
+             AND m_r_p_element_open_quantity < 0
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant
+            INTO TABLE @DATA(lt_future_demand).
+          SORT lt_future_demand BY material.
+          " End 列「未来」のDEMANDデータ処理
+
+          " Begin 列「合計」のDEMANDデータ処理
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+            FROM @lt_filter_mrpdata AS a
+           WHERE m_r_p_element_open_quantity < 0
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant
+            INTO TABLE @DATA(lt_sum_demand).
+          SORT lt_sum_demand BY material.
+          " End 列「合計」のDEMANDデータ処理
+
+          " DEMAND明細表示
+          IF lv_showdemand = abap_true.
+            " Begin「過去」のSUBDEMANDデータ処理
+            ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+            SELECT a~material,
+                   a~m_r_p_area,
+                   a~m_r_p_plant,
+                   a~high_level_material,
+                   SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+              FROM @lt_filter_mrpdata AS a
+             WHERE mrpelementavailyorrqmtdate < @lv_system_date
+               AND m_r_p_element_open_quantity < 0
+               AND high_level_material IS NOT INITIAL
+             GROUP BY a~material,
+                      a~m_r_p_area,
+                      a~m_r_p_plant,
+                      a~high_level_material
+              INTO TABLE @DATA(lt_past_subdemand).
+            SORT lt_past_subdemand BY material high_level_material.
+            " End 「過去」のSUBDEMANDデータ処理
+
+            " Begin 指定期間内のSUBDEMAND取得
+            " By Day
+            ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+            SELECT a~material,
+                   a~m_r_p_area,
+                   a~m_r_p_plant,
+                   a~high_level_material,
+                   a~mrpelementavailyorrqmtdate,
+                   SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+              FROM @lt_filter_mrpdata AS a
+             WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+               AND m_r_p_element_open_quantity < 0
+               AND high_level_material IS NOT INITIAL
+             GROUP BY a~material,
+                      a~m_r_p_area,
+                      a~m_r_p_plant,
+                      a~high_level_material,
+                      a~mrpelementavailyorrqmtdate
+              INTO TABLE @DATA(lt_period_subdemand).
+            SORT lt_period_subdemand BY material high_level_material mrpelementavailyorrqmtdate.
+
+            " By Week
+            ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+            SELECT a~material,
+                   a~m_r_p_area,
+                   a~m_r_p_plant,
+                   a~high_level_material,
+                   a~yearweek,
+                   SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+              FROM @lt_filter_mrpdata AS a
+             WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+               AND m_r_p_element_open_quantity < 0
+               AND high_level_material IS NOT INITIAL
+             GROUP BY a~material,
+                      a~m_r_p_area,
+                      a~m_r_p_plant,
+                      a~high_level_material,
+                      a~yearweek
+              INTO TABLE @DATA(lt_week_subdemand).
+            SORT lt_week_subdemand BY material high_level_material yearweek.
+
+            " By Month
+            ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+            SELECT a~material,
+                   a~m_r_p_area,
+                   a~m_r_p_plant,
+                   a~high_level_material,
+                   a~yearmonth,
+                   SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+              FROM @lt_filter_mrpdata AS a
+             WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+               AND m_r_p_element_open_quantity < 0
+               AND high_level_material IS NOT INITIAL
+             GROUP BY a~material,
+                      a~m_r_p_area,
+                      a~m_r_p_plant,
+                      a~high_level_material,
+                      a~yearmonth
+              INTO TABLE @DATA(lt_month_subdemand).
+            SORT lt_month_subdemand BY material high_level_material yearmonth.
+            " End 指定期間内のSUBDEMAND取得
+
+            " Begin 列「未来」のSUBDEMANDデータ処理
+            ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+            SELECT a~material,
+                   a~m_r_p_area,
+                   a~m_r_p_plant,
+                   a~high_level_material,
+                   SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+              FROM @lt_filter_mrpdata AS a
+             WHERE mrpelementavailyorrqmtdate > @lv_periodenddate
+               AND m_r_p_element_open_quantity < 0
+               AND high_level_material IS NOT INITIAL
+             GROUP BY a~material,
+                      a~m_r_p_area,
+                      a~m_r_p_plant,
+                      a~high_level_material
+              INTO TABLE @DATA(lt_future_subdemand).
+            SORT lt_future_subdemand BY material high_level_material.
+            " End 列「未来」のSUBDEMANDデータ処理
+
+            " Begin 列「合計」のSUBDEMANDデータ処理
+            ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+            SELECT a~material,
+                   a~m_r_p_area,
+                   a~m_r_p_plant,
+                   a~high_level_material,
+                   SUM( a~m_r_p_element_open_quantity ) AS m_r_p_element_open_quantity
+              FROM @lt_filter_mrpdata AS a
+             WHERE m_r_p_element_open_quantity < 0
+               AND high_level_material IS NOT INITIAL
+             GROUP BY a~material,
+                      a~m_r_p_area,
+                      a~m_r_p_plant,
+                      a~high_level_material
+              INTO TABLE @DATA(lt_sum_subdemand).
+            SORT lt_sum_subdemand BY material high_level_material.
+            " End 列「合計」のSUBDEMANDデータ処理
+          ENDIF.
+
+          " Begin 指定期間内のBALANCE取得
+          " By Day
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 a~mrpelementavailyorrqmtdate,
+                 SUM( a~balance_9 ) AS balance_9,
+                 SUM( a~balance_r ) AS balance_r
+            FROM @lt_filter_mrpdata AS a
+           WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant,
+                    a~mrpelementavailyorrqmtdate
+            INTO TABLE @DATA(lt_period_balance).
+          SORT lt_period_balance BY material mrpelementavailyorrqmtdate.
+
+          " By Week
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 a~yearweek,
+                 SUM( a~balance_9 ) AS balance_9,
+                 SUM( a~balance_r ) AS balance_r
+            FROM @lt_filter_mrpdata AS a
+           WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant,
+                    a~yearweek
+            INTO TABLE @DATA(lt_week_balance).
+          SORT lt_week_balance BY material yearweek.
+
+          " By Month
+          ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
+          SELECT a~material,
+                 a~m_r_p_area,
+                 a~m_r_p_plant,
+                 a~yearmonth,
+                 SUM( a~balance_9 ) AS balance_9,
+                 SUM( a~balance_r ) AS balance_r
+            FROM @lt_filter_mrpdata AS a
+           WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
+           GROUP BY a~material,
+                    a~m_r_p_area,
+                    a~m_r_p_plant,
+                    a~yearmonth
+            INTO TABLE @DATA(lt_month_balance).
+          SORT lt_month_balance BY material yearmonth.
+          " End 指定期間内のBALANCE取得
         ENDIF.
-
 
         " 縦表示
         IF lv_displaydimension = 'V' AND lt_filter_mrpdata IS NOT INITIAL.
@@ -582,32 +1094,10 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
           " End 発注ステータス
         ENDIF.
 
-
-
       ENDIF.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+*&--Output data
       APPEND INITIAL LINE TO lt_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
-
       TRY.
           <lfs_data>-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
           ##NO_HANDLER
@@ -630,59 +1120,311 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
         ENDIF.
 
         " EOLグループ
-        IF lv_showinformation = abap_true.
-          DATA(lv_index) = find( val = <lfs_fixed_data>-industry_standard_name sub = '-' ).
-          IF lv_index > 0.
-            <lfs_fixed_data>-e_o_l_group = <lfs_fixed_data>-industry_standard_name+0(lv_index).
-            SPLIT <lfs_fixed_data>-industry_standard_name AT '-' INTO TABLE DATA(lt_split).
-            " 主品目
-            IF lines( lt_split ) > 1 AND lt_split[ 2 ] = lc_str_main.
-              <lfs_fixed_data>-is_main_product = abap_true.
-            ENDIF.
-          ELSE.
-            <lfs_fixed_data>-e_o_l_group = <lfs_fixed_data>-industry_standard_name.
+        DATA(lv_index) = find( val = <lfs_fixed_data>-industry_standard_name sub = '-' ).
+        IF lv_index > 0.
+          <lfs_fixed_data>-e_o_l_group = <lfs_fixed_data>-industry_standard_name+0(lv_index).
+          SPLIT <lfs_fixed_data>-industry_standard_name AT '-' INTO TABLE DATA(lt_split).
+          " 主品目
+          IF lines( lt_split ) > 1 AND lt_split[ 2 ] = lc_str_main.
+            <lfs_fixed_data>-is_main_product = abap_true.
           ENDIF.
+        ELSE.
+          <lfs_fixed_data>-e_o_l_group = <lfs_fixed_data>-industry_standard_name.
+        ENDIF.
 
-          READ TABLE lt_purginforecdorgplntdata INTO DATA(ls_purginforecdorgplntdata)
-                                                 WITH KEY plant = <lfs_fixed_data>-plant
-                                                          purchasinginforecord = <lfs_fixed_data>-purchasinginforecord
-                                                          BINARY SEARCH.
-          IF sy-subrc = 0.
-            " 最新仕入単価
-            IF ls_purginforecdorgplntdata-materialpriceunitqty IS NOT INITIAL.
-              <lfs_fixed_data>-supplier_price = ls_purginforecdorgplntdata-netpriceamount / ls_purginforecdorgplntdata-materialpriceunitqty.
-              CONDENSE <lfs_fixed_data>-supplier_price NO-GAPS.
-              <lfs_fixed_data>-supplier_price = zzcl_common_utils=>conversion_amount(
-                                                  iv_alpha = zzcl_common_utils=>lc_alpha_out
-                                                  iv_currency = ls_purginforecdorgplntdata-currency
-                                                  iv_input = <lfs_fixed_data>-supplier_price ).
+        " 購買関連情報
+        READ TABLE lt_purginforecdorgplntdata INTO DATA(ls_purginforecdorgplntdata)
+                                               WITH KEY plant = <lfs_fixed_data>-plant
+                                                        purchasinginforecord = <lfs_fixed_data>-purchasinginforecord
+                                                        BINARY SEARCH.
+        IF sy-subrc = 0.
+          " 最新仕入単価
+          IF ls_purginforecdorgplntdata-materialpriceunitqty IS NOT INITIAL.
+            <lfs_fixed_data>-supplier_price = ls_purginforecdorgplntdata-netpriceamount / ls_purginforecdorgplntdata-materialpriceunitqty.
+            CONDENSE <lfs_fixed_data>-supplier_price NO-GAPS.
+            <lfs_fixed_data>-supplier_price = zzcl_common_utils=>conversion_amount(
+                                                iv_alpha = zzcl_common_utils=>lc_alpha_out
+                                                iv_currency = ls_purginforecdorgplntdata-currency
+                                                iv_input = <lfs_fixed_data>-supplier_price ).
 
-            ELSE.
-              CLEAR <lfs_fixed_data>-supplier_price.
-            ENDIF.
           ELSE.
-            CLEAR ls_purginforecdorgplntdata.
+            CLEAR <lfs_fixed_data>-supplier_price.
           ENDIF.
+        ELSE.
+          CLEAR ls_purginforecdorgplntdata.
         ENDIF.
       ENDLOOP.
 
       CASE lv_displaydimension.
           " 横表示
         WHEN 'H'.
+          CLEAR: lt_dynamic_col, lv_count, lv_col_date.
+          lv_col_date = lv_system_date.
+
+          CASE lv_displayunit.
+            WHEN 'D'. " Day - display up to 180 days
+              SELECT SINGLE days_between( @lv_system_date, @lv_periodenddate ) FROM i_timezone INTO @DATA(lv_days).
+              IF lv_days > 180.
+                lv_count = 180.
+              ELSE.
+                lv_count = lv_days.
+              ENDIF.
+
+              DO lv_count TIMES.
+                lv_col_date = zzcl_common_utils=>calc_date_add( date = lv_col_date day = 1 ).
+                APPEND VALUE #( name = |Y_M_D{ lv_col_date }| types = 'MENGE_D' ) TO lt_dynamic_col.
+              ENDDO.
+
+            WHEN 'W'. " Week - display up to 3 year, 52 * 3 = 156 weeks
+              TRY.
+                  cl_scal_utils=>date_get_week(
+                    EXPORTING
+                      iv_date = lv_system_date
+                    IMPORTING
+                      ev_year = DATA(lv_begin_year)
+                      ev_week = DATA(lv_begin_week) ).
+
+                  cl_scal_utils=>date_get_week(
+                    EXPORTING
+                      iv_date = lv_periodenddate
+                    IMPORTING
+                      ev_year = DATA(lv_end_year)
+                      ev_week = DATA(lv_end_week) ).
+                CATCH cx_scal.
+                  "handle exception
+              ENDTRY.
+
+              IF lv_end_year - lv_begin_year > 3.
+                lv_count = 156.
+              ELSEIF lv_end_year - lv_begin_year = 0.
+                lv_count = lv_end_week - lv_begin_week + 1.
+              ELSE.
+                lv_count = ( lv_end_year - lv_begin_year - 1 ) * 52 + ( 52 - lv_begin_week ) + lv_end_week.
+              ENDIF.
+
+              APPEND VALUE #( name = |Y_W{ lv_begin_year }{ lv_begin_week }| types = 'MENGE_D' ) TO lt_dynamic_col.
+              lv_count -= 1.
+
+              IF lv_count > 0.
+                DO lv_count TIMES.
+                  lv_col_date = zzcl_common_utils=>calc_date_add( date = lv_col_date day = 7 ).
+                  TRY.
+                      cl_scal_utils=>date_get_week(
+                        EXPORTING
+                          iv_date = lv_col_date
+                        IMPORTING
+                          ev_year = DATA(lv_col_year)
+                          ev_week = DATA(lv_col_week) ).
+                    CATCH cx_scal.
+                      "handle exception
+                  ENDTRY.
+                  APPEND VALUE #( name = |Y_W{ lv_col_year }{ lv_col_week }| types = 'MENGE_D' ) TO lt_dynamic_col.
+                ENDDO.
+              ENDIF.
+
+            WHEN 'M'. " Month - display up to 3 year, 12 * 3 = 36 months
+              CLEAR: lv_begin_year, lv_end_year, lv_begin_month, lv_end_month, lv_col_month.
+              lv_begin_year  = lv_system_date+0(4).
+              lv_end_year    = lv_periodenddate+0(4).
+              lv_begin_month = lv_system_date+4(2).
+              lv_end_month   = lv_periodenddate+4(2).
+
+              IF lv_end_year - lv_begin_year > 3.
+                lv_count = 36.
+              ELSEIF lv_end_year - lv_begin_year = 0.
+                lv_count = lv_end_month - lv_begin_month + 1.
+              ELSE.
+                lv_count = ( lv_end_year - lv_begin_year - 1 ) * 12 + ( 12 - lv_begin_month ) + lv_end_month.
+              ENDIF.
+
+              APPEND VALUE #( name = |Y_M{ lv_begin_year }{ lv_begin_month }| types = 'MENGE_D' ) TO lt_dynamic_col.
+              lv_count -= 1.
+              IF lv_count > 0.
+                lv_col_year = lv_begin_year.
+                lv_col_month = lv_begin_month.
+                DO lv_count TIMES.
+                  lv_col_month += 1.
+                  IF lv_col_month > 12.
+                    lv_col_year += 1.
+                    lv_col_month = 1.
+                  ENDIF.
+                  APPEND VALUE #( name = |Y_M{ lv_col_year }{ lv_col_month }| types = 'MENGE_D' ) TO lt_dynamic_col.
+                ENDDO.
+              ENDIF.
+            WHEN OTHERS.
+          ENDCASE.
+
           LOOP AT lt_fixed_data ASSIGNING <lfs_fixed_data>.
             CLEAR ls_horizontal.
             ls_horizontal = CORRESPONDING #( <lfs_fixed_data> ).
+            ls_horizontal-m_r_p_area = lv_mrparea.
+            ls_horizontal-supplier = |{ ls_horizontal-supplier ALPHA = OUT }|.
+            ls_horizontal-product  = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = ls_horizontal-product ).
 
+            " 購買関連情報
             READ TABLE lt_purginforecdorgplntdata INTO ls_purginforecdorgplntdata
                                                   WITH KEY plant = <lfs_fixed_data>-plant
                                                            purchasinginforecord = <lfs_fixed_data>-purchasinginforecord
                                                            BINARY SEARCH.
             IF sy-subrc = 0.
               ls_horizontal = CORRESPONDING #( BASE ( ls_horizontal ) ls_purginforecdorgplntdata ).
+            ELSE.
+              CLEAR ls_purginforecdorgplntdata.
             ENDIF.
 
-            ls_horizontal-supplier = |{ ls_horizontal-supplier ALPHA = OUT }|.
-            ls_horizontal-product  = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = ls_horizontal-product ).
+            " 在庫数量
+            READ TABLE lt_sum_stockinfo INTO ls_sum_stockinfo WITH KEY product = <lfs_fixed_data>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              ls_horizontal-stock_qty = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
+            ELSE.
+              CLEAR ls_sum_stockinfo.
+            ENDIF.
+
+            " 安全在庫
+            READ TABLE lt_sum_safety_stock INTO ls_sum_safety_stock WITH KEY material = <lfs_fixed_data>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              ls_horizontal-safety_stock = ls_sum_safety_stock-m_r_p_element_open_quantity.
+            ELSE.
+              CLEAR ls_sum_safety_stock.
+            ENDIF.
+
+            " 出荷通知数量
+            READ TABLE lt_ship_qty INTO DATA(ls_ship_qty) WITH KEY material = <lfs_fixed_data>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              ls_horizontal-shipment_notice_qty = ls_ship_qty-m_r_p_element_open_quantity.
+            ELSE.
+              CLEAR ls_ship_qty.
+            ENDIF.
+
+            " 欠品日付
+            READ TABLE lt_outofstockdate INTO DATA(ls_outofstockdate) WITH KEY product = <lfs_fixed_data>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              ls_horizontal-out_of_stock_date = ls_outofstockdate-date.
+            ELSE.
+              CLEAR ls_outofstockdate.
+            ENDIF.
+
+            " Begin 列「過去」
+            READ TABLE lt_past_forecast INTO DATA(ls_past_forecast) WITH KEY material = <lfs_fixed_data>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              DATA(lv_past_forecast) = ls_past_forecast-m_r_p_element_open_quantity.
+            ELSE.
+              CLEAR lv_past_forecast.
+            ENDIF.
+
+            READ TABLE lt_past_supply INTO DATA(ls_past_supply) WITH KEY material = <lfs_fixed_data>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              DATA(lv_past_supply) = ls_past_supply-m_r_p_element_open_quantity.
+            ELSE.
+              CLEAR lv_past_supply.
+            ENDIF.
+
+            READ TABLE lt_past_demand INTO DATA(ls_past_demand) WITH KEY material = <lfs_fixed_data>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              DATA(lv_past_demand) = ls_past_demand-m_r_p_element_open_quantity.
+            ELSE.
+              CLEAR lv_past_demand.
+            ENDIF.
+
+            " 列「過去」の9.BALANCE
+            CLEAR lv_past_9balance.
+            lv_past_9balance = ls_horizontal-stock_qty + ls_horizontal-safety_stock.
+
+            " 列「過去」のR.BALANCE = 9.BALANCE＋ 未来期間に一番目の出荷通知
+            CLEAR lv_past_rbalance.
+            READ TABLE lt_ship_qty_date INTO DATA(ls_ship_qty_date) WITH KEY material = <lfs_fixed_data>-product.
+            IF sy-subrc = 0.
+              lv_past_rbalance = lv_past_9balance + ls_ship_qty_date-m_r_p_element_open_quantity.
+            ELSE.
+              CLEAR ls_ship_qty_date.
+            ENDIF.
+            " End 列「過去」
+
+            " Begin 列「未来」
+            READ TABLE lt_future_forecast INTO DATA(ls_future_forecast) WITH KEY material = <lfs_fixed_data>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              DATA(lv_future_forecast) = ls_future_forecast-m_r_p_element_open_quantity.
+            ELSE.
+              CLEAR lv_future_forecast.
+            ENDIF.
+
+            READ TABLE lt_future_supply INTO DATA(ls_future_supply) WITH KEY material = <lfs_fixed_data>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              DATA(lv_future_supply) = ls_future_supply-m_r_p_element_open_quantity.
+            ELSE.
+              CLEAR lv_future_supply.
+            ENDIF.
+
+            READ TABLE lt_future_demand INTO DATA(ls_future_demand) WITH KEY material = <lfs_fixed_data>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              DATA(lv_future_demand) = ls_future_demand-m_r_p_element_open_quantity.
+            ELSE.
+              CLEAR lv_future_demand.
+            ENDIF.
+
+            " 列「未来」の9.BALANCE
+            CLEAR lv_future_9balance.
+            lv_future_9balance = ls_horizontal-stock_qty + ls_horizontal-safety_stock.
+            " 列「未来」のR.BALANCE = 9.BALANCE
+            CLEAR lv_future_rbalance.
+            lv_future_rbalance = lv_future_9balance.
+            " End 列「未来」
+
+            " Begin 列「合計」
+            READ TABLE lt_sum_forecast INTO DATA(ls_sum_forecast) WITH KEY material = <lfs_fixed_data>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              DATA(lv_sum_forecast) = ls_sum_forecast-m_r_p_element_open_quantity.
+            ELSE.
+              CLEAR lv_sum_forecast.
+            ENDIF.
+
+            READ TABLE lt_sum_supply INTO DATA(ls_sum_supply) WITH KEY material = <lfs_fixed_data>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              DATA(lv_sum_supply) = ls_sum_supply-m_r_p_element_open_quantity.
+            ELSE.
+              CLEAR lv_sum_supply.
+            ENDIF.
+
+            READ TABLE lt_sum_demand INTO DATA(ls_sum_demand) WITH KEY material = <lfs_fixed_data>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              DATA(lv_sum_demand) = ls_sum_demand-m_r_p_element_open_quantity.
+            ELSE.
+              CLEAR lv_sum_demand.
+            ENDIF.
+
+            " 列「合計」の9.BALANCE
+            CLEAR lv_sum_9balance.
+            lv_sum_9balance = ls_horizontal-stock_qty + ls_horizontal-safety_stock + lv_sum_supply + lv_sum_demand.
+            " 列「合計」のR.BALANCE = 9.BALANCE
+            CLEAR lv_sum_rbalance.
+            lv_sum_rbalance = lv_sum_9balance.
+            " End 列「合計」
+
+            " DEMAND明細表示
+            IF lv_showdemand = abap_true.
+              " 上位品目の最終製品取得
+              zcl_bom_where_used=>get_data(
+                 EXPORTING
+                   iv_plant                   = ls_horizontal-plant
+                   iv_billofmaterialcomponent = ls_horizontal-high_level_material
+                   iv_getusagelistroot        = abap_true
+                 IMPORTING
+                   et_usagelist               = DATA(lt_usagelist) ).
+              IF lt_usagelist IS NOT INITIAL.
+                SORT lt_usagelist BY material.
+                DELETE ADJACENT DUPLICATES FROM lt_usagelist COMPARING material.
+                LOOP AT lt_usagelist INTO DATA(ls_usagelist).
+                  IF ls_horizontal-final_product IS INITIAL.
+                    ls_horizontal-final_product = ls_usagelist-material.
+                  ELSE.
+                    ls_horizontal-final_product = |{ ls_horizontal-final_product },{ ls_usagelist-material }|.
+                  ENDIF.
+                ENDLOOP.
+              ELSE.
+                ls_horizontal-final_product = ls_horizontal-high_level_material.
+              ENDIF.
+              CLEAR lt_usagelist.
+            ENDIF.
 
             " 選択条件「購買関連明細行表示」
             " はい：ForecastとR.BALANCEを表示する。
@@ -697,32 +1439,392 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               CASE sy-index.
                 WHEN 1.
                   ls_horizontal-classification = lc_classification_0. " 0.FORECAST
+                  ls_horizontal-past_qty = lv_past_forecast.
+                  ls_horizontal-future_qty = lv_future_forecast.
+                  ls_horizontal-total_qty = lv_sum_forecast.
                 WHEN 2.
                   ls_horizontal-classification = lc_classification_1. " 1.SUPPLY
+                  ls_horizontal-past_qty = lv_past_supply.
+                  ls_horizontal-future_qty = lv_future_supply.
+                  ls_horizontal-total_qty = lv_sum_supply.
                 WHEN 3.
                   ls_horizontal-classification = lc_classification_5. " 5.DEMAND
+                  ls_horizontal-past_qty = lv_past_demand.
+                  ls_horizontal-future_qty = lv_future_demand.
+                  ls_horizontal-total_qty = lv_sum_demand.
                 WHEN 4.
                   ls_horizontal-classification = lc_classification_9. " 9.BALANCE
+                  ls_horizontal-past_qty = lv_past_9balance.
+                  ls_horizontal-future_qty = lv_future_9balance.
+                  ls_horizontal-total_qty = lv_sum_9balance.
                 WHEN 5.
                   ls_horizontal-classification = lc_classification_r. " R.BALANCE
+                  ls_horizontal-past_qty = lv_past_rbalance.
+                  ls_horizontal-future_qty = lv_future_rbalance.
+                  ls_horizontal-total_qty = lv_sum_rbalance.
                 WHEN OTHERS.
               ENDCASE.
               APPEND ls_horizontal TO lt_horizontal.
             ENDDO.
-          ENDLOOP.
 
+            " DEMAND明細表示
+            IF lv_showdemand = abap_true.
+              DATA(lt_subdemand_mrpdata) = lt_filter_mrpdata_sb.
+              APPEND LINES OF lt_filter_mrpdata_ar TO lt_subdemand_mrpdata.
+
+              LOOP AT lt_subdemand_mrpdata INTO DATA(ls_subdemand_mrpdata) WHERE material = <lfs_fixed_data>-product.
+                ls_horizontal-classification = lc_classification_s. " SUBDEMAND
+                " 過去の各上位品目SUBDEMAND
+                READ TABLE lt_past_subdemand INTO DATA(ls_past_subdemand)
+                                              WITH KEY material = <lfs_fixed_data>-product
+                                                       high_level_material = ls_subdemand_mrpdata-high_level_material BINARY SEARCH.
+                IF sy-subrc = 0.
+                  ls_horizontal-past_qty = ls_past_subdemand-m_r_p_element_open_quantity.
+                ELSE.
+                  CLEAR ls_past_subdemand.
+                ENDIF.
+
+                " 未来の各上位品目SUBDEMAND
+                READ TABLE lt_future_subdemand INTO DATA(ls_future_subdemand)
+                                                WITH KEY material = <lfs_fixed_data>-product
+                                                         high_level_material = ls_subdemand_mrpdata-high_level_material BINARY SEARCH.
+                IF sy-subrc = 0.
+                  ls_horizontal-future_qty = ls_future_subdemand-m_r_p_element_open_quantity.
+                ELSE.
+                  CLEAR ls_future_subdemand.
+                ENDIF.
+
+                " 合計の各上位品目SUBDEMAND
+                READ TABLE lt_sum_subdemand INTO DATA(ls_sum_subdemand)
+                                             WITH KEY material = <lfs_fixed_data>-product
+                                                      high_level_material = ls_subdemand_mrpdata-high_level_material BINARY SEARCH.
+                IF sy-subrc = 0.
+                  ls_horizontal-total_qty = ls_sum_subdemand-m_r_p_element_open_quantity.
+                ELSE.
+                  CLEAR ls_sum_subdemand.
+                ENDIF.
+                APPEND ls_horizontal TO lt_horizontal.
+              ENDLOOP.
+            ENDIF.
+          ENDLOOP.
           SORT lt_horizontal BY product classification.
-          <lfs_data>-dynamicdata = xco_cp_json=>data->from_abap( lt_horizontal )->apply( VALUE #(
-             ( xco_cp_json=>transformation->underscore_to_pascal_case )
-          ) )->to_string( ).
+
+          SORT lt_dynamic_col BY name.
+          DATA(dref) = zzcl_common_utils=>get_all_fields( is_table = 'ZSPP_1003'
+                                                          it_type  = lt_dynamic_col ).
+          ASSIGN dref->* TO <table>.
+          IF <table> IS ASSIGNED.
+            <table> = CORRESPONDING #( lt_horizontal ).
+
+            LOOP AT <table> ASSIGNING FIELD-SYMBOL(<lfs_line>).
+              " 0.FORECAST
+              IF <lfs_line>-('CLASSIFICATION') = lc_classification_0.
+                CASE lv_displayunit.
+                  WHEN 'D'. " Day
+                    LOOP AT lt_period_forecast INTO DATA(ls_period_forecast) WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO DATA(ls_dynamic_col)
+                                                WITH KEY name = |Y_M_D{ ls_period_forecast-mrpelementavailyorrqmtdate }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO FIELD-SYMBOL(<lfs_colvalue>).
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_period_forecast-m_r_p_element_open_quantity.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_period_forecast.
+                  WHEN 'W'. " Week
+                    LOOP AT lt_week_forecast INTO DATA(ls_week_forecast) WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_W{ ls_week_forecast-yearweek }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_week_forecast-m_r_p_element_open_quantity.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_week_forecast.
+                  WHEN 'M'. " Month
+                    LOOP AT lt_month_forecast INTO DATA(ls_month_forecast) WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_M{ ls_month_forecast-yearmonth }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_month_forecast-m_r_p_element_open_quantity.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_month_forecast.
+                  WHEN OTHERS.
+                ENDCASE.
+              ENDIF.
+
+              " 1.SUPPLY
+              IF <lfs_line>-('CLASSIFICATION') = lc_classification_1.
+                CASE lv_displayunit.
+                  WHEN 'D'. " Day
+                    LOOP AT lt_period_supply INTO DATA(ls_period_supply) WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_M_D{ ls_period_supply-mrpelementavailyorrqmtdate }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_period_supply-m_r_p_element_open_quantity.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_period_supply.
+                  WHEN 'W'. " Week
+                    LOOP AT lt_week_supply INTO DATA(ls_week_supply) WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_W{ ls_week_supply-yearweek }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_week_supply-m_r_p_element_open_quantity.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_week_supply.
+                  WHEN 'M'. " Month
+                    LOOP AT lt_month_supply INTO DATA(ls_month_supply) WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_M{ ls_month_supply-yearmonth }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_month_supply-m_r_p_element_open_quantity.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_month_supply.
+                  WHEN OTHERS.
+                ENDCASE.
+              ENDIF.
+
+              " 5.DEMAND
+              IF <lfs_line>-('CLASSIFICATION') = lc_classification_5.
+                CASE lv_displayunit.
+                  WHEN 'D'. " Day
+                    LOOP AT lt_period_demand INTO DATA(ls_period_demand) WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_M_D{ ls_period_demand-mrpelementavailyorrqmtdate }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_period_demand-m_r_p_element_open_quantity.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_period_demand.
+                  WHEN 'W'. " Week
+                    LOOP AT lt_week_demand INTO DATA(ls_week_demand) WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_W{ ls_week_demand-yearweek }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_week_demand-m_r_p_element_open_quantity.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_week_demand.
+                  WHEN 'M'. " Month
+                    LOOP AT lt_month_demand INTO DATA(ls_month_demand) WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_M{ ls_month_demand-yearmonth }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_month_demand-m_r_p_element_open_quantity.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_month_demand.
+                  WHEN OTHERS.
+                ENDCASE.
+              ENDIF.
+
+              " 9.BALANCE
+              IF <lfs_line>-('CLASSIFICATION') = lc_classification_9.
+                CASE lv_displayunit.
+                  WHEN 'D'. " Day
+                    LOOP AT lt_period_balance INTO DATA(ls_period_balance) WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_M_D{ ls_period_balance-mrpelementavailyorrqmtdate }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_period_balance-balance_9.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_period_balance.
+                  WHEN 'W'. " Week
+                    LOOP AT lt_week_balance INTO DATA(ls_week_balance) WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_W{ ls_week_balance-yearweek }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_week_balance-balance_9.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_week_balance.
+                  WHEN 'M'. " Month
+                    LOOP AT lt_month_balance INTO DATA(ls_month_balance) WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_M{ ls_month_balance-yearmonth }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_month_balance-balance_9.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_month_balance.
+                  WHEN OTHERS.
+                ENDCASE.
+              ENDIF.
+
+              " R.BALANCE
+              IF <lfs_line>-('CLASSIFICATION') = lc_classification_r.
+                CASE lv_displayunit.
+                  WHEN 'D'. " Day
+                    LOOP AT lt_period_balance INTO ls_period_balance WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_M_D{ ls_period_balance-mrpelementavailyorrqmtdate }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_period_balance-balance_r.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_period_balance.
+                  WHEN 'W'. " Week
+                    LOOP AT lt_week_balance INTO ls_week_balance WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_W{ ls_week_balance-yearweek }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_week_balance-balance_r.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_week_balance.
+                  WHEN 'M'. " Month
+                    LOOP AT lt_month_balance INTO ls_month_balance WHERE material = ls_horizontal-product.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_M{ ls_month_balance-yearmonth }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_month_balance-balance_r.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_month_balance.
+                  WHEN OTHERS.
+                ENDCASE.
+              ENDIF.
+
+              " SUBDEMAND
+              IF <lfs_line>-('CLASSIFICATION') = lc_classification_s.
+                CASE lv_displayunit.
+                  WHEN 'D'. " Day
+                    LOOP AT lt_period_subdemand INTO DATA(ls_period_subdemand) WHERE material = ls_horizontal-product
+                                                                                 AND high_level_material = ls_horizontal-high_level_material.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_M_D{ ls_period_subdemand-mrpelementavailyorrqmtdate }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_period_subdemand-m_r_p_element_open_quantity.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_period_subdemand.
+                  WHEN 'W'. " Week
+                    LOOP AT lt_week_subdemand INTO DATA(ls_week_subdemand) WHERE material = ls_horizontal-product
+                                                                             AND high_level_material = ls_horizontal-high_level_material.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_W{ ls_week_subdemand-yearweek }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_week_subdemand-m_r_p_element_open_quantity.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_week_subdemand.
+                  WHEN 'M'. " Month
+                    LOOP AT lt_month_subdemand INTO DATA(ls_month_subdemand) WHERE material = ls_horizontal-product
+                                                                               AND high_level_material = ls_horizontal-high_level_material.
+                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
+                                                WITH KEY name = |Y_M{ ls_month_subdemand-yearmonth }| BINARY SEARCH.
+                      IF sy-subrc = 0.
+                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                        IF <lfs_colvalue> IS ASSIGNED.
+                          <lfs_colvalue> = ls_month_subdemand-m_r_p_element_open_quantity.
+                        ENDIF.
+                      ELSE.
+                        CLEAR ls_dynamic_col.
+                      ENDIF.
+                    ENDLOOP.
+                    CLEAR ls_month_subdemand.
+                  WHEN OTHERS.
+                ENDCASE.
+              ENDIF.
+            ENDLOOP.
+
+            <lfs_data>-dynamicdata = xco_cp_json=>data->from_abap( <table> )->apply( VALUE #(
+               ( xco_cp_json=>transformation->underscore_to_pascal_case )
+            ) )->to_string( ).
+          ENDIF.
 
           " 縦表示
         WHEN 'V'.
-          LOOP AT lt_filter_mrpdata ASSIGNING FIELD-SYMBOL(<lfs_filter_mrpdata>).
-            DATA(lv_product) = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = <lfs_filter_mrpdata>-material ).
-
+          LOOP AT lt_filter_mrpdata ASSIGNING <lfs_filter_mrpdata>.
             " 在庫行
-            READ TABLE lt_sum_stockinfo INTO DATA(ls_sum_stockinfo) WITH KEY product = lv_product BINARY SEARCH.
+            READ TABLE lt_sum_stockinfo INTO ls_sum_stockinfo WITH KEY product = <lfs_filter_mrpdata>-product BINARY SEARCH.
             IF sy-subrc = 0.
               APPEND INITIAL LINE TO lt_vertical ASSIGNING FIELD-SYMBOL(<lfs_vertical_stock>).
               " 所要数
@@ -735,10 +1837,12 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               <lfs_vertical_stock>-available_stock = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
               " 在庫残数 = 在庫＋所要数
               <lfs_vertical_stock>-remaining_qty   = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
+            ELSE.
+              CLEAR ls_sum_stockinfo.
             ENDIF.
 
             " 安全在庫行
-            READ TABLE lt_sum_safety_stock INTO DATA(ls_sum_safety_stock) WITH KEY material = lv_product BINARY SEARCH.
+            READ TABLE lt_sum_safety_stock INTO ls_sum_safety_stock WITH KEY material = <lfs_filter_mrpdata>-product BINARY SEARCH.
             IF sy-subrc = 0.
               APPEND INITIAL LINE TO lt_vertical ASSIGNING FIELD-SYMBOL(<lfs_vertical2_safety_stock>).
               " 所要数
@@ -751,6 +1855,8 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               <lfs_vertical_stock>-available_stock = ls_sum_safety_stock-m_r_p_element_open_quantity.
               " 在庫残数 = 在庫＋所要数
               <lfs_vertical_stock>-remaining_qty   = ls_sum_safety_stock-m_r_p_element_open_quantity.
+            ELSE.
+              CLEAR ls_sum_safety_stock.
             ENDIF.
 
             " 明細行
@@ -783,7 +1889,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
             " 在庫残数 = 在庫＋所要数
             <lfs_vertical>-remaining_qty   = <lfs_vertical>-required_qty.
 
-            READ TABLE lt_fixed_data INTO DATA(ls_fixed_data) WITH KEY product = lv_product BINARY SEARCH.
+            READ TABLE lt_fixed_data INTO DATA(ls_fixed_data) WITH KEY product = <lfs_filter_mrpdata>-product BINARY SEARCH.
             IF sy-subrc = 0.
               <lfs_vertical> = CORRESPONDING #( BASE ( <lfs_vertical> ) ls_fixed_data ).
 
@@ -794,19 +1900,9 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                                                   |{ <lfs_filter_mrpdata>-m_r_p_element_schedule_line }/{ <lfs_filter_mrpdata>-m_r_p_element_document_type }|.
                 WHEN 'F'.
                   IF <lfs_filter_mrpdata>-m_r_p_element_category = lc_mrpelement_category_sb.
-                    READ TABLE lt_plannedorder INTO DATA(ls_plannedorder)
-                                                WITH KEY plannedorder = <lfs_filter_mrpdata>-source_m_r_p_element
-                                                BINARY SEARCH.
-                    IF sy-subrc = 0.
-                      <lfs_vertical>-m_r_p_elements = ls_plannedorder-product.
-                    ENDIF.
+                    <lfs_vertical>-m_r_p_elements = <lfs_filter_mrpdata>-high_level_material.
                   ELSEIF <lfs_filter_mrpdata>-m_r_p_element_category = lc_mrpelement_category_ar.
-                    READ TABLE lt_manufacturingorder INTO DATA(ls_manufacturingorder)
-                                                      WITH KEY manufacturingorder = <lfs_filter_mrpdata>-source_m_r_p_element
-                                                      BINARY SEARCH.
-                    IF sy-subrc = 0.
-                      <lfs_vertical>-m_r_p_elements = ls_manufacturingorder-product.
-                    ENDIF.
+                    <lfs_vertical>-m_r_p_elements = <lfs_filter_mrpdata>-high_level_material.
                   ELSE.
                     <lfs_vertical>-m_r_p_elements = |{ <lfs_filter_mrpdata>-m_r_p_element }/{ <lfs_filter_mrpdata>-m_r_p_element_item }/| &&
                                                     |{ <lfs_filter_mrpdata>-m_r_p_element_schedule_line }/{ <lfs_filter_mrpdata>-m_r_p_element_document_type }|.
@@ -820,7 +1916,11 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                                                              BINARY SEARCH.
               IF sy-subrc = 0.
                 <lfs_vertical> = CORRESPONDING #( BASE ( <lfs_vertical> ) ls_purginforecdorgplntdata ).
+              ELSE.
+                CLEAR ls_purginforecdorgplntdata.
               ENDIF.
+            ELSE.
+              CLEAR ls_fixed_data.
             ENDIF.
           ENDLOOP.
 
@@ -831,9 +1931,11 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                                                          BINARY SEARCH.
           IF sy-subrc = 0.
             <lfs_vertical>-status = ls_posupplierconfirmation-supplierconfirmationcategory.
+          ELSE.
+            CLEAR ls_posupplierconfirmation.
           ENDIF.
 
-          SORT lt_vertical BY product.
+          SORT lt_vertical BY product date.
           <lfs_data>-dynamicdata = xco_cp_json=>data->from_abap( lt_vertical )->apply( VALUE #(
              ( xco_cp_json=>transformation->underscore_to_pascal_case )
           ) )->to_string( ).
@@ -855,5 +1957,4 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
     ENDIF.
 
   ENDMETHOD.
-
 ENDCLASS.

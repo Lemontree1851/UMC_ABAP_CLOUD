@@ -1,0 +1,4 @@
+@EndUserText.label: 'SD-032 販売計画一覧'
+define service ZUI_SALESDOCUMENTREPORT_O2 {
+  expose ZR_SALESDOCUMENTREPORT as SalesReport;
+}

@@ -133,7 +133,7 @@ define root custom entity ZR_BOM
       ChangeNumber                  : abap.char( 12 );
       @UI                           : { lineItem: [ { position: 260, label: '設置ポイント' } ]}
       @EndUserText.label            : '設置ポイント'
-      BOMSubItemInstallationPoint   : abap.char( 40 );
+      BOMSubItemInstallationPoint   : abap.char( 900 );
       @UI                           : { lineItem: [ { position: 270, label: '副明細数量' } ]}
       @EndUserText.label            : '副明細数量'
       //@Semantics.quantity.unitOfMeasure: 'BillOfMaterialItemUnit'

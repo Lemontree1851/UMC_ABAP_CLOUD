@@ -121,6 +121,15 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
 
     IF lt_req IS NOT INITIAL.
 
+      LOOP AT lt_req INTO DATA(lw_req).
+        IF lw_req-delflag = 'Y'.
+          APPEND ls_output TO es_outputs-items.
+          lv_text = 'UWEBで購買伝票' && lw_req-pono && '明細' && lw_req-dno && 'は削除フラグを付けました.UMC購買担当者と連絡してください.'.
+          lv_error = 'X'.
+          CONTINUE.
+        ENDIF.
+      ENDLOOP.
+
       SELECT purchaseorder, purchaseorderitem, purchasingdocumentdeletioncode, orderquantity
         FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_req
@@ -145,8 +154,8 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
 
     " 检查删除标志
     LOOP AT lt_deletecode INTO DATA(ls_deletecode).
-      IF ls_deletecode-purchasingdocumentdeletioncode = 'X'.
-        lv_text = '購買伝票' && ls_deletecode-purchaseorder && '明細' && ls_deletecode-purchaseorderitem && 'は削除フラグを付けました。UMC購買担当者と連絡してください。'.
+      IF ls_deletecode-purchasingdocumentdeletioncode = 'L'.
+        lv_text = 'S4HCで購買伝票' && ls_deletecode-purchaseorder && '明細' && ls_deletecode-purchaseorderitem && 'は削除フラグを付けました.UMC購買担当者と連絡してください.'.
         lv_error = 'X'.
         CONTINUE.
       ENDIF.
@@ -166,7 +175,6 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
 
         LOOP AT lt_req INTO DATA(ls_req_inner) WHERE pono = ls_req-pono
                                                   AND dno = ls_req-dno
-*                                                  AND deliverydate = lv_current_date
                                                   AND delflag <> 'X'.
           lv_sum_qty = lv_sum_qty + ls_req_inner-quantity.
         ENDLOOP.
@@ -190,7 +198,6 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
           CONDENSE ls_output-seq.
           CONDENSE ls_output-deliverydate.
           CONDENSE ls_output-deliverydate.
-*          CONDENSE ls_output-quantity.
           CONDENSE ls_output-delflag.
           CONDENSE ls_output-extnumber.
 
@@ -241,7 +248,7 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
               IF sy-subrc <> 0.
                 " 处理密码读取失败的情况
                 lv_error = 'X'.
-                lv_text = '无法从 ZC_TBC1001 表中读取用户名或密码。'.
+                lv_text = '无法从 ZC_TBC1001 表中读取用户名或密码'.
                 RETURN.
               ENDIF.
 
@@ -277,10 +284,6 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
 *            lv_timestamp               TYPE string,
             lv_confirmed_delivery_time TYPE string.
 
-*          " 获取当前日期和时间
-*          lv_date = sy-datum.
-*          lv_time = sy-uzeit.
-
           " 从时间中提取小时、分钟、秒
           lv_hour = lv_time+0(2).
           lv_minute = lv_time+2(2).
@@ -310,10 +313,7 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
           ELSE.
             lv_second_str = |{ lv_second }|.
           ENDIF.
-*
-**          " 生成时间戳
-**          lv_timestamp = |{ lv_date+0(4) }-{ lv_date+4(2) }-{ lv_date+6(2) }T{ lv_adjusted_hour_str }:{ lv_minute_str }:{ lv_second_str }|.
-*
+
           " 生成确认交货时间
           lv_confirmed_delivery_time = |{ lv_adjusted_hour_str }:{ lv_minute_str }:{ lv_second_str }|.
           CONDENSE ls_output-quantity NO-GAPS.
@@ -429,7 +429,7 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
               DATA(lo_response) = lo_http_client->execute( i_method = if_web_http_client=>post ).
             CATCH cx_web_http_client_error INTO DATA(lx_http_error).
               " 在这里处理异常，例如记录错误日志或返回自定义错误消息
-              lv_text = 'HTTP リクエストに失敗しました。接続や設定を確認してください。'.
+              lv_text = 'HTTP リクエストに失敗しました。接続や設定を確認してください'.
               lv_error = 'X'.
           ENDTRY.
 
@@ -444,17 +444,15 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
                             CHANGING data = ls_response ).
 
             " 成功消息
-            lv_text = '納期回答情報は購買伝票に反映されました。'.
+            lv_text = '納期回答情報は購買伝票に反映されました.'.
             lv_error = ''.
-
           ELSE.
-            lv_text = '納期回答情報が購買伝票に反映されませんでした。再度ご確認ください。'.
+            lv_text = '納期回答情報が購買伝票に反映されませんでした.再度ご確認ください.'.
             lv_error = 'X'.
             EXIT.
           ENDIF.
-
         ELSE.
-          lv_text = '納期回答合計数量は購買発注の発注数を超過します。データをチェックしてください。'.
+          lv_text = '納期回答合計数量は購買発注の発注数を超過します. データをチェックしてください.'.
           lv_error = 'X'.
           EXIT.
         ENDIF.
@@ -463,35 +461,43 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
 
     ENDIF.
 
-
 *将错误消息通过标准方法改成前台能读取到的内容
-    IF lv_error IS NOT INITIAL.
-      response->set_status( '500' ).
-      response->set_text( lv_text ).
-    ELSE.
-      response->set_status( '200' ).  " 默认设置为200
-      response->set_text( lv_text ).
+    IF lv_text IS NOT INITIAL.
+
+      IF lv_error IS NOT INITIAL.
+        response->set_status( '202' ).
+        " 创建一个 JSON 结构以包含成功消息和数据
+        DATA(lv_text_json_error) = lv_text.
+
+        DATA(lv_json_string_error) = xco_cp_json=>data->from_abap( es_outputs )->apply( VALUE #(
+            ( xco_cp_json=>transformation->underscore_to_pascal_case )
+        ) )->to_string( ).
 *
-*      DATA(lv_json_string) = xco_cp_json=>data->from_abap( es_outputs )->apply( VALUE #(
-*      ( xco_cp_json=>transformation->underscore_to_pascal_case )
-*      ) )->to_string( ).
-*      response->set_text( lv_json_string ).
-*      response->set_header_field( i_name  = lc_header_content
-*                                  i_value = lc_content_type ).
+        " 将 lv_text 直接作为消息字段，并组合 JSON 内容
+*        DATA(lv_response_json_error) = '{ "message": "' && '"status":"202"' && lv_text_json_error && '", "Items": ' && lv_json_string_error && ' }'.
+        DATA(lv_response_json_error) = '{ "message": "' && lv_text_json_error && '", "status": "202", "Items": ' && lv_json_string_error && ' }'.
+        response->set_text( lv_response_json_error ).
+        response->set_header_field( i_name  = lc_header_content
+                                    i_value = lc_content_type ).
 
-      " 创建一个 JSON 结构以包含成功消息和数据
-*      DATA(lv_response_json) = '{"message": "' && lv_text && '", "data": '.
-      DATA(lv_response_json) = lv_text.
-      DATA(lv_json_string) = xco_cp_json=>data->from_abap( es_outputs )->apply( VALUE #(
-          ( xco_cp_json=>transformation->underscore_to_pascal_case )
-      ) )->to_string( ).
+      ELSE.
+        response->set_status( '200' ).
+        " 创建一个 JSON 结构以包含成功消息和数据
+        DATA(lv_text_json_succ) = lv_text.
 
-      lv_response_json = lv_response_json && lv_json_string && '}'.
+        DATA(lv_json_string_succ) = xco_cp_json=>data->from_abap( es_outputs )->apply( VALUE #(
+            ( xco_cp_json=>transformation->underscore_to_pascal_case )
+        ) )->to_string( ).
 
-      response->set_text( lv_response_json ).
-      response->set_header_field( i_name  = lc_header_content
-                                  i_value = lc_content_type ).
+        " 将 lv_text 直接作为消息字段，并组合 JSON 内容
+*        DATA(lv_response_json_succ) = '{ "message": "' && '"status":"200"' && lv_text_json_succ && '", "Items": ' && lv_json_string_succ && ' }'.
+        DATA(lv_response_json_succ) = '{ "message": "' && lv_text_json_succ && '", "status": "200", "Items": ' && lv_json_string_succ && ' }'.
 
+        response->set_text( lv_response_json_succ ).
+        response->set_header_field( i_name  = lc_header_content
+                                    i_value = lc_content_type ).
+
+      ENDIF.
     ENDIF.
 
   ENDMETHOD.

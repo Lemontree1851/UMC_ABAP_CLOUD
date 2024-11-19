@@ -177,8 +177,9 @@ CLASS lhc_zr_orderforecast IMPLEMENTATION.
         MESSAGE e010(zpp_001) WITH TEXT-005 INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
       ELSE.
-        <lfs_data>-requirementdate = zzcl_common_utils=>get_workingday( iv_date = <lfs_data>-requirementdate
-                                                                        iv_next = abap_false ).
+        <lfs_data>-requirementdate = zzcl_common_utils=>get_workingday( iv_date  = <lfs_data>-requirementdate
+                                                                        iv_next  = abap_false
+                                                                        iv_plant = <lfs_data>-plant ).
       ENDIF.
 
       IF <lfs_data>-requirementqtystr IS INITIAL.

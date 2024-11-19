@@ -9,8 +9,6 @@ CLASS zcl_ecn DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
 CLASS zcl_ecn IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
     TYPES:
@@ -44,7 +42,7 @@ CLASS zcl_ecn IMPLEMENTATION.
 
       lr_bomcom         TYPE RANGE OF zr_ecn-component,
       ls_bomcom         LIKE LINE OF lr_bomcom,
-      lv_subitem        type  abap_boolean,
+      lv_subitem        TYPE  abap_boolean,
 
       lv_minimumgroup   TYPE abap_boolean.
 
@@ -79,37 +77,21 @@ CLASS zcl_ecn IMPLEMENTATION.
         issubitem                     TYPE c LENGTH 1,
         headerchangedocument          TYPE string,
 
-
-*      BillOfMaterialComponent type matnr,
-*      plant type werks_d,
-
-*        billofmaterial               TYPE string,
-*        billofmaterialcategory       TYPE string,
-*        billofmaterialvariant        TYPE c LENGTH 16,
-*        billofmaterialversion        TYPE c LENGTH 16,
-*        billofmaterialitemnodenumber TYPE c LENGTH 12,
-
-
       END OF ts_bom_api,
 
       tt_bom_api TYPE STANDARD TABLE OF ts_bom_api WITH DEFAULT KEY,
 
+      BEGIN OF ts_bom_apisub,  "api structue
 
-
-            BEGIN OF ts_bom_apisub,  "api structue
-
-        billofmaterial                TYPE string,
-        billofmaterialcategory        TYPE string,
-        billofmaterialvariant         TYPE string,
-        billofmaterialversion         TYPE string,
-        billofmaterialitemnodenumber  TYPE string,
-        HeaderChangeDocument          type string,
-        material                      TYPE string,
-        plant                         TYPE string,
-        BOMSubItemInstallationPoint   type string,
-
-
-
+        billofmaterial               TYPE string,
+        billofmaterialcategory       TYPE string,
+        billofmaterialvariant        TYPE string,
+        billofmaterialversion        TYPE string,
+        billofmaterialitemnodenumber TYPE string,
+        headerchangedocument         TYPE string,
+        material                     TYPE string,
+        plant                        TYPE string,
+        bomsubiteminstallationpoint  TYPE string,
 
       END OF ts_bom_apisub,
 
@@ -121,7 +103,7 @@ CLASS zcl_ecn IMPLEMENTATION.
         results TYPE tt_bom_api,
       END OF ts_bom_d,
 
-            BEGIN OF ts_bom_dsub,
+      BEGIN OF ts_bom_dsub,
         __count TYPE string,
         results TYPE tt_bom_apisub,
       END OF ts_bom_dsub,
@@ -146,16 +128,6 @@ CLASS zcl_ecn IMPLEMENTATION.
         d     TYPE ts_bom_dsub,
         error TYPE ts_error,
       END OF ts_res_bom_apisub,
-
-
-
-
-
-
-
-
-
-
 
       BEGIN OF ts_ecn,
         changenumber                TYPE  aennr,
@@ -221,18 +193,18 @@ CLASS zcl_ecn IMPLEMENTATION.
       END OF ts_ecn_api.
 
     DATA:
-      lt_bom_api     TYPE STANDARD TABLE OF ts_bom_api,
-      lt_bom_apisub  type STANDARD TABLE OF ts_bom_apisub,
-      ls_bom_api     TYPE ts_bom_api,
-      ls_res_bom_api TYPE ts_res_bom_api,
-      ls_res_bom_apisub type ts_res_bom_apisub,
-      lv_path        TYPE string,
-      lv_path1       type String,
-      lv_path2       type string,
-      lv_path3       type string,
-      lt_bomlist_tmp TYPE STANDARD TABLE OF zcl_explodebom=>ty_bomlist,
-      lt_bomlist     TYPE STANDARD TABLE OF zcl_explodebom=>ty_bomlist,
-      lv_point type string.
+      lt_bom_api        TYPE STANDARD TABLE OF ts_bom_api,
+      lt_bom_apisub     TYPE STANDARD TABLE OF ts_bom_apisub,
+      ls_bom_api        TYPE ts_bom_api,
+      ls_res_bom_api    TYPE ts_res_bom_api,
+      ls_res_bom_apisub TYPE ts_res_bom_apisub,
+      lv_path           TYPE string,
+      lv_path1          TYPE string,
+      lv_path2          TYPE string,
+      lv_path3          TYPE string,
+      lt_bomlist_tmp    TYPE STANDARD TABLE OF zcl_explodebom=>ty_bomlist,
+      lt_bomlist        TYPE STANDARD TABLE OF zcl_explodebom=>ty_bomlist,
+      lv_point          TYPE string.
 
 
     DATA:
@@ -247,8 +219,8 @@ CLASS zcl_ecn IMPLEMENTATION.
       lw_basicdis TYPE ts_basic,
       lw_basicobj TYPE ts_basic,
       lw_basic    TYPE ts_basic,
-      lt_basicall type STANDARD TABLE OF ts_basic,
-      lw_basicall type ts_basic.
+      lt_basicall TYPE STANDARD TABLE OF ts_basic,
+      lw_basicall TYPE ts_basic.
 
     CONSTANTS:
       lc_msgid                  TYPE string VALUE 'ZPP_008',
@@ -320,6 +292,7 @@ CLASS zcl_ecn IMPLEMENTATION.
               APPEND ls_changedoc TO lr_changedoc.
               CLEAR ls_changedoc.
 
+
             WHEN 'ECNVALIDFROM'.
 
               MOVE-CORRESPONDING str_rec_l_range TO ls_begdat.
@@ -340,12 +313,33 @@ CLASS zcl_ecn IMPLEMENTATION.
 
             WHEN 'SUBITEM'.
 
-               lv_subitem = str_rec_l_range-LOW .
+              lv_subitem = str_rec_l_range-low .
 
             WHEN OTHERS.
           ENDCASE.
         ENDLOOP.
       ENDLOOP.
+
+      IF lr_changedoc IS NOT INITIAL.
+
+        LOOP  AT lr_changedoc ASSIGNING FIELD-SYMBOL(<fs_changedoc>).
+
+          <fs_changedoc>-low  = |{ <fs_changedoc>-low ALPHA = OUT }|.
+
+        ENDLOOP.
+
+      ENDIF.
+
+*      if lr_variant is NOT INITIAL.
+*
+*        LOOP  AT lr_variant ASSIGNING FIELD-SYMBOL(<fs_variant>).
+*
+*          <fs_variant>-low  = |{ <fs_variant>-low ALPHA = IN }|.
+*
+*        ENDLOOP.
+*
+*
+*      ENDIF.
 
       SELECT a~billofmaterial,
              a~material,
@@ -361,9 +355,27 @@ CLASS zcl_ecn IMPLEMENTATION.
       WHERE a~material IN @lr_material
         AND a~plant = @lv_plant
         AND a~billofmaterialvariantusage IN @lr_bofmvu
-        AND a~billofmaterialvariant IN @lr_variant
+
+        "AND a~billofmaterialvariant IN @lr_variant
+
         AND b~mrpresponsible IN @lr_mrpresponsible
        INTO TABLE @DATA(lt_bomlink).
+
+
+      SELECT
+             a~material,
+             a~plant,
+             a~billofmaterialvariantusage,
+             b~mrpresponsible
+
+      FROM i_materialbomlink WITH PRIVILEGED ACCESS AS a
+      LEFT JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS b
+      ON   b~product = a~material
+      AND  b~plant = a~plant
+
+       INTO TABLE @DATA(lt_bomusemrp).
+
+
 
       LOOP AT lt_bomlink INTO DATA(ls_materialbomlink).
         "Explode BOM
@@ -412,13 +424,9 @@ CLASS zcl_ecn IMPLEMENTATION.
                  ev_status_code = DATA(lv_stat_code)
                  ev_response    = DATA(lv_resbody_api) ).
 
-
-
         /ui2/cl_json=>deserialize(
                                     EXPORTING json = lv_resbody_api
                                     CHANGING data = ls_res_bom_api ).
-
-
 
         IF lv_stat_code = '200' AND ls_res_bom_api-d-results IS NOT INITIAL.
 
@@ -438,7 +446,7 @@ CLASS zcl_ecn IMPLEMENTATION.
 
 *      DATA(LT_BOM_API1) = lt_bom_api.
 
-      data(lt_bom_api1) = lt_bom_api.
+      DATA(lt_bom_api1) = lt_bom_api.
 
       DELETE lt_bom_api WHERE engineeringchangedocument IS INITIAL  AND chgtoengineeringchgdocument IS INITIAL.
 
@@ -456,12 +464,11 @@ CLASS zcl_ecn IMPLEMENTATION.
       /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
                                CHANGING data = ls_res_ecn ).
 
-      IF lv_stat_code = '200' AND ls_res_ecn-d-results IS NOT INITIAL.
+      IF lv_stat_code1 = '200' AND ls_res_ecn-d-results IS NOT INITIAL.
 
         APPEND LINES OF ls_res_ecn-d-results TO lt_ecn_api.
 
       ENDIF.
-
 
 * 2.1.3品目基本情報取得
 
@@ -472,20 +479,11 @@ CLASS zcl_ecn IMPLEMENTATION.
         FROM i_product WITH PRIVILEGED ACCESS
         INTO TABLE @DATA(lt_product).
 
-
-
       LOOP  AT lt_bom_api ASSIGNING FIELD-SYMBOL(<fs_bomapi>).
 
         MOVE-CORRESPONDING <fs_bomapi> TO lw_basic.
 
-        READ TABLE lt_product INTO DATA(lw_product) WITH KEY product = <fs_bomapi>-billofmaterialcomponent.
 
-        IF sy-subrc = 0.
-
-          lw_basic-netweight   = lw_product-netweight .
-          lw_basic-weightunit  = lw_product-weightunit.
-
-        ENDIF.
 
         READ TABLE lt_ecn_api INTO DATA(lw_ecn) WITH KEY changenumber = <fs_bomapi>-engineeringchangedocument  .
 
@@ -499,7 +497,7 @@ CLASS zcl_ecn IMPLEMENTATION.
 
         ENDIF.
 
-        CLEAR : lw_product,lw_ecn.
+        CLEAR : lw_ecn.
 
         APPEND lw_basic TO lt_basic.
 
@@ -507,19 +505,11 @@ CLASS zcl_ecn IMPLEMENTATION.
 
       ENDLOOP.
 
-
       LOOP  AT lt_bom_api1 ASSIGNING FIELD-SYMBOL(<fs_bomapi1>).
 
         MOVE-CORRESPONDING <fs_bomapi1> TO lw_basic.
 
-        READ TABLE lt_product INTO lw_product WITH KEY product = <fs_bomapi>-billofmaterialcomponent.
 
-        IF sy-subrc = 0.
-
-          lw_basic-netweight   = lw_product-netweight .
-          lw_basic-weightunit  = lw_product-weightunit.
-
-        ENDIF.
 
         READ TABLE lt_ecn_api INTO lw_ecn WITH KEY changenumber = <fs_bomapi>-engineeringchangedocument  .
 
@@ -533,7 +523,7 @@ CLASS zcl_ecn IMPLEMENTATION.
 
         ENDIF.
 
-        CLEAR : lw_product,lw_ecn.
+        CLEAR : lw_ecn.
 
         APPEND lw_basic TO lt_basicall.
 
@@ -542,11 +532,6 @@ CLASS zcl_ecn IMPLEMENTATION.
       ENDLOOP.
 
 
-
-      DELETE lt_basic WHERE engineeringchangedocument NOT IN lr_changedoc
-                     AND    changenumbervalidfromdate NOT IN lr_begdat
-                     AND    changenumbercreationdate NOT IN lr_credat
-                     AND    billofmaterialcomponent NOT IN lr_bomcom.
 
       DATA:
           lv_serialnumber TYPE i.
@@ -557,8 +542,6 @@ CLASS zcl_ecn IMPLEMENTATION.
           lv_serialnumber = lv_serialnumber + 1.
           lw_basic-changediff = '変更後'.
           lw_basic-serialnumber = lv_serialnumber.
-
-
 
           "操作对象
           APPEND lw_basic TO lt_basicobj.
@@ -618,7 +601,7 @@ CLASS zcl_ecn IMPLEMENTATION.
 
           ENDIF.
 
-          clear: lw_basicall.
+          CLEAR: lw_basicall.
 
         ENDIF.
 
@@ -630,59 +613,50 @@ CLASS zcl_ecn IMPLEMENTATION.
 
         lv_index TYPE i.
 
+      IF lv_subitem IS NOT INITIAL.
 
-      if lv_subitem is NOT INITIAL.
+        LOOP AT lt_basicdis INTO DATA(lw_basicsub) WHERE issubitem IS NOT INITIAL.
 
-        loop at lt_basicdis into data(lw_basicsub) where issubitem is not INITIAL.
+          DATA(lv_e)  =   lw_basicsub-billofmaterial.
+          DATA(lv_f)  =   lw_basicsub-billofmaterialcategory.
+          DATA(lv_g)  =   lw_basicsub-billofmaterialvariant.
+          DATA(lv_h)  =   lw_basicsub-billofmaterialversion.
+          DATA(lv_i)  =   lw_basicsub-billofmaterialitemnodenumber.
+          DATA(lv_j)  =   lw_basicsub-headerchangedocument.
+          DATA(lv_k)  =   lw_basicsub-material.
+          DATA(lv_l)  =   lw_basicsub-plant.
 
-             data(lv_e)  =   lw_basicsub-BillofMaterial.
-             data(lv_f)  =   lw_basicsub-BillOfMaterialCategory.
-             data(lv_g)  =   lw_basicsub-BillOfMaterialVariant.
-             data(lv_h)  =   lw_basicsub-BillOfMaterialVersion.
-             data(lv_i)  =   lw_basicsub-BillOfMaterialItemNodeNumber.
-             data(lv_j)  =   lw_basicsub-HeaderChangeDocument.
-             data(lv_k)  =   lw_basicsub-Material.
-             data(lv_l)  =   lw_basicsub-Plant.
+          lv_path1 = |/API_BILL_OF_MATERIAL_SRV;v=0002/MaterialBOMSubItem?$filter=BillOfMaterial eq '{ lv_e }' and BillOfMaterialCategory eq '{ lv_f }'and BillOfMaterialVariant eq '{ lv_g }' |.
+          lv_path2 = | and BillOfMaterialVersion eq '{ lv_h }' and BillOfMaterialItemNodeNumber eq '{ lv_i }' and HeaderChangeDocument eq '{ lv_j }' and Material eq '{ lv_k }' and Plant eq '{ lv_l }' |.
 
-        lv_path1 = |/API_BILL_OF_MATERIAL_SRV;v=0002/MaterialBOMSubItem?$filter=BillOfMaterial eq '{ lv_e }' and BillOfMaterialCategory eq '{ lv_f }'and BillOfMaterialVariant eq '{ lv_g }' |.
-        lv_path2 = | and BillOfMaterialVersion eq '{ lv_h }' and BillOfMaterialItemNodeNumber eq '{ lv_i }' and HeaderChangeDocument eq '{ lv_j }' and Material eq '{ lv_k }' and Plant eq '{ lv_l }' |.
+          lv_path3 = |{ lv_path1 } { lv_path2 }|.
 
-        lv_path3 = |{ lv_path1 } { lv_path2 }|.
+          zzcl_common_utils=>request_api_v2(
+                 EXPORTING
+                   iv_path        = lv_path3
+                   iv_method      = if_web_http_client=>get
+                 IMPORTING
+                   ev_status_code = DATA(lv_stat_codesub)
+                   ev_response    = DATA(lv_resbody_apisub) ).
 
-        zzcl_common_utils=>request_api_v2(
-               EXPORTING
-                 iv_path        = lv_path3
-                 iv_method      = if_web_http_client=>get
-               IMPORTING
-                 ev_status_code = DATA(lv_stat_codesub)
-                 ev_response    = DATA(lv_resbody_apisub) ).
-
-
-
-        /ui2/cl_json=>deserialize(
-                                    EXPORTING json = lv_resbody_apisub
-                                    CHANGING data = ls_res_bom_apisub ).
+          /ui2/cl_json=>deserialize(
+                                      EXPORTING json = lv_resbody_apisub
+                                      CHANGING data = ls_res_bom_apisub ).
 
 
-            IF lv_stat_code = '200' AND ls_res_bom_api-d-results IS NOT INITIAL.
+          IF lv_stat_code = '200' AND ls_res_bom_api-d-results IS NOT INITIAL.
 
-*              SORT ls_res_bom_apisub-d-results BY BillofMaterial BillOfMaterialCategory  BillOfMaterialVariant BillOfMaterialVersion  BillOfMaterialItemNodeNumber HeaderChangeDocument Material plant .
-*
-*              DELETE ADJACENT DUPLICATES FROM ls_res_bom_api-d-results .
+            APPEND LINES OF ls_res_bom_apisub-d-results TO lt_bom_apisub.
 
-              APPEND LINES OF ls_res_bom_apisub-d-results TO lt_bom_apisub.
-
-            ENDIF.
+          ENDIF.
 
         ENDLOOP.
 
-      endif.
-
+      ENDIF.
 
       LOOP AT lt_basicdis INTO lw_basicdis.
 
         lv_index = lv_index + 1.
-
 
         ls_data-seq                          = lv_index.
         ls_data-serialnumber                  = lw_basicdis-serialnumber.
@@ -707,36 +681,64 @@ CLASS zcl_ecn IMPLEMENTATION.
         ls_data-weightunit                    = lw_basicdis-weightunit.                                   "33
         ls_data-bomsubiteminstallationpoint   = lw_basicdis-bomsubiteminstallationpoint.                  "34
 
-        loop at  lt_bom_apisub into DATA(lw_apisub) where BillofMaterial                 = lw_basicdis-BillofMaterial
-                                                      and BillOfMaterialCategory         = lw_basicdis-BillOfMaterialCategory
-                                                      and BillOfMaterialVariant          = lw_basicdis-BillOfMaterialVariant
-                                                      and BillOfMaterialVersion          = lw_basicdis-BillOfMaterialVersion
-                                                      and BillOfMaterialItemNodeNumber   = lw_basicdis-BillOfMaterialItemNodeNumber
-                                                      and HeaderChangeDocument           = lw_basicdis-HeaderChangeDocument
-                                                      and Material                       = lw_basicdis-Material
-                                                      and Plant                          = lw_basicdis-Plant .
+        LOOP AT  lt_bom_apisub INTO DATA(lw_apisub) WHERE billofmaterial                 = lw_basicdis-billofmaterial
+                                                      AND billofmaterialcategory         = lw_basicdis-billofmaterialcategory
+                                                      AND billofmaterialvariant          = lw_basicdis-billofmaterialvariant
+                                                      AND billofmaterialversion          = lw_basicdis-billofmaterialversion
+                                                      AND billofmaterialitemnodenumber   = lw_basicdis-billofmaterialitemnodenumber
+                                                      AND headerchangedocument           = lw_basicdis-headerchangedocument
+                                                      AND material                       = lw_basicdis-material
+                                                      AND plant                          = lw_basicdis-plant .
 
-           lv_point = lv_point && ',' && lw_apisub-bomsubiteminstallationpoint.
+          lv_point = lv_point && ',' && lw_apisub-bomsubiteminstallationpoint.
+*           |{ lw_apisub-bomsubiteminstallationpoint } , { lv_point }|.
 
-       ENDLOOP.
-       ls_data-bomsubiteminstallationpoint   = lv_point.                  "34
-       clear lv_point.
+        ENDLOOP.
+        IF lv_point IS NOT INITIAL.
+          SHIFT lv_point BY 1 PLACES.
+          ls_data-bomsubiteminstallationpoint   = lv_point.                  "34
+          CLEAR lv_point.
 
-        read table lt_bomlink into data(lw_bomlink) With KEY material = lw_basicdis-material plant = lw_basicdis-plant.
-
-            if sy-subrc = 0.
-
-                        ls_data-mrpresponsible                = lw_bomlink-mrpresponsible.                                "35
-                        ls_data-BillOfMaterialVariantUsage    = lw_bomlink-billofmaterialvariantusage.
-
-            ENDIF.
-            clear lw_bomlink.
+        ENDIF.
 
         APPEND ls_data TO lt_data.
         CLEAR ls_data.
 
       ENDLOOP.
 
+
+      DELETE lt_data WHERE      ecnno NOT IN lr_changedoc.
+      DELETE lt_data WHERE      ecnvalidfrom NOT IN lr_begdat.
+      DELETE lt_data WHERE      ecncreateat NOT IN lr_credat.
+      DELETE lt_data WHERE      component NOT IN lr_bomcom.
+      DELETE lt_data Where      billofmaterialvariant not in lr_variant.
+
+
+
+      loop at lt_data ASSIGNING FIELD-SYMBOL(<fs_data>).
+
+        READ TABLE lt_product INTO data(lw_product) WITH KEY product = <fs_data>-component.
+
+            IF sy-subrc = 0.
+
+              <fs_data>-netweight   = lw_product-netweight .
+              <fs_data>-weightunit  = lw_product-weightunit.
+
+            ENDIF.
+
+
+        READ TABLE lt_bomusemrp INTO DATA(lw_bomusemrp) WITH KEY material = <fs_data>-HeadMat plant = <fs_data>-plant.
+
+        IF sy-subrc = 0.
+
+          <fs_data>-mrpresponsible                = lw_bomusemrp-mrpresponsible.                                "35
+          <fs_data>-billofmaterialvariantusage    = lw_bomusemrp-billofmaterialvariantusage.
+
+        ENDIF.
+
+        CLEAR: lw_product, lw_bomusemrp.
+
+      ENDLOOP.
 
       io_response->set_total_number_of_records( lines( lt_data ) ).
 
@@ -759,6 +761,4 @@ CLASS zcl_ecn IMPLEMENTATION.
       io_response->set_data( lt_data ).
     ENDIF.
   ENDMETHOD.
-
-
 ENDCLASS.

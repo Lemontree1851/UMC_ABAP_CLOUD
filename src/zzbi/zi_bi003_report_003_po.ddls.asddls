@@ -21,7 +21,10 @@ define view entity ZI_BI003_REPORT_003_PO
                                                                        and _JournalItem.IsReversed             = ''
                                                                        and _JournalItem.IsReversal             = ''
                                                                        and _JournalItem.DebitCreditCode        = 'S'
-                                                                       and _JournalItem.ValueDate              = '00000000' //排除中间科目
+                                                                       //and _JournalItem.ValueDate              = '00000000' //排除中间科目
+                                                                       and ( ( _JournalItem.TransactionTypeDetermination = 'BSX' and _JournalItem.Quantity > 0 )
+                                                                       or ( _JournalItem.TransactionTypeDetermination = 'ANL' and _JournalItem.Quantity = 0 ) 
+                                                                       or ( _JournalItem.TransactionTypeDetermination = 'KBS' and _JournalItem.Quantity > 0 ))
 
   association [0..1] to I_FixedAsset                 as _FixedAsset    on  _FixedAsset.MasterFixedAsset = $projection.FixedAsset
                                                                        and _FixedAsset.CompanyCode      = $projection.CompanyCode

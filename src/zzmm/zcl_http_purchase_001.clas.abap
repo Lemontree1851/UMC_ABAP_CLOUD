@@ -18,6 +18,7 @@ CLASS zcl_http_purchase_001 DEFINITION
         baseunit                     TYPE c    LENGTH 3,            "基本数量単位
         suppliercertorigincountry    TYPE c    LENGTH 3,            "原産国
         purchasinginforecord         TYPE c    LENGTH 10,           "購買情報
+        suppliermaterialnumber       TYPE c    LENGTH 35,           "仕入先品目コード
         pricingdatecontrol           TYPE c    LENGTH 20,            "価格設定日制御　
         minimumpurchaseorderquantity TYPE c    LENGTH 13,           "最小購買発注数量
         incotermsclassification      TYPE c    LENGTH 3,            "インコタームズ
@@ -33,6 +34,7 @@ CLASS zcl_http_purchase_001 DEFINITION
         baseunit                     TYPE c    LENGTH 3,            "基本数量単位
         suppliercertorigincountry    TYPE c    LENGTH 3,            "原産国
         purchasinginforecord         TYPE c    LENGTH 10,           "購買情報
+        suppliermaterialnumber       TYPE c    LENGTH 35,           "仕入先品目コード
         pricingdatecontrol           TYPE c    LENGTH 20,            "価格設定日制御　
         minimumpurchaseorderquantity TYPE c    LENGTH 13,           "最小購買発注数量
         incotermsclassification      TYPE c    LENGTH 3,            "インコタームズ
@@ -63,7 +65,7 @@ CLASS zcl_http_purchase_001 DEFINITION
 *    DATA: lt_req TYPE STANDARD TABLE OF lt_items.
 
     INTERFACES if_http_service_extension .
-  PROTECTED SECTION.
+PROTECTED SECTION.
   PRIVATE SECTION.
 
     DATA:
@@ -94,8 +96,7 @@ CLASS zcl_http_purchase_001 DEFINITION
 ENDCLASS.
 
 
-
-CLASS ZCL_HTTP_PURCHASE_001 IMPLEMENTATION.
+CLASS zcl_http_purchase_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -104,7 +105,7 @@ CLASS ZCL_HTTP_PURCHASE_001 IMPLEMENTATION.
 
     DATA(lv_header) = request->get_header_field( i_name = 'form' ).
 
-    data(lv_tst) = request->get_form_fields_cs( ).
+    DATA(lv_tst) = request->get_form_fields_cs( ).
 
     IF lv_header = 'XML'.
 
@@ -124,12 +125,14 @@ CLASS ZCL_HTTP_PURCHASE_001 IMPLEMENTATION.
 
       LOOP AT lt_req INTO DATA(ls_req).
 
+        ls_req-bp_number = |{ ls_req-bp_number ALPHA = IN }|.
+
         " 查询第一张表
-        SELECT baseunit,suppliercertorigincountry,purchasinginforecord,supplier,material,isdeleted
+        SELECT baseunit,suppliercertorigincountry,purchasinginforecord,suppliermaterialnumber,supplier,material,isdeleted
           FROM i_purchasinginforecordapi01 WITH PRIVILEGED ACCESS
           WHERE supplier  = @ls_req-bp_number
-            and material  = @ls_req-material_number
-            and isdeleted = ' '
+            AND material  = @ls_req-material_number
+            AND isdeleted = ' '
           INTO @DATA(ls_porecord01).
         ENDSELECT.
 
@@ -157,16 +160,18 @@ CLASS ZCL_HTTP_PURCHASE_001 IMPLEMENTATION.
         CLEAR ls_response.
         ls_response-baseunit                       = ls_porecord01-baseunit.
         ls_response-suppliercertorigincountry      = ls_porecord01-suppliercertorigincountry.
+        ls_response-purchasinginforecord           = ls_porecord01-purchasinginforecord.
+        ls_response-suppliermaterialnumber         = ls_porecord01-suppliermaterialnumber.
 
-        " 价格设置日控制文本处理
-        CASE ls_porecord02-pricingdatecontrol.
-          WHEN '1'.
-            ls_response-pricingdatecontrol = '購買発注日付'.
-          WHEN '2'.
-            ls_response-pricingdatecontrol = '納入期日'.
-          WHEN OTHERS.
-            ls_response-pricingdatecontrol = ''. " 可以定义一个默认值
-        ENDCASE.
+*        " 价格设置日控制文本处理
+*        CASE ls_porecord02-pricingdatecontrol.
+*          WHEN '1'.
+*            ls_response-pricingdatecontrol = '購買発注日付'.
+*          WHEN '2'.
+*            ls_response-pricingdatecontrol = '納入期日'.
+*          WHEN OTHERS.
+*            ls_response-pricingdatecontrol = ''. " 可以定义一个默认值
+*        ENDCASE.
 
         " 计算单价
         IF ls_porecord02-pricevalidityenddate >= sy-datum.
@@ -184,6 +189,8 @@ CLASS ZCL_HTTP_PURCHASE_001 IMPLEMENTATION.
         ls_response-currency                       = ls_porecord02-currency.
         CONDENSE ls_response-baseunit.
         CONDENSE ls_response-suppliercertorigincountry.
+        CONDENSE ls_response-purchasinginforecord.
+        CONDENSE ls_response-suppliermaterialnumber.
         CONDENSE ls_response-pricingdatecontrol.
         CONDENSE ls_response-minimumpurchaseorderquantity.
         CONDENSE ls_response-incotermsclassification.

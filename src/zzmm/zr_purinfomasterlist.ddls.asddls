@@ -26,10 +26,13 @@ define  root custom entity ZR_PURINFOMASTERLIST
       @UI                            : { lineItem: [ { position: 160 } ], 
                                          selectionField: [ { position: 60 } ] }
   key Supplier                       : abap.char(10);
+//      @Consumption.hidden: true
       Ztype1                         : abap.char(1);
+//      @Consumption.hidden: true
       Ztype2                         : abap.char(1);
       ProductName                    : abap.char(40);
       ProductGroup                   : abap.char(9);
+      @Semantics.amount.currencyCode : 'Currency_plnt'
       NetPriceAmount                 : abap.curr(13,2);
       condition_validity_start_date  : abap.dats;
       condition_validity_end_date    : abap.dats;
@@ -58,21 +61,27 @@ define  root custom entity ZR_PURINFOMASTERLIST
       CreationDate_2                 : abap.dats;
       OwnInventoryManagedProduct     : abap.char(40);
       ProductOID                     : abap.char(40);
+//      @Consumption.filter.hidden: true
       BaseUnit                       : abap.unit(3);
       @UI                            : { lineItem: [ { position: 280, label: 'Manufacturer code' } ],
                                          selectionField: [ { position: 100 } ] }
       ManufacturerNumber             : abap.char(10);
+//      @Consumption.hidden: true
       OrganizationBPName1            : abap.char(40);
       @UI                            : { lineItem: [ { position: 300, label: 'MPN' } ], 
                                          selectionField: [ { position: 110 } ] }
       ProductManufacturerNumber      : abap.char(40);
-      standardpurchaseorderquantity  : abap.dec(15,3);
-      Taxprice                       : abap.dec(15,3);
-      UnitPrice_plnt                 : abap.dec(15,3);
       @Semantics.amount.currencyCode : 'Currency_plnt'
+      standardpurchaseorderquantity  : abap.dec(15,2);
+      @Semantics.amount.currencyCode : 'Currency_plnt'
+      Taxprice                       : abap.curr(15,2);
+      @Semantics.amount.currencyCode : 'Currency_plnt'
+      UnitPrice_plnt                 : abap.curr(15,2);
+//      @Semantics.amount.currencyCode : 'Currency_plnt'
       UnitPrice_standard             : abap.curr(15,2);
       PriceUnitQty                   : abap.dec(5);
       Currency_standard              : waers;
+//      @Consumption.hidden: true
       orderpriceunittoorderunitnmrtr : abap.dec(5,0);
       @UI                            : { lineItem: [ { position: 380, label: 'Latest offer' } ], 
                                          selectionField: [ { position: 120 } ] }
@@ -100,6 +109,7 @@ define  root custom entity ZR_PURINFOMASTERLIST
       DeliveryLT                     : abap.char(5);    
       @UI                            : { lineItem: [ { position: 590, label: 'Plus day' } ], 
                                          selectionField: [ { position: 150 } ] }
+      @Consumption.hidden: true
       PlusDay                        : abap.char(3);
       PurchasingInfoRecordCategory   : abap.char(1);
       SupplierConfirmationControlKey : abap.char(4);
@@ -107,9 +117,13 @@ define  root custom entity ZR_PURINFOMASTERLIST
       SupplierSubrange               : abap.char(6);
       SupplierSubrangeName           : abap.char(20);
       loginflag                      : abap.char(1);
+//      @Consumption.hidden: true
       isdeleted                      : abap.char(1);
+//      @Consumption.hidden: true
       ismarkedfordeletion            : abap.char(1);
+//      @Consumption.hidden: true
       productsalesorg                : abap.char(4);
+//      @Consumption.hidden: true
       zvalue2                        : abap.char(120);
       Rate                           : abap.char(11);
 }

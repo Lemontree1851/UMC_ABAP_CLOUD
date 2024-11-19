@@ -15,8 +15,8 @@ define root view entity ZC_WF_ApprovalPath
       OrderType,
       @ObjectModel.text.element: ['BuyPurposeText']
       BuyPurpose,
-      @ObjectModel.text.element: ['LocationText']
-      Location,
+      @ObjectModel.text.element: ['KyotenText']
+      Kyoten,
       @ObjectModel.text.element: ['KnttpText']
       Knttp,
       @ObjectModel.text.element: ['CostCenterName']
@@ -29,12 +29,19 @@ define root view entity ZC_WF_ApprovalPath
       LastChangedAt,
       LocalLastChangedAt,
 
+      @UI.hidden: true
       _PrType.Zvalue2      as PrTypeText,
+      @UI.hidden: true
       _ApplyDepart.Zvalue2 as ApplyDepartText,
+      @UI.hidden: true
       _OrderType.Zvalue2   as OrderTypeText,
+      @UI.hidden: true
       _BuyPurpose.Zvalue2  as BuyPurposeText,
-      _Location.Zvalue2    as LocationText,
+      @UI.hidden: true
+      _Kyoten.Zvalue2      as KyotenText,
+      @UI.hidden: true
       _KNTTP.Zvalue2       as KnttpText,
+      @UI.hidden: true
       _CostCenterText.CostCenterName,
 
       /* Associations */

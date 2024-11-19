@@ -122,7 +122,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
              invoicegrossamount,
              createdbyuser,
              lastchangedbyuser
-        FROM i_supplierinvoiceapi01
+        FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS
         INTO TABLE @DATA(lt_supplier_invoice1).
 
       DATA(lt_supplier_invoice2) = lt_supplier_invoice1[].
@@ -146,7 +146,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
       " 从 I_JournalEntry 表中根据拼接的字段查询 AccountingDocument
       SELECT accountingdocument
-        FROM i_journalentry
+        FROM i_journalentry WITH PRIVILEGED ACCESS
         WHERE originalreferencedocument IN @lt_range1
         INTO TABLE @DATA(lt_journal_entry1).
 
@@ -156,7 +156,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
              supplierinvoicetaxcounter,
              taxcode,
              taxamount
-        FROM i_supplierinvoicetaxapi01
+        FROM i_supplierinvoicetaxapi01 WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_supplier_invoice2
         WHERE supplierinvoice = @lt_supplier_invoice2-supplierinvoice
           AND fiscalyear = @lt_supplier_invoice2-fiscalyear
@@ -174,7 +174,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
              quantityinpurchaseorderunit,
              documentcurrency,
              supplierinvoiceitemamount
-        FROM i_suplrinvcitempurordrefapi01
+        FROM i_suplrinvcitempurordrefapi01 WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_supplier_invoice2
         WHERE supplierinvoice = @lt_supplier_invoice2-supplierinvoice
           AND fiscalyear = @lt_supplier_invoice2-fiscalyear
@@ -200,7 +200,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
                supplierinvoiceitem,
                costcenter,
                glaccount
-          FROM i_suplrinvcitmacctassgmtapi01
+          FROM i_suplrinvcitmacctassgmtapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po_ref1
           WHERE supplierinvoice = @lt_po_ref1-supplierinvoice
             AND fiscalyear = @lt_po_ref1-fiscalyear
@@ -219,7 +219,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
                plant,
                netpriceamount,
                netpricequantity
-          FROM i_purchaseorderitemapi01
+          FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po_ref1
           WHERE purchaseorder = @lt_po_ref1-purchaseorder
             AND purchaseorderitem = @lt_po_ref1-purchaseorderitem
@@ -233,7 +233,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         SELECT purchaseorder,
                purchasinggroup,   "新加字段
                companycode
-          FROM i_purchaseorderapi01
+          FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po_ref1
           WHERE purchaseorder = @lt_po_ref1-purchaseorder
           INTO TABLE @DATA(lt_purchase_order1).
@@ -498,7 +498,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
              invoicegrossamount,
              createdbyuser,
              lastchangedbyuser
-        FROM i_supplierinvoiceapi01
+        FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_req
         WHERE documentdate = @lt_req-documentdate
         INTO TABLE @DATA(lt_supplier_invoice3).
@@ -524,7 +524,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
       " 从 I_JournalEntry 表中根据拼接的字段查询 AccountingDocument
       SELECT accountingdocument
-        FROM i_journalentry
+        FROM i_journalentry WITH PRIVILEGED ACCESS
         WHERE originalreferencedocument IN @lt_range2
         INTO TABLE @DATA(lt_journal_entry2).
 
@@ -534,7 +534,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
              supplierinvoicetaxcounter,
              taxcode,
              taxamount
-        FROM i_supplierinvoicetaxapi01
+        FROM i_supplierinvoicetaxapi01 WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_supplier_invoice4
         WHERE supplierinvoice = @lt_supplier_invoice4-supplierinvoice
           AND fiscalyear = @lt_supplier_invoice4-fiscalyear
@@ -552,7 +552,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
              quantityinpurchaseorderunit,
              documentcurrency,
              supplierinvoiceitemamount
-        FROM i_suplrinvcitempurordrefapi01
+        FROM i_suplrinvcitempurordrefapi01 WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_supplier_invoice4
         WHERE supplierinvoice = @lt_supplier_invoice4-supplierinvoice
           AND fiscalyear = @lt_supplier_invoice4-fiscalyear
@@ -578,7 +578,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
                supplierinvoiceitem,
                costcenter,
                glaccount
-          FROM i_suplrinvcitmacctassgmtapi01
+          FROM i_suplrinvcitmacctassgmtapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po_ref2
           WHERE supplierinvoice = @lt_po_ref2-supplierinvoice
             AND fiscalyear = @lt_po_ref2-fiscalyear
@@ -596,7 +596,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
                plant,
                netpriceamount,
                netpricequantity
-          FROM i_purchaseorderitemapi01
+          FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po_ref2
           WHERE purchaseorder = @lt_po_ref2-purchaseorder
             AND purchaseorderitem = @lt_po_ref2-purchaseorderitem
@@ -608,7 +608,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         SELECT purchaseorder,
                purchasinggroup,
                companycode
-          FROM i_purchaseorderapi01
+          FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po_ref2
           WHERE purchaseorder = @lt_po_ref2-purchaseorder
           INTO TABLE @DATA(lt_purchase_order2).

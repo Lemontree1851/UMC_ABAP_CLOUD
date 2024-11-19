@@ -47,8 +47,8 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
       lv_string1   TYPE string,
       lv_string2   TYPE string,
       lv_rowno     TYPE zr_ofsocomparison-rowno,
-      lv_durationf TYPE c LENGTH 6,
-      lv_durationt TYPE c LENGTH 6.
+      lv_durationf TYPE n LENGTH 6,
+      lv_durationt TYPE n LENGTH 6.
 
     TRY.
         DATA(lt_filter_cond) = io_request->get_filter( )->get_as_ranges( ).
@@ -76,12 +76,14 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
                 ls_material-sign   = 'I'.
                 ls_material-option = 'EQ'.
                 ls_material-low    = str_rec_l_range-low.
+                SHIFT ls_materialbycustomer-low LEFT DELETING LEADING '0'.
                 APPEND ls_material TO lr_material.
-              WHEN 'MATERIALBYCUTOMER'.
+              WHEN 'MATERIALBYCUSTOMER'.
                 CLEAR ls_materialbycustomer.
                 ls_materialbycustomer-sign   = 'I'.
                 ls_materialbycustomer-option = 'EQ'.
                 ls_materialbycustomer-low    = str_rec_l_range-low.
+                SHIFT ls_materialbycustomer-low LEFT DELETING LEADING '0'.
                 APPEND ls_materialbycustomer TO lr_materialbycustomer.
               WHEN 'DURATION'.
                 lv_durf            = str_rec_l_range-low.
@@ -139,18 +141,18 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
            ztpp_1012~unit_of_measure,
            requirement_qty
       FROM ztpp_1012
-     INNER JOIN i_customermaterial_2 WITH PRIVILEGED ACCESS AS cust
+     LEFT JOIN i_customermaterial_2 WITH PRIVILEGED ACCESS AS cust
         ON ztpp_1012~customer = cust~customer
        AND ztpp_1012~material = cust~product
-     INNER JOIN i_productdescription WITH PRIVILEGED ACCESS AS materialt
+     LEFT JOIN i_productdescription WITH PRIVILEGED ACCESS AS materialt
         ON materialt~product  = ztpp_1012~material
-       AND materialt~language = @sy-langu
+       AND materialt~language = 'J'
      WHERE ztpp_1012~customer         IN @lr_customer
        AND ztpp_1012~material         IN @lr_material
        AND ztpp_1012~plant            IN @lr_plant
        AND cust~materialbycustomer    IN @lr_materialbycustomer
        AND ztpp_1012~requirement_date IN @lr_duration
-       AND ztpp_1012~created_at       IN @lr_created_at
+*       AND ztpp_1012~created_at       IN @lr_created_at
       INTO TABLE @DATA(lt_of).
 
 *   対象SOデータ取得
@@ -166,25 +168,27 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
              leline~productavailabilitydate AS requirement_date,   "所要期間
              cust~materialbycustomer,          "得意先品目
              leline~schedulelineorderquantity, "受注の数量
-             leline~orderquantityunit
+             leline~orderquantityunit,
+             rderitem~salesorder,
+             rderitem~salesorderitem
         FROM i_salesorder WITH PRIVILEGED ACCESS AS salesorder
-  INNER JOIN i_salesorderitem WITH PRIVILEGED ACCESS AS rderitem
+   INNER JOIN i_salesorderitem WITH PRIVILEGED ACCESS AS rderitem
           ON salesorder~salesorder = rderitem~salesorder
-  INNER JOIN i_salesorderscheduleline WITH PRIVILEGED ACCESS AS leline
+         AND rderitem~salesdocumentrjcnreason = @space
+   INNER JOIN @lt_of_copy AS copy
+          ON rderitem~product                 = copy~material
+         AND rderitem~plant                   = copy~plant
+         AND salesorder~soldtoparty           = copy~customer
+   INNER JOIN i_salesorderscheduleline WITH PRIVILEGED ACCESS AS leline
           ON rderitem~salesorder      = leline~salesorder
          AND rderitem~salesorderitem  = leline~salesorderitem
-  INNER JOIN i_customermaterial_2 WITH PRIVILEGED ACCESS AS cust
+   LEFT JOIN i_customermaterial_2 WITH PRIVILEGED ACCESS AS cust
           ON salesorder~soldtoparty = cust~customer
          AND rderitem~product = cust~product
-  INNER JOIN i_productdescription WITH PRIVILEGED ACCESS AS materialt
+   LEFT JOIN i_productdescription WITH PRIVILEGED ACCESS AS materialt
           ON materialt~product  = rderitem~product
-         AND materialt~language = @sy-langu
-         FOR ALL ENTRIES IN @lt_of_copy
-       WHERE salesorder~soldtoparty           = @lt_of_copy-customer
-         AND rderitem~product                 = @lt_of_copy-material
-         AND rderitem~plant                   = @lt_of_copy-plant
-         AND leline~productavailabilitydate   IN @lr_duration
-         AND rderitem~salesdocumentrjcnreason = @space
+         AND materialt~language = 'J'
+       WHERE leline~productavailabilitydate IN @lr_duration
         INTO TABLE @DATA(lt_so).
     ENDIF.
 
@@ -212,10 +216,17 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
       INTO DATE DATA(lv_date)
          TIME DATA(lv_time).
 
+      IF lv_date NOT IN lr_created_at.
+        CONTINUE.
+      ENDIF.
+
       ls_data-created_at           = lv_date.
+      ls_data-created_ats          = <lfs_of>-created_at.
       ls_data-unit_of_measure      = <lfs_of>-unit_of_measure.
 
       CLEAR lv_num.
+      lv_durationf = lv_durf.
+      lv_durationt = lv_durt.
       DO.
 
         lv_num    = lv_num + 1.
@@ -235,7 +246,16 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
         IF lv_durationf = lv_durationt OR lv_num = 36.
           EXIT.
         ENDIF.
-        lv_durationf = lv_durationf + 1.
+        IF lv_durationf+4(2) = 12.
+
+          lv_durationf = lv_durationf+0(4) + 1.
+          lv_durationf = lv_durationf && '01'.
+
+        ELSE.
+
+          lv_durationf = lv_durationf + 1.
+
+        ENDIF.
       ENDDO.
 
       lv_rowno = lv_rowno + 1.
@@ -244,17 +264,26 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
     ENDLOOP.
 
     IF lv_latestof = '02'.
-      SORT lt_data BY plant                ASCENDING
-                      customer             ASCENDING
-                      material             ASCENDING
-                      materialname         ASCENDING
-                      materialbycustomer   ASCENDING
-                      created_at           DESCENDING.
-      DELETE ADJACENT DUPLICATES FROM lt_data COMPARING plant
-                                                        customer
-                                                        material
-                                                        materialname
-                                                        materialbycustomer.
+*      SORT lt_data BY plant                ASCENDING
+*                      customer             ASCENDING
+*                      material             ASCENDING
+*                      materialname         ASCENDING
+*                      materialbycustomer   ASCENDING
+*                      created_at           DESCENDING.
+*      DELETE ADJACENT DUPLICATES FROM lt_data COMPARING plant
+*                                                        customer
+*                                                        material
+*                                                        materialname
+*                                                        materialbycustomer.
+
+      SORT lt_data BY plant              ASCENDING
+                      customer           ASCENDING
+                      material           ASCENDING
+                      materialname       ASCENDING
+                      materialbycustomer ASCENDING
+                      created_ats         DESCENDING.
+      DELETE ADJACENT DUPLICATES FROM lt_data COMPARING plant customer material materialname materialbycustomer.
+
     ENDIF.
 
     IF lv_contents = '03'.
@@ -285,6 +314,8 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
         ls_data-unit_of_measure      = <lfs_so>-orderquantityunit.
 
         CLEAR lv_num.
+        lv_durationf = lv_durf.
+        lv_durationt = lv_durt.
         DO.
 
           lv_num    = lv_num + 1.
@@ -304,7 +335,17 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
           IF lv_durationf = lv_durationt OR lv_num = 36.
             EXIT.
           ENDIF.
-          lv_durationf = lv_durationf + 1.
+
+          IF lv_durationf+4(2) = 12.
+
+            lv_durationf = lv_durationf+0(4) + 1.
+            lv_durationf = lv_durationf && '01'.
+
+          ELSE.
+
+            lv_durationf = lv_durationf + 1.
+
+          ENDIF.
         ENDDO.
 
         lv_rowno = lv_rowno + 1.
@@ -312,6 +353,8 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
         APPEND ls_data TO lt_data.
       ENDLOOP.
     ENDIF.
+
+    SORT lt_data BY plant customer material materialname materialbycustomer created_at.
 
     io_response->set_total_number_of_records( lines( lt_data ) ).
 
@@ -323,6 +366,8 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
         CHANGING
           ct_data  = lt_data ).
     ENDIF.
+
+    DATA(ls_re) = io_request->get_paging( ).
 
     "Page
     zzcl_odata_utils=>paging(

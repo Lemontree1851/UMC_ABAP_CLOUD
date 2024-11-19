@@ -9,8 +9,12 @@
 }
 define view entity ZI_BI003_REPORT_003_BILLING
   as select from    ZI_BI003_REPORT_002_BILLING( p_recover_type: 'IN', p_condition_type: 'ZPIN' ) as billing
-    left outer join ZI_BI003_REPORT_REC_NEC_AMT                                                   as TOTALAMT on billing.RecoveryManagementNumber = TOTALAMT.RecoveryManagementNumber
-    left outer join ZI_BI003_REPORT_REC_NEC_AMT_GP( p_product_group:'400' )                       as GRPTOTAL on billing.RecoveryManagementNumber = GRPTOTAL.RecoveryManagementNumber
+    left outer join I_FiscCalendarDateForCompCode                                                 as FiscalCalendarDate on  FiscalCalendarDate.CalendarDate = billing.BillingDocumentDate
+                                                                                                                        and FiscalCalendarDate.CompanyCode  = billing.CompanyCode
+    left outer join ZI_BI003_REPORT_REC_NEC_AMT_S                                                 as TOTALAMT           on  billing.RecoveryManagementNumber    =  TOTALAMT.RecoveryManagementNumber
+                                                                                                                        and FiscalCalendarDate.FiscalYearPeriod <= TOTALAMT.FiscalYearPeriod
+    left outer join ZI_BI003_REPORT_REC_NEC_AMT_GS( p_product_group:'400' )                       as GRPTOTAL           on  billing.RecoveryManagementNumber    = GRPTOTAL.RecoveryManagementNumber
+                                                                                                                        and FiscalCalendarDate.FiscalYearPeriod = GRPTOTAL.FiscalYearPeriod
 {
   key billing.BillingDocument,
   key billing.BillingDocumentItem,
@@ -50,6 +54,7 @@ define view entity ZI_BI003_REPORT_003_BILLING
       case when TOTALAMT.TotalAmount <> 0
       then round( cast( ( cast( GRPTOTAL.TotalGroupAmount as abap.dec(16, 2) ) /
                    cast( TOTALAMT.TotalAmount as abap.dec(16, 2) )
-               ) as abap.dec( 16, 3 ) ), 2)
+               ) as abap.dec( 16, 4 ) ), 4)
       else 0 end as PercentageOfAp
+
 }

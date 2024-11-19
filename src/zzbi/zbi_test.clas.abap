@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zbi_test IMPLEMENTATION.
+CLASS ZBI_TEST IMPLEMENTATION.
 
 
   METHOD if_oo_adt_classrun~main.

@@ -9,11 +9,11 @@ define root view entity ZC_TSD_1001
   key Customer,
   key BillingToParty,
   key Plant,
-  IssueStorageLocation,
+  PartsStorageLocation,
   FinishedStorageLocation,
   ReturnStorageLocation,
   RepairStorageLocation,
-  VimStorageLocation,
+  VmiStorageLocation,
   LocalLastChangedAt
   
 }

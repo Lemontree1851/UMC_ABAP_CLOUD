@@ -11,7 +11,9 @@ ENDCLASS.
 
 
 
-CLASS zcl_paidpay_report IMPLEMENTATION.
+CLASS ZCL_PAIDPAY_REPORT IMPLEMENTATION.
+
+
   METHOD if_rap_query_provider~select.
     DATA:
       lt_output TYPE STANDARD TABLE OF zr_paidpay_report,
@@ -188,5 +190,4 @@ CLASS zcl_paidpay_report IMPLEMENTATION.
     io_response->set_data( lt_output ).
 
   ENDMETHOD.
-
 ENDCLASS.

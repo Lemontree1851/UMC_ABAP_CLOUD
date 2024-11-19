@@ -121,7 +121,7 @@ define root view entity ZI_BI003_REPORT_003
       cast('0.00' as dmbtr)               as RecoveryAmount, //BillingTotalAmount,
 
       @EndUserText: { label:  'Percentage Of AP', quickInfo: 'Percentage Of AP' }
-      cast('0.00' as abap.dec(10, 2))     as PercentageOfAp,
+      cast('0.00' as abap.dec(10, 4))     as PercentageOfAp,
 
       @Semantics.amount.currencyCode: 'BillingCurrency'
       @EndUserText: { label:  'Accounting Posting Amount', quickInfo: 'Accounting Posting Amount' }
@@ -310,7 +310,7 @@ union select from ZI_BI003_REPORT_003_ACCOUTING( p_recover_type: 'IN' )
 
       cast('0.00' as dmbtr)               as RecoveryAmount,                                              //BillingTotalAmount,
 
-      cast('0.00' as abap.dec(10, 2))     as PercentageOfAp,
+      cast('0.00' as abap.dec(10, 4))     as PercentageOfAp,
 
       cast('0.00' as dmbtr)               as AccountingPostingAmount
 }

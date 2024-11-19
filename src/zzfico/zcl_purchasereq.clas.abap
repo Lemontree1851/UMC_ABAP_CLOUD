@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_purchasereq IMPLEMENTATION.
+CLASS ZCL_PURCHASEREQ IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

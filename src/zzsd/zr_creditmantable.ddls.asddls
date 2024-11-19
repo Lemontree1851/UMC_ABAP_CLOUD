@@ -6,25 +6,40 @@ define root custom entity ZR_CREDITMANTABLE
       @Consumption.valueHelpDefinition: [ { entity: { name: 'I_SalesOrganization', element: 'SalesOrganization' } } ]
       SalesOrganization : vkorg;
       zyear             : gjahr;
-      @Consumption.valueHelpDefinition: [ { entity: { name: 'I_Customer_VH', element: 'Customer' } } ]
+//      @Consumption.valueHelpDefinition: [ { entity: { name: 'I_Customer_VH', element: 'Customer' } } ]
+      @Consumption.valueHelpDefinition: [ { entity: { name: 'ZC_Customer_VH', element: 'Customer' } } ]
       Customer          : abap.char( 10 );
       CustomerName      : abap.char( 81 );
-      LimitAmount       : abap.char( 4 );
+      @Semantics.amount.currencyCode : 'currency'
+      LimitAmount       : abap.curr(15,2);
+      currency          : waerk;
       Terms1            : abap.char( 10 );
       Termstext1        : abap.char( 30 );
       Termstext2        : abap.char( 30 );
-      zmonth1           : abap.char( 10 );
-      zmonth2           : abap.char( 10 );
-      zmonth3           : abap.char( 10 );
-      zmonth4           : abap.char( 10 );
-      zmonth5           : abap.char( 10 );
-      zmonth6           : abap.char( 10 );
-      zmonth7           : abap.char( 10 );
-      zmonth8           : abap.char( 10 );
-      zmonth9           : abap.char( 10 );
-      zmonth10          : abap.char( 10 );
-      zmonth11          : abap.char( 10 );
-      zmonth12          : abap.char( 10 );
+      @Semantics.amount.currencyCode : 'currency'
+      zmonth1           : abap.curr(15,2);
+      @Semantics.amount.currencyCode : 'currency'
+      zmonth2           : abap.curr(15,2);
+      @Semantics.amount.currencyCode : 'currency'
+      zmonth3           : abap.curr(15,2);
+      @Semantics.amount.currencyCode : 'currency'
+      zmonth4           : abap.curr(15,2);
+      @Semantics.amount.currencyCode : 'currency'
+      zmonth5           : abap.curr(15,2);
+      @Semantics.amount.currencyCode : 'currency'
+      zmonth6           : abap.curr(15,2);
+      @Semantics.amount.currencyCode : 'currency'
+      zmonth7           : abap.curr(15,2);
+      @Semantics.amount.currencyCode : 'currency'
+      zmonth8           : abap.curr(15,2);
+      @Semantics.amount.currencyCode : 'currency'
+      zmonth9           : abap.curr(15,2);
+      @Semantics.amount.currencyCode : 'currency'
+      zmonth10          : abap.curr(15,2);
+      @Semantics.amount.currencyCode : 'currency'
+      zmonth11          : abap.curr(15,2);
+      @Semantics.amount.currencyCode : 'currency'
+      zmonth12          : abap.curr(15,2);
       text1             : abap.char( 30 );
       zymonth1          : abap.char( 30 );
       zymonth2          : abap.char( 30 );

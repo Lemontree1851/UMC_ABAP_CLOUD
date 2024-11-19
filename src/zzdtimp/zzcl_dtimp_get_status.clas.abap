@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZZCL_DTIMP_GET_STATUS IMPLEMENTATION.
+CLASS zzcl_dtimp_get_status IMPLEMENTATION.
 
 
   METHOD if_sadl_exit_calc_element_read~calculate.
@@ -29,7 +29,7 @@ CLASS ZZCL_DTIMP_GET_STATUS IMPLEMENTATION.
              loghandle
         FROM zzc_dtimp_files
          FOR ALL ENTRIES IN @lt_original_data
-       WHERE UuidFile = @lt_original_data-uuidfile
+       WHERE uuidfile = @lt_original_data-uuidfile
         INTO TABLE @DATA(lt_files).
       SORT lt_files BY uuidfile.
     ENDIF.
@@ -78,9 +78,11 @@ CLASS ZZCL_DTIMP_GET_STATUS IMPLEMENTATION.
                 <fs_original_data>-logstatuscriticality = 0.
             ENDCASE.
 
-            DATA(lv_loghandle) = cl_web_http_utility=>escape_url( CONV #( <fs_original_data>-loghandle ) ).
+*            DATA(lv_loghandle) = cl_web_http_utility=>escape_url( CONV #( <fs_original_data>-loghandle ) ).
 
-*            DATA(lv_url) = |#ApplicationJob-show?JobCatalogEntryName=&/v4_JobRunLog/%252F| &&
+*            DATA(lv_uri) = cl_abap_context_info=>get_system_url( ).
+*
+*            DATA(lv_url) = |https://{ lv_uri }/ui#ApplicationJob-show?JobCatalogEntryName=&/v4_JobRunLog/%252F| &&
 *                           |ApplicationLogOverviewSet('{ lv_loghandle }')%20%252F| &&
 *                           |JobRunOverviewSet(JobName%253D'{ <fs_original_data>-jobname }'%252C| &&
 *                           |JobRunCount='{ <fs_original_data>-jobcount }')%20default|.

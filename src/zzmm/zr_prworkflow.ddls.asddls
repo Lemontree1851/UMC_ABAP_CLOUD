@@ -6,10 +6,14 @@ define root view entity ZR_PRWORKFLOW
   inner join ZR_PRWORKFLOW_dup on ztmm_1006.apply_depart = ZR_PRWORKFLOW_dup.ApplyDepart_dup
   and ztmm_1006.pr_no = ZR_PRWORKFLOW_dup.PrNo_dup
   and ztmm_1006.pr_item = ZR_PRWORKFLOW_dup.PrItem_dup
+ left outer  join ZR_PRWORKFLOWEMAIL  as _Email on  ztmm_1006.workflow_id    = _Email.WorkflowId
+                                                      and ztmm_1006.instance_id = _Email.InstanceId
+                                                      and ztmm_1006.application_id  = _Email.ApplicationId
 {
 
    key   ztmm_1006.apply_depart                           as ApplyDepart,
    key   ztmm_1006.pr_no                                  as PrNo,
+   key  _Email.UserZseq as UserZseq,
       ztmm_1006.uuid                                   as UUID,
       ztmm_1006.pr_item                                as PrItem,
       ztmm_1006.pr_type                                as PrType,
@@ -69,8 +73,13 @@ define root view entity ZR_PRWORKFLOW
       ztmm_1006.local_last_changed_at                  as LocalLastChangedAt,
       @Semantics.systemDateTime.lastChangedAt: true
       ztmm_1006.lat_cahanged_at                        as LatCahangedAt,
+
+      ztmm_1006.workflow_id                    as WorkflowId,
+      ztmm_1006.instance_id                    as InstanceId,
+      ztmm_1006.application_id                 as ApplicationId,   
+        _Email.EmailAddress as    EmailAddress,
       cast('' as bapi_mtype preserving type) as Type,
       cast('' as abap.sstring(256))          as ResultText,
       cast('' as abap.sstring(1033))         as Message
 
-}
+}where ztmm_1006.instance_id  is not initial

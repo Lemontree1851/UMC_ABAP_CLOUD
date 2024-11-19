@@ -47,6 +47,8 @@ define root view entity ZR_TMM_1006
       purchase_order_item                    as PurchaseOrderItem,
       kyoten                                 as Kyoten,
       is_approve                             as IsApprove,
+      supplier_mat                           as SupplierMat,
+      polink_by                              as PolinkBy,
       document_info_record_doc_type          as DocumentInfoRecordDocType,
       document_info_record_doc_numbe         as DocumentInfoRecordDocNumber,
       document_info_record_doc_versi         as DocumentInfoRecordDocVersion,
@@ -66,6 +68,8 @@ define root view entity ZR_TMM_1006
       lat_cahanged_at                        as LatCahangedAt,
       cast('' as bapi_mtype preserving type) as Type,
       cast('' as abap.sstring(256))          as ResultText,
-      cast('' as abap.sstring(1033))         as Message
+      cast('' as abap.sstring(1033))         as Message,
+      workflow_id                            as WorkflowId,
+      instance_id                            as InstanceId
 
 }

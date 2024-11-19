@@ -3,11 +3,11 @@
 @EndUserText.label: 'Projection View for ZR_PRWORKFLOWLINK '
 define root view entity ZC_PRWORKFLOWLINK
   provider contract transactional_query
-  as projection on ZR_PRWORKFLOWLINK 
+  as projection on ZR_PRWORKFLOWLINK
 {
-   key UUID,
-     ApplyDepart,
-     PrNo,
+  key UUID,
+      ApplyDepart,
+      PrNo,
       PrItem,
       PrType,
       OrderType,
@@ -61,5 +61,9 @@ define root view entity ZC_PRWORKFLOWLINK
       LocalLastChangedBy,
       LocalLastChangedAt,
       LatCahangedAt,
-      AmountSum
+      AmountSum,
+      WorkflowId,
+      InstanceId,
+      ApplicationId 
+ 
 }

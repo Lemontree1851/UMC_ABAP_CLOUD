@@ -74,6 +74,60 @@
      <MSGNR>010</MSGNR>
      <TEXT>Customer &amp;1 not existed in Plant &amp;2.</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>011</MSGNR>
+     <TEXT>Node&amp;1、Node Name&amp;2の承認者と承認者メールアドレスを取得できません。チェックしてください。</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>012</MSGNR>
+     <TEXT>現在のNode&amp;1、Node Name&amp;2を承認する権限がありません</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>013</MSGNR>
+     <TEXT>購買依頼&amp;1にPR_BYはありません</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>014</MSGNR>
+     <TEXT>購買依頼&amp;1 PR_BY&amp;2対応メールボックスが見つかりません</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>015</MSGNR>
+     <TEXT>購買依頼&amp;1にPOLINK_BYはありません</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>016</MSGNR>
+     <TEXT>購買依頼&amp;1 POLINK_BY&amp;2対応メールボックスが見つかりません</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>017</MSGNR>
+     <TEXT>&amp;1テンプレート構成が存在しません。ZTBC _ 1001を確認してください</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>018</MSGNR>
+     <TEXT>購買申請番号&amp;1は承認フローを取得できません。チェックしてください。</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>019</MSGNR>
+     <TEXT>購買申請番号&amp;1ワークフローは存在しません</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

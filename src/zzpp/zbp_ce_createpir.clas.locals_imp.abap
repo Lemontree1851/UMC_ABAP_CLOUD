@@ -1,5 +1,6 @@
 CLASS lhc_zce_createpir DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
+    TYPES tt_ofpartition TYPE TABLE for HIERARCHY zd_orderforecastitem.
 
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
       IMPORTING keys REQUEST requested_authorizations FOR zce_createpir RESULT result.
@@ -36,9 +37,9 @@ CLASS lhc_zce_createpir DEFINITION INHERITING FROM cl_abap_behavior_handler.
                 iv_plant                      TYPE werks_d
       RETURNING VALUE(rt_supply_demand_items) TYPE zttpp_1002.
     METHODS createpir
-      IMPORTING it_plndindeprqmt TYPE data
-                iv_type          TYPE string DEFAULT 'OF'
-      CHANGING  !failed          TYPE data OPTIONAL
+      IMPORTING iv_type          TYPE string DEFAULT 'OF'
+      CHANGING  ct_plndindeprqmt TYPE tt_ofpartition
+                !failed          TYPE DATA optional
                 !reported        TYPE data OPTIONAL.
     METHODS processpir
       IMPORTING iv_request     TYPE data
@@ -68,21 +69,21 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
   METHOD processofpartition.
     DATA: lt_splitof_pir TYPE TABLE OF i_plndindeprqmttp,
           ls_splitof_pir LIKE LINE OF lt_splitof_pir.
-
     DATA key LIKE LINE OF keys.
     LOOP AT keys INTO key.
-      "默认只有一条值
+      "默认只有一条值,默认一次只处理一个维度的数据
       DATA(ls_request) = key-%param.
       DATA(lt_ofpartition) = ls_request-_item.
       DATA ls_ofpartition LIKE LINE OF lt_ofpartition.
+
 
 
       "分割后数据直接登录PIR
       createpir(
         EXPORTING
           iv_type = 'OF'
-          it_plndindeprqmt = lt_ofpartition
         CHANGING
+          ct_plndindeprqmt = lt_ofpartition
           failed    = failed
           reported  = reported ).
 
@@ -105,8 +106,8 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
         createpir(
           EXPORTING
             iv_type = 'PIR'
-            it_plndindeprqmt = lt_ofpartition
           CHANGING
+            ct_plndindeprqmt = lt_ofpartition
             failed    = failed
             reported  = reported ).
       ENDIF.
@@ -233,13 +234,61 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
     DATA: lt_plndindeprqmt     TYPE TABLE FOR CREATE i_plndindeprqmttp,
           ls_plndindeprqmt     LIKE LINE OF lt_plndindeprqmt,
           lt_plndindeprqmtitem TYPE TABLE FOR CREATE i_plndindeprqmttp\_plndindeprqmtitem,
-          ls_plndindeprqmtitem LIKE LINE OF lt_plndindeprqmtitem.
-    LOOP AT it_plndindeprqmt ASSIGNING FIELD-SYMBOL(<is_plndindeprqmt>).
-      IF sy-tabix = 1.
+          ls_plndindeprqmtitem LIKE LINE OF lt_plndindeprqmtitem,
+          cs_plndindeprqmt like LINE OF ct_plndindeprqmt,
+          lt_ofpartition TYPE table of zd_orderforecastitem,
+          ls_ofpartition like LINE OF lt_ofpartition.
+    DATA: lv_customer        TYPE kunnr,
+          lv_requirementdate TYPE datum,
+          lv_plant           TYPE werks_d,
+          lv_tabix           TYPE i,
+          lv_date TYPE datum.
+    "有些日期不是工作日，sap会自动变成节日的前一个工作日，但业务需求要后一个工作日，所以需要手动更改为后一个工作日
+    LOOP AT ct_plndindeprqmt INTO cs_plndindeprqmt.
+      lv_requirementdate = cs_plndindeprqmt-requirementdate.
+      cs_plndindeprqmt-requirementdate = zzcl_common_utils=>get_workingday( iv_plant = cs_plndindeprqmt-plant iv_date = lv_requirementdate ).
+      cs_plndindeprqmt-RequirementMonth = cs_plndindeprqmt-requirementdate(6).
+      MOVE-CORRESPONDING cs_plndindeprqmt to ls_ofpartition.
+      COLLECT ls_ofpartition INTO lt_ofpartition.
+    ENDLOOP.
+    MOVE-CORRESPONDING lt_ofpartition to ct_plndindeprqmt.
+    "获取要创建pir的日期范围
+    DATA(lv_date_range) = zcl_ofpartition=>get_process_date_range( ).
+    "为减少数据传输量，前端只会传入数量不等于0的日期
+    "但在创建pir时系统只会处理传入日期的数据，但实际是需要用0覆盖之前的数据，
+    "所以现在需要填充要处理的日期范围中的每一天(工作日)
+    "默认一次只会有一个维度的数据
+    IF lines( ct_plndindeprqmt ) > 0.
+      cs_plndindeprqmt = ct_plndindeprqmt[ 1 ].
+    ENDIF.
+    lv_date = lv_date_range-startdate.
+    WHILE lv_date <= lv_date_range-enddate.
+      "如果不是工作日则不用处理
+      IF NOT zzcl_common_utils=>is_workingday( iv_plant = cs_plndindeprqmt-plant iv_date = lv_date ).
+        lv_date = lv_date + 1.
+        CONTINUE.
+      ENDIF.
+      "默认一次只会有一个维度的数据
+      READ TABLE ct_plndindeprqmt TRANSPORTING NO FIELDS WITH KEY requirementdate = lv_date."因为会插入数据，所以无法使用binary search。除非新增一个内表
+      "如果是工作日且内表中没有则需要用0填充
+      IF sy-subrc <> 0.
+        cs_plndindeprqmt-requirementdate = lv_date.
+        cs_plndindeprqmt-requirementmonth = lv_date(6).
+        cs_plndindeprqmt-requirementqty = 0.
+        APPEND cs_plndindeprqmt TO ct_plndindeprqmt.
+      ENDIF.
+      lv_date = lv_date + 1.
+    ENDWHILE.
+    SORT ct_plndindeprqmt BY customer plant material requirementdate.
+
+    LOOP AT ct_plndindeprqmt ASSIGNING FIELD-SYMBOL(<is_plndindeprqmt>).
+      lv_tabix = sy-tabix.
+      lv_customer = |{ <is_plndindeprqmt>-customer ALPHA = OUT }|.
+      IF lv_tabix = 1.
         ls_plndindeprqmt-%cid = sy-tabix.
-        ls_plndindeprqmt-product = <is_plndindeprqmt>-('material').
-        ls_plndindeprqmt-plant = <is_plndindeprqmt>-('plant').
-        ls_plndindeprqmt-requirementplan = <is_plndindeprqmt>-('customer').
+        ls_plndindeprqmt-product = <is_plndindeprqmt>-material.
+        ls_plndindeprqmt-plant = <is_plndindeprqmt>-plant.
+        ls_plndindeprqmt-requirementplan = lv_customer.
         IF iv_type = 'OF'.
           DATA(lv_version) = '02'.
           DATA(lv_isactive) = ''.
@@ -252,21 +301,21 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
         APPEND ls_plndindeprqmt TO lt_plndindeprqmt.
         CLEAR ls_plndindeprqmt.
         ls_plndindeprqmtitem-%cid_ref = sy-tabix.
-        ls_plndindeprqmtitem-product = <is_plndindeprqmt>-('material').
-        ls_plndindeprqmtitem-plant = <is_plndindeprqmt>-('plant').
-        ls_plndindeprqmtitem-requirementplan = <is_plndindeprqmt>-('customer').
+        ls_plndindeprqmtitem-product = <is_plndindeprqmt>-material.
+        ls_plndindeprqmtitem-plant = <is_plndindeprqmt>-plant.
+        ls_plndindeprqmtitem-requirementplan = lv_customer.
         ls_plndindeprqmtitem-plndindeprqmtversion = lv_version.
       ENDIF.
 
       ls_plndindeprqmtitem-%target = VALUE #( BASE ls_plndindeprqmtitem-%target (
-                                              %cid = |I{ sy-tabix }|
-                                              product = <is_plndindeprqmt>-('material')
-                                              plant = <is_plndindeprqmt>-('plant')
-                                              requirementplan = <is_plndindeprqmt>-('customer')
+                                              %cid = |I{ lv_tabix }|
+                                              product = <is_plndindeprqmt>-material
+                                              plant = <is_plndindeprqmt>-plant
+                                              requirementplan = lv_customer
                                               periodtype      = 'D'
-                                              plndindeprqmtperiod = <is_plndindeprqmt>-('requirementdate')
-                                              workingdaydate  = <is_plndindeprqmt>-('requirementdate')
-                                              plannedquantity = <is_plndindeprqmt>-('requirementqty') ) ).
+                                              plndindeprqmtperiod = <is_plndindeprqmt>-requirementdate
+                                              workingdaydate  = <is_plndindeprqmt>-requirementdate
+                                              plannedquantity = <is_plndindeprqmt>-requirementqty ) ).
     ENDLOOP.
     IF sy-subrc = 0.
       APPEND ls_plndindeprqmtitem TO lt_plndindeprqmtitem.
@@ -343,33 +392,28 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
                           iv_enddate    = CONV #( ls_request-processend ) ).
     "2. 对实际发货进行排序，确保按日期从早到晚处理
     SORT lt_shipping BY customer plant material productavailabilitydate.
-    LOOP AT lt_ofpartition INTO DATA(ls_ofpartition).
       "3. 遍历发货数据，依次减少生产计划
-      LOOP AT lt_shipping ASSIGNING FIELD-SYMBOL(<ls_shipping>) WHERE quantityinbaseunit > 0.
-*        GROUP BY (  customer = <ls_shipping>-customer
-*                    plant = <ls_shipping>-plant
-*                    material = <ls_shipping>-material ) ASSIGNING FIELD-SYMBOL(<group>).
-        lv_delivered = <ls_shipping>-quantityinbaseunit.
+    LOOP AT lt_shipping ASSIGNING FIELD-SYMBOL(<ls_shipping>) WHERE quantityinbaseunit > 0.
+      lv_delivered = <ls_shipping>-quantityinbaseunit.
 
-        LOOP AT lt_ofpartition INTO ls_ofpartition WHERE customer = <ls_shipping>-customer AND plant = <ls_shipping>-plant
-          AND material = <ls_shipping>-material AND requirementmonth = <ls_shipping>-month AND requirementqty > 0.
-          IF lv_delivered = 0.
-            EXIT.
-          ENDIF.
+      LOOP AT lt_ofpartition INTO DATA(ls_ofpartition) WHERE customer = <ls_shipping>-customer AND plant = <ls_shipping>-plant
+        AND material = <ls_shipping>-material AND requirementmonth = <ls_shipping>-month AND requirementqty > 0.
+        IF lv_delivered = 0.
+          EXIT.
+        ENDIF.
 
-          IF ls_ofpartition-requirementqty >= lv_delivered.
-            " 如果当前生产计划可以大于实际发货数量，则生产剩余数量
-            ls_ofpartition-requirementqty = ls_ofpartition-requirementqty - lv_delivered.
-            lv_delivered = 0.
-          ELSE.
-            " 如果实际发货数量已经大于当前生产计划则不生产，数量为0
-            lv_delivered = lv_delivered - ls_ofpartition-requirementqty.
-            ls_ofpartition-requirementqty = 0.
-          ENDIF.
+        IF ls_ofpartition-requirementqty >= lv_delivered.
+          " 如果当前生产计划大于实际发货数量，则生产剩余的数量
+          ls_ofpartition-requirementqty = ls_ofpartition-requirementqty - lv_delivered.
+          lv_delivered = 0.
+        ELSE.
+          " 如果实际发货数量已经大于当前生产计划则不生产，数量为0
+          lv_delivered = lv_delivered - ls_ofpartition-requirementqty.
+          ls_ofpartition-requirementqty = 0.
+        ENDIF.
 
-          " 修改生产计划内表中的数量
-          MODIFY lt_ofpartition FROM ls_ofpartition.
-        ENDLOOP.
+        " 修改生产计划内表中的数量
+        MODIFY lt_ofpartition FROM ls_ofpartition.
       ENDLOOP.
     ENDLOOP.
     " 结合受注残出荷残的需求数量 决定生成需求
@@ -493,7 +537,7 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
         ENDIF.
       ENDIF.
 
-      if lv_type = 'S'.
+      IF lv_type = 'S'.
 *        lv_msg =
       ENDIF.
 

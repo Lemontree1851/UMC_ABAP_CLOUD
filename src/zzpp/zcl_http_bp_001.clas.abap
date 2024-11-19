@@ -9,7 +9,11 @@ CLASS zcl_http_bp_001 DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_http_bp_001 IMPLEMENTATION.
+
+
+CLASS ZCL_HTTP_BP_001 IMPLEMENTATION.
+
+
   METHOD if_http_service_extension~handle_request.
     TYPES:
       BEGIN OF ty_req,

@@ -45,6 +45,8 @@ CLASS zcl_bom_where_used DEFINITION
 
     CLASS-METHODS:
       "! Get data of usage list of component
+      "! iv_getusagelistroot: abap_true->get root bills of material of component（highest level material）
+      "!                      abap_false->get bills of material of component（high level material）
       get_data IMPORTING iv_plant                   TYPE werks_d
                          iv_billofmaterialcomponent TYPE matnr
                          iv_getusagelistroot        TYPE abap_boolean OPTIONAL
@@ -54,7 +56,11 @@ CLASS zcl_bom_where_used DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_bom_where_used IMPLEMENTATION.
+
+
+CLASS ZCL_BOM_WHERE_USED IMPLEMENTATION.
+
+
   METHOD get_data.
 
     DATA:
@@ -121,10 +127,10 @@ CLASS zcl_bom_where_used IMPLEMENTATION.
       ENDLOOP.
     ENDIF.
 
-*   Reads bills of material for a component in root level
+*   Read bills of material for a component in high level
     IF iv_getusagelistroot = abap_false.
       APPEND LINES OF lt_results TO et_usagelist.
-*   Reads bills of material for a component in high level
+*   Read bills of material for a component in root level
     ELSE.
       IF lt_results IS NOT INITIAL.
         LOOP AT lt_results INTO ls_results.

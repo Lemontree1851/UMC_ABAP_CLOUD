@@ -26,7 +26,8 @@ CLASS lhc_zc_productionorder DEFINITION INHERITING FROM cl_abap_behavior_handler
       lc_strategygroup_40 TYPE string VALUE '40',
       lc_criticality_1    TYPE string VALUE '1',
       lc_criticality_3    TYPE string VALUE '3',
-      lc_event_release    TYPE string VALUE 'RELEASE'.
+      lc_event_release    TYPE string VALUE 'RELEASE',
+      lc_seprator_virgule TYPE string VALUE '/'.
 
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
       IMPORTING keys REQUEST requested_authorizations FOR productionorder RESULT result.
@@ -121,19 +122,32 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
       REPORTED DATA(reported_rel).
 
       IF failed_rel IS NOT INITIAL.
-        DATA(lv_msgid) = reported_rel-productionorder[ 1 ]-%msg->if_t100_message~t100key-msgid.
-        DATA(lv_msgno) = reported_rel-productionorder[ 1 ]-%msg->if_t100_message~t100key-msgno.
-        DATA(lv_msgty) = reported_rel-productionorder[ 1 ]-%msg->if_t100_dyn_msg~msgty.
-        DATA(lv_msgv1) = reported_rel-productionorder[ 1 ]-%msg->if_t100_dyn_msg~msgv1.
-        DATA(lv_msgv2) = reported_rel-productionorder[ 1 ]-%msg->if_t100_dyn_msg~msgv1.
-        DATA(lv_msgv3) = reported_rel-productionorder[ 1 ]-%msg->if_t100_dyn_msg~msgv1.
-        DATA(lv_msgv4) = reported_rel-productionorder[ 1 ]-%msg->if_t100_dyn_msg~msgv1.
-        MESSAGE ID lv_msgid TYPE lv_msgty NUMBER lv_msgno WITH lv_msgv1 lv_msgv2 lv_msgv3 lv_msgv4 INTO lv_message.
+        LOOP AT reported_rel-productionorder INTO DATA(ls_productionorder).
+          IF ls_productionorder-%msg->if_t100_dyn_msg~msgty CA 'EAX'.
+            DATA(lv_msgid) = ls_productionorder-%msg->if_t100_message~t100key-msgid.
+            DATA(lv_msgno) = ls_productionorder-%msg->if_t100_message~t100key-msgno.
+            DATA(lv_msgty) = ls_productionorder-%msg->if_t100_dyn_msg~msgty.
+            DATA(lv_msgv1) = ls_productionorder-%msg->if_t100_dyn_msg~msgv1.
+            DATA(lv_msgv2) = ls_productionorder-%msg->if_t100_dyn_msg~msgv2.
+            DATA(lv_msgv3) = ls_productionorder-%msg->if_t100_dyn_msg~msgv3.
+            DATA(lv_msgv4) = ls_productionorder-%msg->if_t100_dyn_msg~msgv4.
+            MESSAGE ID lv_msgid TYPE lv_msgty NUMBER lv_msgno WITH lv_msgv1 lv_msgv2 lv_msgv3 lv_msgv4 INTO lv_message.
+
+            IF <fs_item>-message IS INITIAL.
+              <fs_item>-message = lv_message.
+            ELSE.
+              CONCATENATE <fs_item>-message
+                          lv_message
+                     INTO <fs_item>-message
+                SEPARATED BY lc_seprator_virgule.
+            ENDIF.
+          ENDIF.
+        ENDLOOP.
 
         <fs_item>-criticality = lc_criticality_1.
-        <fs_item>-message = lv_message.
+        lv_message = <fs_item>-message.
 
-        "Production Order &1: &2
+        "製造指図 &1: &2
         MESSAGE ID lc_msgid_zpp_001 TYPE lc_msgty_e NUMBER 099 WITH lv_manufacturingorder lv_message INTO lv_message.
 
         APPEND VALUE #( type        = lc_type_e
@@ -142,10 +156,12 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
                         description = lv_message ) TO cs_data-messageitems.
       ELSE.
         <fs_item>-criticality = lc_criticality_3.
-        <fs_item>-message = lc_type_s.
 
         "Production Order &1 was released successfully.
+        "製造指図 &1 発行できました。
         MESSAGE ID lc_msgid_zpp_001 TYPE lc_msgty_e NUMBER 100 WITH lv_manufacturingorder INTO lv_message.
+
+        <fs_item>-message = lv_message.
 
         APPEND VALUE #( type        = lc_type_s
                         title       = lc_type_s
@@ -157,8 +173,9 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
 
   METHOD check.
     DATA:
-      lv_message    TYPE zc_productionorder-message,
-      lv_assign_qty TYPE ztpp_1014-assign_qty.
+      lv_message            TYPE zc_productionorder-message,
+      lv_assign_qty         TYPE ztpp_1014-assign_qty,
+      lv_manufacturingorder TYPE aufnr.
 
     CHECK cs_data-items IS NOT INITIAL.
 
@@ -197,6 +214,8 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
     SORT lt_ztpp_1014 BY plant manufacturing_order.
 
     LOOP AT cs_data-items ASSIGNING <fs_item>.
+      lv_manufacturingorder = |{ <fs_item>-manufacturingorder ALPHA = IN }|.
+
       "Read data of product plant supply planning
       READ TABLE lt_planning INTO DATA(ls_planning) WITH KEY product = <fs_item>-material
                                                              plant = <fs_item>-plant
@@ -204,12 +223,12 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
 
       "Read data of allocation relationship between production order and so
       READ TABLE lt_ztpp_1014 TRANSPORTING NO FIELDS WITH KEY plant = <fs_item>-plant
-                                                              manufacturing_order = <fs_item>-manufacturingorder
+                                                              manufacturing_order = lv_manufacturingorder
                                                      BINARY SEARCH.
       IF sy-subrc = 0.
         LOOP AT lt_ztpp_1014 INTO DATA(ls_ztpp_1014) FROM sy-tabix.
           IF ls_ztpp_1014-plant <> <fs_item>-plant
-          OR ls_ztpp_1014-manufacturing_order <> <fs_item>-manufacturingorder.
+          OR ls_ztpp_1014-manufacturing_order <> lv_manufacturingorder.
             EXIT.
           ENDIF.
 
@@ -217,13 +236,13 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
         ENDLOOP.
 
         IF <fs_item>-mfgorderplannedtotalqty > lv_assign_qty.
-          "The Plan Qty of the Production Order is more than the Total Assigned Qty.
+          "製造指図の生産計画数が割当合計数より多くなる。
           MESSAGE ID lc_msgid_zpp_001 TYPE lc_msgty_e NUMBER 086 INTO lv_message .
 
           <fs_item>-criticality = lc_criticality_1.
           <fs_item>-message = lv_message.
 
-          "Production Order &1: &2
+          "製造指図 &1: &2
           MESSAGE ID lc_msgid_zpp_001 TYPE lc_msgty_e NUMBER 099 WITH <fs_item>-manufacturingorder lv_message INTO lv_message.
 
           APPEND VALUE #( type        = lc_type_e
@@ -233,13 +252,13 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
         ENDIF.
       ELSE.
         IF <fs_item>-producttype = lc_producttype_zfrt AND ls_planning-planningstrategygroup = lc_strategygroup_40.
-          "Please assign Sales Order to this Production Order.
+          "当該製造指図に受注を割当してください。
           MESSAGE ID lc_msgid_zpp_001 TYPE lc_msgty_e NUMBER 087 INTO lv_message.
 
           <fs_item>-criticality = lc_criticality_1.
           <fs_item>-message = lv_message.
 
-          "Production Order &1: &2
+          "製造指図 &1: &2
           MESSAGE ID lc_msgid_zpp_001 TYPE lc_msgty_e NUMBER 099 WITH <fs_item>-manufacturingorder lv_message INTO lv_message.
 
           APPEND VALUE #( type        = lc_type_e

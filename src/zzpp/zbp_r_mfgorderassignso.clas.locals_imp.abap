@@ -169,6 +169,12 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
         <lfs_item>-sales_order = |{ <lfs_item>-sales_order ALPHA = IN }|.
       ENDLOOP.
 
+      SELECT MAX( sequence )
+        FROM ztpp_1014
+       WHERE plant = @ls_request-production_plant
+         AND manufacturing_order = @lv_manufacturing_order
+        INTO @lv_sequence.
+
       SELECT *
         FROM ztpp_1014
         FOR ALL ENTRIES IN @ls_request-items
@@ -182,20 +188,19 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
 
       GET TIME STAMP FIELD lv_timestamp.
       LOOP AT ls_request-items INTO DATA(ls_item).
-        CLEAR: lv_sequence,lv_assign_qty.
+        CLEAR lv_assign_qty.
+        lv_sequence += 1.
+
         READ TABLE lt_update ASSIGNING FIELD-SYMBOL(<lfs_update>)
                                   WITH KEY sales_order = ls_item-sales_order
                                            sales_order_item = ls_item-sales_order_item_i.
         IF sy-subrc = 0.
-          lv_sequence = <lfs_update>-sequence + 1.
           lv_assign_qty = <lfs_update>-assign_qty.
           <lfs_update>-remark = |{ <lfs_update>-assign_qty }->0|.
           <lfs_update>-assign_qty = 0.
           <lfs_update>-last_changed_at = lv_timestamp.
           <lfs_update>-last_changed_by = sy-uname.
           <lfs_update>-local_last_changed_at = lv_timestamp.
-        ELSE.
-          lv_sequence = 1.
         ENDIF.
 
         APPEND INITIAL LINE TO lt_append ASSIGNING FIELD-SYMBOL(<lfs_append>).
@@ -288,30 +293,34 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
              AND manufacturingorder = @lv_manufacturing_order
             INTO @DATA(ls_order).
 
+          SELECT MAX( sequence )
+            FROM ztpp_1014
+           WHERE plant = @ls_item-plant
+             AND manufacturing_order = @lv_manufacturing_order
+            INTO @lv_sequence.
+
           SELECT *
             FROM ztpp_1014
            WHERE plant = @ls_item-plant
              AND manufacturing_order = @lv_manufacturing_order
-             AND sales_order = @lv_sales_order
-             AND sales_order_item = @lv_sales_order_item
+             AND sequence = @ls_item-sequence
             INTO TABLE @DATA(lt_exist_data).
 
-          SORT lt_exist_data BY sales_order sales_order_item sequence DESCENDING.
+          SORT lt_exist_data BY sequence DESCENDING.
 
           GET TIME STAMP FIELD lv_timestamp.
           " Read the line with the largest sequence
           READ TABLE lt_exist_data ASSIGNING FIELD-SYMBOL(<lfs_exist_data>) INDEX 1.
           IF sy-subrc = 0.
-            lv_sequence = <lfs_exist_data>-sequence + 1.
             <lfs_exist_data>-remark = |{ <lfs_exist_data>-assign_qty }->0|.
             <lfs_exist_data>-assign_qty = 0.
             <lfs_exist_data>-last_changed_at = lv_timestamp.
             <lfs_exist_data>-last_changed_by = sy-uname.
             <lfs_exist_data>-local_last_changed_at = lv_timestamp.
             APPEND <lfs_exist_data> TO lt_update.
-          ELSE.
-            lv_sequence = 1.
           ENDIF.
+
+          lv_sequence += 1.
 
           " new line
           APPEND INITIAL LINE TO lt_update ASSIGNING FIELD-SYMBOL(<lfs_update>).
@@ -400,6 +409,12 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
         <lfs_item>-sales_order = |{ <lfs_item>-sales_order ALPHA = IN }|.
       ENDLOOP.
 
+      SELECT MAX( sequence )
+        FROM ztpp_1014
+       WHERE plant = @ls_item-plant
+         AND manufacturing_order = @lv_manufacturing_order
+        INTO @lv_sequence.
+
       SELECT *
         FROM ztpp_1014
          FOR ALL ENTRIES IN @ls_request-items
@@ -413,12 +428,13 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
 
       GET TIME STAMP FIELD lv_timestamp.
       LOOP AT ls_request-items INTO ls_item.
-        CLEAR: lv_sequence,lv_assign_qty.
+        CLEAR lv_assign_qty.
+        lv_sequence += 1.
+
         READ TABLE lt_exist_data ASSIGNING FIELD-SYMBOL(<lfs_exist_data>)
                                   WITH KEY sales_order = ls_item-sales_order
                                            sales_order_item = ls_item-sales_order_item.
         IF sy-subrc = 0.
-          lv_sequence = <lfs_exist_data>-sequence + 1.
           lv_assign_qty = <lfs_exist_data>-assign_qty.
           IF <lfs_exist_data>-remark IS INITIAL.
             <lfs_exist_data>-remark = |{ <lfs_exist_data>-assign_qty }->0|.
@@ -428,8 +444,6 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
             <lfs_exist_data>-local_last_changed_at = lv_timestamp.
             APPEND <lfs_exist_data> TO lt_update.
           ENDIF.
-        ELSE.
-          lv_sequence = 1.
         ENDIF.
 
         IF ls_item-sequence IS INITIAL.

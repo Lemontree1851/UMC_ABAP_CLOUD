@@ -12,11 +12,14 @@ annotate entity ZC_DeliveryReceipt
   ReferenceSDDocument;
 //  ReferenceSDDocumentItem;
 //  DeliveryDocumentItemText;
-  @UI.selectionField: [{ position: 15 }]
-  @UI.lineItem: [{ position: 80 }]
-  OverallSDProcessStatus;
   @UI.selectionField: [{ position: 10 }]
+  @UI.lineItem: [{ position: 80 }]
+  @Consumption.valueHelpDefinition:[ { entity:{ name:'I_DeliveryStatus', element:'DeliveryStatus' } } ]
+  @EndUserText.label: '出荷実績転記ステータス'
+  OverallSDProcessStatus;
+  @UI.selectionField: [{ position: 15 }]
   @UI.lineItem: [{ position: 45 }]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'ZR_DeliveryDocumentTypeVH', element: 'DeliveryDocumentType' } } ]
   DeliveryDocumentType;
   @UI.selectionField: [{ position: 20 }]
   @UI.lineItem: [{ position: 30 }]
@@ -29,15 +32,18 @@ annotate entity ZC_DeliveryReceipt
   ShipToParty;
   @UI.selectionField: [{ position: 30 }]
   @UI.lineItem: [{ position: 40 }]
+  @Consumption.filter.selectionType: #INTERVAL
   IntcoExtPlndTransfOfCtrlDteTme;
   @UI.selectionField: [{ position: 45 }]
   @UI.lineItem: [{ position: 70 }]
   CreatedByUser;
   @UI.selectionField: [{ position: 50 }]
   @UI.lineItem: [{ position: 35 }]
+  @Consumption.filter.selectionType: #INTERVAL
   DeliveryDate;
   @UI.selectionField: [{ position: 55 }]
   @UI.lineItem: [{ position: 75 }]
+  @Consumption.filter.selectionType: #INTERVAL
   CreationDate;
   @UI.selectionField: [{ position: 60 }]
   @UI.lineItem: [{ position: 5 }]
@@ -51,6 +57,8 @@ annotate entity ZC_DeliveryReceipt
   @UI.selectionField: [{ position: 75 }]
   @UI.lineItem: [{ position: 55 }]
   MaterialByCustomer;
+  @EndUserText.label: '納品書No.'
+  DeliveryReceiptNo;
 //  ActualDeliveryQuantity;
 //  DeliveryQuantityUnit;
 //  ConditionRateValue;

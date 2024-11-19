@@ -125,7 +125,7 @@ CLASS lhc_zr_ledplannedordercomponen IMPLEMENTATION.
           IF ls_failed IS INITIAL AND ls_reported IS INITIAL.
             <fs_l_data>-status = '3'.
             <fs_l_data>-statustext = 'Success'.
-*           更新できました
+*           提案が受入できました。
             MESSAGE s102(zpp_001) INTO <fs_l_data>-message.
           ENDIF.
         ELSE.

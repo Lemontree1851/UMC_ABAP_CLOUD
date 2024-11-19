@@ -165,7 +165,235 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_usap_001 IMPLEMENTATION.
+CLASS ZCL_HTTP_USAP_001 IMPLEMENTATION.
+
+
+  METHOD cancel.
+    DATA:
+      ls_ztpp_1010 TYPE ztpp_1010.
+
+    MODIFY ENTITY i_materialdocumenttp\\materialdocument   ##EML_IN_LOOP_OK
+              EXECUTE cancel FROM ct_cancel
+              RESULT DATA(ls_cancel_result)
+              MAPPED DATA(ls_cancel_mapped)
+              FAILED DATA(ls_cancel_failed)
+              REPORTED DATA(ls_cancel_reported).
+
+    IF ls_cancel_failed IS INITIAL.  "Get ref. document
+      COMMIT ENTITIES.
+      IF sy-subrc = 0.
+        LOOP AT ls_cancel_result INTO DATA(ls_result).
+          DATA(lv_doc)  = ls_result-%param-materialdocument.
+          DATA(lv_year) = ls_result-%param-materialdocumentyear.
+        ENDLOOP.
+      ENDIF.
+      IF lv_doc IS INITIAL.  "if no document
+        lv_success = 'E'.
+        ls_response-_uwms_key = cs_item-uwmskey.
+        ls_response-_item_no = cs_item-itemno.
+        "Material Document canceled failed
+        MESSAGE e003(zmm_001) INTO ls_response-_message.
+        ls_response-_status = 'E'.
+        APPEND ls_response TO es_response-items.
+        CLEAR: ls_response.
+      ELSE.
+        READ TABLE ct_usap INTO DATA(ls_usap)
+             WITH KEY uwmskey = cs_item-uwmskey
+                      itemno = cs_item-itemno.
+        IF sy-subrc = 0.
+          DELETE FROM ztmm_1003 WHERE uwmskey = @ls_usap-uwmskey
+                                  AND itemno = @ls_usap-itemno.
+          IF sy-subrc <> 0.
+            ROLLBACK WORK.
+            ls_response-_uwms_key = cs_item-uwmskey.
+            ls_response-_item_no = cs_item-itemno.
+            "Cancel successful but delete database failed
+            MESSAGE e004(zmm_001) INTO ls_response-_message.
+            ls_response-_status = 'E'.
+            ls_response-_material_document = lv_doc.
+            ls_response-_material_document_year = lv_year.
+            APPEND ls_response TO es_response-items.
+            CLEAR: ls_response.
+          ELSE.
+            COMMIT WORK AND WAIT.
+            ls_response-_uwms_key = cs_item-uwmskey.
+            ls_response-_item_no = cs_item-itemno.
+            ls_response-_material_document = lv_doc.
+            ls_response-_material_document_year = lv_year.
+            ls_response-_status = 'S'.
+            APPEND ls_response TO es_response-items.
+            CLEAR: ls_response.
+          ENDIF.
+        ELSE.
+          ls_response-_uwms_key = cs_item-uwmskey.
+          ls_response-_item_no = cs_item-itemno.
+          ls_response-_material_document = lv_doc.
+          ls_response-_material_document_year = lv_year.
+          ls_response-_status = 'S'.
+          APPEND ls_response TO es_response-items.
+          CLEAR: ls_response.
+        ENDIF.
+
+        "MR update
+        IF cs_item-mrno IS NOT INITIAL
+       AND cs_item-mritemno IS NOT INITIAL.
+          UPDATE ztpp_1010 SET uwms_post_status = @space
+                 WHERE material_requisition_no = @cs_item-mrno
+                   AND item_no = @cs_item-mritemno.
+          IF sy-subrc <> 0.
+            ROLLBACK WORK.
+          ELSE.
+            COMMIT WORK AND WAIT.
+          ENDIF.
+        ENDIF.
+      ENDIF.
+    ELSE.
+      lv_success = 'E'.
+      LOOP AT ls_cancel_reported-materialdocument INTO DATA(ls_header).
+        DATA(lv_msgty) = ls_header-%msg->if_t100_dyn_msg~msgty.
+        IF lv_msgty = 'E'
+        OR lv_msgty = 'A'.
+          lv_text = ls_header-%msg->if_message~get_text( ).
+          IF lv_msg IS INITIAL.
+            lv_msg = lv_text.
+          ELSE.
+            lv_msg = lv_msg && '/' && lv_text.
+          ENDIF.
+        ENDIF.
+      ENDLOOP.
+
+      LOOP AT ls_cancel_reported-materialdocumentitem INTO DATA(ls_item).
+        lv_msgty = ls_item-%msg->if_t100_dyn_msg~msgty.
+        IF lv_msgty = 'E'
+        OR lv_msgty = 'A'.
+          lv_text = ls_item-%msg->if_message~get_text( ).
+          IF lv_msg IS INITIAL.
+            lv_msg = lv_text.
+          ELSE.
+            lv_msg = lv_msg && '/' && lv_text.
+          ENDIF.
+        ENDIF.
+      ENDLOOP.
+      IF lv_msgty = 'A'
+      OR lv_msgty = 'E'.
+        ls_response-_uwms_key = cs_item-uwmskey.
+        ls_response-_item_no = cs_item-itemno.
+        ls_response-_message = lv_msg.
+        ls_response-_status = 'E'.
+        APPEND ls_response TO es_response-items.
+        CLEAR: ls_response.
+      ENDIF.
+    ENDIF.
+    CLEAR: lv_msgty, lv_msg, lv_text.
+  ENDMETHOD.
+
+
+  METHOD create.
+    DATA:
+      lt_ztmm_usap TYPE STANDARD TABLE OF ztmm_1003,
+      ls_ztmm_usap TYPE ztmm_1003,
+      ls_res_api   TYPE ts_res_api,
+      lt_ztmm_1010 TYPE STANDARD TABLE OF ztmm_1010,
+      ls_ztmm_1010 TYPE ztmm_1010,
+      lt_ztpp_1010 TYPE STANDARD TABLE OF ztpp_1010,
+      ls_ztpp_1010 TYPE ztpp_1010.
+
+    DATA:
+      lv_timestamp TYPE timestamp.
+
+    DATA(lv_reqbody_api) = /ui2/cl_json=>serialize( data = cs_matdoc
+                                                    compress = 'X'
+                                                    pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+    REPLACE ALL OCCURRENCES OF `issuingorreceivingstorageloc` IN lv_reqbody_api  WITH 'IssuingOrReceivingStorageLoc'.
+    REPLACE ALL OCCURRENCES OF `toMaterialDocumentItem` IN lv_reqbody_api  WITH 'to_MaterialDocumentItem'.
+    zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = |/API_MATERIAL_DOCUMENT_SRV/A_MaterialDocumentHeader?sap-language={ zzcl_common_utils=>get_current_language(  ) }|
+                                                       iv_method      = if_web_http_client=>post
+                                                       iv_body        = lv_reqbody_api
+                                             IMPORTING ev_status_code = DATA(lv_status_code)
+                                                       ev_response    = DATA(lv_response) ).
+    /ui2/cl_json=>deserialize(
+                          EXPORTING json = lv_response
+                          CHANGING data = ls_res_api ).
+
+    IF lv_status_code = 201. " created
+      ls_response-_uwms_key = cs_create-uwmskey.
+      ls_response-_item_no = cs_create-itemno.
+      ls_response-_material_document_year = ls_res_api-d-materialdocumentyear.
+      ls_response-_material_document = ls_res_api-d-materialdocument.
+
+      " Insert log table
+      ls_ztmm_usap-uwmskey = cs_create-uwmskey.
+      ls_ztmm_usap-itemno = cs_create-itemno.
+      ls_ztmm_usap-documentdate = cs_create-documentdate.
+      ls_ztmm_usap-materialdocumentyear = ls_response-_material_document_year.
+      ls_ztmm_usap-materialdocument = ls_response-_material_document.
+      ls_ztmm_usap-postingdate = cs_create-postingdate.
+      ls_ztmm_usap-goodsmovementtype = cs_create-goodsmovementtype.
+      INSERT ztmm_1003 FROM @ls_ztmm_usap.
+      IF sy-subrc <> 0.
+        ROLLBACK WORK.
+        ls_response-_status = 'E'.
+        "MIGO success but Database insert failed
+        MESSAGE e001(zmm_001) INTO ls_response-_message.
+        APPEND ls_response TO es_response-items.
+        CLEAR: ls_response.
+      ELSE.
+        COMMIT WORK AND WAIT.
+        ls_response-_status = 'S'.
+        APPEND ls_response TO es_response-items.
+        CLEAR: ls_response.
+      ENDIF.
+      "VMI update
+      IF cs_create-vmi_flag = 'X'.
+        GET TIME STAMP FIELD lv_timestamp.
+        ls_ztmm_1010-uuid = cs_create-uwmskey.
+        ls_ztmm_1010-material = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = 'IN' iv_input = cs_create-material ).
+        ls_ztmm_1010-quantity = cs_create-quantityinentryunit.
+        TRY.
+            ls_ztmm_1010-unit = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = 'IN'
+                                                                               iv_input = cs_create-entryunit ).
+          CATCH zzcx_custom_exception INTO lo_root_exc.
+            ls_ztmm_1010-unit = cs_create-entryunit.
+        ENDTRY.
+        ls_ztmm_1010-plant = cs_create-plant.
+        ls_ztmm_1010-storagelocation = cs_create-storagelocation.
+        ls_ztmm_1010-customer = |{ cs_create-customer ALPHA = IN }|.
+        ls_ztmm_1010-documentdate = cs_create-documentdate.
+        ls_ztmm_1010-postingdate = cs_create-postingdate.
+        ls_ztmm_1010-created_at = lv_timestamp.
+        ls_ztmm_1010-created_by = sy-uname.
+        INSERT ztmm_1010 FROM @ls_ztmm_1010.
+        IF sy-subrc <> 0.
+          ROLLBACK WORK.
+        ELSE.
+          COMMIT WORK AND WAIT.
+        ENDIF.
+      ENDIF.
+      "MR update
+      IF cs_create-mrno IS NOT INITIAL
+     AND cs_create-mritemno IS NOT INITIAL.
+        UPDATE ztpp_1010 SET uwms_post_status = 'P'
+               WHERE material_requisition_no = @cs_create-mrno
+                 AND item_no = @cs_create-mritemno.
+        IF sy-subrc <> 0.
+          ROLLBACK WORK.
+        ELSE.
+          COMMIT WORK AND WAIT.
+        ENDIF.
+      ENDIF.
+    ELSE.
+      lv_success = 'E'.
+      ls_response-_uwms_key = cs_create-uwmskey.
+      ls_response-_item_no = cs_create-itemno.
+      ls_response-_status = 'E'.
+      ls_response-_message = ls_res_api-error-message-value.
+      APPEND ls_response TO es_response-items.
+      CLEAR: ls_response.
+    ENDIF.
+
+    CLEAR: cs_matdoc,
+           lv_text, lv_msg, lv_count.
+  ENDMETHOD.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -417,226 +645,4 @@ CLASS zcl_http_usap_001 IMPLEMENTATION.
     response->set_header_field( i_name  = lc_header_content
                                 i_value = lc_content_type ).
   ENDMETHOD.
-
-  METHOD create.
-    DATA:
-      lt_ztmm_usap TYPE STANDARD TABLE OF ztmm_1003,
-      ls_ztmm_usap TYPE ztmm_1003,
-      ls_res_api   TYPE ts_res_api,
-      lt_ztmm_1010 TYPE STANDARD TABLE OF ztmm_1010,
-      ls_ztmm_1010 TYPE ztmm_1010,
-      lt_ztpp_1010 TYPE STANDARD TABLE OF ztpp_1010,
-      ls_ztpp_1010 TYPE ztpp_1010.
-
-    DATA:
-      lv_timestamp TYPE timestamp.
-
-    DATA(lv_reqbody_api) = /ui2/cl_json=>serialize( data = cs_matdoc
-                                                    compress = 'X'
-                                                    pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
-    REPLACE ALL OCCURRENCES OF `issuingorreceivingstorageloc` IN lv_reqbody_api  WITH 'IssuingOrReceivingStorageLoc'.
-    REPLACE ALL OCCURRENCES OF `toMaterialDocumentItem` IN lv_reqbody_api  WITH 'to_MaterialDocumentItem'.
-    zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = |/API_MATERIAL_DOCUMENT_SRV/A_MaterialDocumentHeader?sap-language={ zzcl_common_utils=>get_current_language(  ) }|
-                                                       iv_method      = if_web_http_client=>post
-                                                       iv_body        = lv_reqbody_api
-                                             IMPORTING ev_status_code = DATA(lv_status_code)
-                                                       ev_response    = DATA(lv_response) ).
-    /ui2/cl_json=>deserialize(
-                          EXPORTING json = lv_response
-                          CHANGING data = ls_res_api ).
-
-    IF lv_status_code = 201. " created
-      ls_response-_uwms_key = cs_create-uwmskey.
-      ls_response-_item_no = cs_create-itemno.
-      ls_response-_material_document_year = ls_res_api-d-materialdocumentyear.
-      ls_response-_material_document = ls_res_api-d-materialdocument.
-
-      " Insert log table
-      ls_ztmm_usap-uwmskey = cs_create-uwmskey.
-      ls_ztmm_usap-itemno = cs_create-itemno.
-      ls_ztmm_usap-documentdate = cs_create-documentdate.
-      ls_ztmm_usap-materialdocumentyear = ls_response-_material_document_year.
-      ls_ztmm_usap-materialdocument = ls_response-_material_document.
-      ls_ztmm_usap-postingdate = cs_create-postingdate.
-      ls_ztmm_usap-goodsmovementtype = cs_create-goodsmovementtype.
-      INSERT ztmm_1003 FROM @ls_ztmm_usap.
-      IF sy-subrc <> 0.
-        ROLLBACK WORK.
-        ls_response-_status = 'E'.
-        "MIGO success but Database insert failed
-        MESSAGE e001(zmm_001) INTO ls_response-_message.
-        APPEND ls_response TO es_response-items.
-        CLEAR: ls_response.
-      ELSE.
-        COMMIT WORK AND WAIT.
-        ls_response-_status = 'S'.
-        APPEND ls_response TO es_response-items.
-        CLEAR: ls_response.
-      ENDIF.
-      "VMI update
-      IF cs_create-vmi_flag = 'X'.
-        GET TIME STAMP FIELD lv_timestamp.
-        ls_ztmm_1010-uuid = cs_create-uwmskey.
-        ls_ztmm_1010-material = cs_create-material.
-        ls_ztmm_1010-quantity = cs_create-quantityinentryunit.
-        ls_ztmm_1010-unit = cs_create-entryunit.
-        ls_ztmm_1010-plant = cs_create-plant.
-        ls_ztmm_1010-storagelocation = cs_create-storagelocation.
-        ls_ztmm_1010-customer = cs_create-customer.
-        ls_ztmm_1010-documentdate = cs_create-documentdate.
-        ls_ztmm_1010-postingdate = cs_create-postingdate.
-        ls_ztmm_1010-created_at = lv_timestamp.
-        ls_ztmm_1010-created_by = sy-uname.
-        INSERT ztmm_1010 FROM @ls_ztmm_1010.
-        IF sy-subrc <> 0.
-          ROLLBACK WORK.
-        ELSE.
-          COMMIT WORK AND WAIT.
-        ENDIF.
-      ENDIF.
-      "MR update
-      IF cs_create-mrno IS NOT INITIAL
-     AND cs_create-mritemno IS NOT INITIAL.
-        UPDATE ztpp_1010 SET uwms_post_status = 'P'
-               WHERE material_requisition_no = @cs_create-mrno
-                 AND item_no = @cs_create-mritemno.
-        IF sy-subrc <> 0.
-          ROLLBACK WORK.
-        ELSE.
-          COMMIT WORK AND WAIT.
-        ENDIF.
-      ENDIF.
-    ELSE.
-      lv_success = 'E'.
-      ls_response-_uwms_key = cs_create-uwmskey.
-      ls_response-_item_no = cs_create-itemno.
-      ls_response-_status = 'E'.
-      ls_response-_message = ls_res_api-error-message-value.
-      APPEND ls_response TO es_response-items.
-      CLEAR: ls_response.
-    ENDIF.
-
-    CLEAR: cs_matdoc,
-           lv_text, lv_msg, lv_count.
-  ENDMETHOD.
-
-  METHOD cancel.
-    DATA:
-      ls_ztpp_1010 TYPE ztpp_1010.
-
-    MODIFY ENTITY i_materialdocumenttp\\materialdocument   ##EML_IN_LOOP_OK
-              EXECUTE cancel FROM ct_cancel
-              RESULT DATA(ls_cancel_result)
-              MAPPED DATA(ls_cancel_mapped)
-              FAILED DATA(ls_cancel_failed)
-              REPORTED DATA(ls_cancel_reported).
-
-    IF ls_cancel_failed IS INITIAL.  "Get ref. document
-      COMMIT ENTITIES.
-      IF sy-subrc = 0.
-        LOOP AT ls_cancel_result INTO DATA(ls_result).
-          DATA(lv_doc)  = ls_result-%param-materialdocument.
-          DATA(lv_year) = ls_result-%param-materialdocumentyear.
-        ENDLOOP.
-      ENDIF.
-      IF lv_doc IS INITIAL.  "if no document
-        lv_success = 'E'.
-        ls_response-_uwms_key = cs_item-uwmskey.
-        ls_response-_item_no = cs_item-itemno.
-        "Material Document canceled failed
-        MESSAGE e003(zmm_001) INTO ls_response-_message.
-        ls_response-_status = 'E'.
-        APPEND ls_response TO es_response-items.
-        CLEAR: ls_response.
-      ELSE.
-        READ TABLE ct_usap INTO DATA(ls_usap)
-             WITH KEY uwmskey = cs_item-uwmskey
-                      itemno = cs_item-itemno.
-        IF sy-subrc = 0.
-          DELETE FROM ztmm_1003 WHERE uwmskey = @ls_usap-uwmskey
-                                  AND itemno = @ls_usap-itemno.
-          IF sy-subrc <> 0.
-            ROLLBACK WORK.
-            ls_response-_uwms_key = cs_item-uwmskey.
-            ls_response-_item_no = cs_item-itemno.
-            "Cancel successful but delete database failed
-            MESSAGE e004(zmm_001) INTO ls_response-_message.
-            ls_response-_status = 'E'.
-            ls_response-_material_document = lv_doc.
-            ls_response-_material_document_year = lv_year.
-            APPEND ls_response TO es_response-items.
-            CLEAR: ls_response.
-          ELSE.
-            COMMIT WORK AND WAIT.
-            ls_response-_uwms_key = cs_item-uwmskey.
-            ls_response-_item_no = cs_item-itemno.
-            ls_response-_material_document = lv_doc.
-            ls_response-_material_document_year = lv_year.
-            ls_response-_status = 'S'.
-            APPEND ls_response TO es_response-items.
-            CLEAR: ls_response.
-          ENDIF.
-        ELSE.
-          ls_response-_uwms_key = cs_item-uwmskey.
-          ls_response-_item_no = cs_item-itemno.
-          ls_response-_material_document = lv_doc.
-          ls_response-_material_document_year = lv_year.
-          ls_response-_status = 'S'.
-          APPEND ls_response TO es_response-items.
-          CLEAR: ls_response.
-        ENDIF.
-
-        "MR update
-        IF cs_item-mrno IS NOT INITIAL
-       AND cs_item-mritemno IS NOT INITIAL.
-          UPDATE ztpp_1010 SET uwms_post_status = @space
-                 WHERE material_requisition_no = @cs_item-mrno
-                   AND item_no = @cs_item-mritemno.
-          IF sy-subrc <> 0.
-            ROLLBACK WORK.
-          ELSE.
-            COMMIT WORK AND WAIT.
-          ENDIF.
-        ENDIF.
-      ENDIF.
-    ELSE.
-      lv_success = 'E'.
-      LOOP AT ls_cancel_reported-materialdocument INTO DATA(ls_header).
-        DATA(lv_msgty) = ls_header-%msg->if_t100_dyn_msg~msgty.
-        IF lv_msgty = 'E'
-        OR lv_msgty = 'A'.
-          lv_text = ls_header-%msg->if_message~get_text( ).
-          IF lv_msg IS INITIAL.
-            lv_msg = lv_text.
-          ELSE.
-            lv_msg = lv_msg && '/' && lv_text.
-          ENDIF.
-        ENDIF.
-      ENDLOOP.
-
-      LOOP AT ls_cancel_reported-materialdocumentitem INTO DATA(ls_item).
-        lv_msgty = ls_item-%msg->if_t100_dyn_msg~msgty.
-        IF lv_msgty = 'E'
-        OR lv_msgty = 'A'.
-          lv_text = ls_item-%msg->if_message~get_text( ).
-          IF lv_msg IS INITIAL.
-            lv_msg = lv_text.
-          ELSE.
-            lv_msg = lv_msg && '/' && lv_text.
-          ENDIF.
-        ENDIF.
-      ENDLOOP.
-      IF lv_msgty = 'A'
-      OR lv_msgty = 'E'.
-        ls_response-_uwms_key = cs_item-uwmskey.
-        ls_response-_item_no = cs_item-itemno.
-        ls_response-_message = lv_msg.
-        ls_response-_status = 'E'.
-        APPEND ls_response TO es_response-items.
-        CLEAR: ls_response.
-      ENDIF.
-    ENDIF.
-    CLEAR: lv_msgty, lv_msg, lv_text.
-  ENDMETHOD.
-
 ENDCLASS.

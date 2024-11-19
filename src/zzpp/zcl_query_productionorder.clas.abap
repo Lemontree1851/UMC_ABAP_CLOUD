@@ -9,11 +9,7 @@ CLASS zcl_query_productionorder DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_QUERY_PRODUCTIONORDER IMPLEMENTATION.
-
-
+CLASS zcl_query_productionorder IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
 
     DATA:
@@ -115,11 +111,10 @@ CLASS ZCL_QUERY_PRODUCTIONORDER IMPLEMENTATION.
         LEFT OUTER JOIN i_productdescription WITH PRIVILEGED ACCESS AS d
           ON d~product = a~material
          AND d~language = @sy-langu
-       WHERE
-       a~orderisreleased = @abap_false
+       WHERE a~orderisreleased = @abap_false
          AND a~ismarkedfordeletion = @abap_false
-         AND a~orderitemisnotrelevantformrp = @abap_false AND
-          a~manufacturingorder IN @lr_manufacturingorder
+         AND a~orderitemisnotrelevantformrp = @abap_false
+         AND a~manufacturingorder IN @lr_manufacturingorder
          AND a~productionplant IN @lr_plant
          AND a~material IN @lr_material
          AND a~mfgorderplannedstartdate IN @lr_mfgorderplannedstartdate
@@ -176,13 +171,13 @@ CLASS ZCL_QUERY_PRODUCTIONORDER IMPLEMENTATION.
 
           IF ls_data-mfgorderplannedtotalqty > lv_assign_qty.
             ls_data-criticality = lc_criticality_1.
-            "The Plan Qty of the Production Order is more than the Total Assigned Qty.
+            "製造指図の生産計画数が割当合計数より多くなる。
             MESSAGE ID lc_msgid TYPE lc_msgty_e NUMBER 086 INTO ls_data-message.
           ENDIF.
         ELSE.
           IF ls_data-producttype = lc_producttype_zfrt AND ls_data-planningstrategygroup = lc_strategygroup_40.
             ls_data-criticality = lc_criticality_1.
-            "Please assign Sales Order to this Production Order.
+            "当該製造指図に受注を割当してください。
             MESSAGE ID lc_msgid TYPE lc_msgty_e NUMBER 087 INTO ls_data-message.
           ENDIF.
         ENDIF.

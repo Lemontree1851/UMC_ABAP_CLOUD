@@ -1,11 +1,29 @@
-projection;
+//projection;
+//strict;
+//
+//define behavior for ZC_AGENCYPURCHASING //alias <alias_name>
+//{
+//  use create;
+//  use update;
+////  use delete;
+//
+//  use action processLogic;
+//}
+unmanaged implementation in class zbp_c_agencypurchasing unique;
+//unmanaged implementation in class zbp_r_agencypurchasing unique;
 strict;
 
 define behavior for ZC_AGENCYPURCHASING //alias <alias_name>
+//persistent table <???>
+lock master
+authorization master ( instance )
+//etag master <field_name>
+//with unmanaged save
 {
-  use create;
-  use update;
-//  use delete;
+  create;
+  update;
+//  delete;
+//  field ( readonly ) PostingDate, CompanyCode, CompanyCode2, CompanyCodeCurrency, TaxCode;
 
-  use action processLogic;
+  static action processLogic parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
 }

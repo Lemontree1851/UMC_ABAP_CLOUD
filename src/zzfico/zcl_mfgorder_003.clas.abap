@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_mfgorder_003 IMPLEMENTATION.
+CLASS ZCL_MFGORDER_003 IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

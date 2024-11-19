@@ -151,7 +151,7 @@ CLASS lhc_physicalinvupload IMPLEMENTATION.
 
 
 *--------------------------------just for test
-"用于接受成功后的返回值
+"用于创建成功后的返回值
 TYPES: BEGIN OF ty_response_S,
          FiscalYear                       TYPE string,
          PhysicalInventoryDocument        TYPE string,
@@ -164,6 +164,23 @@ TYPES: BEGIN OF ty_response_S,
 
    data:ls_response_ss type ty_response_Ss.
 *-----------------------------------
+
+*-----------------------------------
+types: BEGIN OF ty_response_C,
+
+           PhysicalInventoryDocument    type string,
+           PhysicalInventoryDocumentItem type string,
+
+       END OF TY_RESPONSE_C,
+
+
+       BEGIN OF ty_response_cc,
+           d type ty_response_c,
+       END OF TY_RESPONSE_CC.
+   data:ls_response_cc type ty_response_cc.
+*-----------------------------------
+
+
 
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<ls_data>).
 
@@ -201,7 +218,7 @@ TYPES: BEGIN OF ty_response_S,
 
         DATA(lv_unit1) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit ).
 
-         <ls_data>-unitofentry = lv_unit1.
+         <ls_data>-UnitOfEntry = lv_unit1.
          clear: lv_unit1, LV_MATNRIN .
 
        ENDIF.
@@ -246,8 +263,9 @@ TYPES: BEGIN OF ty_response_S,
                                            ev_response    = DATA(lv_response) ).
         "成功会返回204
         IF lv_status_code = 204.
+
           <ls_data>-status = 'S'.
-          <ls_data>-message = '変更が保存されました!'.
+          <ls_data>-message = |実地棚卸伝票 { lv_b } 明細 10 は変更されました。|.
 
         "如果失败则报错
         ELSE.
@@ -291,16 +309,14 @@ TYPES: BEGIN OF ty_response_S,
 
         IF lv_status_code_c = 201.
 
-           <ls_data>-message = 'Physical Inventory Document create success！'.
+
 
           xco_cp_json=>data->from_string( lv_response_C )->apply( VALUE #(
               ( xco_cp_json=>transformation->underscore_to_pascal_case )
           ) )->write_to( REF #( ls_response_ss ) ).
 
-          if <ls_data>-PhysicalInventoryItemIsZero = 'X'.
+            <ls_data>-message = |実地棚卸伝票 { ls_response_ss-d-PhysicalInventoryDocument } が登録されました。|.
 
-
-          ENDIF.
 
 
           ls_request = VALUE #( _material                         = <ls_data>-material
@@ -332,8 +348,11 @@ TYPES: BEGIN OF ty_response_S,
 
           IF lv_status_code = 204.
 
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_response
+                           CHANGING  data = ls_response_cc ).
+
               <ls_data>-status = 'S'.
-              <ls_data>-message = '変更が保存されました!'.
+              <ls_data>-message = |実地棚卸伝票 { lv_b } 明細 10 は登録され、変更されました。|.
 
           else.
 
@@ -341,7 +360,7 @@ TYPES: BEGIN OF ty_response_S,
                                CHANGING  data = ls_error ).
 
               <ls_data>-status = 'E'.
-              <ls_data>-message = <ls_data>-message && ' but ' && ls_error-error-message-value.
+              <ls_data>-message = <ls_data>-message && ' しかし  ' && ls_error-error-message-value.
 
           ENDIF.
 

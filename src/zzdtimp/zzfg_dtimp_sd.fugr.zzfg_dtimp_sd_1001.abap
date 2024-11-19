@@ -17,11 +17,11 @@ FUNCTION zzfg_dtimp_sd_1001.
                      ( customer                     = <fs_line>-('customer')
                        billing_to_party             = <fs_line>-('billing_to_party')
                        plant                        = <fs_line>-('plant')
-                       issue_storage_location       = <fs_line>-('issue_storage_location')
+                       parts_storage_location       = <fs_line>-('parts_storage_location')
                        finished_storage_location    = <fs_line>-('finished_storage_location')
                        return_storage_location      = <fs_line>-('return_storage_location')
                        repair_storage_location      = <fs_line>-('repair_storage_location')
-                       vim_storage_location         = <fs_line>-('vim_storage_location')
+                       vmi_storage_location         = <fs_line>-('vmi_storage_location')
                      ) ).
   SELECT
     *

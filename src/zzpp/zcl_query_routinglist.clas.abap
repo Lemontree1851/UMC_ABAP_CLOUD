@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_query_routinglist IMPLEMENTATION.
+CLASS ZCL_QUERY_ROUTINGLIST IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

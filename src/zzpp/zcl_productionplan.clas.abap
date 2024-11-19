@@ -442,53 +442,51 @@ CLASS zcl_productionplan IMPLEMENTATION.
       INTO TABLE @DATA(lt_operation).
 
 * 2.6 ~ 2.13
-    lt_bom_tmp[] = lt_bom[].
-    SORT lt_bom_tmp BY plant idnrk.
-    LOOP AT lt_bom_tmp INTO ls_bom.
-      ls_para-%param-mrparea = ls_bom-plant.
-      ls_para-%param-mrpplant = ls_bom-plant.
-      ls_para-%param-material = ls_bom-idnrk.
-      APPEND ls_para TO lt_para.
-      CLEAR: ls_para.
+    "只有单独读物料才能返回availableqty，多条返回0.
+    LOOP AT lt_bom INTO ls_bom.
+      READ ENTITIES OF i_supplydemanditemtp PRIVILEGED
+            ENTITY supplydemanditem
+            EXECUTE getitem
+            FROM VALUE #( ( %param-material = ls_bom-idnrk
+                            %param-mrparea = ls_bom-plant
+                            %param-mrpplant = ls_bom-plant ) )
+            RESULT DATA(lt_sdi_result)
+            FAILED DATA(lt_sdi_failed)
+            REPORTED DATA(lt_sdi_reported).
+      READ TABLE lt_sdi_result INTO DATA(ls_result) INDEX 1.
+      LOOP AT lt_sdi_result INTO DATA(ls_item).
+        ls_mrp_api-material = ls_item-%param-material.
+        ls_mrp_api-mrpplant = ls_item-%param-mrpplant.
+        ls_mrp_api-mrpelementopenquantity = ls_item-%param-mrpelementopenquantity.
+        ls_mrp_api-mrpavailablequantity = ls_item-%param-mrpavailablequantity.
+        ls_mrp_api-mrpelement = ls_item-%param-mrpelement.
+        ls_mrp_api-mrpelementavailyorrqmtdate = ls_item-%param-mrpelementavailyorrqmtdate.
+        ls_mrp_api-mrpelementcategory = ls_item-%param-mrpelementcategory.
+        ls_mrp_api-mrpelementdocumenttype = ls_item-%param-mrpelementdocumenttype.
+        ls_mrp_api-productionversion = ls_item-%param-productionversion.
+        ls_mrp_api-sourcemrpelement = ls_item-%param-sourcemrpelement_2.
+
+        APPEND ls_mrp_api TO lt_mrp_api.
+        CLEAR: ls_mrp_api.
+
+      ENDLOOP.
     ENDLOOP.
 
-    READ ENTITIES OF i_supplydemanditemtp PRIVILEGED
-         ENTITY supplydemanditem
-          EXECUTE getpeggingwithitems
-          FROM lt_para
-         RESULT DATA(lt_sdi_result)
-         FAILED DATA(lt_sdi_failed)
-         REPORTED DATA(lt_sdi_reported).
-
-    READ TABLE lt_sdi_result INTO DATA(ls_result) INDEX 1.
-    LOOP AT ls_result-%param-_supplydemanditemgetitemr INTO DATA(ls_item).
-      ls_mrp_api-material = ls_item-material.
-      ls_mrp_api-mrpplant = ls_item-mrpplant.
-      ls_mrp_api-mrpelementopenquantity = ls_item-mrpelementopenquantity.
-      ls_mrp_api-mrpavailablequantity = ls_item-mrpavailablequantity.
-      ls_mrp_api-mrpelement = ls_item-mrpelement.
-      ls_mrp_api-mrpelementavailyorrqmtdate = ls_item-mrpelementavailyorrqmtdate.
-      ls_mrp_api-mrpelementcategory = ls_item-mrpelementcategory.
-      ls_mrp_api-mrpelementdocumenttype = ls_item-mrpelementdocumenttype.
-      ls_mrp_api-productionversion = ls_item-productionversion.
-      ls_mrp_api-sourcemrpelement = ls_item-sourcemrpelement.
-      APPEND ls_mrp_api TO lt_mrp_api.
-      CLEAR: ls_mrp_api.
-    ENDLOOP.
 
     IF lv_plancheck = 'X'.   "計画手配検査
       lt_bom_tmp[] = lt_bom[].
       CLEAR: lt_bom.
-      LOOP AT lt_mrp_api INTO ls_mrp_api
-         WHERE mrpelementcategory = 'PA'
-           AND mrpelementdocumenttype = 'LA'.
-        READ TABLE lt_bom INTO ls_bom
-             WITH KEY matnr = ls_mrp_api-material.
-        IF sy-subrc = 0.
+      LOOP AT lt_bom_tmp INTO ls_bom.
+        READ TABLE lt_mrp_api INTO ls_mrp_api
+             WITH KEY material = ls_bom-idnrk
+                      mrpelementcategory = 'PA'
+                      mrpelementdocumenttype = 'LA'.
+        IF sy-subrc = 0
+       AND ls_mrp_api-mrpelementopenquantity <> 0.
           APPEND ls_bom TO lt_bom.
         ENDIF.
-
       ENDLOOP.
+
     ENDIF.
 
 * 2.6 在庫取得
@@ -1141,7 +1139,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
 
             IF lv_atp = 0
            AND lv_qty = 0.
-             <l_field> = space.
+              <l_field> = space.
             ENDIF.
 
             lv_dayc = 'SUMMARYCOLOR'.
@@ -1162,7 +1160,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
 
             IF lv_atp_t = 0
            AND lv_qty_t = 0.
-             <l_field> = space.
+              <l_field> = space.
             ENDIF.
           ENDLOOP.
           CLEAR: lv_atp, lv_atp_t, lv_qty, lv_qty_t.
@@ -1262,13 +1260,17 @@ CLASS zcl_productionplan IMPLEMENTATION.
         lv_index = lv_index + 1.
         CONCATENATE 'D' lv_index INTO lv_dayc.
         ASSIGN COMPONENT lv_dayc OF STRUCTURE ls_output TO <l_field2>.
-        <l_field2> = <l_field>.
-        CONDENSE <l_field2> NO-GAPS.
+        IF <l_field> <> 0.
+          <l_field2> = <l_field>.
+          CONDENSE <l_field2> NO-GAPS.
+        ENDIF.
 
         IF <l_plantype> = 'W'.
-          <l_field2> = <l_field>.
-          CONCATENATE <l_color> <l_field2> INTO <l_field2>.
-          CONDENSE <l_field2> NO-GAPS.
+          IF <l_field> <> 0.
+            <l_field2> = <l_field>.
+            CONCATENATE <l_color> <l_field2> INTO <l_field2>.
+            CONDENSE <l_field2> NO-GAPS.
+          ENDIF.
         ENDIF.
       ENDDO.
 

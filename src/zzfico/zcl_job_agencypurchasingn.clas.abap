@@ -11,7 +11,16 @@ CLASS zcl_job_agencypurchasingn DEFINITION
 
   PROTECTED SECTION.
   PRIVATE SECTION.
-    METHODS init_application_log.
+    CLASS-METHODS:
+      init_application_log,
+      "! <p class="shorttext synchronized" lang="en"></p>
+      "!
+      "! @parameter i_text | <p class="shorttext synchronized" lang="en"></p>
+      "! @parameter i_type | <p class="shorttext synchronized" lang="en"></p>
+      "! @raising cx_bali_runtime | <p class="shorttext synchronized" lang="en"></p>
+      add_message_to_log IMPORTING i_text TYPE cl_bali_free_text_setter=>ty_text
+                                   i_type TYPE cl_bali_free_text_setter=>ty_severity OPTIONAL
+                         RAISING   cx_bali_runtime.
 
     CLASS-DATA:
       mo_application_log TYPE REF TO if_bali_log.
@@ -49,88 +58,202 @@ ENDCLASS.
 
 
 
-CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
-  METHOD if_apj_rt_exec_object~execute.
+CLASS ZCL_JOB_AGENCYPURCHASINGN IMPLEMENTATION.
+
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
+        " handle exception
+    ENDTRY.
+  ENDMETHOD.
+
+
+  METHOD boi.
 
   ENDMETHOD.
 
+
   METHOD if_apj_dt_exec_object~get_parameters.
+
+    et_parameter_def = VALUE #( ( selname        = 'P_ZPOSTI'
+                                  kind           = if_apj_dt_exec_object=>select_option
+                                  datatype       = 'char'
+                                  length         = 6
+                                  param_text     = '年度期間'
+                                  changeable_ind = abap_true )
+                                  ( selname        = 'P_COM'
+                                  kind           = if_apj_dt_exec_object=>select_option
+                                  datatype       = 'char'
+                                  length         = 4
+                                  param_text     = '転記先会社コード'
+                                  changeable_ind = abap_true )
+                                  ( selname        = 'P_COM2'
+                                  kind           = if_apj_dt_exec_object=>select_option
+                                  datatype       = 'char'
+                                  length         = 4
+                                  param_text     = '決済対象会社コード'
+                                  changeable_ind = abap_true ) ).
+  ENDMETHOD.
+
+
+  METHOD if_apj_rt_exec_object~execute.
+    DATA:
+      lv_msgt          TYPE cl_bali_free_text_setter=>ty_text,
+      lv_zpostingdatef TYPE n LENGTH 6,
+      lv_zpostingdatet TYPE n LENGTH 6,
+      lt_item          TYPE STANDARD TABLE OF zc_agencypurchasing,
+      ls_data          TYPE zc_agencypurchasing.
+
+    DATA:
+      lr_companycode  TYPE RANGE OF zc_agencypurchasing-companycode,
+      lr_companycode2 TYPE RANGE OF zc_agencypurchasing-companycode2,
+      ls_companycode  LIKE LINE OF lr_companycode,
+      ls_companycode2 LIKE LINE OF lr_companycode2.
 
     " 获取日志对象
     init_application_log( ).
 
-    SELECT SUBSTRING( item1~postingdate,1,6 ) as postingdate,
+    LOOP AT it_parameters INTO DATA(ls_parameters).
+      IF ls_parameters-selname = 'P_ZPOSTI'.
+        lv_zpostingdatef = ls_parameters-low.
+        lv_zpostingdatet = ls_parameters-low.
+      ENDIF.
+
+      IF ls_parameters-selname = 'P_COM'.
+        MOVE-CORRESPONDING ls_parameters TO ls_companycode.
+        APPEND ls_companycode TO lr_companycode.
+      ENDIF.
+
+      IF ls_parameters-selname = 'P_COM2'.
+        MOVE-CORRESPONDING ls_parameters TO ls_companycode2.
+        APPEND ls_companycode2 TO lr_companycode2.
+      ENDIF.
+    ENDLOOP.
+
+    IF lv_zpostingdatef IS INITIAL.
+      lv_zpostingdatef = sy-datum+0(6).
+      lv_zpostingdatet = sy-datum+0(6).
+
+      lv_zpostingdatef = lv_zpostingdatef - 1.
+      lv_zpostingdatet = lv_zpostingdatet - 1.
+      SELECT ztbc_1001~zvalue1
+        FROM ztbc_1001
+       WHERE ztbc_1001~zid     = 'ZFI002'
+      INTO TABLE @DATA(lt_ztbc_1001).
+      READ TABLE lt_ztbc_1001 INDEX 1 INTO DATA(ls_ztbc_1001).
+
+      CLEAR ls_companycode.
+      ls_companycode-sign   = 'I'.
+      ls_companycode-option = 'EQ'.
+      ls_companycode-low    = ls_ztbc_1001-zvalue1.
+      APPEND ls_companycode TO lr_companycode.
+
+    ENDIF.
+
+    SELECT item1~postingdate,
            item1~companycode,
-           item2~companycode                                                            AS companycode2,
            item1~companycodecurrency,
            item1~taxcode,
-          item1~ledger,
-          item1~glaccount,
-          item1~accountingdocument,
-          item1~fiscalyear,
-          item1~fiscalyearperiod,
-          item1~referencedocumentcontext,
-          item1~referencedocument,
-          SUM( item1~amountincompanycodecurrency )                                     AS currency1,
-          SUM( item3~amountincompanycodecurrency )                                      AS currency2,
-          SUM(  item3~amountincompanycodecurrency - item1~amountincompanycodecurrency ) AS currency3,
-      CASE WHEN jour1~accountingdocument = ztfi_1014~accountingdocument1 THEN ' '
-      ELSE ztfi_1014~accountingdocument1 END AS accountingdocument1,
-      CASE WHEN jour2~accountingdocument = ztfi_1014~accountingdocument2 THEN ' '
-      ELSE ztfi_1014~accountingdocument2 END AS accountingdocument2,
-          ztfi_1014~message AS message
-    FROM    i_journalentryitem AS item1
-        INNER JOIN      ztbc_1001                   ON  ztbc_1001~zid     = 'ZFI001'
-                                                    AND ztbc_1001~zvalue1 = item1~glaccount
-        INNER JOIN      ztbc_1001 AS ztbc_1001c     ON  ztbc_1001c~zid     = 'ZFI002'
-                                                    AND ztbc_1001c~zvalue1 = item1~companycode
-        LEFT OUTER JOIN i_journalentryitem AS item2 ON  item1~referencedocumentcontext =  item2~referencedocumentcontext
-                                                    AND item1~referencedocument        =  item2~referencedocument
-                                                    AND item1~companycode              <> item2~companycode
-                                                    AND item2~ledger                   =  '0L'
-        LEFT OUTER JOIN i_journalentryitem AS item3 ON  item1~companycode          = item3~companycode
-                                                    AND item1~accountingdocument   = item3~accountingdocument
-                                                    AND item1~fiscalyear           = item3~fiscalyear
-                                                    AND item3~financialaccounttype = 'K'
-                                                    AND item3~ledger               = '0L'
-        LEFT OUTER JOIN ztfi_1014 ON  ztfi_1014~postingdate            = item1~postingdate
-                                  AND ztfi_1014~companycode            = item1~companycode
-                                  AND ztfi_1014~companycode2           = item2~companycode
-                                  AND ztfi_1014~companycodecurrency    = item1~companycodecurrency
-                                  AND ztfi_1014~taxcode                = item1~taxcode
+           item2~companycode                                                            AS companycode2,
+           item1~glaccount,
+           SUM( item1~amountincompanycodecurrency )                                     AS currency1,
+           SUM( item3~amountincompanycodecurrency )                                     AS currency2,
+*           sum( item3~AmountInCompanyCodeCurrency * -1 )                                     as Currency2,
+*           sum( item3~AmountInCompanyCodeCurrency * -1 - Item1~AmountInCompanyCodeCurrency ) as Currency3,
+           CASE WHEN jour1~accountingdocument = ztfi_1014~accountingdocument1 THEN ' '
+           ELSE ztfi_1014~accountingdocument1 END AS accountingdocument1,
+           CASE WHEN jour2~accountingdocument = ztfi_1014~accountingdocument2 THEN ' '
+           ELSE ztfi_1014~accountingdocument2 END AS accountingdocument2,
+           ztfi_1014~message,
+           ztfi_1014~uuid1,
+           ztfi_1014~uuid2
+      FROM zr_journalentryitem  AS item1
+    INNER JOIN      ztbc_1001                   ON  ztbc_1001~zid     = 'ZFI001'
+                                                AND ztbc_1001~zvalue1 = item1~glaccount
+    LEFT OUTER JOIN i_journalentryitem AS item2 ON  item1~referencedocumentcontext =  item2~referencedocumentcontext
+                                                AND item1~referencedocument        =  item2~referencedocument
+                                                AND item1~companycode              <> item2~companycode
+                                                AND item2~ledger                   =  '0L'
+                                                AND item2~taxcode              IS NOT INITIAL
+    LEFT OUTER JOIN i_journalentryitem AS item3 ON  item1~companycode          = item3~companycode
+                                                AND item1~accountingdocument   = item3~accountingdocument
+                                                AND item1~fiscalyear           = item3~fiscalyear
+                                                AND item3~financialaccounttype = 'K'
+                                                AND item3~ledger               = '0L'
+    LEFT OUTER JOIN ztfi_1014 ON  ztfi_1014~postingdate            = item1~postingdate
+                              AND ztfi_1014~companycode            = item1~companycode
+                              AND ztfi_1014~companycode2           = item2~companycode
+                              AND ztfi_1014~companycodecurrency    = item1~companycodecurrency
+                              AND ztfi_1014~taxcode                = item1~taxcode
     LEFT OUTER JOIN i_journalentryitem AS jour1 ON jour1~companycode = item1~companycode
                                               AND jour1~accountingdocument = ztfi_1014~accountingdocument1
                                               AND jour1~fiscalyear = item1~fiscalyear
                                               AND jour1~isreversed = 'X'
     LEFT OUTER JOIN i_journalentryitem AS jour2 ON jour2~companycode = item2~companycode
                                               AND jour2~accountingdocument = ztfi_1014~accountingdocument2
-                                              AND jour2~fiscalyear = item1~fiscalyear
-                                              AND jour2~isreversed = 'X'
-    WHERE item1~taxcode              IS NOT INITIAL
-      AND item3~financialaccounttype = 'K'
-      AND item1~ledger               = '0L'
-      AND item1~accountingdocumenttype = 'RE'
-    GROUP BY
-      jour1~accountingdocument,
-      jour2~accountingdocument,
-      ztfi_1014~accountingdocument1,
-      ztfi_1014~accountingdocument2,
-      ztfi_1014~message,
-      item1~postingdate,
-      item1~companycode,
-      item2~companycode,
-      item1~companycodecurrency,
-      item1~taxcode,
-      item1~glaccount,
-      item1~accountingdocument,
-      item1~ledger,
-      item2~ledger,
-      item3~ledger,
-      item1~fiscalyearperiod,
-      item1~referencedocumentcontext,
-      item1~referencedocument,
-      item1~fiscalyear
-      INTO TABLE @DATA(lt_item).
+                                              AND jour2~fiscalyear = item1~fiscalyear AND jour2~isreversed = 'X'
+WHERE item1~taxcode              IS NOT INITIAL
+  AND item3~financialaccounttype   = 'K'
+  AND item1~ledger                 = '0L'
+  AND item1~accountingdocumenttype = 'RE'
+  AND item1~postingdate >= @lv_zpostingdatef
+  AND item1~postingdate <= @lv_zpostingdatet
+  AND item1~companycode IN @lr_companycode
+  AND item2~companycode IN @lr_companycode2
+GROUP BY
+  item1~postingdate,
+  jour1~accountingdocument,
+  jour2~accountingdocument,
+  ztfi_1014~accountingdocument1,
+  ztfi_1014~accountingdocument2,
+  ztfi_1014~message,
+  item1~companycode,
+  item2~companycode,
+  item1~companycodecurrency,
+  item1~taxcode,
+  item1~glaccount,
+  ztfi_1014~uuid1,
+  ztfi_1014~uuid2
+  INTO TABLE @DATA(lt_data_l).
+
+    LOOP AT lt_data_l ASSIGNING FIELD-SYMBOL(<lfs_data_l>).
+      CLEAR ls_data.
+      ls_data-zpostingdate = '20240101'.
+      ls_data-postingdate = <lfs_data_l>-postingdate.
+      ls_data-companycode = <lfs_data_l>-companycode.
+      ls_data-companycodecurrency = <lfs_data_l>-companycodecurrency.
+      ls_data-taxcode = <lfs_data_l>-taxcode.
+      ls_data-companycode2 = <lfs_data_l>-companycode2.
+      ls_data-glaccount = <lfs_data_l>-glaccount.
+      ls_data-currency1 = <lfs_data_l>-currency1.
+      ls_data-currency2 = <lfs_data_l>-currency2 * -1.
+      ls_data-currency3 = ls_data-currency2 - ls_data-currency1.
+      ls_data-accountingdocument1 = <lfs_data_l>-accountingdocument1.
+      ls_data-accountingdocument2 = <lfs_data_l>-accountingdocument2.
+      ls_data-message = <lfs_data_l>-message.
+      ls_data-uuid1   = '1001'.
+      ls_data-uuid2   = '1002'.
+      APPEND ls_data TO lt_item.
+    ENDLOOP.
+
 
     DATA:
       lt_deep     TYPE TABLE FOR ACTION IMPORT i_journalentrytp~post,
@@ -139,33 +262,31 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
       ls_deep_rev TYPE STRUCTURE FOR ACTION IMPORT i_journalentrytp~reverse.
 
     DATA:
-      ls_ztfi_1014 TYPE ztfi_1014.
+    ls_ztfi_1014 TYPE ztfi_1014.
 
-    DATA:
-      i          TYPE i,
-      lv_lastday TYPE sy-datum,
-      lv_postingdate TYPE sy-datum,
-      lv_cr(9)   TYPE p DECIMALS 2,
-      lv_cr1(9)  TYPE p DECIMALS 2,
-      lv_cr2(9)  TYPE p DECIMALS 2,
-      lv_dr(9)   TYPE p DECIMALS 2,
-      lv_msg     TYPE string,
-      lv_message TYPE string,
-      lv_fail    TYPE c LENGTH 1.
-
-    CONSTANTS: lc_config_id           TYPE ztbc_1001-zid VALUE `ZFI002`.
-
-    DATA:
-      ls_response       TYPE ts_response.
 * data:lv_uuid TYPE SYSUUID_X16.
     DATA:
       lv_request  TYPE string,
       lv_error(1) TYPE c,
       lv_text     TYPE string.
 
+    DATA:
+      i              TYPE i,
+      lv_lastday     TYPE datum,
+      lv_postingdate TYPE datum,
+      lv_cr(9)       TYPE p DECIMALS 2,
+      lv_cr1(9)      TYPE p DECIMALS 2,
+      lv_cr2(9)      TYPE p DECIMALS 2,
+      lv_dr(9)       TYPE p DECIMALS 2,
+      lv_msg         TYPE string,
+      lv_message     TYPE string,
+      lv_fail        TYPE c LENGTH 1.
+
+    CHECK lt_item IS NOT INITIAL.
+
     SELECT *
     FROM zc_tbc1001
-    WHERE zid = @lc_config_id
+    WHERE zid = 'ZFI002'
     INTO TABLE @DATA(lt_config).              "#EC CI_ALL_FIELDS_NEEDED
     SORT lt_config BY zvalue1 zvalue2.
 
@@ -173,23 +294,25 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
     SORT lt_items BY companycode companycode2.
     DELETE ADJACENT DUPLICATES FROM lt_items COMPARING companycode companycode2.
 
-    IF lt_items IS NOT INITIAL.
-      SELECT *
-      FROM i_suppliercompany
-      FOR ALL ENTRIES IN @lt_items
-      WHERE companycode = @lt_items-companycode
-      OR companycode = @lt_items-companycode2
-      INTO TABLE @DATA(lt_suppliercompany).   "#EC CI_ALL_FIELDS_NEEDED
-      SORT lt_suppliercompany BY supplier companycode.
-    ENDIF.
+    SELECT *
+    FROM i_suppliercompany
+    FOR ALL ENTRIES IN @lt_items
+    WHERE companycode = @lt_items-companycode
+    OR companycode = @lt_items-companycode2
+    INTO TABLE @DATA(lt_suppliercompany).     "#EC CI_ALL_FIELDS_NEEDED
+    SORT lt_suppliercompany BY supplier companycode.
 
     LOOP AT lt_item ASSIGNING FIELD-SYMBOL(<lfs_item>).
-      <lfs_item>-Currency2 = <lfs_item>-Currency2 * -1.
-      <lfs_item>-Currency3 = <lfs_item>-Currency2 * -1 - <lfs_item>-Currency1.
 
       IF <lfs_item>-accountingdocument1 IS NOT INITIAL
       OR <lfs_item>-accountingdocument2 IS NOT INITIAL.
         <lfs_item>-message = '仕訳が既に生成されましたので、ご確認ください。'.
+
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
         CONTINUE.
       ENDIF.
 
@@ -218,8 +341,13 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
           lv_error = 'X'.
           lv_text = 'UUID 作成に失敗しました: ' && lx_uuid_error->get_text( ).
           " 处理错误或记录日志
-*          <lfs_item>-uuid1 = lv_uuid.
+          <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
+          lv_msgt = <lfs_item>-message.
+          TRY.
+              add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+            CATCH cx_bali_runtime.
+          ENDTRY.
           EXIT.
       ENDTRY.
 
@@ -234,15 +362,25 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
           " 处理上下文信息错误
           lv_error = 'X'.
           lv_text = 'システムURLの取得に失敗しました: ' && lx_context_error->get_text( ).
-*          <lfs_item>-uuid1 = lv_uuid.
+          <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
           EXIT.
         CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
           " 处理 HTTP 目的地提供者错误
           lv_error = 'X'.
           lv_text = 'HTTP宛先の作成に失敗しました: ' && lx_http_dest_provider_error->get_text( ).
-*          <lfs_item>-uuid1 = lv_uuid.
+          <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
           EXIT.
       ENDTRY.
 
@@ -264,8 +402,13 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
             lv_error = 'X'.
             lv_text = 'ZC_TBC1001テーブルからユーザー名またはパスワードを読み込めませんでした'.
 
-*            <lfs_item>-uuid1 = lv_uuid.
+            <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
             EXIT.
           ENDIF.
 
@@ -280,8 +423,13 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
           lv_error = 'X'.
           lv_text = 'HTTP 要求失敗: ' && lx_web_http_client_error->get_text( ).
 
-*          <lfs_item>-uuid1 = lv_uuid.
+          <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
           EXIT.
       ENDTRY.
 
@@ -359,8 +507,13 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
           " 在这里处理异常，例如记录错误日志或返回自定义错误消息
           lv_text = 'HTTP リクエストに失敗しました。接続や設定を確認してください。'.
           lv_error = 'X'.
-*          <lfs_item>-uuid1 = lv_uuid.
+          <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
           EXIT.
       ENDTRY.
 
@@ -427,13 +580,18 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
         ls_ztfi_1014-accountingdocument2 = ''.
 *        ls_ztfi_1014-message             = <lfs_item>-message.
         MODIFY ztfi_1014 FROM @ls_ztfi_1014.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'S' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
       ELSE.
         CLEAR <lfs_item>-accountingdocument1.
         lv_string = lo_response->get_text( ).
         lv_text = lv_string2.
 
         lv_error = 'X'.
-*        <lfs_item>-uuid1 = lv_uuid.
+        <lfs_item>-uuid1 = lv_uuid.
         <lfs_item>-message = lv_text.
 
 *       仕訳が転記された後、アドオンテーブルに保存する
@@ -447,6 +605,11 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
         ls_ztfi_1014-accountingdocument2 = ''.
         ls_ztfi_1014-message             = ''.
         MODIFY ztfi_1014 FROM @ls_ztfi_1014.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
         EXIT.
       ENDIF.
 
@@ -474,8 +637,13 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
             lv_error = 'X'.
             lv_text = 'UUID 作成に失敗しました: ' && lx_uuid_error->get_text( ).
             " 处理错误或记录日志
-*            <lfs_item>-uuid1 = lv_uuid.
+            <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
             EXIT.
         ENDTRY.
 
@@ -489,15 +657,25 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
             " 处理上下文信息错误
             lv_error = 'X'.
             lv_text = 'システムURLの取得に失敗しました: ' && lx_context_error->get_text( ).
-*            <lfs_item>-uuid1 = lv_uuid.
+            <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
             EXIT.
           CATCH cx_http_dest_provider_error INTO lx_http_dest_provider_error.
             " 处理 HTTP 目的地提供者错误
             lv_error = 'X'.
             lv_text = 'HTTP宛先の作成に失敗しました: ' && lx_http_dest_provider_error->get_text( ).
-*            <lfs_item>-uuid1 = lv_uuid.
+            <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
             EXIT.
         ENDTRY.
 
@@ -516,8 +694,13 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
               lv_error = 'X'.
               lv_text = 'ZC_TBC1001テーブルからユーザー名またはパスワードを読み込めませんでした'.
 
-*              <lfs_item>-uuid1 = lv_uuid.
+              <lfs_item>-uuid1 = lv_uuid.
               <lfs_item>-message = lv_text.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
               EXIT.
             ENDIF.
 
@@ -532,8 +715,13 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
             lv_error = 'X'.
             lv_text = 'HTTP 要求失敗: ' && lx_web_http_client_error->get_text( ).
 
-*            <lfs_item>-uuid1 = lv_uuid.
+            <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
             EXIT.
         ENDTRY.
 
@@ -616,8 +804,13 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
             " 在这里处理异常，例如记录错误日志或返回自定义错误消息
             lv_text = 'HTTP リクエストに失敗しました。接続や設定を確認してください。'.
             lv_error = 'X'.
-*            <lfs_item>-uuid1 = lv_uuid.
+            <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
             EXIT.
         ENDTRY.
 
@@ -672,13 +865,18 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
           ls_ztfi_1014-accountingdocument2 = <lfs_item>-accountingdocument2.
 *          ls_ztfi_1014-message             = <lfs_item>-message.
           MODIFY ztfi_1014 FROM @ls_ztfi_1014.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'S' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
         ELSE.
           CLEAR <lfs_item>-accountingdocument2.
 
           lv_text = lv_string2.
 
           lv_error = 'X'.
-*          <lfs_item>-uuid1 = lv_uuid.
+          <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
 
 *       仕訳が転記された後、アドオンテーブルに保存する
@@ -692,90 +890,13 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
           ls_ztfi_1014-accountingdocument2 = ''.
           ls_ztfi_1014-message             = ''.
           MODIFY ztfi_1014 FROM @ls_ztfi_1014.
+        lv_msgt = <lfs_item>-message.
+        TRY.
+            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+          CATCH cx_bali_runtime.
+        ENDTRY.
           EXIT.
         ENDIF.
-** document
-*        i += 1.
-*        ls_deep-%cid = |My%CID_{ i }|.
-*
-*        ls_deep-%param-companycode = <lfs_item>-companycode2.
-*        ls_deep-%param-businesstransactiontype = 'RFBU'.
-*        ls_deep-%param-postingdate = lv_lastday.
-*        ls_deep-%param-documentdate = lv_lastday.
-*        ls_deep-%param-accountingdocumenttype = 'KR'.
-*        ls_deep-%param-accountingdocumentheadertext = <lfs_item>-postingdate
-*        && '代行購買転記先会社'
-*        && <lfs_item>-companycode.
-*        CLEAR ls_config.
-*        SELECT SINGLE *
-*        FROM zc_tbc1001
-*        WHERE zid = @lc_config_id
-*        AND zvalue1 = @<lfs_item>-companycode2
-*        AND zvalue2 = @<lfs_item>-companycode
-*        INTO @ls_config.                      "#EC CI_ALL_FIELDS_NEEDED
-*
-*        CLEAR ls_suppliercompany.
-*        SELECT SINGLE *
-*        FROM i_suppliercompany
-*        WHERE supplier = @ls_config-zvalue3
-*        AND companycode = @<lfs_item>-companycode2
-*        INTO @ls_suppliercompany.             "#EC CI_ALL_FIELDS_NEEDED
-*
-*        ls_deep-%param-_glitems =
-*        VALUE #(
-*        ( glaccountlineitem = |001|
-*        glaccount = <lfs_item>-glaccount
-*        documentitemtext = <lfs_item>-postingdate && '代行購買転記先会社' && <lfs_item>-companycode
-*        taxcode = <lfs_item>-taxcode
-*        _currencyamount =
-*        VALUE #( ( currencyrole = '00'
-*        journalentryitemamount = <lfs_item>-currency1
-*        currency = <lfs_item>-companycodecurrency ) )
-*        )
-*        ( glaccountlineitem = |002|
-*        taxcode = <lfs_item>-taxcode
-*        documentitemtext = <lfs_item>-postingdate && '代行購買転記先会社' && <lfs_item>-companycode
-*        _currencyamount =
-*        VALUE #( ( currencyrole = '00'
-*        journalentryitemamount = <lfs_item>-currency3
-*        currency = <lfs_item>-companycodecurrency ) )
-*        )
-*        ( glaccountlineitem = |003|
-*        glaccount = '0021100010'
-*        documentitemtext = <lfs_item>-postingdate && '代行購買転記先会社' && <lfs_item>-companycode
-*        taxcode = <lfs_item>-taxcode
-*        _currencyamount =
-*        VALUE #( ( currencyrole = '00'
-*        journalentryitemamount = <lfs_item>-currency2 * -1
-*        currency = <lfs_item>-companycodecurrency ) )
-*        )
-*
-*        ).
-*
-*        ls_deep-%param-_apitems =
-*        VALUE #(
-*        ( glaccountlineitem = |003|
-*        supplier = ls_config-zvalue3
-*        )
-*
-*        ).
-*
-*        ls_deep-%param-_aritems =
-*        VALUE #(
-*        ( glaccountlineitem = |003|
-*        paymentterms = ls_suppliercompany-paymentterms
-*        )
-*
-*        ).
-*
-*        APPEND ls_deep TO lt_deep.
-
-*        boi( CHANGING ct_deep = lt_deep
-*        cs_response = ls_response
-*        cv_fail = lv_fail
-*        cv_i = i ).
-*
-*        CLEAR: ls_deep, lt_deep.
       ENDIF.
 
 
@@ -783,16 +904,28 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
 
   ENDMETHOD.
 
+
   METHOD if_oo_adt_classrun~main.
-    " for debugger
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
-*    lt_parameters = VALUE #( ( selname = 'P_ID'
+*    lt_parameters = VALUE #( ( selname = 'P_ZPOSTI'
 *                               kind    = if_apj_dt_exec_object=>parameter
 *                               sign    = 'I'
 *                               option  = 'EQ'
-*                               low     = '8B3CF2B54B611EEFA2D72EB68B20D50C' ) ).
+*                               low     = '202411' )
+*                               ( selname = 'P_COM'
+*                               kind    = if_apj_dt_exec_object=>parameter
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1100' )
+**                               ( selname = 'P_COMPANYCODE2'
+**                               kind    = if_apj_dt_exec_object=>parameter
+**                               sign    = 'I'
+**                               option  = 'EQ'
+**                               low     = '1100' )
+*                               ).
     TRY.
-*        if_apj_rt_exec_object~execute( it_parameters = lt_parameters ).
+        if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
+
         if_apj_rt_exec_object~execute( lt_parameters ).
       CATCH cx_root INTO DATA(lo_root).
         out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
@@ -811,9 +944,4 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
         " handle exception
     ENDTRY.
   ENDMETHOD.
-
-  METHOD boi.
-
-  ENDMETHOD.
-
 ENDCLASS.

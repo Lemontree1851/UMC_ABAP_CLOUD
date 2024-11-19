@@ -7,5 +7,16 @@
   },
   "generalInformation": {
     "className": "ZCL_JOB_AGENCYPURCHASINGN"
-  }
+  },
+  "parameters": [
+    {
+      "name": "P_ZPOSTI"
+    },
+    {
+      "name": "P_COM"
+    },
+    {
+      "name": "P_COM2"
+    }
+  ]
 }

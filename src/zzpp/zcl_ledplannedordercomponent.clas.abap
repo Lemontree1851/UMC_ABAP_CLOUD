@@ -88,24 +88,26 @@ CLASS ZCL_LEDPLANNEDORDERCOMPONENT IMPLEMENTATION.
       ENDLOOP.
 
 *     計画手配取得
-      SELECT b~plannedorder,
-             b~plant,
-             b~assembly,
-             a~plannedtotalqtyinbaseunit,
-             b~matlcomprequirementdate,
-             b~billofmaterialitemnumber_2 AS billofmaterialitemnumber,
-             b~material,
-             b~usageprobabilitypercent,
-             b~alternativeitemgroup,
-             b~alternativeitemstrategy,
-             b~alternativeitempriority,
-             b~requiredquantity,
-             b~confirmedavailablequantity,
-             b~mrpcontroller,
-             b~productionsupervisor,
+      SELECT b~plannedorder,                                            "計画手配
+             b~plant,                                                   "プラント
+             b~assembly,                                                "組立品目
+             a~plannedtotalqtyinbaseunit,                               "計画数量
+             b~matlcomprequirementdate,                                 "所要日付
+             b~billofmaterialitemnumber_2 AS billofmaterialitemnumber,  "BOM明細番号
+             b~material,                                                "構成品目
+             b~usageprobabilitypercent,                                 "使用頻度
+             b~alternativeitemgroup,                                    "代替明細グループ
+             b~alternativeitemstrategy,                                 "方針
+             b~alternativeitempriority,                                 "優先度
+             b~requiredquantity,                                        "所要量
+             b~confirmedavailablequantity,                              "利用可能数量
+             b~mrpcontroller,                                           "MRP管理者
+             b~productionsupervisor,                                    "製造責任者
              b~reservation,
              b~reservationitem,
+             b~materialcomponentismissing,
              ' ' AS commitfail,
+             ' ' AS status,
              CAST( ' ' AS CHAR( 50 ) ) AS message
         FROM i_plannedorder WITH PRIVILEGED ACCESS AS a
        INNER JOIN i_plannedordercomponent WITH PRIVILEGED ACCESS AS b
@@ -137,13 +139,15 @@ CLASS ZCL_LEDPLANNEDORDERCOMPONENT IMPLEMENTATION.
         LOOP AT GROUP <fs_l_group> ASSIGNING FIELD-SYMBOL(<fs_l_basicinfo>).
 *         主代替グループの優先度を取得する
           IF <fs_l_basicinfo>-alternativeitemstrategy = lc_strategy_2.
-            IF <fs_l_basicinfo>-plannedtotalqtyinbaseunit <> <fs_l_basicinfo>-confirmedavailablequantity.
+*            IF <fs_l_basicinfo>-plannedtotalqtyinbaseunit <> <fs_l_basicinfo>-confirmedavailablequantity.
+            IF <fs_l_basicinfo>-materialcomponentismissing IS NOT INITIAL.
               <fs_l_basicinfo>-commitfail = abap_true.
+              <fs_l_basicinfo>-status = '1'.
 
               "不足品目がある。
               MESSAGE e101(zpp_001) INTO <fs_l_basicinfo>-message.
 
-              MODIFY lt_basicinfo FROM <fs_l_basicinfo> TRANSPORTING commitfail WHERE plannedorder = <fs_l_basicinfo>-plannedorder.
+              MODIFY lt_basicinfo FROM <fs_l_basicinfo> TRANSPORTING commitfail status WHERE plannedorder = <fs_l_basicinfo>-plannedorder.
 
             ELSEIF <fs_l_basicinfo>-requiredquantity IS NOT INITIAL.
               DATA(ls_tmp) = <fs_l_basicinfo>.
@@ -157,12 +161,14 @@ CLASS ZCL_LEDPLANNEDORDERCOMPONENT IMPLEMENTATION.
           IF sy-subrc = 0.
 *            ls_tmp-usageprobabilitypercent = 0.
             ls_tmp-requiredquantity = 0.
+            ls_tmp-usageprobabilitypercent = 0.
 
-            MODIFY lt_basicinfo FROM ls_tmp TRANSPORTING requiredquantity WHERE plannedorder = ls_tmp-plannedorder
-                                                                            AND alternativeitemgroup = ls_ztbc_1001-zvalue2
-                                                                            AND alternativeitempriority <> ls_tmp-alternativeitempriority.
+            MODIFY lt_basicinfo FROM ls_tmp TRANSPORTING requiredquantity usageprobabilitypercent WHERE plannedorder = ls_tmp-plannedorder
+                                                                                                    AND alternativeitemgroup = ls_ztbc_1001-zvalue2
+                                                                                                    AND alternativeitempriority <> ls_tmp-alternativeitempriority.
           ENDIF.
         ENDIF.
+        CLEAR ls_tmp.
       ENDLOOP.
       SORT lt_basicinfo BY plannedorder    ASCENDING
                            reservation     ASCENDING

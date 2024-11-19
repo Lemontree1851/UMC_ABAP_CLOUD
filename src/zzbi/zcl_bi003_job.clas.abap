@@ -21,7 +21,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_bi003_job IMPLEMENTATION.
+CLASS ZCL_BI003_JOB IMPLEMENTATION.
 
 
   METHOD if_apj_dt_exec_object~get_parameters.
@@ -96,6 +96,7 @@ CLASS zcl_bi003_job IMPLEMENTATION.
 
   ENDMETHOD.
 
+
   METHOD update_report_002.
     DATA: lt_save TYPE STANDARD TABLE OF ztbi_bi003_j02,
           ls_save TYPE ztbi_bi003_j02.
@@ -156,6 +157,7 @@ CLASS zcl_bi003_job IMPLEMENTATION.
 
     MODIFY ztbi_bi003_j02 FROM TABLE @lt_save.
   ENDMETHOD.
+
 
   METHOD update_report_003.
     DATA: lt_save TYPE STANDARD TABLE OF ztbi_bi003_j03,
@@ -225,6 +227,7 @@ CLASS zcl_bi003_job IMPLEMENTATION.
     MODIFY ztbi_bi003_j03 FROM TABLE @lt_save.
   ENDMETHOD.
 
+
   METHOD update_report_004.
     DATA: lt_save TYPE STANDARD TABLE OF ztbi_bi003_j04,
           ls_save TYPE ztbi_bi003_j04.
@@ -287,6 +290,7 @@ CLASS zcl_bi003_job IMPLEMENTATION.
     MODIFY ztbi_bi003_j04 FROM TABLE @lt_save.
   ENDMETHOD.
 
+
   METHOD update_report_005.
     DATA: lt_save TYPE STANDARD TABLE OF ztbi_bi003_j05,
           ls_save TYPE ztbi_bi003_j05.
@@ -345,5 +349,4 @@ CLASS zcl_bi003_job IMPLEMENTATION.
     MODIFY ztbi_bi003_j05 FROM TABLE @lt_save.
 
   ENDMETHOD.
-
 ENDCLASS.

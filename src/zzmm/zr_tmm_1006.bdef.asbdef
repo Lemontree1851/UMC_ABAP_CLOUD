@@ -16,6 +16,8 @@ authorization master ( global )
   PrNo,
   PrItem,
   CreatedAt,
+  PurchaseOrder,
+  PurchaseOrderItem,
   LocalCreatedBy,
   LocalCreatedAt,
   LocalLastChangedBy,
@@ -88,6 +90,8 @@ authorization master ( global )
       PurchaseOrderItem            = purchase_order_item;
       Kyoten                       = kyoten;
       IsApprove                    = is_approve;
+      SupplierMat                  = supplier_mat;
+      PolinkBy                     = polink_by;
       DocumentInfoRecordDocType    = document_info_record_doc_type;
       DocumentInfoRecordDocNumber  = document_info_record_doc_numbe;
       DocumentInfoRecordDocVersion = document_info_record_doc_versi;

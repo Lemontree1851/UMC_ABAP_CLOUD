@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_mfgorder_001 IMPLEMENTATION.
+CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -310,20 +310,23 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
         DATA:lv_isassembly TYPE c VALUE 'X'.
 
         "从会计科目表明细中提取主要材料和辅助材料的帐户和金额合计
-        lv_path = |/API_BILL_OF_MATERIAL_SRV;v=0002/MaterialBOMItem?$filter=IsAssembly%20eq%20'{ lv_isassembly }'%20|.
+        lv_path = |/API_BILL_OF_MATERIAL_SRV;v=0002/MaterialBOMItem?$filter=IsAssembly%20eq%20'{ lv_isassembly }'|.
         "Call API
         zzcl_common_utils=>request_api_v2(
           EXPORTING
            iv_path        = lv_path
             iv_method      = if_web_http_client=>get
             iv_format      = 'json'
+            iv_select = 'BillOfMaterialComponent,Material'
           IMPORTING
             ev_status_code = DATA(lv_stat_code3)
             ev_response    = DATA(lv_resbody_api3) ).
         TRY.
             "JSON->ABAP
-            xco_cp_json=>data->from_string( lv_resbody_api3 )->apply( VALUE #(
-                ( xco_cp_json=>transformation->underscore_to_camel_case ) ) )->write_to( REF #( ls_res_api3 ) ).
+          "  xco_cp_json=>data->from_string( lv_resbody_api3 )->apply( VALUE #(
+          "      ( xco_cp_json=>transformation->underscore_to_camel_case ) ) )->write_to( REF #( ls_res_api3 ) ).
+                /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api3
+                   CHANGING  data = ls_res_api3 ).
             LOOP AT ls_res_api3-d-results INTO DATA(ls_result3).
 
               IF  ls_result3-plant IN lr_plant.
@@ -778,7 +781,9 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
           IF sy-subrc = 0.
             "ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount. "'実際賃率'
             IF ls_actualcostrate-costratescalefactor IS NOT INITIAL.
-              ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount / ls_actualcostrate-costratescalefactor  ."'実際賃率'
+             " ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount / ls_actualcostrate-costratescalefactor  ."'実際賃率'
+             " ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount    ."'実際賃率'
+
               ls_mfgorder_001-costratescalefactor2 = ls_actualcostrate-costratescalefactor.
               ls_mfgorder_001-Currency2 = ls_actualcostrate-Currency.
             ENDIF.

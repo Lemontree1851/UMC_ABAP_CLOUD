@@ -3,20 +3,21 @@
 define root view entity ZR_TSD_1001
   as select from ztsd_1001
 {
-  @EndUserText.label:'Sold-to Party'
+  @EndUserText.label:'受注先'
   key customer as Customer,
+  @EndUserText.label:'請求先'
   key billing_to_party as BillingToParty,
   key plant as Plant,
-  @EndUserText.label:'Issue Sloc.'
-  issue_storage_location as IssueStorageLocation,
-  @EndUserText.label:'Finished Sloc.'
+  @EndUserText.label:'部品倉庫'
+  parts_storage_location as PartsStorageLocation,
+  @EndUserText.label:'製品倉庫'
   finished_storage_location as FinishedStorageLocation,
-  @EndUserText.label:'Return Sloc.'
+  @EndUserText.label:'返品倉庫'
   return_storage_location as ReturnStorageLocation,
-  @EndUserText.label:'Repair Sloc.'
+  @EndUserText.label:'返修出庫倉庫'
   repair_storage_location as RepairStorageLocation,
-  @EndUserText.label:'Vim Sloc.'
-  vim_storage_location as VimStorageLocation,
+  @EndUserText.label:'VMI倉庫'
+  vmi_storage_location as VmiStorageLocation,
   @Semantics.user.createdBy: true
   local_created_by as LocalCreatedBy,
   @Semantics.systemDateTime.createdAt: true

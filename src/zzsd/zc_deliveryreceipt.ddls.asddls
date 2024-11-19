@@ -41,4 +41,5 @@ define root view entity ZC_DeliveryReceipt
   _BC1001.zvalue5 as TheCompanyTelNumber,
   _BC1001.zvalue6 as TheCompanyFaxNumber,
   _BC1001.zvalue7 as TheCompanyName
+  
 }

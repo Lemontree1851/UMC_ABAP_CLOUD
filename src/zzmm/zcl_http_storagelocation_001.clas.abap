@@ -26,6 +26,7 @@ public section.
       END OF ty_inputs,
 
       BEGIN OF ty_output,
+        message type string,
         items TYPE STANDARD TABLE OF ty_response WITH EMPTY KEY,
       END OF ty_output.
 
@@ -70,8 +71,26 @@ CLASS ZCL_HTTP_STORAGELOCATION_001 IMPLEMENTATION.
     WHERE plant = @lt_input-PLANT
     INTO TABLE @DATA(lt_storage).
 
+
+    data:
+        lv_count type i.
+
+
     IF LT_STORAGE IS NOT INITIAL.
+
+      data(LT_STORAGE1) = LT_STORAGE.
+
+      sort LT_STORAGE1 by Plant StorageLocation.
+
+      DELETE ADJACENT DUPLICATES FROM LT_STORAGE1 COMPARING Plant StorageLocation.
+
+        loop    at LT_STORAGE1  INTO data(lw_data).
+            lv_count = lv_count + 1.
+
+        endloop.
+
       LOOP AT LT_STORAGE INTO DATA(LW_STORAGE).
+
         ls_response-Plant                      =   LW_STORAGE-Plant                                .
         ls_response-StorageLocation            =   LW_STORAGE-StorageLocation                      .
         ls_response-StorageLocationName        =   LW_STORAGE-StorageLocationName                  .
@@ -94,7 +113,11 @@ CLASS ZCL_HTTP_STORAGELOCATION_001 IMPLEMENTATION.
 
         APPEND ls_response TO es_response-items.
         CLEAR ls_response.
+
       ENDLOOP.
+
+          es_response-message = |保管場所{ lv_count }件は送信されました。|.
+
 
     ELSE.
         lv_error = 'X'.
@@ -110,6 +133,8 @@ CLASS ZCL_HTTP_STORAGELOCATION_001 IMPLEMENTATION.
 
       "respond with success payload
       response->set_status( '200' ).
+
+
 
       DATA(lv_json_string) = xco_cp_json=>data->from_abap( es_response )->apply( VALUE #(
       ( xco_cp_json=>transformation->underscore_to_pascal_case )

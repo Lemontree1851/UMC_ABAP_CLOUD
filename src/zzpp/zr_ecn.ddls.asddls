@@ -17,8 +17,8 @@ define root custom entity ZR_ECN
   key Plant                         : werks_d;
   
   
-      @UI                           : { lineItem: [ { position: 230, label: '品目' } ], selectionField: [ { position: 30 } ] }
-      @Consumption.filter           : { mandatory: true }
+      @UI                           : { selectionField: [ { position: 30 } ] }
+      @Consumption.filter           : { mandatory: false }
       @Consumption.valueHelpDefinition: [ { entity: { element: 'Material', name: 'ZC_BOMMaterialVH' } } ]
       @EndUserText.label            : '品目'
   key Material                      : abap.char( 40 );
@@ -126,7 +126,7 @@ define root custom entity ZR_ECN
       
 
       
-      @UI                           : { lineItem: [ { position: 230, label: '副明細表示' } ], selectionField: [ { position: 100 } ] }
+      @UI                           : { selectionField: [ { position: 100 } ] }
       @Consumption.filter.selectionType: #SINGLE
       @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_BOOLEAN_VH', element: 'value_low' } }]
       @EndUserText.label            : '副明細表示'

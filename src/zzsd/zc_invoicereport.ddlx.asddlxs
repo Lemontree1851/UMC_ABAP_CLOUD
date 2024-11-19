@@ -14,9 +14,11 @@ annotate entity ZC_INVOICEREPORT with
   BillingDocumentItem;
   @UI.selectionField: [{ position: 10 }]
   @UI.lineItem: [{ position: 48 }]
+  @Consumption.valueHelpDefinition: [{ entity:{name:'I_BillingDocumentTypeStdVH', element:'BillingDocumentType'} }]
   BillingDocumentType;
   @UI.selectionField: [{ position: 40 }]
   @UI.lineItem: [{ position: 40 }]
+  @Consumption.filter.selectionType: #INTERVAL
   BillingDocumentDate;
 //  BillingDocumentItemText;
   @UI.selectionField: [{ position: 20 }]
@@ -40,12 +42,15 @@ annotate entity ZC_INVOICEREPORT with
 //  BillingQuantityUnit;
   @UI.selectionField: [{ position: 35 }]
   @UI.lineItem: [{ position: 45 }]
+  @Consumption.valueHelpDefinition: [{ entity:{name:'I_OverallSDProcessStatus', element:'OverallSDProcessStatus'} }]
+  @EndUserText.label: '会計へリリース'
   OverallSDProcessStatus;
   @UI.selectionField: [{ position: 50 }]
   @UI.lineItem: [{ position: 53 }]
   CreatedByUser;
   @UI.selectionField: [{ position: 55 }]
   @UI.lineItem: [{ position: 55 }]
+  @Consumption.filter.selectionType: #INTERVAL
   CreationDate;
 //  NetAmount;
 //  TransactionCurrency;

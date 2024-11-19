@@ -20,14 +20,14 @@ define root view entity ZR_MFGORDERASSIGNSO
   key case when _AssignItem.sales_order is null
            then ''
            else _AssignItem.sales_order
-           end                                                          as SalesOrder,
+           end                                                                as SalesOrder,
   key case when _AssignItem.sales_order_item is null
            then '000000'
            else _AssignItem.sales_order_item
-           end                                                          as SalesOrderItem,
+           end                                                                as SalesOrderItem,
   key case when _AssignItem.sequence is null
            then '000'
-           else _AssignItem.sequence end                                as Sequence,
+           else _AssignItem.sequence end                                      as Sequence,
       _MfgOrder.MRPController,
       _MfgOrder.ProductionSupervisor,
       _MfgOrder.Material,
@@ -36,20 +36,22 @@ define root view entity ZR_MFGORDERASSIGNSO
       @Semantics.quantity.unitOfMeasure: 'ProductionUnit'
       _MfgOrder.MfgOrderPlannedTotalQty,
       _MfgOrder.ProductionUnit,
-      _MfgOrder.OrderIsReleased,
+
+      case when _MfgOrder.OrderIsReleased is not initial then 'X' else '' end as OrderIsReleased,
 
       @Semantics.quantity.unitOfMeasure: 'ProductionUnit'
-      _AssignItem.assign_qty                                            as AssignQty,
+      _AssignItem.assign_qty                                                  as AssignQty,
 
       _SOItem.PurchaseOrderByCustomer,
+      _SOItem.Material                                                        as ItemMaterial,
       @Semantics.quantity.unitOfMeasure: 'ProductionUnit'
-      cast( _SOItem.RequestedQuantityInBaseUnit as abap.quan( 15, 3 ) ) as RequestedQuantityInBaseUnit,
+      cast( _SOItem.RequestedQuantityInBaseUnit as abap.quan( 15, 3 ) )       as RequestedQuantityInBaseUnit,
 
       @Semantics.quantity.unitOfMeasure: 'ProductionUnit'
       case when _SumAssignQty.TotalAssignQty is null
            then _MfgOrder.MfgOrderPlannedTotalQty
            else _MfgOrder.MfgOrderPlannedTotalQty - _SumAssignQty.TotalAssignQty
-      end                                                               as AvailableAssignQty,
+      end                                                                     as AvailableAssignQty,
 
       _AssignSOItem
 }

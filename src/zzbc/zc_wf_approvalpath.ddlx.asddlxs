@@ -66,9 +66,9 @@ annotate view ZC_WF_ApprovalPath with
 
   @UI.lineItem: [{ position: 70, importance: #MEDIUM, cssDefault.width: '10rem' }]
   @UI.identification: [ { position: 70 } ]
-  @EndUserText.label: 'Location'
+  @EndUserText.label: 'Kyoten'
   @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_WF_Location_VH', element: 'Zvalue1' } }]
-  Location;
+  Kyoten;
 
   @UI.lineItem: [{ position: 80, importance: #MEDIUM, cssDefault.width: '13rem' }]
   @UI.identification: [ { position: 80 } ]

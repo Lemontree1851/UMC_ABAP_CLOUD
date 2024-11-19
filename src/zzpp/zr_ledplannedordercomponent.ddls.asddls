@@ -14,19 +14,19 @@ define root custom entity ZR_LEDPLANNEDORDERCOMPONENT
   key Plant                      : werks_d;
 
       @UI                        : { lineItem: [ { position: 160, label: 'MRP管理者' } ], selectionField: [ { position: 20 } ] }
-      @Consumption.filter        : { selectionType: #SINGLE, multipleSelections: false, mandatory: true }
+      @Consumption.filter        : { selectionType: #HIERARCHY_NODE, multipleSelections: false, mandatory: true }
       @Consumption.valueHelpDefinition: [ { entity: { name: 'I_MRPControllerVH', element: 'MRPController' } } ]
       @EndUserText.label         : 'MRP管理者'
   key MRPController              : dispo;
 
       @UI                        : { lineItem: [ { position: 170, label: '製造責任者' } ], selectionField: [ { position: 30 } ] }
-      @Consumption.filter        : { selectionType: #SINGLE, multipleSelections: false }
-//      @Consumption.valueHelpDefinition: [ { entity: { name: 'I_ProductionSupervisor_VH', element: 'ProductionSupervisor' } } ]
+      @Consumption.filter        : { selectionType: #HIERARCHY_NODE, multipleSelections: false }
+      @Consumption.valueHelpDefinition: [ { entity: { name: 'I_PlndOrderProdnSupervisorVH', element: 'ProductionSupervisor' } } ]
       @EndUserText.label         : '製造責任者'
   key ProductionSupervisor       : abap.char( 3 );
 
       @UI                        : { lineItem: [ { position: 90, label: '構成品目' } ], selectionField: [ { position: 40 } ] }
-      @Consumption.filter        : { selectionType: #SINGLE, multipleSelections: false }
+      @Consumption.filter        : { selectionType: #HIERARCHY_NODE, multipleSelections: false }
       @Consumption.valueHelpDefinition: [ { entity: { name: 'I_ProductStdVH', element: 'Product' } } ]
       @EndUserText.label         : '品目'
   key Material                   : matnr;
@@ -38,7 +38,7 @@ define root custom entity ZR_LEDPLANNEDORDERCOMPONENT
   key MatlCompRequirementDate    : bdter;
 
       @UI                        : { lineItem: [ { position: 30, label: '計画手配' } ], selectionField: [ { position: 60 } ] }
-      @Consumption.filter        : { selectionType: #SINGLE, multipleSelections: false }
+      @Consumption.filter        : { selectionType: #HIERARCHY_NODE, multipleSelections: false }
       @Consumption.valueHelpDefinition: [ { entity: { name: 'I_PlannedOrderStdVH', element: 'PlannedOrder' } } ]
       @EndUserText.label         : '計画手配番号'
   key PlannedOrder               : abap.char( 10 );

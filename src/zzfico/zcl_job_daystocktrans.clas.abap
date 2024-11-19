@@ -31,6 +31,7 @@ CLASS zcl_job_daystocktrans DEFINITION
       BEGIN OF ty_response_h,
         project_no          TYPE string,
         requisition_version TYPE string,
+        currency            TYPE waers,
         valid_f             TYPE string,
         valid_t             TYPE string,
       END OF ty_response_h,
@@ -70,11 +71,37 @@ ENDCLASS.
 
 
 
-CLASS zcl_job_daystocktrans IMPLEMENTATION.
+CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
+
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
+        " handle exception
+    ENDTRY.
+  ENDMETHOD.
+
 
   METHOD if_apj_dt_exec_object~get_parameters.
     " Return the supported selection parameters here
-    et_parameter_def = VALUE #( ( selname        = 'P_COMPANYCODE'
+    et_parameter_def = VALUE #( ( selname        = 'P_COMPAN'
                                   kind           = if_apj_dt_exec_object=>select_option
                                   datatype       = 'char'
                                   length         = 4
@@ -92,6 +119,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
     " Return the default parameters values here
     " et_parameter_val
   ENDMETHOD.
+
 
   METHOD if_apj_rt_exec_object~execute.
 
@@ -283,16 +311,17 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
                       plant   ASCENDING
                       businesspartner ASCENDING.
     DELETE ADJACENT DUPLICATES FROM lt_tmpsql COMPARING product plant businesspartner.
+*    DELETE ADJACENT DUPLICATES FROM lt_tmpsql COMPARING product plant.
 
     SELECT a~material,
            b~producttype,
            a~plant,
-           a~customer,
+           b~businesspartner AS customer,
            a~requirement_qty
       FROM ztpp_1012 AS a
       INNER JOIN @lt_tmpsql AS b ON b~product = a~material
                                 AND b~plant = a~plant
-                                AND b~businesspartner = a~customer
+*                                AND b~businesspartner = a~customer
      WHERE a~requirement_date >= @lv_next_start
        AND a~requirement_date <= @lv_next_end
         INTO TABLE @lt_next.
@@ -310,7 +339,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
 *   売上予測単価を抽出
     TRY.
         DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
-        " Get USAP Access configuration
+        " Get UQMS Access configuration
         SELECT SINGLE *
           FROM zc_tbc1001
          WHERE zid = 'ZBC003'
@@ -331,13 +360,13 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
       CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
       CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
-      zzcl_common_utils=>get_usap_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T01_QUO_H|
-                                                   iv_odata_filter  = lv_filter
-                                                   iv_token_url     = CONV #( ls_config-zvalue3 )
-                                                   iv_client_id     = CONV #( ls_config-zvalue4 )
-                                                   iv_client_secret = CONV #( ls_config-zvalue5 )
-                                         IMPORTING ev_status_code   = DATA(lv_status_code)
-                                                   ev_response      = DATA(lv_response) ).
+      zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T01_QUO_H?sap-language={ zzcl_common_utils=>get_current_language(  ) }|
+                                                              iv_odata_filter  = lv_filter
+                                                              iv_token_url     = CONV #( ls_config-zvalue3 )
+                                                              iv_client_id     = CONV #( ls_config-zvalue4 )
+                                                              iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                    IMPORTING ev_status_code   = DATA(lv_status_code)
+                                                              ev_response      = DATA(lv_response) ).
       IF lv_status_code = 200.
         REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_response  WITH ``.
         REPLACE ALL OCCURRENCES OF `)\/` IN lv_response  WITH ``.
@@ -364,7 +393,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
     lt_next_tmp = lt_next.
     CLEAR lt_next.
     LOOP AT lt_next_tmp ASSIGNING FIELD-SYMBOL(<fs_l_group_next>)
-      GROUP BY ( plant       = <fs_l_group_next>-plant          "プラント
+      GROUP BY ( plant       = <fs_l_group_next>-plant           "プラント
 *                 producttype = <fs_l_group_next>-producttype    "品目タイプ
                  customer    = <fs_l_group_next>-customer ).    "ビジネスパートナ
 
@@ -378,13 +407,13 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
           CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
           CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
           CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
-          zzcl_common_utils=>get_usap_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T02_QUO_D|
-                                                       iv_odata_filter  = lv_filter
-                                                       iv_token_url     = CONV #( ls_config-zvalue3 )
-                                                       iv_client_id     = CONV #( ls_config-zvalue4 )
-                                                       iv_client_secret = CONV #( ls_config-zvalue5 )
-                                             IMPORTING ev_status_code   = lv_status_code
-                                                       ev_response      = lv_response ).
+          zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T02_QUO_D?sap-language={ zzcl_common_utils=>get_current_language( ) }|
+                                                                  iv_odata_filter  = lv_filter
+                                                                  iv_token_url     = CONV #( ls_config-zvalue3 )
+                                                                  iv_client_id     = CONV #( ls_config-zvalue4 )
+                                                                  iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                        IMPORTING ev_status_code   = lv_status_code
+                                                                  ev_response      = lv_response ).
           IF lv_status_code = 200.
             xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
 *              ( xco_cp_json=>transformation->pascal_case_to_underscore )
@@ -392,7 +421,18 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
             ) )->write_to( REF #( ls_response_d ) ).
 
             IF ls_response_d-d-results IS NOT INITIAL.
-              DATA(lv_sales_price) = ls_response_d-d-results[ 1 ]-sales_price.
+*              DATA(lv_sales_price) = ls_response_d-d-results[ 1 ]-sales_price.
+              DATA(lv_sales_price) = zzcl_common_utils=>conversion_amount(
+                                              iv_alpha = 'IN'
+                                              iv_currency = ls_results_h-currency
+                                              iv_input = ls_response_d-d-results[ 1 ]-sales_price ).
+
+              TRY.
+                  <fs_l_next>-salesforcast = <fs_l_next>-requirement_qty * lv_sales_price.
+                  lv_salesforcast = lv_salesforcast + <fs_l_next>-salesforcast.
+                CATCH cx_root.
+                  "handle exception
+              ENDTRY.
               EXIT.
             ENDIF.
           ELSE.
@@ -403,12 +443,6 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
             RETURN.
           ENDIF.
         ENDIF.
-        TRY.
-            <fs_l_next>-salesforcast = <fs_l_next>-requirement_qty * lv_sales_price.
-            lv_salesforcast = lv_salesforcast + <fs_l_next>-salesforcast.
-          CATCH cx_root.
-            "handle exception
-        ENDTRY.
       ENDLOOP.
       <fs_l_group_next>-salesprice = lv_sales_price.
       <fs_l_group_next>-salesforcast = lv_salesforcast.
@@ -520,8 +554,8 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
 
 *     合計
       ls_1016-total = ls_1016-valuationquantity * <fs_l_productplant>-averageprice.
-      ls_1016-yearmonth         = lv_date+0(6).              "会計期間
-      ls_1016-type              = |在庫実績|.                 "タイプ
+      ls_1016-yearmonth         = |{ lv_gjahr } { lv_poper }|."会計期間
+      ls_1016-type              = |在庫実績|.                  "タイプ
 
 *      GET TIME STAMP FIELD lv_timestamp.
       ls_1016-displaycurrency    = <fs_l_group_m>-currency.  "照会通貨
@@ -578,26 +612,28 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
 *    ENDIF.
   ENDMETHOD.
 
+
   METHOD if_oo_adt_classrun~main.
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
-    lt_parameters = VALUE #( ( selname = 'P_COMPAN'
-                               kind    = if_apj_dt_exec_object=>parameter
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '1100' )
-                               ( selname = 'P_PLANT'
-                               kind    = if_apj_dt_exec_object=>parameter
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '1100' ) ).
+*    lt_parameters = VALUE #( ( selname = 'P_COMPAN'
+*                               kind    = if_apj_dt_exec_object=>parameter
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1100' )
+*                               ( selname = 'P_PLANT'
+*                               kind    = if_apj_dt_exec_object=>parameter
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1100' ) ).
     TRY.
-*        if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
+        if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
 
         if_apj_rt_exec_object~execute( lt_parameters ).
       CATCH cx_root INTO DATA(lo_root).
         out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
     ENDTRY.
   ENDMETHOD.
+
 
   METHOD init_application_log.
     TRY.
@@ -610,29 +646,4 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
         " handle exception
     ENDTRY.
   ENDMETHOD.
-
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '1' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
-        " handle exception
-    ENDTRY.
-  ENDMETHOD.
-
 ENDCLASS.

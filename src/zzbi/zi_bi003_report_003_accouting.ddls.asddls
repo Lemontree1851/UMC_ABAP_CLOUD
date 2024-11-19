@@ -38,7 +38,7 @@ define view entity ZI_BI003_REPORT_003_ACCOUTING
 
       _CompanyCode,
 
-      docitem._GLAccountText[Language='J'].GLAccountName,
+      docitem._GLAccountTxt[1:Language = $session.system_language].GLAccountName,
       docitem._MasterFixedAssetText.MasterFixedAssetDescription as FixedAssetDescription
 
 }

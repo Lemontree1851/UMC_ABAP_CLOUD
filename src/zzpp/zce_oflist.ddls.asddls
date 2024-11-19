@@ -13,7 +13,7 @@ define custom entity ZCE_OFLIST
   key PlndIndepRqmtPeriod           : abap.char(8);
   key PeriodType                    : abap.char(1);
       ProductDescription            : maktx;
-      MaterialByCustomer            : matnr;
+      MaterialByCustomer            : abap.char(35);
       PlndIndepRqmtIsActive         : abap_boolean;
       MfgOrderConfirmationEntryDate : abap.char(8);
       RequirementDate               : abap.char(8);

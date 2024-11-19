@@ -26,7 +26,9 @@ define root custom entity ZC_COMPONENTUSAGELIST
       BillOfMaterialItemUnit        : meins;
       AlternativeItemStrategy       : abap.char( 1 );
       AlternativeItemPriority       : abap.numc( 2 );
-      BOMSubItemInstallationPoint   : abap.char( 100 );
+      BOMSubItemInstallationPoint   : abap.char( 900 );
+      
+      //checkbox field
       NoDisplayNonProduct           : abap_boolean;
-      DisplayPurchasingInfo         : abap_boolean;
+//      DisplayPurchasingInfo         : abap_boolean;
 }
