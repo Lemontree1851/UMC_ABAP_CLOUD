@@ -365,6 +365,7 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
                                                                     iv_token_url     = CONV #( ls_config-zvalue3 )
                                                                     iv_client_id     = CONV #( ls_config-zvalue4 )
                                                                     iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                                    iv_authtype      = 'OAuth2.0'
                                                           IMPORTING ev_status_code   = DATA(lv_status_code)
                                                                     ev_response      = DATA(lv_response) ).
             IF lv_status_code = 200.

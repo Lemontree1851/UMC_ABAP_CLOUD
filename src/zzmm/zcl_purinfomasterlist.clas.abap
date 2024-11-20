@@ -113,7 +113,9 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
       ls_valuation_api TYPE ts_valuation,
       ls_valuation_ecn TYPE ts_valuation_api.
 
-    DATA:lv_path2          TYPE string.
+    DATA:lv_path2 TYPE string,
+         lv_dec   TYPE i.
+
 
 *    IF io_request->is_data_requested( ).
     TRY.
@@ -146,6 +148,8 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
             CLEAR ls_purchasingorganization.
           WHEN 'MATERIAL'.
             MOVE-CORRESPONDING str_rec_l_range TO ls_material.
+            ls_material-low = |{ ls_material-low ALPHA = IN }|.
+            ls_material-high = |{ ls_material-high ALPHA = IN }|.
             APPEND ls_material TO lr_material.
             CLEAR ls_material.
           WHEN 'SUPPLIERMATERIALNUMBER'.
@@ -154,6 +158,8 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
             CLEAR ls_suppliermaterialnumber.
           WHEN 'SUPPLIER'.
             MOVE-CORRESPONDING str_rec_l_range TO ls_supplier.
+            ls_supplier-low = |{ ls_supplier-low ALPHA = IN }|.
+            ls_supplier-high = |{ ls_supplier-high ALPHA = IN }|.
             APPEND ls_supplier TO lr_supplier.
             CLEAR ls_supplier.
           WHEN 'PURCHASINGGROUP'.
@@ -278,6 +284,7 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
         AND zvalue1 = d~taxcode
       WHERE d~plant IN @lr_plant
         AND d~purchasingorganization IN @lr_purchasingorganization
+        AND d~incotermsclassification IN @lr_incotermsclassification
         AND d~purchasinggroup IN @lr_purchasinggroup
         AND a~purchasinginforecord IN @lr_purchasinginforecord
         AND a~supplier IN @lr_supplier
@@ -287,7 +294,7 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
         AND b~manufacturernumber IN @lr_manufacturernumber
         AND b~productmanufacturernumber IN @lr_productmanufacturernumber
         AND o~supplierisfixed IN @lr_supplierisfixed
-        AND o~plant IN @lr_plant
+        AND d~plant IN @lr_plant
         AND d~purchasingorganization IN @lr_purchasingorganization
       INTO TABLE @DATA(lt_purinfoitem2).
 
@@ -316,32 +323,32 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
       DATA(lv_select) = |ConditionRecord,ConditionValidityStartDate,ConditionValidityEndDate,PurchasingInfoRecord| &&
                         |,Supplier,Material,Plant,PurchasingOrganization,PurchasingInfoRecordCategory|.
 
-      lv_filter = |ConditionType eq 'PPR0'|.
-
-      CLEAR lv_count.
-      LOOP AT lt_supplier INto DATA(ls_supplier1).
-        lv_count += 1.
-        IF lv_count = 1.
-          lv_filter = |{ lv_filter } and (Supplier eq '{ ls_supplier1-supplier }'|.
-        ELSE.
-          lv_filter = |{ lv_filter } or Supplier eq '{ ls_supplier1-supplier }'|.
-        ENDIF.
-      ENDLOOP.
-      lv_filter = |{ lv_filter })|.
-
-      CLEAR lv_count.
-      LOOP AT lt_material INTO DATA(ls_material1).
-        lv_count += 1.
-        IF lv_count = 1.
-          lv_filter = |{ lv_filter } and (Material eq '{ ls_material1-material }'|.
-          lv_filter2 = |(Product eq '{ ls_material1-material }'|.
-        ELSE.
-          lv_filter = |{ lv_filter } or Material eq '{ ls_material1-material }'|.
-          lv_filter2 = |{ lv_filter2 } or Product eq '{ ls_material1-material }'|.
-        ENDIF.
-      ENDLOOP.
-      lv_filter = |{ lv_filter })|.
-      lv_filter2 = |{ lv_filter2 })|.
+      lv_filter = |ConditionType eq 'PPR0' and Supplier ne '' and Material ne ''|.
+      lv_filter2 = |Product ne ''|.
+*      CLEAR lv_count.
+*      LOOP AT lt_supplier INto DATA(ls_supplier1).
+*        lv_count += 1.
+*        IF lv_count = 1.
+*          lv_filter = |{ lv_filter } and (Supplier eq '{ ls_supplier1-supplier }'|.
+*        ELSE.
+*          lv_filter = |{ lv_filter } or Supplier eq '{ ls_supplier1-supplier }'|.
+*        ENDIF.
+*      ENDLOOP.
+*      lv_filter = |{ lv_filter })|.
+*
+*      CLEAR lv_count.
+*      LOOP AT lt_material INTO DATA(ls_material1).
+*        lv_count += 1.
+*        IF lv_count = 1.
+*          lv_filter = |{ lv_filter } and (Material eq '{ ls_material1-material }'|.
+*          lv_filter2 = |(Product eq '{ ls_material1-material }'|.
+*        ELSE.
+*          lv_filter = |{ lv_filter } or Material eq '{ ls_material1-material }'|.
+*          lv_filter2 = |{ lv_filter2 } or Product eq '{ ls_material1-material }'|.
+*        ENDIF.
+*      ENDLOOP.
+*      lv_filter = |{ lv_filter })|.
+*      lv_filter2 = |{ lv_filter2 })|.
 
       CLEAR lv_count.
       LOOP AT lt_plant INTO DATA(ls_plant1).
@@ -430,7 +437,7 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
         EXPORTING
           iv_path        = lv_path2
           iv_method      = if_web_http_client=>get
-*          iv_filter      = lv_filter2
+          iv_filter      = lv_filter2
           iv_format      = 'json'
         IMPORTING
           ev_status_code = DATA(lv_stat_code)
@@ -502,16 +509,20 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
       lw_data-deliverylt = lw_data2-materialplanneddeliverydurn + lrs_plusday-low.
 
       IF lw_data2-materialpriceunitqty <> 0.
-        lv_unitprice_plnt = lw_data2-netpriceamount / lw_data2-materialpriceunitqty.
+        lv_unitprice_plnt = zzcl_common_utils=>conversion_amount( iv_alpha    = zzcl_common_utils=>lc_alpha_out
+                                                                  iv_currency = lw_data2-currency_plnt
+                                                                  iv_input    = lw_data2-netpriceamount ).
+        lv_unitprice_plnt = lv_unitprice_plnt / lw_data2-materialpriceunitqty.
 
-        lw_data-unitprice_plnt = round(
-        val = lv_unitprice_plnt
-        dec = 3
-        mode = cl_abap_math=>round_half_up
-        ).
+        IF lw_data2-currency_plnt = 'JPY'.
+          lv_dec = 3.
+        ELSE.
+          lv_dec = 5.
+        ENDIF.
+
         lw_data-standardpurchaseorderquantity = round(
         val = lv_unitprice_plnt
-        dec = 3
+        dec = lv_dec
         mode = cl_abap_math=>round_half_up
         ).
       ELSE.
@@ -520,7 +531,7 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
       ENDIF.
 
       IF lv_unitprice_plnt IS NOT INITIAL AND lw_data2-zvalue2 IS NOT INITIAL AND lw_data2-zvalue2 <> 0.
-        lw_data-taxprice = lv_unitprice_plnt * lw_data2-zvalue2.
+        lw_data-taxprice = lv_unitprice_plnt * lw_data2-zvalue2 / 100.
       ELSE.
         " 如果有字段为空或为零，设置税价为零或其他默认值
         lw_data-taxprice = 0.
@@ -533,7 +544,9 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
                BINARY SEARCH.
 
       IF sy-subrc = 0. " 如果找到记录
-
+        lw_data-unitprice_plnt = zzcl_common_utils=>conversion_amount( iv_alpha    = zzcl_common_utils=>lc_alpha_in
+                                                                  iv_currency = lw_unitprice-currency
+                                                                  iv_input    = lw_unitprice-standardprice ).
         lw_data-valuationclass    = lw_unitprice-valuationclass.
         lw_data-priceunitqty      = lw_unitprice-priceunitqty.
         lw_data-currency_standard = lw_unitprice-currency.
@@ -543,17 +556,23 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
           " 计算标准单价
           lv_unitprice_standard = lw_unitprice-standardprice / lw_unitprice-priceunitqty.
 
+          IF lw_unitprice-currency = 'JPY'.
+            lv_dec = 3.
+          ELSE.
+            lv_dec = 5.
+          ENDIF.
+
           " 四舍五入至3位小数
           lw_data-unitprice_standard = round(
               val = lv_unitprice_standard
-              dec = 3
+              dec = lv_dec
               mode = cl_abap_math=>round_half_up
           ).
         ELSE.
           lw_data-unitprice_standard = 0.
         ENDIF.
 
-        lv_price = abs( lw_data-unitprice_standard - lw_data-unitprice_plnt ).
+        lv_price = abs( lw_data-unitprice_standard - lw_data-standardpurchaseorderquantity ).
 
 *        IF lv_price IS NOT INITIAL AND lw_data-materialpriceunitqty IS NOT INITIAL.
         IF lv_price IS NOT INITIAL AND lw_data-unitprice_standard IS NOT INITIAL.

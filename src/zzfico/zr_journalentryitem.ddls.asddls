@@ -12,8 +12,8 @@ define root view entity ZR_JournalEntryItem
   key Item1.PostingDate as aPostingDate,  
 //           case when Item1.PostingDate is initial then '000000'
 //           else substring( Item1.PostingDate ,1,6 ) end as PostingDate,  
-      '202411' as PostingDate,    
-//      substring( Item1.PostingDate ,1,6 ) as PostingDate, 
+//      '202411' as PostingDate,    
+      substring( Item1.PostingDate ,1,6 ) as PostingDate, 
       '20240101' as zPostingDate,  
       Item1.GLAccount,
       Item1.ReferenceDocumentContext,

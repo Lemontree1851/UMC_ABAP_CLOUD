@@ -158,20 +158,22 @@ CLASS zcl_http_purchase_001 IMPLEMENTATION.
 
         " 组装输出数据
         CLEAR ls_response.
+
+*        ls_porecord01-baseunit = |{ ls_porecord01-baseunit ALPHA = IN }|.
         ls_response-baseunit                       = ls_porecord01-baseunit.
         ls_response-suppliercertorigincountry      = ls_porecord01-suppliercertorigincountry.
         ls_response-purchasinginforecord           = ls_porecord01-purchasinginforecord.
         ls_response-suppliermaterialnumber         = ls_porecord01-suppliermaterialnumber.
 
-*        " 价格设置日控制文本处理
-*        CASE ls_porecord02-pricingdatecontrol.
-*          WHEN '1'.
-*            ls_response-pricingdatecontrol = '購買発注日付'.
-*          WHEN '2'.
-*            ls_response-pricingdatecontrol = '納入期日'.
-*          WHEN OTHERS.
-*            ls_response-pricingdatecontrol = ''. " 可以定义一个默认值
-*        ENDCASE.
+        " 价格设置日控制文本处理
+        CASE ls_porecord02-pricingdatecontrol.
+          WHEN '1'.
+            ls_response-pricingdatecontrol = '購買発注日付'.
+          WHEN '2'.
+            ls_response-pricingdatecontrol = '納入期日'.
+          WHEN OTHERS.
+            ls_response-pricingdatecontrol = ''. " 可以定义一个默认值
+        ENDCASE.
 
         " 计算单价
         IF ls_porecord02-pricevalidityenddate >= sy-datum.

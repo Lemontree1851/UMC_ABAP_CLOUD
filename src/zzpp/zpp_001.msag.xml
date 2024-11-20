@@ -662,6 +662,18 @@
      <MSGNR>108</MSGNR>
      <TEXT>会社コード&amp;1に対し、BP &amp;2は存在しません！</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>109</MSGNR>
+     <TEXT>転記日付とS4HCの会計期間をチェックしてください！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>110</MSGNR>
+     <TEXT>該当データは前回処理済みです！</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

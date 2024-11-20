@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
+CLASS zcl_mfgorder_001 IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -282,7 +282,7 @@ CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
          ON a~product = b~product
          FOR ALL ENTRIES IN @lt_matnr
          WHERE a~product =  @lt_matnr-producedproduct
-         AND plant IN @lr_plant
+         "AND plant IN @lr_plant
          AND producttype = 'ZFRT'
          INTO TABLE @DATA(lt_productplant).
         SORT lt_productplant BY product.
@@ -329,7 +329,7 @@ CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
                    CHANGING  data = ls_res_api3 ).
             LOOP AT ls_res_api3-d-results INTO DATA(ls_result3).
 
-              IF  ls_result3-plant IN lr_plant.
+              "IF  ls_result3-plant IN lr_plant.
                 CLEAR ls_component.
                 "ls_component-assembly = ls_result3-billofmaterialcomponent.
                 "ls_component-material = ls_result3-material.
@@ -337,7 +337,7 @@ CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
                 ls_component-material = ls_result3-billofmaterialcomponent.
                 APPEND ls_component TO lt_component.
 
-              ENDIF.
+             " ENDIF.
             ENDLOOP.
             SORT lt_component BY material assembly.
             DELETE ADJACENT DUPLICATES FROM lt_component COMPARING material assembly.
@@ -383,7 +383,7 @@ CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
           WITH PRIVILEGED ACCESS
            FOR ALL ENTRIES IN @lt_order
           WHERE manufacturingorder = @lt_order-orderid
-          AND productionplant IN @lr_plant
+          "AND productionplant IN @lr_plant
           AND companycode IN @lr_companycode
            INTO TABLE @DATA(lt_manufacturingorder).
           SORT lt_manufacturingorder BY manufacturingorder.

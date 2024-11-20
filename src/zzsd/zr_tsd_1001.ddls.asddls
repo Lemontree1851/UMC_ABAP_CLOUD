@@ -3,10 +3,10 @@
 define root view entity ZR_TSD_1001
   as select from ztsd_1001
 {
-  @EndUserText.label:'受注先'
+  @EndUserText.label:'得意先'
   key customer as Customer,
   @EndUserText.label:'請求先'
-  key billing_to_party as BillingToParty,
+  key billing_to_party  as BillingToParty,
   key plant as Plant,
   @EndUserText.label:'部品倉庫'
   parts_storage_location as PartsStorageLocation,
@@ -14,7 +14,7 @@ define root view entity ZR_TSD_1001
   finished_storage_location as FinishedStorageLocation,
   @EndUserText.label:'返品倉庫'
   return_storage_location as ReturnStorageLocation,
-  @EndUserText.label:'返修出庫倉庫'
+  @EndUserText.label:'修理品倉庫'
   repair_storage_location as RepairStorageLocation,
   @EndUserText.label:'VMI倉庫'
   vmi_storage_location as VmiStorageLocation,

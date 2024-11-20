@@ -397,8 +397,28 @@ CLASS lhc_purchasereq IMPLEMENTATION.
       CLEAR records.
       /ui2/cl_json=>deserialize(  EXPORTING json = key-%param-zzkey
                                   CHANGING  data = records ).
-
+      IF records IS NOT INITIAL.
+        SELECT
+          *
+        FROM ztmm_1006
+        FOR ALL ENTRIES IN @records
+        WHERE uuid = @records-uuid
+        INTO TABLE @DATA(lt_mm1006).
+        SORT lt_mm1006 BY pr_no.
+      ENDIF.
       LOOP AT records INTO record.
+        READ TABLE lt_mm1006 INTO DATA(ls_mm1006) WITH KEY pr_no = record-prno BINARY SEARCH.
+        IF sy-subrc = 0.
+          " 提交申请时数据状态只能为1（登録済）
+          IF ls_mm1006-approve_status <> '1'.
+            record-type = 'E'.
+            MESSAGE e027(zmm_001) WITH record-prno record-pritem INTO record-message.
+            MODIFY records FROM record.
+            CONTINUE.
+          ENDIF.
+        ELSE.
+          " TODO 找不到数据应该报错，刷新界面，但概率较小
+        ENDIF.
         record-workflowid = 'purchaserequisition'.
         CLEAR lv_new.
         "1. 获取审批流的uuid
@@ -467,10 +487,14 @@ CLASS lhc_purchasereq IMPLEMENTATION.
           UPDATE ztmm_1006
              SET workflow_id   = @record-workflowid,
                 application_id = @record-applicationid,
-                instance_id    = @lv_instanceid
+                instance_id    = @lv_instanceid,
+                apply_date = @sy-datum,
+                apply_time = @sy-uzeit
          WHERE pr_no = @record-prno.
         ENDIF.
         "7. 生成审批流同时添加审批流日志
+        DATA lv_approve_status TYPE ztmm_1006-approve_status.
+        lv_approve_status = '2'.
         zzcl_wf_utils=>add_approval_history(
                           iv_workflowid     = record-workflowid
                           iv_instanceid     = lv_instanceid
@@ -478,22 +502,20 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                           iv_nextnode       = lv_next_node
                           iv_operator       = CONV #( record-userfullname )
                           iv_email          = CONV #( record-useremail )
-                          iv_approvalstatus = '2'"审批中
+                          iv_approvalstatus = lv_approve_status"审批中
                           iv_remark         = '提交审批' ).
 
         record-message = '申请成功'.
         record-type = 'S'.
         record-instanceid = lv_instanceid.
-        MODIFY records FROM record TRANSPORTING message type instanceid applicationid.
+        record-approvestatus = lv_approve_status.
+        MODIFY records FROM record TRANSPORTING message type instanceid applicationid approvestatus.
       ENDLOOP.
 
       DATA(lv_json) = /ui2/cl_json=>serialize( records ).
       APPEND VALUE #( %cid    = key-%cid
                       %param  = VALUE #( zzkey = lv_json ) ) TO result.
     ENDLOOP.
-
-
-
   ENDMETHOD.
   METHOD revoke.
     DATA:
@@ -567,6 +589,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         ENDIF.
 
         "6. 生成审批流同时添加审批流日志
+        DATA lv_approve_status TYPE ztmm_1006-approve_status.
+        lv_approve_status = '1'.
         zzcl_wf_utils=>add_approval_history(
                           iv_workflowid     = ls_ztmm_1006-workflow_id
                           iv_instanceid     = ls_ztmm_1006-instance_id
@@ -574,17 +598,18 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                           iv_nextnode       = lv_next_node
                           iv_operator       = CONV #( record-userfullname )
                           iv_email          = CONV #( record-useremail )
-                          iv_approvalstatus = '1'
+                          iv_approvalstatus = lv_approve_status
                           iv_reject         =  abap_true
                           iv_remark         = '撤回' ).
+        record-message = '撤回成功'.
+        record-type = 'S'.
+        record-approvestatus = lv_approve_status.
+        MODIFY records FROM record TRANSPORTING message type approvestatus.
       ENDLOOP.
 
       DATA(lv_json) = /ui2/cl_json=>serialize( records ).
       APPEND VALUE #( %cid    = key-%cid
                       %param  = VALUE #( zzkey = lv_json ) ) TO result.
-      record-message = '撤回成功'.
-      record-type = 'S'.
-      MODIFY records FROM record TRANSPORTING message type.
     ENDLOOP.
 
 

@@ -35,6 +35,9 @@ FUNCTION zzfg_dtimp_sd_1001.
 
   LOOP AT eo_data->* ASSIGNING FIELD-SYMBOL(<fs_record>).
     MOVE-CORRESPONDING <fs_record> TO ls_data.
+    ls_data-customer = |{ ls_data-customer ALPHA = IN }|.
+    ls_data-billing_to_party = |{ ls_data-billing_to_party ALPHA = IN }|.
+    ls_data-plant = |{ ls_data-plant ALPHA = IN }|.
     READ TABLE lt_old_data INTO DATA(ls_old_data) WITH KEY customer = ls_data-customer
         billing_to_party = ls_data-billing_to_party plant = ls_data-plant BINARY SEARCH.
     IF sy-subrc = 0.
@@ -51,10 +54,12 @@ FUNCTION zzfg_dtimp_sd_1001.
     MODIFY ztsd_1001 FROM @ls_data.
     IF sy-subrc = 0.
       COMMIT WORK AND WAIT.
+      <fs_record>-('type') = 'S'.
+      <fs_record>-('message') = 'Successed.'.
     ELSE.
       ROLLBACK WORK.
-      MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <fs_record>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-      <fs_record>-('Type') = 'E'.
+      MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <fs_record>-('message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+      <fs_record>-('type') = 'E'.
     ENDIF.
   ENDLOOP.
 ENDFUNCTION.

@@ -196,7 +196,7 @@ CLASS zzcl_common_utils DEFINITION
                                           iv_token_url          TYPE string OPTIONAL
                                           iv_client_id          TYPE string OPTIONAL
                                           iv_client_secret      TYPE string OPTIONAL
-                                          iv_no_authorization   TYPE abap_boolean OPTIONAL
+                                          iv_authtype           TYPE string
                                 EXPORTING VALUE(ev_status_code) TYPE if_web_http_response=>http_status-code
                                           VALUE(ev_response)    TYPE string,
 
@@ -668,7 +668,7 @@ CLASS zzcl_common_utils IMPLEMENTATION.
 
   METHOD get_externalsystems_cdata.
 
-    IF iv_no_authorization = abap_false.
+    IF iv_authtype = 'OAuth2.0'.
       get_access_token( EXPORTING iv_token_url     = iv_token_url
                                   iv_client_id     = iv_client_id
                                   iv_client_secret = iv_client_secret
@@ -685,9 +685,12 @@ CLASS zzcl_common_utils IMPLEMENTATION.
         DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_http_destination ).
         DATA(lo_request) = lo_http_client->get_http_request( ).
 
-        IF iv_no_authorization = abap_false.
-          lo_request->set_header_field( i_name = 'Authorization' i_value = |{ ls_response-token_type } { ls_response-access_token }| ).
-        ENDIF.
+        CASE iv_authtype.
+          WHEN 'OAuth2.0'.
+            lo_request->set_header_field( i_name = 'Authorization' i_value = |{ ls_response-token_type } { ls_response-access_token }| ).
+          WHEN 'Basic'.
+            lo_request->set_authorization_basic( i_username = iv_client_id i_password = iv_client_secret ).
+        ENDCASE.
 
         lo_request->set_header_field( i_name = 'Accept' i_value = 'application/json' ).
 

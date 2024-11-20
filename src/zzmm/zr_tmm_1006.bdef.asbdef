@@ -41,7 +41,9 @@ authorization master ( global )
     Price,
     IsLink,
     Kyoten,
-    BuyPurpoose;
+    BuyPurpoose,
+    PolinkBy,
+    PrBy;
     create; }
 
   mapping for ztmm_1006

@@ -108,14 +108,19 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
       ls_res       TYPE ty_res,
       ls_req_api   TYPE ty_req_api,
       ls_res_api   TYPE ty_res_api,
-      lv_path      TYPE string.
+      lv_path      TYPE string,
+      lv_monat     TYPE monat,
+      lv_previous_processed TYPE ztpp_1004-messagetype.
 
     CONSTANTS:
       lc_msgid         TYPE string     VALUE 'ZPP_001',
       lc_msgty         TYPE string     VALUE 'E',
+      lc_msgty_s       TYPE string     VALUE 'S',
+      lc_msgty_w       TYPE string     VALUE 'W',
       lc_stat_code_201 TYPE string     VALUE '201',
       lc_alpha_in      TYPE string     VALUE 'IN',
       lc_updateflag_i  TYPE string     VALUE 'I',
+      lc_updateflag_c  TYPE string     VALUE 'C',
       lc_sequence_0    TYPE string     VALUE '0',
       lc_count_10      TYPE i          VALUE '10',
       lc_second_in_ms  TYPE i          VALUE '1000',
@@ -326,7 +331,72 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
           RAISE EXCEPTION TYPE cx_abap_invalid_value.
         ENDIF.
 
+        "Check fiscal year and period
+        zzcl_common_utils=>get_fiscal_year_period(
+          EXPORTING
+            iv_date   = ls_ztpp_1004-postingdate
+          IMPORTING
+            ev_year   = DATA(lv_fiscal_year)
+            ev_period = DATA(lv_fiscal_period) ).
+        lv_monat = lv_fiscal_period+1(2).
+        SELECT COUNT(*)
+          FROM I_CompanyCodePeriod WITH PRIVILEGED ACCESS
+         WHERE CompanyCode = @ls_ztpp_1004-plant
+           AND ( ( FiscalMonthCurrentPeriod  = @lv_monat AND ProductCurrentFiscalYear     = @lv_fiscal_year )
+              OR ( FiscalMonthPreviousPeriod = @lv_monat AND ProdPreviousPeriodFiscalYear = @lv_fiscal_year ) ).
+        IF sy-subrc <> 0.
+          "記日付とS4HCの会計期間をチェックしてください！
+          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 109 INTO ls_res-_msg.
+          RAISE EXCEPTION TYPE cx_abap_invalid_value.
+        ENDIF.
+
+        "Check previous processed
+        SELECT umesid,
+               plant,
+               pgmid,
+               creationdate,
+               mfgorderconfirmationgroup,
+               mfgorderconfirmation,
+               updateflag
+          FROM ztpp_1004
+         WHERE umesid      = @ls_ztpp_1004-umesid
+           AND updateflag  = @lc_updateflag_i      "登録
+           AND messagetype = @lc_msgty_s
+         ORDER BY creationdate DESCENDING
+          INTO TABLE @DATA(lt_ztpp_1004_i).
+
+        SELECT umesid,
+               plant,
+               pgmid,
+               creationdate,
+               mfgorderconfirmationgroup,
+               mfgorderconfirmation,
+               updateflag
+          FROM ztpp_1004
+         WHERE umesid      = @ls_ztpp_1004-umesid
+           AND updateflag  = @lc_updateflag_c      "取り消し
+           AND messagetype = @lc_msgty_s
+         ORDER BY creationdate DESCENDING
+          INTO TABLE @DATA(lt_ztpp_1004_c).
+
+        IF lines( lt_ztpp_1004_i ) - lines( lt_ztpp_1004_c ) = 1.
+          lv_previous_processed = lc_msgty_w.
+        ELSE.
+          CLEAR lv_previous_processed.
+        ENDIF.
+
         ls_res-_data-_u_m_e_s_i_d = ls_ztpp_1004-umesid.
+
+        IF lv_previous_processed = lc_msgty_w.
+          READ TABLE lt_ztpp_1004_i INTO DATA(ls_ztpp_1004_i) iNDEX 1.
+          ls_res-_data-_mfg_order_confirmation_group = |{ ls_ztpp_1004_i-mfgorderconfirmationgroup ALPHA = OUT }|.
+          ls_res-_data-_mfg_order_confirmation       = |{ ls_ztpp_1004_i-mfgorderconfirmation ALPHA = OUT }|.
+          CONDENSE ls_res-_data-_mfg_order_confirmation_group NO-GAPS.
+          CONDENSE ls_res-_data-_mfg_order_confirmation NO-GAPS.
+          "該当データは前回処理済みです！
+          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 110 INTO ls_res-_msg.
+          ls_res-_msgty = lv_previous_processed.
+        ELSE.
 
         "/API_PROD_ORDER_CONFIRMATION_2_SRV/ProdnOrdConf2
         lv_path = '/API_PROD_ORDER_CONFIRMATION_2_SRV/ProdnOrdConf2'.
@@ -367,9 +437,12 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
             ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_res_api ) ).
 
         IF lv_stat_code = lc_stat_code_201.
-          ls_res-_data-_mfg_order_confirmation_group = ls_res_api-d-confirmation_group.
-          ls_res-_data-_mfg_order_confirmation       = ls_res_api-d-confirmation_count.
-
+          "ls_res-_data-_mfg_order_confirmation_group = ls_res_api-d-confirmation_group.
+          "ls_res-_data-_mfg_order_confirmation       = ls_res_api-d-confirmation_count.
+          ls_res-_data-_mfg_order_confirmation_group = |{ ls_res_api-d-confirmation_group ALPHA = OUT }|.
+          ls_res-_data-_mfg_order_confirmation       = |{ ls_res_api-d-confirmation_count ALPHA = OUT }|.
+          CONDENSE ls_res-_data-_mfg_order_confirmation_group NO-GAPS.
+          CONDENSE ls_res-_data-_mfg_order_confirmation NO-GAPS.
           "作業実績確認は成功しました！
           MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 048 INTO ls_res-_msg.
           ls_res-_msgty = 'S'.
@@ -379,6 +452,9 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
           ls_res-_msg = ls_res-_msg && ls_res_api-error-message-value.
           RAISE EXCEPTION TYPE cx_abap_api_state.
         ENDIF.
+
+        ENDIF.
+
       CATCH cx_root INTO lo_root_exc.
         ls_res-_msgty = 'E'.
     ENDTRY.
@@ -388,9 +464,6 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
 *                                                 compress = 'X'
                                                  pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
 
-    "Set request data
-    response->set_text( lv_res_body ).
-
     IF ls_ztpp_1004-umesid IS NOT INITIAL.
       ls_ztpp_1004-pgmid                     = lc_pgmid.
       ls_ztpp_1004-mfgorderconfirmationgroup = ls_res_api-d-confirmation_group.
@@ -398,6 +471,11 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
       ls_ztpp_1004-workcenter                = |{ ls_ztpp_1004-workcenter ALPHA = IN }|.
       ls_ztpp_1004-updateflag                = lc_updateflag_i.
       ls_ztpp_1004-messagetype               = ls_res-_msgty.
+
+      IF lv_previous_processed = lc_msgty_w.
+        ls_ztpp_1004-mfgorderconfirmationgroup = ls_ztpp_1004_i-mfgorderconfirmationgroup.
+        ls_ztpp_1004-mfgorderconfirmation      = ls_ztpp_1004_i-mfgorderconfirmation.
+      ENDIF.
 
       TRY.
           ls_ztpp_1004-opworkquantityunit1 = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_ztpp_1004-opworkquantityunit1 ).
@@ -421,5 +499,9 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
       MODIFY ztpp_1004 FROM TABLE @lt_ztpp_1004.
       MODIFY ztpp_1005 FROM TABLE @lt_ztpp_1005.
     ENDIF.
+
+     "Set request data
+    response->set_text( lv_res_body ).
+
   ENDMETHOD.
 ENDCLASS.

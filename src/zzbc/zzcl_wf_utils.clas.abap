@@ -7,13 +7,16 @@ CLASS zzcl_wf_utils DEFINITION
 
     TYPES:tt_wf_approvaluser TYPE TABLE OF zc_wf_approvaluser.
     TYPES:tt_wf_approvalhistory TYPE TABLE OF zc_wf_approvalhistory.
-    CONSTANTS: lc_zkey1        TYPE string VALUE `COMPANY_CODE`,
-               lc_zkey2        TYPE string VALUE `PR_TYPE`,
-               lc_zkey3        TYPE string VALUE `PR_BY`,
-               lc_zkey4        TYPE string VALUE `POLINK_BY`,
-               lc_zkey5        TYPE string VALUE `MAIL`,
-               lc_prby_zid     TYPE string VALUE `ZMM005`,
-               lc_polinkby_zid TYPE string VALUE `ZMM006`.
+    CONSTANTS: lc_zkey1           TYPE string VALUE `COMPANY_CODE`,
+               lc_zkey2           TYPE string VALUE `PR_TYPE`,
+               lc_zkey3           TYPE string VALUE `PR_BY`,
+               lc_zkey4           TYPE string VALUE `POLINK_BY`,
+               lc_zkey5           TYPE string VALUE `MAIL`,
+               lc_prby_zid        TYPE string VALUE `ZMM005`,
+               lc_polinkby_zid    TYPE string VALUE `ZMM006`,
+               lc_company_1100(4) TYPE c  VALUE `1100`,
+               lc_company_1400(4) TYPE c  VALUE `1400`,
+               lc_workflowid_pr   TYPE zc_wf_approvalhistory-workflowid VALUE 'purchaserequisition'.
 
     INTERFACES if_oo_adt_classrun.
 
@@ -100,35 +103,60 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
 
     CASE iv_workflowid.
 
-      WHEN 'purchaserequisition'.
+      WHEN lc_workflowid_pr.
 
         SELECT SINGLE *
         FROM ztmm_1006
         WHERE uuid = @iv_uuid
         INTO @DATA(ls_ztmm_1006).
 
-        DATA:ls_wf_approvalpath TYPE zc_wf_approvalpath.
-        ls_wf_approvalpath-prtype      = ls_ztmm_1006-pr_type.
-        ls_wf_approvalpath-applydepart = ls_ztmm_1006-apply_depart.
-        ls_wf_approvalpath-ordertype   = ls_ztmm_1006-order_type.
-        ls_wf_approvalpath-buypurpose  = ls_ztmm_1006-buy_purpoose.
-        ls_wf_approvalpath-kyoten      = ls_ztmm_1006-kyoten.
-        CONDENSE:ls_wf_approvalpath-prtype,
-        ls_wf_approvalpath-applydepart,
-        ls_wf_approvalpath-ordertype,
-        ls_wf_approvalpath-buypurpose,
-        ls_wf_approvalpath-kyoten .
+        IF ls_ztmm_1006-company_code = lc_company_1100.
+          TRY .
+              SELECT SINGLE applicationid
+              FROM zc_wf_approvalpath
+             WHERE  prtype      = @ls_ztmm_1006-pr_type
+               AND  applydepart = @ls_ztmm_1006-apply_depart
+               AND  ordertype   = @ls_ztmm_1006-order_type
+               AND  buypurpose  = @ls_ztmm_1006-buy_purpoose
+               AND  kyoten      = @ls_ztmm_1006-kyoten
+              INTO @DATA(lv_applicationid).
+              ev_applicationid = lv_applicationid.
 
-        SELECT SINGLE applicationid
-        FROM zc_wf_approvalpath
-       WHERE  prtype      = @ls_wf_approvalpath-prtype
-         AND  applydepart = @ls_wf_approvalpath-applydepart
-         AND  ordertype   = @ls_wf_approvalpath-ordertype
-         AND  buypurpose  = @ls_wf_approvalpath-BuyPurpose
-         AND  kyoten      = @ls_wf_approvalpath-kyoten
-        INTO @DATA(lv_applicationid).
+            CATCH cx_root INTO DATA(lx_root).
+              " handle exception
+              DATA(rv_error_text) = lx_root->get_longtext(  ).
+              ev_error = 'X'.
+              ev_errortext = rv_error_text.
+          ENDTRY.
 
-        ev_applicationid = lv_applicationid.
+        ELSEIF ls_ztmm_1006-company_code = lc_company_1400.
+
+          SELECT SINGLE *
+          FROM zr_prworkflow_sum
+          WHERE applydepart_sum = @ls_ztmm_1006-apply_depart
+          AND   prno_sum        = @ls_ztmm_1006-pr_no
+          INTO @DATA(ls_prworkflow_sum).
+
+          TRY .
+              SELECT SINGLE applicationid
+              FROM zc_wf_approvalpath
+             WHERE applydepart = @ls_ztmm_1006-apply_depart
+               AND knttp       = @ls_ztmm_1006-account_type
+               AND costcenter  = @ls_ztmm_1006-cost_center
+               AND amountfrom <= @ls_prworkflow_sum-amount_sum
+               AND amountto   >= @ls_prworkflow_sum-amount_sum
+              INTO @lv_applicationid.
+              ev_applicationid = lv_applicationid.
+
+            CATCH cx_root INTO lx_root.
+              " handle exception
+              rv_error_text = lx_root->get_longtext(  ).
+              ev_error = 'X'.
+              ev_errortext = rv_error_text.
+          ENDTRY.
+
+        ENDIF.
+
       WHEN OTHERS.
 
     ENDCASE.

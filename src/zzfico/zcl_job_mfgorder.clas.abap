@@ -209,32 +209,8 @@ ENDCLASS.
 
 
 
-CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
+CLASS zcl_job_mfgorder IMPLEMENTATION.
 
-
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '1' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
-        " handle exception
-    ENDTRY.
-  ENDMETHOD.
 
 
   METHOD if_apj_dt_exec_object~get_parameters.
@@ -357,38 +333,6 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
       ENDTRY.
     ENDIF.
   ENDMETHOD.
-
-
-  METHOD if_oo_adt_classrun~main.
-    " for debugger
-    DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
-*    lt_parameters = VALUE #( ( selname = 'P_ID'
-*                               kind    = if_apj_dt_exec_object=>parameter
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '8B3CF2B54B611EEFA2D72EB68B20D50C' ) ).
-    TRY.
-*        if_apj_rt_exec_object~execute( it_parameters = lt_parameters ).
-        if_apj_rt_exec_object~execute( lt_parameters ).
-      CATCH cx_root INTO DATA(lo_root).
-        out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
-    ENDTRY.
-  ENDMETHOD.
-
-
-  METHOD init_application_log.
-    TRY.
-        mo_application_log = cl_bali_log=>create_with_header(
-                               header = cl_bali_header_setter=>create( object      = 'ZZ_LOG_BI001'
-                                                                       subobject   = 'ZZ_LOG_BI001_SUB'
-*                                                                       external_id = CONV #( mv_uuid )
-                                                                       ) ).
-      CATCH cx_bali_runtime.
-        " handle exception
-    ENDTRY.
-  ENDMETHOD.
-
-
   METHOD save_table_01.
     IF lv_calendaryear IS NOT INITIAL AND lv_calendarmonth IS NOT INITIAL.
 
@@ -446,7 +390,7 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
        ON a~product = b~product
        FOR ALL ENTRIES IN @lt_matnr
        WHERE a~product =  @lt_matnr-producedproduct
-       AND plant IN @lr_plant
+       "AND plant IN @lr_plant
        AND producttype = 'ZFRT'
        INTO TABLE @DATA(lt_productplant).
       SORT lt_productplant BY product.
@@ -493,7 +437,7 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
                    CHANGING  data = ls_res_api3 ).
           LOOP AT ls_res_api3-d-results INTO DATA(ls_result3).
 
-            IF  ls_result3-plant IN lr_plant.
+           " IF  ls_result3-plant IN lr_plant.
               CLEAR ls_component.
               "ls_component-assembly = ls_result3-billofmaterialcomponent.
               "ls_component-material = ls_result3-material.
@@ -501,7 +445,7 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
               ls_component-material = ls_result3-billofmaterialcomponent.
               APPEND ls_component TO lt_component.
 
-            ENDIF.
+           " ENDIF.
           ENDLOOP.
           SORT lt_component BY material assembly.
           DELETE ADJACENT DUPLICATES FROM lt_component COMPARING material assembly.
@@ -547,7 +491,7 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
         WITH PRIVILEGED ACCESS
          FOR ALL ENTRIES IN @lt_order
         WHERE manufacturingorder = @lt_order-orderid
-        AND productionplant IN @lr_plant
+        "AND productionplant IN @lr_plant
         AND companycode IN @lr_companycode
          INTO TABLE @DATA(lt_manufacturingorder).
         SORT lt_manufacturingorder BY manufacturingorder.
@@ -1023,8 +967,6 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
       ENDTRY.
     ENDIF.
   ENDMETHOD.
-
-
   METHOD save_table_02.
 
     SELECT
@@ -1202,8 +1144,6 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
     ENDIF.
 
   ENDMETHOD.
-
-
   METHOD save_table_03.
 
     lv_glaccount1 = '0050301000'.
@@ -1441,5 +1381,56 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
       ENDTRY.
     ENDIF.
 
+  ENDMETHOD.
+  METHOD if_oo_adt_classrun~main.
+    " for debugger
+    DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
+*    lt_parameters = VALUE #( ( selname = 'P_ID'
+*                               kind    = if_apj_dt_exec_object=>parameter
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '8B3CF2B54B611EEFA2D72EB68B20D50C' ) ).
+    TRY.
+*        if_apj_rt_exec_object~execute( it_parameters = lt_parameters ).
+        if_apj_rt_exec_object~execute( lt_parameters ).
+      CATCH cx_root INTO DATA(lo_root).
+        out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
+    ENDTRY.
+  ENDMETHOD.
+
+  METHOD init_application_log.
+    TRY.
+        mo_application_log = cl_bali_log=>create_with_header(
+                               header = cl_bali_header_setter=>create( object      = 'ZZ_LOG_BI001'
+                                                                       subobject   = 'ZZ_LOG_BI001_SUB'
+*                                                                       external_id = CONV #( mv_uuid )
+                                                                       ) ).
+      CATCH cx_bali_runtime.
+        " handle exception
+    ENDTRY.
+  ENDMETHOD.
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
+        " handle exception
+    ENDTRY.
   ENDMETHOD.
 ENDCLASS.

@@ -1,4 +1,5 @@
 @EndUserText.label: '保存采购申请数据'
 define service ZUI_UPLOADPR_O2 {
-  expose ZC_TMM_1006 as PurchaseReq;
+  expose ZC_TMM_1006          as PurchaseReq;
+  expose ZC_PRWORKFLOWhistory as ApprovalHistory;
 }

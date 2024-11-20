@@ -9,7 +9,7 @@ CLASS zcl_http_podata_001 DEFINITION
       BEGIN OF ty_inputs,
         pono         TYPE c    LENGTH 10,               "購買発注"
         dno          TYPE n    LENGTH 5,                "購買発注明細"
-        seq          TYPE c    LENGTH 4,                "連続番号"
+*        seq          TYPE c    LENGTH 4,                "連続番号"
         deliverydate TYPE c    LENGTH 10,               "納品日"
         quantity     TYPE p    DECIMALS 3 LENGTH 13,    "納品数量"
         delflag      TYPE c    LENGTH 1,                "削除フラグ（納期回答）"
@@ -21,7 +21,7 @@ CLASS zcl_http_podata_001 DEFINITION
       BEGIN OF ty_output,
         pono         TYPE c    LENGTH 10,
         dno          TYPE c    LENGTH 5,
-        seq          TYPE c    LENGTH 4,
+*        seq          TYPE c    LENGTH 4,
         deliverydate TYPE c    LENGTH 10,
         quantity     TYPE c    LENGTH 13,
         delflag      TYPE c    LENGTH 1,
@@ -187,7 +187,7 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
 
           ls_output-pono                    = ls_req-pono.
           ls_output-dno                     = ls_req-dno.
-          ls_output-seq                     = ls_req-seq.
+*          ls_output-seq                     = ls_req-seq.
           ls_output-deliverydate            = ls_req-deliverydate.
           ls_output-quantity                = ls_req-quantity.
           ls_output-delflag                 = ls_req-delflag.
@@ -195,7 +195,7 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
 
           CONDENSE ls_output-pono.
           CONDENSE ls_output-dno.
-          CONDENSE ls_output-seq.
+*          CONDENSE ls_output-seq.
           CONDENSE ls_output-deliverydate.
           CONDENSE ls_output-deliverydate.
           CONDENSE ls_output-delflag.
@@ -399,7 +399,7 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
               " 正确拼接 <ScheduleLine> 标签
               lv_current_request = lv_current_request &&
                                    |<ScheduleLine>| &&
-                                   |<PurchaseOrderScheduleLine>{ ls_req-seq }</PurchaseOrderScheduleLine>| &&
+*                                   |<PurchaseOrderScheduleLine>{ ls_req-seq }</PurchaseOrderScheduleLine>| &&
                                    |<ConfirmedDeliveryDate>{ ls_req-deliverydate }</ConfirmedDeliveryDate>| &&
                                    |<ConfirmedDeliveryTime>{ lv_confirmed_delivery_time }</ConfirmedDeliveryTime>| &&
                                    |<ConfirmedOrderQuantityByMaterialAvailableCheck unitCode="{ lv_converted_unit }">{ ls_req-quantity }</ConfirmedOrderQuantityByMaterialAvailableCheck>| &&

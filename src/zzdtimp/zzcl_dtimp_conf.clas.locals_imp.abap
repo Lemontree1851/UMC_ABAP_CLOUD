@@ -83,6 +83,13 @@ CLASS lhc_zzr_dtimp_conf IMPLEMENTATION.
                                                       text = 'Start Column is mandatory.' )
                         %element-startcolumn = if_abap_behv=>mk-on
                        ) TO reported-configuration.
+      ELSEIF <lfs_conf>-startcolumn <> 'A'.
+        APPEND VALUE #( %tky = <lfs_conf>-%tky ) TO failed-configuration.
+        APPEND VALUE #( %tky = <lfs_conf>-%tky
+                        %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error
+                                                      text = 'The current version only supports reading from column A.' )
+                        %element-startcolumn = if_abap_behv=>mk-on
+                       ) TO reported-configuration.
       ENDIF.
       IF <lfs_conf>-templatecontent IS INITIAL.
         APPEND VALUE #( %tky = <lfs_conf>-%tky ) TO failed-configuration.

@@ -21,8 +21,8 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       @UI                           : { lineItem: [ { position: 40 } ],
                                          selectionField: [ { position: 40 } ] }
   key Product                       : abap.char(40);
-      @UI                           : { lineItem: [ { position: 50 } ],
-                                         selectionField: [ { position: 50 } ] }
+//      @UI                           : { lineItem: [ { position: 50 } ],
+//                                         selectionField: [ { position: 50 } ] }
   key plantype                      : abap.char(10);
       CustomerName                  : abap.numc(80);
       ProfitCenter                  : abap.char(10);

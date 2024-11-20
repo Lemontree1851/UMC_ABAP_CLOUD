@@ -248,6 +248,18 @@
      <MSGNR>039</MSGNR>
      <TEXT>会社コード&amp;1の値が存在しません。</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZFICO_001</ARBGB>
+     <MSGNR>040</MSGNR>
+     <TEXT>会社コードを入力してください。</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZFICO_001</ARBGB>
+     <MSGNR>041</MSGNR>
+     <TEXT>補助内訳区分を入力してください。</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

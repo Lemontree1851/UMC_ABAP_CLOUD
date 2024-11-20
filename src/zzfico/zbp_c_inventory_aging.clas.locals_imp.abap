@@ -30,6 +30,17 @@ CLASS lhc_inventoryaging DEFINITION INHERITING FROM cl_abap_behavior_handler.
         issue    TYPE i_materialdocumentitem_2-quantityinbaseunit,
       END OF ty_goosmovment,
 
+      BEGIN OF ty_materialdocumentitem_309,
+        materialdocumentyear   TYPE i_materialdocumentitem_2-materialdocumentyear,
+        materialdocument       TYPE i_materialdocumentitem_2-materialdocument,
+        materialdocumentitem   TYPE i_materialdocumentitem_2-materialdocumentitem,
+        plant                  TYPE i_materialdocumentitem_2-plant,
+        material               TYPE i_materialdocumentitem_2-material,
+        isautomaticallycreated TYPE i_materialdocumentitem_2-isautomaticallycreated,
+        debitcreditcode        TYPE i_materialdocumentitem_2-debitcreditcode,
+        quantityinbaseunit     TYPE i_materialdocumentitem_2-quantityinbaseunit,
+      END OF ty_materialdocumentitem_309,
+
       BEGIN OF ty_ztfi_1004,
         plant    TYPE ztfi_1004-plant,
         material TYPE ztfi_1004-material,
@@ -90,31 +101,37 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
   METHOD recalculate.
 
     DATA:
-      lt_inventoryamtbyfsclperd     TYPE STANDARD TABLE OF ty_inventoryamtbyfsclperd,
-      lt_inventoryamtbyfsclperd_sum TYPE STANDARD TABLE OF ty_inventoryamtbyfsclperd,
-      lt_goosmovment                TYPE STANDARD TABLE OF ty_goosmovment,
-      lt_ztfi_1004                  TYPE STANDARD TABLE OF ty_ztfi_1004,
-      lt_ztfi_1019                  TYPE STANDARD TABLE OF ty_ztfi_1019,
-      lt_ztfi_1019_tmp              TYPE STANDARD TABLE OF ty_ztfi_1019,
-      lt_ztfi_1019_cal              TYPE STANDARD TABLE OF ty_ztfi_1019,
-      lt_ztfi_1019_cal_tmp          TYPE STANDARD TABLE OF ty_ztfi_1019,
-      lt_ztfi_1019_db               TYPE STANDARD TABLE OF ztfi_1019,
-      ls_ztfi_1019_cal              TYPE ty_ztfi_1019,
-      ls_ztfi_1019_db               TYPE ztfi_1019,
-      ls_goosmovment                TYPE ty_goosmovment,
-      lv_companycode                TYPE zc_inventory_aging-companycode,
-      lv_fiscalyear                 TYPE zc_inventory_aging-fiscalyear,
-      lv_fiscalperiod               TYPE zc_inventory_aging-fiscalperiod,
-      lv_ledger                     TYPE zc_inventory_aging-ledger,
-      lv_goodsissueqty              TYPE i_materialdocumentitem_2-quantityinbaseunit,
-      lv_qty                        TYPE ztfi_1004-qty,
-      lv_timestampl                 TYPE timestampl,
-      lv_fiscalyearperiod           TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
-      lv_fiscalyear_last            TYPE i_fiscalyearperiodforvariant-fiscalyear,
-      lv_fiscalperiod_last          TYPE i_fiscalyearperiodforvariant-fiscalperiod,
-      lv_fiscalperiodstartdate      TYPE d,
-      lv_fiscalperiodenddate        TYPE d,
-      lv_age                        TYPE i.
+      lt_inventoryamtbyfsclperd      TYPE STANDARD TABLE OF ty_inventoryamtbyfsclperd,
+      lt_inventoryamtbyfsclperd_sum  TYPE STANDARD TABLE OF ty_inventoryamtbyfsclperd,
+      lt_goosmovment                 TYPE STANDARD TABLE OF ty_goosmovment,
+      lt_materialdocumentitem_309    TYPE STANDARD TABLE OF ty_materialdocumentitem_309,
+      lt_materialdocumentitem_309tmp TYPE STANDARD TABLE OF ty_materialdocumentitem_309,
+      lt_ztfi_1004                   TYPE STANDARD TABLE OF ty_ztfi_1004,
+      lt_ztfi_1019                   TYPE STANDARD TABLE OF ty_ztfi_1019,
+      lt_ztfi_1019_tmp               TYPE STANDARD TABLE OF ty_ztfi_1019,
+      lt_ztfi_1019_cal               TYPE STANDARD TABLE OF ty_ztfi_1019,
+      lt_ztfi_1019_cal_tmp           TYPE STANDARD TABLE OF ty_ztfi_1019,
+      lt_ztfi_1019_db                TYPE STANDARD TABLE OF ztfi_1019,
+      lr_mvtype                      TYPE RANGE OF bwart,
+      lr_mvtype_zfi003               TYPE RANGE OF bwart,
+      lr_mvtype_zfi004               TYPE RANGE OF bwart,
+      ls_materialdocumentitem_309tmp TYPE ty_materialdocumentitem_309,
+      ls_ztfi_1019_cal               TYPE ty_ztfi_1019,
+      ls_ztfi_1019_db                TYPE ztfi_1019,
+      ls_goosmovment                 TYPE ty_goosmovment,
+      lv_companycode                 TYPE zc_inventory_aging-companycode,
+      lv_fiscalyear                  TYPE zc_inventory_aging-fiscalyear,
+      lv_fiscalperiod                TYPE zc_inventory_aging-fiscalperiod,
+      lv_ledger                      TYPE zc_inventory_aging-ledger,
+      lv_goodsissueqty               TYPE i_materialdocumentitem_2-quantityinbaseunit,
+      lv_qty                         TYPE ztfi_1004-qty,
+      lv_timestampl                  TYPE timestampl,
+      lv_fiscalyearperiod            TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
+      lv_fiscalyear_last             TYPE i_fiscalyearperiodforvariant-fiscalyear,
+      lv_fiscalperiod_last           TYPE i_fiscalyearperiodforvariant-fiscalperiod,
+      lv_fiscalperiodstartdate       TYPE d,
+      lv_fiscalperiodenddate         TYPE d,
+      lv_age                         TYPE i.
 
 *    IF cs_data-filterdata-fiscalyear = '2025' AND cs_data-filterdata-fiscalperiod = '002'.
     IF cs_data-filterdata-fiscalyear = '2024' AND cs_data-filterdata-fiscalperiod = '005'.
@@ -288,38 +305,74 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
 
         MOVE-CORRESPONDING lt_ztfi_1004_tmp TO lt_ztfi_1004.
 
-        "Obtain data of material document item
-        SELECT a~materialdocumentyear,
-               a~materialdocument,
-               a~materialdocumentitem,
-               a~plant,
-               a~material,
-               a~debitcreditcode,
-               a~quantityinbaseunit
-          FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS AS a
-           FOR ALL ENTRIES IN @lt_productplantbasic
-         WHERE a~companycode = @lt_productplantbasic-companycode
-           AND a~plant = @lt_productplantbasic-valuationarea
-           AND a~material = @lt_productplantbasic-product
-           AND a~issgorrcvgspclstockind <> 'T'
-           AND postingdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
-           AND NOT EXISTS ( SELECT materialdocument FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
-                             WHERE reversedmaterialdocumentyear = a~materialdocumentyear
-                               AND reversedmaterialdocument = a~materialdocument
-                               AND reversedmaterialdocumentitem = a~materialdocumentitem )
-          INTO TABLE @DATA(lt_materialdocumentitem).
+        "Obtain movement type
+        SELECT zid,
+               zvalue2
+          FROM ztbc_1001
+         WHERE zid IN ('ZFI003','ZFI004')
+           AND zvalue1 = @lv_companycode
+          INTO TABLE @DATA(lt_ztbc_1001).
+
+        LOOP AT lt_ztbc_1001 INTO DATA(ls_ztbc_1001).
+          IF ls_ztbc_1001-zid = 'ZFI003'.
+            lr_mvtype_zfi003 = VALUE #( BASE lr_mvtype_zfi003 sign = 'I' option = 'EQ' ( low = ls_ztbc_1001-zvalue2 ) ).
+          ELSE.
+            lr_mvtype_zfi004 = VALUE #( BASE lr_mvtype_zfi004 sign = 'I' option = 'EQ' ( low = ls_ztbc_1001-zvalue2 ) ).
+          ENDIF.
+
+          lr_mvtype = VALUE #( BASE lr_mvtype sign = 'I' option = 'EQ' ( low = ls_ztbc_1001-zvalue2 ) ).
+        ENDLOOP.
+
+        IF lr_mvtype IS NOT INITIAL.
+          "Obtain data of material document item
+          SELECT materialdocumentyear,
+                 materialdocument,
+                 materialdocumentitem,
+                 goodsmovementtype,
+                 plant,
+                 material,
+                 debitcreditcode,
+                 quantityinbaseunit
+            FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
+             FOR ALL ENTRIES IN @lt_productplantbasic
+           WHERE companycode = @lt_productplantbasic-companycode
+             AND plant = @lt_productplantbasic-valuationarea
+             AND material = @lt_productplantbasic-product
+             AND postingdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
+             AND goodsmovementtype IN @lr_mvtype
+            INTO TABLE @DATA(lt_materialdocumentitem).
+        ENDIF.
 
         LOOP AT lt_materialdocumentitem INTO DATA(ls_materialdocumentitem).
-          ls_goosmovment-plant = ls_materialdocumentitem-plant.
+          ls_goosmovment-plant    = ls_materialdocumentitem-plant.
           ls_goosmovment-material = ls_materialdocumentitem-material.
 
 *         Goods Receipt
-          IF ls_materialdocumentitem-debitcreditcode = lc_debitcreditcode_s.
-            ls_goosmovment-receipt = ls_materialdocumentitem-quantityinbaseunit.
-*         Goods Issue
-          ELSE.
-            ls_goosmovment-issue = ls_materialdocumentitem-quantityinbaseunit.
+          IF lr_mvtype_zfi003 IS NOT INITIAL AND ls_materialdocumentitem-goodsmovementtype IN lr_mvtype_zfi003.
+
+            IF ls_materialdocumentitem-debitcreditcode = lc_debitcreditcode_s.
+              ls_goosmovment-receipt = ls_materialdocumentitem-quantityinbaseunit.
+            ELSE.
+              ls_goosmovment-receipt = - ls_materialdocumentitem-quantityinbaseunit.
+            ENDIF.
           ENDIF.
+
+*         Goods Issue
+          IF lr_mvtype_zfi004 IS NOT INITIAL AND ls_materialdocumentitem-goodsmovementtype IN lr_mvtype_zfi004.
+            IF ls_materialdocumentitem-debitcreditcode = lc_debitcreditcode_s.
+              ls_goosmovment-issue = ls_materialdocumentitem-quantityinbaseunit.
+            ELSE.
+              ls_goosmovment-issue = - ls_materialdocumentitem-quantityinbaseunit.
+            ENDIF.
+          ENDIF.
+
+
+*          IF ls_materialdocumentitem-debitcreditcode = lc_debitcreditcode_s.
+*            ls_goosmovment-receipt = ls_materialdocumentitem-quantityinbaseunit.
+**         Goods Issue
+*          ELSE.
+*            ls_goosmovment-issue = ls_materialdocumentitem-quantityinbaseunit.
+*          ENDIF.
 
           COLLECT ls_goosmovment INTO lt_goosmovment.
           CLEAR ls_goosmovment.
@@ -369,24 +422,60 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         DATA(lt_ztfi_1019_309) = lt_ztfi_1019.
 
         "Obtain data of material document item
-        SELECT a~materialdocumentyear,
-               a~materialdocument,
-               a~materialdocumentitem,
-               a~plant,
-               a~material,
+        SELECT materialdocumentyear,
+               materialdocument,
+               materialdocumentitem,
+               plant,
+               material,
                isautomaticallycreated,
-               a~quantityinbaseunit
-          FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS AS a
+               debitcreditcode,
+               quantityinbaseunit
+          FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
            FOR ALL ENTRIES IN @lt_productplantbasic
-         WHERE a~companycode = @lt_productplantbasic-companycode
-           AND a~plant = @lt_productplantbasic-valuationarea
-           AND a~goodsmovementtype = '309'
+         WHERE companycode = @lt_productplantbasic-companycode
+           AND plant = @lt_productplantbasic-valuationarea
+           AND goodsmovementtype IN ('309','310')
            AND postingdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
-           AND NOT EXISTS ( SELECT materialdocument FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
-                             WHERE reversedmaterialdocumentyear = a~materialdocumentyear
-                               AND reversedmaterialdocument = a~materialdocument
-                               AND reversedmaterialdocumentitem = a~materialdocumentitem )
-          INTO TABLE @DATA(lt_materialdocumentitem_309).
+          INTO TABLE @lt_materialdocumentitem_309.
+
+        LOOP AT lt_materialdocumentitem_309 INTO DATA(ls_materialdocumentitem_309).
+          ls_goosmovment-plant    = ls_materialdocumentitem_309-plant.
+          ls_goosmovment-material = ls_materialdocumentitem_309-material.
+
+*         Goods Receipt
+          IF ls_materialdocumentitem_309-isautomaticallycreated = 'X'.
+            IF ls_materialdocumentitem_309-debitcreditcode = lc_debitcreditcode_s.
+              ls_goosmovment-receipt = ls_materialdocumentitem_309-quantityinbaseunit.
+            ELSE.
+              ls_goosmovment-receipt = - ls_materialdocumentitem_309-quantityinbaseunit.
+            ENDIF.
+*         Goods issue
+          ELSE.
+            IF ls_materialdocumentitem_309-debitcreditcode = lc_debitcreditcode_s.
+              ls_goosmovment-issue = ls_materialdocumentitem_309-quantityinbaseunit.
+            ELSE.
+              ls_goosmovment-issue = - ls_materialdocumentitem_309-quantityinbaseunit.
+            ENDIF.
+          ENDIF.
+
+          COLLECT ls_goosmovment INTO lt_goosmovment.
+          CLEAR ls_goosmovment.
+
+          IF ls_materialdocumentitem_309tmp-isautomaticallycreated = abap_false.
+            ls_materialdocumentitem_309tmp-plant                  = ls_materialdocumentitem_309-plant.
+            ls_materialdocumentitem_309tmp-material               = ls_materialdocumentitem_309-material.
+            ls_materialdocumentitem_309tmp-isautomaticallycreated = ls_materialdocumentitem_309-isautomaticallycreated.
+
+            IF ls_materialdocumentitem_309-debitcreditcode = lc_debitcreditcode_s.
+              ls_materialdocumentitem_309tmp-quantityinbaseunit = ls_materialdocumentitem_309-quantityinbaseunit.
+            ELSE.
+              ls_materialdocumentitem_309tmp-quantityinbaseunit = - ls_materialdocumentitem_309-quantityinbaseunit.
+            ENDIF.
+
+            COLLECT ls_materialdocumentitem_309tmp INTO lt_materialdocumentitem_309tmp.
+            CLEAR ls_materialdocumentitem_309tmp.
+          ENDIF.
+        ENDLOOP.
       ENDIF.
 
       SORT lt_goosmovment BY plant material.
@@ -507,85 +596,75 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         ENDIF.
       ENDLOOP.
 
-      DATA(lt_materialdocumentitem_309tmp) = lt_materialdocumentitem_309.
-      DELETE lt_materialdocumentitem_309tmp WHERE isautomaticallycreated = abap_true.
-
-      SORT lt_materialdocumentitem_309 BY materialdocumentyear materialdocument isautomaticallycreated.
       SORT lt_materialdocumentitem_309tmp BY plant material.
       SORT lt_ztfi_1019_309 BY plant product age DESCENDING.
 
       "309
-      LOOP AT lt_materialdocumentitem_309tmp INTO DATA(ls_materialdocumentitem_309tmp).
-        READ TABLE lt_materialdocumentitem_309 INTO DATA(ls_materialdocumentitem_309) WITH KEY materialdocumentyear = ls_materialdocumentitem_309tmp-materialdocumentyear
-                                                                                               materialdocument = ls_materialdocumentitem_309tmp-materialdocument
-                                                                                               isautomaticallycreated = abap_false
-                                                                                      BINARY SEARCH.
+      LOOP AT lt_materialdocumentitem_309tmp INTO ls_materialdocumentitem_309tmp.
+        READ TABLE lt_ztfi_1019_309 TRANSPORTING NO FIELDS WITH KEY plant = ls_materialdocumentitem_309-plant
+                                                                    product = ls_materialdocumentitem_309-material
+                                                           BINARY SEARCH.
         IF sy-subrc = 0.
-          READ TABLE lt_ztfi_1019_309 TRANSPORTING NO FIELDS WITH KEY plant = ls_materialdocumentitem_309-plant
-                                                                      product = ls_materialdocumentitem_309-material
-                                                             BINARY SEARCH.
-          IF sy-subrc = 0.
-            LOOP AT lt_ztfi_1019_309 INTO DATA(ls_ztfi_1019_309) FROM sy-tabix.
-              IF ls_ztfi_1019_309-plant <> ls_materialdocumentitem_309-plant
-              OR ls_ztfi_1019_309-product <> ls_materialdocumentitem_309-material.
-                EXIT.
-              ENDIF.
+          LOOP AT lt_ztfi_1019_309 INTO DATA(ls_ztfi_1019_309) FROM sy-tabix.
+            IF ls_ztfi_1019_309-plant <> ls_materialdocumentitem_309-plant
+            OR ls_ztfi_1019_309-product <> ls_materialdocumentitem_309-material.
+              EXIT.
+            ENDIF.
 
-              lv_qty = ls_ztfi_1019_309-qty.
+            lv_qty = ls_ztfi_1019_309-qty.
 
-              READ TABLE lt_ztfi_1019_cal TRANSPORTING NO FIELDS WITH KEY plant = ls_materialdocumentitem_309tmp-plant
-                                                                          product = ls_materialdocumentitem_309tmp-material
-                                                                 BINARY SEARCH.
-              IF sy-subrc = 0.
-                LOOP AT lt_ztfi_1019_cal ASSIGNING <fs_ztfi_1019_cal> FROM sy-tabix.
-                  IF <fs_ztfi_1019_cal>-plant <> ls_materialdocumentitem_309tmp-plant
-                  OR <fs_ztfi_1019_cal>-product <> ls_materialdocumentitem_309tmp-material.
-                    EXIT.
-                  ENDIF.
+            READ TABLE lt_ztfi_1019_cal TRANSPORTING NO FIELDS WITH KEY plant = ls_materialdocumentitem_309tmp-plant
+                                                                        product = ls_materialdocumentitem_309tmp-material
+                                                               BINARY SEARCH.
+            IF sy-subrc = 0.
+              LOOP AT lt_ztfi_1019_cal ASSIGNING <fs_ztfi_1019_cal> FROM sy-tabix.
+                IF <fs_ztfi_1019_cal>-plant <> ls_materialdocumentitem_309tmp-plant
+                OR <fs_ztfi_1019_cal>-product <> ls_materialdocumentitem_309tmp-material.
+                  EXIT.
+                ENDIF.
 
-                  IF lv_qty >= <fs_ztfi_1019_cal>-qty.
-                    lv_qty = lv_qty - <fs_ztfi_1019_cal>-qty.
+                IF lv_qty >= <fs_ztfi_1019_cal>-qty.
+                  lv_qty = lv_qty - <fs_ztfi_1019_cal>-qty.
 
-                    ls_ztfi_1019_cal-plant   = <fs_ztfi_1019_cal>-plant.
-                    ls_ztfi_1019_cal-product = <fs_ztfi_1019_cal>-product.
-                    ls_ztfi_1019_cal-qty     = <fs_ztfi_1019_cal>-qty.
-                    ls_ztfi_1019_cal-age     = ls_ztfi_1019_309-age.
-                    COLLECT ls_ztfi_1019_cal INTO lt_ztfi_1019_cal_tmp.
-                    CLEAR ls_ztfi_1019_cal.
+                  ls_ztfi_1019_cal-plant   = <fs_ztfi_1019_cal>-plant.
+                  ls_ztfi_1019_cal-product = <fs_ztfi_1019_cal>-product.
+                  ls_ztfi_1019_cal-qty     = <fs_ztfi_1019_cal>-qty.
+                  ls_ztfi_1019_cal-age     = ls_ztfi_1019_309-age.
+                  COLLECT ls_ztfi_1019_cal INTO lt_ztfi_1019_cal_tmp.
+                  CLEAR ls_ztfi_1019_cal.
 
-                    CLEAR <fs_ztfi_1019_cal>-qty.
-                  ELSE.
-                    ls_ztfi_1019_cal-plant   = <fs_ztfi_1019_cal>-plant.
-                    ls_ztfi_1019_cal-product = <fs_ztfi_1019_cal>-product.
-                    ls_ztfi_1019_cal-qty     = lv_qty.
-                    ls_ztfi_1019_cal-age     = ls_ztfi_1019_309-age.
-                    COLLECT ls_ztfi_1019_cal INTO lt_ztfi_1019_cal_tmp.
-                    CLEAR ls_ztfi_1019_cal.
+                  CLEAR <fs_ztfi_1019_cal>-qty.
+                ELSE.
+                  ls_ztfi_1019_cal-plant   = <fs_ztfi_1019_cal>-plant.
+                  ls_ztfi_1019_cal-product = <fs_ztfi_1019_cal>-product.
+                  ls_ztfi_1019_cal-qty     = lv_qty.
+                  ls_ztfi_1019_cal-age     = ls_ztfi_1019_309-age.
+                  COLLECT ls_ztfi_1019_cal INTO lt_ztfi_1019_cal_tmp.
+                  CLEAR ls_ztfi_1019_cal.
 
-                    ls_ztfi_1019_cal-plant   = <fs_ztfi_1019_cal>-plant.
-                    ls_ztfi_1019_cal-product = <fs_ztfi_1019_cal>-product.
-                    ls_ztfi_1019_cal-qty     = <fs_ztfi_1019_cal>-qty - lv_qty.
-                    ls_ztfi_1019_cal-age     = <fs_ztfi_1019_cal>-age.
-                    COLLECT ls_ztfi_1019_cal INTO lt_ztfi_1019_cal_tmp.
-                    CLEAR ls_ztfi_1019_cal.
+                  ls_ztfi_1019_cal-plant   = <fs_ztfi_1019_cal>-plant.
+                  ls_ztfi_1019_cal-product = <fs_ztfi_1019_cal>-product.
+                  ls_ztfi_1019_cal-qty     = <fs_ztfi_1019_cal>-qty - lv_qty.
+                  ls_ztfi_1019_cal-age     = <fs_ztfi_1019_cal>-age.
+                  COLLECT ls_ztfi_1019_cal INTO lt_ztfi_1019_cal_tmp.
+                  CLEAR ls_ztfi_1019_cal.
 
-                    CLEAR <fs_ztfi_1019_cal>-qty.
-                  ENDIF.
+                  CLEAR <fs_ztfi_1019_cal>-qty.
+                ENDIF.
 
-                  "扣减完毕
-                  IF lv_qty = 0.
-                    EXIT.
-                  ENDIF.
-                ENDLOOP.
+                "扣减完毕
+                IF lv_qty = 0.
+                  EXIT.
+                ENDIF.
+              ENDLOOP.
 
-                LOOP AT lt_ztfi_1019_cal_tmp INTO ls_ztfi_1019_cal.
-                  COLLECT ls_ztfi_1019_cal INTO lt_ztfi_1019_cal.
-                ENDLOOP.
+              LOOP AT lt_ztfi_1019_cal_tmp INTO ls_ztfi_1019_cal.
+                COLLECT ls_ztfi_1019_cal INTO lt_ztfi_1019_cal.
+              ENDLOOP.
 
-                CLEAR lt_ztfi_1019_cal_tmp.
-              ENDIF.
-            ENDLOOP.
-          ENDIF.
+              CLEAR lt_ztfi_1019_cal_tmp.
+            ENDIF.
+          ENDLOOP.
         ENDIF.
       ENDLOOP.
 

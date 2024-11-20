@@ -77,6 +77,7 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
       SELECT soitem~salesdocument AS sales_order,
              soitem~salesdocumentitem AS sales_order_item,
              soitem~salesdocumentitem AS sales_order_item_i,
+             soitem~material,
              soitem~requestedquantityinbaseunit,
              soitem~baseunit AS base_unit,
              soitem~purchaseorderbycustomer AS purchase_order_by_customer,
@@ -424,16 +425,17 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
          AND sales_order_item = @ls_request-items-sales_order_item_i
         INTO TABLE @DATA(lt_exist_data).
 
-      SORT lt_exist_data BY sales_order sales_order_item sequence DESCENDING.
+      SORT lt_exist_data BY sales_order sales_order_item sequence.
 
       GET TIME STAMP FIELD lv_timestamp.
       LOOP AT ls_request-items INTO ls_item.
         CLEAR lv_assign_qty.
-        lv_sequence += 1.
 
+        " The first line is the line to be split
         READ TABLE lt_exist_data ASSIGNING FIELD-SYMBOL(<lfs_exist_data>)
                                   WITH KEY sales_order = ls_item-sales_order
-                                           sales_order_item = ls_item-sales_order_item.
+                                           sales_order_item = ls_item-sales_order_item
+                                           sequence = ls_item-sequence BINARY SEARCH.
         IF sy-subrc = 0.
           lv_assign_qty = <lfs_exist_data>-assign_qty.
           IF <lfs_exist_data>-remark IS INITIAL.
@@ -446,11 +448,14 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
           ENDIF.
         ENDIF.
 
+        " append new line
         IF ls_item-sequence IS INITIAL.
+          lv_sequence += 1.
           APPEND INITIAL LINE TO lt_update ASSIGNING FIELD-SYMBOL(<lfs_update>).
           <lfs_update> = CORRESPONDING #( ls_order ).
           <lfs_update>-sales_order = ls_item-sales_order.
           <lfs_update>-sales_order_item = ls_item-sales_order_item_i.
+          <lfs_update>-material    = ls_item-material.
           <lfs_update>-sequence    = lv_sequence.
           <lfs_update>-assign_qty  = ls_item-assign_qty + lv_assign_qty.
           <lfs_update>-created_at  = lv_timestamp.

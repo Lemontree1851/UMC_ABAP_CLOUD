@@ -244,6 +244,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
       lv_first TYPE c LENGTH 1,
       lv_diff  TYPE menge_d,
       lv_qty   TYPE menge_d,
+      lv_left  TYPE menge_d,
       lv_field TYPE string,
       lv_tabix TYPE i.
 
@@ -411,9 +412,14 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                           AND productionversion = <ls_data>-verid
                           AND plndorderplannedstartdate = lv_day.
                   IF lv_first = 'X'.
-                    update_planorder( CHANGING cs_planorder = ls_confirmedplan
-                                               cs_data = <ls_data>
-                                               cv_qty = lv_qty ).
+                    IF lv_qty = 0.
+                      delete_planorder( CHANGING cs_planorder = ls_confirmedplan
+                                               cs_data = <ls_data> ).
+                    ELSE.
+                      update_planorder( CHANGING cs_planorder = ls_confirmedplan
+                                                 cs_data = <ls_data>
+                                                 cv_qty = lv_qty ).
+                    ENDIF.
                     CLEAR: lv_first.
                   ELSE.
                     delete_planorder( CHANGING cs_planorder = ls_confirmedplan
@@ -431,7 +437,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                 lv_diff = lv_qty - ls_confirm-plannedtotalqtyinbaseunit.
                 IF lv_diff > 0.
                   LOOP AT lt_unconfirmplan INTO DATA(ls_unconfirmplan).
-                    IF ls_unconfirmplan-plannedtotalqtyinbaseunit < lv_qty.
+                    IF ls_unconfirmplan-plannedtotalqtyinbaseunit <= lv_qty.
                       delete_planorder( CHANGING cs_planorder = ls_unconfirmplan
                                                      cs_data = <ls_data_w> ).
                       lv_qty = lv_qty - ls_unconfirmplan-plannedtotalqtyinbaseunit.
@@ -441,19 +447,29 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                       update_planorder( CHANGING cs_planorder = ls_unconfirmplan
                                                    cs_data = <ls_data_w>
                                                    cv_qty = lv_qty ).
+
+                      IF <ls_data_w>-status = 'S'.
+                        ls_unconfirmplan-plannedtotalqtyinbaseunit = lv_qty.
+                        MODIFY lt_unconfirmplan FROM ls_unconfirmplan TRANSPORTING plannedtotalqtyinbaseunit.
+                      ENDIF.
+                      EXIT.
                     ENDIF.
                   ENDLOOP.
                 ELSEIF lv_diff < 0.
                   LOOP AT lt_unconfirmplan INTO ls_unconfirmplan.
-                    lv_qty = lv_qty + ls_unconfirmplan-plannedtotalqtyinbaseunit.
+                    lv_qty = ls_unconfirmplan-plannedtotalqtyinbaseunit - lv_diff.
 
                     update_planorder( CHANGING cs_planorder = ls_unconfirmplan
                                                  cs_data = <ls_data_w>
                                                  cv_qty = lv_qty ).
+                    IF <ls_data_w>-status = 'S'.
+                      ls_unconfirmplan-plannedtotalqtyinbaseunit = lv_qty.
+                      MODIFY lt_unconfirmplan FROM ls_unconfirmplan TRANSPORTING plannedtotalqtyinbaseunit.
+                    ENDIF.
                     EXIT.
                   ENDLOOP.
                   IF sy-subrc <> 0.
-                    lv_qty = <l_field>.
+                    lv_qty = -1 * lv_diff.
                     ls_unconfirmplan-material = <ls_data_w>-idnrk.
                     ls_unconfirmplan-mrpplant = <ls_data_w>-plant.
                     ls_unconfirmplan-productionversion = <ls_data_w>-verid.
@@ -552,9 +568,19 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
 
                   ELSE.
                     lv_qty = ls_unconfirmplan-plannedtotalqtyinbaseunit - lv_qty.
-                    update_planorder( CHANGING cs_planorder = ls_unconfirmplan
-                                                 cs_data = <ls_data_w>
-                                                 cv_qty = lv_qty ).
+                    IF lv_qty = 0.
+                      delete_planorder( CHANGING cs_planorder = ls_unconfirmplan
+                                                     cs_data = <ls_data_w> ).
+                    ELSE.
+                      update_planorder( CHANGING cs_planorder = ls_unconfirmplan
+                                                   cs_data = <ls_data_w>
+                                                   cv_qty = lv_qty ).
+                      IF <ls_data_w>-status = 'S'.
+                        ls_unconfirmplan-plannedtotalqtyinbaseunit = lv_qty.
+                        MODIFY lt_unconfirmplan FROM ls_unconfirmplan TRANSPORTING plannedtotalqtyinbaseunit.
+                      ENDIF.
+                    ENDIF.
+                    EXIT.
                   ENDIF.
                 ENDLOOP.
 
@@ -703,7 +729,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                                        IMPORTING ev_status_code = DATA(lv_status_code)
                                                  ev_response    = DATA(lv_response)
                                                  ev_etag        = lv_etag ).
-    IF lv_etag IS NOT initial.
+    IF lv_etag IS NOT INITIAL.
       DATA(lv_reqbody_api) = /ui2/cl_json=>serialize( data = ls_planorder_u
                                                       compress = 'X'
                                                       pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
@@ -719,12 +745,13 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
       IF lv_status_code = 201
       OR lv_status_code = 200. " update
         IF cs_data-message IS INITIAL.
+          cs_data-status = 'S'.
           cs_data-message = cs_planorder-plannedorder && ` update`.
         ELSE.
           cs_data-message = cs_data-message && ';' && cs_planorder-plannedorder && ` update`.
         ENDIF.
       ELSE.
-
+        cs_data-status = 'E'.
         IF cs_data-message IS INITIAL.
           cs_data-message = ls_res_planorder-error-message.
         ELSE.

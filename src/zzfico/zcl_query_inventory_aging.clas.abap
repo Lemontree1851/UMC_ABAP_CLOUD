@@ -252,35 +252,40 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
          AND inventoryspecialstocktype <> 'T'
         INTO TABLE @DATA(lt_inventorypricebykeydate).
 
-      "Obtain data of supplier invoice
-      SELECT a~purchaseorder,
-             a~purchaseorderitem,
-             a~accountassignmentnumber,
-             a~purchasinghistorydocumenttype,
-             a~purchasinghistorydocumentyear,
-             a~purchasinghistorydocument,
-             a~purchasinghistorydocumentitem,
-             a~purordamountincompanycodecrcy,
-             a~quantity,
-             a~plant,
-             a~material
-        FROM c_purchaseorderhistorydex WITH PRIVILEGED ACCESS AS a
-       INNER JOIN c_supplierinvoicedex WITH PRIVILEGED ACCESS AS b
-          ON b~supplierinvoice = a~purchasinghistorydocument
-         FOR ALL ENTRIES IN @lt_productplantbasic
-       WHERE a~plant = @lt_productplantbasic-valuationarea
-         AND a~material = @lt_productplantbasic-product
-         AND b~companycode = @lv_companycode
-         AND a~purchasinghistorycategory = 'Q'
-         AND a~postingdate <= @lv_fiscalperiodenddate
-         AND a~purordamountincompanycodecrcy <> 0
-         AND b~fiscalyear = @lv_fiscalperiodstartdate+0(4)
-         AND b~reversedocument = @space
-         AND b~postingdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
-        INTO TABLE @DATA(lt_purchaseorderhistorydex).
+      DATA(lt_productplantbasic_zroh) = lt_productplantbasic.
+      DELETE lt_productplantbasic_zroh WHERE producttype <> 'ZROH'.
 
-      SORT lt_purchaseorderhistorydex BY plant material purchasinghistorydocument DESCENDING.
-      DELETE ADJACENT DUPLICATES FROM lt_purchaseorderhistorydex COMPARING plant material.
+      IF lt_productplantbasic_zroh IS NOT INITIAL.
+        "Obtain data of supplier invoice
+        SELECT a~purchaseorder,
+               a~purchaseorderitem,
+               a~accountassignmentnumber,
+               a~purchasinghistorydocumenttype,
+               a~purchasinghistorydocumentyear,
+               a~purchasinghistorydocument,
+               a~purchasinghistorydocumentitem,
+               a~purordamountincompanycodecrcy,
+               a~quantity,
+               a~plant,
+               a~material
+          FROM c_purchaseorderhistorydex WITH PRIVILEGED ACCESS AS a
+         INNER JOIN c_supplierinvoicedex WITH PRIVILEGED ACCESS AS b
+            ON b~supplierinvoice = a~purchasinghistorydocument
+           FOR ALL ENTRIES IN @lt_productplantbasic_zroh
+         WHERE a~plant = @lt_productplantbasic_zroh-valuationarea
+           AND a~material = @lt_productplantbasic_zroh-product
+           AND b~companycode = @lv_companycode
+           AND a~purchasinghistorycategory = 'Q'
+           AND a~postingdate <= @lv_fiscalperiodenddate
+           AND a~purordamountincompanycodecrcy <> 0
+           AND b~fiscalyear = @lv_fiscalperiodstartdate+0(4)
+           AND b~reversedocument = @space
+           AND b~postingdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
+          INTO TABLE @DATA(lt_purchaseorderhistorydex).
+
+        SORT lt_purchaseorderhistorydex BY plant material purchasinghistorydocument DESCENDING.
+        DELETE ADJACENT DUPLICATES FROM lt_purchaseorderhistorydex COMPARING plant material.
+      ENDIF.
 
       DATA(lt_productplantbasic_zhlb) = lt_productplantbasic.
       DELETE lt_productplantbasic_zhlb WHERE producttype <> 'ZHLB'.

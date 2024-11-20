@@ -170,6 +170,18 @@
      <MSGNR>026</MSGNR>
      <TEXT>単価を取得できません。チェックしてください</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>027</MSGNR>
+     <TEXT>購買申請番号&amp;1明細&amp;2は承認対象ではありません</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>028</MSGNR>
+     <TEXT>購買申請は承認済ではないので、購買発注を登録できません</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

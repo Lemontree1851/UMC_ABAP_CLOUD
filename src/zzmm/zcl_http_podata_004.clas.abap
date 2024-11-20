@@ -8,7 +8,7 @@ CLASS zcl_http_podata_004 DEFINITION
     TYPES:
       BEGIN OF ty_inputs,
 *        DocumentDate                TYPE c LENGTH 8,    "請求書日付"
-        documentdate TYPE d,    "請求書日付"
+        documentdate TYPE D,    "請求書日付"
       END OF ty_inputs.
 
     TYPES:
@@ -58,7 +58,8 @@ CLASS zcl_http_podata_004 DEFINITION
   PRIVATE SECTION.
 
     DATA:
-    lt_req TYPE STANDARD TABLE OF ty_inputs.
+    lt_req TYPE STANDARD TABLE OF ty_inputs,
+    lw_req like LINE OF lt_req.
 
     DATA:
       lv_tablename(10)  TYPE c,
@@ -92,22 +93,31 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
   METHOD if_http_service_extension~handle_request.
 
-    DATA(lv_req_body) = request->get_text( ).
+*    DATA(lv_req_body) = request->get_text( ).
 
-    DATA(lv_header) = request->get_header_field( i_name = 'form' ).
+*    DATA(lv_header) = request->get_header_field( i_name = 'form' ).
 
-    IF lv_header = 'XML'.
+*    IF lv_header = 'XML'.
 
-    ELSE.
-      "first deserialize the request
-      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
-          ( xco_cp_json=>transformation->underscore_to_pascal_case )
-      ) )->write_to( REF #( lt_req ) ).
+*    ELSE.
+*      "first deserialize the request
+*      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
+*          ( xco_cp_json=>transformation->underscore_to_pascal_case )
+*      ) )->write_to( REF #( lt_req ) ).
+*
+*    ENDIF.
 
-    ENDIF.
+
 
 *    DATA(lt_supplier_invoice) = VALUE TABLE OF ty_response.
     DATA: lv_latest_date TYPE d.
+
+    DATA(lv_sy_datum) = cl_abap_context_info=>get_system_date( ).
+
+*    lw_req-documentdate = lv_sy_datum.
+    lw_req-documentdate = '20241111'.
+
+    APPEND lw_req to lt_req.
 
     IF lt_req IS INITIAL.
 

@@ -166,15 +166,9 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
 *----------------------------------------------uweb调用参考 pickinglist。
       BEGIN OF ty_response_res,
-             id   TYPE string,
-             OBJECT_TYPE     TYPE string,
-             OBJECT     TYPE string,
-             OBJECT_LINK    TYPE string,
-             OBJECT_VERSION TYPE string,
-             FILE_TYPE TYPE string,
-             FILE_NAME TYPE string,
-             CD_TIME TYPE string,
-             CD_BY TYPE string,
+             PO_NO   TYPE C LENGTH 10,
+             D_NO     TYPE C LENGTH 5,
+             PRINT_TIMES     TYPE I,
 
       END OF ty_response_res,
 
@@ -428,7 +422,18 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
       ENDLOOP.
 
-      SELECT a~purchaseordertype                  ,
+      SELECT
+
+             b~purchaseorder                      ,
+             b~purchaseorderitem                  ,
+             concat( b~purchaseorder, CAST( b~purchaseorderitem AS CHAR ) ) AS popoitem,
+
+             l~deliverydate                       , "回答納期
+             l~sequentialnmbrofsuplrconf          ,
+             l~supplierconfirmationextnumber      ,
+             l~confirmedquantity                  ,
+
+             a~purchaseordertype                  ,
              a~supplier                           ,
              a~purchasinggroup                    ,
              a~purchaseorderdate                  ,             "伝票日付
@@ -439,14 +444,6 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
 
 
-             l~purchaseorderitem                  ,
-             l~purchaseorder                      ,
-             l~deliverydate                       , "回答納期
-             l~sequentialnmbrofsuplrconf          ,
-             l~supplierconfirmationextnumber      ,
-             l~confirmedquantity                  ,
-
-             concat( b~purchaseorder, CAST( b~purchaseorderitem AS CHAR ) ) AS popoitem,
              b~material                           ,
              b~purchaseorderitemtext              ,
              b~manufacturermaterial               ,
@@ -485,7 +482,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
              f~mrpcontrollername                  ,                               "2.5　コントロール名称
 
              g~suppliercertorigincountry          ,                               "2.7　原産国
-             g~suplrcertoriginclassfctnnumber     ,                               "2.16　基軸通貨(製造業者)
+
              g~purchasinginforecord               ,
              g~suppliersubrange                   ,                               "供給者部門
 
@@ -501,12 +498,13 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
              m~schedulelinedeliverydate           ,                               "納入日付
              m~roughgoodsreceiptqty
 
-        FROM i_posupplierconfirmationapi01 WITH PRIVILEGED ACCESS AS l
-        LEFT JOIN i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS AS b
+
+        from i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS AS b
+        left outer JOIN i_posupplierconfirmationapi01 WITH PRIVILEGED ACCESS AS l
           ON l~purchaseorder = b~purchaseorder
          AND l~purchaseorderitem = b~purchaseorderitem
         LEFT JOIN i_purchaseorderapi01  WITH PRIVILEGED ACCESS AS a
-          ON l~purchaseorder = a~purchaseorder
+          ON b~purchaseorder = a~purchaseorder
         LEFT JOIN i_supplier WITH PRIVILEGED ACCESS AS c
           ON a~supplier = c~supplier
         LEFT JOIN i_productmrparea WITH PRIVILEGED ACCESS AS d
@@ -554,27 +552,6 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 *        AND N~Language =
         INTO TABLE @DATA(lt_result) .
 
-
-
-        zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |http://220.248.121.53:11380/srv/odata/v2/TableService/SYS_T13_ATTACHMENT|
-                                                                iv_no_authorization = abap_true
-                                                      IMPORTING ev_status_code   = DATA(lv_status_code_uweb)
-                                                                ev_response      = DATA(lv_response_uweb) ).
-        IF lv_status_code_uweb = 200.
-          xco_cp_json=>data->from_string( lv_response_uweb )->apply( VALUE #(
-*            ( xco_cp_json=>transformation->pascal_case_to_underscore )
-            ( xco_cp_json=>transformation->boolean_to_abap_bool )
-          ) )->write_to( REF #( ls_response ) ).
-
-          IF ls_response-d-results IS NOT INITIAL.
-
-          APPEND LINES OF ls_response-d-results TO lt_uweb_api.
-
-          ENDIF.
-
-        ENDIF.
-
-
 *     购买组取值
       IF lr_purchasinggroup IS NOT INITIAL.
         LOOP AT lr_purchasinggroup INTO ls_old_range.
@@ -596,11 +573,15 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         FROM i_supplier WITH PRIVILEGED ACCESS
         INTO  TABLE @DATA(lt_maker).
 
+        SORT lt_maker by  supplier .
+
       SELECT customer ,
              addresssearchterm2
         FROM i_customer WITH PRIVILEGED ACCESS
        WHERE addresssearchterm1 IN @lr_new_range
         INTO TABLE @DATA(lt_customer).
+
+        SORT lt_customer by addresssearchterm2.
 
       "-----2.17　NCNR、CANCELルール-------------
       "購買情報の組織プラントデータ
@@ -610,12 +591,16 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
        WHERE ismarkedfordeletion IS INITIAL   "ブランク
         INTO TABLE @DATA(lt_purginfo).
 
+        SORT lt_purginfo by purchasinginforecord  purchasingorganization plant purchasinginforecordcategory .
+
       "出荷指示 - テキスト
       SELECT *
         FROM i_shippinginstructiontext
         WITH PRIVILEGED ACCESS
        WHERE language = @sy-langu
         INTO TABLE @DATA(lt_shipping).
+
+        sort lt_shipping by shippinginstruction.
 
       "-----2.17　NCNR、CANCELルール-------------
 
@@ -625,11 +610,14 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
        WHERE language = @sy-langu
         INTO TABLE @DATA(lt_longtext).
 
+        SORT lt_longtext by purchaseorder  purchaseorderitem.
+
       SELECT *
         FROM i_purchaseordernotetp_2
         WITH PRIVILEGED ACCESS
        WHERE language = @sy-langu
         INTO TABLE @DATA(lt_longtext_1).
+        SORT lt_longtext_1 by purchaseorder .
 
       "mrp管理者 控制
       DELETE lt_result WHERE mrpresponsible NOT IN lr_mrpctname.
@@ -644,17 +632,21 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
              data(lt_result_1) = lt_result.
 
-             SORT lt_result_1 by material plant.
+             DELETE lt_result_1 WHERE Deliverydate is INITIAL.
 
-             DELETE ADJACENT DUPLICATES FROM lt_result_1 COMPARING material plant.
+
+             SORT lt_result_1 by plant.
+
+             DELETE ADJACENT DUPLICATES FROM lt_result_1 COMPARING plant.
 
          ENDIF.
 
+          " api 接口 mrp 数据取得。
          if lt_result_1 is  NOT INITIAL.
 
             loop at lt_result_1 into data(lw_result_1).
 
-                lv_path = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?$filter=Material eq '{ lw_result_1-material }' and MRPPlant eq '{ lw_result_1-plant }' and MRPArea eq '{ lw_result_1-plant }'|.
+                lv_path = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?$filter=MRPPlant eq '{ lw_result_1-plant }' and MRPArea eq '{ lw_result_1-plant }'|.
 
                 zzcl_common_utils=>request_api_v2(
                       EXPORTING
@@ -692,6 +684,34 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
          ENDIF.
 
+         SORT lt_mrp_api by mrpelement  mrpelementitem MRPElementScheduleLine MRPElementCategory.
+
+        "uweb 接口，打印次数
+        zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |http://220.248.121.53:11380/srv/odata/v2/TableService/T02_PO_D|
+                                                                iv_client_id     = CONV #( 'Tom' )
+                                                                iv_client_secret = CONV #( '1' )
+                                                               iv_authtype      = 'Basic'
+                                                      IMPORTING ev_status_code   = DATA(lv_status_code_uweb)
+                                                                ev_response      = DATA(lv_response_uweb) ).
+        IF lv_status_code_uweb = 200.
+          xco_cp_json=>data->from_string( lv_response_uweb )->apply( VALUE #(
+*            ( xco_cp_json=>transformation->pascal_case_to_underscore )
+            ( xco_cp_json=>transformation->boolean_to_abap_bool )
+          ) )->write_to( REF #( ls_response ) ).
+
+          IF ls_response-d-results IS NOT INITIAL.
+
+          APPEND LINES OF ls_response-d-results TO lt_uweb_api.
+
+          ENDIF.
+
+        ENDIF.
+
+        sort lt_uweb_api by Po_no D_no.
+
+
+
+
 *     审批状态取得取得
       lv_pathoverview = |/YY1_WORKFLOWSTATUSOVERVIEW_CDS/YY1_WorkflowStatusOverview|.
       "Call API
@@ -711,6 +731,8 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         APPEND LINES OF ls_res_workflow-d-results TO lt_workflow_api.
 
       ENDIF.
+
+      SORT lt_workflow_api by SAPBusinessObjectNodeKey1.
 
 *      审批详情取得
 
@@ -748,7 +770,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         MOVE-CORRESPONDING lw_result TO lw_data.
 
         "2.2　得意先名称通过 ea0 后两位检索 customer
-        READ TABLE lt_customer INTO DATA(lw_customer) WITH KEY addresssearchterm2 = lw_result-purchasinggroup+1(2).
+        READ TABLE lt_customer INTO DATA(lw_customer) WITH KEY addresssearchterm2 = lw_result-purchasinggroup+1(2) BINARY SEARCH.
         IF sy-subrc = 0.
           lw_data-customer = lw_customer-customer.
           CLEAR lw_customer.
@@ -778,15 +800,16 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         READ TABLE lt_purginfo INTO DATA(lw_purginfo) WITH KEY purchasinginforecord   = lw_result-purchasinginforecord
                                                                purchasingorganization = lw_result-purchasingorganization
                                                                plant                  = lw_result-plant
-                                                               purchasinginforecordcategory = lv_purcate .
+                                                               purchasinginforecordcategory = lv_purcate
+                                                               BINARY SEARCH.
 
         IF sy-subrc = 0.
 
           IF lw_purginfo-shippinginstruction IS INITIAL.
-            DATA(lv_error1q) = 'x'.
+            DATA(lv_error1q) = 'X'.
           ENDIF.
 
-          READ TABLE lt_shipping INTO DATA(lw_shipping) WITH KEY shippinginstruction = lw_purginfo-shippinginstruction.  "出荷指示
+          READ TABLE lt_shipping INTO DATA(lw_shipping) WITH KEY shippinginstruction = lw_purginfo-shippinginstruction BINARY SEARCH.  "出荷指示
 
           IF sy-subrc = 0.
             "NCNR、CANCELルール
@@ -809,65 +832,15 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         CLEAR:lw_shipping.
         CLEAR lw_purginfo.
 
-*        DATA(lv_a) = lw_result-material.
-*        DATA(lv_b) = lw_result-plant.
-*        DATA(lv_c) = lw_result-purchaseorder.
-*        DATA(lv_d) = lw_result-purchaseorderitem.
-*
-*        lv_path = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?$filter=Material eq '{ lv_a }' and MRPPlant eq '{ lv_b }' and MRPArea eq '{ lv_b }'|.
-*
-*        zzcl_common_utils=>request_api_v2(
-*              EXPORTING
-*                iv_path        = lv_path
-*                iv_method      = if_web_http_client=>get
-*              IMPORTING
-*                ev_status_code = DATA(lv_stat_code)
-*                ev_response    = DATA(lv_resbody_api) ).
-*
-*        /ui2/cl_json=>deserialize(
-*                        EXPORTING json = lv_resbody_api
-*                        CHANGING data = ls_res_mrp_api ).
-*
-*        CLEAR: lt_mrp_api.
-
-*        IF lv_stat_code = '200' AND ls_res_mrp_api-d-results IS NOT INITIAL.
-*          APPEND LINES OF ls_res_mrp_api-d-results TO lt_mrp_api.
-*
-*          DELETE lt_mrp_api WHERE MRPElement <> lw_result-purchaseorder.
-*          DELETE lt_mrp_api WHERE MRPElementItem <> lw_result-purchaseorderitem.
-*
-*            IF lw_result-sequentialnmbrofsuplrconf IS not INITIAL.
-*
-*              DELETE lt_mrp_api WHERE MRPElementScheduleLine <> lw_result-sequentialnmbrofsuplrconf.
-*            ELSE.
-*
-*              DELETE lt_mrp_api WHERE MRPElementCategory <> 'BE'.
-*
-*            ENDIF.
-*
-*        ENDIF.
-*
-*        if lt_mrp_api is NOT INITIAL.
-*
-*          LOOP AT lt_mrp_api ASSIGNING FIELD-SYMBOL(<fs_mrp>) .
-*
-*            <fs_mrp>-mrpelementitem = |{ <fs_mrp>-mrpelementitem ALPHA = IN }|.
-*
-*          ENDLOOP.
-*
-*        ENDIF.
-*
-*        CLEAR: lv_path ,lv_stat_code ,ls_res_mrp_api.
-
 *          "2.19 例外
 *          "2.20 注意
 
-        IF lw_result-sequentialnmbrofsuplrconf IS not INITIAL.
+        IF lw_result-sequentialnmbrofsuplrconf IS not INITIAL .
 
             READ TABLE lt_mrp_api INTO DATA(lw_mrp) WITH KEY mrpelement = lw_result-purchaseorder
                                                              mrpelementitem = lw_result-purchaseorderitem
                                                              MRPElementScheduleLine = lw_result-sequentialnmbrofsuplrconf
-                                                             .
+                                                              BINARY SEARCH.
 
             if sy-subrc = 0.
                 data(lv_getnop) = 'X'.
@@ -875,9 +848,11 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
                 lv_getnop = ''.
             ENDIF.
 
-            ELSE.
+        ELSE.
 
-            READ TABLE lt_mrp_api INTO lw_mrp with key mrpelement = lw_result-purchaseorder mrpelementitem = lw_result-purchaseorderitem  MRPElementCategory = 'BE'.
+            READ TABLE lt_mrp_api INTO lw_mrp with key mrpelement = lw_result-purchaseorder
+                                                       mrpelementitem = lw_result-purchaseorderitem
+                                                       MRPElementCategory = 'BE' BINARY SEARCH.
 
             if sy-subrc = 0.
                 lv_getnop = 'X'.
@@ -922,17 +897,16 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
                   data(lv_length) = STRLEN( lw_mrp-exceptionmessagetext ).
 
-                  if lv_length > 24 and lv_length <> 34.
+                  if lv_length = 33.
+                  "
 
                       data(lv_yy) = lw_mrp-exceptionmessagetext+30(2).
                       data(lv_dd) = lw_mrp-exceptionmessagetext+27(2).
                       data(lv_mm) = lw_mrp-exceptionmessagetext+24(2).
                       data(lv_date) = |20{ lv_yy }{ lv_mm }{ lv_dd } |.
                       lw_data-MRPDILIVERYDATE = lv_date.
-
-                      clear:lv_yy,lv_dd,lv_mm,lv_date.
-
                   ENDIF.
+                  clear:lv_yy,lv_dd,lv_mm,lv_date,lv_length.
 
               ENDIF.
           ENDIF.
@@ -993,7 +967,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
         ENDIF.
 
-        CLEAR  lw_mrp.
+        CLEAR:  lw_mrp ,lv_getnop.
 
         "LW_DATA-MRPDILIVERYDATE  = LW_MRP-MRPElementAvailyOrRqmtDate - 1.  calc_date_subtract
 
@@ -1053,10 +1027,10 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         "2.26 承認サイト
         "lw_data-WorkflowTaskResut
 
-        READ TABLE lt_workflow_api into data(lw_workflow) WITH KEY SAPBusinessObjectNodeKey1 = lw_data-purchaseorder.
+        READ TABLE lt_workflow_api into data(lw_workflow) WITH KEY SAPBusinessObjectNodeKey1 = lw_data-purchaseorder BINARY SEARCH.
 
             if sy-subrc = 0.
-               READ TABLE lt_workflowdetail_api into data(lw_workflow_d) WITH key WorkflowInternalID = lw_workflow-WorkflowInternalID.
+               READ TABLE lt_workflowdetail_api into data(lw_workflow_d) WITH key WorkflowInternalID = lw_workflow-WorkflowInternalID BINARY SEARCH.
 
                "如果能在detail中取到WorkflowTaskInternalID
                if sy-subrc = 0.
@@ -1092,6 +1066,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
             clear:  lw_workflow      ,lw_workflow_d.
 
         APPEND lw_data TO lt_data.
+        clear lw_data.
 
       ENDLOOP.
 
@@ -1099,7 +1074,26 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
       LOOP AT lt_data ASSIGNING FIELD-SYMBOL(<fs_data>).
 
-        READ TABLE lt_maker INTO DATA(lw_maker) WITH KEY supplier = <fs_data>-manufacturer.
+        data(lv_dn) =  |{ <fs_data>-PurchaseOrderItem ALPHA = OUT }| .
+        DATA(LV_PO) = |{ <fs_data>-PurchaseOrder ALPHA = OUT }| .
+        read table lt_uweb_api into data(lw_uweb) WITH KEY Po_no = LV_PO
+                                                            D_no = lv_dn BINARY SEARCH.
+        if sy-subrc = 0.
+
+            if lw_uweb-print_times > 0.
+                <fs_data>-Porelease = '発行済'.
+
+            ELSEIF lw_uweb-print_times = 0.
+                 <fs_data>-Porelease = '未発行'.
+            ENDIF.
+
+        endif.
+
+
+
+        clear : lw_uweb , lv_dn ,LV_PO.
+
+        READ TABLE lt_maker INTO DATA(lw_maker) WITH KEY supplier = <fs_data>-manufacturer BINARY SEARCH.
         IF  sy-subrc = 0.
           <fs_data>-suppliername2 = lw_maker-suppliername.
 
@@ -1149,14 +1143,14 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         ENDCASE.
 
         "ヘッダテキスト
-        READ TABLE lt_longtext INTO DATA(ls_longtext) WITH KEY purchaseorder = <fs_data>-purchaseorder purchaseorderitem = <fs_data>-purchaseorderitem .
+        READ TABLE lt_longtext INTO DATA(ls_longtext) WITH KEY purchaseorder = <fs_data>-purchaseorder purchaseorderitem = <fs_data>-purchaseorderitem  BINARY SEARCH.
         IF sy-subrc = 0.
           <fs_data>-plainlongtext1 =  ls_longtext-plainlongtext.
         ENDIF.
         CLEAR ls_longtext.
 
         "項目テキスト
-        READ TABLE lt_longtext_1 INTO DATA(ls_longtext1) WITH KEY purchaseorder = <fs_data>-purchaseorder.
+        READ TABLE lt_longtext_1 INTO DATA(ls_longtext1) WITH KEY purchaseorder = <fs_data>-purchaseorder BINARY SEARCH.
 
         IF sy-subrc = 0 .
           <fs_data>-plainlongtext = ls_longtext1-plainlongtext.

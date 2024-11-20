@@ -63,5 +63,6 @@ define root view entity ZC_PRWORKFLOWITEM
       LocalCreatedAt,
       LocalLastChangedBy,
       LocalLastChangedAt,
-      LatCahangedAt
+      LatCahangedAt,
+      amount1
 }

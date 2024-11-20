@@ -125,5 +125,8 @@ define root view entity ZC_TMM_1006
       WorkflowId,
       @Consumption.filter.hidden: true
       @UI.hidden: true
-      InstanceId
+      InstanceId,
+      @Consumption.filter.hidden: true
+      @UI.hidden: true
+      ApplicationId
 }

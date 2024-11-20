@@ -1,6 +1,6 @@
 @AccessControl.authorizationCheck: #CHECK
 @EndUserText.label: 'Purchase Requisition Workflow SUM'
-define view entity ZR_PRWORKFLOW_SUM
+define view entity ZR_PRWORKFLOW_SUM1
   as select from ztmm_1006
 {
 

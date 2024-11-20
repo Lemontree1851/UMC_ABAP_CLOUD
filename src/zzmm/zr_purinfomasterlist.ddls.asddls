@@ -71,14 +71,14 @@ define  root custom entity ZR_PURINFOMASTERLIST
       @UI                            : { lineItem: [ { position: 300, label: 'MPN' } ], 
                                          selectionField: [ { position: 110 } ] }
       ProductManufacturerNumber      : abap.char(40);
-      @Semantics.amount.currencyCode : 'Currency_plnt'
-      standardpurchaseorderquantity  : abap.dec(15,2);
-      @Semantics.amount.currencyCode : 'Currency_plnt'
-      Taxprice                       : abap.curr(15,2);
+//      @Semantics.amount.currencyCode : 'Currency_plnt'
+      standardpurchaseorderquantity  : abap.dec(15,3);
+//      @Semantics.amount.currencyCode : 'Currency_plnt'
+      Taxprice                       : abap.dec(15,3);
       @Semantics.amount.currencyCode : 'Currency_plnt'
       UnitPrice_plnt                 : abap.curr(15,2);
 //      @Semantics.amount.currencyCode : 'Currency_plnt'
-      UnitPrice_standard             : abap.curr(15,2);
+      UnitPrice_standard             : abap.dec(15,3);
       PriceUnitQty                   : abap.dec(5);
       Currency_standard              : waers;
 //      @Consumption.hidden: true
@@ -109,7 +109,7 @@ define  root custom entity ZR_PURINFOMASTERLIST
       DeliveryLT                     : abap.char(5);    
       @UI                            : { lineItem: [ { position: 590, label: 'Plus day' } ], 
                                          selectionField: [ { position: 150 } ] }
-      @Consumption.hidden: true
+//      @Consumption.hidden: true
       PlusDay                        : abap.char(3);
       PurchasingInfoRecordCategory   : abap.char(1);
       SupplierConfirmationControlKey : abap.char(4);

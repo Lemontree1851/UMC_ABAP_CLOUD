@@ -1,6 +1,6 @@
 @AccessControl.authorizationCheck: #CHECK
 @EndUserText.label: 'Purchase Requisition Workflow'
-define root view entity ZR_PRWORKFLOWITEM 
+define root view entity ZR_PRWORKFLOWITEM
   as select from ztmm_1006
 {
   key uuid                                   as UUID,
@@ -22,6 +22,7 @@ define root view entity ZR_PRWORKFLOWITEM
       material_group                         as MaterialGroup,
       quantity                               as Quantity,
       unit                                   as Unit,
+      @Semantics.amount.currencyCode : 'currency'
       price                                  as Price,
       unit_price                             as UnitPrice,
       delivery_date                          as DeliveryDate,
@@ -66,6 +67,11 @@ define root view entity ZR_PRWORKFLOWITEM
       lat_cahanged_at                        as LatCahangedAt,
       cast('' as bapi_mtype preserving type) as Type,
       cast('' as abap.sstring(256))          as ResultText,
-      cast('' as abap.sstring(1033))         as Message
+      cast('' as abap.sstring(1033))         as Message,
+      @Semantics.amount.currencyCode : 'currency'
+      case when unit_price <> 0
+                  then price * quantity / unit_price
+                  else 0
+               end                           as amount1
 
 }

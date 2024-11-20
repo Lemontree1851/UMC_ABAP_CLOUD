@@ -212,8 +212,13 @@ CLASS lhc_purchasereq IMPLEMENTATION.
               "到这就认为成功，后续出错程序会抛出异常或终止
               record-type = 'S'.
               MESSAGE s012(zmm_001) WITH record-prno record-pritem INTO record-message.
-              "审批状态默认为1登録済
-              record-approvestatus = '1'.
+              "需要审批时，审批状态默认为1登録済
+              "不需要审批，状态直接为3承認済
+              IF record-isapprove = '1'.
+                record-approvestatus = '1'.
+              ELSE.
+                record-approvestatus = '3'.
+              ENDIF.
               MOVE-CORRESPONDING record TO ls_purchasereq.
               APPEND ls_purchasereq TO lt_purchasereq.
             ENDIF.
@@ -270,6 +275,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                       purchaseorderitem
                       kyoten
                       isapprove
+                      approvestatus
                       createdat )
             WITH lt_purchasereq
             MAPPED mapped
@@ -325,7 +331,9 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                 ( companycode = lv_company1 field = 'Quantity' field_name = TEXT-010 )
                                 ( companycode = lv_company1 field = 'Price' field_name = TEXT-011 )
                                 ( companycode = lv_company1 field = 'Kyoten' field_name = TEXT-015 )
-                                ( companycode = lv_company1 field = 'BuyPurpoose' field_name = TEXT-014 ) ).
+                                ( companycode = lv_company1 field = 'BuyPurpoose' field_name = TEXT-014 )
+                                ( companycode = lv_company1 field = 'PolinkBy' field_name = TEXT-018 )
+                                ( companycode = lv_company1 field = 'PrBy' field_name = TEXT-019 ) ).
 
     required_fields = VALUE #( BASE required_fields
                                 ( companycode = lv_company2 field = 'ApplyDepart' field_name = TEXT-016 )
@@ -338,7 +346,9 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                 ( companycode = lv_company2 field = 'PurchaseGrp' field_name = TEXT-008 )
                                 ( companycode = lv_company2 field = 'MatId' field_name = TEXT-009 )
                                 ( companycode = lv_company2 field = 'Quantity' field_name = TEXT-010 )
-                                ( companycode = lv_company2 field = 'Price' field_name = TEXT-011 ) ).
+                                ( companycode = lv_company2 field = 'Price' field_name = TEXT-011 )
+                                ( companycode = lv_company2 field = 'PolinkBy' field_name = TEXT-018 )
+                                ( companycode = lv_company2 field = 'PrBy' field_name = TEXT-019 ) ).
     LOOP AT records ASSIGNING FIELD-SYMBOL(<record>).
       " 没起作用，不知为何前端状态消息不会自动清除，添加清除状态消息的代码也不起作用
 *      APPEND VALUE #( %key     = <record>-('%key')
@@ -384,13 +394,6 @@ CLASS lhc_purchasereq IMPLEMENTATION.
           ENDIF.
         ENDLOOP.
       ENDIF.
-
-      " TODO 只提供了cds描述需要cds名称，且提供的字段不准确
-*      SELECT
-*        *
-*      FROM I_PurgInfoRecdOrgPlantData with PRIVILEGED ACCESS as pur_info
-*      WHERE pur_info~PurchasingOrganization = record-PurchaseOrg
-*        and pur_info~Plant = record-Plant.
 
       " 标识当前行有错误
       IF is_error = abap_true.
@@ -506,6 +509,15 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         is_error = abap_true.
         ls_result-type = 'E'.
         MESSAGE e019(zmm_001) WITH ls_result-prno ls_result-pritem INTO lv_msg.
+        ls_result-message = zzcl_common_utils=>merge_message( iv_message1 = ls_result-message
+                                                              iv_message2 = lv_msg
+                                                              iv_symbol   = ';' ).
+      ENDIF.
+      " 只有审批完成的才可以生成PO
+      IF ls_result-approvestatus <> '3'."承認済
+        is_error = abap_true.
+        ls_result-type = 'E'.
+        MESSAGE e028(zmm_001) INTO lv_msg.
         ls_result-message = zzcl_common_utils=>merge_message( iv_message1 = ls_result-message
                                                               iv_message2 = lv_msg
                                                               iv_symbol   = ';' ).
@@ -733,7 +745,9 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         record_temp-type = 'S'.
         record_temp-message = lv_message.
         record_temp-purchaseorder = ls_response-purchaseorder.
-        MODIFY records FROM record_temp TRANSPORTING type message purchaseorder WHERE prno = record_key-prno.
+        " PO创建成功后需要更改审批状态为4送信済
+        record_temp-approvestatus = '4'.
+        MODIFY records FROM record_temp TRANSPORTING type message purchaseorder approvestatus WHERE prno = record_key-prno.
 
         "将PO号更新到ZTMM_1006
         MODIFY ENTITIES OF zr_tmm_1006 IN LOCAL MODE

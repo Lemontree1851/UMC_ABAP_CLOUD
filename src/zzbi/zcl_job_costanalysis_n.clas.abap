@@ -253,6 +253,7 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
                                                               iv_token_url     = CONV #( ls_config-zvalue3 )
                                                               iv_client_id     = CONV #( ls_config-zvalue4 )
                                                               iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                              iv_authtype      = 'OAuth2.0'
                                                     IMPORTING ev_status_code   = DATA(lv_status_code)
                                                               ev_response      = DATA(lv_response) ).
 
@@ -287,6 +288,7 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
                                                               iv_token_url     = CONV #( ls_config-zvalue3 )
                                                               iv_client_id     = CONV #( ls_config-zvalue4 )
                                                               iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                              iv_authtype      = 'OAuth2.0'
                                                     IMPORTING ev_status_code   = DATA(lv_status_codet02)
                                                               ev_response      = DATA(lv_responset02) ).
       IF lv_status_codet02 = 200.
@@ -338,6 +340,7 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
                                                               iv_token_url     = CONV #( ls_config-zvalue3 )
                                                               iv_client_id     = CONV #( ls_config-zvalue4 )
                                                               iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                              iv_authtype      = 'OAuth2.0'
                                                     IMPORTING ev_status_code   = DATA(lv_status_codet07)
                                                               ev_response      = DATA(lv_responset07) ).
       IF lv_status_codet07 = 200.
@@ -870,6 +873,19 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
                                       iv_alpha = 'IN'
                                       iv_currency = lv_currencyold
                                       iv_input = ls_dataj-estimatedprice_fat ).
+
+        ls_dataj-actualprice_smt = zzcl_common_utils=>conversion_amount(
+                                      iv_alpha = 'IN'
+                                      iv_currency = lv_currencyold
+                                      iv_input = ls_dataj-actualprice_smt ).
+        ls_dataj-actualprice_ai = zzcl_common_utils=>conversion_amount(
+                                      iv_alpha = 'IN'
+                                      iv_currency = lv_currencyold
+                                      iv_input = ls_dataj-actualprice_ai ).
+        ls_dataj-actualprice_fat = zzcl_common_utils=>conversion_amount(
+                                      iv_alpha = 'IN'
+                                      iv_currency = lv_currencyold
+                                      iv_input = ls_dataj-actualprice_fat ).
       ENDIF.
 
       READ TABLE lt_bill ASSIGNING FIELD-SYMBOL(<lfs_bill>)
@@ -903,15 +919,7 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
 
   METHOD if_apj_dt_exec_object~get_parameters.
     " Return the supported selection parameters here
-    et_parameter_def = VALUE #(
-*                                ( selname        = 'P_Compan'
-*                                  kind           = if_apj_dt_exec_object=>parameter
-*                                  datatype       = 'char'
-*                                  length         = 4
-*                                  param_text     = '会社コード'
-*                                  changeable_ind = abap_true
-*                                  mandatory_ind  = abap_true )
-                                ( selname        = 'P_Plant'
+    et_parameter_def = VALUE #( ( selname        = 'P_Plant'
                                   kind           = if_apj_dt_exec_object=>select_option
                                   datatype       = 'char'
                                   length         = 4
@@ -949,11 +957,6 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
 *                               sign    = 'I'
 *                               option  = 'EQ'
 *                               low     = '1100' )
-*                               ( selname = 'P_Plant'
-*                               kind    = if_apj_dt_exec_object=>parameter
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '1200' )
 *                               ( selname = 'P_Year'
 *                               kind    = if_apj_dt_exec_object=>parameter
 *                               sign    = 'I'
@@ -963,7 +966,7 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
 *                               kind    = if_apj_dt_exec_object=>parameter
 *                               sign    = 'I'
 *                               option  = 'EQ'
-*                               low     = '08' )
+*                               low     = '07' )
 *
 *                               ).
 

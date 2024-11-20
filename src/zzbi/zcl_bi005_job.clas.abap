@@ -8,8 +8,30 @@ CLASS zcl_bi005_job DEFINITION
       BEGIN OF ty_podataanalysis.
         INCLUDE TYPE zr_podataanalysis.
     TYPES:
-        yearmonth TYPE N LENGTH 6,
-      END OF ty_podataanalysis.
+        yearmonth TYPE n LENGTH 6,
+      END OF ty_podataanalysis,
+
+      BEGIN OF ty_supply,
+        yearmonth      TYPE n LENGTH 6,
+        material       TYPE matnr,
+        supplyquantity TYPE p LENGTH 7 DECIMALS 0,
+      END OF ty_supply,
+
+*----------------------------------------------uweb调用参考 pickinglist。
+      BEGIN OF ty_response_res,
+        plant            TYPE string,
+        material         TYPE string,
+        arrange_end_date TYPE string,
+        arrange_qty_sum  TYPE string,
+      END OF ty_response_res,
+
+      BEGIN OF ty_response_d,
+        results TYPE TABLE OF ty_response_res WITH DEFAULT KEY,
+      END OF ty_response_d,
+
+      BEGIN OF ty_response,
+        d TYPE ty_response_d,
+      END OF ty_response.
 
 
     INTERFACES if_apj_dt_exec_object .
@@ -96,12 +118,17 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       lr_plant       TYPE RANGE OF werks_d,
       ls_companycode LIKE LINE OF lr_companycode,
       ls_plant       LIKE LINE OF lr_plant,
-      lt_response    TYPE STANDARD TABLE OF zr_podataanalysis,
+      lt_response    TYPE STANDARD TABLE OF ty_podataanalysis,
       lv_gjahr       TYPE gjahr,
       lv_poper       TYPE poper,
       lv_count       TYPE i,
       lv_filter      TYPE string,
-
+      lv_filter2     TYPE string,
+      lt_zmm80       TYPE STANDARD TABLE OF ty_supply,
+      lt_zmm06       TYPE STANDARD TABLE OF ty_supply,
+      ls_supply      TYPE ty_supply,
+      lt_uweb_api    TYPE STANDARD TABLE OF ty_response_res,
+      ls_response    TYPE ty_response,
       lv_msg         TYPE cl_bali_free_text_setter=>ty_text.
 
 
@@ -176,9 +203,9 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
      WHERE fiscalyearvariant = 'V3'
        AND fiscalyearperiod    = @lv_yearperiod
-      INTO @DATA(ls_fiscal).
+      INTO ( @DATA(lv_now_start), @DATA(lv_now_end) ).
 
-    DATA(lv_next_start) = zzcl_common_utils=>calc_date_add( EXPORTING date = ls_fiscal-fiscalperiodstartdate month = 11 ).
+    DATA(lv_next_start) = zzcl_common_utils=>calc_date_add( EXPORTING date = lv_now_start month = 11 ).
     DATA(lv_next_end) = zzcl_common_utils=>get_enddate_of_month( EXPORTING iv_date = lv_next_start ).
 
 *   前月の在庫実績を抽出
@@ -220,6 +247,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
     lv_filter = |{ lv_filter })|.
+    lv_filter2 = lv_filter.
 
     CLEAR lv_count.
     LOOP AT lt_material INTO DATA(ls_material).
@@ -233,6 +261,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     lv_filter = |{ lv_filter })|.
 
 *   部品の入庫予測データを取得
+*   PO登録した後の原材料Supplyの数字を取得する（ZMM80）
     DATA(lv_path) = |/zui_podataanalysis_o4/srvd/sap/zui_podataanalysis_o4/0001/PODataAnalysis|.
 *    DATA(lv_select) = |Plant,Material,DeliveryDate,ScheduleLineDeliveryDate,ConfirmedQuantity,OrderQuantity|.
     zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
@@ -246,15 +275,86 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         ( xco_cp_json=>transformation->pascal_case_to_underscore )
       ) )->write_to( REF #( lt_response ) ).
 
-      DELETE lt_response WHERE ( ( deliverydate IS NOT INITIAL AND ( deliverydate < ls_fiscal-fiscalperiodstartdate OR deliverydate > ls_fiscal-fiscalperiodenddate ) OR
-                                   deliverydate IS INITIAL AND ( schedulelinedeliverydate < ls_fiscal-fiscalperiodstartdate OR schedulelinedeliverydate > ls_fiscal-fiscalperiodenddate )  ) ).
+      DELETE lt_response WHERE ( ( deliverydate IS NOT INITIAL AND ( deliverydate < lv_now_start OR deliverydate > lv_next_end ) OR
+                                   deliverydate IS INITIAL AND ( schedulelinedeliverydate < lv_now_start OR schedulelinedeliverydate > lv_next_end )  ) ).
 
       LOOP AT lt_response ASSIGNING FIELD-SYMBOL(<fs_l_response>).
+        IF <fs_l_response>-deliverydate IS NOT INITIAL.
+          ls_supply-yearmonth = <fs_l_response>-deliverydate+0(6).
+        ELSEIF <fs_l_response>-schedulelinedeliverydate IS NOT INITIAL.
+          ls_supply-yearmonth = <fs_l_response>-schedulelinedeliverydate+0(6).
+        ENDIF.
 
-
+        IF <fs_l_response>-confirmedquantity IS NOT INITIAL.
+          ls_supply-supplyquantity = <fs_l_response>-confirmedquantity.
+        ELSEIF <fs_l_response>-orderquantity IS NOT INITIAL.
+          ls_supply-supplyquantity = <fs_l_response>-orderquantity.
+        ENDIF.
+        ls_supply-material = <fs_l_response>-material.
+        COLLECT ls_supply INTO lt_zmm80.
+        CLEAR ls_supply.
       ENDLOOP.
     ENDIF.
 
+*   PO登録されない原材料のSupplyの数字を取得する（ZMM06）
+*    DATA(lv_select) = |Plant,Material,DeliveryDate,ScheduleLineDeliveryDate,ConfirmedQuantity,OrderQuantity|.
+    DATA(lv_start_c) = lv_now_start+0(4) && '-' && lv_now_start+4(2) && '-' && lv_now_start+6(2) && 'T00:00:00'.
+    DATA(lv_next_end_c)   = lv_next_end+0(4) && '-' && lv_next_end+4(2) && '-' && lv_next_end+6(2)  && 'T00:00:00'.
+    lv_filter2 = |{ lv_filter2 } and ARRANGE_END_DATE be datetime'{ lv_start_c }' and ARRANGE_END_DATE le datetime'{ lv_next_end_c }'|.
+    zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |http://220.248.121.53:11380/srv/odata/v2/TableService/PCH09_LIST|
+                                                            iv_client_id     = CONV #( 'Tom' )
+                                                            iv_client_secret = CONV #( '1' )
+                                                            iv_authtype      = 'Basic'
+                                                  IMPORTING ev_status_code   = DATA(lv_status_code_uweb)
+                                                            ev_response      = DATA(lv_response_uweb) ).
+    IF lv_status_code_uweb = 200.
+      REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_response_uweb  WITH ``.
+      REPLACE ALL OCCURRENCES OF `)\/` IN lv_response_uweb  WITH ``.
+
+      xco_cp_json=>data->from_string( lv_response_uweb )->apply( VALUE #(
+*        ( xco_cp_json=>transformation->boolean_to_abap_bool )
+      ) )->write_to( REF #( ls_response ) ).
+
+      IF ls_response-d-results IS NOT INITIAL.
+        APPEND LINES OF ls_response-d-results TO lt_uweb_api.
+        LOOP AT lt_uweb_api ASSIGNING FIELD-SYMBOL(<fs_l_uweb_api>).
+          IF <fs_l_uweb_api>-arrange_end_date < 0.
+            ls_supply-yearmonth = '190001'.
+          ELSEIF <fs_l_uweb_api>-arrange_end_date = '253402214400000'.
+            ls_supply-yearmonth = '999912'.
+          ELSE.
+*            <fs_l_uweb_api>-arrange_end_date = xco_cp_time=>unix_timestamp(
+*                        iv_unix_timestamp = <fs_l_uweb_api>-arrange_end_date / 1000
+*                     )->get_moment( )->as( xco_cp_time=>format->abap )->value+0(8).
+            ls_supply-yearmonth = xco_cp_time=>unix_timestamp(
+                        iv_unix_timestamp = <fs_l_uweb_api>-arrange_end_date / 1000
+                     )->get_moment( )->as( xco_cp_time=>format->abap )->value+0(6).
+          ENDIF.
+          ls_supply-material = <fs_l_uweb_api>-material.
+          COLLECT ls_supply INTO lt_zmm06.
+          CLEAR ls_supply.
+        ENDLOOP.
+      ENDIF.
+    ENDIF.
+
+    DATA(lt_material_zfrt) = lt_1016.
+    SORT lt_material_zfrt BY material.
+    DELETE lt_material_zfrt WHERE materialtype <> 'ZFRT'.    "原材料の製品
+    DELETE ADJACENT DUPLICATES FROM lt_material_zfrt COMPARING material.
+
+*   得意先内示データから製品の所要量を取得
+    SELECT a~material,
+           b~materialtype,
+           a~plant,
+           b~businesspartner AS customer,
+           a~requirement_qty
+      FROM ztpp_1012 AS a
+      INNER JOIN @lt_material_zfrt AS b ON b~material = a~material
+*                                  AND b~businesspartner = a~customer
+     WHERE a~plant IN @lr_plant
+       AND a~requirement_date >= @lv_now_start
+       AND a~requirement_date <= @lv_next_end
+      INTO TABLE @DATA(lt_1012).
 
 
 

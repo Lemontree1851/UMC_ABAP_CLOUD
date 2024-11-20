@@ -27,6 +27,7 @@ define root custom entity ZR_SALESACCEPTANCE_RESULT
       AcceptPeriodFrom       : abap.dats;     //検収期間From
       AcceptPeriodTo         : abap.dats;     //検収期間To
       SalesDocumentType      : auart; //受注伝票タイプ
+      SalesDocumentTypeText  : bezei;  //SalesDocumentTypeName
       Product                : matnr; //品目コード
       SalesDocumentItemText  : arktx; //品名
       PostingDate            : budat; //実績転記日
@@ -42,7 +43,7 @@ define root custom entity ZR_SALESACCEPTANCE_RESULT
       NetAmount              : abap.curr(13,2); //請求金額
       AccceptTaxAmount       : abap.curr(13,2); //検収税額
       TaxAmount              : abap.curr(13,2); //請求税額
-      Currency        : waers; //検収通貨(受注通貨)
+      Currency               : waers; //検収通貨(受注通貨)
       AccountingExchangeRate : abap.char(9); //為替レート(検収通貨と会社通貨)
       ExchangeRateDate       : abap.dats; //為替日付
       OutsideData            : abap.char(1); //SAP外売上区分

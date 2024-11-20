@@ -70,6 +70,7 @@ define root view entity ZR_TMM_1006
       cast('' as abap.sstring(256))          as ResultText,
       cast('' as abap.sstring(1033))         as Message,
       workflow_id                            as WorkflowId,
-      instance_id                            as InstanceId
+      instance_id                            as InstanceId,
+      application_id                         as ApplicationId
 
 }

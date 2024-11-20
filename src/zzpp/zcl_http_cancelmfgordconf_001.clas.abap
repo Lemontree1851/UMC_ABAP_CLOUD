@@ -69,12 +69,16 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
       lv_creator        TYPE c LENGTH 40,
       lv_path           TYPE string,
       lv_string         TYPE string,
-      lv_unix_timestamp TYPE int8.
+      lv_unix_timestamp TYPE int8,
+      lv_previous_processed TYPE ztpp_1004-messagetype.
 
     CONSTANTS:
       lc_msgid         TYPE string VALUE 'ZPP_001',
       lc_msgty         TYPE string VALUE 'E',
+      lc_msgty_s       TYPE string VALUE 'S',
+      lc_msgty_w       TYPE string VALUE 'W',
       lc_stat_code_200 TYPE string VALUE '200',
+      lc_updateflag_i  TYPE string VALUE 'I',
       lc_updateflag_c  TYPE string VALUE 'C',
       lc_count_10      TYPE i      VALUE '10',
       lc_date_19000101 TYPE d      VALUE '19000101',
@@ -131,6 +135,47 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
           MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 002 WITH lv_plant INTO ls_res-_msg.
           RAISE EXCEPTION TYPE cx_abap_api_state.
         ENDIF.
+
+       "Check previous processed
+        SELECT umesid,
+               plant,
+               pgmid,
+               creationdate,
+               mfgorderconfirmationgroup,
+               mfgorderconfirmation,
+               updateflag
+          FROM ztpp_1004
+         WHERE umesid      = @lv_umesid
+           AND updateflag  = @lc_updateflag_i      "登録
+           AND messagetype = @lc_msgty_s
+         ORDER BY creationdate DESCENDING
+          INTO TABLE @DATA(lt_ztpp_1004_i).
+
+        SELECT umesid,
+               plant,
+               pgmid,
+               creationdate,
+               mfgorderconfirmationgroup,
+               mfgorderconfirmation,
+               updateflag
+          FROM ztpp_1004
+         WHERE umesid      = @lv_umesid
+           AND updateflag  = @lc_updateflag_c      "取り消し
+           AND messagetype = @lc_msgty_s
+         ORDER BY creationdate DESCENDING
+          INTO TABLE @DATA(lt_ztpp_1004_c).
+
+        IF lines( lt_ztpp_1004_i ) - lines( lt_ztpp_1004_c ) <> 1.
+          lv_previous_processed = lc_msgty_w.
+        ELSE.
+          CLEAR lv_previous_processed.
+        ENDIF.
+
+        IF lv_previous_processed = lc_msgty_w.
+          "該当データは前回処理済みです！
+          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 110 INTO ls_res-_msg.
+          ls_res-_msgty = lv_previous_processed.
+        ELSE.
 
         "Obtain data of manufacturing order confirmation
         SELECT SINGLE
@@ -198,6 +243,9 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
           MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 021 WITH lv_group lv_count INTO ls_res-_msg.
           RAISE EXCEPTION TYPE cx_abap_api_state.
         ENDIF.
+
+        ENDIF.
+
       CATCH cx_root INTO lo_root_exc.
         ls_res-_msgty = 'E'.
     ENDTRY.
@@ -209,9 +257,6 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
 *                                                 compress = 'X'
                                                  pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
 
-    "Set request data
-    response->set_text( lv_res_body ).
-
     IF lv_umesid IS NOT INITIAL.
       ls_ztpp_1004-umesid                    = lv_umesid.
       ls_ztpp_1004-plant                     = lv_plant.
@@ -221,6 +266,10 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
       ls_ztpp_1004-updateflag                = lc_updateflag_c.
       ls_ztpp_1004-messagetype               = ls_res-_msgty.
       ls_ztpp_1004-creator                   = lv_creator.
+      IF lv_previous_processed = lc_msgty_w.
+        CLEAR: ls_ztpp_1004-mfgorderconfirmationgroup,
+               ls_ztpp_1004-mfgorderconfirmation.
+      ENDIF.
       GET TIME STAMP FIELD ls_ztpp_1004-creationdate.
       APPEND ls_ztpp_1004 TO lt_ztpp_1004.
 
@@ -238,5 +287,9 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
       MODIFY ztpp_1004 FROM TABLE @lt_ztpp_1004.
       MODIFY ztpp_1005 FROM TABLE @lt_ztpp_1005.
     ENDIF.
+
+    "Set request data
+    response->set_text( lv_res_body ).
+
   ENDMETHOD.
 ENDCLASS.

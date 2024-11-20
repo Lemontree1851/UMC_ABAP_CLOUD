@@ -8,5 +8,6 @@ define root view entity ZC_PRWORKFLOWSUM
 
   key   ApplyDepart,
   key   PrNo,
+        Currency,
         AmountSum
 }

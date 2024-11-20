@@ -58,64 +58,11 @@ ENDCLASS.
 
 
 
-CLASS ZCL_JOB_AGENCYPURCHASINGN IMPLEMENTATION.
-
-
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '1' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
-        " handle exception
-    ENDTRY.
-  ENDMETHOD.
-
-
-  METHOD boi.
-
-  ENDMETHOD.
-
-
-  METHOD if_apj_dt_exec_object~get_parameters.
-
-    et_parameter_def = VALUE #( ( selname        = 'P_ZPOSTI'
-                                  kind           = if_apj_dt_exec_object=>select_option
-                                  datatype       = 'char'
-                                  length         = 6
-                                  param_text     = '年度期間'
-                                  changeable_ind = abap_true )
-                                  ( selname        = 'P_COM'
-                                  kind           = if_apj_dt_exec_object=>select_option
-                                  datatype       = 'char'
-                                  length         = 4
-                                  param_text     = '転記先会社コード'
-                                  changeable_ind = abap_true )
-                                  ( selname        = 'P_COM2'
-                                  kind           = if_apj_dt_exec_object=>select_option
-                                  datatype       = 'char'
-                                  length         = 4
-                                  param_text     = '決済対象会社コード'
-                                  changeable_ind = abap_true ) ).
-  ENDMETHOD.
-
-
+CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
   METHOD if_apj_rt_exec_object~execute.
     DATA:
+      lv_datum         TYPE datum,
+      lv_datetime      TYPE string,
       lv_msgt          TYPE cl_bali_free_text_setter=>ty_text,
       lv_zpostingdatef TYPE n LENGTH 6,
       lv_zpostingdatet TYPE n LENGTH 6,
@@ -149,11 +96,16 @@ CLASS ZCL_JOB_AGENCYPURCHASINGN IMPLEMENTATION.
     ENDLOOP.
 
     IF lv_zpostingdatef IS INITIAL.
-      lv_zpostingdatef = sy-datum+0(6).
-      lv_zpostingdatet = sy-datum+0(6).
 
-      lv_zpostingdatef = lv_zpostingdatef - 1.
-      lv_zpostingdatet = lv_zpostingdatet - 1.
+*     Parameterの実行日付
+      GET TIME STAMP FIELD DATA(lv_stimestamp).
+      lv_datetime = lv_stimestamp.
+      lv_datum     = lv_datetime+0(6) && '01'.
+
+      lv_datum = lv_datum - 1.
+      lv_zpostingdatef  = lv_datum+0(6).
+      lv_zpostingdatet  = lv_datum+0(6).
+
       SELECT ztbc_1001~zvalue1
         FROM ztbc_1001
        WHERE ztbc_1001~zid     = 'ZFI002'
@@ -364,11 +316,11 @@ GROUP BY
           lv_text = 'システムURLの取得に失敗しました: ' && lx_context_error->get_text( ).
           <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
+          lv_msgt = <lfs_item>-message.
+          TRY.
+              add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+            CATCH cx_bali_runtime.
+          ENDTRY.
           EXIT.
         CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
           " 处理 HTTP 目的地提供者错误
@@ -376,11 +328,11 @@ GROUP BY
           lv_text = 'HTTP宛先の作成に失敗しました: ' && lx_http_dest_provider_error->get_text( ).
           <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
+          lv_msgt = <lfs_item>-message.
+          TRY.
+              add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+            CATCH cx_bali_runtime.
+          ENDTRY.
           EXIT.
       ENDTRY.
 
@@ -404,11 +356,11 @@ GROUP BY
 
             <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
+            lv_msgt = <lfs_item>-message.
+            TRY.
+                add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+              CATCH cx_bali_runtime.
+            ENDTRY.
             EXIT.
           ENDIF.
 
@@ -425,11 +377,11 @@ GROUP BY
 
           <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
+          lv_msgt = <lfs_item>-message.
+          TRY.
+              add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+            CATCH cx_bali_runtime.
+          ENDTRY.
           EXIT.
       ENDTRY.
 
@@ -509,11 +461,11 @@ GROUP BY
           lv_error = 'X'.
           <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
+          lv_msgt = <lfs_item>-message.
+          TRY.
+              add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+            CATCH cx_bali_runtime.
+          ENDTRY.
           EXIT.
       ENDTRY.
 
@@ -639,11 +591,11 @@ GROUP BY
             " 处理错误或记录日志
             <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
+            lv_msgt = <lfs_item>-message.
+            TRY.
+                add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+              CATCH cx_bali_runtime.
+            ENDTRY.
             EXIT.
         ENDTRY.
 
@@ -659,11 +611,11 @@ GROUP BY
             lv_text = 'システムURLの取得に失敗しました: ' && lx_context_error->get_text( ).
             <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
+            lv_msgt = <lfs_item>-message.
+            TRY.
+                add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+              CATCH cx_bali_runtime.
+            ENDTRY.
             EXIT.
           CATCH cx_http_dest_provider_error INTO lx_http_dest_provider_error.
             " 处理 HTTP 目的地提供者错误
@@ -671,11 +623,11 @@ GROUP BY
             lv_text = 'HTTP宛先の作成に失敗しました: ' && lx_http_dest_provider_error->get_text( ).
             <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
+            lv_msgt = <lfs_item>-message.
+            TRY.
+                add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+              CATCH cx_bali_runtime.
+            ENDTRY.
             EXIT.
         ENDTRY.
 
@@ -696,11 +648,11 @@ GROUP BY
 
               <lfs_item>-uuid1 = lv_uuid.
               <lfs_item>-message = lv_text.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
+              lv_msgt = <lfs_item>-message.
+              TRY.
+                  add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+                CATCH cx_bali_runtime.
+              ENDTRY.
               EXIT.
             ENDIF.
 
@@ -717,11 +669,11 @@ GROUP BY
 
             <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
+            lv_msgt = <lfs_item>-message.
+            TRY.
+                add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+              CATCH cx_bali_runtime.
+            ENDTRY.
             EXIT.
         ENDTRY.
 
@@ -806,11 +758,11 @@ GROUP BY
             lv_error = 'X'.
             <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
+            lv_msgt = <lfs_item>-message.
+            TRY.
+                add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+              CATCH cx_bali_runtime.
+            ENDTRY.
             EXIT.
         ENDTRY.
 
@@ -865,11 +817,11 @@ GROUP BY
           ls_ztfi_1014-accountingdocument2 = <lfs_item>-accountingdocument2.
 *          ls_ztfi_1014-message             = <lfs_item>-message.
           MODIFY ztfi_1014 FROM @ls_ztfi_1014.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'S' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
+          lv_msgt = <lfs_item>-message.
+          TRY.
+              add_message_to_log( i_text = lv_msgt i_type = 'S' ).
+            CATCH cx_bali_runtime.
+          ENDTRY.
         ELSE.
           CLEAR <lfs_item>-accountingdocument2.
 
@@ -890,11 +842,11 @@ GROUP BY
           ls_ztfi_1014-accountingdocument2 = ''.
           ls_ztfi_1014-message             = ''.
           MODIFY ztfi_1014 FROM @ls_ztfi_1014.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
+          lv_msgt = <lfs_item>-message.
+          TRY.
+              add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+            CATCH cx_bali_runtime.
+          ENDTRY.
           EXIT.
         ENDIF.
       ENDIF.
@@ -904,6 +856,27 @@ GROUP BY
 
   ENDMETHOD.
 
+  METHOD if_apj_dt_exec_object~get_parameters.
+
+    et_parameter_def = VALUE #( ( selname        = 'P_ZPOSTI'
+                                  kind           = if_apj_dt_exec_object=>select_option
+                                  datatype       = 'char'
+                                  length         = 6
+                                  param_text     = '年度期間'
+                                  changeable_ind = abap_true )
+                                  ( selname        = 'P_COM'
+                                  kind           = if_apj_dt_exec_object=>select_option
+                                  datatype       = 'char'
+                                  length         = 4
+                                  param_text     = '転記先会社コード'
+                                  changeable_ind = abap_true )
+                                  ( selname        = 'P_COM2'
+                                  kind           = if_apj_dt_exec_object=>select_option
+                                  datatype       = 'char'
+                                  length         = 4
+                                  param_text     = '決済対象会社コード'
+                                  changeable_ind = abap_true ) ).
+  ENDMETHOD.
 
   METHOD if_oo_adt_classrun~main.
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
@@ -944,4 +917,33 @@ GROUP BY
         " handle exception
     ENDTRY.
   ENDMETHOD.
+
+  METHOD boi.
+
+  ENDMETHOD.
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
+        " handle exception
+    ENDTRY.
+  ENDMETHOD.
+
 ENDCLASS.

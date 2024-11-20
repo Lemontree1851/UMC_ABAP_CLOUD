@@ -73,7 +73,7 @@ define root view entity ZR_PRWORKFLOWLINK
       ztmm_1006.local_last_changed_at          as LocalLastChangedAt,
       @Semantics.systemDateTime.lastChangedAt: true
       ztmm_1006.lat_cahanged_at                as LatCahangedAt,
-      ZR_PRWORKFLOW_SUM.amount_sum             as AmountSum,
+      ZR_PRWORKFLOW_SUM.Amount_Sum             as AmountSum,
       ztmm_1006.workflow_id                    as WorkflowId,
       ztmm_1006.instance_id                    as InstanceId,
       ztmm_1006.application_id                 as ApplicationId   

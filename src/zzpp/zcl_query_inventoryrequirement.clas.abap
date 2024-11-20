@@ -12,8 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
-
+CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
 
   METHOD if_rap_query_provider~select.
     TYPES: BEGIN OF ty_metadata,
@@ -139,9 +138,9 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
     CONSTANTS: lc_classification_0 TYPE string VALUE `0.FORECAST`,
                lc_classification_1 TYPE string VALUE `1.SUPPLY`,
                lc_classification_5 TYPE string VALUE `5.DEMAND`,
+               lc_classification_s TYPE string VALUE `5.SUBDEMAND`,
                lc_classification_9 TYPE string VALUE `9.BALANCE`,
-               lc_classification_r TYPE string VALUE `R.BALANCE`,
-               lc_classification_s TYPE string VALUE `SUBDEMAND`.
+               lc_classification_r TYPE string VALUE `R.BALANCE`.
 
     CONSTANTS: lc_config_zpp015 TYPE ztbc_1001-zid VALUE `ZPP015`,
                lc_config_zpp016 TYPE ztbc_1001-zid VALUE `ZPP016`,
@@ -635,6 +634,8 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
 
               " 9.BALANCE
               <lfs_filter_mrpdata>-balance_9 = lv_quantity.
+              " R.BALANCE
+              <lfs_filter_mrpdata>-balance_r = lv_quantity.
 
               " 计算 R.BALANCE 用
               IF <lfs_filter_mrpdata>-m_r_p_element_category = lc_mrpelement_category_la. " 出荷通知
@@ -1163,12 +1164,15 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
 
           CASE lv_displayunit.
             WHEN 'D'. " Day - display up to 180 days
-              SELECT SINGLE days_between( @lv_system_date, @lv_periodenddate ) FROM i_timezone INTO @DATA(lv_days).
+              SELECT SINGLE days_between( @lv_system_date, @lv_periodenddate ) + 1 FROM i_timezone INTO @DATA(lv_days).
               IF lv_days > 180.
                 lv_count = 180.
               ELSE.
                 lv_count = lv_days.
               ENDIF.
+
+              APPEND VALUE #( name = |Y_M_D{ lv_col_date }| types = 'MENGE_D' ) TO lt_dynamic_col.
+              lv_count -= 1.
 
               DO lv_count TIMES.
                 lv_col_date = zzcl_common_utils=>calc_date_add( date = lv_col_date day = 1 ).
@@ -1328,10 +1332,11 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
 
             " 列「過去」の9.BALANCE
             CLEAR lv_past_9balance.
-            lv_past_9balance = ls_horizontal-stock_qty + ls_horizontal-safety_stock.
+            lv_past_9balance = ls_horizontal-stock_qty + ls_horizontal-safety_stock + lv_past_supply + lv_past_demand.
 
             " 列「過去」のR.BALANCE = 9.BALANCE＋ 未来期間に一番目の出荷通知
             CLEAR lv_past_rbalance.
+            lv_past_rbalance = lv_past_9balance.
             READ TABLE lt_ship_qty_date INTO DATA(ls_ship_qty_date) WITH KEY material = <lfs_fixed_data>-product.
             IF sy-subrc = 0.
               lv_past_rbalance = lv_past_9balance + ls_ship_qty_date-m_r_p_element_open_quantity.
@@ -1364,10 +1369,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
 
             " 列「未来」の9.BALANCE
             CLEAR lv_future_9balance.
-            lv_future_9balance = ls_horizontal-stock_qty + ls_horizontal-safety_stock.
-            " 列「未来」のR.BALANCE = 9.BALANCE
-            CLEAR lv_future_rbalance.
-            lv_future_rbalance = lv_future_9balance.
+            lv_future_9balance = lv_future_supply + lv_future_demand.
             " End 列「未来」
 
             " Begin 列「合計」
@@ -1400,86 +1402,77 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
             lv_sum_rbalance = lv_sum_9balance.
             " End 列「合計」
 
-            " DEMAND明細表示
-            IF lv_showdemand = abap_true.
-              " 上位品目の最終製品取得
-              zcl_bom_where_used=>get_data(
-                 EXPORTING
-                   iv_plant                   = ls_horizontal-plant
-                   iv_billofmaterialcomponent = ls_horizontal-high_level_material
-                   iv_getusagelistroot        = abap_true
-                 IMPORTING
-                   et_usagelist               = DATA(lt_usagelist) ).
-              IF lt_usagelist IS NOT INITIAL.
-                SORT lt_usagelist BY material.
-                DELETE ADJACENT DUPLICATES FROM lt_usagelist COMPARING material.
-                LOOP AT lt_usagelist INTO DATA(ls_usagelist).
-                  IF ls_horizontal-final_product IS INITIAL.
-                    ls_horizontal-final_product = ls_usagelist-material.
-                  ELSE.
-                    ls_horizontal-final_product = |{ ls_horizontal-final_product },{ ls_usagelist-material }|.
-                  ENDIF.
-                ENDLOOP.
-              ELSE.
-                ls_horizontal-final_product = ls_horizontal-high_level_material.
-              ENDIF.
-              CLEAR lt_usagelist.
-            ENDIF.
-
-            " 選択条件「購買関連明細行表示」
-            " はい：ForecastとR.BALANCEを表示する。
-            " いいえ：ForecastとR.BALANCEを表示しない。
-            IF lv_showdetaillines = abap_true.
-              DATA(lv_times) = 5.
-            ELSE.
-              lv_times = 4.
-            ENDIF.
-
-            DO lv_times TIMES.
+            DO 3 TIMES.
               CASE sy-index.
                 WHEN 1.
-                  ls_horizontal-classification = lc_classification_0. " 0.FORECAST
-                  ls_horizontal-past_qty = lv_past_forecast.
-                  ls_horizontal-future_qty = lv_future_forecast.
-                  ls_horizontal-total_qty = lv_sum_forecast.
+                  " 選択条件「購買関連明細行表示」
+                  " はい：ForecastとR.BALANCEを表示する。
+                  IF lv_showdetaillines = abap_true.
+                    ls_horizontal-classification = lc_classification_0. " 0.FORECAST
+                    ls_horizontal-past_qty = lv_past_forecast.
+                    ls_horizontal-future_qty = lv_future_forecast.
+                    ls_horizontal-total_qty = lv_sum_forecast.
+                    APPEND ls_horizontal TO lt_horizontal.
+                  ENDIF.
                 WHEN 2.
                   ls_horizontal-classification = lc_classification_1. " 1.SUPPLY
                   ls_horizontal-past_qty = lv_past_supply.
                   ls_horizontal-future_qty = lv_future_supply.
                   ls_horizontal-total_qty = lv_sum_supply.
+                  APPEND ls_horizontal TO lt_horizontal.
                 WHEN 3.
                   ls_horizontal-classification = lc_classification_5. " 5.DEMAND
                   ls_horizontal-past_qty = lv_past_demand.
                   ls_horizontal-future_qty = lv_future_demand.
                   ls_horizontal-total_qty = lv_sum_demand.
-                WHEN 4.
-                  ls_horizontal-classification = lc_classification_9. " 9.BALANCE
-                  ls_horizontal-past_qty = lv_past_9balance.
-                  ls_horizontal-future_qty = lv_future_9balance.
-                  ls_horizontal-total_qty = lv_sum_9balance.
-                WHEN 5.
-                  ls_horizontal-classification = lc_classification_r. " R.BALANCE
-                  ls_horizontal-past_qty = lv_past_rbalance.
-                  ls_horizontal-future_qty = lv_future_rbalance.
-                  ls_horizontal-total_qty = lv_sum_rbalance.
+                  APPEND ls_horizontal TO lt_horizontal.
                 WHEN OTHERS.
               ENDCASE.
-              APPEND ls_horizontal TO lt_horizontal.
             ENDDO.
 
             " DEMAND明細表示
             IF lv_showdemand = abap_true.
-              DATA(lt_subdemand_mrpdata) = lt_filter_mrpdata_sb.
-              APPEND LINES OF lt_filter_mrpdata_ar TO lt_subdemand_mrpdata.
+              DATA(lt_subdemand_mrpdata) = lt_filter_mrpdata.
+              DELETE lt_subdemand_mrpdata WHERE m_r_p_element_category <> lc_mrpelement_category_sb
+                                            AND m_r_p_element_category <> lc_mrpelement_category_ar.
+              SORT lt_subdemand_mrpdata BY material high_level_material.
+              DELETE ADJACENT DUPLICATES FROM lt_subdemand_mrpdata COMPARING material high_level_material.
 
+              DATA(ls_subdemand) = ls_horizontal.
               LOOP AT lt_subdemand_mrpdata INTO DATA(ls_subdemand_mrpdata) WHERE material = <lfs_fixed_data>-product.
-                ls_horizontal-classification = lc_classification_s. " SUBDEMAND
+                " SUBDEMAND
+                ls_subdemand-classification = lc_classification_s.
+                " 上位品目
+                ls_subdemand-high_level_material = ls_subdemand_mrpdata-high_level_material.
+                " 上位品目の最終製品取得
+                zcl_bom_where_used=>get_data(
+                   EXPORTING
+                     iv_plant                   = ls_subdemand-plant
+                     iv_billofmaterialcomponent = ls_subdemand-high_level_material
+                     iv_getusagelistroot        = abap_true
+                   IMPORTING
+                     et_usagelist               = DATA(lt_usagelist) ).
+                IF lt_usagelist IS NOT INITIAL.
+                  SORT lt_usagelist BY material.
+                  DELETE ADJACENT DUPLICATES FROM lt_usagelist COMPARING material.
+                  LOOP AT lt_usagelist INTO DATA(ls_usagelist).
+                    IF ls_subdemand-final_product IS INITIAL.
+                      ls_subdemand-final_product = ls_usagelist-material.
+                    ELSE.
+                      ls_subdemand-final_product = |{ ls_subdemand-final_product },{ ls_usagelist-material }|.
+                    ENDIF.
+                  ENDLOOP.
+                ELSE.
+                  ls_subdemand-final_product = ls_subdemand-high_level_material.
+                ENDIF.
+                CLEAR lt_usagelist.
+
                 " 過去の各上位品目SUBDEMAND
                 READ TABLE lt_past_subdemand INTO DATA(ls_past_subdemand)
                                               WITH KEY material = <lfs_fixed_data>-product
                                                        high_level_material = ls_subdemand_mrpdata-high_level_material BINARY SEARCH.
                 IF sy-subrc = 0.
-                  ls_horizontal-past_qty = ls_past_subdemand-m_r_p_element_open_quantity.
+                  ls_subdemand-past_qty = ls_past_subdemand-m_r_p_element_open_quantity.
                 ELSE.
                   CLEAR ls_past_subdemand.
                 ENDIF.
@@ -1489,7 +1482,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
                                                 WITH KEY material = <lfs_fixed_data>-product
                                                          high_level_material = ls_subdemand_mrpdata-high_level_material BINARY SEARCH.
                 IF sy-subrc = 0.
-                  ls_horizontal-future_qty = ls_future_subdemand-m_r_p_element_open_quantity.
+                  ls_subdemand-future_qty = ls_future_subdemand-m_r_p_element_open_quantity.
                 ELSE.
                   CLEAR ls_future_subdemand.
                 ENDIF.
@@ -1499,13 +1492,34 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
                                              WITH KEY material = <lfs_fixed_data>-product
                                                       high_level_material = ls_subdemand_mrpdata-high_level_material BINARY SEARCH.
                 IF sy-subrc = 0.
-                  ls_horizontal-total_qty = ls_sum_subdemand-m_r_p_element_open_quantity.
+                  ls_subdemand-total_qty = ls_sum_subdemand-m_r_p_element_open_quantity.
                 ELSE.
                   CLEAR ls_sum_subdemand.
                 ENDIF.
-                APPEND ls_horizontal TO lt_horizontal.
+                APPEND ls_subdemand TO lt_horizontal.
               ENDLOOP.
             ENDIF.
+
+            DO 2 TIMES.
+              CASE sy-index.
+                WHEN 1.
+                  ls_horizontal-classification = lc_classification_9. " 9.BALANCE
+                  ls_horizontal-past_qty = lv_past_9balance.
+                  ls_horizontal-future_qty = lv_future_9balance.
+                  ls_horizontal-total_qty = lv_sum_9balance.
+                  APPEND ls_horizontal TO lt_horizontal.
+                WHEN 2.
+                  " 選択条件「購買関連明細行表示」
+                  " はい：ForecastとR.BALANCEを表示する。
+                  IF lv_showdetaillines = abap_true.
+                    ls_horizontal-classification = lc_classification_r. " R.BALANCE
+                    ls_horizontal-past_qty = lv_past_rbalance.
+                    ls_horizontal-total_qty = lv_sum_rbalance.
+                    APPEND ls_horizontal TO lt_horizontal.
+                  ENDIF.
+                WHEN OTHERS.
+              ENDCASE.
+            ENDDO.
           ENDLOOP.
           SORT lt_horizontal BY product classification.
 
@@ -1518,10 +1532,10 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
 
             LOOP AT <table> ASSIGNING FIELD-SYMBOL(<lfs_line>).
               " 0.FORECAST
-              IF <lfs_line>-('CLASSIFICATION') = lc_classification_0.
+              IF <lfs_line>-('classification') = lc_classification_0.
                 CASE lv_displayunit.
                   WHEN 'D'. " Day
-                    LOOP AT lt_period_forecast INTO DATA(ls_period_forecast) WHERE material = ls_horizontal-product.
+                    LOOP AT lt_period_forecast INTO DATA(ls_period_forecast) WHERE material = <lfs_line>-('product').
                       READ TABLE lt_dynamic_col INTO DATA(ls_dynamic_col)
                                                 WITH KEY name = |Y_M_D{ ls_period_forecast-mrpelementavailyorrqmtdate }| BINARY SEARCH.
                       IF sy-subrc = 0.
@@ -1535,7 +1549,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
                     ENDLOOP.
                     CLEAR ls_period_forecast.
                   WHEN 'W'. " Week
-                    LOOP AT lt_week_forecast INTO DATA(ls_week_forecast) WHERE material = ls_horizontal-product.
+                    LOOP AT lt_week_forecast INTO DATA(ls_week_forecast) WHERE material = <lfs_line>-('product').
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_W{ ls_week_forecast-yearweek }| BINARY SEARCH.
                       IF sy-subrc = 0.
@@ -1549,7 +1563,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
                     ENDLOOP.
                     CLEAR ls_week_forecast.
                   WHEN 'M'. " Month
-                    LOOP AT lt_month_forecast INTO DATA(ls_month_forecast) WHERE material = ls_horizontal-product.
+                    LOOP AT lt_month_forecast INTO DATA(ls_month_forecast) WHERE material = <lfs_line>-('product').
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_M{ ls_month_forecast-yearmonth }| BINARY SEARCH.
                       IF sy-subrc = 0.
@@ -1567,10 +1581,10 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
               ENDIF.
 
               " 1.SUPPLY
-              IF <lfs_line>-('CLASSIFICATION') = lc_classification_1.
+              IF <lfs_line>-('classification') = lc_classification_1.
                 CASE lv_displayunit.
                   WHEN 'D'. " Day
-                    LOOP AT lt_period_supply INTO DATA(ls_period_supply) WHERE material = ls_horizontal-product.
+                    LOOP AT lt_period_supply INTO DATA(ls_period_supply) WHERE material = <lfs_line>-('product').
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_M_D{ ls_period_supply-mrpelementavailyorrqmtdate }| BINARY SEARCH.
                       IF sy-subrc = 0.
@@ -1584,7 +1598,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
                     ENDLOOP.
                     CLEAR ls_period_supply.
                   WHEN 'W'. " Week
-                    LOOP AT lt_week_supply INTO DATA(ls_week_supply) WHERE material = ls_horizontal-product.
+                    LOOP AT lt_week_supply INTO DATA(ls_week_supply) WHERE material = <lfs_line>-('product').
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_W{ ls_week_supply-yearweek }| BINARY SEARCH.
                       IF sy-subrc = 0.
@@ -1598,7 +1612,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
                     ENDLOOP.
                     CLEAR ls_week_supply.
                   WHEN 'M'. " Month
-                    LOOP AT lt_month_supply INTO DATA(ls_month_supply) WHERE material = ls_horizontal-product.
+                    LOOP AT lt_month_supply INTO DATA(ls_month_supply) WHERE material = <lfs_line>-('product').
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_M{ ls_month_supply-yearmonth }| BINARY SEARCH.
                       IF sy-subrc = 0.
@@ -1616,10 +1630,10 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
               ENDIF.
 
               " 5.DEMAND
-              IF <lfs_line>-('CLASSIFICATION') = lc_classification_5.
+              IF <lfs_line>-('classification') = lc_classification_5.
                 CASE lv_displayunit.
                   WHEN 'D'. " Day
-                    LOOP AT lt_period_demand INTO DATA(ls_period_demand) WHERE material = ls_horizontal-product.
+                    LOOP AT lt_period_demand INTO DATA(ls_period_demand) WHERE material = <lfs_line>-('product').
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_M_D{ ls_period_demand-mrpelementavailyorrqmtdate }| BINARY SEARCH.
                       IF sy-subrc = 0.
@@ -1633,7 +1647,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
                     ENDLOOP.
                     CLEAR ls_period_demand.
                   WHEN 'W'. " Week
-                    LOOP AT lt_week_demand INTO DATA(ls_week_demand) WHERE material = ls_horizontal-product.
+                    LOOP AT lt_week_demand INTO DATA(ls_week_demand) WHERE material = <lfs_line>-('product').
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_W{ ls_week_demand-yearweek }| BINARY SEARCH.
                       IF sy-subrc = 0.
@@ -1647,7 +1661,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
                     ENDLOOP.
                     CLEAR ls_week_demand.
                   WHEN 'M'. " Month
-                    LOOP AT lt_month_demand INTO DATA(ls_month_demand) WHERE material = ls_horizontal-product.
+                    LOOP AT lt_month_demand INTO DATA(ls_month_demand) WHERE material = <lfs_line>-('product').
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_M{ ls_month_demand-yearmonth }| BINARY SEARCH.
                       IF sy-subrc = 0.
@@ -1665,108 +1679,166 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
               ENDIF.
 
               " 9.BALANCE
-              IF <lfs_line>-('CLASSIFICATION') = lc_classification_9.
+              IF <lfs_line>-('classification') = lc_classification_9.
                 CASE lv_displayunit.
                   WHEN 'D'. " Day
-                    LOOP AT lt_period_balance INTO DATA(ls_period_balance) WHERE material = ls_horizontal-product.
-                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
-                                                WITH KEY name = |Y_M_D{ ls_period_balance-mrpelementavailyorrqmtdate }| BINARY SEARCH.
-                      IF sy-subrc = 0.
-                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
-                        IF <lfs_colvalue> IS ASSIGNED.
-                          <lfs_colvalue> = ls_period_balance-balance_9.
+                    CLEAR lv_count.
+                    LOOP AT lt_dynamic_col INTO ls_dynamic_col.
+                      lv_count += 1.
+                      ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                      IF <lfs_colvalue> IS ASSIGNED.
+                        READ TABLE lt_period_balance INTO DATA(ls_period_balance) WITH KEY material = <lfs_line>-('product')
+                                                                                           mrpelementavailyorrqmtdate = ls_dynamic_col-name+5(8)
+                                                                                           BINARY SEARCH.
+                        " 读不到时，等于前一天的值(所以不需要判断SUBRC)
+                        <lfs_colvalue> = ls_period_balance-balance_9.
+
+                        IF lv_count = 1 AND ls_period_balance-balance_9 IS INITIAL.
+                          <lfs_colvalue> = <lfs_line>-('past_qty').
+                          ls_period_balance-balance_9 = <lfs_line>-('past_qty').
                         ENDIF.
-                      ELSE.
-                        CLEAR ls_dynamic_col.
                       ENDIF.
                     ENDLOOP.
-                    CLEAR ls_period_balance.
+
+                    " + 指定期間最終日の9.BALANCE
+                    <lfs_line>-('future_qty') = ls_period_balance-balance_9 + <lfs_line>-('future_qty').
+                    " 列「未来」のR.BALANCE = 列「未来」9.BALANCE
+                    CLEAR lv_future_rbalance.
+                    lv_future_rbalance = <lfs_line>-('future_qty').
+
+                    CLEAR: ls_dynamic_col, ls_period_balance.
+
                   WHEN 'W'. " Week
-                    LOOP AT lt_week_balance INTO DATA(ls_week_balance) WHERE material = ls_horizontal-product.
-                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
-                                                WITH KEY name = |Y_W{ ls_week_balance-yearweek }| BINARY SEARCH.
-                      IF sy-subrc = 0.
-                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
-                        IF <lfs_colvalue> IS ASSIGNED.
-                          <lfs_colvalue> = ls_week_balance-balance_9.
+                    CLEAR lv_count.
+                    LOOP AT lt_dynamic_col INTO ls_dynamic_col.
+                      lv_count += 1.
+                      ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                      IF <lfs_colvalue> IS ASSIGNED.
+                        READ TABLE lt_week_balance INTO DATA(ls_week_balance) WITH KEY material = <lfs_line>-('product')
+                                                                                       yearweek = ls_dynamic_col-name+3(6)
+                                                                                       BINARY SEARCH.
+                        " 读不到时，等于前一天的值(所以不需要判断SUBRC)
+                        <lfs_colvalue> = ls_week_balance-balance_9.
+
+                        IF lv_count = 1 AND ls_week_balance-balance_9 IS INITIAL.
+                          <lfs_colvalue> = <lfs_line>-('past_qty').
+                          ls_week_balance-balance_9 = <lfs_line>-('past_qty').
                         ENDIF.
-                      ELSE.
-                        CLEAR ls_dynamic_col.
                       ENDIF.
                     ENDLOOP.
-                    CLEAR ls_week_balance.
+
+                    " + 指定期間最終の9.BALANCE
+                    <lfs_line>-('future_qty') = ls_week_balance-balance_9 + <lfs_line>-('future_qty').
+                    " 列「未来」のR.BALANCE = 列「未来」9.BALANCE
+                    CLEAR lv_future_rbalance.
+                    lv_future_rbalance = <lfs_line>-('future_qty').
+
+                    CLEAR: ls_dynamic_col, ls_week_balance.
+
                   WHEN 'M'. " Month
-                    LOOP AT lt_month_balance INTO DATA(ls_month_balance) WHERE material = ls_horizontal-product.
-                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
-                                                WITH KEY name = |Y_M{ ls_month_balance-yearmonth }| BINARY SEARCH.
-                      IF sy-subrc = 0.
-                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
-                        IF <lfs_colvalue> IS ASSIGNED.
-                          <lfs_colvalue> = ls_month_balance-balance_9.
+                    CLEAR lv_count.
+                    LOOP AT lt_dynamic_col INTO ls_dynamic_col.
+                      lv_count += 1.
+                      ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                      IF <lfs_colvalue> IS ASSIGNED.
+                        READ TABLE lt_month_balance INTO DATA(ls_month_balance) WITH KEY material  = <lfs_line>-('product')
+                                                                                         yearmonth = ls_dynamic_col-name+3(6)
+                                                                                         BINARY SEARCH.
+                        " 读不到时，等于前一天的值(所以不需要判断SUBRC)
+                        <lfs_colvalue> = ls_month_balance-balance_9.
+
+                        IF lv_count = 1 AND ls_month_balance-balance_9 IS INITIAL.
+                          <lfs_colvalue> = <lfs_line>-('past_qty').
+                          ls_month_balance-balance_9 = <lfs_line>-('past_qty').
                         ENDIF.
-                      ELSE.
-                        CLEAR ls_dynamic_col.
                       ENDIF.
                     ENDLOOP.
-                    CLEAR ls_month_balance.
+
+                    " + 指定期間最終の9.BALANCE
+                    <lfs_line>-('future_qty') = ls_month_balance-balance_9 + <lfs_line>-('future_qty').
+                    " 列「未来」のR.BALANCE = 列「未来」9.BALANCE
+                    CLEAR lv_future_rbalance.
+                    lv_future_rbalance = <lfs_line>-('future_qty').
+
+                    CLEAR: ls_dynamic_col, ls_month_balance.
                   WHEN OTHERS.
                 ENDCASE.
               ENDIF.
 
               " R.BALANCE
-              IF <lfs_line>-('CLASSIFICATION') = lc_classification_r.
+              IF <lfs_line>-('classification') = lc_classification_r.
+                " 列「未来」のR.BALANCE
+                <lfs_line>-('future_qty') = lv_future_rbalance.
+
                 CASE lv_displayunit.
                   WHEN 'D'. " Day
-                    LOOP AT lt_period_balance INTO ls_period_balance WHERE material = ls_horizontal-product.
-                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
-                                                WITH KEY name = |Y_M_D{ ls_period_balance-mrpelementavailyorrqmtdate }| BINARY SEARCH.
-                      IF sy-subrc = 0.
-                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
-                        IF <lfs_colvalue> IS ASSIGNED.
-                          <lfs_colvalue> = ls_period_balance-balance_r.
+                    CLEAR lv_count.
+                    LOOP AT lt_dynamic_col INTO ls_dynamic_col.
+                      lv_count += 1.
+                      ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                      IF <lfs_colvalue> IS ASSIGNED.
+                        READ TABLE lt_period_balance INTO ls_period_balance WITH KEY material = <lfs_line>-('product')
+                                                                                     mrpelementavailyorrqmtdate = ls_dynamic_col-name+5(8)
+                                                                                     BINARY SEARCH.
+                        " 读不到时，等于前一天的值(所以不需要判断SUBRC)
+                        <lfs_colvalue> = ls_period_balance-balance_r.
+
+                        IF lv_count = 1 AND ls_period_balance-balance_r IS INITIAL.
+                          <lfs_colvalue> = <lfs_line>-('past_qty').
+                          ls_period_balance-balance_r = <lfs_line>-('past_qty').
                         ENDIF.
-                      ELSE.
-                        CLEAR ls_dynamic_col.
                       ENDIF.
                     ENDLOOP.
-                    CLEAR ls_period_balance.
+                    CLEAR: ls_dynamic_col, ls_period_balance.
+
                   WHEN 'W'. " Week
-                    LOOP AT lt_week_balance INTO ls_week_balance WHERE material = ls_horizontal-product.
-                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
-                                                WITH KEY name = |Y_W{ ls_week_balance-yearweek }| BINARY SEARCH.
-                      IF sy-subrc = 0.
-                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
-                        IF <lfs_colvalue> IS ASSIGNED.
-                          <lfs_colvalue> = ls_week_balance-balance_r.
+                    CLEAR lv_count.
+                    LOOP AT lt_dynamic_col INTO ls_dynamic_col.
+                      lv_count += 1.
+                      ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                      IF <lfs_colvalue> IS ASSIGNED.
+                        READ TABLE lt_week_balance INTO ls_week_balance WITH KEY material = <lfs_line>-('product')
+                                                                                 yearweek = ls_dynamic_col-name+3(6)
+                                                                                 BINARY SEARCH.
+                        " 读不到时，等于前一天的值(所以不需要判断SUBRC)
+                        <lfs_colvalue> = ls_week_balance-balance_r.
+
+                        IF lv_count = 1 AND ls_week_balance-balance_r IS INITIAL.
+                          <lfs_colvalue> = <lfs_line>-('past_qty').
+                          ls_week_balance-balance_r = <lfs_line>-('past_qty').
                         ENDIF.
-                      ELSE.
-                        CLEAR ls_dynamic_col.
                       ENDIF.
                     ENDLOOP.
-                    CLEAR ls_week_balance.
+                    CLEAR: ls_dynamic_col, ls_week_balance.
+
                   WHEN 'M'. " Month
-                    LOOP AT lt_month_balance INTO ls_month_balance WHERE material = ls_horizontal-product.
-                      READ TABLE lt_dynamic_col INTO ls_dynamic_col
-                                                WITH KEY name = |Y_M{ ls_month_balance-yearmonth }| BINARY SEARCH.
-                      IF sy-subrc = 0.
-                        ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
-                        IF <lfs_colvalue> IS ASSIGNED.
-                          <lfs_colvalue> = ls_month_balance-balance_r.
+                    CLEAR lv_count.
+                    LOOP AT lt_dynamic_col INTO ls_dynamic_col.
+                      lv_count += 1.
+                      ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
+                      IF <lfs_colvalue> IS ASSIGNED.
+                        READ TABLE lt_month_balance INTO ls_month_balance WITH KEY material  = <lfs_line>-('product')
+                                                                                   yearmonth = ls_dynamic_col-name+3(6)
+                                                                                   BINARY SEARCH.
+                        " 读不到时，等于前一天的值(所以不需要判断SUBRC)
+                        <lfs_colvalue> = ls_month_balance-balance_r.
+
+                        IF lv_count = 1 AND ls_month_balance-balance_r IS INITIAL.
+                          <lfs_colvalue> = <lfs_line>-('past_qty').
+                          ls_month_balance-balance_r = <lfs_line>-('past_qty').
                         ENDIF.
-                      ELSE.
-                        CLEAR ls_dynamic_col.
                       ENDIF.
                     ENDLOOP.
-                    CLEAR ls_month_balance.
+                    CLEAR: ls_dynamic_col, ls_month_balance.
                   WHEN OTHERS.
                 ENDCASE.
               ENDIF.
 
               " SUBDEMAND
-              IF <lfs_line>-('CLASSIFICATION') = lc_classification_s.
+              IF <lfs_line>-('classification') = lc_classification_s.
                 CASE lv_displayunit.
                   WHEN 'D'. " Day
-                    LOOP AT lt_period_subdemand INTO DATA(ls_period_subdemand) WHERE material = ls_horizontal-product
+                    LOOP AT lt_period_subdemand INTO DATA(ls_period_subdemand) WHERE material = <lfs_line>-('product')
                                                                                  AND high_level_material = ls_horizontal-high_level_material.
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_M_D{ ls_period_subdemand-mrpelementavailyorrqmtdate }| BINARY SEARCH.
@@ -1781,7 +1853,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
                     ENDLOOP.
                     CLEAR ls_period_subdemand.
                   WHEN 'W'. " Week
-                    LOOP AT lt_week_subdemand INTO DATA(ls_week_subdemand) WHERE material = ls_horizontal-product
+                    LOOP AT lt_week_subdemand INTO DATA(ls_week_subdemand) WHERE material = <lfs_line>-('product')
                                                                              AND high_level_material = ls_horizontal-high_level_material.
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_W{ ls_week_subdemand-yearweek }| BINARY SEARCH.
@@ -1796,7 +1868,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
                     ENDLOOP.
                     CLEAR ls_week_subdemand.
                   WHEN 'M'. " Month
-                    LOOP AT lt_month_subdemand INTO DATA(ls_month_subdemand) WHERE material = ls_horizontal-product
+                    LOOP AT lt_month_subdemand INTO DATA(ls_month_subdemand) WHERE material = <lfs_line>-('product')
                                                                                AND high_level_material = ls_horizontal-high_level_material.
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_M{ ls_month_subdemand-yearmonth }| BINARY SEARCH.
@@ -1827,36 +1899,18 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
             READ TABLE lt_sum_stockinfo INTO ls_sum_stockinfo WITH KEY product = <lfs_filter_mrpdata>-product BINARY SEARCH.
             IF sy-subrc = 0.
               APPEND INITIAL LINE TO lt_vertical ASSIGNING FIELD-SYMBOL(<lfs_vertical_stock>).
-              " 所要数
-              <lfs_vertical_stock>-required_qty = 0.
-              " 在庫数
-              <lfs_vertical_stock>-stock_qty    = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
-              " 供給数
-              <lfs_vertical_stock>-supplied_qty = 0.
-              " 利用可能在庫 = 在庫＋供給数＋所要数
-              <lfs_vertical_stock>-available_stock = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
-              " 在庫残数 = 在庫＋所要数
-              <lfs_vertical_stock>-remaining_qty   = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
             ELSE.
               CLEAR ls_sum_stockinfo.
+              UNASSIGN <lfs_vertical_stock>.
             ENDIF.
 
             " 安全在庫行
             READ TABLE lt_sum_safety_stock INTO ls_sum_safety_stock WITH KEY material = <lfs_filter_mrpdata>-product BINARY SEARCH.
             IF sy-subrc = 0.
-              APPEND INITIAL LINE TO lt_vertical ASSIGNING FIELD-SYMBOL(<lfs_vertical2_safety_stock>).
-              " 所要数
-              <lfs_vertical_stock>-required_qty = ls_sum_safety_stock-m_r_p_element_open_quantity.
-              " 在庫数
-              <lfs_vertical_stock>-stock_qty    = 0.
-              " 供給数
-              <lfs_vertical_stock>-supplied_qty = 0.
-              " 利用可能在庫 = 在庫＋供給数＋所要数
-              <lfs_vertical_stock>-available_stock = ls_sum_safety_stock-m_r_p_element_open_quantity.
-              " 在庫残数 = 在庫＋所要数
-              <lfs_vertical_stock>-remaining_qty   = ls_sum_safety_stock-m_r_p_element_open_quantity.
+              APPEND INITIAL LINE TO lt_vertical ASSIGNING FIELD-SYMBOL(<lfs_vertical_safety_stock>).
             ELSE.
               CLEAR ls_sum_safety_stock.
+              UNASSIGN <lfs_vertical_safety_stock>.
             ENDIF.
 
             " 明細行
@@ -1922,6 +1976,50 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
             ELSE.
               CLEAR ls_fixed_data.
             ENDIF.
+
+            " 在庫行
+            IF <lfs_vertical_stock> IS ASSIGNED.
+              <lfs_vertical_stock> = CORRESPONDING #( <lfs_vertical> EXCEPT required_qty
+                                                                            stock_qty
+                                                                            supplied_qty
+                                                                            available_stock
+                                                                            remaining_qty ).
+              READ TABLE lt_sum_stockinfo INTO ls_sum_stockinfo WITH KEY product = <lfs_filter_mrpdata>-product BINARY SEARCH.
+              IF sy-subrc = 0.
+                " 所要数
+                <lfs_vertical_stock>-required_qty = 0.
+                " 在庫数
+                <lfs_vertical_stock>-stock_qty    = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
+                " 供給数
+                <lfs_vertical_stock>-supplied_qty = 0.
+                " 利用可能在庫 = 在庫＋供給数＋所要数
+                <lfs_vertical_stock>-available_stock = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
+                " 在庫残数 = 在庫＋所要数
+                <lfs_vertical_stock>-remaining_qty   = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
+              ENDIF.
+            ENDIF.
+
+            " 安全在庫行
+            IF <lfs_vertical_safety_stock> IS ASSIGNED.
+              <lfs_vertical_safety_stock> = CORRESPONDING #( <lfs_vertical> EXCEPT required_qty
+                                                                                   stock_qty
+                                                                                   supplied_qty
+                                                                                   available_stock
+                                                                                   remaining_qty ).
+              READ TABLE lt_sum_safety_stock INTO ls_sum_safety_stock WITH KEY material = <lfs_filter_mrpdata>-product BINARY SEARCH.
+              IF sy-subrc = 0.
+                " 所要数
+                <lfs_vertical_safety_stock>-required_qty = ls_sum_safety_stock-m_r_p_element_open_quantity.
+                " 在庫数
+                <lfs_vertical_safety_stock>-stock_qty    = 0.
+                " 供給数
+                <lfs_vertical_safety_stock>-supplied_qty = 0.
+                " 利用可能在庫 = 在庫＋供給数＋所要数
+                <lfs_vertical_safety_stock>-available_stock = ls_sum_safety_stock-m_r_p_element_open_quantity.
+                " 在庫残数 = 在庫＋所要数
+                <lfs_vertical_safety_stock>-remaining_qty   = ls_sum_safety_stock-m_r_p_element_open_quantity.
+              ENDIF.
+            ENDIF.
           ENDLOOP.
 
           " 縦表示のステータス
@@ -1957,4 +2055,5 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
     ENDIF.
 
   ENDMETHOD.
+
 ENDCLASS.
