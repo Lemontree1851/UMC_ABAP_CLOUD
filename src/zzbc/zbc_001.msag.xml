@@ -128,6 +128,24 @@
      <MSGNR>019</MSGNR>
      <TEXT>購買申請番号&amp;1ワークフローは存在しません</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>020</MSGNR>
+     <TEXT>購入目的&amp;1はZTBCに配置されていません、チェックしてください</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>021</MSGNR>
+     <TEXT> 発注タイプを分類する&amp;1はZTBCに配置されていません、チェックしてください</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>022</MSGNR>
+     <TEXT>无権申请会社コード&amp;1の购入申请书据</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

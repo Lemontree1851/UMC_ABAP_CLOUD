@@ -27,6 +27,8 @@ define root view entity ZC_COMPONENTCOST
     movingaverageprice,
     currency,
     billingquantity,
-    billingquantityunit
+    billingquantityunit,
+    profitcenter,
+    profitcentername
 //    _association_name // Make association public
 }

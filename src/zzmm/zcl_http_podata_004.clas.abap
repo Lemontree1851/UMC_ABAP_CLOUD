@@ -114,10 +114,10 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
     DATA(lv_sy_datum) = cl_abap_context_info=>get_system_date( ).
 
-*    lw_req-documentdate = lv_sy_datum.
-    lw_req-documentdate = '20241111'.
+    lw_req-documentdate = lv_sy_datum.
+*    lw_req-documentdate = '20241111'.
 
-    APPEND lw_req to lt_req.
+    APPEND lw_req TO lt_req.
 
     IF lt_req IS INITIAL.
 
@@ -356,6 +356,9 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       " 合并数据
       LOOP AT lt_result1 INTO lw_result1.
 
+        DATA(lv_unit1) = lw_result1-purchaseorderquantityunit.
+        DATA(lv_unit11) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit1 ).
+
         ls_response-supplierinvoice                      = lw_result1-supplierinvoice.
         ls_response-fiscalyear                           = lw_result1-fiscalyear.
         ls_response-invoicingparty                       = lw_result1-invoicingparty.
@@ -377,7 +380,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ls_response-documentcurrency                     = lw_result1-documentcurrency.
         ls_response-supplierinvoiceitemamount            = lw_result1-supplierinvoiceitemamount.
         ls_response-quantityinpurchaseorderunit          = lw_result1-quantityinpurchaseorderunit.
-        ls_response-purchaseorderquantityunit            = lw_result1-purchaseorderquantityunit.
+        ls_response-purchaseorderquantityunit            = lv_unit11.
         ls_response-costcenter                           = lw_result1-costcenter.
         ls_response-glaccount                            = lw_result1-glaccount.
         ls_response-purchaseorderitemtext                = lw_result1-purchaseorderitemtext.
@@ -734,6 +737,9 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
     " 合并数据
     LOOP AT lt_result INTO lw_result.
 
+      DATA(lv_unit2) = lw_result-purchaseorderquantityunit.
+      DATA(lv_unit22) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit2 ).
+
       ls_response-supplierinvoice                      = lw_result-supplierinvoice.
       ls_response-fiscalyear                           = lw_result-fiscalyear.
       ls_response-invoicingparty                       = lw_result-invoicingparty.
@@ -755,7 +761,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       ls_response-documentcurrency                     = lw_result-documentcurrency.
       ls_response-supplierinvoiceitemamount            = lw_result-supplierinvoiceitemamount.
       ls_response-quantityinpurchaseorderunit          = lw_result-quantityinpurchaseorderunit.
-      ls_response-purchaseorderquantityunit            = lw_result-purchaseorderquantityunit.
+      ls_response-purchaseorderquantityunit            = lv_unit22.
       ls_response-costcenter                           = lw_result-costcenter.
       ls_response-glaccount                            = lw_result-glaccount.
       ls_response-purchaseorderitemtext                = lw_result-purchaseorderitemtext.

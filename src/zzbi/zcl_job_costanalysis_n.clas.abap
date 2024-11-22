@@ -335,7 +335,7 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
       CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
       CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
       CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
-      zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T07_QUOTATION_D|
+      zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T07_QUOTATION_D?sap-language={ zzcl_common_utils=>get_current_language(  ) }|
 *                                                             iv_odata_filter  = lv_filtert07
                                                               iv_token_url     = CONV #( ls_config-zvalue3 )
                                                               iv_client_id     = CONV #( ls_config-zvalue4 )
@@ -426,6 +426,23 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
         RETURN.
       ENDIF.
     ENDIF.
+
+*   品目マスタから製品が属される利益センタを抽出
+    SELECT product~plant,
+           product~product,
+           product~profitcenter,
+           ptext~ProfitCenterName
+      FROM i_productplantbasic WITH PRIVILEGED ACCESS as product
+     INNER JOIN @lt_qms_t07_quotation_d as t07
+             on ( t07~SAP_MAT_ID      = product~product
+             or   t07~MATERIAL_NUMBER = product~product )
+            and t07~plant = product~plant
+      LEFT JOIN i_profitcentertext WITH PRIVILEGED ACCESS as ptext
+             on ptext~ProfitCenter = product~profitcenter
+            and ptext~Language     = 'J'
+     INTO TABLE @DATA(lt_productplantbasic).
+    SORT lt_productplantbasic BY plant product.
+
 *   該当月の支払請求書を抽出
 *   各部品の最終受入単価を取得する
 *   発注伝票を取得
@@ -481,8 +498,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
    LEFT JOIN i_plant WITH PRIVILEGED ACCESS AS aplant
           ON aplant~plant   = suplrinvc~plant
          AND aplant~language     = 'J'
-       WHERE supplier~postingdate      >= @lv_next_start
-         AND supplier~postingdate      <= @lv_next_end
+*       WHERE supplier~postingdate      >= @lv_next_start
+*         AND supplier~postingdate      <= @lv_next_end
+       WHERE supplier~postingdate      <= @lv_next_end
          AND supplier~reversedocument  = @space
         INTO TABLE @DATA(lt_supplier).
       SORT lt_supplier BY supplierinvoice ASCENDING
@@ -640,6 +658,15 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
       ls_data-material        = <lfs_qmst07>-material_number.
       ls_data-productdescription  = ls_sap_mat_id-productdescription.
       ls_data-materialdescription = ls_material_number-materialdescription.
+
+      READ TABLE lt_productplantbasic ASSIGNING FIELD-SYMBOL(<lfs_productplantbasic>)
+        WITH KEY product = ls_data-material
+                 plant   = ls_data-plant BINARY SEARCH.
+      if sy-subrc = 0.
+        ls_data-Profitcenter            = <lfs_productplantbasic>-ProfitCenter.
+        ls_data-ProfitCenterName        = <lfs_productplantbasic>-ProfitCenterName.
+      ENDIF.
+
       ls_data-quantity            = <lfs_qmst07>-person_no1.
 
       READ TABLE lt_mrp ASSIGNING FIELD-SYMBOL(<lfs_mrp>)
@@ -750,9 +777,11 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
 
 *     工程別加工費実績から各製品の加工費実績を取得
     SELECT mfgorder~product,
+           mfgorder~Producedproduct,
            mfgorder~productionsupervisor,
            mfgorder~companycode,
-           mfgorder~totalactualcost
+           mfgorder~totalactualcost,
+           mfgorder~MFGORDERCONFIRMEDYIELDQTY as YIELDQTY
       FROM ztfi_1020 AS mfgorder
       JOIN @lt_qms_t02_quo_d AS t02
         ON mfgorder~product = t02~sap_mat_id
@@ -836,8 +865,15 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
       IF sy-subrc = 0.
         ls_dataj-productdescription = <lfs_product>-productdescription.
       ENDIF.
-*      ls_dataj-customer = '545'.
-*      ls_dataj-customername = '54bbnnnnnn5'.
+
+      READ TABLE lt_productplantbasic ASSIGNING <lfs_productplantbasic>
+        WITH KEY product = ls_dataj-product
+                 plant   = ls_dataj-plant BINARY SEARCH.
+      if sy-subrc = 0.
+        ls_dataj-Profitcenter            = <lfs_productplantbasic>-ProfitCenter.
+        ls_dataj-ProfitCenterName        = <lfs_productplantbasic>-ProfitCenterName.
+      ENDIF.
+
       ls_dataj-estimatedprice_smt = <lfs_t02>-smt_prod_cost.
       ls_dataj-estimatedprice_ai = <lfs_t02>-ai_prod_cost.
       ls_dataj-estimatedprice_fat = <lfs_t02>-fat_prod_cost.
@@ -852,7 +888,21 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
           WHEN 300.
             ls_dataj-actualprice_fat = ls_dataj-actualprice_fat + <lfs_mfgorder>-totalactualcost.
         ENDCASE.
+
+        if <lfs_mfgorder>-Product = <lfs_mfgorder>-Producedproduct.
+          ls_dataj-YIELDQTY = ls_dataj-YIELDQTY + <lfs_mfgorder>-yieldqty.
+        ENDIF.
       ENDLOOP.
+
+      try.
+        ls_dataj-actualprice_smt = ls_dataj-actualprice_smt / ls_dataj-YIELDQTY.
+        ls_dataj-actualprice_ai  = ls_dataj-actualprice_ai  / ls_dataj-YIELDQTY.
+        ls_dataj-actualprice_fat = ls_dataj-actualprice_fat / ls_dataj-YIELDQTY.
+      CATCH cx_root  INTO DATA(exc).
+        ls_dataj-actualprice_smt = 0.
+        ls_dataj-actualprice_ai  = 0.
+        ls_dataj-actualprice_fat = 0.
+      ENDTRY.
 
       READ TABLE lt_basic2 ASSIGNING FIELD-SYMBOL(<lfs_basic2>)
         WITH KEY plant    = <lfs_t02>-plant

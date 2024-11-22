@@ -119,13 +119,13 @@
     <item>
      <ID>I</ID>
      <KEY>018</KEY>
-     <ENTRY>PO連携担当者</ENTRY>
+     <ENTRY>PO by</ENTRY>
      <LENGTH>50</LENGTH>
     </item>
     <item>
      <ID>I</ID>
      <KEY>019</KEY>
-     <ENTRY>購買依頼者</ENTRY>
+     <ENTRY>PR by</ENTRY>
      <LENGTH>50</LENGTH>
     </item>
    </TPOOL>
@@ -227,6 +227,18 @@
        <ID>I</ID>
        <KEY>017</KEY>
        <ENTRY>承認要否</ENTRY>
+       <LENGTH>50</LENGTH>
+      </item>
+      <item>
+       <ID>I</ID>
+       <KEY>018</KEY>
+       <ENTRY>PO連携担当者</ENTRY>
+       <LENGTH>50</LENGTH>
+      </item>
+      <item>
+       <ID>I</ID>
+       <KEY>019</KEY>
+       <ENTRY>購買依頼者</ENTRY>
        <LENGTH>50</LENGTH>
       </item>
      </TEXTPOOL>

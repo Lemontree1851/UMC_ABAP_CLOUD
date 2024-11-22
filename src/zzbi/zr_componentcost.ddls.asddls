@@ -31,5 +31,7 @@ define root view entity ZR_COMPONENTCOST
   movingaverageprice,
   currency,
   billingquantity,
-  billingquantityunit
+  billingquantityunit,
+  profitcenter,
+  profitcentername
 }

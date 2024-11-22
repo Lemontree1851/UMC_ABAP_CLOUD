@@ -12,8 +12,12 @@ CLASS zzcl_wf_utils DEFINITION
                lc_zkey3           TYPE string VALUE `PR_BY`,
                lc_zkey4           TYPE string VALUE `POLINK_BY`,
                lc_zkey5           TYPE string VALUE `MAIL`,
+               lc_zkey6           TYPE string VALUE `BUYPur`,
+               lc_zkey7           TYPE string VALUE `ORDERTYPE`,
                lc_prby_zid        TYPE string VALUE `ZMM005`,
                lc_polinkby_zid    TYPE string VALUE `ZMM006`,
+               lc_buy_zid         TYPE string VALUE `ZMM002`,
+               lc_ordertype_zid   TYPE string VALUE `ZMM003`,
                lc_company_1100(4) TYPE c  VALUE `1100`,
                lc_company_1400(4) TYPE c  VALUE `1400`,
                lc_workflowid_pr   TYPE zc_wf_approvalhistory-workflowid VALUE 'purchaserequisition'.
@@ -82,8 +86,13 @@ CLASS zzcl_wf_utils DEFINITION
                             iv_instanceid    TYPE ztbc_1011-instance_id
                             iv_users         TYPE tt_wf_approvaluser
                             iv_zid           TYPE ztbc_1001-zid
+                            iv_uuid          TYPE sysuuid_x16 OPTIONAL
                   EXPORTING ev_error         TYPE abap_boolean
-                            ev_errortext     TYPE string.
+                            ev_errortext     TYPE string,
+      check_plant_access IMPORTING iv_email     TYPE string
+                                   iv_uuid      TYPE sysuuid_x16
+                         EXPORTING ev_error     TYPE abap_boolean
+                                   ev_errortext TYPE string.
   PROTECTED SECTION.
     CLASS-METHODS:
       get_nextnode IMPORTING iv_workflowid    TYPE ztbc_1011-workflow_id
@@ -98,8 +107,41 @@ ENDCLASS.
 
 CLASS zzcl_wf_utils IMPLEMENTATION.
 
+  METHOD check_plant_access.
+
+    CLEAR :ev_error,ev_errortext.
+
+    SELECT SINGLE *
+    FROM ztmm_1006
+    WHERE uuid = @iv_uuid
+    INTO @DATA(ls_ztmm_1006).
+
+    SELECT * FROM i_plant
+     WITH PRIVILEGED ACCESS
+    WHERE valuationarea = @ls_ztmm_1006-company_code
+    INTO TABLE @DATA(lt_plant) .
+
+    IF lt_plant IS NOT INITIAL.
+      SELECT plant
+       FROM zc_tbc1004 JOIN zc_tbc1006
+      ON zc_tbc1004~useruuid = zc_tbc1006~useruuid
+       FOR ALL ENTRIES IN @lt_plant
+      WHERE plant = @lt_plant-plant
+       AND mail = @iv_email
+      INTO TABLE @DATA(lt_zc_tbc1004).
+    ENDIF.
+
+    IF lt_zc_tbc1004 IS INITIAL.
+      ev_error = 'X'.
+      MESSAGE s022(zbc_001) WITH ls_ztmm_1006-company_code INTO ev_errortext.
+    ENDIF.
+
+  ENDMETHOD.
+
+
   METHOD get_application_id.
 
+    CLEAR :ev_error,ev_errortext,ev_applicationid.
 
     CASE iv_workflowid.
 
@@ -111,13 +153,47 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
         INTO @DATA(ls_ztmm_1006).
 
         IF ls_ztmm_1006-company_code = lc_company_1100.
+
+          DATA:ls_zc_wf_approvalpath TYPE zc_wf_approvalpath.
+
+          "get buy_purpoose mapping
+          SELECT SINGLE *
+            FROM ztbc_1001
+          WHERE  zid   = @lc_buy_zid
+            AND zkey1  = @lc_zkey6
+            AND zvalue1 = @ls_ztmm_1006-buy_purpoose
+          INTO @DATA(ls_ztbc_buy).
+          IF sy-subrc <> 0.
+            ev_error = 'X'.
+            MESSAGE s020(zbc_001) WITH ls_ztmm_1006-buy_purpoose INTO ev_errortext.
+            RETURN.
+          ELSE.
+            ls_zc_wf_approvalpath-buypurpose = ls_ztbc_buy-zvalue2.
+          ENDIF.
+
+          "get order_type mapping
+          SELECT SINGLE *
+            FROM ztbc_1001
+          WHERE  zid   = @lc_ordertype_zid
+            AND zkey1  = @lc_zkey7
+            AND zvalue1 = @ls_ztmm_1006-order_type
+          INTO @DATA(ls_ztbc_ordertype).
+          IF sy-subrc <> 0.
+            ev_error = 'X'.
+            MESSAGE s021(zbc_001) WITH ls_ztmm_1006-order_type INTO ev_errortext.
+            RETURN.
+          ELSE.
+            ls_zc_wf_approvalpath-ordertype = ls_ztbc_ordertype-zvalue2.
+          ENDIF.
+
+
           TRY .
               SELECT SINGLE applicationid
               FROM zc_wf_approvalpath
              WHERE  prtype      = @ls_ztmm_1006-pr_type
                AND  applydepart = @ls_ztmm_1006-apply_depart
-               AND  ordertype   = @ls_ztmm_1006-order_type
-               AND  buypurpose  = @ls_ztmm_1006-buy_purpoose
+               AND  ordertype   = @ls_zc_wf_approvalpath-ordertype
+               AND  buypurpose  = @ls_zc_wf_approvalpath-buypurpose
                AND  kyoten      = @ls_ztmm_1006-kyoten
               INTO @DATA(lv_applicationid).
               ev_applicationid = lv_applicationid.
@@ -169,6 +245,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD add_approval_history.
+
     SELECT MAX( zseq )
       FROM zc_wf_approvalhistory
      WHERE workflowid = @iv_workflowid
@@ -201,6 +278,12 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     ENDIF.
     "承认撤回 标记删除过往审批历史
     IF iv_reject = abap_true.
+      UPDATE ztmm_1006
+       SET apply_date = '',
+           apply_time = ''
+      WHERE workflow_id = @iv_workflowid
+      AND application_id = @iv_applicationid
+      AND instance_id = @iv_instanceid.
 
       UPDATE ztbc_1011
        SET del = @abap_true
@@ -211,6 +294,9 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
   METHOD check_current_node_email.
+
+    CLEAR :ev_error,ev_errortext.
+
     SELECT *
       FROM zc_wf_approvaluser
      WHERE workflowid    = @iv_workflowid
@@ -232,6 +318,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_approved_user.
+    CLEAR :ev_users.
     SELECT *
       FROM zc_wf_approvalhistory
      WHERE workflowid    = @iv_workflowid
@@ -252,6 +339,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_current_node.
+    CLEAR :ev_currentnode.
     SELECT *
        FROM zc_wf_approvalhistory
     WHERE  workflowid    = @iv_workflowid
@@ -270,6 +358,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_nextnode.
+    CLEAR :ev_nextnode,ev_approvalend .
     SELECT *
       FROM zc_wf_approvalnode
      WHERE workflowid    = @iv_workflowid
@@ -297,6 +386,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_next_node.
+    CLEAR :ev_nextnode,ev_approvalend,ev_auto .
     SELECT *
       FROM zc_wf_approvalnode
      WHERE workflowid    = @iv_workflowid
@@ -346,6 +436,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
 
 
   METHOD get_next_node_user.
+    CLEAR :ev_error ,ev_errortext,ev_users .
     SELECT *
        FROM zc_wf_approvaluser
     WHERE  workflowid    = @iv_workflowid
@@ -367,7 +458,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_pr_by.
-
+    CLEAR :ev_error ,ev_errortext,ev_users .
     "get info
     SELECT SINGLE *
       FROM ztmm_1006
@@ -405,7 +496,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_polink_by.
-
+    CLEAR :ev_error ,ev_errortext,ev_users .
     "get info
     SELECT SINGLE *
       FROM ztmm_1006
@@ -444,6 +535,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD send_emails.
+    CLEAR :ev_error ,ev_errortext .
     DATA: lt_recipient    TYPE cl_bcs_mail_message=>tyt_recipient,
           lt_attachment   TYPE zzcl_common_utils=>tt_attachment,
           lv_subject      TYPE cl_bcs_mail_message=>ty_subject,
@@ -451,14 +543,21 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
           lv_filename     TYPE string,
           lv_timestamp    TYPE timestamp,
           lv_timezone     TYPE tznzone.
-
-    "get companycode / PR_TYPE
-    SELECT SINGLE *
-      FROM ztmm_1006
-    WHERE  workflow_id    = @iv_workflowid
-      AND application_id = @iv_applicationid
-      AND instance_id    = @iv_instanceid
-    INTO @DATA(ls_ztmm_1006).
+    IF iv_uuid IS INITIAL.
+      "get pr_by prno
+      SELECT SINGLE *
+        FROM ztmm_1006
+      WHERE  workflow_id    = @iv_workflowid
+        AND application_id = @iv_applicationid
+        AND instance_id    = @iv_instanceid
+      INTO @DATA(ls_ztmm_1006).
+    ELSE.
+      "get pr_by prno
+      SELECT SINGLE *
+        FROM ztmm_1006
+      WHERE uuid    = @iv_uuid
+      INTO @ls_ztmm_1006.
+    ENDIF.
 
     "get email setting
     SELECT SINGLE *
@@ -475,7 +574,12 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     lt_recipient = VALUE #( FOR item IN iv_users ( address = item-emailaddress ) ).
     SORT lt_recipient BY address.
     DELETE ADJACENT DUPLICATES FROM lt_recipient COMPARING address.
-
+    DELETE lt_recipient WHERE address IS INITIAL.
+    IF lt_recipient IS INITIAL.
+      ev_error = 'X'.
+      ev_errortext = '送信メールボックスを空にすることはできません'.
+      return.
+    ENDIF.
     lv_subject = ls_ztbc_1001-zvalue3.
     REPLACE ALL OCCURRENCES OF '&1' IN lv_subject  WITH ls_ztmm_1006-pr_by .
     REPLACE ALL OCCURRENCES OF '&2' IN lv_subject  WITH ls_ztmm_1006-pr_no .

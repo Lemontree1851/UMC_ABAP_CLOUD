@@ -5,8 +5,7 @@ CLASS lhc_purchasereq DEFINITION INHERITING FROM cl_abap_behavior_handler.
     TYPES:  remark TYPE ztbc_1011-remark.
     TYPES:  useremail TYPE string.
     TYPES:  userfullname TYPE string.
-
-
+    TYPES:  timezone TYPE string.
     TYPES: row TYPE i,
            END OF ty_batchupload.
     TYPES:tt_batchupload TYPE TABLE OF ty_batchupload.
@@ -86,9 +85,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
 
     DATA:lv_current_node TYPE ztbc_1011-current_node.
     DATA:lv_next_node    TYPE ztbc_1011-current_node.
-    DATA:lv_next_node_n    TYPE ztbc_1011-current_node.
     DATA:lv_approvalend  TYPE abap_boolean.
-    DATA:lv_approvalend_n  TYPE abap_boolean.
     DATA:lv_operator TYPE  ztbc_1011-operator.
     DATA:lv_ev_error TYPE abap_boolean.
     DATA:lv_error_text TYPE string.
@@ -98,7 +95,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
     DATA:lv_auto TYPE STANDARD TABLE OF zc_wf_approvalhistory.
     LOOP AT ct_data INTO DATA(cs_data).
 
-      CLEAR:lv_current_node,lv_next_node,lv_approvalend, lv_operator,lv_ev_error,lv_error_text,lv_users,lv_next_node_n,lv_approvalend_n.
+      CLEAR:lv_current_node,lv_next_node,lv_approvalend, lv_operator,lv_ev_error,lv_error_text,lv_users.
       CLEAR:lv_users_prby,lv_users_polink.
       CLEAR:lv_auto.
 
@@ -166,7 +163,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
       ENDIF.
 
 *&--下一节点不存在 当前就是最终节点 终点邮件和节点变更
-      IF lv_approvalend_n = abap_true.
+      IF lv_approvalend = abap_true.
         "邮件通知 POLINK_BY & PR_BY
         zzcl_wf_utils=>send_emails( EXPORTING iv_workflowid    = cs_data-workflowid
                                               iv_applicationid = cs_data-applicationid
@@ -205,11 +202,13 @@ CLASS lhc_purchasereq IMPLEMENTATION.
          iv_remark         = cs_data-remark
          iv_approvalstatus = '3'
        ).
-
+        cs_data-message = '成功'.
+        cs_data-type = 'S'.
+        MODIFY ct_data FROM cs_data TRANSPORTING message type.
       ENDIF.
 
 *&--下一节点存在 正常流程邮件和节点变更
-      IF lv_approvalend_n = abap_false.
+      IF lv_approvalend = abap_false.
         zzcl_wf_utils=>send_emails( EXPORTING iv_workflowid    = cs_data-workflowid
                                 iv_applicationid = cs_data-applicationid
                                 iv_instanceid    = cs_data-instanceid
@@ -257,6 +256,9 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         iv_remark         = ls_auto-remark
         iv_approvalstatus = ls_auto-approvalstatus
       ).
+          cs_data-message = '成功'.
+          cs_data-type = 'S'.
+          MODIFY ct_data FROM cs_data TRANSPORTING message type.
         ENDLOOP.
 
 
@@ -268,9 +270,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
 
     DATA:lv_current_node TYPE ztbc_1011-current_node.
     DATA:lv_next_node    TYPE ztbc_1011-current_node.
-    DATA:lv_next_node_n    TYPE ztbc_1011-current_node.
     DATA:lv_approvalend  TYPE abap_boolean.
-    DATA:lv_approvalend_n  TYPE abap_boolean.
     DATA:lv_operator TYPE  ztbc_1011-operator.
     DATA:lv_ev_error TYPE abap_boolean.
     DATA:lv_error_text TYPE string.
@@ -279,7 +279,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
     DATA:lv_users_polink TYPE STANDARD TABLE OF zc_wf_approvaluser.
     LOOP AT ct_data INTO DATA(cs_data).
 
-      CLEAR:lv_current_node,lv_next_node,lv_approvalend, lv_operator,lv_ev_error,lv_error_text,lv_users,lv_next_node_n,lv_approvalend_n.
+      CLEAR:lv_current_node,lv_next_node,lv_approvalend, lv_operator,lv_ev_error,lv_error_text,lv_users.
       CLEAR:lv_users_prby,lv_users_polink.
 
       lv_operator = cs_data-userfullname && '(' && cs_data-useremail && ')' .
@@ -393,6 +393,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
       lv_msg        TYPE string,
       lv_instanceid TYPE sysuuid_x16,
       lv_new        TYPE c.
+    DATA:lv_operator TYPE  ztbc_1011-operator.
     LOOP AT keys INTO DATA(key).
       CLEAR records.
       /ui2/cl_json=>deserialize(  EXPORTING json = key-%param-zzkey
@@ -407,9 +408,26 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         SORT lt_mm1006 BY pr_no.
       ENDIF.
       LOOP AT records INTO record.
+
+        CLEAR lv_operator.
+        lv_operator = record-userfullname && '(' && record-useremail && ')' .
+
+*&--只能申请本公司的PR
+        zzcl_wf_utils=>check_plant_access(
+                  EXPORTING iv_email    = record-useremail
+                            iv_uuid     = record-uuid
+                  IMPORTING ev_error         = DATA(lv_ev_error)
+                            ev_errortext     = DATA(lv_error_text) ).
+        IF lv_ev_error IS NOT INITIAL.
+          record-message = lv_error_text.
+          record-type = 'E'.
+          MODIFY records FROM record TRANSPORTING message type.
+          CONTINUE.
+        ENDIF.
+
+*&--提交申请时数据状态只能为1（登録済）
         READ TABLE lt_mm1006 INTO DATA(ls_mm1006) WITH KEY pr_no = record-prno BINARY SEARCH.
         IF sy-subrc = 0.
-          " 提交申请时数据状态只能为1（登録済）
           IF ls_mm1006-approve_status <> '1'.
             record-type = 'E'.
             MESSAGE e027(zmm_001) WITH record-prno record-pritem INTO record-message.
@@ -421,7 +439,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         ENDIF.
         record-workflowid = 'purchaserequisition'.
         CLEAR lv_new.
-        "1. 获取审批流的uuid
+*&-- 获取审批流的uuid
         IF record-instanceid IS INITIAL.
           TRY.
               lv_instanceid = cl_system_uuid=>create_uuid_x16_static(  ).
@@ -433,12 +451,12 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         ELSE.
           lv_instanceid = record-instanceid.
         ENDIF.
-        "2. 获取审批流的applicationid
+*&-- 获取审批流的applicationid
         zzcl_wf_utils=>get_application_id(
                   EXPORTING iv_workflowid    = record-workflowid
                             iv_uuid          = record-uuid
-                  IMPORTING ev_error         = DATA(lv_ev_error)
-                            ev_errortext     = DATA(lv_error_text)
+                  IMPORTING ev_error         = lv_ev_error
+                            ev_errortext     = lv_error_text
                             ev_applicationid = record-applicationid ).
 
         IF lv_ev_error IS NOT INITIAL.
@@ -448,14 +466,14 @@ CLASS lhc_purchasereq IMPLEMENTATION.
           CONTINUE.
         ENDIF.
 
-        "3. 获取下一审批节点
+*&-- 获取下一审批节点
         zzcl_wf_utils=>get_next_node(
                           EXPORTING iv_workflowid    = record-workflowid
                                     iv_applicationid = record-applicationid
                                     iv_instanceid    = lv_instanceid
                           IMPORTING ev_nextnode      = DATA(lv_next_node)
                                     ev_approvalend   = DATA(lv_approvalend) ).
-        "4. 获取再下一节点的user
+*&-- 获取再下一节点的user
         zzcl_wf_utils=>get_next_node_user( EXPORTING iv_workflowid    = record-workflowid
                                                      iv_applicationid = record-applicationid
                                                      iv_nextnode      = lv_next_node
@@ -468,12 +486,13 @@ CLASS lhc_purchasereq IMPLEMENTATION.
           MODIFY records FROM record TRANSPORTING message type.
           CONTINUE.
         ENDIF.
-        "5. node 10 发邮件
+*&-- node 10 发邮件
         zzcl_wf_utils=>send_emails( EXPORTING iv_workflowid    = record-workflowid
                                               iv_applicationid = record-applicationid
-                                              iv_instanceid    = record-instanceid
+                                              iv_instanceid    = lv_instanceid
                                               iv_users         = lv_users
                                               iv_zid           = 'ZMM013'
+                                              iv_uuid          = record-uuid
                                      IMPORTING ev_error         = lv_ev_error
                                                ev_errortext     = lv_error_text ).
         IF lv_ev_error IS NOT INITIAL.
@@ -482,17 +501,22 @@ CLASS lhc_purchasereq IMPLEMENTATION.
           MODIFY records FROM record TRANSPORTING message type.
           CONTINUE.
         ENDIF.
-        "6. 将工作流id写入ztmm_1006
+*&-- 将工作流id写入ztmm_1006
+        DATA(current_date) = cl_abap_context_info=>get_system_date( ).
+        DATA(current_time) = cl_abap_context_info=>get_system_time( ).
+        DATA lv_frontend_datetime_str TYPE timestamp.
+        lv_frontend_datetime_str = current_date && current_time.
+        CONVERT TIME STAMP lv_frontend_datetime_str TIME ZONE record-timezone INTO DATE current_date TIME current_time.
         IF lv_new IS NOT INITIAL.
           UPDATE ztmm_1006
              SET workflow_id   = @record-workflowid,
                 application_id = @record-applicationid,
                 instance_id    = @lv_instanceid,
-                apply_date = @sy-datum,
-                apply_time = @sy-uzeit
+                apply_date = @current_date,
+                apply_time = @current_time
          WHERE pr_no = @record-prno.
         ENDIF.
-        "7. 生成审批流同时添加审批流日志
+*&--生成审批流同时添加审批流日志
         DATA lv_approve_status TYPE ztmm_1006-approve_status.
         lv_approve_status = '2'.
         zzcl_wf_utils=>add_approval_history(
@@ -500,7 +524,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                           iv_instanceid     = lv_instanceid
                           iv_applicationid  = record-applicationid
                           iv_nextnode       = lv_next_node
-                          iv_operator       = CONV #( record-userfullname )
+                          iv_operator       = lv_operator
                           iv_email          = CONV #( record-useremail )
                           iv_approvalstatus = lv_approve_status"审批中
                           iv_remark         = '提交审批' ).
@@ -509,7 +533,11 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         record-type = 'S'.
         record-instanceid = lv_instanceid.
         record-approvestatus = lv_approve_status.
-        MODIFY records FROM record TRANSPORTING message type instanceid applicationid approvestatus.
+        record-applydate = current_date.
+        record-applytime = current_time.
+        MODIFY records FROM record TRANSPORTING message type instanceid applicationid approvestatus applydate applytime.
+        CLEAR:lv_next_node,lv_approvalend,lv_ev_error,lv_error_text,lv_users,lv_instanceid.
+
       ENDLOOP.
 
       DATA(lv_json) = /ui2/cl_json=>serialize( records ).
@@ -522,12 +550,16 @@ CLASS lhc_purchasereq IMPLEMENTATION.
       records TYPE TABLE OF ty_batchupload,
       record  LIKE LINE OF records,
       lv_msg  TYPE string.
+    DATA:lv_operator TYPE  ztbc_1011-operator.
     LOOP AT keys INTO DATA(key).
       CLEAR records.
       /ui2/cl_json=>deserialize(  EXPORTING json = key-%param-zzkey
                                   CHANGING  data = records ).
 
       LOOP AT records INTO record.
+
+        CLEAR lv_operator.
+        lv_operator = record-userfullname && '(' && record-useremail && ')' .
 
         "1. 获取 workflowid applicationid instanceid
         SELECT SINGLE *
@@ -596,7 +628,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                           iv_instanceid     = ls_ztmm_1006-instance_id
                           iv_applicationid  = ls_ztmm_1006-application_id
                           iv_nextnode       = lv_next_node
-                          iv_operator       = CONV #( record-userfullname )
+                          iv_operator       = lv_operator
                           iv_email          = CONV #( record-useremail )
                           iv_approvalstatus = lv_approve_status
                           iv_reject         =  abap_true
@@ -604,7 +636,10 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         record-message = '撤回成功'.
         record-type = 'S'.
         record-approvestatus = lv_approve_status.
-        MODIFY records FROM record TRANSPORTING message type approvestatus.
+        record-applydate = ''.
+        record-applytime = ''.
+        MODIFY records FROM record TRANSPORTING message type approvestatus applydate applytime.
+        CLEAR:lv_next_node,lv_approvalend,lv_ev_error,lv_error_text,lv_users.
       ENDLOOP.
 
       DATA(lv_json) = /ui2/cl_json=>serialize( records ).

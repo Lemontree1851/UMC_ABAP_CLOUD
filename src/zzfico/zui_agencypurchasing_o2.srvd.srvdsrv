@@ -1,0 +1,4 @@
+@EndUserText.label: '代理購買仕訳生成'
+define service ZUI_AGENCYPURCHASING_O2 {
+  expose ZC_AGENCYPURCHASING as Itemdata;
+}

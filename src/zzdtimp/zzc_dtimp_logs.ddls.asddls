@@ -5,7 +5,6 @@
        typeNamePlural: 'Log Entries'
     },
     presentationVariant: [{
-       maxItems: 20,
        visualizations: [{type: #AS_LINEITEM}]
     }]
 }

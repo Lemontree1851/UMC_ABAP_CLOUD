@@ -9,9 +9,7 @@ CLASS zcl_salesdocumentreport DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
+CLASS zcl_salesdocumentreport IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -31,9 +29,30 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
       ls_product           LIKE LINE OF  lr_product.
 *      ls_plantype          LIKE LINE OF  lr_plantype.
 
+    TYPES:
+      BEGIN OF ty_planversion,
+        createdbyuser    TYPE c_salesplanvaluehelp-createdbyuser,
+        salesplan        TYPE c_salesplanvaluehelp-salesplan,
+        salesplanversion TYPE c_salesplanvaluehelp-salesplanversion,
+      END OF ty_planversion.
+
+    DATA:lt_planversion TYPE STANDARD TABLE OF ty_planversion,
+         ls_planversion TYPE ty_planversion.
+
+    DATA:lt_version0 TYPE STANDARD TABLE OF ty_planversion,
+         ls_version0 TYPE ty_planversion.
+
+    DATA:lt_version1 TYPE STANDARD TABLE OF ty_planversion,
+         ls_version1 TYPE ty_planversion.
+
+    DATA:lt_version2 TYPE STANDARD TABLE OF ty_planversion,
+         ls_version2 TYPE ty_planversion.
+
+    DATA:lt_version3 TYPE STANDARD TABLE OF ty_planversion,
+         ls_version3 TYPE ty_planversion.
 
     CONSTANTS:
-      lc_exchangetype     TYPE string VALUE '0'.
+      lc_exchangetype    TYPE string VALUE '0'.
 
     TRY.
         "Get and add filter
@@ -92,7 +111,8 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
        b~customer,
        b~companycode,
        c~salesorganization,
-       d~customername
+       d~customername,
+       e~material
      FROM i_customersalesarea WITH PRIVILEGED ACCESS AS a
      LEFT JOIN i_customercompany WITH PRIVILEGED ACCESS AS b
        ON a~customer = b~customer
@@ -102,13 +122,17 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
      LEFT JOIN i_customer WITH PRIVILEGED ACCESS AS d
        ON  d~customer = a~customer
        AND d~customer = b~customer
+*     LEFT JOIN ztfi_1010 as e
+*       ON e~Customer = b~customer
+     LEFT JOIN i_materialbomlinkdex WITH PRIVILEGED ACCESS AS e
+       ON e~plant = a~salesorganization
      WHERE a~salesorganization IN @lr_salesorganization
        AND b~companycode IN @lr_salesorganization
        AND b~customer IN @lr_customer
-       INTO TABLE @DATA(lt_customerb).
+       INTO TABLE @DATA(lt_basicdata).
 
-    LOOP AT  lt_customerb INTO DATA(lw_customerb).
-      MOVE-CORRESPONDING lw_customerb TO lw_data.
+    LOOP AT  lt_basicdata INTO DATA(lw_basicdata).
+      MOVE-CORRESPONDING lw_basicdata TO lw_data.
       APPEND lw_data TO lt_data.
     ENDLOOP.
 
@@ -116,113 +140,267 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
       APPEND lw_data TO lt_output.  " 将当前行的 lw_data 追加到 lt_output 内表
     ENDLOOP.
 
-*    SELECT
-*      a~salesorganization,
-*      a~salesoffice,
-*      a~salesgroup,
-*      a~soldtoparty,
-*      a~product,
-*      a~productgroup,
-*      a~plant,
-*      a~profitcenter,
-*      c~customername,
-*      d~matlaccountassignmentgroup,
-*      e~productname
-*      FROM i_slsperformanceplanactualcube WITH PRIVILEGED ACCESS AS a
-*      LEFT JOIN c_salesplanvaluehelp WITH PRIVILEGED ACCESS AS b
-*      ON  p_exchangeratetype = '0'
-*      AND p_createdbyuser    = @createdbyuser
-*      AND p_salesplan        = @salesplan
-*      AND p_salesplanversion = @lv_salesplan_version
-*      AND p_displaycurrency  = 'JPY'
-*      LEFT JOIN i_customer WITH PRIVILEGED ACCESS AS c
-*        ON c~customer = a~customergroup
-*      LEFT JOIN i_productsalesdelivery WITH PRIVILEGED ACCESS AS d
-*        ON d~product = a~product
-*      LEFT JOIN i_producttext WITH PRIVILEGED ACCESS AS e
-*        ON e~product = a~product
-*      INTO TABLE @DATA(lt_result).
+    DATA(lv_typeab) = lv_ztype1 && '%'.  " lv_ztype1 与百分号连接
 
-*    " 使用 CONCATENATE 生成模式
-*    CONCATENATE ls_plantype-low '%' INTO lv_pattern.
-*
-*    " 查询并存储结果
-*    SELECT salesplanversion FROM c_salesplanvaluehelp
-*      WHERE salesplanversion LIKE @lv_pattern
-*      INTO TABLE @lt_salesplan.
-*
-*    " 初始化最大值和对应版本
-*    DATA(lv_salesplan_versions) = ''.
-*
-*    " 循环处理所有的第二个字符 '0', '1', '2', '3'
-*    DO 4 TIMES.
-*      DATA(lv_index) = sy-index - 1.
-*      DATA(lv_second_char_value) = lv_index.  " 0, 1, 2, 3
-*
-*      " 初始化最大值
-*      lv_max_number = -1.
-*      lv_salesplan_version = ''.
-*
-*      LOOP AT lt_salesplan INTO DATA(lv_salesplan_version_current).
-*        " 获取第二个字符
-*        lv_second_char = lv_salesplan_version_current+1(1).
-*
-*        " 检查第二个字符是否匹配
-*        IF lv_second_char = lv_second_char_value.
-*          " 获取第三个字符数字
-*          lv_third_char = lv_salesplan_version_current+2(1).
-*
-*          " 将字符转换为数字
-*          lv_number = lv_third_char.
-*
-*          " 更新最大值和对应版本
-*          IF lv_number IS NOT INITIAL AND lv_number > lv_max_number.
-*            lv_max_number = lv_number.
-*            lv_salesplan_version = lv_salesplan_version_current.
-*          ENDIF.
-*        ENDIF.
-*      ENDLOOP.
-*
-*      " 根据第二个字符保存结果
-*      CASE lv_index.
-*        WHEN 0.
-*          DATA(lv_salesplan_version0) = lv_salesplan_version.
-*        WHEN 1.
-*          DATA(lv_salesplan_version1) = lv_salesplan_version.
-*        WHEN 2.
-*          DATA(lv_salesplan_version2) = lv_salesplan_version.
-*        WHEN 3.
-*          DATA(lv_salesplan_version3) = lv_salesplan_version.
-*      ENDCASE.
-*    ENDDO.
+    SELECT
+      createdbyuser,
+      salesplan,
+      salesplanversion
+    FROM c_salesplanvaluehelp WITH PRIVILEGED ACCESS
+*    WHERE salesplanversion LIKE @lv_typeab
+    INTO TABLE @lt_planversion.
 
-    "販売計画のマスタデータについて"
+    SELECT *
+    FROM c_salesplanvaluehelp WITH PRIVILEGED ACCESS
+*    WHERE salesplanversion LIKE @lv_typeab
+    INTO TABLE @DATA(lt_planversion2).
+
+********基础数据获取********
+*得意先名*品名
+
+    "按第二位数字排序
+    SORT lt_planversion BY salesplanversion+1(1) DESCENDING.
+
+    "获取排序后的第一条记录，即第二位数字最大的记录
+    READ TABLE lt_planversion INDEX 1 INTO DATA(lw_versionmax).
+
+    SELECT
+      a~salesorganization,
+      a~salesoffice,
+      a~salesgroup,
+      a~soldtoparty,
+      a~product AS product_a,
+      a~productgroup,
+      a~plant,
+      a~profitcenter,
+      b~customername,
+*      c~\_MatlAccountAssignmentGroup
+      d~productname,
+      e~product,
+      f~billofmaterial,
+      f~billofmaterialvariant
+    FROM i_slsperformanceplanactualcube(
+      p_exchangeratetype = 0,
+      p_displaycurrency  = 'JPY',
+      p_salesplan        = @lw_versionmax-salesplan,
+      p_salesplanversion = @lw_versionmax-salesplanversion,
+      p_createdbyuser    = @lw_versionmax-createdbyuser ) WITH PRIVILEGED ACCESS AS a
+   LEFT JOIN i_customer WITH PRIVILEGED ACCESS AS b
+   ON b~customername = a~soldtoparty
+*   LEFT JOIN i_productsalesdelivery WITH PRIVILEGED ACCESS AS c
+*   ON c~product = a~product
+   LEFT JOIN i_producttext WITH PRIVILEGED ACCESS AS d
+   ON d~product = a~product
+   LEFT JOIN i_product WITH PRIVILEGED ACCESS AS e
+   ON e~product = a~product
+   LEFT JOIN i_billofmaterialitemdex_3 WITH PRIVILEGED ACCESS AS f
+   ON f~billofmaterialcomponent = a~product
+   WHERE a~product IN @lr_product
+    INTO TABLE @DATA(lt_result1).
+
+    IF sy-subrc = 0.
+      DATA(lt_product) = lt_result1.
+      SORT lt_product BY product.
+      DELETE ADJACENT DUPLICATES FROM lt_product COMPARING product.
+    ENDIF.
+
+*    SELECT single material
+*    FROM i_materialbomlinkdex WITH PRIVILEGED ACCESS
+*    FOR ALL ENTRIES IN lt_product
 
 
-*
+********計画数量********
+
+    CLEAR lt_version0.
+
+    " 筛选第二位数字为 '0' 的记录
+    LOOP AT lt_planversion INTO ls_planversion.
+      IF ls_planversion-salesplanversion+1(1) = '0'.
+        APPEND ls_planversion TO lt_version0.
+      ENDIF.
+    ENDLOOP.
+
+    " 如果有筛选结果，按第三位数字排序
+    IF lt_version0 IS NOT INITIAL.
+      SORT lt_version0 BY salesplanversion+2(1) DESCENDING.
+
+      " 获取第三位数字最大的记录
+      READ TABLE lt_version0 INDEX 1 INTO DATA(lw_version0).
+    ENDIF.
+
+    SELECT
+      salesplanquantity,
+      salesplanperiodname
+    FROM i_slsperformanceplanactualcube(
+      p_exchangeratetype = 0,
+      p_displaycurrency  = 'JPY',
+      p_salesplan        = @lw_version0-salesplan,
+      p_salesplanversion = @lw_version0-salesplanversion,
+      p_createdbyuser    = @lw_version0-createdbyuser ) WITH PRIVILEGED ACCESS
+    INTO TABLE @DATA(lt_result2).
+
+    IF sy-subrc = 0.
+      DATA(lt_read2) = lt_result2.
+      SORT lt_read2 BY salesplanquantity salesplanperiodname.
+      DELETE ADJACENT DUPLICATES FROM lt_read2 COMPARING salesplanquantity salesplanperiodname.
+    ENDIF.
+
+*********売上*********
+    CLEAR lt_version1.
+
+    " 筛选第二位数字为 '1' 的记录
+    LOOP AT lt_planversion INTO ls_planversion.
+      IF ls_planversion-salesplanversion+1(1) = '1'.
+        APPEND ls_planversion TO lt_version1.
+      ENDIF.
+    ENDLOOP.
+
+    " 如果有筛选结果，按第三位数字排序
+    IF lt_version1 IS NOT INITIAL.
+      SORT lt_version1 BY salesplanversion+2(1) DESCENDING.
+
+      " 获取第三位数字最大的记录
+      READ TABLE lt_version1 INDEX 1 INTO DATA(lw_version1).
+    ENDIF.
+
+    SELECT
+      salesplanamountindspcrcy,
+      salesplanperiodname
+    FROM i_slsperformanceplanactualcube(
+      p_exchangeratetype = 0,
+      p_displaycurrency  = 'JPY',
+      p_salesplan        = @lw_version1-salesplan,
+      p_salesplanversion = @lw_version1-salesplanversion,
+      p_createdbyuser    = @lw_version1-createdbyuser ) WITH PRIVILEGED ACCESS
+    INTO TABLE @DATA(lt_result3).
+
+    IF sy-subrc = 0.
+      DATA(lt_read3) = lt_result3.
+      SORT lt_read3 BY salesplanamountindspcrcy salesplanperiodname.
+      DELETE ADJACENT DUPLICATES FROM lt_read3 COMPARING salesplanamountindspcrcy salesplanperiodname.
+    ENDIF.
+
+*********貢献利益*********
+    CLEAR lt_version2.
+
+    " 筛选第二位数字为 '2' 的记录
+    LOOP AT lt_planversion INTO ls_planversion.
+      IF ls_planversion-salesplanversion+1(1) = '2'.
+        APPEND ls_planversion TO lt_version2.
+      ENDIF.
+    ENDLOOP.
+
+    " 如果有筛选结果，按第三位数字排序
+    IF lt_version2 IS NOT INITIAL.
+      SORT lt_version2 BY salesplanversion+2(1) DESCENDING.
+
+      " 获取第三位数字最大的记录
+      READ TABLE lt_version2 INDEX 1 INTO DATA(lw_version2).
+    ENDIF.
+
+    SELECT
+      salesplanamountindspcrcy,
+      salesplanperiodname
+    FROM i_slsperformanceplanactualcube(
+      p_exchangeratetype = 0,
+      p_displaycurrency  = 'JPY',
+      p_salesplan        = @lw_version2-salesplan,
+      p_salesplanversion = @lw_version2-salesplanversion,
+      p_createdbyuser    = @lw_version2-createdbyuser ) WITH PRIVILEGED ACCESS
+    INTO TABLE @DATA(lt_result4).
+
+    IF sy-subrc = 0.
+      DATA(lt_read4) = lt_result4.
+      SORT lt_read4 BY salesplanamountindspcrcy salesplanperiodname.
+      DELETE ADJACENT DUPLICATES FROM lt_read4 COMPARING salesplanamountindspcrcy salesplanperiodname.
+    ENDIF.
+
+*********売上総利益*********
+    CLEAR lt_version3.
+
+    " 筛选第二位数字为 '3' 的记录
+    LOOP AT lt_planversion INTO ls_planversion.
+      IF ls_planversion-salesplanversion+1(1) = '3'.
+        APPEND ls_planversion TO lt_version3.
+      ENDIF.
+    ENDLOOP.
+
+    " 如果有筛选结果，按第三位数字排序
+    IF lt_version3 IS NOT INITIAL.
+      SORT lt_version3 BY salesplanversion+2(1) DESCENDING.
+
+      " 获取第三位数字最大的记录
+      READ TABLE lt_version3 INDEX 1 INTO DATA(lw_version3).
+    ENDIF.
+
+    SELECT
+      salesplanamountindspcrcy,
+      salesplanperiodname
+    FROM i_slsperformanceplanactualcube(
+      p_exchangeratetype = 0,
+      p_displaycurrency  = 'JPY',
+      p_salesplan        = @lw_version3-salesplan,
+      p_salesplanversion = @lw_version3-salesplanversion,
+      p_createdbyuser    = @lw_version3-createdbyuser ) WITH PRIVILEGED ACCESS
+    INTO TABLE @DATA(lt_result5).
+
+    IF sy-subrc = 0.
+      DATA(lt_read5) = lt_result5.
+      SORT lt_read5 BY salesplanamountindspcrcy salesplanperiodname.
+      DELETE ADJACENT DUPLICATES FROM lt_read5 COMPARING salesplanamountindspcrcy salesplanperiodname.
+    ENDIF.
+
+*********単価*********
+    IF lv_ztype1 = 'A'.
+
 *      SELECT
-*        a~SalesPlanQuantity,
-*        a~SalesPlanPeriodName
-*        FROM I_SlsPerformancePlanActualCube WITH PRIVILEGED ACCESS AS a
-*        LEFT JOIN C_SalesPlanValueHelp WITH PRIVILEGED ACCESS AS b
-*          ON  a~P_EXCHANGERATETYPE = '0'
-*          AND a~P_CREATEDBYUSER    = b~CreatedByUser
-*          AND a~P_SALESPLAN        = b~SalesPlan
-*          AND a~P_SALESPLANVERSION = @lv_salesplan_version0
-*          AND a~P_DISPLAYCURRENCY  = 'JPY'
-*        INTO TABLE @DATA(lt_result0) .
-*
-*      SELECT
-*        a~SalesPlanAmountInDspCrcy,
-*        a~SalesPlanPeriodName
-*        FROM I_SlsPerformancePlanActualCube WITH PRIVILEGED ACCESS AS a
-*        LEFT JOIN C_SalesPlanValueHelp WITH PRIVILEGED ACCESS AS b
-*          ON  a~P_EXCHANGERATETYPE = '0'
-*          AND a~P_CREATEDBYUSER    = b~CreatedByUser
-*          AND a~P_SALESPLAN        = b~SalesPlan
-*          AND a~P_SALESPLANVERSION = @lv_salesplan_version1
-*          AND a~P_DISPLAYCURRENCY  = 'JPY'
-*        INTO TABLE @DATA(lt_result1).
+*        conditionratevalue,
+*        SalesPlanPeriodName
+*      FROM i_slsprcgconditionrecord WITH PRIVILEGED ACCESS
+*      WHERE conditiontype      = 'ZYP0'
+*        AND conditionisdeleted = @space
+*      FOR ALL ENTRIES IN @lt_read2
+*       WHERE ConditionValidityStartDate = @lt_read2-SalesPlanPeriodName
+*      INTO @DATA(lv_ratevaluea).
+
+      IF lt_read2 IS NOT INITIAL.
+        SELECT conditionratevalue
+          FROM i_slsprcgconditionrecord WITH PRIVILEGED ACCESS
+*          FOR ALL ENTRIES IN @lt_read2
+         WHERE conditiontype      = 'ZYP0'
+           AND conditionisdeleted = @space
+*           AND conditionvaliditystartdate = @lt_read2-salesplanperiodname
+
+         INTO TABLE @DATA(lt_ratevaluea).
+      ENDIF.
+
+
+    ELSE.
+
+      SELECT SINGLE
+         conditionratevalue
+       FROM i_slsprcgconditionrecord WITH PRIVILEGED ACCESS
+*         FOR ALL ENTRIES IN @lt_read2
+       WHERE conditiontype      = 'PPR0'
+         AND conditionisdeleted = @space
+*       AND ConditionValidityStartDate = @lt_read2-salesplanperiodname
+       INTO @DATA(lv_ratevalueb1).
+
+      IF lv_ratevalueb1 IS INITIAL.
+
+        SELECT SINGLE
+        conditionratevalue
+      FROM i_slsprcgconditionrecord WITH PRIVILEGED ACCESS
+*         FOR ALL ENTRIES IN @lt_read2
+      WHERE conditiontype      = 'ZZR0'
+        AND conditionisdeleted = @space
+*       AND ConditionValidityStartDate = @lt_read2-salesplanperiodname
+      INTO @DATA(lv_ratevalueb2).
+
+      ENDIF.
+
+    ENDIF.
+*********単価*********
 *
     "貢献利益"
 

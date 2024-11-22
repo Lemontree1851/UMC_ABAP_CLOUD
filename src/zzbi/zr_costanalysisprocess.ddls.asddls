@@ -28,11 +28,13 @@ define root custom entity ZR_COSTANALYSISPROCESS
       @Semantics : { amount : {currencyCode: 'Currency'} }                     
       ActualPrice_FAT    : abap.curr(15,2);                       
       Currency           : waerk;                           
-      BillingQuantity    : abap.char( 6 );                         
+      BillingQuantity    : abap.char( 20 );                         
       BillingQuantityUnit: abap.char( 2 );
       sales_number        : abap.char(25);
       quo_version         : abap.char(25);
       sales_d_no          : abap.char(25);                                   
-       
+      profitcenter        : abap.char(20);
+      profitcentername    : abap.char(40);
+      yieldqty            : abap.char(20);
       
 }

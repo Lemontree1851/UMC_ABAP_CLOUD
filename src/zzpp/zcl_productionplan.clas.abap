@@ -132,6 +132,9 @@ CLASS zcl_productionplan IMPLEMENTATION.
       ls_para         TYPE STRUCTURE FOR FUNCTION IMPORT i_supplydemanditemtp~getpeggingwithitems,
       lt_mrp_api      TYPE STANDARD TABLE OF ts_mrp_api,
       ls_mrp_api      TYPE ts_mrp_api,
+      lt_para_p       TYPE TABLE FOR FUNCTION IMPORT i_supplydemanditemtp~getpeggingwithitems,
+      ls_para_p       TYPE STRUCTURE FOR FUNCTION IMPORT i_supplydemanditemtp~getpeggingwithitems,
+      lt_mrp_pegging  TYPE STANDARD TABLE OF ts_mrp_api,
       ls_res_mrp_api  TYPE ts_res_mrp_api,
       lt_stock        TYPE STANDARD TABLE OF ts_mrp_api,
       ls_stock        TYPE ts_mrp_api,
@@ -188,16 +191,18 @@ CLASS zcl_productionplan IMPLEMENTATION.
       components TYPE abap_component_tab.
 
     DATA:
-      lv_dayc  TYPE c LENGTH 30,
-      lv_day   TYPE d,
-      lv_vdate TYPE d,
-      lv_color TYPE c LENGTH 30,
-      lv_index TYPE n LENGTH 3,
-      lv_qty   TYPE menge_d,
-      lv_qty_t TYPE menge_d,
-      lv_atp   TYPE menge_d,
-      lv_atp_t TYPE menge_d.
-
+      lv_dayc   TYPE c LENGTH 30,
+      lv_day    TYPE d,
+      lv_vdate  TYPE d,
+      lv_color  TYPE c LENGTH 30,
+      lv_index  TYPE n LENGTH 3,
+      lv_qty    TYPE menge_d,
+      lv_qty_t  TYPE menge_d,
+      lv_atp    TYPE menge_d,
+      lv_atp_t  TYPE menge_d,
+      lv_sum    TYPE menge_d,
+      lv_field  TYPE menge_d,
+      lv_field2 TYPE menge_d.
 
     FIELD-SYMBOLS:
       <lt_tab>     TYPE STANDARD TABLE,
@@ -442,7 +447,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
       INTO TABLE @DATA(lt_operation).
 
 * 2.6 ~ 2.13
-    "只有单独读物料才能返回availableqty，多条返回0.
+    "只有getitem单独读物料才能返回availableqty.
     LOOP AT lt_bom INTO ls_bom.
       READ ENTITIES OF i_supplydemanditemtp PRIVILEGED
             ENTITY supplydemanditem
@@ -471,6 +476,42 @@ CLASS zcl_productionplan IMPLEMENTATION.
 
       ENDLOOP.
     ENDLOOP.
+    "只有GetPeggingWithItems才能读取到VC和FE类型
+    LOOP AT lt_bom INTO ls_bom.
+      ls_para_p-%param-mrparea = ls_bom-plant.
+      ls_para_p-%param-mrpplant = ls_bom-plant.
+      ls_para_p-%param-material = ls_bom-idnrk.
+      APPEND ls_para_p TO lt_para_p.
+    ENDLOOP.
+    READ ENTITIES OF i_supplydemanditemtp PRIVILEGED
+         ENTITY supplydemanditem
+          EXECUTE getpeggingwithitems
+          FROM lt_para_p
+         RESULT DATA(lt_sdi_result_p)
+         FAILED DATA(lt_sdi_failed_p)
+         REPORTED DATA(lt_sdi_reported_p).
+    IF lt_sdi_failed_p IS INITIAL.
+      LOOP AT lt_sdi_result_p INTO DATA(ls_result_p).
+        LOOP AT ls_result_p-%param-_supplydemanditemgetitemr INTO DATA(ls_p).
+          IF ls_p-mrpelementcategory = 'VC'
+          OR ls_p-mrpelementcategory = 'FE'.
+            ls_mrp_api-material = ls_p-material.
+            ls_mrp_api-mrpplant = ls_p-mrpplant.
+            ls_mrp_api-mrpelementopenquantity = ls_p-mrpelementopenquantity.
+            ls_mrp_api-mrpavailablequantity = ls_p-mrpavailablequantity.
+            ls_mrp_api-mrpelement = ls_p-mrpelement.
+            ls_mrp_api-mrpelementavailyorrqmtdate = ls_p-mrpelementavailyorrqmtdate.
+            ls_mrp_api-mrpelementcategory = ls_p-mrpelementcategory.
+            ls_mrp_api-mrpelementdocumenttype = ls_p-mrpelementdocumenttype.
+            ls_mrp_api-productionversion = ls_p-productionversion.
+            APPEND ls_mrp_api TO lt_mrp_pegging.
+            CLEAR: ls_mrp_api.
+
+          ENDIF.
+        ENDLOOP.
+      ENDLOOP.
+
+    ENDIF.
 
 
     IF lv_plancheck = 'X'.   "計画手配検査
@@ -515,6 +556,20 @@ CLASS zcl_productionplan IMPLEMENTATION.
     ENDLOOP.
 
 * 2.7 DELTA取得
+    LOOP AT lt_mrp_api INTO ls_mrp_api
+         GROUP BY ( material = ls_mrp_api-material
+                    mrpplant = ls_mrp_api-mrpplant )
+         REFERENCE INTO DATA(api).
+      LOOP AT GROUP api ASSIGNING FIELD-SYMBOL(<lfs_api>).
+
+      ENDLOOP.
+      "Delta最後行
+      ls_delta-material = <lfs_api>-material.
+      ls_delta-mrpplant = <lfs_api>-mrpplant.
+      ls_delta-mrpavailablequantity = <lfs_api>-mrpavailablequantity.
+      APPEND ls_delta TO lt_delta.
+      CLEAR: ls_delta.
+    ENDLOOP.
 * 2.8 過去～今月までの受注取得
 * 2.9 今月～未来までの受注取得
     "実行日付の月末日
@@ -529,20 +584,14 @@ CLASS zcl_productionplan IMPLEMENTATION.
     ENDIF.
     lv_datum = lv_year && lv_nextmonth && '01'.
     lv_date = lv_datum - 1.
-*    DATA(lv_timestamp) = xco_cp_time=>moment( iv_year   = lv_date+0(4)
-*                                          iv_month  = lv_date+4(2)
-*                                          iv_day    = lv_date+6(2)
-*                                          iv_hour   = '00'
-*                                          iv_minute = '00'
-*                                          iv_second = '00'
-*                                        )->get_unix_timestamp( )->value * 1000.
-    LOOP AT lt_mrp_api INTO ls_mrp_api
+
+    LOOP AT lt_mrp_pegging INTO ls_mrp_api
          GROUP BY ( material = ls_mrp_api-material
                     mrpplant = ls_mrp_api-mrpplant )
-         REFERENCE INTO DATA(api).
-      LOOP AT GROUP api ASSIGNING FIELD-SYMBOL(<lfs_api>).
+         REFERENCE INTO DATA(pegging).
+      LOOP AT GROUP pegging ASSIGNING <lfs_api>.
         IF <lfs_api>-mrpelementcategory = 'VC'.
-          IF <lfs_api>-mrpelementavailyorrqmtdate+6(13) <= lv_date.
+          IF <lfs_api>-mrpelementavailyorrqmtdate <= lv_date.
             ls_history-mrpelementopenquantity = ls_history-mrpelementopenquantity
                                               + <lfs_api>-mrpelementopenquantity.
           ELSE.
@@ -551,12 +600,6 @@ CLASS zcl_productionplan IMPLEMENTATION.
           ENDIF.
         ENDIF.
       ENDLOOP.
-      "Delta最後行
-      ls_delta-material = <lfs_api>-material.
-      ls_delta-mrpplant = <lfs_api>-mrpplant.
-      ls_delta-mrpavailablequantity = <lfs_api>-mrpavailablequantity.
-      APPEND ls_delta TO lt_delta.
-      CLEAR: ls_delta.
       "history
       ls_history-material = <lfs_api>-material.
       ls_history-mrpplant = <lfs_api>-mrpplant.
@@ -635,7 +678,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
     ENDLOOP.
 
 * 2.12 製造指図取得
-    LOOP AT lt_mrp_api INTO ls_mrp_api WHERE mrpelementcategory = 'FE'.
+    LOOP AT lt_mrp_pegging INTO ls_mrp_api WHERE mrpelementcategory = 'FE'.
       lrs_orderid-sign = 'I'.
       lrs_orderid-option = 'EQ'.
       lrs_orderid-low = ls_mrp_api-mrpelement.
@@ -670,18 +713,23 @@ CLASS zcl_productionplan IMPLEMENTATION.
       SELECT plannedorder
         FROM i_plannedorder
        WHERE plannedorder IN @lr_plnum
+         AND plannedorderisfirm = 'X'
         INTO TABLE @DATA(lt_sb).
     ENDIF.
-    SORT lt_sb BY plannedorder.
-    LOOP AT lt_mrp_api INTO ls_mrp_api.
-      READ TABLE lt_sb INTO DATA(ls_sb)
-           WITH KEY plannedorder = ls_mrp_api-sourcemrpelement BINARY SEARCH.
+
+    DATA(lt_mrp_tmp) = lt_mrp_api[].
+    SORT lt_mrp_tmp BY mrpelementcategory sourcemrpelement.
+    LOOP AT lt_sb INTO DATA(ls_sb).
+      READ TABLE lt_mrp_tmp INTO ls_mrp_api
+                 WITH KEY mrpelementcategory = 'SB'
+                          sourcemrpelement = ls_sb-plannedorder BINARY SEARCH.
       IF sy-subrc = 0.
         MOVE-CORRESPONDING ls_mrp_api TO ls_require.
         APPEND ls_require TO lt_require.
         CLEAR: ls_require.
       ENDIF.
     ENDLOOP.
+
 * 2.13 入出庫予定取得
     LOOP AT lt_mrp_api INTO ls_mrp_api
          WHERE mrpelementcategory = 'AR'.
@@ -841,11 +889,10 @@ CLASS zcl_productionplan IMPLEMENTATION.
         ls_matnr-stockqty = ls_stock-mrpelementopenquantity.
       ENDIF.
       APPEND ls_matnr TO lt_matnr.
-      CLEAR: ls_matnr-stockqty.
 
       IF lv_theory = 'X'.  "理论在库
         ls_matnr-plantype = 'Z'.
-        CLEAR :ls_matnr-historyso,ls_matnr-futureso,ls_matnr-delta,ls_matnr-stockqty.
+        CLEAR :ls_matnr-historyso,ls_matnr-futureso,ls_matnr-delta.
         APPEND ls_matnr TO lt_matnr.
       ENDIF.
       CLEAR: ls_matnr.
@@ -1013,11 +1060,13 @@ CLASS zcl_productionplan IMPLEMENTATION.
             ENDIF.
             CONCATENATE 'D' <lfs_confirm>-plndorderplannedstartdate INTO lv_dayc.
             ASSIGN COMPONENT lv_dayc OF STRUCTURE <ls_tab> TO <l_field>.
-            <l_field> = <l_field> + <lfs_confirm>-plannedtotalqtyinbaseunit.
-
-            "Summary
-            <l_field2> = <l_field2> + <lfs_confirm>-plannedtotalqtyinbaseunit.
-
+            IF sy-subrc = 0.
+              <l_field> = <l_field> + <lfs_confirm>-plannedtotalqtyinbaseunit.
+              "Summary
+              IF <l_field2> IS ASSIGNED.
+                <l_field2> = <l_field2> + <lfs_confirm>-plannedtotalqtyinbaseunit.
+              ENDIF.
+            ENDIF.
             IF lv_theory = 'X'.
               ls_tmpdb-matnr = <l_matnr>.
               ls_tmpdb-idnrk = <l_idnrk>.
@@ -1033,17 +1082,22 @@ CLASS zcl_productionplan IMPLEMENTATION.
           LOOP AT lt_order ASSIGNING FIELD-SYMBOL(<lfs_order>)
                            WHERE product = <l_idnrk>
                              AND productionversion = <l_verid>
-                             AND mfgorderplannedstartdate >= lv_datum
+                             "AND mfgorderplannedstartdate >= lv_datum
                              AND mfgorderplannedstartdate < lv_vdate.
+            IF <lfs_order>-mfgorderplannedstartdate >= lv_datum.
+              CONCATENATE 'D' <lfs_order>-mfgorderplannedstartdate INTO lv_dayc.
+              ASSIGN COMPONENT lv_dayc OF STRUCTURE <ls_tab> TO <l_field>.
+              IF sy-subrc = 0.
+                <l_field> = <l_field> + <lfs_order>-mfgorderplannedtotalqty
+                          - <lfs_order>-mfgorderitemgoodsreceiptqty.
 
-            CONCATENATE 'D' <lfs_order>-mfgorderplannedstartdate INTO lv_dayc.
-            ASSIGN COMPONENT lv_dayc OF STRUCTURE <ls_tab> TO <l_field>.
-            <l_field> = <l_field> + <lfs_order>-mfgorderplannedtotalqty
-                      - <lfs_order>-mfgorderitemgoodsreceiptqty.
-            "Summary
-            <l_field2> = <l_field2> + <lfs_order>-mfgorderplannedtotalqty
-                      - <lfs_order>-mfgorderitemgoodsreceiptqty.
-
+                "Summary
+                IF <l_field2> IS ASSIGNED.
+                  <l_field2> = <l_field2> + <lfs_order>-mfgorderplannedtotalqty
+                            - <lfs_order>-mfgorderitemgoodsreceiptqty.
+                ENDIF.
+              ENDIF.
+            ENDIF.
             IF lv_theory = 'X'.
               ls_tmpdb-matnr = <l_matnr>.
               ls_tmpdb-idnrk = <l_idnrk>.
@@ -1057,28 +1111,8 @@ CLASS zcl_productionplan IMPLEMENTATION.
         WHEN 'C'. "ECN
           <l_planitem> = 'ECO番号'.
 
-          LOOP AT lt_ecn_api ASSIGNING FIELD-SYMBOL(<lfs_ecn>)
-                             WHERE objmgmtrecdobjectinternalid = <l_idnrk>
-                               AND changenumbervalidfromdate < lv_vdate.
-
-            CONCATENATE 'D' <lfs_ecn>-changenumbervalidfromdate INTO lv_dayc.
-            ASSIGN COMPONENT lv_dayc OF STRUCTURE <ls_tab> TO <l_field>.
-            <l_field> = <lfs_ecn>-changenumber.
-          ENDLOOP.
-
         WHEN 'K'. "
           <l_planitem> = '指図番号'.
-          ls_output-project = <l_planitem>.
-          LOOP AT lt_order ASSIGNING <lfs_order>
-                             WHERE product = <l_idnrk>
-                               AND productionversion = <l_verid>
-                               AND mfgorderplannedstartdate >= lv_datum
-                               AND mfgorderplannedstartdate < lv_vdate.
-
-            CONCATENATE 'D' <lfs_order>-mfgorderplannedstartdate INTO lv_dayc.
-            ASSIGN COMPONENT lv_dayc OF STRUCTURE <ls_tab> TO <l_field>.
-            <l_field> = <lfs_order>-manufacturingorder.
-          ENDLOOP.
 
         WHEN 'I'.
           <l_planitem> = '出荷計画'."出货计划
@@ -1088,9 +1122,14 @@ CLASS zcl_productionplan IMPLEMENTATION.
                                 AND workingdaydate < lv_vdate.
             CONCATENATE 'D' <lfs_plnd>-workingdaydate INTO lv_dayc.
             ASSIGN COMPONENT lv_dayc OF STRUCTURE <ls_tab> TO <l_field>.
-            <l_field> = <l_field> + <lfs_plnd>-plannedquantity.
-            "Summary
-            <l_field2> = <l_field2> + <lfs_plnd>-plannedquantity.
+            IF sy-subrc = 0.
+              <l_field> = <l_field> + <lfs_plnd>-plannedquantity.
+
+              "Summary
+              IF <l_field2> IS ASSIGNED.
+                <l_field2> = <l_field2> + <lfs_plnd>-plannedquantity.
+              ENDIF.
+            ENDIF.
 
             IF lv_theory = 'X'.
               ls_tmpdb-matnr = <l_matnr>.
@@ -1114,53 +1153,60 @@ CLASS zcl_productionplan IMPLEMENTATION.
 
             CONCATENATE 'D' <lfs_unconfirm>-plndorderplannedstartdate INTO lv_dayc.
             ASSIGN COMPONENT lv_dayc OF STRUCTURE <ls_tab> TO <l_field>.
-            <l_field> = <lfs_unconfirm>-plannedtotalqtyinbaseunit.
+            IF sy-subrc = 0.
+              <l_field> = <lfs_unconfirm>-plannedtotalqtyinbaseunit.
+            ENDIF.
             lv_atp = <lfs_unconfirm>-plndordercommittedqty.
             lv_qty = <lfs_unconfirm>-plannedtotalqtyinbaseunit.
             "Summary
-            <l_field2> = <l_field2> + <lfs_unconfirm>-plannedtotalqtyinbaseunit.
-            CONDENSE <l_field2> NO-GAPS.
+            IF <l_field2> IS ASSIGNED.
+              <l_field2> = <l_field2> + <lfs_unconfirm>-plannedtotalqtyinbaseunit.
+            ENDIF.
             lv_qty_t = lv_qty_t + <lfs_unconfirm>-plannedtotalqtyinbaseunit.
             lv_atp_t = lv_atp_t + <lfs_unconfirm>-plndordercommittedqty.
 
             CONCATENATE 'COLOR' <lfs_unconfirm>-plndorderplannedstartdate INTO lv_dayc.
             ASSIGN COMPONENT lv_dayc OF STRUCTURE <ls_tab> TO <l_field>.
-            IF lv_atp = 0      "赤色
-           AND lv_qty <> 0.
-              <l_field> = 'R'.
-            ENDIF.
-            IF lv_atp > 0         "黄色
-           AND lv_atp < lv_qty.
-              <l_field> = 'Y'.
-            ENDIF.
-            IF lv_atp >= lv_qty.  "緑色
-              <l_field> = 'G'.
-            ENDIF.
+            IF sy-subrc = 0.
+              IF lv_atp = 0      "赤色
+             AND lv_qty <> 0.
+                <l_field> = 'R'.
+              ENDIF.
+              IF lv_atp > 0         "黄色
+             AND lv_atp < lv_qty.
+                <l_field> = 'Y'.
+              ENDIF.
+              IF lv_atp >= lv_qty.  "緑色
+                <l_field> = 'G'.
+              ENDIF.
 
-            IF lv_atp = 0
-           AND lv_qty = 0.
-              <l_field> = space.
+              IF lv_atp = 0
+             AND lv_qty = 0.
+                <l_field> = space.
+              ENDIF.
             ENDIF.
 
             lv_dayc = 'SUMMARYCOLOR'.
             ASSIGN COMPONENT lv_dayc OF STRUCTURE <ls_tab> TO <l_field>.
-            IF lv_atp_t = 0       "赤色
-           AND lv_qty_t <> 0.
-              <l_field> = 'R'.
-            ENDIF.
+            IF sy-subrc = 0.
+              IF lv_atp_t = 0       "赤色
+             AND lv_qty_t <> 0.
+                <l_field> = 'R'.
+              ENDIF.
 
-            IF lv_atp_t > 0       "黄色
-           AND lv_atp_t < lv_qty_t.
-              <l_field> = 'Y'.
-            ENDIF.
+              IF lv_atp_t > 0       "黄色
+             AND lv_atp_t < lv_qty_t.
+                <l_field> = 'Y'.
+              ENDIF.
 
-            IF lv_atp_t >= lv_qty_t. "緑色
-              <l_field> = 'G'.
-            ENDIF.
+              IF lv_atp_t >= lv_qty_t. "緑色
+                <l_field> = 'G'.
+              ENDIF.
 
-            IF lv_atp_t = 0
-           AND lv_qty_t = 0.
-              <l_field> = space.
+              IF lv_atp_t = 0
+             AND lv_qty_t = 0.
+                <l_field> = space.
+              ENDIF.
             ENDIF.
           ENDLOOP.
           CLEAR: lv_atp, lv_atp_t, lv_qty, lv_qty_t.
@@ -1173,7 +1219,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
             CONCATENATE 'D' ls_require-mrpelementavailyorrqmtdate INTO lv_dayc.
             ls_tmpdb-matnr = <l_matnr>.
             ls_tmpdb-idnrk = <l_idnrk>.
-            ls_tmpdb-rqmng = ls_require-mrpelementopenquantity * -1 .
+            ls_tmpdb-rqmng = ls_require-mrpelementopenquantity.
             ls_tmpdb-rqdat = lv_dayc.
             COLLECT ls_tmpdb INTO lt_tmpdb.
           ENDLOOP.
@@ -1191,11 +1237,19 @@ CLASS zcl_productionplan IMPLEMENTATION.
             COLLECT ls_tmpdb INTO lt_tmpdb.
           ENDLOOP.
 
-          LOOP AT lt_tmpdb INTO ls_tmpdb.
+          SORT lt_tmpdb BY rqdat.
+          lv_sum = <l_stockqty>.
+          LOOP AT lt_tmpdb INTO ls_tmpdb
+                  WHERE matnr = <l_matnr>
+                    AND idnrk = <l_idnrk>.
             ASSIGN COMPONENT ls_tmpdb-rqdat OF STRUCTURE <ls_tab> TO <l_field>.
-            <l_field> = ls_tmpdb-rqmng + <l_stockqty>.
-            <l_field2> = <l_field2> + <l_field>.
+            IF sy-subrc = 0.
+              <l_field> = lv_sum + ls_tmpdb-rqmng.
+
+              lv_sum = <l_field>.
+            ENDIF.
           ENDLOOP.
+          CLEAR: lv_sum, lt_tmpdb.
       ENDCASE.
       UNASSIGN: <l_field>, <l_field2>.
     ENDLOOP.
@@ -1260,24 +1314,70 @@ CLASS zcl_productionplan IMPLEMENTATION.
         lv_index = lv_index + 1.
         CONCATENATE 'D' lv_index INTO lv_dayc.
         ASSIGN COMPONENT lv_dayc OF STRUCTURE ls_output TO <l_field2>.
-        IF <l_field> <> 0.
-          <l_field2> = <l_field>.
-          CONDENSE <l_field2> NO-GAPS.
+
+        IF <l_field> IS ASSIGNED
+       AND <l_field2> IS ASSIGNED.
+          IF <l_field> <> 0.
+            <l_field2> = <l_field>.
+            CONDENSE <l_field2> NO-GAPS.
+          ENDIF.
         ENDIF.
 
-        IF <l_plantype> = 'W'.
+        IF <l_plantype> = 'C'.
+          READ TABLE lt_ecn_api INTO DATA(ls_ecn)
+                                WITH KEY objmgmtrecdobjectinternalid = <l_idnrk>
+                                         changenumbervalidfromdate = lv_day.
+
+          IF sy-subrc = 0.
+            ASSIGN COMPONENT lv_dayc OF STRUCTURE ls_output TO <l_field>.
+            IF sy-subrc = 0.
+              <l_field> = ls_ecn-changenumber.
+            ENDIF.
+          ENDIF.
+        ENDIF.
+
+        IF <l_plantype> = 'K'.
+          READ TABLE lt_order INTO ls_order
+               WITH KEY product = <l_idnrk>
+                        productionversion = <l_verid>
+                        mfgorderplannedstartdate = lv_day.
+          IF sy-subrc = 0.
+            ASSIGN COMPONENT lv_dayc OF STRUCTURE ls_output TO <l_field>.
+            IF sy-subrc = 0.
+              <l_field> = |{ ls_order-manufacturingorder ALPHA = OUT }|.
+            ENDIF.
+          ENDIF.
+*          LOOP AT lt_order ASSIGNING <lfs_order>
+*                             WHERE product = <l_idnrk>
+*                               AND productionversion = <l_verid>
+*                               AND mfgorderplannedstartdate >= lv_datum
+*                               AND mfgorderplannedstartdate < lv_vdate.
+*
+*            CONCATENATE 'D' <lfs_order>-mfgorderplannedstartdate INTO lv_dayc.
+*            ASSIGN COMPONENT lv_dayc OF STRUCTURE <ls_tab> TO <l_field>.
+*            IF sy-subrc = 0.
+*              <l_field> = <lfs_order>-manufacturingorder.
+*            ENDIF.
+*          ENDLOOP.
+        ENDIF.
+
+        IF <l_plantype> = 'W'
+       AND <l_field> IS ASSIGNED
+       AND <l_field2> IS ASSIGNED
+       AND <l_color> IS ASSIGNED.
           IF <l_field> <> 0.
             <l_field2> = <l_field>.
             CONCATENATE <l_color> <l_field2> INTO <l_field2>.
             CONDENSE <l_field2> NO-GAPS.
           ENDIF.
+
         ENDIF.
       ENDDO.
 
       APPEND ls_output TO lt_output.
       CLEAR: ls_output, lv_index, lv_datum, lv_day, lv_dayc.
     ENDLOOP.
-*    SORT lt_output BY plant MRPResponsible Product Idnrk Stufe PlanType Verid Mdv01.
+
 
     IF io_request->is_total_numb_of_rec_requested(  ) .
       io_response->set_total_number_of_records( lines( lt_output ) ).

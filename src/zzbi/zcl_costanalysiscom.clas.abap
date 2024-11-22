@@ -111,7 +111,9 @@ CLASS zcl_costanalysiscom IMPLEMENTATION.
            billingquantityunit,
            sales_number,
            quo_version,
-           sales_d_no
+           sales_d_no,
+           profitcenter,
+           profitcentername
       FROM ztbi_1001
      WHERE companycode in @lr_companycode
        and zyear       in @lr_zyear

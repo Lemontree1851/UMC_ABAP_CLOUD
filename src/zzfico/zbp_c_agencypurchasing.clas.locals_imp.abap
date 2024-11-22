@@ -33,11 +33,12 @@ CLASS lhc_zc_agencypurchasing DEFINITION INHERITING FROM cl_abap_behavior_handle
 
     METHODS processlogic FOR MODIFY
       IMPORTING keys FOR ACTION zc_agencypurchasing~processlogic RESULT result.
-    METHODS create FOR MODIFY
-      IMPORTING entities FOR CREATE zc_agencypurchasing.
 
-    METHODS update FOR MODIFY
-      IMPORTING entities FOR UPDATE zc_agencypurchasing.
+*    METHODS create FOR MODIFY
+*      IMPORTING entities FOR CREATE zc_agencypurchasing.
+*
+*    METHODS update FOR MODIFY
+*      IMPORTING entities FOR UPDATE zc_agencypurchasing.
 
     METHODS read FOR READ
       IMPORTING keys FOR READ zc_agencypurchasing RESULT result.
@@ -45,12 +46,8 @@ CLASS lhc_zc_agencypurchasing DEFINITION INHERITING FROM cl_abap_behavior_handle
     METHODS lock FOR LOCK
       IMPORTING keys FOR LOCK zc_agencypurchasing.
 
-    "!
-    "! @parameter iv_model |
-    "! @parameter cs_data |
-    METHODS posting
-      IMPORTING iv_model TYPE string
-      CHANGING  cs_data  TYPE lty_request.
+    METHODS posting IMPORTING iv_model TYPE string
+                    CHANGING  cs_data  TYPE lty_request.
 
     TYPES:
       BEGIN OF ts_response,
@@ -145,16 +142,16 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
       lv_text     TYPE string.
 
     DATA:
-      i          TYPE i,
-      lv_lastday TYPE datum,
+      i              TYPE i,
+      lv_lastday     TYPE datum,
       lv_postingdate TYPE datum,
-      lv_cr(9)   TYPE p DECIMALS 2,
-      lv_cr1(9)  TYPE p DECIMALS 2,
-      lv_cr2(9)  TYPE p DECIMALS 2,
-      lv_dr(9)   TYPE p DECIMALS 2,
-      lv_msg     TYPE string,
-      lv_message TYPE string,
-      lv_fail    TYPE c LENGTH 1.
+      lv_cr(9)       TYPE p DECIMALS 2,
+      lv_cr1(9)      TYPE p DECIMALS 2,
+      lv_cr2(9)      TYPE p DECIMALS 2,
+      lv_dr(9)       TYPE p DECIMALS 2,
+      lv_msg         TYPE string,
+      lv_message     TYPE string,
+      lv_fail        TYPE c LENGTH 1.
 
     CHECK cs_data IS NOT INITIAL.
 
@@ -178,8 +175,8 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
 
     LOOP AT cs_data-items ASSIGNING FIELD-SYMBOL(<lfs_item>).
 
-      if <lfs_item>-accountingdocument1 is NOT INITIAL
-      or <lfs_item>-accountingdocument2 is NOT INITIAL.
+      IF <lfs_item>-accountingdocument1 IS NOT INITIAL
+      OR <lfs_item>-accountingdocument2 IS NOT INITIAL.
         <lfs_item>-message = '仕訳が既に生成されましたので、ご確認ください。'.
 
         CONTINUE.
@@ -774,11 +771,11 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
     ENDLOOP.
   ENDMETHOD.
 
-  METHOD create.
-  ENDMETHOD.
-
-  METHOD update.
-  ENDMETHOD.
+*  METHOD create.
+*  ENDMETHOD.
+*
+*  METHOD update.
+*  ENDMETHOD.
 
   METHOD read.
   ENDMETHOD.

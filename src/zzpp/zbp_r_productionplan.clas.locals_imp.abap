@@ -255,10 +255,11 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
       <ls_data_w> TYPE zr_productionplan.
     CREATE DATA dy_line LIKE LINE OF ct_data.
     ASSIGN dy_line->* TO <ls_data_w>.
-    DATA(lv_datum) = cl_abap_context_info=>get_system_date( ).
-    lv_day = lv_datum - 1.
-    lv_vdate = lv_day + cv_day.
+
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<ls_data>).
+      DATA(lv_datum) = cl_abap_context_info=>get_system_date( ).
+      lv_day = lv_datum - 1.
+      lv_vdate = lv_day + cv_day.
       CLEAR: <ls_data>-status, <ls_data>-message.
       CASE <ls_data>-plantype.
         WHEN 'P'.   "計画手配(同时修改W行)
@@ -412,7 +413,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                           AND productionversion = <ls_data>-verid
                           AND plndorderplannedstartdate = lv_day.
                   IF lv_first = 'X'.
-                    IF lv_qty = 0.
+                    IF lv_qty = 0.  "如果=0，直接删除，后续不用处理
                       delete_planorder( CHANGING cs_planorder = ls_confirmedplan
                                                cs_data = <ls_data> ).
                     ELSE.
@@ -435,13 +436,18 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                 lv_tabix = sy-tabix.
                 CLEAR: <ls_data_w>-status, <ls_data_w>-message.
                 lv_diff = lv_qty - ls_confirm-plannedtotalqtyinbaseunit.
-                IF lv_diff > 0.
+                IF lv_diff > 0.  "数量从小改大
                   LOOP AT lt_unconfirmplan INTO DATA(ls_unconfirmplan).
                     IF ls_unconfirmplan-plannedtotalqtyinbaseunit <= lv_qty.
                       delete_planorder( CHANGING cs_planorder = ls_unconfirmplan
                                                      cs_data = <ls_data_w> ).
                       lv_qty = lv_qty - ls_unconfirmplan-plannedtotalqtyinbaseunit.
-
+                      IF <ls_data_w>-status = 'S'.
+                        DELETE TABLE lt_unconfirmplan FROM ls_unconfirmplan.
+                      ENDIF.
+                      IF lv_qty = 0.  "如果最后为0，跳出不处理后续
+                        EXIT.
+                      ENDIF.
                     ELSE.
                       lv_qty = ls_unconfirmplan-plannedtotalqtyinbaseunit - lv_qty.
                       update_planorder( CHANGING cs_planorder = ls_unconfirmplan
@@ -452,10 +458,10 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                         ls_unconfirmplan-plannedtotalqtyinbaseunit = lv_qty.
                         MODIFY lt_unconfirmplan FROM ls_unconfirmplan TRANSPORTING plannedtotalqtyinbaseunit.
                       ENDIF.
-                      EXIT.
+                      EXIT.   "修改后跳出不处理后续
                     ENDIF.
                   ENDLOOP.
-                ELSEIF lv_diff < 0.
+                ELSEIF lv_diff < 0.  "数量从大改小
                   LOOP AT lt_unconfirmplan INTO ls_unconfirmplan.
                     lv_qty = ls_unconfirmplan-plannedtotalqtyinbaseunit - lv_diff.
 
@@ -480,65 +486,6 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                   ENDIF.
 
                 ENDIF.
-*                READ TABLE lt_unconfirm INTO ls_unconfirm
-*                     WITH KEY material = <ls_data_w>-idnrk
-*                              mrpplant = <ls_data_w>-plant
-*                              plndorderplannedstartdate = lv_day.
-*                IF sy-subrc = 0.
-*                  ASSIGN COMPONENT lv_dayi OF STRUCTURE <ls_data_w> TO <l_field2>.
-*                  IF <l_field2>+0(1) = 'R'
-*                  OR <l_field2>+0(1) = 'Y'
-*                  OR <l_field2>+0(1) = 'G'.
-*                    <l_field2> = <l_field2>+1.
-*                  ENDIF.
-*                  lv_qty = <l_field>.
-*                  lv_diff = lv_qty - ls_confirm-plannedtotalqtyinbaseunit.
-*                  IF lv_diff > 0.
-*                    LOOP AT lt_unconfirmplan INTO ls_unconfirmplan.
-*                      IF ls_unconfirmplan-plannedtotalqtyinbaseunit <= lv_qty.
-*                        delete_planorder( CHANGING cs_planorder = ls_unconfirmplan
-*                                                   cs_data = <ls_data_w> ).
-*                        lv_qty = lv_qty - ls_unconfirmplan-plannedtotalqtyinbaseunit.
-*                        IF lv_qty <= 0.
-*                          EXIT.
-*                        ENDIF.
-*                      ELSE.
-*                        lv_qty = ls_unconfirmplan-plannedtotalqtyinbaseunit - lv_qty.
-*                        IF lv_qty <= 0.
-*                          EXIT.
-*                        ENDIF.
-*                        update_planorder( CHANGING cs_planorder = ls_unconfirmplan
-*                                                 cs_data = <ls_data_w>
-*                                                 cv_qty = lv_qty ).
-*                      ENDIF.
-*                    ENDLOOP.
-*
-*                  ELSE.
-*                    LOOP AT lt_unconfirmplan INTO ls_unconfirmplan.
-*                      lv_qty = ls_unconfirmplan-plannedtotalqtyinbaseunit - lv_diff.
-*                      update_planorder( CHANGING cs_planorder = ls_unconfirmplan
-*                                                 cs_data = <ls_data_w>
-*                                                 cv_qty = lv_qty ).
-*                      EXIT.
-*                    ENDLOOP.
-*
-*                  ENDIF.
-*                ELSE.
-*                  ASSIGN COMPONENT lv_dayi OF STRUCTURE <ls_data_w> TO <l_field2>.
-*                  IF <l_field2>+0(1) = 'R'
-*                  OR <l_field2>+0(1) = 'Y'
-*                  OR <l_field2>+0(1) = 'G'.
-*                    <l_field2> = <l_field2>+1.
-*                  ENDIF.
-*                  lv_qty = <l_field>.
-*                  ls_unconfirmplan-material = <ls_data_w>-idnrk.
-*                  ls_unconfirmplan-mrpplant = <ls_data_w>-plant.
-*                  ls_unconfirmplan-productionversion = <ls_data_w>-verid.
-*                  create_planorder( CHANGING cs_planorder = ls_unconfirmplan
-*                                         cs_data = <ls_data_w>
-*                                         cv_qty = lv_qty
-*                                         cv_day = lv_day ).
-*                ENDIF.
 
               ENDIF.
             ELSE.
@@ -565,12 +512,20 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                     delete_planorder( CHANGING cs_planorder = ls_unconfirmplan
                                                    cs_data = <ls_data_w> ).
                     lv_qty = lv_qty - ls_unconfirmplan-plannedtotalqtyinbaseunit.
-
+                    IF <ls_data_w>-status = 'S'.
+                      DELETE TABLE lt_unconfirmplan FROM ls_unconfirmplan.
+                    ENDIF.
+                    IF lv_qty = 0.
+                      EXIT.
+                    ENDIF.
                   ELSE.
                     lv_qty = ls_unconfirmplan-plannedtotalqtyinbaseunit - lv_qty.
                     IF lv_qty = 0.
                       delete_planorder( CHANGING cs_planorder = ls_unconfirmplan
                                                      cs_data = <ls_data_w> ).
+                      IF <ls_data_w>-status = 'S'.
+                        DELETE TABLE lt_unconfirmplan FROM ls_unconfirmplan.
+                      ENDIF.
                     ELSE.
                       update_planorder( CHANGING cs_planorder = ls_unconfirmplan
                                                    cs_data = <ls_data_w>
@@ -583,57 +538,6 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                     EXIT.
                   ENDIF.
                 ENDLOOP.
-
-*                READ TABLE lt_unconfirm INTO ls_unconfirm
-*                      WITH KEY plndorderplannedstartdate = lv_day.
-*                IF sy-subrc = 0.
-*                  <l_field2> = <l_field>.
-*                  IF <l_field2>+0(1) = 'R'
-*                  OR <l_field2>+0(1) = 'Y'
-*                  OR <l_field2>+0(1) = 'G'.
-*                    <l_field2> = <l_field2>+1.
-*                  ENDIF.
-*                  lv_qty = <l_field2>.
-*                  lv_diff = lv_qty - ls_confirm-plannedtotalqtyinbaseunit.
-*                  IF lv_diff >= 0.
-*                    LOOP AT lt_unconfirmplan INTO ls_unconfirmplan.
-*                      IF ls_unconfirmplan-plannedtotalqtyinbaseunit <= lv_qty.
-*                        delete_planorder( CHANGING cs_planorder = ls_unconfirmplan
-*                                                   cs_data = <ls_data_w> ).
-*                        lv_qty = lv_qty - ls_unconfirmplan-plannedtotalqtyinbaseunit.
-*                        IF lv_qty <= 0.
-*                          EXIT.
-*                        ENDIF.
-*                      ELSE.
-*                        lv_qty = ls_unconfirmplan-plannedtotalqtyinbaseunit - lv_qty.
-*                        IF lv_qty <= 0.
-*                          EXIT.
-*                        ENDIF.
-*                        update_planorder( CHANGING cs_planorder = ls_unconfirmplan
-*                                                 cs_data = <ls_data_w>
-*                                                 cv_qty = lv_qty ).
-*                      ENDIF.
-*                    ENDLOOP.
-*
-*                  ELSE.
-*                    LOOP AT lt_unconfirmplan INTO ls_unconfirmplan.
-*                      lv_qty = ls_unconfirmplan-plannedtotalqtyinbaseunit - lv_diff.
-*                      update_planorder( CHANGING cs_planorder = ls_unconfirmplan
-*                                                 cs_data = <ls_data_w>
-*                                                 cv_qty = lv_qty ).
-*                    ENDLOOP.
-*
-*                  ENDIF.
-*                ELSE.
-*                  lv_qty = <l_field>.
-*                  ls_unconfirmplan-material = <ls_data_w>-idnrk.
-*                  ls_unconfirmplan-mrpplant = <ls_data_w>-plant.
-*                  ls_unconfirmplan-productionversion = <ls_data_w>-verid.
-*                  create_planorder( CHANGING cs_planorder = ls_unconfirmplan
-*                                         cs_data = <ls_data_w>
-*                                         cv_qty = lv_qty
-*                                         cv_day = lv_day ).
-*                ENDIF.
               ENDIF.
             ENDIF.
           ENDDO.
@@ -759,84 +663,51 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
         ENDIF.
       ENDIF.
     ENDIF.
-*    MODIFY ENTITIES OF i_plannedordertp PRIVILEGED
-*      ENTITY plannedorder
-*      UPDATE FIELDS (  totalquantity plannedorderisfirm )
-*           WITH VALUE #( (
-*           plannedorder  = cs_planorder-plannedorder
-*           totalquantity = cv_qty
-*           plannedorderisfirm = lv_firm
-*           %control-totalquantity = cl_abap_behv=>flag_changed
-*           %control-plannedorderisfirm = cl_abap_behv=>flag_changed ) )
-*      FAILED DATA(ls_update_failed)
-*      REPORTED DATA(ls_update_reported).
-*
-*    IF sy-subrc = 0
-*   AND ls_update_failed IS INITIAL.
-*      IF cs_data-message IS INITIAL.
-*        cs_data-message = cs_planorder-plannedorder && ` update`.
-*      ELSE.
-*        cs_data-message = cs_data-message && ';' && cs_planorder-plannedorder && ` update`.
-*      ENDIF.
-*
-*    ELSE.
-*      LOOP AT ls_update_reported-plannedorder INTO DATA(ls_order).
-*        DATA(lv_msgty) = ls_order-%msg->if_t100_dyn_msg~msgty.
-*        IF lv_msgty = 'A'
-*        OR lv_msgty = 'E'.
-*          lv_msg = ls_order-%msg->if_message~get_text( ).
-*          lv_message = zzcl_common_utils=>merge_message(
-*                             iv_message1 = lv_message
-*                             iv_message2 = lv_msg
-*                             iv_symbol = ';' ).
-*        ENDIF.
-*      ENDLOOP.
-*      IF cs_data-message IS INITIAL.
-*        cs_data-message = lv_message.
-*      ELSE.
-*        cs_data-message = cs_data-message && ';' && lv_message.
-*      ENDIF.
-*    ENDIF.
 
   ENDMETHOD.
 
   METHOD delete_planorder.
     DATA:
+      lo_root_exc      TYPE REF TO cx_root,
+      ls_planorder_u   TYPE ts_planorder_u,
+      ls_res_planorder TYPE ts_res_plan_api.
+    DATA:
       lv_msg     TYPE string,
-      lv_message TYPE string.
-    MODIFY ENTITIES OF i_plannedordertp PRIVILEGED
-      ENTITY plannedorder
-      DELETE FROM VALUE #( ( plannedorder = cs_planorder-plannedorder ) )
-          MAPPED DATA(ls_delete_mapped)
-          FAILED DATA(ls_delete_failed)
-          REPORTED DATA(ls_delete_reported).
-    IF sy-subrc = 0
-   AND ls_delete_failed IS INITIAL.
-      IF cs_data-message IS INITIAL.
-        cs_data-message = cs_planorder-plannedorder && ` delete`.
-      ELSE.
-        cs_data-message = cs_data-message && ';' && cs_planorder-plannedorder && ` delete`.
-      ENDIF.
+      lv_message TYPE string,
+      lv_etag    TYPE string.
 
-    ELSE.
-      LOOP AT ls_delete_reported-plannedorder INTO DATA(ls_order).
-
-        DATA(lv_msgty) = ls_order-%msg->if_t100_dyn_msg~msgty.
-        IF lv_msgty = 'A'
-        OR lv_msgty = 'E'.
-          lv_msg = ls_order-%msg->if_message~get_text( ).
-          lv_message = zzcl_common_utils=>merge_message(
-                             iv_message1 = lv_message
-                             iv_message2 = lv_msg
-                             iv_symbol = ';' ).
+    zzcl_common_utils=>request_api_v4( EXPORTING iv_path = |/api_plannedorder/srvd_a2x/sap/plannedorder/0001/PlannedOrderHeader/{ cs_planorder-plannedorder }|
+                                                 iv_method      = if_web_http_client=>get
+                                                 "iv_etag        = lv_etag
+                                       IMPORTING ev_status_code = DATA(lv_status_code)
+                                                 ev_response    = DATA(lv_response)
+                                                 ev_etag        = lv_etag ).
+    IF lv_etag IS NOT INITIAL.
+      zzcl_common_utils=>request_api_v4( EXPORTING iv_path = |/api_plannedorder/srvd_a2x/sap/plannedorder/0001/PlannedOrderHeader/{ cs_planorder-plannedorder }|
+                                                 iv_method      = if_web_http_client=>delete
+                                                 iv_etag = lv_etag
+                                         IMPORTING ev_status_code = lv_status_code
+                                                  ev_response    = lv_response ).
+      /ui2/cl_json=>deserialize(
+                           EXPORTING json = lv_response
+                           CHANGING data = ls_res_planorder ).
+      IF lv_status_code = 204. " success
+        IF cs_data-message IS INITIAL.
+          cs_data-status = 'S'.
+          cs_data-message = cs_planorder-plannedorder && ` update`.
+        ELSE.
+          cs_data-message = cs_data-message && ';' && cs_planorder-plannedorder && ` update`.
         ENDIF.
-      ENDLOOP.
-      IF cs_data-message IS INITIAL.
-        cs_data-message = lv_message.
       ELSE.
-        cs_data-message = cs_data-message && ';' && lv_message.
+        cs_data-status = 'E'.
+        IF cs_data-message IS INITIAL.
+          cs_data-message = ls_res_planorder-error-message.
+        ELSE.
+          cs_data-message = cs_data-message && ';' && ls_res_planorder-error-message.
+        ENDIF.
       ENDIF.
     ENDIF.
+
   ENDMETHOD.
 
   METHOD create_planorder.
@@ -934,10 +805,11 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                                                  ev_response    = DATA(lv_response) ).
     IF lv_status_code = 201.
       cs_data-status = 'S'.
-      cs_data-message = 'Successful'.
+      cs_data-message = 'Create Successful'.
     ELSE.
       /ui2/cl_json=>deserialize( EXPORTING json = lv_response
                                  CHANGING  data = ls_error ).
+      cs_data-status = 'E'.
       IF cs_data-message IS INITIAL.
         cs_data-message = ls_error-error-message-value.
       ELSE.
@@ -972,27 +844,27 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
 
     IF sy-subrc = 0
    AND ls_failed IS INITIAL.
+      cs_data-status = 'S'.
       IF cs_data-message IS INITIAL.
-
+        cs_data-message = 'Update Successful'.
       ENDIF.
 
     ELSE.
       LOOP AT ls_reported-plannedindependentrequirement INTO DATA(ls_order).
-
-        DATA(lv_msgty) = ls_order-%msg->if_t100_dyn_msg~msgty.
-        IF lv_msgty = 'A'
-        OR lv_msgty = 'E'.
+        DATA(lv_msgobj) = cl_message_helper=>get_t100_for_object( ls_order-%msg ).
+        IF ls_order-%msg->m_severity = cl_abap_behv=>ms-error.
           lv_msg = ls_order-%msg->if_message~get_text( ).
-          lv_message = zzcl_common_utils=>merge_message(
-                             iv_message1 = lv_message
-                             iv_message2 = lv_msg
-                             iv_symbol = ';' ).
+*          lv_message = zzcl_common_utils=>merge_message(
+*                             iv_message1 = lv_message
+*                             iv_message2 = lv_msg
+*                             iv_symbol = ';' ).
         ENDIF.
       ENDLOOP.
+      cs_data-status = 'E'.
       IF cs_data-message IS INITIAL.
-        cs_data-message = lv_message.
+        cs_data-message = lv_msg.
       ELSE.
-        cs_data-message = cs_data-message && ';' && lv_message.
+        cs_data-message = cs_data-message && ';' && lv_msg.
       ENDIF.
     ENDIF.
   ENDMETHOD.

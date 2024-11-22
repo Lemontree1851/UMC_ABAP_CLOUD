@@ -356,7 +356,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
 
       CLEAR lv_message.
       is_error = abap_false.
-
+      "不同公司检查逻辑不通，所以先要检查公司代码
       IF <record>-('CompanyCode') IS INITIAL.
         is_error = abap_true.
         " 明细界面单条值处理时会用到此消息

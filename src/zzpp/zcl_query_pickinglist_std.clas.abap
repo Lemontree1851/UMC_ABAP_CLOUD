@@ -354,8 +354,8 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
           ls_data-totalshortfallquantity = ls_data-totalrequiredquantity - ls_data-storagelocationtostock.
           ls_data-totaltransferquantity  = ls_data-totalshortfallquantity.
 
-          IF ls_config IS NOT INITIAL.
-            DATA(lv_filter) = |PLANT_ID eq '{ ls_data-plant }' and MAT_ID eq '{ ls_data-material }' and LOC_ID eq '{ ls_data-storagelocationto }'|.
+          IF ls_config IS NOT INITIAL AND ls_data-storagelocationfrom IS NOT INITIAL.
+            DATA(lv_filter) = |PLANT_ID eq '{ ls_data-plant }' and MAT_ID eq '{ ls_data-material }' and LOC_ID eq '{ ls_data-storagelocationfrom }'|.
             CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
             CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
             CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID

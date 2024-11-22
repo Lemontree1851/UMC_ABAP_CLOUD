@@ -89,7 +89,7 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
              d TYPE ty_result,
            END OF ty_response.
 
-    TYPES: BEGIN OF ts_valuation,
+    TYPES: BEGIN OF ty_valuation,
              product            TYPE  matnr,
              valuationarea      TYPE  bwkey,
              standardprice      TYPE  stprs,
@@ -97,23 +97,25 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
              priceunitqty       TYPE  peinh,
              currency           TYPE  waers,
              movingaverageprice TYPE  verpr,
-           END OF ts_valuation,
-           tt_valuation TYPE STANDARD TABLE OF ts_valuation WITH DEFAULT KEY,
-           BEGIN OF ts_valuation_d,
+           END OF ty_valuation,
+           tt_valuation TYPE STANDARD TABLE OF ty_valuation WITH DEFAULT KEY,
+           BEGIN OF ty_valuation_d,
              results TYPE tt_valuation,
-           END OF ts_valuation_d,
-           BEGIN OF ts_valuation_api,
-             d TYPE ts_valuation_d,
-           END OF ts_valuation_api.
+           END OF ty_valuation_d,
+           BEGIN OF ty_valuation_api,
+             d TYPE ty_valuation_d,
+           END OF ty_valuation_api.
 
     DATA:ls_response       TYPE ty_response.
 
     DATA:
-      lt_valuation_api TYPE STANDARD TABLE OF ts_valuation,
-      ls_valuation_api TYPE ts_valuation,
-      ls_valuation_ecn TYPE ts_valuation_api.
+      lt_recdvalidity  TYPE STANDARD TABLE OF ty_record,
+      lt_valuation_api TYPE STANDARD TABLE OF ty_valuation,
+      ls_valuation_api TYPE ty_valuation,
+      ls_valuation_ecn TYPE ty_valuation_api.
 
     DATA:lv_path2 TYPE string,
+         lv_dotimes TYPE p LENGTH 5 DECIMALS 3,
          lv_dec   TYPE i.
 
 
@@ -326,7 +328,7 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
       lv_filter = |ConditionType eq 'PPR0' and Supplier ne '' and Material ne ''|.
       lv_filter2 = |Product ne ''|.
 *      CLEAR lv_count.
-*      LOOP AT lt_supplier INto DATA(ls_supplier1).
+*      LOOP AT lt_supplier INTO DATA(ls_supplier1).
 *        lv_count += 1.
 *        IF lv_count = 1.
 *          lv_filter = |{ lv_filter } and (Supplier eq '{ ls_supplier1-supplier }'|.
@@ -385,6 +387,46 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
         ENDIF.
       ENDLOOP.
       lv_filter = |{ lv_filter })|.
+
+*      lv_dotimes = ceil( lines( lt_material ) / 200 ).
+*
+*      DO lv_dotimes TIMES.
+*        CLEAR:
+*          lv_filter2,
+*          lv_count.
+*
+*        lv_filter2 = lv_filter.
+*        DATA(lv_from) = ( sy-index - 1 ) * 200 + 1.
+*        DATA(lv_to)   = sy-index * 200.
+*
+*        LOOP AT lt_material INTO DATA(ls_material1)
+*          FROM lv_from TO lv_to.
+*          lv_count += 1.
+*          IF lv_count = 1.
+*            lv_filter2 = |{ lv_filter2 } and (Material eq '{ ls_material1-material }'|.
+*          ELSE.
+*            lv_filter2 = |{ lv_filter2 } or Material eq '{ ls_material1-material }'|.
+*          ENDIF.
+*        ENDLOOP.
+*        lv_filter2 = |{ lv_filter2 })|.
+*
+*        zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
+*                                                     iv_method      = if_web_http_client=>get
+*                                                     iv_select      = lv_select
+*                                                     iv_filter      = lv_filter2
+*                                           IMPORTING ev_status_code = DATA(lv_status_code)
+*                                                     ev_response    = DATA(lv_response) ).
+*        IF lv_status_code = 200.
+*          REPLACE ALL OCCURRENCES OF `PurchasingInfoRecordCategory` IN lv_response  WITH `Purchasinginforecordcategory`.
+*          REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_response  WITH ``.
+*          REPLACE ALL OCCURRENCES OF `)\/` IN lv_response  WITH ``.
+*          /ui2/cl_json=>deserialize(
+*                                         EXPORTING json = lv_response
+*                                         CHANGING data = ls_response ).
+*          APPEND LINES OF ls_response-d-results TO lt_recdvalidity.
+*        ENDIF.
+*      ENDDO.
+
       zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
                                                    iv_method      = if_web_http_client=>get
                                                    iv_select      = lv_select
@@ -393,45 +435,15 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
                                                    ev_response    = DATA(lv_response) ).
       IF lv_status_code = 200.
         REPLACE ALL OCCURRENCES OF `PurchasingInfoRecordCategory` IN lv_response  WITH `Purchasinginforecordcategory`.
-        "ConditionValidityEndDate":"\/Date(253402214400000)\/"
-        "ConditionValidityStartDate":"\/Date(1722297600000)\/"
         REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_response  WITH ``.
         REPLACE ALL OCCURRENCES OF `)\/` IN lv_response  WITH ``.
-
-*          xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
-*            ( xco_cp_json=>transformation->pascal_case_to_underscore )
-*            ( xco_cp_json=>transformation->boolean_to_abap_bool )
-*          ) )->write_to( REF #( ls_response ) ).
-
         /ui2/cl_json=>deserialize(
                                        EXPORTING json = lv_response
                                        CHANGING data = ls_response ).
-
-        DATA(lt_recdvalidity) = ls_response-d-results.
-*        DELETE lt_recdvalidity WHERE PurchasingInfoRecord is INITIAL.
-*        LOOP AT lt_recdvalidity ASSIGNING FIELD-SYMBOL(<lfs_recdvalidity>).
-*          IF <lfs_recdvalidity>-conditionvaliditystartdate < 0.
-*            <lfs_recdvalidity>-validitystartdate = '19000101'.
-*          ELSEIF <lfs_recdvalidity>-validitystartdate = '253402214400000'.
-*            <lfs_recdvalidity>-validitystartdate = '99991231'.
-*          ELSE.
-*            <lfs_recdvalidity>-validitystartdate = xco_cp_time=>unix_timestamp(
-*                        iv_unix_timestamp = <lfs_recdvalidity>-conditionvaliditystartdate / 1000
-*                     )->get_moment( )->as( xco_cp_time=>format->abap )->value+0(8).
-*          ENDIF.
-*          IF <lfs_recdvalidity>-conditionvalidityenddate < 0.
-*            <lfs_recdvalidity>-validityenddate = '19000101'.
-*          ELSEIF <lfs_recdvalidity>-conditionvalidityenddate = '253402214400000'.
-*            <lfs_recdvalidity>-validityenddate = '99991231'.
-*          ELSE.
-*            <lfs_recdvalidity>-validityenddate = xco_cp_time=>unix_timestamp(
-*                        iv_unix_timestamp = <lfs_recdvalidity>-conditionvalidityenddate / 1000
-*                     )->get_moment( )->as( xco_cp_time=>format->abap )->value+0(8).
-*          ENDIF.
-*        ENDLOOP.
+        APPEND LINES OF ls_response-d-results TO lt_recdvalidity.
       ENDIF.
 
-      lv_path2 = |/YY1_PRODUCTVALUATION_CDS/YY1_ProductValuation|.
+      lv_path2 = |/YY1_PRODUCTVALUATION_CDS/YY1_ProductValuation?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
       "Call API
       zzcl_common_utils=>request_api_v2(
         EXPORTING
@@ -612,6 +624,13 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
       lw_data-supplier = |{ lw_data-supplier ALPHA = OUT }|.
 
 *      READ TABLE lt_recdvalidity INTO DATA(lw_recdvalidity) WITH KEY material = lw_data-material
+*      DATA(lt_lt_recdvalidity_tmp) = lt_recdvalidity.
+*      delete lt_lt_recdvalidity_tmp WHERE material <> lw_data-material
+*                                       or supplier <> lw_data-supplier
+*                                       or plant <> lw_data-plant
+*                                       or purchasinginforecordcategory <> lw_data-purchasinginforecordcategory
+*                                       or purchasingorganization <> lw_data-purchasingorganization.
+
       READ TABLE lt_recdvalidity TRANSPORTING NO FIELDS WITH KEY material = lw_data-material
                                                                      supplier = lw_data-supplier
                                                                         plant = lw_data-plant
@@ -622,6 +641,7 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
       IF sy-subrc = 0.
         DATA(lv_lastflg) = abap_on.
         LOOP AT lt_recdvalidity INTO DATA(lw_recdvalidity) FROM sy-tabix
+*        LOOP AT lt_lt_recdvalidity_tmp INTO DATA(lw_recdvalidity).
           WHERE material = lw_data-material
             AND supplier = lw_data-supplier
             AND plant = lw_data-plant
@@ -673,9 +693,9 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
           APPEND lw_data TO lt_data.
         ENDLOOP.
       ELSE.
-        lw_data-condition_validity_start_date = ' '.
-        lw_data-condition_validity_end_date   = ' '.
-        APPEND lw_data TO lt_data.
+*        lw_data-condition_validity_start_date = ' '.
+*        lw_data-condition_validity_end_date   = ' '.
+*        APPEND lw_data TO lt_data.
       ENDIF.
       CLEAR lw_recdvalidity.
       CLEAR lw_data.
@@ -688,12 +708,12 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
     CLEAR lv_rate_display.
 
     " 如果 lv_ztype1 为 'X'，删除符合条件的记录
-    IF lv_ztype1 = ' '.
-      DELETE lt_data WHERE isdeleted = space AND ismarkedfordeletion = space.
+    IF lv_ztype1 <> 'X'.
+      DELETE lt_data WHERE isdeleted IS NOT INITIAL OR ismarkedfordeletion IS NOT INITIAL.
     ENDIF.
 
     IF lv_ztype2 = 'X'.
-      DELETE lt_data WHERE condition_validity_start_date <= sy-datum.
+      DELETE lt_data WHERE condition_validity_end_date <= sy-datum OR condition_validity_start_date >= sy-datum.
     ENDIF.
 
 *    LOOP AT lt_data INTO lw_data.  " 循环遍历 lt_dataS

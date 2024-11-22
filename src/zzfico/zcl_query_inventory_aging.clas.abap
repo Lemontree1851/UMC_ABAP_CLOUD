@@ -47,10 +47,63 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
       lv_fiscalperiodenddate        TYPE d.
 
     CONSTANTS:
-      lc_alpha_out        TYPE string VALUE 'OUT',
-      lc_fiyearvariant_v3 TYPE string VALUE 'V3',
-      lc_sign_i           TYPE c LENGTH 1 VALUE 'I',
-      lc_option_eq        TYPE c LENGTH 2 VALUE 'EQ'.
+      BEGIN OF lsc_producttype,
+        zroh TYPE string VALUE 'ZROH',
+        zhlb TYPE string VALUE 'ZHLB',
+        zfrt TYPE string VALUE 'ZFRT',
+      END OF lsc_producttype,
+
+      BEGIN OF lsc_age,
+        a001 TYPE ztfi_1019-age VALUE '001',
+        a002 TYPE ztfi_1019-age VALUE '002',
+        a003 TYPE ztfi_1019-age VALUE '003',
+        a004 TYPE ztfi_1019-age VALUE '004',
+        a005 TYPE ztfi_1019-age VALUE '005',
+        a006 TYPE ztfi_1019-age VALUE '006',
+        a007 TYPE ztfi_1019-age VALUE '007',
+        a008 TYPE ztfi_1019-age VALUE '008',
+        a009 TYPE ztfi_1019-age VALUE '009',
+        a010 TYPE ztfi_1019-age VALUE '010',
+        a011 TYPE ztfi_1019-age VALUE '011',
+        a012 TYPE ztfi_1019-age VALUE '012',
+        a013 TYPE ztfi_1019-age VALUE '013',
+        a014 TYPE ztfi_1019-age VALUE '014',
+        a015 TYPE ztfi_1019-age VALUE '015',
+        a016 TYPE ztfi_1019-age VALUE '016',
+        a017 TYPE ztfi_1019-age VALUE '017',
+        a018 TYPE ztfi_1019-age VALUE '018',
+        a019 TYPE ztfi_1019-age VALUE '019',
+        a020 TYPE ztfi_1019-age VALUE '020',
+        a021 TYPE ztfi_1019-age VALUE '021',
+        a022 TYPE ztfi_1019-age VALUE '022',
+        a023 TYPE ztfi_1019-age VALUE '023',
+        a024 TYPE ztfi_1019-age VALUE '024',
+        a025 TYPE ztfi_1019-age VALUE '025',
+        a026 TYPE ztfi_1019-age VALUE '026',
+        a027 TYPE ztfi_1019-age VALUE '027',
+        a028 TYPE ztfi_1019-age VALUE '028',
+        a029 TYPE ztfi_1019-age VALUE '029',
+        a030 TYPE ztfi_1019-age VALUE '030',
+        a031 TYPE ztfi_1019-age VALUE '031',
+        a032 TYPE ztfi_1019-age VALUE '032',
+        a033 TYPE ztfi_1019-age VALUE '033',
+        a034 TYPE ztfi_1019-age VALUE '034',
+        a035 TYPE ztfi_1019-age VALUE '035',
+        a036 TYPE ztfi_1019-age VALUE '036',
+      END OF lsc_age,
+
+      lc_alpha_out               TYPE string VALUE 'OUT',
+      lc_fiyearvariant_v3        TYPE string VALUE 'V3',
+      lc_invspecialstocktype_t   TYPE string VALUE 'T',
+      lc_invspecialstocktype_e   TYPE string VALUE 'E',
+      lc_currencyrole_10         TYPE string VALUE '10',
+      lc_purhistorycategory_q    TYPE string VALUE 'Q',
+      lc_billingdocumenttype_f2  TYPE string VALUE 'F2',
+      lc_billingdocumenttype_iv2 TYPE string VALUE 'IV2',
+      lc_chargeablesupplyflag_y  TYPE string VALUE 'Y',
+      lc_chargeablesupplyflag_n  TYPE string VALUE 'N',
+      lc_sign_i                  TYPE c LENGTH 1 VALUE 'I',
+      lc_option_eq               TYPE c LENGTH 2 VALUE 'EQ'.
 
     TRY.
         "Get and add filter
@@ -86,13 +139,6 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
        AND fiscalperiod = @lv_fiscalperiod
        AND ledger = @lv_ledger
       INTO TABLE @DATA(lt_ztfi_1019).
-*    IF sy-subrc = 0.
-    "Obtain data of company code currency
-*    SELECT SINGLE
-*           currency
-*      FROM i_companycode WITH PRIVILEGED ACCESS
-*     WHERE companycode = @lv_companycode
-*      INTO @DATA(lv_currency).
 
     "Obtain data of product
     SELECT a~valuationarea,
@@ -123,33 +169,6 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
        AND g~mrpcontroller = c~mrpresponsible
      WHERE a~companycode = @lv_companycode
       INTO TABLE @DATA(lt_productplantbasic).
-
-*      "Obtain data of product
-*      SELECT a~plant,
-*             a~product,
-*             a~baseunit,
-*             a~profitcenter,
-*             a~mrpresponsible,
-*             b~producttype,
-*             c~producttypename,
-*             d~productdescription,
-*             e~mrpcontrollername
-*        FROM i_productplantbasic WITH PRIVILEGED ACCESS AS a
-*       INNER JOIN i_product WITH PRIVILEGED ACCESS AS b
-*          ON b~product = a~product
-*        LEFT OUTER JOIN i_producttypetext_2 WITH PRIVILEGED ACCESS AS c
-*          ON c~producttype = b~producttype
-*         AND c~language = @sy-langu
-*        LEFT OUTER JOIN i_productdescription WITH PRIVILEGED ACCESS AS d
-*          ON d~product = a~product
-*         AND d~language = @sy-langu
-*        LEFT OUTER JOIN i_mrpcontrollervh WITH PRIVILEGED ACCESS AS e
-*          ON e~plant = a~plant
-*         AND e~mrpcontroller = a~mrpresponsible
-*        FOR ALL ENTRIES IN @lt_ztfi_1019
-*       WHERE a~plant = @lt_ztfi_1019-plant
-*         AND a~product = @lt_ztfi_1019-product
-*        INTO TABLE @DATA(lt_productplantbasic).
     IF sy-subrc = 0.
       "Obtain data of inventory amount for fiscal period
       SELECT costestimate,
@@ -163,8 +182,8 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
          AND material = @lt_productplantbasic-product
          AND companycode = @lv_companycode
          AND ledger = @lv_ledger
-         AND invtryvalnspecialstocktype <> 'T'
-         AND invtryvalnspecialstocktype <> 'E'
+         AND invtryvalnspecialstocktype <> @lc_invspecialstocktype_t
+         AND invtryvalnspecialstocktype <> @lc_invspecialstocktype_e
          AND valuationquantity <> 0
          AND amountincompanycodecurrency <> 0
         INTO TABLE @lt_inventoryamtbyfsclperd.
@@ -247,13 +266,13 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
          FOR ALL ENTRIES IN @lt_productplantbasic
        WHERE material = @lt_productplantbasic-product
          AND valuationarea = @lt_productplantbasic-valuationarea
-         AND currencyrole = '10'
+         AND currencyrole = @lc_currencyrole_10
          AND ledger = @lv_ledger
-         AND inventoryspecialstocktype <> 'T'
+         AND inventoryspecialstocktype <> @lc_invspecialstocktype_t
         INTO TABLE @DATA(lt_inventorypricebykeydate).
 
       DATA(lt_productplantbasic_zroh) = lt_productplantbasic.
-      DELETE lt_productplantbasic_zroh WHERE producttype <> 'ZROH'.
+      DELETE lt_productplantbasic_zroh WHERE producttype <> lsc_producttype-zroh.
 
       IF lt_productplantbasic_zroh IS NOT INITIAL.
         "Obtain data of supplier invoice
@@ -275,7 +294,7 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
          WHERE a~plant = @lt_productplantbasic_zroh-valuationarea
            AND a~material = @lt_productplantbasic_zroh-product
            AND b~companycode = @lv_companycode
-           AND a~purchasinghistorycategory = 'Q'
+           AND a~purchasinghistorycategory = @lc_purhistorycategory_q
            AND a~postingdate <= @lv_fiscalperiodenddate
            AND a~purordamountincompanycodecrcy <> 0
            AND b~fiscalyear = @lv_fiscalperiodstartdate+0(4)
@@ -288,7 +307,7 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
       ENDIF.
 
       DATA(lt_productplantbasic_zhlb) = lt_productplantbasic.
-      DELETE lt_productplantbasic_zhlb WHERE producttype <> 'ZHLB'.
+      DELETE lt_productplantbasic_zhlb WHERE producttype <> lsc_producttype-zhlb.
 
       LOOP AT lt_productplantbasic_zhlb INTO DATA(ls_productplantbasic_zhlb).
         "Obtain data of root level material of component(high level material)
@@ -321,7 +340,7 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
       ENDLOOP.
 
       DATA(lt_productplantbasic_zfrt) = lt_productplantbasic.
-      DELETE lt_productplantbasic_zfrt WHERE producttype <> 'ZFRT'.
+      DELETE lt_productplantbasic_zfrt WHERE producttype <> lsc_producttype-zfrt.
 
       IF lt_productplantbasic_zfrt IS NOT INITIAL.
         "Obtain data of billing document item
@@ -343,7 +362,7 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
            AND a~billingdocumentdate <= @lv_fiscalperiodenddate
            AND b~billingdocumentiscancelled = @abap_false
            AND b~cancelledbillingdocument = @space
-           AND b~billingdocumenttype IN ('F2','IV2')
+           AND b~billingdocumenttype IN (@lc_billingdocumenttype_f2,@lc_billingdocumenttype_iv2)
            AND b~billingdocumentdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
           INTO TABLE @DATA(lt_billingdocumentitem).
 
@@ -368,13 +387,11 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
            AND a~companycode = @lv_companycode
            AND b~billingdocumentiscancelled = @abap_false
            AND b~cancelledbillingdocument = @space
-           AND b~billingdocumenttype IN ('F2','IV2')
+           AND b~billingdocumenttype IN (@lc_billingdocumenttype_f2,@lc_billingdocumenttype_iv2)
            AND b~billingdocumentdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
           INTO TABLE @DATA(lt_billingdocumentitem_final).
       ENDIF.
     ENDIF.
-*    ENDIF.
-
 
     SORT lt_productplantbasic BY valuationarea product.
     SORT lt_businesspartner BY searchterm2.
@@ -409,9 +426,9 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
       lv_offset = lv_length - 1.
 
       IF lv_offset >= 0 AND ls_productplantbasic-product+lv_offset(1) = '2'.
-        ls_data-chargeablesupplyflag = 'Y'.
+        ls_data-chargeablesupplyflag = lc_chargeablesupplyflag_y.
       ELSE.
-        ls_data-chargeablesupplyflag = 'N'.
+        ls_data-chargeablesupplyflag = lc_chargeablesupplyflag_n.
       ENDIF.
 
       IF ls_productplantbasic-mrpresponsible IS NOT INITIAL.
@@ -533,112 +550,112 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
           ENDIF.
 
           CASE ls_ztfi_1019-age.
-            WHEN '001'.
+            WHEN lsc_age-a001.
               ls_data-quantitymonth1 = ls_ztfi_1019-qty.
               ls_data-amountmonth1   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '002'.
+            WHEN lsc_age-a002.
               ls_data-quantitymonth2 = ls_ztfi_1019-qty.
               ls_data-amountmonth2   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '003'.
+            WHEN lsc_age-a003.
               ls_data-quantitymonth3 = ls_ztfi_1019-qty.
               ls_data-amountmonth3   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '004'.
+            WHEN lsc_age-a004.
               ls_data-quantitymonth4 = ls_ztfi_1019-qty.
               ls_data-amountmonth4   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '005'.
+            WHEN lsc_age-a005.
               ls_data-quantitymonth5 = ls_ztfi_1019-qty.
               ls_data-amountmonth5   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '006'.
+            WHEN lsc_age-a006.
               ls_data-quantitymonth6 = ls_ztfi_1019-qty.
               ls_data-amountmonth6   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '007'.
+            WHEN lsc_age-a007.
               ls_data-quantitymonth7 = ls_ztfi_1019-qty.
               ls_data-amountmonth7   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '008'.
+            WHEN lsc_age-a008.
               ls_data-quantitymonth8 = ls_ztfi_1019-qty.
               ls_data-amountmonth8   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '009'.
+            WHEN lsc_age-a009.
               ls_data-quantitymonth9 = ls_ztfi_1019-qty.
               ls_data-amountmonth9   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '010'.
+            WHEN lsc_age-a010.
               ls_data-quantitymonth10 = ls_ztfi_1019-qty.
               ls_data-amountmonth10   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '011'.
+            WHEN lsc_age-a011.
               ls_data-quantitymonth11 = ls_ztfi_1019-qty.
               ls_data-amountmonth11   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '012'.
+            WHEN lsc_age-a012.
               ls_data-quantitymonth12 = ls_ztfi_1019-qty.
               ls_data-amountmonth12   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '013'.
+            WHEN lsc_age-a013.
               ls_data-quantitymonth13 = ls_ztfi_1019-qty.
               ls_data-amountmonth13   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '014'.
+            WHEN lsc_age-a014.
               ls_data-quantitymonth14 = ls_ztfi_1019-qty.
               ls_data-amountmonth14   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '015'.
+            WHEN lsc_age-a015.
               ls_data-quantitymonth15 = ls_ztfi_1019-qty.
               ls_data-amountmonth15   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '016'.
+            WHEN lsc_age-a016.
               ls_data-quantitymonth16 = ls_ztfi_1019-qty.
               ls_data-amountmonth16   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '017'.
+            WHEN lsc_age-a017.
               ls_data-quantitymonth17 = ls_ztfi_1019-qty.
               ls_data-amountmonth17   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '018'.
+            WHEN lsc_age-a018.
               ls_data-quantitymonth18 = ls_ztfi_1019-qty.
               ls_data-amountmonth18   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '019'.
+            WHEN lsc_age-a019.
               ls_data-quantitymonth19 = ls_ztfi_1019-qty.
               ls_data-amountmonth19   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '020'.
+            WHEN lsc_age-a020.
               ls_data-quantitymonth20 = ls_ztfi_1019-qty.
               ls_data-amountmonth20   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '021'.
+            WHEN lsc_age-a021.
               ls_data-quantitymonth21 = ls_ztfi_1019-qty.
               ls_data-amountmonth21   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '022'.
+            WHEN lsc_age-a022.
               ls_data-quantitymonth22 = ls_ztfi_1019-qty.
               ls_data-amountmonth22   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '023'.
+            WHEN lsc_age-a023.
               ls_data-quantitymonth23 = ls_ztfi_1019-qty.
               ls_data-amountmonth23   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '024'.
+            WHEN lsc_age-a024.
               ls_data-quantitymonth24 = ls_ztfi_1019-qty.
               ls_data-amountmonth24   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '025'.
+            WHEN lsc_age-a025.
               ls_data-quantitymonth25 = ls_ztfi_1019-qty.
               ls_data-amountmonth25   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '026'.
+            WHEN lsc_age-a026.
               ls_data-quantitymonth26 = ls_ztfi_1019-qty.
               ls_data-amountmonth26   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '027'.
+            WHEN lsc_age-a027.
               ls_data-quantitymonth27 = ls_ztfi_1019-qty.
               ls_data-amountmonth27   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '028'.
+            WHEN lsc_age-a028.
               ls_data-quantitymonth28 = ls_ztfi_1019-qty.
               ls_data-amountmonth28   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '029'.
+            WHEN lsc_age-a029.
               ls_data-quantitymonth29 = ls_ztfi_1019-qty.
               ls_data-amountmonth29   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '030'.
+            WHEN lsc_age-a030.
               ls_data-quantitymonth30 = ls_ztfi_1019-qty.
               ls_data-amountmonth30   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '031'.
+            WHEN lsc_age-a031.
               ls_data-quantitymonth31 = ls_ztfi_1019-qty.
               ls_data-amountmonth31   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '032'.
+            WHEN lsc_age-a032.
               ls_data-quantitymonth32 = ls_ztfi_1019-qty.
               ls_data-amountmonth32   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '033'.
+            WHEN lsc_age-a033.
               ls_data-quantitymonth33 = ls_ztfi_1019-qty.
               ls_data-amountmonth33   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '034'.
+            WHEN lsc_age-a034.
               ls_data-quantitymonth34 = ls_ztfi_1019-qty.
               ls_data-amountmonth34   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '035'.
+            WHEN lsc_age-a035.
               ls_data-quantitymonth35 = ls_ztfi_1019-qty.
               ls_data-amountmonth35   = ls_ztfi_1019-qty * ls_data-actualcost.
-            WHEN '036'.
+            WHEN lsc_age-a036.
               ls_data-quantitymonth36 = ls_ztfi_1019-qty.
               ls_data-amountmonth36   = ls_ztfi_1019-qty * ls_data-actualcost.
           ENDCASE.

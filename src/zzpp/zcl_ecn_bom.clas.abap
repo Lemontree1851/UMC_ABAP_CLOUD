@@ -11,7 +11,8 @@ ENDCLASS.
 
 
 
-CLASS ZCL_ECN_BOM IMPLEMENTATION.
+CLASS zcl_ecn_bom IMPLEMENTATION.
+
 
 
   METHOD if_oo_adt_classrun~main.
@@ -41,13 +42,25 @@ CLASS ZCL_ECN_BOM IMPLEMENTATION.
 *   REPORTED DATA(ls_reported).
 
 
+*
+*   SELECT * FROM
+*   i_manufacturingorder WITH PRIVILEGED ACCESS
+*   where MfgOrderPlannedStartDate BETWEEN '20180101' and '20190101'
+*   into TABLE @DATA(lt_pro).
 
-   SELECT * FROM
-   i_manufacturingorder WITH PRIVILEGED ACCESS
-   where MfgOrderPlannedStartDate BETWEEN '20180101' and '20190101'
-   into TABLE @DATA(lt_pro).
+*   select * FROM
+*   C_salesplanvaluehelp WITH PRIVILEGED ACCESS
+*   into table @data(lt_c).
 
-   out->write( lt_pro ).
+
+   data: lv_num type c LENGTH 3.
+
+         lv_num = 999.
+
+         lv_num = lv_num + 999 .
+
+   out->write( lv_num ).
 
   ENDMETHOD.
+
 ENDCLASS.

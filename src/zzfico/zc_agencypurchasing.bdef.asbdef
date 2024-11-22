@@ -20,8 +20,8 @@ authorization master ( instance )
 //etag master <field_name>
 //with unmanaged save
 {
-  create;
-  update;
+//  create;
+//  update;
 //  delete;
 //  field ( readonly ) PostingDate, CompanyCode, CompanyCode2, CompanyCodeCurrency, TaxCode;
 

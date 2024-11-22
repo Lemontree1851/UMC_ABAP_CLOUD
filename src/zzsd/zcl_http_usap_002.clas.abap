@@ -6,7 +6,8 @@ CLASS zcl_http_usap_002 DEFINITION
 * input data type
     TYPES:
       BEGIN OF ts_input_item1,
-        delivery TYPE c LENGTH 10,
+        delivery   TYPE c LENGTH 10,
+        actualdate TYPE budat,
       END OF ts_input_item1,
       tt_item1 TYPE STANDARD TABLE OF ts_input_item1 WITH DEFAULT KEY,
 
@@ -91,9 +92,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_USAP_002 IMPLEMENTATION.
-
-
+CLASS zcl_http_usap_002 IMPLEMENTATION.
   METHOD if_http_service_extension~handle_request.
     DATA:
       ls_outbound TYPE ts_outbound,
@@ -140,7 +139,11 @@ CLASS ZCL_HTTP_USAP_002 IMPLEMENTATION.
         ls_post-delivery = |{ ls_post-delivery ALPHA = IN }|.
         DATA(lv_parameter) = '''' && ls_post-delivery && ''''.
 * update gr date
-        DATA(lv_datum) = cl_abap_context_info=>get_system_date( ).
+        IF ls_post-actualdate IS INITIAL.
+          DATA(lv_datum) = cl_abap_context_info=>get_system_date( ).
+        ELSE.
+          lv_datum = ls_post-actualdate.
+        ENDIF.
         ls_outbound-_actual_goods_movement_date = |{ lv_datum+0(4) }-{ lv_datum+4(2) }-{ lv_datum+6(2) }T00:00:00|.
         DATA(lv_reqbody_api) = /ui2/cl_json=>serialize( data = ls_outbound
                                                     compress = 'X'
@@ -158,7 +161,7 @@ CLASS ZCL_HTTP_USAP_002 IMPLEMENTATION.
           CLEAR: ls_response.
           CONTINUE.
         ELSE.
-          zzcl_common_utils=>request_api_v2( EXPORTING iv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader({ lv_parameter })|
+          zzcl_common_utils=>request_api_v2( EXPORTING iv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader({ lv_parameter })?sap-language={ lv_langu }|
                                                  iv_method      = if_web_http_client=>patch
                                                  iv_body        = lv_reqbody_api
                                        IMPORTING ev_status_code = lv_status_code
@@ -170,7 +173,8 @@ CLASS ZCL_HTTP_USAP_002 IMPLEMENTATION.
 
           ELSE.
             ls_response-_status = 'E'.
-            ls_response-_message = 'Update date fail'.
+            ls_response-_message = ls_res_api-error-message-value.
+            "ls_response-_message = 'Update date fail'.
             APPEND ls_response TO es_response-items.
             CLEAR: ls_response.
             CONTINUE.

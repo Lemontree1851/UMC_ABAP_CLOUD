@@ -11,16 +11,29 @@ CLASS zcl_bi005_job DEFINITION
         yearmonth TYPE n LENGTH 6,
       END OF ty_podataanalysis,
 
+*     部品の入庫予測データ
       BEGIN OF ty_supply,
         yearmonth      TYPE n LENGTH 6,
+        plant          TYPE werks_d,
         material       TYPE matnr,
+        supplier       TYPE lifnr,
         supplyquantity TYPE p LENGTH 7 DECIMALS 0,
       END OF ty_supply,
+
+*     各品目の出庫予測データ
+      BEGIN OF ty_demand,
+        yearmonth      TYPE n LENGTH 6,
+        plant          TYPE werks_d,
+        material       TYPE matnr,
+        customer       TYPE kunnr,
+        demandquantity TYPE p LENGTH 7 DECIMALS 0,
+      END OF ty_demand,
 
 *----------------------------------------------uweb调用参考 pickinglist。
       BEGIN OF ty_response_res,
         plant            TYPE string,
         material         TYPE string,
+        supplier         TYPE lifnr,
         arrange_end_date TYPE string,
         arrange_qty_sum  TYPE string,
       END OF ty_response_res,
@@ -126,7 +139,9 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       lv_filter2     TYPE string,
       lt_zmm80       TYPE STANDARD TABLE OF ty_supply,
       lt_zmm06       TYPE STANDARD TABLE OF ty_supply,
+      lt_demand      TYPE STANDARD TABLE OF ty_demand,
       ls_supply      TYPE ty_supply,
+      ls_demand      TYPE ty_demand,
       lt_uweb_api    TYPE STANDARD TABLE OF ty_response_res,
       ls_response    TYPE ty_response,
       lv_msg         TYPE cl_bali_free_text_setter=>ty_text.
@@ -237,6 +252,10 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     SORT lt_plant BY plant.
     DELETE ADJACENT DUPLICATES FROM lt_plant COMPARING plant.
 
+    DATA(lt_supplier) = lt_1016.
+    SORT lt_supplier BY businesspartner.
+    DELETE ADJACENT DUPLICATES FROM lt_supplier COMPARING businesspartner.
+
     CLEAR lv_count.
     LOOP AT lt_plant INTO DATA(ls_plant1).
       lv_count += 1.
@@ -244,6 +263,17 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         lv_filter = |(Plant eq '{ ls_plant1-plant }'|.
       ELSE.
         lv_filter = |{ lv_filter } or Plant eq '{ ls_plant1-plant }'|.
+      ENDIF.
+    ENDLOOP.
+    lv_filter = |{ lv_filter })|.
+
+    CLEAR lv_count.
+    LOOP AT lt_supplier INTO DATA(ls_supplier).
+      lv_count += 1.
+      IF lv_count = 1.
+        lv_filter = |{ lv_filter } and (Supplier eq '{ ls_supplier-businesspartner }'|.
+      ELSE.
+        lv_filter = |{ lv_filter } or Supplier eq '{ ls_supplier-businesspartner }'|.
       ENDIF.
     ENDLOOP.
     lv_filter = |{ lv_filter })|.
@@ -262,7 +292,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 
 *   部品の入庫予測データを取得
 *   PO登録した後の原材料Supplyの数字を取得する（ZMM80）
-    DATA(lv_path) = |/zui_podataanalysis_o4/srvd/sap/zui_podataanalysis_o4/0001/PODataAnalysis|.
+    DATA(lv_path) = |/zui_podataanalysis_o4/srvd/sap/zui_podataanalysis_o4/0001/PODataAnalysis?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
 *    DATA(lv_select) = |Plant,Material,DeliveryDate,ScheduleLineDeliveryDate,ConfirmedQuantity,OrderQuantity|.
     zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
                                                  iv_method      = if_web_http_client=>get
@@ -271,9 +301,12 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                                        IMPORTING ev_status_code = DATA(lv_status_code)
                                                  ev_response    = DATA(lv_response) ).
     IF lv_status_code = 200.
-      xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
-        ( xco_cp_json=>transformation->pascal_case_to_underscore )
-      ) )->write_to( REF #( lt_response ) ).
+*     json => abap
+*      xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
+*        ( xco_cp_json=>transformation->pascal_case_to_underscore )
+*      ) )->write_to( REF #( lt_response ) ).
+      /ui2/cl_json=>deserialize( EXPORTING json = lv_response
+                                 CHANGING  data = lt_response ).
 
       DELETE lt_response WHERE ( ( deliverydate IS NOT INITIAL AND ( deliverydate < lv_now_start OR deliverydate > lv_next_end ) OR
                                    deliverydate IS INITIAL AND ( schedulelinedeliverydate < lv_now_start OR schedulelinedeliverydate > lv_next_end )  ) ).
@@ -291,6 +324,8 @@ CLASS zcl_bi005_job IMPLEMENTATION.
           ls_supply-supplyquantity = <fs_l_response>-orderquantity.
         ENDIF.
         ls_supply-material = <fs_l_response>-material.
+        ls_supply-plant    = <fs_l_response>-plant.
+        ls_supply-supplier = <fs_l_response>-supplier.
         COLLECT ls_supply INTO lt_zmm80.
         CLEAR ls_supply.
       ENDLOOP.
@@ -301,7 +336,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     DATA(lv_start_c) = lv_now_start+0(4) && '-' && lv_now_start+4(2) && '-' && lv_now_start+6(2) && 'T00:00:00'.
     DATA(lv_next_end_c)   = lv_next_end+0(4) && '-' && lv_next_end+4(2) && '-' && lv_next_end+6(2)  && 'T00:00:00'.
     lv_filter2 = |{ lv_filter2 } and ARRANGE_END_DATE be datetime'{ lv_start_c }' and ARRANGE_END_DATE le datetime'{ lv_next_end_c }'|.
-    zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |http://220.248.121.53:11380/srv/odata/v2/TableService/PCH09_LIST|
+    zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |http://220.248.121.53:11380/srv/odata/v2/TableService/PCH09_LIST?sap-language={ zzcl_common_utils=>get_current_language(  ) }|
                                                             iv_client_id     = CONV #( 'Tom' )
                                                             iv_client_secret = CONV #( '1' )
                                                             iv_authtype      = 'Basic'
@@ -311,9 +346,11 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_response_uweb  WITH ``.
       REPLACE ALL OCCURRENCES OF `)\/` IN lv_response_uweb  WITH ``.
 
-      xco_cp_json=>data->from_string( lv_response_uweb )->apply( VALUE #(
-*        ( xco_cp_json=>transformation->boolean_to_abap_bool )
-      ) )->write_to( REF #( ls_response ) ).
+*      xco_cp_json=>data->from_string( lv_response_uweb )->apply( VALUE #(
+**        ( xco_cp_json=>transformation->boolean_to_abap_bool )
+*      ) )->write_to( REF #( ls_response ) ).
+      /ui2/cl_json=>deserialize( EXPORTING json = lv_response_uweb
+                                 CHANGING  data = ls_response ).
 
       IF ls_response-d-results IS NOT INITIAL.
         APPEND LINES OF ls_response-d-results TO lt_uweb_api.
@@ -331,6 +368,8 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                      )->get_moment( )->as( xco_cp_time=>format->abap )->value+0(6).
           ENDIF.
           ls_supply-material = <fs_l_uweb_api>-material.
+          ls_supply-plant    = <fs_l_response>-plant.
+          ls_supply-supplier = <fs_l_uweb_api>-supplier.
           COLLECT ls_supply INTO lt_zmm06.
           CLEAR ls_supply.
         ENDLOOP.
@@ -339,25 +378,48 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 
     DATA(lt_material_zfrt) = lt_1016.
     SORT lt_material_zfrt BY material.
-    DELETE lt_material_zfrt WHERE materialtype <> 'ZFRT'.    "原材料の製品
+    DELETE lt_material_zfrt WHERE materialtype <> 'ZFRT'.    "製品の品目
     DELETE ADJACENT DUPLICATES FROM lt_material_zfrt COMPARING material.
 
 *   得意先内示データから製品の所要量を取得
     SELECT a~material,
-           b~materialtype,
+           a~requirement_date,
            a~plant,
            b~businesspartner AS customer,
            a~requirement_qty
       FROM ztpp_1012 AS a
       INNER JOIN @lt_material_zfrt AS b ON b~material = a~material
-*                                  AND b~businesspartner = a~customer
+                                       AND b~businesspartner = a~customer
      WHERE a~plant IN @lr_plant
        AND a~requirement_date >= @lv_now_start
        AND a~requirement_date <= @lv_next_end
       INTO TABLE @DATA(lt_1012).
 
+    if sy-subrc = 0.
+      LOOP AT lt_1012 ASSIGNING FIELD-SYMBOL(<fs_l_1012>).
+        ls_demand-yearmonth = <fs_l_1012>-requirement_date+0(6).
+        ls_demand-material = <fs_l_1012>-material.
+        ls_demand-plant    = <fs_l_1012>-plant.
+        ls_demand-customer = <fs_l_1012>-customer.
+        COLLECT ls_demand INTO lt_demand.
+        CLEAR ls_demand.
+      ENDLOOP.
+    ENDIF.
 
-
+    lv_path = |/API_BILL_OF_MATERIAL_SRV;v=0002/MaterialBOMItem?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+    lv_filter = |BillOfMaterialVariant eq '1'|.
+    DATA(lv_select) = |Plant,Material,BillOfMaterialComponent,BillOfMaterialItemQuantity,IsAssembly|.
+    zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
+                                                 iv_method      = if_web_http_client=>get
+                                                 iv_filter      = lv_filter
+                                                 iv_format      = 'json'
+                                       IMPORTING ev_status_code = lv_status_code
+                                                 ev_response    = lv_response ).
+    IF lv_status_code = 200.
+*     json => abap
+      /ui2/cl_json=>deserialize( EXPORTING json = lv_response
+                                 CHANGING  data = lt_response ).
+    ENDIF.
 
 
 

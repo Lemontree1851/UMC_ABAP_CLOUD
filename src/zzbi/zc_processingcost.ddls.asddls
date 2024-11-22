@@ -23,6 +23,9 @@ define root view entity ZC_PROCESSINGCOST
     actualprice_fat,
     currency,
     billingquantity,
-    billingquantityunit
+    billingquantityunit,
+    profitcenter,
+    profitcentername,
+    yieldqty
 //    _association_name // Make association public
 }

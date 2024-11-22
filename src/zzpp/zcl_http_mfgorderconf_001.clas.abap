@@ -47,6 +47,7 @@ CLASS ZCL_HTTP_MFGORDERCONF_001 IMPLEMENTATION.
         _other_manufacturing_costs    TYPE i_mfgorderconfirmation-opconfirmedworkquantity6,
         _real_human_count             TYPE i_manufacturingorderoperation-numberoftimetickets,
         _real_work_time               TYPE i_mfgorderconfirmation-opconfirmedworkquantity3,
+        _u_m_e_s_i_d                  TYPE string,
       END OF ty_confirmation,
       tt_confirmation TYPE STANDARD TABLE OF ty_confirmation WITH DEFAULT KEY,
 
@@ -217,6 +218,22 @@ CLASS ZCL_HTTP_MFGORDERCONF_001 IMPLEMENTATION.
           RAISE EXCEPTION TYPE cx_abap_invalid_value.
         ENDIF.
 
+        "Obtain data of umesid
+        SELECT FROM ztpp_1004 WITH PRIVILEGED ACCESS
+         INNER JOIN @lt_mfgorderconfirmation AS mfgorderconfirmation
+            ON ztpp_1004~mfgorderconfirmationgroup = mfgorderconfirmation~mfgorderconfirmationgroup
+           AND ztpp_1004~mfgorderconfirmation      = mfgorderconfirmation~mfgorderconfirmation
+           AND ztpp_1004~updateflag                = 'I'
+           AND ztpp_1004~messagetype               = 'S'
+        FIELDS ztpp_1004~umesid,
+               ztpp_1004~mfgorderconfirmationgroup,
+               ztpp_1004~mfgorderconfirmation,
+               ztpp_1004~manufacturingorder
+         ORDER BY ztpp_1004~manufacturingorder        ASCENDING,
+                  ztpp_1004~mfgorderconfirmationgroup ASCENDING,
+                  ztpp_1004~mfgorderconfirmation      ASCENDING
+          INTO TABLE @DATA(lt_ztpp_1004).
+
         DATA(lv_lines) = lines( lt_mfgorderconfirmation ).
         ls_res-_msgty = 'S'.
 
@@ -319,6 +336,15 @@ CLASS ZCL_HTTP_MFGORDERCONF_001 IMPLEMENTATION.
             ls_confirmation-_real_work_time = ls_confirmation-_machine_work_time.
           ELSEIF ls_confirmation-_human_work_time > 0.
             ls_confirmation-_real_work_time = ls_confirmation-_human_work_time / ls_confirmation-_real_human_count.
+          ENDIF.
+
+          READ TABLE lt_ztpp_1004 INTO DATA(ls_ztpp_1004) WITH KEY
+            manufacturingorder        = ls_manufacturingorderoperation-manufacturingorder
+            mfgorderconfirmationgroup = ls_mfgorderconfirmation-mfgorderconfirmationgroup
+            mfgorderconfirmation      = ls_mfgorderconfirmation-mfgorderconfirmation
+            BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_confirmation-_u_m_e_s_i_d = ls_ztpp_1004-umesid.
           ENDIF.
 
           APPEND ls_confirmation TO ls_res-_data-_confirmation.

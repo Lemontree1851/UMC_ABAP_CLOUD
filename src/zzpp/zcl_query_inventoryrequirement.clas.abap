@@ -188,6 +188,9 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
           lv_sum_9balance    TYPE menge_d,
           lv_sum_rbalance    TYPE menge_d.
 
+    DATA: lv_previous_available_stock TYPE menge_d,
+          lv_previous_remaining_qty   TYPE menge_d.
+
     FIELD-SYMBOLS <table> TYPE STANDARD TABLE.
 
     IF io_request->is_data_requested( ).
@@ -589,7 +592,8 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
 
           SORT lt_filter_mrpdata BY product mrpelementavailyorrqmtdate.
 
-          CLEAR: lt_outofstockdate, lv_sequence.
+          CLEAR: lt_outofstockdate.
+          lv_sequence = 1.
           LOOP AT lt_filter_mrpdata INTO DATA(ls_filter_mrpdata)
                                     GROUP BY ( product = ls_filter_mrpdata-product )
                                     ASSIGNING FIELD-SYMBOL(<lfs_filter_mrpdata_group>).
@@ -1839,7 +1843,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                 CASE lv_displayunit.
                   WHEN 'D'. " Day
                     LOOP AT lt_period_subdemand INTO DATA(ls_period_subdemand) WHERE material = <lfs_line>-('product')
-                                                                                 AND high_level_material = ls_horizontal-high_level_material.
+                                                                                 AND high_level_material = <lfs_line>-('high_level_material').
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_M_D{ ls_period_subdemand-mrpelementavailyorrqmtdate }| BINARY SEARCH.
                       IF sy-subrc = 0.
@@ -1854,7 +1858,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                     CLEAR ls_period_subdemand.
                   WHEN 'W'. " Week
                     LOOP AT lt_week_subdemand INTO DATA(ls_week_subdemand) WHERE material = <lfs_line>-('product')
-                                                                             AND high_level_material = ls_horizontal-high_level_material.
+                                                                             AND high_level_material = <lfs_line>-('high_level_material').
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_W{ ls_week_subdemand-yearweek }| BINARY SEARCH.
                       IF sy-subrc = 0.
@@ -1869,7 +1873,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                     CLEAR ls_week_subdemand.
                   WHEN 'M'. " Month
                     LOOP AT lt_month_subdemand INTO DATA(ls_month_subdemand) WHERE material = <lfs_line>-('product')
-                                                                               AND high_level_material = ls_horizontal-high_level_material.
+                                                                               AND high_level_material = <lfs_line>-('high_level_material').
                       READ TABLE lt_dynamic_col INTO ls_dynamic_col
                                                 WITH KEY name = |Y_M{ ls_month_subdemand-yearmonth }| BINARY SEARCH.
                       IF sy-subrc = 0.
@@ -1894,9 +1898,14 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
 
           " 縦表示
         WHEN 'V'.
-          LOOP AT lt_filter_mrpdata ASSIGNING <lfs_filter_mrpdata>.
+          LOOP AT lt_filter_mrpdata INTO ls_filter_mrpdata GROUP BY ( product = ls_filter_mrpdata-product )
+                                                           ASSIGNING FIELD-SYMBOL(<lfs_group>).
+            CLEAR: ls_sum_stockinfo, ls_sum_safety_stock.
+            CLEAR: lv_previous_available_stock,
+                   lv_previous_remaining_qty.
+
             " 在庫行
-            READ TABLE lt_sum_stockinfo INTO ls_sum_stockinfo WITH KEY product = <lfs_filter_mrpdata>-product BINARY SEARCH.
+            READ TABLE lt_sum_stockinfo INTO ls_sum_stockinfo WITH KEY product = <lfs_group>-product BINARY SEARCH.
             IF sy-subrc = 0.
               APPEND INITIAL LINE TO lt_vertical ASSIGNING FIELD-SYMBOL(<lfs_vertical_stock>).
             ELSE.
@@ -1905,7 +1914,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
             ENDIF.
 
             " 安全在庫行
-            READ TABLE lt_sum_safety_stock INTO ls_sum_safety_stock WITH KEY material = <lfs_filter_mrpdata>-product BINARY SEARCH.
+            READ TABLE lt_sum_safety_stock INTO ls_sum_safety_stock WITH KEY material = <lfs_group>-product BINARY SEARCH.
             IF sy-subrc = 0.
               APPEND INITIAL LINE TO lt_vertical ASSIGNING FIELD-SYMBOL(<lfs_vertical_safety_stock>).
             ELSE.
@@ -1913,125 +1922,145 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               UNASSIGN <lfs_vertical_safety_stock>.
             ENDIF.
 
+            " 前行(安全在庫行)の在庫残数
+            lv_previous_remaining_qty = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
+
             " 明細行
-            APPEND INITIAL LINE TO lt_vertical ASSIGNING FIELD-SYMBOL(<lfs_vertical>).
-            <lfs_vertical>-plant = <lfs_filter_mrpdata>-m_r_p_plant.
-            <lfs_vertical>-m_r_p_area = <lfs_filter_mrpdata>-m_r_p_area.
-            <lfs_vertical>-product = <lfs_filter_mrpdata>-material.
-            <lfs_vertical>-date = <lfs_filter_mrpdata>-mrpelementavailyorrqmtdate+0(4) && '/' &&
-                                  <lfs_filter_mrpdata>-mrpelementavailyorrqmtdate+4(2) && '/' &&
-                                  <lfs_filter_mrpdata>-mrpelementavailyorrqmtdate+6(2).
-            <lfs_vertical>-supplier = <lfs_filter_mrpdata>-mrpelementbusinesspartner.
-            <lfs_vertical>-supplier_name = <lfs_filter_mrpdata>-mrpelementbusinesspartnername.
+            LOOP AT GROUP <lfs_group> ASSIGNING FIELD-SYMBOL(<lfs_group_item>).
+              APPEND INITIAL LINE TO lt_vertical ASSIGNING FIELD-SYMBOL(<lfs_vertical>).
+              <lfs_vertical>-plant = <lfs_group_item>-m_r_p_plant.
+              <lfs_vertical>-m_r_p_area = <lfs_group_item>-m_r_p_area.
+              <lfs_vertical>-product = <lfs_group_item>-material.
+              <lfs_vertical>-date = <lfs_group_item>-mrpelementavailyorrqmtdate+0(4) && '/' &&
+                                    <lfs_group_item>-mrpelementavailyorrqmtdate+4(2) && '/' &&
+                                    <lfs_group_item>-mrpelementavailyorrqmtdate+6(2).
+              <lfs_vertical>-supplier = <lfs_group_item>-mrpelementbusinesspartner.
+              <lfs_vertical>-supplier_name = <lfs_group_item>-mrpelementbusinesspartnername.
 
-            <lfs_vertical>-required_qty    = 0. " 所要数
-            <lfs_vertical>-stock_qty       = 0. " 在庫数
-            <lfs_vertical>-supplied_qty    = 0. " 供給数
-            <lfs_vertical>-available_stock = 0. " 利用可能在庫
-            <lfs_vertical>-remaining_qty   = 0. " 在庫残数
+              <lfs_vertical>-required_qty    = 0. " 所要数
+              <lfs_vertical>-stock_qty       = 0. " 在庫数
+              <lfs_vertical>-supplied_qty    = 0. " 供給数
+              <lfs_vertical>-available_stock = 0. " 利用可能在庫
+              <lfs_vertical>-remaining_qty   = 0. " 在庫残数
 
-            IF <lfs_filter_mrpdata>-m_r_p_element_open_quantity < 0.
-              " 所要数
-              <lfs_vertical>-required_qty = <lfs_filter_mrpdata>-m_r_p_element_open_quantity.
-            ELSEIF <lfs_filter_mrpdata>-m_r_p_element_open_quantity > 0.
-              " 供給数
-              <lfs_vertical>-supplied_qty = <lfs_filter_mrpdata>-m_r_p_element_open_quantity.
-            ENDIF.
+              IF <lfs_group_item>-m_r_p_element_open_quantity < 0.
+                " 所要数
+                <lfs_vertical>-required_qty = <lfs_group_item>-m_r_p_element_open_quantity.
+              ELSEIF <lfs_group_item>-m_r_p_element_open_quantity > 0.
+                " 供給数
+                <lfs_vertical>-supplied_qty = <lfs_group_item>-m_r_p_element_open_quantity.
+              ENDIF.
 
-            " 利用可能在庫 = 在庫＋供給数＋所要数
-            <lfs_vertical>-available_stock = <lfs_vertical>-required_qty + <lfs_vertical>-supplied_qty.
-            " 在庫残数 = 在庫＋所要数
-            <lfs_vertical>-remaining_qty   = <lfs_vertical>-required_qty.
+              " 利用可能在庫 = 前行の利用可能在庫+所要数＋供給数
+              <lfs_vertical>-available_stock = lv_previous_available_stock +
+                                               <lfs_vertical>-required_qty +
+                                               <lfs_vertical>-supplied_qty.
+              " 在庫残数 = 前行の在庫残数＋現在行の所要数
+              <lfs_vertical>-remaining_qty   = lv_previous_remaining_qty +
+                                               <lfs_vertical>-required_qty.
 
-            READ TABLE lt_fixed_data INTO DATA(ls_fixed_data) WITH KEY product = <lfs_filter_mrpdata>-product BINARY SEARCH.
-            IF sy-subrc = 0.
-              <lfs_vertical> = CORRESPONDING #( BASE ( <lfs_vertical> ) ls_fixed_data ).
+              " 前行の利用可能在庫
+              lv_previous_available_stock = <lfs_vertical>-available_stock.
+              " 前行の在庫残数
+              lv_previous_remaining_qty = <lfs_vertical>-remaining_qty.
 
-              " MRP要素
-              CASE ls_fixed_data-procurementtype.
-                WHEN 'E'.
-                  <lfs_vertical>-m_r_p_elements = |{ <lfs_filter_mrpdata>-m_r_p_element }/{ <lfs_filter_mrpdata>-m_r_p_element_item }/| &&
-                                                  |{ <lfs_filter_mrpdata>-m_r_p_element_schedule_line }/{ <lfs_filter_mrpdata>-m_r_p_element_document_type }|.
-                WHEN 'F'.
-                  IF <lfs_filter_mrpdata>-m_r_p_element_category = lc_mrpelement_category_sb.
-                    <lfs_vertical>-m_r_p_elements = <lfs_filter_mrpdata>-high_level_material.
-                  ELSEIF <lfs_filter_mrpdata>-m_r_p_element_category = lc_mrpelement_category_ar.
-                    <lfs_vertical>-m_r_p_elements = <lfs_filter_mrpdata>-high_level_material.
-                  ELSE.
-                    <lfs_vertical>-m_r_p_elements = |{ <lfs_filter_mrpdata>-m_r_p_element }/{ <lfs_filter_mrpdata>-m_r_p_element_item }/| &&
-                                                    |{ <lfs_filter_mrpdata>-m_r_p_element_schedule_line }/{ <lfs_filter_mrpdata>-m_r_p_element_document_type }|.
-                  ENDIF.
-                WHEN OTHERS.
-              ENDCASE.
+              READ TABLE lt_fixed_data INTO DATA(ls_fixed_data) WITH KEY product = <lfs_group_item>-product BINARY SEARCH.
+              IF sy-subrc = 0.
+                <lfs_vertical> = CORRESPONDING #( BASE ( <lfs_vertical> ) ls_fixed_data ).
 
-              READ TABLE lt_purginforecdorgplntdata INTO ls_purginforecdorgplntdata
-                                                    WITH KEY plant = <lfs_vertical>-plant
-                                                             purchasinginforecord = ls_fixed_data-purchasinginforecord
+                " MRP要素
+                CASE ls_fixed_data-procurementtype.
+                  WHEN 'E'.
+                    <lfs_vertical>-m_r_p_elements = |{ <lfs_group_item>-m_r_p_element }/{ <lfs_group_item>-m_r_p_element_item }/| &&
+                                                    |{ <lfs_group_item>-m_r_p_element_schedule_line }/{ <lfs_group_item>-m_r_p_element_document_type }|.
+                  WHEN 'F'.
+                    IF <lfs_group_item>-m_r_p_element_category = lc_mrpelement_category_sb.
+                      <lfs_vertical>-m_r_p_elements = <lfs_group_item>-high_level_material.
+                    ELSEIF <lfs_group_item>-m_r_p_element_category = lc_mrpelement_category_ar.
+                      <lfs_vertical>-m_r_p_elements = <lfs_group_item>-high_level_material.
+                    ELSE.
+                      <lfs_vertical>-m_r_p_elements = |{ <lfs_group_item>-m_r_p_element }/{ <lfs_group_item>-m_r_p_element_item }/| &&
+                                                      |{ <lfs_group_item>-m_r_p_element_schedule_line }/{ <lfs_group_item>-m_r_p_element_document_type }|.
+                    ENDIF.
+                  WHEN OTHERS.
+                ENDCASE.
+
+                READ TABLE lt_purginforecdorgplntdata INTO ls_purginforecdorgplntdata
+                                                      WITH KEY plant = <lfs_vertical>-plant
+                                                               purchasinginforecord = ls_fixed_data-purchasinginforecord
+                                                               BINARY SEARCH.
+                IF sy-subrc = 0.
+                  <lfs_vertical> = CORRESPONDING #( BASE ( <lfs_vertical> ) ls_purginforecdorgplntdata ).
+                ELSE.
+                  CLEAR ls_purginforecdorgplntdata.
+                ENDIF.
+              ELSE.
+                CLEAR ls_fixed_data.
+              ENDIF.
+
+              " 縦表示のステータス
+              READ TABLE lt_posupplierconfirmation INTO DATA(ls_posupplierconfirmation)
+                                                    WITH KEY purchaseorder = <lfs_group_item>-m_r_p_element
+                                                             purchaseorderitem = <lfs_group_item>-m_r_p_element_item
                                                              BINARY SEARCH.
               IF sy-subrc = 0.
-                <lfs_vertical> = CORRESPONDING #( BASE ( <lfs_vertical> ) ls_purginforecdorgplntdata ).
+                <lfs_vertical>-status = ls_posupplierconfirmation-supplierconfirmationcategory.
               ELSE.
-                CLEAR ls_purginforecdorgplntdata.
+                CLEAR ls_posupplierconfirmation.
               ENDIF.
-            ELSE.
-              CLEAR ls_fixed_data.
-            ENDIF.
+            ENDLOOP.
 
             " 在庫行
             IF <lfs_vertical_stock> IS ASSIGNED.
-              <lfs_vertical_stock> = CORRESPONDING #( <lfs_vertical> EXCEPT required_qty
+              <lfs_vertical_stock> = CORRESPONDING #( <lfs_vertical> EXCEPT date
+                                                                            m_r_p_elements
+                                                                            required_qty
                                                                             stock_qty
                                                                             supplied_qty
                                                                             available_stock
                                                                             remaining_qty ).
-              READ TABLE lt_sum_stockinfo INTO ls_sum_stockinfo WITH KEY product = <lfs_filter_mrpdata>-product BINARY SEARCH.
+              <lfs_vertical_stock>-m_r_p_elements = '在庫'.
+              READ TABLE lt_sum_stockinfo INTO ls_sum_stockinfo WITH KEY product = <lfs_group>-product BINARY SEARCH.
               IF sy-subrc = 0.
                 " 所要数
                 <lfs_vertical_stock>-required_qty = 0.
                 " 在庫数
-                <lfs_vertical_stock>-stock_qty    = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
+                <lfs_vertical_stock>-stock_qty = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
                 " 供給数
                 <lfs_vertical_stock>-supplied_qty = 0.
-                " 利用可能在庫 = 在庫＋供給数＋所要数
+                " 利用可能在庫 = 在庫
                 <lfs_vertical_stock>-available_stock = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
-                " 在庫残数 = 在庫＋所要数
-                <lfs_vertical_stock>-remaining_qty   = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
+                " 在庫残数 = 在庫
+                <lfs_vertical_stock>-remaining_qty = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
               ENDIF.
             ENDIF.
 
             " 安全在庫行
             IF <lfs_vertical_safety_stock> IS ASSIGNED.
-              <lfs_vertical_safety_stock> = CORRESPONDING #( <lfs_vertical> EXCEPT required_qty
+              <lfs_vertical_safety_stock> = CORRESPONDING #( <lfs_vertical> EXCEPT date
+                                                                                   m_r_p_elements
+                                                                                   required_qty
                                                                                    stock_qty
                                                                                    supplied_qty
                                                                                    available_stock
                                                                                    remaining_qty ).
-              READ TABLE lt_sum_safety_stock INTO ls_sum_safety_stock WITH KEY material = <lfs_filter_mrpdata>-product BINARY SEARCH.
+              <lfs_vertical_safety_stock>-m_r_p_elements = '安全在庫'.
+              READ TABLE lt_sum_safety_stock INTO ls_sum_safety_stock WITH KEY material = <lfs_group>-product BINARY SEARCH.
               IF sy-subrc = 0.
                 " 所要数
                 <lfs_vertical_safety_stock>-required_qty = ls_sum_safety_stock-m_r_p_element_open_quantity.
                 " 在庫数
-                <lfs_vertical_safety_stock>-stock_qty    = 0.
+                <lfs_vertical_safety_stock>-stock_qty = 0.
                 " 供給数
                 <lfs_vertical_safety_stock>-supplied_qty = 0.
-                " 利用可能在庫 = 在庫＋供給数＋所要数
-                <lfs_vertical_safety_stock>-available_stock = ls_sum_safety_stock-m_r_p_element_open_quantity.
-                " 在庫残数 = 在庫＋所要数
-                <lfs_vertical_safety_stock>-remaining_qty   = ls_sum_safety_stock-m_r_p_element_open_quantity.
+                " 利用可能在庫 = 在庫数+安全在庫
+                <lfs_vertical_safety_stock>-available_stock = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit +
+                                                              ls_sum_safety_stock-m_r_p_element_open_quantity.
+                " 在庫残数 = 在庫
+                <lfs_vertical_safety_stock>-remaining_qty = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
               ENDIF.
             ENDIF.
           ENDLOOP.
-
-          " 縦表示のステータス
-          READ TABLE lt_posupplierconfirmation INTO DATA(ls_posupplierconfirmation)
-                                                WITH KEY purchaseorder = <lfs_filter_mrpdata>-m_r_p_element
-                                                         purchaseorderitem = <lfs_filter_mrpdata>-m_r_p_element_item
-                                                         BINARY SEARCH.
-          IF sy-subrc = 0.
-            <lfs_vertical>-status = ls_posupplierconfirmation-supplierconfirmationcategory.
-          ELSE.
-            CLEAR ls_posupplierconfirmation.
-          ENDIF.
 
           SORT lt_vertical BY product date.
           <lfs_data>-dynamicdata = xco_cp_json=>data->from_abap( lt_vertical )->apply( VALUE #(

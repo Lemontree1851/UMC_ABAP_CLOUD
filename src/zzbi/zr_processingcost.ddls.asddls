@@ -29,7 +29,8 @@ define root view entity ZR_PROCESSINGCOST
   actualprice_fat,
   currency,
   billingquantity,
-  billingquantityunit
-
-  
+  billingquantityunit,
+  profitcenter,
+  profitcentername,
+  yieldqty
 }

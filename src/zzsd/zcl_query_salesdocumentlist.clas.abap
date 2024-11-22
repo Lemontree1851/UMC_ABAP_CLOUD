@@ -742,7 +742,7 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
                 ENDIF.
               ENDIF.
 
-              IF ls_deliverydocumentitem-intcoextplndtransfofctrldtetme = 0.
+              IF ls_deliverydocumentitem-intcoextplndtransfofctrldtetme <> 0.
                 "Read data of material document item(GoodsMovementType 601)
                 READ TABLE lt_materialdocumentitem TRANSPORTING NO FIELDS WITH KEY deliverydocument = ls_deliverydocumentitem-deliverydocument
                                                                                    deliverydocumentitem = ls_deliverydocumentitem-deliverydocumentitem
@@ -782,6 +782,13 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
                   SHIFT lv_value LEFT DELETING LEADING space.
 
                   CONCATENATE lv_value lv_baseunit INTO ls_data-noexternaltansferqtyinbaseunit SEPARATED BY space.
+
+                  "外部移転未記載
+                  IF lv_indicator3 = abap_true.
+                    IF lv_flag_b601 = abap_false AND lv_flag_b687 = abap_true.
+                      DATA(lv_indicator3_ok) = abap_true.
+                    ENDIF.
+                  ENDIF.
                 ENDIF.
 
                 IF ls_data-externaltansferqtyinbaseunit IS INITIAL.
@@ -803,6 +810,13 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
 
             lv_actualdelqtyinbaseunit = lv_actualdelqtyinbaseunit + ls_deliverydocumentitem-actualdeliveredqtyinbaseunit.
           ENDLOOP.
+
+          "外部移転未記載
+          IF lv_indicator3 = abap_true.
+            IF lv_indicator3_ok = abap_false.
+              CONTINUE.
+            ENDIF.
+          ENDIF.
 
           IF ls_salesdocumentitem-orderrelatedbillingstatus = lsc_status-c.
             ls_data-nobillingquantityinbaseunit = lv_actualdelqtyinbaseunit - lv_billingqtyinbaseunit.
