@@ -41,6 +41,8 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
              source_m_r_p_element_item     TYPE i_supplydemanditemtp-sourcemrpelementitem,
              sourcemrpelementscheduleline  TYPE i_supplydemanditemtp-sourcemrpelementscheduleline,
              high_level_material           TYPE matnr,
+             planned_order                 TYPE i_plannedorder-plannedorder,
+             manufacturing_order           TYPE i_manufacturingorder-manufacturingorder,
              product                       TYPE matnr,
              yearmonth(6)                  TYPE n,
              yearweek(6)                   TYPE n,
@@ -131,8 +133,12 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
             date    TYPE string,
           END OF ty_outofstockdate,
           BEGIN OF ty_update_sequence,
-            sequence TYPE sy-index,
-            quantity TYPE menge_d,
+            product                    TYPE matnr,
+            sequence                   TYPE sy-index,
+            mrpelementavailyorrqmtdate TYPE i_supplydemanditemtp-mrpelementavailyorrqmtdate,
+            yearmonth(6)               TYPE n,
+            yearweek(6)                TYPE n,
+            quantity                   TYPE menge_d,
           END OF ty_update_sequence.
 
     CONSTANTS: lc_classification_0 TYPE string VALUE `0.FORECAST`,
@@ -144,7 +150,8 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
 
     CONSTANTS: lc_config_zpp015 TYPE ztbc_1001-zid VALUE `ZPP015`,
                lc_config_zpp016 TYPE ztbc_1001-zid VALUE `ZPP016`,
-               lc_config_zpp017 TYPE ztbc_1001-zid VALUE `ZPP017`.
+               lc_config_zpp017 TYPE ztbc_1001-zid VALUE `ZPP017`,
+               lc_config_zpp019 TYPE ztbc_1001-zid VALUE `ZPP019`.
 
     CONSTANTS: lc_mrpelement_category_sh TYPE i_supplydemanditemtp-mrpelementcategory VALUE `SH`,
                lc_mrpelement_category_ba TYPE i_supplydemanditemtp-mrpelementcategory VALUE `BA`,
@@ -256,6 +263,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
              mrpcontroller AS m_r_p_controller,
              abcindicator AS a_b_c_indicator,
              procurementtype,
+             goodsreceiptduration,
              supplier,
              \_product-externalproductgroup AS external_product_group,
              \_product-productgroup AS product_group,
@@ -290,6 +298,41 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
 
       IF lt_fixed_data IS NOT INITIAL.
         SORT lt_fixed_data BY product.
+
+        SELECT *
+          FROM zc_tbc1001
+         WHERE zid IN ( @lc_config_zpp015, @lc_config_zpp016, @lc_config_zpp017, @lc_config_zpp019 )
+           AND zvalue1 = @lv_selectionrule
+          INTO TABLE @DATA(lt_config).        "#EC CI_ALL_FIELDS_NEEDED
+        SORT lt_config BY zid.
+
+        IF lt_config IS NOT INITIAL.
+          " MRPElement範囲取得
+          DATA(lt_config_pp015) = lt_config.
+          DELETE lt_config_pp015 WHERE zid <> lc_config_zpp015 OR zvalue4 <> lc_str_yes.
+          lr_config_category = VALUE #( FOR item IN lt_config_pp015 ( sign = 'I' option = 'EQ' low = item-zvalue3 ) ).
+
+          " 在庫タイプ取得
+          DATA(lt_config_pp016) = lt_config.
+          DELETE lt_config_pp016 WHERE zid <> lc_config_zpp016 OR zvalue4 <> lc_str_yes.
+          lr_config_stocktype = VALUE #( FOR item IN lt_config_pp016 ( sign = 'I' option = 'EQ' low = item-zvalue3 ) ).
+
+          " 安全在庫要否取得
+          DATA(lt_config_pp017) = lt_config.
+          DELETE lt_config_pp017 WHERE zid <> lc_config_zpp017 OR zvalue1 <> lv_selectionrule.
+          READ TABLE lt_config_pp017 INTO DATA(ls_config_pp017) INDEX 1.
+          IF sy-subrc = 0.
+            DATA(lv_whether_safety) = ls_config_pp017-zvalue3. " Yes/No
+          ENDIF.
+
+          " 入庫処理日数考慮要否
+          DATA(lt_config_pp019) = lt_config.
+          DELETE lt_config_pp019 WHERE zid <> lc_config_zpp019 OR zvalue1 <> lv_selectionrule.
+          READ TABLE lt_config_pp019 INTO DATA(ls_config_pp019) INDEX 1.
+          IF sy-subrc = 0.
+            DATA(lv_whether_process) = ls_config_pp017-zvalue2. " Yes/No
+          ENDIF.
+        ENDIF.
 
         " Begin 購買関連情報取得
         SELECT purchasinginforecord,
@@ -385,6 +428,18 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
             ENDIF.
             <lfs_mrpdata>-product = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = <lfs_mrpdata>-material ).
 
+            " 入庫処理日数考慮要否
+            IF lv_whether_process = lc_str_yes.
+              READ TABLE lt_fixed_data INTO DATA(ls_fixed_data) WITH KEY product = <lfs_mrpdata>-product BINARY SEARCH.
+              IF sy-subrc = 0.
+                " - 入庫処理日数
+                <lfs_mrpdata>-mrpelementavailyorrqmtdate = zzcl_common_utils=>calc_date_subtract( date = <lfs_mrpdata>-mrpelementavailyorrqmtdate
+                                                                                                  day  = CONV #( ls_fixed_data-goodsreceiptduration ) ).
+              ELSE.
+                CLEAR ls_fixed_data.
+              ENDIF.
+            ENDIF.
+
             <lfs_mrpdata>-yearmonth = <lfs_mrpdata>-mrpelementavailyorrqmtdate+0(6).
             TRY.
                 cl_scal_utils=>date_get_week(
@@ -395,37 +450,17 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               CATCH cx_scal.
                 "handle exception
             ENDTRY.
+
+            IF <lfs_mrpdata>-m_r_p_element_category = lc_mrpelement_category_sb.
+              <lfs_mrpdata>-planned_order = |{ <lfs_mrpdata>-source_m_r_p_element ALPHA = IN }|.
+            ENDIF.
+            IF <lfs_mrpdata>-m_r_p_element_category = lc_mrpelement_category_ar.
+              <lfs_mrpdata>-manufacturing_order = |{ <lfs_mrpdata>-source_m_r_p_element ALPHA = IN }|.
+            ENDIF.
           ENDLOOP.
           SORT lt_mrpdata BY material.
         ENDIF.
         " End MRP計画データ取得
-
-        SELECT *
-          FROM zc_tbc1001
-         WHERE zid IN ( @lc_config_zpp015, @lc_config_zpp016, @lc_config_zpp017 )
-           AND zvalue1 = @lv_selectionrule
-          INTO TABLE @DATA(lt_config).        "#EC CI_ALL_FIELDS_NEEDED
-        IF sy-subrc = 0.
-          SORT lt_config BY zid.
-
-          " MRPElement範囲取得
-          DATA(lt_config_pp015) = lt_config.
-          DELETE lt_config_pp015 WHERE zid <> lc_config_zpp015 OR zvalue4 <> lc_str_yes.
-          lr_config_category = VALUE #( FOR item IN lt_config_pp015 ( sign = 'I' option = 'EQ' low = item-zvalue3 ) ).
-
-          " 在庫タイプ取得
-          DATA(lt_config_pp016) = lt_config.
-          DELETE lt_config_pp016 WHERE zid <> lc_config_zpp016 OR zvalue4 <> lc_str_yes.
-          lr_config_stocktype = VALUE #( FOR item IN lt_config_pp016 ( sign = 'I' option = 'EQ' low = item-zvalue3 ) ).
-
-          " 安全在庫要否取得
-          DATA(lt_config_pp017) = lt_config.
-          DELETE lt_config_pp017 WHERE zid <> lc_config_zpp017 OR zvalue1 <> lv_selectionrule.
-          READ TABLE lt_config_pp017 INTO DATA(ls_config_pp017) INDEX 1.
-          IF sy-subrc = 0.
-            DATA(lv_whether) = ls_config_pp017-zvalue3. " Yes/No
-          ENDIF.
-        ENDIF.
 
         " Begin 在庫データ集約
         ##ITAB_DB_SELECT
@@ -446,7 +481,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
           DELETE lt_safety_stock WHERE m_r_p_element_category <> lc_mrpelement_category_sh.
 
           " Begin 安全在庫集約
-          IF lv_whether = lc_str_yes.
+          IF lv_whether_safety = lc_str_yes.
             ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
             SELECT a~material,
                    a~m_r_p_area,
@@ -570,12 +605,11 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
           DELETE lt_filter_mrpdata_ar WHERE m_r_p_element_category <> lc_mrpelement_category_ar.
 
           IF lt_filter_mrpdata_sb IS NOT INITIAL.
-            ##ITAB_KEY_IN_SELECT
-            SELECT DISTINCT
-                   plannedorder,
+            SELECT plannedorder,
                    i_plannedorder~product
               FROM i_plannedorder
-              JOIN @lt_filter_mrpdata_sb AS a ON i_plannedorder~plannedorder = a~source_m_r_p_element
+               FOR ALL ENTRIES IN @lt_filter_mrpdata_sb
+             WHERE plannedorder = @lt_filter_mrpdata_sb-planned_order
               INTO TABLE @DATA(lt_plannedorder).
             SORT lt_plannedorder BY plannedorder.
           ENDIF.
@@ -585,20 +619,19 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                    product
               FROM i_manufacturingorder
                FOR ALL ENTRIES IN @lt_filter_mrpdata_ar
-             WHERE manufacturingorder = @lt_filter_mrpdata_ar-source_m_r_p_element
+             WHERE manufacturingorder = @lt_filter_mrpdata_ar-manufacturing_order
               INTO TABLE @DATA(lt_manufacturingorder).
             SORT lt_manufacturingorder BY manufacturingorder.
           ENDIF.
 
           SORT lt_filter_mrpdata BY product mrpelementavailyorrqmtdate.
 
-          CLEAR: lt_outofstockdate.
+          CLEAR: lt_outofstockdate,lt_update_sequence.
           lv_sequence = 1.
           LOOP AT lt_filter_mrpdata INTO DATA(ls_filter_mrpdata)
                                     GROUP BY ( product = ls_filter_mrpdata-product )
                                     ASSIGNING FIELD-SYMBOL(<lfs_filter_mrpdata_group>).
-
-            CLEAR: lt_update_sequence, lv_quantity.
+            CLEAR lv_quantity.
             READ TABLE lt_sum_stockinfo INTO DATA(ls_sum_stockinfo)
                                          WITH KEY product = <lfs_filter_mrpdata_group>-product BINARY SEARCH.
             IF sy-subrc = 0.
@@ -615,7 +648,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               " 上位品目
               IF <lfs_filter_mrpdata>-m_r_p_element_category = lc_mrpelement_category_sb.
                 READ TABLE lt_plannedorder INTO DATA(ls_plannedorder)
-                                            WITH KEY plannedorder = <lfs_filter_mrpdata>-source_m_r_p_element
+                                            WITH KEY plannedorder = <lfs_filter_mrpdata>-planned_order
                                             BINARY SEARCH.
                 IF sy-subrc = 0.
                   <lfs_filter_mrpdata>-high_level_material = ls_plannedorder-product.
@@ -624,7 +657,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                 ENDIF.
               ELSEIF <lfs_filter_mrpdata>-m_r_p_element_category = lc_mrpelement_category_ar.
                 READ TABLE lt_manufacturingorder INTO DATA(ls_manufacturingorder)
-                                                  WITH KEY manufacturingorder = <lfs_filter_mrpdata>-source_m_r_p_element
+                                                  WITH KEY manufacturingorder = <lfs_filter_mrpdata>-manufacturing_order
                                                   BINARY SEARCH.
                 IF sy-subrc = 0.
                   <lfs_filter_mrpdata>-high_level_material = ls_manufacturingorder-product.
@@ -643,8 +676,12 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
 
               " 计算 R.BALANCE 用
               IF <lfs_filter_mrpdata>-m_r_p_element_category = lc_mrpelement_category_la. " 出荷通知
-                APPEND VALUE #( sequence = lv_sequence
-                                quantity = <lfs_filter_mrpdata>-m_r_p_element_open_quantity ) TO lt_update_sequence.
+                APPEND VALUE #( product   = <lfs_filter_mrpdata>-product
+                                sequence  = lv_sequence
+                                mrpelementavailyorrqmtdate = <lfs_filter_mrpdata>-mrpelementavailyorrqmtdate
+                                yearmonth = <lfs_filter_mrpdata>-yearmonth
+                                yearweek  = <lfs_filter_mrpdata>-yearweek
+                                quantity  = <lfs_filter_mrpdata>-m_r_p_element_open_quantity ) TO lt_update_sequence.
                 lv_sequence += 1.
               ELSE.
                 <lfs_filter_mrpdata>-update_seq = lv_sequence.
@@ -659,18 +696,8 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                 ) TO lt_outofstockdate.
               ENDIF.
             ENDLOOP.
-
-            SORT lt_update_sequence BY sequence.
-            LOOP AT GROUP <lfs_filter_mrpdata_group> ASSIGNING <lfs_filter_mrpdata> WHERE update_seq IS NOT INITIAL.
-              READ TABLE lt_update_sequence INTO DATA(ls_update_sequence)
-                                             WITH KEY sequence = <lfs_filter_mrpdata>-update_seq BINARY SEARCH.
-              IF sy-subrc = 0.
-                <lfs_filter_mrpdata>-balance_r = <lfs_filter_mrpdata>-balance_9 + ls_update_sequence-quantity.
-              ELSE.
-                CLEAR ls_update_sequence.
-              ENDIF.
-            ENDLOOP.
           ENDLOOP.
+          SORT lt_update_sequence BY product sequence.
           " End MRP計画データ集約
 
           " Begin 出荷通知数量取得
@@ -1033,14 +1060,10 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                  a~m_r_p_area,
                  a~m_r_p_plant,
                  a~mrpelementavailyorrqmtdate,
-                 SUM( a~balance_9 ) AS balance_9,
-                 SUM( a~balance_r ) AS balance_r
+                 a~balance_9,
+                 a~balance_r
             FROM @lt_filter_mrpdata AS a
            WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
-           GROUP BY a~material,
-                    a~m_r_p_area,
-                    a~m_r_p_plant,
-                    a~mrpelementavailyorrqmtdate
             INTO TABLE @DATA(lt_period_balance).
           SORT lt_period_balance BY material mrpelementavailyorrqmtdate.
 
@@ -1050,14 +1073,10 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                  a~m_r_p_area,
                  a~m_r_p_plant,
                  a~yearweek,
-                 SUM( a~balance_9 ) AS balance_9,
-                 SUM( a~balance_r ) AS balance_r
+                 a~balance_9,
+                 a~balance_r
             FROM @lt_filter_mrpdata AS a
            WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
-           GROUP BY a~material,
-                    a~m_r_p_area,
-                    a~m_r_p_plant,
-                    a~yearweek
             INTO TABLE @DATA(lt_week_balance).
           SORT lt_week_balance BY material yearweek.
 
@@ -1067,14 +1086,10 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                  a~m_r_p_area,
                  a~m_r_p_plant,
                  a~yearmonth,
-                 SUM( a~balance_9 ) AS balance_9,
-                 SUM( a~balance_r ) AS balance_r
+                 a~balance_9,
+                 a~balance_r
             FROM @lt_filter_mrpdata AS a
            WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
-           GROUP BY a~material,
-                    a~m_r_p_area,
-                    a~m_r_p_plant,
-                    a~yearmonth
             INTO TABLE @DATA(lt_month_balance).
           SORT lt_month_balance BY material yearmonth.
           " End 指定期間内のBALANCE取得
@@ -1691,11 +1706,14 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                       lv_count += 1.
                       ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
                       IF <lfs_colvalue> IS ASSIGNED.
-                        READ TABLE lt_period_balance INTO DATA(ls_period_balance) WITH KEY material = <lfs_line>-('product')
-                                                                                           mrpelementavailyorrqmtdate = ls_dynamic_col-name+5(8)
-                                                                                           BINARY SEARCH.
-                        " 读不到时，等于前一天的值(所以不需要判断SUBRC)
-                        <lfs_colvalue> = ls_period_balance-balance_9.
+                        LOOP AT lt_period_balance INTO DATA(ls_period_balance) WHERE material = <lfs_line>-('product')
+                                                                                 AND mrpelementavailyorrqmtdate = ls_dynamic_col-name+5(8).
+                          <lfs_colvalue> = ls_period_balance-balance_9.
+                        ENDLOOP.
+                        IF sy-subrc <> 0.
+                          " 读不到时，等于前一天的值
+                          <lfs_colvalue> = ls_period_balance-balance_9.
+                        ENDIF.
 
                         IF lv_count = 1 AND ls_period_balance-balance_9 IS INITIAL.
                           <lfs_colvalue> = <lfs_line>-('past_qty').
@@ -1718,11 +1736,14 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                       lv_count += 1.
                       ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
                       IF <lfs_colvalue> IS ASSIGNED.
-                        READ TABLE lt_week_balance INTO DATA(ls_week_balance) WITH KEY material = <lfs_line>-('product')
-                                                                                       yearweek = ls_dynamic_col-name+3(6)
-                                                                                       BINARY SEARCH.
-                        " 读不到时，等于前一天的值(所以不需要判断SUBRC)
-                        <lfs_colvalue> = ls_week_balance-balance_9.
+                        LOOP AT lt_week_balance INTO DATA(ls_week_balance) WHERE material = <lfs_line>-('product')
+                                                                             AND yearweek = ls_dynamic_col-name+3(6).
+                          <lfs_colvalue> = ls_week_balance-balance_9.
+                        ENDLOOP.
+                        IF sy-subrc <> 0.
+                          " 读不到时，等于前一天的值
+                          <lfs_colvalue> = ls_week_balance-balance_9.
+                        ENDIF.
 
                         IF lv_count = 1 AND ls_week_balance-balance_9 IS INITIAL.
                           <lfs_colvalue> = <lfs_line>-('past_qty').
@@ -1745,11 +1766,14 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                       lv_count += 1.
                       ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
                       IF <lfs_colvalue> IS ASSIGNED.
-                        READ TABLE lt_month_balance INTO DATA(ls_month_balance) WITH KEY material  = <lfs_line>-('product')
-                                                                                         yearmonth = ls_dynamic_col-name+3(6)
-                                                                                         BINARY SEARCH.
-                        " 读不到时，等于前一天的值(所以不需要判断SUBRC)
-                        <lfs_colvalue> = ls_month_balance-balance_9.
+                        LOOP AT lt_month_balance INTO DATA(ls_month_balance) WHERE material = <lfs_line>-('product')
+                                                                               AND yearmonth = ls_dynamic_col-name+3(6).
+                          <lfs_colvalue> = ls_month_balance-balance_9.
+                        ENDLOOP.
+                        IF sy-subrc <> 0.
+                          " 读不到时，等于前一天的值
+                          <lfs_colvalue> = ls_month_balance-balance_9.
+                        ENDIF.
 
                         IF lv_count = 1 AND ls_month_balance-balance_9 IS INITIAL.
                           <lfs_colvalue> = <lfs_line>-('past_qty').
@@ -1767,6 +1791,9 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                     CLEAR: ls_dynamic_col, ls_month_balance.
                   WHEN OTHERS.
                 ENDCASE.
+
+                " 计算 R.BALANCE 用
+                lv_past_9balance = <lfs_line>-('past_qty').
               ENDIF.
 
               " R.BALANCE
@@ -1781,19 +1808,32 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                       lv_count += 1.
                       ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
                       IF <lfs_colvalue> IS ASSIGNED.
-                        READ TABLE lt_period_balance INTO ls_period_balance WITH KEY material = <lfs_line>-('product')
-                                                                                     mrpelementavailyorrqmtdate = ls_dynamic_col-name+5(8)
-                                                                                     BINARY SEARCH.
-                        " 读不到时，等于前一天的值(所以不需要判断SUBRC)
-                        <lfs_colvalue> = ls_period_balance-balance_r.
+                        LOOP AT lt_period_balance INTO ls_period_balance WHERE material = <lfs_line>-('product')
+                                                                           AND mrpelementavailyorrqmtdate = ls_dynamic_col-name+5(8).
+                          <lfs_colvalue> = ls_period_balance-balance_r.
+                        ENDLOOP.
+                        IF sy-subrc <> 0.
+                          " 读不到时，等于前一天的值
+                          <lfs_colvalue> = ls_period_balance-balance_r.
+                        ENDIF.
 
                         IF lv_count = 1 AND ls_period_balance-balance_r IS INITIAL.
-                          <lfs_colvalue> = <lfs_line>-('past_qty').
-                          ls_period_balance-balance_r = <lfs_line>-('past_qty').
+                          <lfs_colvalue> = lv_past_9balance.
+                          ls_period_balance-balance_r = lv_past_9balance.
                         ENDIF.
+
+                        " + 出荷通知数量
+                        LOOP AT lt_update_sequence INTO DATA(ls_update_sequence) WHERE product = <lfs_line>-('product').
+                          IF ls_dynamic_col-name+5(8) < ls_update_sequence-mrpelementavailyorrqmtdate.
+                            <lfs_colvalue> += ls_update_sequence-quantity.
+                            EXIT.
+                          ELSEIF ls_dynamic_col-name+5(8) = ls_update_sequence-mrpelementavailyorrqmtdate.
+                            EXIT.
+                          ENDIF.
+                        ENDLOOP.
                       ENDIF.
                     ENDLOOP.
-                    CLEAR: ls_dynamic_col, ls_period_balance.
+                    CLEAR: ls_dynamic_col, ls_period_balance, ls_update_sequence.
 
                   WHEN 'W'. " Week
                     CLEAR lv_count.
@@ -1801,19 +1841,32 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                       lv_count += 1.
                       ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
                       IF <lfs_colvalue> IS ASSIGNED.
-                        READ TABLE lt_week_balance INTO ls_week_balance WITH KEY material = <lfs_line>-('product')
-                                                                                 yearweek = ls_dynamic_col-name+3(6)
-                                                                                 BINARY SEARCH.
-                        " 读不到时，等于前一天的值(所以不需要判断SUBRC)
-                        <lfs_colvalue> = ls_week_balance-balance_r.
+                        LOOP AT lt_week_balance INTO ls_week_balance WHERE material = <lfs_line>-('product')
+                                                                       AND yearweek = ls_dynamic_col-name+3(6).
+                          <lfs_colvalue> = ls_week_balance-balance_r.
+                        ENDLOOP.
+                        IF sy-subrc <> 0.
+                          " 读不到时，等于前一天的值
+                          <lfs_colvalue> = ls_week_balance-balance_r.
+                        ENDIF.
 
                         IF lv_count = 1 AND ls_week_balance-balance_r IS INITIAL.
-                          <lfs_colvalue> = <lfs_line>-('past_qty').
-                          ls_week_balance-balance_r = <lfs_line>-('past_qty').
+                          <lfs_colvalue> = lv_past_9balance.
+                          ls_week_balance-balance_r = lv_past_9balance.
                         ENDIF.
+
+                        " + 出荷通知数量
+                        LOOP AT lt_update_sequence INTO ls_update_sequence WHERE product = <lfs_line>-('product').
+                          IF ls_dynamic_col-name+3(6) < ls_update_sequence-yearweek.
+                            <lfs_colvalue> += ls_update_sequence-quantity.
+                            EXIT.
+                          ELSEIF ls_dynamic_col-name+3(6) = ls_update_sequence-yearweek.
+                            EXIT.
+                          ENDIF.
+                        ENDLOOP.
                       ENDIF.
                     ENDLOOP.
-                    CLEAR: ls_dynamic_col, ls_week_balance.
+                    CLEAR: ls_dynamic_col, ls_week_balance, ls_update_sequence.
 
                   WHEN 'M'. " Month
                     CLEAR lv_count.
@@ -1821,19 +1874,32 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                       lv_count += 1.
                       ASSIGN COMPONENT ls_dynamic_col-name OF STRUCTURE <lfs_line> TO <lfs_colvalue>.
                       IF <lfs_colvalue> IS ASSIGNED.
-                        READ TABLE lt_month_balance INTO ls_month_balance WITH KEY material  = <lfs_line>-('product')
-                                                                                   yearmonth = ls_dynamic_col-name+3(6)
-                                                                                   BINARY SEARCH.
-                        " 读不到时，等于前一天的值(所以不需要判断SUBRC)
-                        <lfs_colvalue> = ls_month_balance-balance_r.
+                        LOOP AT lt_month_balance INTO ls_month_balance WHERE material = <lfs_line>-('product')
+                                                                         AND yearmonth = ls_dynamic_col-name+3(6).
+                          <lfs_colvalue> = ls_month_balance-balance_r.
+                        ENDLOOP.
+                        IF sy-subrc <> 0.
+                          " 读不到时，等于前一天的值
+                          <lfs_colvalue> = ls_month_balance-balance_r.
+                        ENDIF.
 
                         IF lv_count = 1 AND ls_month_balance-balance_r IS INITIAL.
-                          <lfs_colvalue> = <lfs_line>-('past_qty').
-                          ls_month_balance-balance_r = <lfs_line>-('past_qty').
+                          <lfs_colvalue> = lv_past_9balance.
+                          ls_month_balance-balance_r = lv_past_9balance.
                         ENDIF.
+
+                        " + 出荷通知数量
+                        LOOP AT lt_update_sequence INTO ls_update_sequence WHERE product = <lfs_line>-('product').
+                          IF ls_dynamic_col-name+3(6) < ls_update_sequence-yearmonth.
+                            <lfs_colvalue> += ls_update_sequence-quantity.
+                            EXIT.
+                          ELSEIF ls_dynamic_col-name+3(6) = ls_update_sequence-yearmonth.
+                            EXIT.
+                          ENDIF.
+                        ENDLOOP.
                       ENDIF.
                     ENDLOOP.
-                    CLEAR: ls_dynamic_col, ls_month_balance.
+                    CLEAR: ls_dynamic_col, ls_month_balance, ls_update_sequence.
                   WHEN OTHERS.
                 ENDCASE.
               ENDIF.
@@ -1964,7 +2030,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               " 前行の在庫残数
               lv_previous_remaining_qty = <lfs_vertical>-remaining_qty.
 
-              READ TABLE lt_fixed_data INTO DATA(ls_fixed_data) WITH KEY product = <lfs_group_item>-product BINARY SEARCH.
+              READ TABLE lt_fixed_data INTO ls_fixed_data WITH KEY product = <lfs_group_item>-product BINARY SEARCH.
               IF sy-subrc = 0.
                 <lfs_vertical> = CORRESPONDING #( BASE ( <lfs_vertical> ) ls_fixed_data ).
 

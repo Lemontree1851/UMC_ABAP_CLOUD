@@ -4,10 +4,10 @@
 define root view entity ZC_SALESORDER_U
   as projection on ZR_SALESORDER_U
 {
-  key SalesOrder,
-  key SalesOrderItem,
+  key SalesDocument     as SalesOrder,
+  key SalesDocumentItem as SalesOrderItem,
       SalesOrganization,
-      SalesOrderType,
+      SalesDocumentType as SalesOrderType,
       CreationDate,
       ShippingPoint,
       DeliveryType,
@@ -25,7 +25,7 @@ define root view entity ZC_SALESORDER_U
       ShippingType,
       ShipToParty,
       ShipToPartyName,
-      StorageLocation,
+//      StorageLocation,
       DeliveryDate,
       OrderQuantity,
       OrderQuantityUnit,
@@ -35,7 +35,7 @@ define root view entity ZC_SALESORDER_U
       DeliveredQty,
       RemainingQty,
       CurrDeliveryQty,
-      ShippingStorLoc,
+//      ShippingStorLoc,
       DeliveryDocument
       //SO行项目的长文本 长文本id 0001
       //    @ObjectModel.virtualElementCalculatedBy: 'ZCL_SALESORDER_U_CALC'

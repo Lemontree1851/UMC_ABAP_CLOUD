@@ -11,7 +11,7 @@ annotate entity ZC_SALESORDER_U with
 {
   @UI.selectionField: [{ position: 55 }]
   SalesOrder;
-  @Consumption.filter:{ mandatory: true }
+  @Consumption.filter:{ mandatory: false }
   @UI.selectionField: [{ position: 5 }]
   SalesOrganization;
   //交货类型
@@ -24,7 +24,7 @@ annotate entity ZC_SALESORDER_U with
   Material;
   @UI.selectionField: [{ position: 40 }]
   MaterialByCustomer;
-  @Consumption.filter:{ mandatory: true }
+  @Consumption.filter:{ mandatory: false }
   @UI.selectionField: [{ position: 10 }]
   Plant;
   @UI.selectionField: [{ position: 25 }]

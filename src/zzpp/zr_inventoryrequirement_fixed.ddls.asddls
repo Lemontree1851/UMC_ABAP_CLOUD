@@ -32,6 +32,7 @@ define view entity ZR_InventoryRequirement_fixed
       _ProductPlantBasic.MRPResponsible as MRPController,
       _ProductPlantBasic.ABCIndicator,
       _ProductPlantBasic.ProcurementType,
+      _ProductPlantBasic.GoodsReceiptDuration,
 
       _MPPurchasingSourceItem.Supplier,
 

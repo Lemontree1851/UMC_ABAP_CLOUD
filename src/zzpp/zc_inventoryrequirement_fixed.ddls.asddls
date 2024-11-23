@@ -21,6 +21,7 @@ define view entity ZC_InventoryRequirement_fixed
       MRPController,
       ABCIndicator,
       ProcurementType,
+      GoodsReceiptDuration,
       Supplier,
 
       StandardPrice,

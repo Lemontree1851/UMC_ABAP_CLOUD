@@ -2,14 +2,14 @@
 @EndUserText.label: '用于创建DN的SO信息'
 define root view entity ZR_SALESORDER_U
   as select from    ZR_SALESORDERBASIC          as basic
-    left outer join ZTF_SALESORDERSTORLOC(
-                        clnt: $session.client ) as SalesStorLoc on  SalesStorLoc.SalesOrder     = basic.SalesOrder
-                                                                and SalesStorLoc.SalesOrderItem = basic.SalesOrderItem
+//    left outer join ZTF_SALESORDERSTORLOC(
+//                        clnt: $session.client ) as SalesStorLoc on  SalesStorLoc.SalesDocument     = basic.SalesDocument
+//                                                                and SalesStorLoc.SalesDocumentItem = basic.SalesDocumentItem
 {
-  key basic.SalesOrder,
-  key basic.SalesOrderItem,
+  key basic.SalesDocument,
+  key basic.SalesDocumentItem,
       basic.SalesOrganization,
-      basic.SalesOrderType,
+      basic.SalesDocumentType,
       basic.CreationDate,
       basic.ShippingPoint,
       basic.DeliveryType,
@@ -27,7 +27,7 @@ define root view entity ZR_SALESORDER_U
       basic.ShippingType,
       basic.ShipToParty,
       basic.ShipToPartyName,
-      SalesStorLoc.StorageLocation,
+//      SalesStorLoc.StorageLocation,
       basic.DeliveryDate,
       basic.OrderQuantity,
       basic.OrderQuantityUnit,
@@ -37,7 +37,7 @@ define root view entity ZR_SALESORDER_U
       basic.DeliveredQty,
       basic.RemainingQty,
       basic.CurrDeliveryQty,
-      SalesStorLoc.StorageLocation as ShippingStorLoc,
+//      SalesStorLoc.StorageLocation as ShippingStorLoc,
       basic.DeliveryDocument
 }
 // where 删除 确认数量为0的数据

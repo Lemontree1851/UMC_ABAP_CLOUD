@@ -7,8 +7,8 @@ with parameters
   clnt : abap.clnt
 returns {
   Client : abap.clnt;
-  SalesOrder : vbeln_vl;
-  SalesOrderItem : abap.numc(6);
+  SalesDocument : vbeln_vl;
+  SalesDocumentItem : abap.numc(6);
   StorageLocation : abap.char(4);
   
 }
