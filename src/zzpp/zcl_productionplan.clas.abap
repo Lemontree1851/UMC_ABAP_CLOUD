@@ -15,29 +15,31 @@ CLASS zcl_productionplan IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
     TYPES:
       BEGIN OF ts_matnr,
-        plant         TYPE werks_d,
-        dispo         TYPE dispo,
-        mtart         TYPE mtart,
-        matnr         TYPE matnr,
-        idnrk         TYPE matnr,
-        stufe         TYPE stufe,
-        verid         TYPE verid,
-        plantype      TYPE c LENGTH 1,
-        zday          TYPE n LENGTH 2,
-        mdv01         TYPE arbpl, "Production Line
-        capacity      TYPE c LENGTH 30,
-        project       TYPE c LENGTH 30,
-        remark        TYPE c LENGTH 20,
-        stockqty      TYPE labst,
-        rounding      TYPE c LENGTH 30,
-        delta         TYPE c LENGTH 30,
-        historyso     TYPE c LENGTH 30,
-        futureso      TYPE c LENGTH 30,
-        balanceqty(8) TYPE p DECIMALS 3,
-        summary(8)    TYPE p DECIMALS 3,
-        summarycolor  TYPE c LENGTH 1,
-        mnglg(7)      TYPE p DECIMALS 3,
-        objkt         TYPE aeobjekt,
+        plant                  TYPE werks_d,
+        dispo                  TYPE dispo,
+        mtart                  TYPE mtart,
+        matnr                  TYPE matnr,
+        idnrk                  TYPE matnr,
+        stufe                  TYPE stufe,
+        verid                  TYPE verid,
+        plantype               TYPE c LENGTH 1,
+        zday                   TYPE n LENGTH 2,
+        mdv01                  TYPE arbpl, "Production Line
+        capacity               TYPE c LENGTH 30,
+        project                TYPE c LENGTH 30,
+        remark                 TYPE c LENGTH 20,
+        stockqty               TYPE labst,
+        rounding               TYPE c LENGTH 30,
+        delta                  TYPE c LENGTH 30,
+        historyso              TYPE c LENGTH 30,
+        futureso               TYPE c LENGTH 30,
+        balanceqty(8)          TYPE p DECIMALS 3,
+        summary(8)             TYPE p DECIMALS 3,
+        summarycolor           TYPE c LENGTH 1,
+        mnglg(7)               TYPE p DECIMALS 3,
+        objkt                  TYPE aeobjekt,
+        isphantomitem          TYPE dumps,
+        specialprocurementtype TYPE c LENGTH 2,
       END OF ts_matnr,
 
       BEGIN OF ts_mrp_api,  "api structue
@@ -282,6 +284,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
 * 1.1-1.3 品目取得
     SELECT a~product,
            a~producttype,
+           a~lowlevelcode,
            b~plant,
            b~mrpresponsible
       FROM i_product WITH PRIVILEGED ACCESS AS a
@@ -299,7 +302,14 @@ CLASS zcl_productionplan IMPLEMENTATION.
 * 2.1 BOM展開下位全品目取得
 * if expand bom = 'X', expand
     IF lv_expand = 'X'.
+      SORT lt_marc BY plant lowlevelcode product.
       LOOP AT lt_marc INTO DATA(ls_marc).
+        READ TABLE lt_bom
+                   WITH KEY plant = ls_marc-plant
+                            idnrk = ls_marc-product TRANSPORTING NO FIELDS.
+        IF sy-subrc = 0.
+          CONTINUE.
+        ENDIF.
         ls_bom-plant = ls_marc-plant.
         ls_bom-matnr = ls_marc-product.
         ls_bom-stufe = 0.
@@ -329,7 +339,8 @@ CLASS zcl_productionplan IMPLEMENTATION.
          REPORTED DATA(ls_reported).
 
         LOOP AT lt_result INTO DATA(ls_data).
-          IF ls_data-%param-materialtype <> 'ZROH'.
+          IF ls_data-%param-materialtype <> 'ZROH'
+         AND ls_data-%param-materialtype IS NOT INITIAL.
             ls_bom-plant = ls_data-plant.
             ls_bom-matnr = ls_data-material.
             ls_bom-stufe = ls_data-%param-explodebomlevelvalue.
@@ -337,6 +348,8 @@ CLASS zcl_productionplan IMPLEMENTATION.
             ls_bom-idnrk = ls_data-%param-billofmaterialcomponent.
             ls_bom-mnglg = ls_data-%param-componentquantityinbaseuom.
             ls_bom-objkt = ls_data-%param-billofmaterialcomponent.
+            ls_bom-isphantomitem = ls_data-%param-isphantomitem.
+            ls_bom-specialprocurementtype = ls_data-%param-specialprocurementtype.
             APPEND ls_bom TO lt_bom.
             CLEAR: ls_bom.
           ENDIF.
@@ -1381,6 +1394,9 @@ CLASS zcl_productionplan IMPLEMENTATION.
           ELSE.
             IF lv_field <> 0.
               <l_field2> = lv_field.
+              CONDENSE <l_field2> NO-GAPS.
+            ELSE.
+              <l_field2> = '0'.
               CONDENSE <l_field2> NO-GAPS.
             ENDIF.
           ENDIF.

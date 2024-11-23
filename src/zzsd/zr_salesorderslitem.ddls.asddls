@@ -18,6 +18,7 @@ define view entity ZR_SalesOrderSLItem
       OrderQuantityUnit
 
 }
+where ConfdOrderQtyByMatlAvailCheck > 0
 group by
   SalesDocument,
   SalesDocumentItem,

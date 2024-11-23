@@ -144,7 +144,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
     CONSTANTS: lc_classification_0 TYPE string VALUE `0.FORECAST`,
                lc_classification_1 TYPE string VALUE `1.SUPPLY`,
                lc_classification_5 TYPE string VALUE `5.DEMAND`,
-               lc_classification_s TYPE string VALUE `5.SUBDEMAND`,
+               lc_classification_s TYPE string VALUE `SUBDEMAND`,
                lc_classification_9 TYPE string VALUE `9.BALANCE`,
                lc_classification_r TYPE string VALUE `R.BALANCE`.
 
@@ -1458,9 +1458,11 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               DELETE ADJACENT DUPLICATES FROM lt_subdemand_mrpdata COMPARING material high_level_material.
 
               DATA(ls_subdemand) = ls_horizontal.
+              CLEAR lv_count.
               LOOP AT lt_subdemand_mrpdata INTO DATA(ls_subdemand_mrpdata) WHERE material = <lfs_fixed_data>-product.
+                lv_count += 1.
                 " SUBDEMAND
-                ls_subdemand-classification = lc_classification_s.
+                ls_subdemand-classification = |5.{ lc_classification_s }{ lv_count }|.
                 " 上位品目
                 ls_subdemand-high_level_material = ls_subdemand_mrpdata-high_level_material.
                 " 上位品目の最終製品取得
@@ -1493,7 +1495,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                 IF sy-subrc = 0.
                   ls_subdemand-past_qty = ls_past_subdemand-m_r_p_element_open_quantity.
                 ELSE.
-                  CLEAR ls_past_subdemand.
+                  CLEAR: ls_subdemand-past_qty, ls_past_subdemand.
                 ENDIF.
 
                 " 未来の各上位品目SUBDEMAND
@@ -1503,7 +1505,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                 IF sy-subrc = 0.
                   ls_subdemand-future_qty = ls_future_subdemand-m_r_p_element_open_quantity.
                 ELSE.
-                  CLEAR ls_future_subdemand.
+                  CLEAR: ls_subdemand-future_qty, ls_future_subdemand.
                 ENDIF.
 
                 " 合計の各上位品目SUBDEMAND
@@ -1513,7 +1515,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                 IF sy-subrc = 0.
                   ls_subdemand-total_qty = ls_sum_subdemand-m_r_p_element_open_quantity.
                 ELSE.
-                  CLEAR ls_sum_subdemand.
+                  CLEAR: ls_subdemand-total_qty, ls_sum_subdemand.
                 ENDIF.
                 APPEND ls_subdemand TO lt_horizontal.
               ENDLOOP.
@@ -1905,7 +1907,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               ENDIF.
 
               " SUBDEMAND
-              IF <lfs_line>-('classification') = lc_classification_s.
+              IF find( val = <lfs_line>-('classification') sub = lc_classification_s ) > 0.
                 CASE lv_displayunit.
                   WHEN 'D'. " Day
                     LOOP AT lt_period_subdemand INTO DATA(ls_period_subdemand) WHERE material = <lfs_line>-('product')

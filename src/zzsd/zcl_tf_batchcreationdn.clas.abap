@@ -17,23 +17,23 @@ ENDCLASS.
 
 
 
-CLASS ZCL_TF_BATCHCREATIONDN IMPLEMENTATION.
+CLASS zcl_tf_batchcreationdn IMPLEMENTATION.
 
 
   METHOD get_storloc
     BY DATABASE FUNCTION FOR HDB LANGUAGE SQLSCRIPT OPTIONS READ-ONLY
-    USING zr_tsd_1001 zr_salesorderbasic.
+    USING zr_tsd_1001 zr_salesorderbasic ztbc_1001.
     lt_table =
       select
         mandt,
         Customer,
         billingtoparty,
         plant,
-        issuestoragelocation,
+        partsstoragelocation,
         finishedstoragelocation,
         returnstoragelocation,
         repairstoragelocation,
-        vimstoragelocation,
+        vmistoragelocation,
         ROW_NUMBER ( ) OVER (PARTITION BY Customer,plant) as rownumber
       FROM zr_tsd_1001
       WHERE zr_tsd_1001.mandt = :clnt;
@@ -43,74 +43,59 @@ CLASS ZCL_TF_BATCHCREATIONDN IMPLEMENTATION.
           mandt AS client,
           customer,
           plant,
-          issuestoragelocation,
+          partsstoragelocation,
           finishedstoragelocation,
           returnstoragelocation,
           repairstoragelocation,
-          vimstoragelocation
+          vmistoragelocation
         FROM :lt_table
         WHERE rownumber = 1;
 
     RETURN
       select
         basic.mandt as client,
-        basic.salesorder,
-        basic.salesorderitem,
-        -- 判定三个条件是否取到值
-        case when sd1001a.customer is not null
-          then
-            case when basic.deliverytype = 'DN-2'
-              then
-                CASE when sd1001a.vimstoragelocation <> ''
-                  then sd1001a.vimstoragelocation
-                  else sd1001a.finishedstoragelocation
-                end
-              else
-                case
-                  when basic.salesordertype = 'SO-2' and sd1001a.issuestoragelocation <> ''
-                    then sd1001a.issuestoragelocation
-                  -- 发货国内、发货国外、转厂交货 为 成品仓
-                  when basic.deliverytype = 'DN-1' and sd1001a.finishedstoragelocation <> ''
-                    then sd1001a.finishedstoragelocation
-                  -- 国内退货、国外退货 为 返品仓
-                  when ( basic.deliverytype = 'DN-4' or basic.deliverytype = 'DN-8' ) and sd1001a.returnstoragelocation <> ''
-                    then sd1001a.returnstoragelocation
-                  -- 返修品发货 为 返修品发货仓
-                  when ( basic.deliverytype = 'DN-7' or basic.deliverytype = 'DN-F' ) and sd1001a.repairstoragelocation <> ''
-                    then sd1001a.repairstoragelocation
-                  else ''
-                end
-            end
-         -- 如果三个条件没有取到值就用两个条件取值
+        basic.salesdocument,
+        basic.salesdocumentitem,
+        case when basic.storagelocation <> ''
+          then basic.storagelocation
           else
-            case when basic.deliverytype = 'DN-2'
+          -- 判定三个条件是否取到值(sd1001a) customer billingtoparty plant
+            CASE when sd1001a.customer is not null
               then
-                CASE when sd1001b.vimstoragelocation <> ''
-                  then sd1001b.vimstoragelocation
-                  else sd1001b.finishedstoragelocation
-                end
-              else
                 case
-                  when basic.salesordertype = 'SO-2' and sd1001b.issuestoragelocation <> ''
-                    then sd1001b.issuestoragelocation
-                  -- 发货国内、发货国外、转厂交货 为 成品仓
-                  when basic.deliverytype = 'DN-1' and sd1001b.finishedstoragelocation <> ''
+                  when basic.yy1_salesdoctype_sdh = ''
+                    then sd1001a.finishedstoragelocation
+                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD013' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                    then sd1001a.finishedstoragelocation
+                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD014' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                    then case when sd1001a.vmistoragelocation = '' THEN sd1001a.partsstoragelocation else sd1001a.vmistoragelocation end
+                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD015' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                    then sd1001a.repairstoragelocation
+                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD016' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                    then sd1001a.returnstoragelocation
+                end
+             -- 如果三个条件没有取到值就将billingtoparty固定为空(sd1001b)
+              ELSE
+                case
+                  when basic.yy1_salesdoctype_sdh = ''
                     then sd1001b.finishedstoragelocation
-                  -- 国内退货、国外退货 为 返品仓
-                  when ( basic.deliverytype = 'DN-4' or basic.deliverytype = 'DN-8' ) and sd1001b.returnstoragelocation <> ''
-                    then sd1001b.returnstoragelocation
-                  -- 返修品发货 为 返修品发货仓
-                  when ( basic.deliverytype = 'DN-7' or basic.deliverytype = 'DN-F' ) and sd1001b.repairstoragelocation <> ''
+                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD013' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                    then sd1001b.finishedstoragelocation
+                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD014' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                    then case when sd1001b.vmistoragelocation = '' THEN sd1001b.partsstoragelocation else sd1001b.vmistoragelocation end
+                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD015' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
                     then sd1001b.repairstoragelocation
-                  else ''
+                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD016' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                    then sd1001b.returnstoragelocation
                 end
             end
-        end as storagelocation
+          end as storagelocation
       from zr_salesorderbasic as basic
       left outer join zr_tsd_1001              as sd1001a  on  sd1001a.customer       = basic.soldtoparty
                                                            and sd1001a.billingtoparty = basic.billingtoparty
                                                            and sd1001a.plant          = basic.plant
       left outer join :lt_table_without_billto as sd1001b  on  sd1001b.customer = basic.soldtoparty
+                                                           and sd1001a.billingtoparty = ''
                                                            and sd1001b.plant    = basic.plant;
 
   endmethod.

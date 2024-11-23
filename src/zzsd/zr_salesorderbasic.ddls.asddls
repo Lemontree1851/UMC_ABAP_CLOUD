@@ -7,32 +7,30 @@
   dataClass: #MIXED
 }
 define view entity ZR_SALESORDERBASIC
-  as select from    I_SalesDocument             as vbak
-    inner join      I_SalesDocumentItem         as vbap          on vbap.SalesDocument = vbak.SalesDocument
-    left outer join ZR_SalesOrderSLItem         as vbep          on  vbap.SalesDocument     = vbep.SalesDocument
-                                                                 and vbap.SalesDocumentItem = vbep.SalesDocumentItem
-    left outer join ZR_DELIVERYEDQTY            as DeliveryedQty on  DeliveryedQty.SalesOrder     = vbap.SalesDocument
-                                                                 and DeliveryedQty.SalesOrderItem = vbap.SalesDocumentItem
-                                                                 and DeliveryedQty.BaseUnit       = vbap.OrderQuantityUnit
-//    left outer join ZTF_SALESORDERSTORLOC(
-//                        clnt: $session.client ) as SalesStorLoc  on  SalesStorLoc.SalesOrder     = vbap.SalesDocument
-//                                                                 and SalesStorLoc.SalesOrderItem = vbap.SalesDocumentItem
+  as select from    I_SalesDocument     as vbak
+    inner join      I_SalesDocumentItem as vbap             on vbap.SalesDocument = vbak.SalesDocument
+    left outer join ZR_SalesOrderSLItem as vbep             on  vbap.SalesDocument     = vbep.SalesDocument
+                                                            and vbap.SalesDocumentItem = vbep.SalesDocumentItem
+    left outer join ZR_DELIVERYEDQTY    as DeliveryedQty    on  DeliveryedQty.SalesOrder     = vbap.SalesDocument
+                                                            and DeliveryedQty.SalesOrderItem = vbap.SalesDocumentItem
+                                                            and DeliveryedQty.BaseUnit       = vbap.OrderQuantityUnit
+//    left outer join I_RouteText         as _RouteText       on  _RouteText.Route    = vbap.Route
+//                                                            and _RouteText.Language = $session.system_language
 {
   key vbak.SalesDocument,
   key vbap.SalesDocumentItem,
       vbak.SalesOrganization,
       vbak.SalesDocumentType,
-      vbak.YY1_SalesDocType_SDH,//受注伝票タイプ（Old）
+      vbak.YY1_SalesDocType_SDH, //受注伝票タイプ（Old）
       vbak.SalesOffice,
       vbak.SalesGroup,
       vbak.CreationDate,
       vbap.ShippingPoint,
-      cast('' as abap.char(4))                             as DeliveryType, //tvak~lfarv"交货类型 delivery type
-      //交货类型描述
-      cast('' as abap.char(220))                           as DeliveryTypeDesc,
+      vbap._ShippingPointText[ Language = $session.system_language ].ShippingPointName,
       vbak.SoldToParty,
       vbak._SoldToParty.CustomerName,
       vbak._Partner[1: PartnerFunction = 'RE'].Customer    as BillingToParty,
+      vbak._Partner[1: PartnerFunction = 'RE'].FullName    as BillingToPartyName,
       vbak._Partner[1: PartnerFunction = 'WE'].Customer    as ShipToParty,
       vbak._Partner[1: PartnerFunction = 'WE'].FullName    as ShipToPartyName,
 
@@ -47,10 +45,15 @@ define view entity ZR_SALESORDERBASIC
       vbap.Material,
       vbap.MaterialByCustomer,
       vbap.Plant,
-      //装运类型
-      vbap.ShippingType,
+      vbap.TransitPlant,
       //库存地
       vbap.StorageLocation,
+      vbap._StorageLocation.StorageLocationName,
+      vbap.Route,
+//      vbap._Route._Text.RouteName,
+      //装运类型
+      vbap.ShippingType,
+      vbap._ShippingType._Text[ Language = $session.system_language ].ShippingTypeName,
       //指定納入日付（明細）
       vbap.RequestedDeliveryDate,
       //计划行最小的日期 計画出庫日付?
@@ -73,16 +76,14 @@ define view entity ZR_SALESORDERBASIC
       //本次交货数量（手动输入
       @Semantics.quantity.unitOfMeasure: 'OrderQuantityUnit'
       cast(0 as menge_d)                                   as CurrDeliveryQty,
-//      //新库存地点，默认和自定义逻辑的库存地点相同，可修改 搜索帮助 mard
-//      SalesStorLoc.StorageLocation                         as ShippingStorLoc,
       // 生成的dn 可跳转至VL03N
       cast('' as abap.numc( 10 ))                          as DeliveryDocument
       //message 执行结果
 }
 where
-  vbap.SalesDocumentRjcnReason = ''
-  and ( vbap.TotalDeliveryStatus = 'A' or vbap.TotalDeliveryStatus = 'B' )
-//     vbak.SalesOrderType = 'SO-5'
-//  or vbak.SalesOrderType = 'SO-5'
-//  or vbak.SalesOrderType = 'SO-B'
+       vbap.SalesDocumentRjcnReason = ''
+  and(
+       vbap.TotalDeliveryStatus     = 'A'
+    or vbap.TotalDeliveryStatus     = 'B'
+  )
 //删除 确认数量为0的数据

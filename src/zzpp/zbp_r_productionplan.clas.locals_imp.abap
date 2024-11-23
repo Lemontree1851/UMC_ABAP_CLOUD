@@ -330,7 +330,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                AND plannedorderisfirm = @space
               INTO CORRESPONDING FIELDS OF TABLE @lt_unconfirmplan.
           ENDIF.
-          " Sum qty by startdate
+          " 将开始日<当天的都修改为当天，否则比较第一天的数据会错乱
           LOOP AT lt_confirmedplan ASSIGNING FIELD-SYMBOL(<lfs_tmp>).
             IF <lfs_tmp>-plndorderplannedstartdate < lv_datum.
               <lfs_tmp>-startdate = lv_datum.
@@ -400,7 +400,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                  WITH KEY material = <ls_data>-idnrk
                           mrpplant = <ls_data>-plant
                           productionversion = <ls_data>-verid
-                          plndorderplannedstartdate = lv_day.
+                          startdate = lv_day.
             IF sy-subrc = 0.
               "確定計画手配の処理:比较
               lv_qty = <l_field>.
@@ -411,7 +411,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                         WHERE material = <ls_data>-idnrk
                           AND mrpplant = <ls_data>-plant
                           AND productionversion = <ls_data>-verid
-                          AND plndorderplannedstartdate = lv_day.
+                          AND startdate = lv_day.
                   IF lv_first = 'X'.
                     IF lv_qty = 0.  "如果=0，直接删除，后续不用处理
                       delete_planorder( CHANGING cs_planorder = ls_confirmedplan
