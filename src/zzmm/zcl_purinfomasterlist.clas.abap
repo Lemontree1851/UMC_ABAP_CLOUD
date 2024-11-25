@@ -301,6 +301,9 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
       INTO TABLE @DATA(lt_purinfoitem2).
 
     IF sy-subrc = 0.
+      SORT lt_purinfoitem2.
+      DELETE ADJACENT DUPLICATES FROM lt_purinfoitem2 COMPARING ALL FIELDS.
+
       DATA(lt_supplier) = lt_purinfoitem2.
       SORT lt_supplier BY supplier.
       DELETE ADJACENT DUPLICATES FROM lt_supplier COMPARING supplier.
@@ -687,7 +690,10 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
           IF lw_recdvalidity-conditionvaliditystartdate >= 0
           AND lv_lastflg IS NOT INITIAL.
             lw_data-latestoffer = abap_on.
-            CLEAR lv_lastflg.
+            CLEAR:
+              lv_lastflg.
+          ELSE.
+            CLEAR lw_data-latestoffer.
           ENDIF.
 
           APPEND lw_data TO lt_data.

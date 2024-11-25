@@ -8,7 +8,7 @@ CLASS zcl_http_podata_004 DEFINITION
     TYPES:
       BEGIN OF ty_inputs,
 *        DocumentDate                TYPE c LENGTH 8,    "請求書日付"
-        documentdate TYPE D,    "請求書日付"
+        documentdate TYPE d,    "請求書日付"
       END OF ty_inputs.
 
     TYPES:
@@ -16,7 +16,7 @@ CLASS zcl_http_podata_004 DEFINITION
         supplierinvoice             TYPE c LENGTH 10,   "請求書伝票番号"
         fiscalyear                  TYPE c LENGTH 4,    "会計年度"
         invoicingparty              TYPE c LENGTH 10,   "請求元"
-        documentdate                TYPE d,          "請求書日付"
+        documentdate                TYPE d,             "請求書日付"
         postingdate                 TYPE c LENGTH 8,    "転記日付"
         exchangerate                TYPE c LENGTH 9,    "換算レート"
         duecalculationbasedate      TYPE c LENGTH 8,    "基準日"
@@ -47,6 +47,7 @@ CLASS zcl_http_podata_004 DEFINITION
         companycode                 TYPE c LENGTH 4,    "会社コード
         purchasinggroupname         TYPE c LENGTH 18,   "購買グループ名
         accountingdocument          TYPE c LENGTH 10,   "仕訳
+        suppliername                TYPE c LENGTH 20,   "サプライヤ名
       END OF ty_response,
 
       BEGIN OF ty_output,
@@ -54,7 +55,7 @@ CLASS zcl_http_podata_004 DEFINITION
       END OF ty_output.
 
     INTERFACES if_http_service_extension .
-  PROTECTED SECTION.
+PROTECTED SECTION.
   PRIVATE SECTION.
 
     DATA:
@@ -115,24 +116,26 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
     DATA(lv_sy_datum) = cl_abap_context_info=>get_system_date( ).
 
     lw_req-documentdate = lv_sy_datum.
-*    lw_req-documentdate = '20241111'.
 
     APPEND lw_req TO lt_req.
 
     IF lt_req IS INITIAL.
 
       " 获取所有数据
-      SELECT supplierinvoice,
-             fiscalyear,
-             invoicingparty,
-             documentdate,
-             postingdate,
-             exchangerate,
-             duecalculationbasedate,
-             invoicegrossamount,
-             createdbyuser,
-             lastchangedbyuser
-        FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS
+      SELECT a~supplierinvoice,
+             a~fiscalyear,
+             a~invoicingparty,
+             a~documentdate,
+             a~postingdate,
+             a~exchangerate,
+             a~duecalculationbasedate,
+             a~invoicegrossamount,
+             a~createdbyuser,
+             a~lastchangedbyuser,
+             b~suppliername
+        FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS AS a
+        LEFT JOIN i_supplier WITH PRIVILEGED ACCESS AS b
+        ON b~supplier = a~invoicingparty
         INTO TABLE @DATA(lt_supplier_invoice1).
 
       DATA(lt_supplier_invoice2) = lt_supplier_invoice1[].
@@ -204,17 +207,28 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       ENDIF.
 
       IF lt_po_ref1 IS NOT INITIAL.
-        " 从 I_SuplrInvcItmAcctAssgmtAPI01 表获取数据
-        SELECT supplierinvoice,
-               fiscalyear,
-               supplierinvoiceitem,
+*        " 从 I_SuplrInvcItmAcctAssgmtAPI01 表获取数据
+*        SELECT supplierinvoice,
+*               fiscalyear,
+*               supplierinvoiceitem
+**               costcenter,
+**               glaccount
+*          FROM i_suplrinvcitmacctassgmtapi01 WITH PRIVILEGED ACCESS
+*          FOR ALL ENTRIES IN @lt_po_ref1
+*          WHERE supplierinvoice = @lt_po_ref1-supplierinvoice
+*            AND fiscalyear = @lt_po_ref1-fiscalyear
+*            AND supplierinvoiceitem = @lt_po_ref1-supplierinvoiceitem
+*          INTO TABLE @DATA(lt_acct_assgmt1).
+
+        " 从 I_PurOrdAccountAssignmentAPI01 表获取数据
+        SELECT purchaseorder,
+               purchaseorderitem,
                costcenter,
                glaccount
-          FROM i_suplrinvcitmacctassgmtapi01 WITH PRIVILEGED ACCESS
+          FROM i_purordaccountassignmentapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po_ref1
-          WHERE supplierinvoice = @lt_po_ref1-supplierinvoice
-            AND fiscalyear = @lt_po_ref1-fiscalyear
-            AND supplierinvoiceitem = @lt_po_ref1-supplierinvoiceitem
+          WHERE purchaseorder = @lt_po_ref1-purchaseorder
+            AND purchaseorderitem = @lt_po_ref1-purchaseorderitem
           INTO TABLE @DATA(lt_acct_assgmt1).
       ENDIF.
 
@@ -255,6 +269,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
       LOOP AT lt_supplier_invoice1 INTO DATA(lw_supplier_invoice1).
         CLEAR lw_result1.
+        lw_result1-SupplierName           = lw_supplier_invoice1-SupplierName.
         lw_result1-supplierinvoice        = lw_supplier_invoice1-supplierinvoice.
         lw_result1-fiscalyear             = lw_supplier_invoice1-fiscalyear.
         lw_result1-invoicingparty         = lw_supplier_invoice1-invoicingparty.
@@ -304,9 +319,9 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       ENDLOOP.
 
       LOOP AT lt_acct_assgmt1 INTO DATA(lw_acct_assgmt1).
-        READ TABLE lt_result1 INTO lw_result1 WITH KEY supplierinvoice = lw_acct_assgmt1-supplierinvoice
-                                                          fiscalyear = lw_acct_assgmt1-fiscalyear
-                                                 supplierinvoiceitem = lw_acct_assgmt1-supplierinvoiceitem.
+        READ TABLE lt_result1 INTO lw_result1 WITH KEY purchaseorder = lw_acct_assgmt1-purchaseorder
+                                                       purchaseorderitem = lw_acct_assgmt1-purchaseorderitem.
+
         IF sy-subrc = 0.
           lw_result1-costcenter = lw_acct_assgmt1-costcenter.
           lw_result1-glaccount  = lw_acct_assgmt1-glaccount.
@@ -438,7 +453,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
             ls_response-unitprice   = lw_result1-unitprice.
         ENDCASE.
 
-
+        CONDENSE ls_response-SupplierName.
         CONDENSE ls_response-supplierinvoice.
         CONDENSE ls_response-fiscalyear.
         CONDENSE ls_response-invoicingparty.
@@ -501,19 +516,20 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
     ELSE.
 
       " 根据 DocumentDate 过滤数据
-      SELECT supplierinvoice,
-             fiscalyear,
-             invoicingparty,
-             documentdate,
-             postingdate,
-             exchangerate,
-             duecalculationbasedate,
-             invoicegrossamount,
-             createdbyuser,
-             lastchangedbyuser
-        FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS
-        FOR ALL ENTRIES IN @lt_req
-        WHERE documentdate = @lt_req-documentdate
+      SELECT a~supplierinvoice,
+             a~fiscalyear,
+             a~invoicingparty,
+             a~documentdate,
+             a~postingdate,
+             a~exchangerate,
+             a~duecalculationbasedate,
+             a~invoicegrossamount,
+             a~createdbyuser,
+             a~lastchangedbyuser,
+             b~suppliername
+        FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS AS a
+        LEFT JOIN i_supplier WITH PRIVILEGED ACCESS AS b
+        ON b~supplier = a~invoicingparty
         INTO TABLE @DATA(lt_supplier_invoice3).
 
       DATA(lt_supplier_invoice4) = lt_supplier_invoice3[].
@@ -585,17 +601,28 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       ENDIF.
 
       IF lt_po_ref2 IS NOT INITIAL.
-        " 从 I_SuplrInvcItmAcctAssgmtAPI01 表获取数据
-        SELECT supplierinvoice,
-               fiscalyear,
-               supplierinvoiceitem,
+*        " 从 I_SuplrInvcItmAcctAssgmtAPI01 表获取数据
+*        SELECT supplierinvoice,
+*               fiscalyear,
+*               supplierinvoiceitem,
+*               costcenter,
+*               glaccount
+*          FROM i_suplrinvcitmacctassgmtapi01 WITH PRIVILEGED ACCESS
+*          FOR ALL ENTRIES IN @lt_po_ref2
+*          WHERE supplierinvoice = @lt_po_ref2-supplierinvoice
+*            AND fiscalyear = @lt_po_ref2-fiscalyear
+*            AND supplierinvoiceitem = @lt_po_ref2-supplierinvoiceitem
+*          INTO TABLE @DATA(lt_acct_assgmt2).
+
+        " 从 I_PurOrdAccountAssignmentAPI01 表获取数据
+        SELECT purchaseorder,
+               purchaseorderitem,
                costcenter,
                glaccount
-          FROM i_suplrinvcitmacctassgmtapi01 WITH PRIVILEGED ACCESS
+          FROM i_purordaccountassignmentapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po_ref2
-          WHERE supplierinvoice = @lt_po_ref2-supplierinvoice
-            AND fiscalyear = @lt_po_ref2-fiscalyear
-            AND supplierinvoiceitem = @lt_po_ref2-supplierinvoiceitem
+          WHERE purchaseorder = @lt_po_ref2-purchaseorder
+            AND purchaseorderitem = @lt_po_ref2-purchaseorderitem
           INTO TABLE @DATA(lt_acct_assgmt2).
       ENDIF.
 
@@ -635,6 +662,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
     LOOP AT lt_supplier_invoice3 INTO DATA(lw_supplier_invoice3).
       CLEAR lw_result.
+      lw_result-SupplierName           = lw_supplier_invoice3-SupplierName.
       lw_result-supplierinvoice        = lw_supplier_invoice3-supplierinvoice.
       lw_result-fiscalyear             = lw_supplier_invoice3-fiscalyear.
       lw_result-invoicingparty         = lw_supplier_invoice3-invoicingparty.
@@ -684,9 +712,8 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
     ENDLOOP.
 
     LOOP AT lt_acct_assgmt2 INTO DATA(lw_acct_assgmt2).
-      READ TABLE lt_result INTO lw_result WITH KEY supplierinvoice = lw_acct_assgmt2-supplierinvoice
-                                                        fiscalyear = lw_acct_assgmt2-fiscalyear
-                                               supplierinvoiceitem = lw_acct_assgmt2-supplierinvoiceitem.
+      READ TABLE lt_result INTO lw_result WITH KEY purchaseorder = lw_acct_assgmt2-purchaseorder
+                                                   purchaseorderitem = lw_acct_assgmt2-purchaseorderitem.
       IF sy-subrc = 0.
         lw_result-costcenter = lw_acct_assgmt2-costcenter.
         lw_result-glaccount  = lw_acct_assgmt2-glaccount.
@@ -822,6 +849,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
           ls_response-unitprice   = lw_result1-unitprice.
       ENDCASE.
 
+      CONDENSE ls_response-SupplierName.
       CONDENSE ls_response-supplierinvoice.
       CONDENSE ls_response-fiscalyear.
       CONDENSE ls_response-invoicingparty.

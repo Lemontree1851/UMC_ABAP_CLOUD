@@ -36,7 +36,7 @@ ENDCLASS.
 
 
 
-CLASS ZZCL_DTIMP_PROCESS IMPLEMENTATION.
+CLASS zzcl_dtimp_process IMPLEMENTATION.
 
 
   METHOD add_message_to_log.
@@ -226,31 +226,41 @@ CLASS ZZCL_DTIMP_PROCESS IMPLEMENTATION.
 
     get_data_from_excel( ).
 
-    " call function module
     IF mo_table IS INITIAL.
+      TRY.
+          add_message_to_log( i_text = |No data was read from the file.|
+                              i_type = if_bali_constants=>c_severity_error ).
+        CATCH cx_bali_runtime.
+          " handle exception
+      ENDTRY.
       RETURN.
     ENDIF.
 
+    TRY.
+        add_message_to_log( |Batch data import - Start.| ).
+      CATCH cx_bali_runtime.
+        " handle exception
+    ENDTRY.
+
+    " call function module
     process_logic( ).
 
   ENDMETHOD.
 
 
   METHOD if_oo_adt_classrun~main.
-    " for debugger
-    DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
-    lt_parameters = VALUE #( ( selname = 'P_ID'
-                               kind    = if_apj_dt_exec_object=>parameter
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = 'A1405D901B3B1EEFA9E82B9A5D1A95E1' ) )."FILE ID NOT JOB ID
-"low     = '5B254A18EBFA1EEF9CB4941908FA14FC' ) ).
-*                               low     = 'B714F993A1871EEF8B9195BEF840D4D9' ) ).
-    TRY.
-        if_apj_rt_exec_object~execute( it_parameters = lt_parameters ).
-      CATCH cx_root INTO DATA(lo_root).
-        out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
-    ENDTRY.
+*    " for debugger => 请使用类 zcl_debug_job
+*    DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
+*    lt_parameters = VALUE #( ( selname = 'P_ID'
+*                               kind    = if_apj_dt_exec_object=>parameter
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = 'A1405D901B3B1EEFA9E82B9A5D1A95E1' ) ).
+*    TRY.
+*        if_apj_rt_exec_object~execute( it_parameters = lt_parameters ).
+*      CATCH cx_root INTO DATA(lo_root).
+*        out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
+*    ENDTRY.
   ENDMETHOD.
 
 
@@ -288,6 +298,13 @@ CLASS ZZCL_DTIMP_PROCESS IMPLEMENTATION.
       CATCH cx_root.
         " handle exception
         lv_has_error = abap_true.
+        TRY.
+            add_message_to_log( i_text = |The logic processing function contains errors.|
+                                i_type = if_bali_constants=>c_severity_error ).
+          CATCH cx_bali_runtime.
+            " handle exception
+        ENDTRY.
+        RETURN.
     ENDTRY.
 
     TRY.
@@ -317,6 +334,12 @@ CLASS ZZCL_DTIMP_PROCESS IMPLEMENTATION.
       TRY.
           add_message_to_log( i_text = |Batch import processing contains errors.|
                               i_type = if_bali_constants=>c_severity_error ).
+        CATCH cx_bali_runtime.
+          " handle exception
+      ENDTRY.
+    ELSE.
+      TRY.
+          add_message_to_log( |Batch data import - Completed.| ).
         CATCH cx_bali_runtime.
           " handle exception
       ENDTRY.

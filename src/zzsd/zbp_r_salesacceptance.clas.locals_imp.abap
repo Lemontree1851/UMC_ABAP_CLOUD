@@ -161,6 +161,8 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
                                         EXPORTING iv_alpha = 'IN'
                                                   iv_input = <lfs_data>-customermaterial ).
 
+      <lfs_data>-customer = |{ <lfs_data>-customer ALPHA = IN }|.
+
     ENDLOOP.
 * Get reference data
     SELECT product
@@ -307,6 +309,17 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       lv_to        TYPE budat,
       lv_message   TYPE string,
       lv_msg       TYPE string.
+
+    LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
+      <lfs_data>-umcproductcode = zzcl_common_utils=>conversion_matn1(
+                                      EXPORTING iv_alpha = 'IN'
+                                                iv_input = <lfs_data>-umcproductcode ).
+      <lfs_data>-customermaterial = zzcl_common_utils=>conversion_matn1(
+                                      EXPORTING iv_alpha = 'IN'
+                                                iv_input = <lfs_data>-customermaterial ).
+
+      <lfs_data>-customer = |{ <lfs_data>-customer ALPHA = IN }|.
+    ENDLOOP.
 * Check
     SELECT COUNT( * )
       FROM ztsd_1003
@@ -317,17 +330,12 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
        AND acceptperiod = @ct_data-acceptperiod.
 
     IF sy-subrc = 0.
-      LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
+      LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'E'.
         <lfs_data>-message = TEXT-013.
       ENDLOOP.
     ELSE.
 * Insert process
-      LOOP AT ct_data ASSIGNING <lfs_data>.
-        <lfs_data>-umcproductcode = zzcl_common_utils=>conversion_matn1(
-                                        EXPORTING iv_alpha = 'IN'
-                                                  iv_input = <lfs_data>-umcproductcode ).
-      ENDLOOP.
       SELECT product,
              baseunit
         FROM i_product
@@ -405,6 +413,16 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       lv_msg     TYPE string.
 
 * Check if exist
+    LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
+      <lfs_data>-umcproductcode = zzcl_common_utils=>conversion_matn1(
+                                      EXPORTING iv_alpha = 'IN'
+                                                iv_input = <lfs_data>-umcproductcode ).
+      <lfs_data>-customermaterial = zzcl_common_utils=>conversion_matn1(
+                                      EXPORTING iv_alpha = 'IN'
+                                                iv_input = <lfs_data>-customermaterial ).
+
+      <lfs_data>-customer = |{ <lfs_data>-customer ALPHA = IN }|.
+    ENDLOOP.
     SELECT *
       FROM ztsd_1003
       FOR ALL ENTRIES IN @ct_data
@@ -414,8 +432,8 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
        AND acceptperiod = @ct_data-acceptperiod
       INTO TABLE @DATA(lt_table).
 
-    IF sy-subrc = 0.
-      LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
+    IF sy-subrc <> 0.
+      LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'E'.
         <lfs_data>-message = TEXT-013. "指定得意先且つ指定期間の検収データは既に登録しました。
       ENDLOOP.
@@ -525,6 +543,16 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       lv_msg     TYPE string.
 
 * Check if exist
+    LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
+      <lfs_data>-umcproductcode = zzcl_common_utils=>conversion_matn1(
+                                      EXPORTING iv_alpha = 'IN'
+                                                iv_input = <lfs_data>-umcproductcode ).
+      <lfs_data>-customermaterial = zzcl_common_utils=>conversion_matn1(
+                                      EXPORTING iv_alpha = 'IN'
+                                                iv_input = <lfs_data>-customermaterial ).
+
+      <lfs_data>-customer = |{ <lfs_data>-customer ALPHA = IN }|.
+    ENDLOOP.
     SELECT *
       FROM ztsd_1003
       FOR ALL ENTRIES IN @ct_data
@@ -534,8 +562,8 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
        AND acceptperiod = @ct_data-acceptperiod
       INTO TABLE @DATA(lt_table).
 
-    IF sy-subrc = 0.
-      LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
+    IF sy-subrc <> 0.
+      LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'E'.
         <lfs_data>-message = TEXT-013. "指定得意先且つ指定期間の検収データは既に登録しました。
       ENDLOOP.
@@ -585,6 +613,16 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       lv_msg     TYPE string.
 
 * Check if exist
+    LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
+      <lfs_data>-umcproductcode = zzcl_common_utils=>conversion_matn1(
+                                      EXPORTING iv_alpha = 'IN'
+                                                iv_input = <lfs_data>-umcproductcode ).
+      <lfs_data>-customermaterial = zzcl_common_utils=>conversion_matn1(
+                                      EXPORTING iv_alpha = 'IN'
+                                                iv_input = <lfs_data>-customermaterial ).
+
+      <lfs_data>-customer = |{ <lfs_data>-customer ALPHA = IN }|.
+    ENDLOOP.
     SELECT *
       FROM ztsd_1003
       FOR ALL ENTRIES IN @ct_data
@@ -594,8 +632,8 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
        AND acceptperiod = @ct_data-acceptperiod
       INTO TABLE @DATA(lt_table).
 
-    IF sy-subrc = 0.
-      LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
+    IF sy-subrc <> 0.
+      LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'E'.
         <lfs_data>-message = TEXT-013. "指定得意先且つ指定期間の検収データは既に登録しました。
       ENDLOOP.

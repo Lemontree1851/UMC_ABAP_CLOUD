@@ -1,5 +1,5 @@
 unmanaged implementation in class zbp_r_salesorder_u unique;
-strict ( 2 );
+//strict ( 2 );
 
 define behavior for ZR_SALESORDER_U alias SalesOrderForDN
 //late numbering
@@ -11,7 +11,7 @@ authorization master ( instance )
   update;
   delete;
 
-  field ( readonly ) SalesOrder, SalesOrderItem;
+  field ( readonly ) SalesDocument, SalesDocumentItem;
 
-  action createDeliveryOrder parameter ZD_PARAMETERSFORDN result [1] $self;
+  static action createDeliveryOrder parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
 }

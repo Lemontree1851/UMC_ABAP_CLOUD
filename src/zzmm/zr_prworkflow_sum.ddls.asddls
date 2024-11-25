@@ -9,8 +9,19 @@ define view entity ZR_PRWORKFLOW_SUM
   currency,
       @Semantics.amount.currencyCode : 'currency'  
           sum(
-          case when unit_price <> 0 then price * quantity / unit_price
+          case currency
+          when 'JPY'
+          then
+          
+          ( case when unit_price <> 0 then price * quantity / unit_price
           else 0
+          end ) / 100
+          
+          else 
+          ( case when unit_price <> 0 then price * quantity / unit_price
+          else 0
+          end )
+          
           end
           ) as Amount_Sum 
 

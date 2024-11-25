@@ -229,6 +229,7 @@ CLASS zzcl_common_utils DEFINITION
       set_datadescr      IMPORTING VALUE(iv_types) TYPE string
                          RETURNING VALUE(rv_descr) TYPE REF TO cl_abap_datadescr,
 *&--End use for create dynamic table
+
       is_workingday IMPORTING iv_plant             TYPE werks_d
                               iv_date              TYPE datum
                     RETURNING VALUE(rv_workingday) TYPE abap_bool.
@@ -725,34 +726,7 @@ CLASS zzcl_common_utils IMPLEMENTATION.
 
           " is a holiday
           IF lv_flag = abap_false.
-*            TRY.
-*                cl_scal_utils=>date_get_week(
-*                  EXPORTING
-*                    iv_date = iv_date
-*                  IMPORTING
-*                    ev_year = DATA(lv_year)
-*                    ev_week = DATA(lv_week) ).
 *
-*                IF lv_week = 52.
-*                  lv_year += 1.
-*                  lv_week = 1.
-*                ELSE.
-*                  lv_week += 1.
-*                ENDIF.
-*
-*                cl_scal_utils=>week_get_first_day(
-*                  EXPORTING
-*                    iv_year      = lv_year
-*                    iv_week      = lv_week
-*                    iv_year_week = |{ lv_year }{ lv_week }|
-*                  IMPORTING
-*                    ev_date      = rv_workingday ).
-*
-*              CATCH cx_scal INTO DATA(lx_scal).
-*                "handle exception
-*                DATA(lv_text) = lx_scal->get_text( ).
-*            ENDTRY.
-
             lv_date = iv_date.
             DO.
               lv_date += 1.

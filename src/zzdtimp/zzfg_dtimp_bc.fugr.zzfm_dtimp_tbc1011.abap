@@ -37,7 +37,8 @@ FUNCTION zzfm_dtimp_tbc1011.
   CONSTANTS:
     lc_updateflag_insert TYPE string VALUE 'I',
     lc_updateflag_update TYPE string VALUE 'U',
-    lc_updateflag_delete TYPE string VALUE 'D'.
+    lc_updateflag_delete TYPE string VALUE 'D',
+    lc_splitflag         TYPE string VALUE '、'.
 
   CREATE DATA eo_data TYPE TABLE OF (iv_struc).
 
@@ -60,8 +61,8 @@ FUNCTION zzfm_dtimp_tbc1011.
       <line>-('Message') = 'The value of update flag cannot be empty.'.
       <line>-('Type')    = 'E'.
       CONTINUE.
-    ELSEIF ls_data-updateflag <> lc_updateflag_insert OR
-           ls_data-updateflag <> lc_updateflag_update OR
+    ELSEIF ls_data-updateflag <> lc_updateflag_insert AND
+           ls_data-updateflag <> lc_updateflag_update AND
            ls_data-updateflag <> lc_updateflag_delete.
       <line>-('Message') = 'The value of update flag must be I or U or D.'.
       <line>-('Type')    = 'E'.
@@ -136,12 +137,6 @@ FUNCTION zzfm_dtimp_tbc1011.
           ls_ztbc_1006,
           lt_ztbc_1006.
 
-        TRY.
-          ls_ztbc_1006-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-        CATCH cx_uuid_error.
-          " handle exception
-        ENDTRY.
-
         ls_ztbc_1006-user_uuid = ls_ztbc_1004-user_uuid.
         ls_ztbc_1006-created_by = sy-uname.
         GET TIME STAMP FIELD ls_ztbc_1006-created_at.
@@ -149,8 +144,14 @@ FUNCTION zzfm_dtimp_tbc1011.
         GET TIME STAMP FIELD ls_ztbc_1006-last_changed_at.
         GET TIME STAMP FIELD ls_ztbc_1006-local_last_changed_at.
 
-        SPLIT ls_data-plant AT ',' INTO TABLE lt_plant.
+        CLEAR lt_plant.
+        SPLIT ls_data-plant AT lc_splitflag INTO TABLE lt_plant.
         LOOP AT lt_plant INTO DATA(ls_plant).
+          TRY.
+            ls_ztbc_1006-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+          CATCH cx_uuid_error.
+            " handle exception
+          ENDTRY.
           ls_ztbc_1006-plant = ls_plant-plant.
           APPEND ls_ztbc_1006 TO lt_ztbc_1006.
         ENDLOOP.
@@ -183,12 +184,6 @@ FUNCTION zzfm_dtimp_tbc1011.
           ls_ztbc_1012,
           lt_ztbc_1012.
 
-        TRY.
-          ls_ztbc_1012-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-        CATCH cx_uuid_error.
-          " handle exception
-        ENDTRY.
-
         ls_ztbc_1012-user_uuid = ls_ztbc_1004-user_uuid.
         ls_ztbc_1012-created_by = sy-uname.
         GET TIME STAMP FIELD ls_ztbc_1012-created_at.
@@ -196,8 +191,14 @@ FUNCTION zzfm_dtimp_tbc1011.
         GET TIME STAMP FIELD ls_ztbc_1012-last_changed_at.
         GET TIME STAMP FIELD ls_ztbc_1012-local_last_changed_at.
 
-        SPLIT ls_data-company_code AT ',' INTO TABLE lt_company.
+        CLEAR lt_company.
+        SPLIT ls_data-company_code AT lc_splitflag INTO TABLE lt_company.
         LOOP AT lt_company INTO DATA(ls_company).
+          TRY.
+            ls_ztbc_1012-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+          CATCH cx_uuid_error.
+            " handle exception
+          ENDTRY.
           ls_ztbc_1012-company_code = ls_company-company.
           APPEND ls_ztbc_1012 TO lt_ztbc_1012.
         ENDLOOP.
@@ -230,12 +231,6 @@ FUNCTION zzfm_dtimp_tbc1011.
           ls_ztbc_1013,
           lt_ztbc_1013.
 
-        TRY.
-          ls_ztbc_1013-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-        CATCH cx_uuid_error.
-          " handle exception
-        ENDTRY.
-
         ls_ztbc_1013-user_uuid = ls_ztbc_1004-user_uuid.
         ls_ztbc_1013-created_by = sy-uname.
         GET TIME STAMP FIELD ls_ztbc_1013-created_at.
@@ -243,8 +238,14 @@ FUNCTION zzfm_dtimp_tbc1011.
         GET TIME STAMP FIELD ls_ztbc_1013-last_changed_at.
         GET TIME STAMP FIELD ls_ztbc_1013-local_last_changed_at.
 
-        SPLIT ls_data-sales_organization AT ',' INTO TABLE lt_salesorg.
+        CLEAR lt_salesorg.
+        SPLIT ls_data-sales_organization AT lc_splitflag INTO TABLE lt_salesorg.
         LOOP AT lt_salesorg INTO DATA(ls_salesorg).
+          TRY.
+            ls_ztbc_1013-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+          CATCH cx_uuid_error.
+            " handle exception
+          ENDTRY.
           ls_ztbc_1013-sales_organization = ls_salesorg-salesorg.
           APPEND ls_ztbc_1013 TO lt_ztbc_1013.
         ENDLOOP.
@@ -313,28 +314,12 @@ FUNCTION zzfm_dtimp_tbc1011.
       IF ls_data-plant IS NOT INITIAL.
 
         DELETE FROM ztbc_1006 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
-        IF sy-subrc = 0.
-          COMMIT WORK AND WAIT.
-          <line>-('Type') = 'S'.
-          <line>-('Message') = 'Success'.
-        ELSE.
-          ROLLBACK WORK.
-          MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-          <line>-('Type') = 'E'.
-          CONTINUE.
-        ENDIF.
 
         IF ls_data-plant <> 'D'.
 
           CLEAR:
             ls_ztbc_1006,
             lt_ztbc_1006.
-
-          TRY.
-            ls_ztbc_1006-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-          CATCH cx_uuid_error.
-            " handle exception
-          ENDTRY.
 
           ls_ztbc_1006-user_uuid = ls_ztbc_1004-user_uuid.
           ls_ztbc_1006-created_by = sy-uname.
@@ -343,8 +328,14 @@ FUNCTION zzfm_dtimp_tbc1011.
           GET TIME STAMP FIELD ls_ztbc_1006-last_changed_at.
           GET TIME STAMP FIELD ls_ztbc_1006-local_last_changed_at.
 
-          SPLIT ls_data-plant AT ',' INTO TABLE lt_plant.
+          CLEAR lt_plant.
+          SPLIT ls_data-plant AT lc_splitflag INTO TABLE lt_plant.
           LOOP AT lt_plant INTO ls_plant.
+            TRY.
+              ls_ztbc_1006-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+            CATCH cx_uuid_error.
+              " handle exception
+            ENDTRY.
             ls_ztbc_1006-plant = ls_plant-plant.
             APPEND ls_ztbc_1006 TO lt_ztbc_1006.
           ENDLOOP.
@@ -361,6 +352,10 @@ FUNCTION zzfm_dtimp_tbc1011.
             CONTINUE.
           ENDIF.
 
+        ELSE.
+          COMMIT WORK AND WAIT.
+          <line>-('Type') = 'S'.
+          <line>-('Message') = 'Success'.
         ENDIF.
 
       ENDIF.
@@ -369,28 +364,12 @@ FUNCTION zzfm_dtimp_tbc1011.
       IF ls_data-company_code IS NOT INITIAL.
 
         DELETE FROM ztbc_1012 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
-        IF sy-subrc = 0.
-          COMMIT WORK AND WAIT.
-          <line>-('Type') = 'S'.
-          <line>-('Message') = 'Success'.
-        ELSE.
-          ROLLBACK WORK.
-          MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-          <line>-('Type') = 'E'.
-          CONTINUE.
-        ENDIF.
 
         IF ls_data-company_code <> 'D'.
 
           CLEAR:
             ls_ztbc_1012,
             lt_ztbc_1012.
-
-          TRY.
-            ls_ztbc_1012-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-          CATCH cx_uuid_error.
-            " handle exception
-          ENDTRY.
 
           ls_ztbc_1012-user_uuid = ls_ztbc_1004-user_uuid.
           ls_ztbc_1012-created_by = sy-uname.
@@ -399,8 +378,14 @@ FUNCTION zzfm_dtimp_tbc1011.
           GET TIME STAMP FIELD ls_ztbc_1012-last_changed_at.
           GET TIME STAMP FIELD ls_ztbc_1012-local_last_changed_at.
 
-          SPLIT ls_data-company_code AT ',' INTO TABLE lt_company.
+          CLEAR lt_company.
+          SPLIT ls_data-company_code AT lc_splitflag INTO TABLE lt_company.
           LOOP AT lt_company INTO ls_company.
+            TRY.
+              ls_ztbc_1012-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+            CATCH cx_uuid_error.
+              " handle exception
+            ENDTRY.
             ls_ztbc_1012-company_code = ls_company-company.
             APPEND ls_ztbc_1012 TO lt_ztbc_1012.
           ENDLOOP.
@@ -417,6 +402,10 @@ FUNCTION zzfm_dtimp_tbc1011.
             CONTINUE.
           ENDIF.
 
+        ELSE.
+          COMMIT WORK AND WAIT.
+          <line>-('Type') = 'S'.
+          <line>-('Message') = 'Success'.
         ENDIF.
 
       ENDIF.
@@ -425,28 +414,12 @@ FUNCTION zzfm_dtimp_tbc1011.
       IF ls_data-sales_organization IS NOT INITIAL.
 
         DELETE FROM ztbc_1013 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
-        IF sy-subrc = 0.
-          COMMIT WORK AND WAIT.
-          <line>-('Type') = 'S'.
-          <line>-('Message') = 'Success'.
-        ELSE.
-          ROLLBACK WORK.
-          MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-          <line>-('Type') = 'E'.
-          CONTINUE.
-        ENDIF.
 
         IF ls_data-sales_organization <> 'D'.
 
           CLEAR:
             ls_ztbc_1013,
             lt_ztbc_1013.
-
-          TRY.
-            ls_ztbc_1013-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-          CATCH cx_uuid_error.
-            " handle exception
-          ENDTRY.
 
           ls_ztbc_1013-user_uuid = ls_ztbc_1004-user_uuid.
           ls_ztbc_1013-created_by = sy-uname.
@@ -455,8 +428,14 @@ FUNCTION zzfm_dtimp_tbc1011.
           GET TIME STAMP FIELD ls_ztbc_1013-last_changed_at.
           GET TIME STAMP FIELD ls_ztbc_1013-local_last_changed_at.
 
-          SPLIT ls_data-sales_organization AT ',' INTO TABLE lt_salesorg.
+          CLEAR lt_salesorg.
+          SPLIT ls_data-sales_organization AT lc_splitflag INTO TABLE lt_salesorg.
           LOOP AT lt_salesorg INTO ls_salesorg.
+            TRY.
+              ls_ztbc_1013-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+            CATCH cx_uuid_error.
+              " handle exception
+            ENDTRY.
             ls_ztbc_1013-sales_organization = ls_salesorg-salesorg.
             APPEND ls_ztbc_1013 TO lt_ztbc_1013.
           ENDLOOP.
@@ -473,6 +452,10 @@ FUNCTION zzfm_dtimp_tbc1011.
             CONTINUE.
           ENDIF.
 
+        ELSE.
+          COMMIT WORK AND WAIT.
+          <line>-('Type') = 'S'.
+          <line>-('Message') = 'Success'.
         ENDIF.
 
       ENDIF.
@@ -490,54 +473,22 @@ FUNCTION zzfm_dtimp_tbc1011.
 
       "Delete user data
       DELETE FROM ztbc_1004 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
-      IF sy-subrc <> 0.
-        ROLLBACK WORK.
-        MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-        <line>-('Type') = 'E'.
-        CONTINUE.
-      ENDIF.
 
       "Delete plant data
       DELETE FROM ztbc_1006 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
-      IF sy-subrc <> 0.
-        ROLLBACK WORK.
-        MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-        <line>-('Type') = 'E'.
-        CONTINUE.
-      ENDIF.
 
       "Delete role data
       DELETE FROM ztbc_1007 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
-      IF sy-subrc <> 0.
-        ROLLBACK WORK.
-        MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-        <line>-('Type') = 'E'.
-        CONTINUE.
-      ENDIF.
 
       "Delete company data
       DELETE FROM ztbc_1012 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
-      IF sy-subrc <> 0.
-        ROLLBACK WORK.
-        MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-        <line>-('Type') = 'E'.
-        CONTINUE.
-      ENDIF.
 
       "Delete sales organization data
       DELETE FROM ztbc_1013 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
-      IF sy-subrc <> 0.
-        ROLLBACK WORK.
-        MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-        <line>-('Type') = 'E'.
-        CONTINUE.
-      ENDIF.
 
-      IF <line>-('Type') IS INITIAL.
-        <line>-('Message') = 'Success'.
-        <line>-('Type')    = 'S'.
-        CONTINUE.
-      ENDIF.
+      COMMIT WORK AND WAIT.
+      <line>-('Type') = 'S'.
+      <line>-('Message') = 'Success'.
 
     ENDIF.
 

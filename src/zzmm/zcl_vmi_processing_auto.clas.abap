@@ -17,11 +17,7 @@ CLASS zcl_vmi_processing_auto DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_VMI_PROCESSING_AUTO IMPLEMENTATION.
-
-
+CLASS zcl_vmi_processing_auto IMPLEMENTATION.
   METHOD execute.
 
     TYPES:
@@ -99,6 +95,7 @@ CLASS ZCL_VMI_PROCESSING_AUTO IMPLEMENTATION.
 
     CONSTANTS:
       lc_stat_code_201      TYPE if_web_http_response=>http_status-code VALUE '201',
+      lc_stat_code_500      TYPE if_web_http_response=>http_status-code VALUE '500',
       lc_hour_08            TYPE if_xco_cp_tm_time=>tv_hour             VALUE '08',
       lc_minute_00          TYPE if_xco_cp_tm_time=>tv_minute           VALUE '00',
       lc_second_00          TYPE if_xco_cp_tm_time=>tv_second           VALUE '00',
@@ -270,21 +267,30 @@ CLASS ZCL_VMI_PROCESSING_AUTO IMPLEMENTATION.
             ev_status_code = DATA(lv_stat_code)
             ev_response    = DATA(lv_response) ).
 
-        "JSON->ABAP
-        xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
-            ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_response ) ).
-
         IF lv_stat_code = lc_stat_code_201.
+          "JSON->ABAP
+          xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
+              ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_response ) ).
+
           <fs_ztmm_1010>-materialdocument     = ls_response-d-material_document.
           <fs_ztmm_1010>-materialdocumentyear = ls_response-d-material_document_year.
           <fs_ztmm_1010>-processed            = abap_true.
           CLEAR <fs_ztmm_1010>-message.
         ELSE.
-          READ TABLE ls_response-error-innererror-errordetails INTO DATA(ls_errordetails) INDEX 1.
-          IF sy-subrc = 0.
-            <fs_ztmm_1010>-message = ls_errordetails-message.
+          "Could not fetch SCRF token
+          IF lv_stat_code = lc_stat_code_500.
+            <fs_ztmm_1010>-message = lv_response.
           ELSE.
-            <fs_ztmm_1010>-message = ls_response-error-message-value.
+            "JSON->ABAP
+            xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
+                ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_response ) ).
+
+            READ TABLE ls_response-error-innererror-errordetails INTO DATA(ls_errordetails) INDEX 1.
+            IF sy-subrc = 0.
+              <fs_ztmm_1010>-message = ls_errordetails-message.
+            ELSE.
+              <fs_ztmm_1010>-message = ls_response-error-message-value.
+            ENDIF.
           ENDIF.
         ENDIF.
 

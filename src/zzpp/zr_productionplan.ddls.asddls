@@ -153,6 +153,7 @@ define root custom entity ZR_PRODUCTIONPLAN
       D097                 : abap.char(20);
       D098                 : abap.char(20);
       D099                 : abap.char(20);
+      Sobmx                : abap.char(2);  //特殊調達タイプ
       Status               : abap.char(1);
       Message              : zze_zzkey;
 }

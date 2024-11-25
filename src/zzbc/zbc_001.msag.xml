@@ -90,25 +90,25 @@
      <SPRSL>E</SPRSL>
      <ARBGB>ZBC_001</ARBGB>
      <MSGNR>013</MSGNR>
-     <TEXT>購買依頼&amp;1にPR_BYはありません</TEXT>
+     <TEXT>購買申請&amp;1に購買申請者の情報はありません。チェックしてください。</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZBC_001</ARBGB>
      <MSGNR>014</MSGNR>
-     <TEXT>購買依頼&amp;1 PR_BY&amp;2対応メールボックスが見つかりません</TEXT>
+     <TEXT>購買申請&amp;1に購買申請者&amp;2のメールアドレスを取得できません。チェックしてください。</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZBC_001</ARBGB>
      <MSGNR>015</MSGNR>
-     <TEXT>購買依頼&amp;1にPOLINK_BYはありません</TEXT>
+     <TEXT>購買申請&amp;1にPO連携担当者の情報はありません。チェックしてください。</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZBC_001</ARBGB>
      <MSGNR>016</MSGNR>
-     <TEXT>購買依頼&amp;1 POLINK_BY&amp;2対応メールボックスが見つかりません</TEXT>
+     <TEXT>購買申請&amp;1にPO連携担当者のメールアドレスを取得できません。チェックしてください。</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>
@@ -132,19 +132,19 @@
      <SPRSL>E</SPRSL>
      <ARBGB>ZBC_001</ARBGB>
      <MSGNR>020</MSGNR>
-     <TEXT>購入目的&amp;1はZTBCに配置されていません、チェックしてください</TEXT>
+     <TEXT>購入目的&amp;1はテーブル&amp;2に設定されていません。チェックしてください。「ID:&amp;3」</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZBC_001</ARBGB>
      <MSGNR>021</MSGNR>
-     <TEXT> 発注タイプを分類する&amp;1はZTBCに配置されていません、チェックしてください</TEXT>
+     <TEXT>発注タイプ&amp;1はテーブル&amp;2に設定されていません。チェックしてください。「ID:&amp;3」</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZBC_001</ARBGB>
      <MSGNR>022</MSGNR>
-     <TEXT>无権申请会社コード&amp;1の购入申请书据</TEXT>
+     <TEXT>対象データは処理権限を持っていません。チェックしてください。</TEXT>
     </T100>
    </T100>
   </asx:values>

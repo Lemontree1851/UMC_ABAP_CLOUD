@@ -7,7 +7,10 @@
 "ZTMM_1006"
 ],
 "ASSOCIATED":
-[],
+[
+"ZC_WF_LOCATION_VH",
+"ZC_WF_PRTYPE_VH"
+],
 "BASE":
 [],
 "ANNO_REF":

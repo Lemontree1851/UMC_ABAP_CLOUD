@@ -34,6 +34,8 @@ authorization master ( instance )
   draft determine action Prepare;
 
   association _AssignPlant { create; with draft; }
+  association _AssignCompany { create; with draft; }
+  association _AssignSalesOrg { create; with draft; }
   association _AssignRole { create; with draft; }
 
   mapping for ztbc_1004
@@ -126,6 +128,84 @@ etag master LocalLastChangedAt
       Uuid               = uuid;
       UserUuid           = user_uuid;
       RoleUuid           = role_uuid;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}
+
+define behavior for ZR_TBC1012 alias AssignCompany
+persistent table ztbc_1012
+draft table ztbc_1012_d
+lock dependent by _User
+authorization dependent by _User
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) Uuid;
+  field ( readonly )
+  UserUuid,
+  CompanyCodeName,
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field ( mandatory ) CompanyCode;
+
+  validation validateCompanyCode on save ##NOT_ASSIGNED_TO_DETACT { field CompanyCode; create; update; }
+
+  association _User { with draft; }
+
+  mapping for ztbc_1012
+    {
+      Uuid               = uuid;
+      UserUuid           = user_uuid;
+      CompanyCode        = company_code;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}
+
+define behavior for ZR_TBC1013 alias AssignSalesOrg
+persistent table ztbc_1013
+draft table ztbc_1013_d
+lock dependent by _User
+authorization dependent by _User
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) Uuid;
+  field ( readonly )
+  UserUuid,
+  SalesOrganizationName,
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field ( mandatory ) SalesOrganization;
+
+  validation validateSalesOrg on save ##NOT_ASSIGNED_TO_DETACT { field SalesOrganization; create; update; }
+
+  association _User { with draft; }
+
+  mapping for ztbc_1013
+    {
+      Uuid               = uuid;
+      UserUuid           = user_uuid;
+      SalesOrganization  = sales_organization;
       CreatedBy          = created_by;
       CreatedAt          = created_at;
       LastChangedBy      = last_changed_by;

@@ -2,6 +2,14 @@
 @EndUserText.label: '##GENERATED ZTMM_1006'
 define root view entity ZR_TMM_1006
   as select from ztmm_1006
+  association [0..1] to ZC_WF_PrType_VH         as _PrTypeText         on  $projection.PrType = _PrTypeText.Zvalue1
+  association [0..1] to ZC_WF_ApplyDepart_VH    as _ApplyDepartText    on  $projection.ApplyDepart = _ApplyDepartText.Zvalue1
+  association [0..1] to ztbc_1001               as _OrderTypeText      on  $projection.OrderType = _OrderTypeText.zvalue1
+                                                                       and _OrderTypeText.zid    = 'ZMM003'
+  association [0..1] to ztbc_1001               as _BuyPurposeText     on  $projection.BuyPurpoose = _BuyPurposeText.zvalue1
+                                                                       and _BuyPurposeText.zid     = 'ZMM002'
+  association [0..1] to ZC_WF_Location_VH       as _KyotenText         on  $projection.Kyoten = _KyotenText.Zvalue1
+  association [0..1] to ZC_WF_ApprovalStatus_VH as _ApprovalStatusText on  $projection.ApproveStatus = _ApprovalStatusText.Zvalue1
 {
   key uuid                                   as UUID,
       apply_depart                           as ApplyDepart,
@@ -71,6 +79,12 @@ define root view entity ZR_TMM_1006
       cast('' as abap.sstring(1033))         as Message,
       workflow_id                            as WorkflowId,
       instance_id                            as InstanceId,
-      application_id                         as ApplicationId
+      application_id                         as ApplicationId,
+      _ApplyDepartText.Zvalue2               as ApplyDepartText,
+      _PrTypeText.Zvalue2                    as PrTypeText,
+      _OrderTypeText.zvalue3                 as OrderTypeText,
+      _BuyPurposeText.zvalue3                as BuyPurposeText,
+      _KyotenText.Zvalue2                    as KyotenText,
+      _ApprovalStatusText.Zvalue2            as ApproveStatusText
 
 }

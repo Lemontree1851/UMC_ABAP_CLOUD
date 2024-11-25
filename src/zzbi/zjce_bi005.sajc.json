@@ -1,0 +1,29 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "先々在庫推移分析",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "className": "ZCL_BI005_JOB"
+  },
+  "parameters": [
+    {
+      "name": "P_BUKRS",
+      "mandatory": true
+    },
+    {
+      "name": "P_PLANT",
+      "mandatory": true
+    },
+    {
+      "name": "P_GJAHR",
+      "mandatory": true
+    },
+    {
+      "name": "P_POPER",
+      "mandatory": true
+    }
+  ]
+}

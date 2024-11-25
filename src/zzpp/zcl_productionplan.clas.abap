@@ -158,10 +158,10 @@ CLASS zcl_productionplan IMPLEMENTATION.
       ls_res_ecn      TYPE ts_ecn_api,
       lt_tmpdb        TYPE STANDARD TABLE OF ts_tmpdb,
       ls_tmpdb        TYPE ts_tmpdb,
-
+      "output
       lt_output       TYPE STANDARD TABLE OF zr_productionplan,
       ls_output       TYPE zr_productionplan,
-
+      "range table
       lr_plnum        TYPE RANGE OF i_plannedorder-plannedorder,
       lrs_plnum       LIKE LINE OF lr_plnum,
       lr_orderid      TYPE RANGE OF i_manufacturingorderitem-manufacturingorder,
@@ -179,9 +179,6 @@ CLASS zcl_productionplan IMPLEMENTATION.
       lv_capacity(12) TYPE p,
       lv_value(12)    TYPE p DECIMALS 2.
 
-
-    CONSTANTS:
-      lc_times  TYPE i VALUE 50.
 
     "Dynamic table
     DATA:
@@ -397,14 +394,14 @@ CLASS zcl_productionplan IMPLEMENTATION.
     SORT lt_marc_zhlb BY plant product.
     LOOP AT lt_bom ASSIGNING FIELD-SYMBOL(<ls_bom>).
       IF <ls_bom>-mtart = 'ZHLB'.
-        READ TABLE lt_marc_zhlb INTO DATA(ls_mrac_zhlb)
+        READ TABLE lt_marc_zhlb INTO DATA(ls_marc_zhlb)
              WITH KEY plant = <ls_bom>-plant
                       product = <ls_bom>-idnrk BINARY SEARCH.
         IF sy-subrc <> 0.
           DELETE lt_bom.
           CONTINUE.
         ELSE.
-          <ls_bom>-dispo = ls_mrac_zhlb-mrpresponsible.
+          <ls_bom>-dispo = ls_marc_zhlb-mrpresponsible.
         ENDIF.
       ENDIF.
     ENDLOOP.
@@ -1325,6 +1322,13 @@ CLASS zcl_productionplan IMPLEMENTATION.
       ls_output-balanceqty = <l_balance>.
       ls_output-summary = <l_field>.
       CONDENSE ls_output-summary NO-GAPS.
+      READ TABLE lt_marc_zhlb INTO ls_marc_zhlb
+           WITH KEY plant = <l_plant>
+                    product = <l_idnrk> BINARY SEARCH.
+      if sy-subrc = 0.
+        ls_output-sobmx = ls_marc_zhlb-specialprocurementtype.
+      ENDIF.
+
       lv_datum = cl_abap_context_info=>get_system_date( ).
       lv_day = lv_datum - 1.
 * from today

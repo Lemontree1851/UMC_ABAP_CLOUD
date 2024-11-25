@@ -1,0 +1,27 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Company Code',
+    typeNamePlural: 'Company Code'
+  }
+}
+annotate view ZC_TBC1012 with
+{
+
+  @UI.hidden: true
+  Uuid;
+  @UI.hidden: true
+  UserUuid;
+
+  @UI.lineItem: [{ position: 10, cssDefault.width: '10rem' }]
+  @Consumption.valueHelpDefinition: [{ entity: {name: 'I_CompanyCode' , element: 'CompanyCode' },
+               additionalBinding: [{ localElement: 'CompanyCodeName', element: 'CompanyCodeName', usage: #RESULT }]
+  }]
+  CompanyCode;
+
+  @UI.lineItem: [{ position: 20, cssDefault.width: '20rem' }]
+  CompanyCodeName;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

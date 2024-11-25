@@ -110,7 +110,8 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
       ls_res_api   TYPE ty_res_api,
       lv_path      TYPE string,
       lv_monat     TYPE monat,
-      lv_previous_processed TYPE ztpp_1004-messagetype.
+      lv_previous_processed TYPE ztpp_1004-messagetype,
+      ls_error     TYPE zzcl_odata_utils=>gty_error.
 
     CONSTANTS:
       lc_msgid         TYPE string     VALUE 'ZPP_001',
@@ -118,6 +119,7 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
       lc_msgty_s       TYPE string     VALUE 'S',
       lc_msgty_w       TYPE string     VALUE 'W',
       lc_stat_code_201 TYPE string     VALUE '201',
+      lc_stat_code_500 TYPE string     VALUE '500',
       lc_alpha_in      TYPE string     VALUE 'IN',
       lc_updateflag_i  TYPE string     VALUE 'I',
       lc_updateflag_c  TYPE string     VALUE 'C',
@@ -432,11 +434,16 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
             ev_status_code = DATA(lv_stat_code)
             ev_response    = DATA(lv_resbody_api) ).
 
-        "JSON->ABAP
-        xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
-            ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_res_api ) ).
+        "Could not fetch SCRF token
+        IF lv_stat_code = lc_stat_code_500.
+          ls_res-_msg = lv_resbody_api.
+          RAISE EXCEPTION TYPE cx_abap_api_state.
+        ENDIF.
 
         IF lv_stat_code = lc_stat_code_201.
+          "JSON->ABAP
+          xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
+              ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_res_api ) ).
           "ls_res-_data-_mfg_order_confirmation_group = ls_res_api-d-confirmation_group.
           "ls_res-_data-_mfg_order_confirmation       = ls_res_api-d-confirmation_count.
           ls_res-_data-_mfg_order_confirmation_group = |{ ls_res_api-d-confirmation_group ALPHA = OUT }|.
@@ -449,7 +456,10 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
         ELSE.
           "作業実績確認が失敗しました：
           MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 049 INTO ls_res-_msg.
-          ls_res-_msg = ls_res-_msg && ls_res_api-error-message-value.
+          /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+                                     CHANGING  data = ls_error ).
+          "ls_res-_msg = ls_res-_msg && ls_res_api-error-message-value.
+          ls_res-_msg = ls_res-_msg && ls_error-error-message-value.
           RAISE EXCEPTION TYPE cx_abap_api_state.
         ENDIF.
 

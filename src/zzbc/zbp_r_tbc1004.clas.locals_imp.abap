@@ -101,7 +101,7 @@ CLASS lhc_assignplant IMPLEMENTATION.
 
     IF lt_result IS NOT INITIAL.
       SELECT plant
-        FROM i_plant
+        FROM i_plant WITH PRIVILEGED ACCESS
          FOR ALL ENTRIES IN @lt_result
        WHERE plant = @lt_result-plant
         INTO TABLE @DATA(lt_plant).
@@ -214,6 +214,106 @@ CLASS lhc_assignrole IMPLEMENTATION.
           REPORTED DATA(modifyreported).
 
           reported = CORRESPONDING #( DEEP modifyreported ).
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+  ENDMETHOD.
+
+ENDCLASS.
+
+CLASS lhc_assigncompany DEFINITION INHERITING FROM cl_abap_behavior_handler.
+
+  PRIVATE SECTION.
+
+    METHODS validatecompanycode FOR VALIDATE ON SAVE
+      IMPORTING keys FOR assigncompany~validatecompanycode.
+
+ENDCLASS.
+
+CLASS lhc_assigncompany IMPLEMENTATION.
+
+  METHOD validatecompanycode.
+    READ ENTITIES OF zr_tbc1004 IN LOCAL MODE
+    ENTITY assigncompany
+    FIELDS ( companycode ) WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result).
+
+    IF lt_result IS NOT INITIAL.
+      SELECT companycode
+        FROM i_companycode WITH PRIVILEGED ACCESS
+         FOR ALL ENTRIES IN @lt_result
+       WHERE companycode = @lt_result-companycode
+        INTO TABLE @DATA(lt_companycode).
+      SORT lt_companycode BY companycode.
+
+      LOOP AT lt_result INTO DATA(ls_result).
+        IF ls_result-companycode IS INITIAL.
+          MESSAGE e006(zbc_001) WITH TEXT-005 INTO DATA(lv_message).
+        ELSE.
+          READ TABLE lt_companycode TRANSPORTING NO FIELDS WITH KEY companycode = ls_result-companycode BINARY SEARCH.
+          IF sy-subrc <> 0.
+            MESSAGE e008(zbc_001) WITH TEXT-005 ls_result-companycode INTO lv_message.
+          ENDIF.
+        ENDIF.
+
+        IF lv_message IS NOT INITIAL.
+          APPEND VALUE #( %tky = ls_result-%tky ) TO failed-assigncompany.
+          APPEND VALUE #( %tky           = ls_result-%tky
+                          %state_area    = 'VALIDATE_COMPANY'
+                          %element-companycode = if_abap_behv=>mk-on
+                          %msg           = new_message_with_text( severity = if_abap_behv_message=>severity-error
+                                                                  text     = lv_message )
+                          %path          = VALUE #( user-%key-useruuid = ls_result-useruuid ) ) TO reported-assigncompany.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+  ENDMETHOD.
+
+ENDCLASS.
+
+CLASS lhc_assignsalesorg DEFINITION INHERITING FROM cl_abap_behavior_handler.
+
+  PRIVATE SECTION.
+
+    METHODS validatesalesorg FOR VALIDATE ON SAVE
+      IMPORTING keys FOR assignsalesorg~validatesalesorg.
+
+ENDCLASS.
+
+CLASS lhc_assignsalesorg IMPLEMENTATION.
+
+  METHOD validatesalesorg.
+    READ ENTITIES OF zr_tbc1004 IN LOCAL MODE
+    ENTITY assignsalesorg
+    FIELDS ( salesorganization ) WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result).
+
+    IF lt_result IS NOT INITIAL.
+      SELECT salesorganization
+        FROM i_salesorganization WITH PRIVILEGED ACCESS
+         FOR ALL ENTRIES IN @lt_result
+       WHERE salesorganization = @lt_result-salesorganization
+        INTO TABLE @DATA(lt_salesorganization).
+      SORT lt_salesorganization BY salesorganization.
+
+      LOOP AT lt_result INTO DATA(ls_result).
+        IF ls_result-salesorganization IS INITIAL.
+          MESSAGE e006(zbc_001) WITH TEXT-006 INTO DATA(lv_message).
+        ELSE.
+          READ TABLE lt_salesorganization TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result-salesorganization BINARY SEARCH.
+          IF sy-subrc <> 0.
+            MESSAGE e008(zbc_001) WITH TEXT-006 ls_result-salesorganization INTO lv_message.
+          ENDIF.
+        ENDIF.
+
+        IF lv_message IS NOT INITIAL.
+          APPEND VALUE #( %tky = ls_result-%tky ) TO failed-assignsalesorg.
+          APPEND VALUE #( %tky           = ls_result-%tky
+                          %state_area    = 'VALIDATE_SALESORG'
+                          %element-salesorganization = if_abap_behv=>mk-on
+                          %msg           = new_message_with_text( severity = if_abap_behv_message=>severity-error
+                                                                  text     = lv_message )
+                          %path          = VALUE #( user-%key-useruuid = ls_result-useruuid ) ) TO reported-assignsalesorg.
         ENDIF.
       ENDLOOP.
     ENDIF.

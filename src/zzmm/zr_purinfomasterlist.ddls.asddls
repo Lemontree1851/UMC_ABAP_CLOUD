@@ -33,6 +33,8 @@ define root custom entity ZR_PURINFOMASTERLIST
   key latestoffer                    : abap.char(1);
   key SupplierIsFixed                : abap.char(1);
   key IncotermsClassification        : abap.char(3);
+  key condition_validity_start_date  : abap.dats;
+  key condition_validity_end_date    : abap.dats;
       //      @Consumption.hidden: true
       Ztype1                         : abap.char(1);
       //      @Consumption.hidden: true
@@ -41,8 +43,6 @@ define root custom entity ZR_PURINFOMASTERLIST
       ProductGroup                   : abap.char(9);
       @Semantics.amount.currencyCode : 'Currency_plnt'
       NetPriceAmount                 : abap.curr(13,2);
-      condition_validity_start_date  : abap.dats;
-      condition_validity_end_date    : abap.dats;
       @Semantics.currencyCode        : true
       Currency_plnt                  : waers;
       @Semantics.amount.currencyCode : 'Currency_plnt'

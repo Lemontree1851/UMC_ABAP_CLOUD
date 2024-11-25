@@ -71,14 +71,7 @@ define view entity ZR_SALESORDERBASIC
       //剩余数量
       //如果vbup-lfsta  = A 未发货 送货数量=0 剩余数量就等于确认数量,但vbup表根本没有值，所以当做不等于A处理？
       @Semantics.quantity.unitOfMeasure: 'OrderQuantityUnit'
-      vbep.ConfdOrderQty - DeliveryedQty.DeliveredQuantity as RemainingQty,
-
-      //本次交货数量（手动输入
-      @Semantics.quantity.unitOfMeasure: 'OrderQuantityUnit'
-      cast(0 as menge_d)                                   as CurrDeliveryQty,
-      // 生成的dn 可跳转至VL03N
-      cast('' as abap.numc( 10 ))                          as DeliveryDocument
-      //message 执行结果
+      vbep.ConfdOrderQty - DeliveryedQty.DeliveredQuantity as RemainingQty
 }
 where
        vbap.SalesDocumentRjcnReason = ''

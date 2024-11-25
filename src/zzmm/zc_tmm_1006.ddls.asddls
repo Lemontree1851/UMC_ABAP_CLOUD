@@ -6,14 +6,17 @@ define root view entity ZC_TMM_1006
   as projection on ZR_TMM_1006
 {
   key UUID,
+      @ObjectModel.text.element: [ 'ApplyDepartText' ]
       @Consumption.filter.hidden: true
       ApplyDepart,
       PrNo,
       @Consumption.filter.hidden: true
       PrItem,
       @Consumption.filter.hidden: true
+      @ObjectModel.text.element: [ 'PrTypeText' ]
       PrType,
       @Consumption.filter.hidden: true
+      @ObjectModel.text.element: [ 'OrderTypeText' ]
       OrderType,
       Supplier,
       @Consumption.filter.hidden: true
@@ -70,14 +73,17 @@ define root view entity ZC_TMM_1006
       @Consumption.filter.hidden: true
       MemoText,
       @Consumption.filter.hidden: true
+      @ObjectModel.text.element: [ 'BuyPurposeText' ]
       BuyPurpoose,
       @Consumption.filter.hidden: true
       IsLink,
+      @ObjectModel.text.element: [ 'ApproveStatusText' ]
       ApproveStatus,
       @Consumption.filter.hidden: true
       PurchaseOrder,
       @Consumption.filter.hidden: true
       PurchaseOrderItem,
+      @ObjectModel.text.element: [ 'KyotenText' ]
       Kyoten,
       @Consumption.filter.hidden: true
       IsApprove,
@@ -128,5 +134,23 @@ define root view entity ZC_TMM_1006
       InstanceId,
       @Consumption.filter.hidden: true
       @UI.hidden: true
-      ApplicationId
+      ApplicationId,
+      @Consumption.filter.hidden: true
+      @UI.hidden: true
+      ApplyDepartText,
+      @Consumption.filter.hidden: true
+      @UI.hidden: true
+      PrTypeText,
+      @Consumption.filter.hidden: true
+      @UI.hidden: true
+      OrderTypeText,
+      @Consumption.filter.hidden: true
+      @UI.hidden: true
+      BuyPurposeText,
+      @Consumption.filter.hidden: true
+      @UI.hidden: true
+      KyotenText,
+      @Consumption.filter.hidden: true
+      @UI.hidden: true
+      ApproveStatusText
 }

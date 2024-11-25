@@ -3,14 +3,14 @@
     headerInfo: {
         typeName: 'Sales',
         typeNamePlural: 'Sales',
-        title: { type: #STANDARD, label: 'Sales Info', value: 'SalesOrder' }
+        title: { type: #STANDARD, label: 'Sales Info', value: 'SalesDocument' }
     }
 }
 //前端使用freestyle 所以目前这里只设置filter
 annotate entity ZC_SALESORDER_U with
 {
   @UI.selectionField: [{ position: 55 }]
-  SalesOrder;
+  SalesDocument;
   @Consumption.filter:{ mandatory: false }
   @UI.selectionField: [{ position: 5 }]
   SalesOrganization;
@@ -31,7 +31,7 @@ annotate entity ZC_SALESORDER_U with
   ShipToParty;
   //库存地点
   @UI.selectionField: [{ position: 30 }]
-  SalesOrderType;
+  SalesDocumentType;
   @UI.selectionField: [{ position: 45 }]
   DeliveryDate;
   @UI.selectionField: [{ position: 50 }]

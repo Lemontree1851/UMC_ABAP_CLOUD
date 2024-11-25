@@ -330,7 +330,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
           DELETE lt_config_pp019 WHERE zid <> lc_config_zpp019 OR zvalue1 <> lv_selectionrule.
           READ TABLE lt_config_pp019 INTO DATA(ls_config_pp019) INDEX 1.
           IF sy-subrc = 0.
-            DATA(lv_whether_process) = ls_config_pp017-zvalue2. " Yes/No
+            DATA(lv_whether_process) = ls_config_pp019-zvalue2. " Yes/No
           ENDIF.
         ENDIF.
 
@@ -1282,7 +1282,9 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
             ls_horizontal = CORRESPONDING #( <lfs_fixed_data> ).
             ls_horizontal-m_r_p_area = lv_mrparea.
             ls_horizontal-supplier = |{ ls_horizontal-supplier ALPHA = OUT }|.
-            ls_horizontal-product  = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = ls_horizontal-product ).
+            CONDENSE ls_horizontal-supplier NO-GAPS.
+            ls_horizontal-product = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = ls_horizontal-product ).
+            CONDENSE ls_horizontal-product NO-GAPS.
 
             " 購買関連情報
             READ TABLE lt_purginforecdorgplntdata INTO ls_purginforecdorgplntdata
@@ -1990,6 +1992,10 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               UNASSIGN <lfs_vertical_safety_stock>.
             ENDIF.
 
+            " 前行(安全在庫行)の利用可能在庫
+            lv_previous_available_stock = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit +
+                                          ls_sum_safety_stock-m_r_p_element_open_quantity.
+
             " 前行(安全在庫行)の在庫残数
             lv_previous_remaining_qty = ls_sum_stockinfo-matlwrhsstkqtyinmatlbaseunit.
 
@@ -2076,6 +2082,11 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               ELSE.
                 CLEAR ls_posupplierconfirmation.
               ENDIF.
+
+              <lfs_vertical>-supplier = |{ <lfs_vertical>-supplier ALPHA = OUT }|.
+              CONDENSE <lfs_vertical>-supplier NO-GAPS.
+              <lfs_vertical>-product = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = <lfs_vertical>-product ).
+              CONDENSE <lfs_vertical>-product NO-GAPS.
             ENDLOOP.
 
             " 在庫行

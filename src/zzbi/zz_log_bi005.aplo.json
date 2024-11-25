@@ -1,0 +1,14 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "先々在庫推移分析",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "subobjects": [
+    {
+      "name": "ZZ_LOG_BI005_SUB",
+      "description": "先々在庫推移分析"
+    }
+  ]
+}

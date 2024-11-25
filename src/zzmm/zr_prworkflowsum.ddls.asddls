@@ -9,6 +9,9 @@ define root view entity ZR_PRWORKFLOWSUM
   key   ZR_PRWORKFLOW_dup.ApplyDepart_dup       as ApplyDepart,
   key   ZR_PRWORKFLOW_dup.PrNo_dup              as PrNo,
         ZR_PRWORKFLOW_SUM.currency             as Currency,
-        ZR_PRWORKFLOW_SUM.Amount_Sum as AmountSum
+        
+         ZR_PRWORKFLOW_SUM.Amount_Sum
+
+          as AmountSum
 
 }

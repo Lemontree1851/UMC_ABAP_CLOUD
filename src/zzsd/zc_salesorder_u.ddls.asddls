@@ -2,13 +2,15 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 define root view entity ZC_SALESORDER_U
-  as projection on ZR_SALESORDER_U
+  provider contract transactional_query as projection on ZR_SALESORDER_U
+//  association [1..1] to I_SalesOrderItemTextTP as _Text on _Text.SalesOrder = $projection.SalesOrder
+//      and _Text.SalesOrderItem = $projection.SalesOrderItem
 {
-  key SalesDocument     as SalesOrder,
-  key SalesDocumentItem as SalesOrderItem,
+  key SalesDocument,
+  key SalesDocumentItem,
       SalesOrganization,
       SalesGroup,
-      SalesDocumentType as SalesOrderType,
+      SalesDocumentType,
       CreationDate,
       ShippingPoint,
       ShippingPointName,
@@ -38,14 +40,33 @@ define root view entity ZC_SALESORDER_U
       OrderQuantity,
       OrderQuantityUnit,
       IncotermsClassification,
+      @EndUserText.label: 'インコタームズ場所'
       IncotermsTransferLocation,
+      @EndUserText.label: '確認済受注数'
       ConfdOrderQty,
+      @EndUserText.label: 'DN作成済数量'
       DeliveredQty,
+      @EndUserText.label: '受注残数'
       RemainingQty,
+      @EndUserText.label: '今回納品数'
       CurrDeliveryQty,
-      ShippingStorLoc,
-      DeliveryDocument
-      //SO行项目的长文本 长文本id 0001
-      //    @ObjectModel.virtualElementCalculatedBy: 'ZCL_SALESORDER_U_CALC'
-      //    virtual ItemRemark : abap.string
+      @EndUserText.label: '今回保管場所'
+      CurrStorageLocation,
+      @EndUserText.label: '今回出荷タイプ'
+      CurrShippingType,
+      @EndUserText.label: '今回計画出庫日付'
+      CurrPlannedGoodsIssueDate,
+      @EndUserText.label: '今回納入日付'
+      CurrDeliveryDate,
+      @EndUserText.label: '今回出荷伝票'
+      DeliveryDocument,
+      @EndUserText.label: '出荷伝票明細'
+      DeliveryDocumentItem,
+      _Text.LongText,
+      @EndUserText.label: 'ステータス'
+      Type,
+      @EndUserText.label: '結果'
+      Status,
+      @EndUserText.label: 'メッセージ'
+      Message
 }

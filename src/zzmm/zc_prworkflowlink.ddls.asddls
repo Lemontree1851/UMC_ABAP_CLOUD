@@ -9,6 +9,7 @@ define root view entity ZC_PRWORKFLOWLINK
       ApplyDepart,
       PrNo,
       PrItem,
+      @ObjectModel.text.element: ['PrTypeText']
       PrType,
       OrderType,
       Supplier,
@@ -47,6 +48,7 @@ define root view entity ZC_PRWORKFLOWLINK
       ApproveStatus,
       PurchaseOrder,
       PurchaseOrderItem,
+      @ObjectModel.text.element: ['KyotenText']
       Kyoten,
       IsApprove,
       DocumentInfoRecordDocType,
@@ -64,6 +66,9 @@ define root view entity ZC_PRWORKFLOWLINK
       AmountSum,
       WorkflowId,
       InstanceId,
-      ApplicationId 
- 
+      ApplicationId,
+      @UI.hidden: true
+      _PrType.Zvalue2 as PrTypeText,
+      @UI.hidden: true
+      _Kyoten.Zvalue2 as KyotenText
 }

@@ -15,6 +15,8 @@ define behavior for ZC_TBC1004 alias User
   use action Prepare;
 
   use association _AssignPlant { create; with draft; }
+  use association _AssignCompany { create; with draft; }
+  use association _AssignSalesOrg { create; with draft; }
   use association _AssignRole { create; with draft; }
 }
 
@@ -27,6 +29,22 @@ define behavior for ZC_TBC1006 alias AssignPlant
 }
 
 define behavior for ZC_TBC1007 alias AssignRole
+{
+  use update;
+  use delete;
+
+  use association _User { with draft; }
+}
+
+define behavior for ZC_TBC1012 alias AssignCompany
+{
+  use update;
+  use delete;
+
+  use association _User { with draft; }
+}
+
+define behavior for ZC_TBC1013 alias AssignSalesOrg
 {
   use update;
   use delete;

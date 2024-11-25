@@ -633,8 +633,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
 
     "去重数据，得到抬头数据
     DATA(records_key) = records.
-    SORT records_key BY prno.
-    DELETE ADJACENT DUPLICATES FROM records_key COMPARING prno.
+    SORT records_key BY ordertype supplier companycode purchaseorg purchasegrp currency.
+    DELETE ADJACENT DUPLICATES FROM records_key COMPARING ordertype supplier companycode purchaseorg purchasegrp currency.
 
 
     DATA is_returns_item(5) TYPE c.
@@ -654,7 +654,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
       "行项目数据
       CLEAR ls_request-to_purchase_order_item.
       CLEAR lt_mm1006.
-      LOOP AT records INTO record_temp WHERE prno = record_key-prno.
+      LOOP AT records INTO record_temp WHERE ordertype = record_key-ordertype and supplier = record_key-supplier and companycode = record_key-companycode
+        and purchaseorg = record_key-purchaseorg and purchasegrp = record_key-purchasegrp and currency = record_key-currency.
         IF record_temp-returnitem IS NOT INITIAL.
           is_returns_item = 'true'.
         ELSE.
@@ -752,7 +753,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         "将PO号更新到ZTMM_1006
         MODIFY ENTITIES OF zr_tmm_1006 IN LOCAL MODE
         ENTITY purchasereq
-        UPDATE FIELDS ( purchaseorder purchaseorderitem )
+        UPDATE FIELDS ( purchaseorder purchaseorderitem approvestatus )
         WITH CORRESPONDING #( records ).
       ELSE.
         /ui2/cl_json=>deserialize( EXPORTING json = lv_response

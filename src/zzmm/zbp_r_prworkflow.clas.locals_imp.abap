@@ -2,6 +2,7 @@ CLASS lhc_purchasereq DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
     TYPES:BEGIN OF ty_batchupload.
             INCLUDE TYPE zc_prworkflow.
+    TYPES:  pritem TYPE ztmm_1006-pr_item.
     TYPES:  remark TYPE ztbc_1011-remark.
     TYPES:  useremail TYPE string.
     TYPES:  userfullname TYPE string.
@@ -202,7 +203,9 @@ CLASS lhc_purchasereq IMPLEMENTATION.
          iv_remark         = cs_data-remark
          iv_approvalstatus = '3'
        ).
-        cs_data-message = '成功'.
+
+        "承認されました。
+        MESSAGE s031(zmm_001)  INTO cs_data-message.
         cs_data-type = 'S'.
         MODIFY ct_data FROM cs_data TRANSPORTING message type.
       ENDIF.
@@ -233,7 +236,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
           iv_remark         = cs_data-remark
           iv_approvalstatus = '2'
         ).
-        cs_data-message = '成功'.
+        "承認されました。
+        MESSAGE s031(zmm_001)  INTO cs_data-message.
         cs_data-type = 'S'.
         MODIFY ct_data FROM cs_data TRANSPORTING message type.
         "邮件通知下一层的users
@@ -256,7 +260,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         iv_remark         = ls_auto-remark
         iv_approvalstatus = ls_auto-approvalstatus
       ).
-          cs_data-message = '成功'.
+          "承認されました。
+          MESSAGE s031(zmm_001)  INTO cs_data-message.
           cs_data-type = 'S'.
           MODIFY ct_data FROM cs_data TRANSPORTING message type.
         ENDLOOP.
@@ -276,11 +281,11 @@ CLASS lhc_purchasereq IMPLEMENTATION.
     DATA:lv_error_text TYPE string.
     DATA:lv_users TYPE STANDARD TABLE OF zc_wf_approvaluser.
     DATA:lv_users_prby TYPE STANDARD TABLE OF zc_wf_approvaluser.
-    DATA:lv_users_polink TYPE STANDARD TABLE OF zc_wf_approvaluser.
+
     LOOP AT ct_data INTO DATA(cs_data).
 
       CLEAR:lv_current_node,lv_next_node,lv_approvalend, lv_operator,lv_ev_error,lv_error_text,lv_users.
-      CLEAR:lv_users_prby,lv_users_polink.
+      CLEAR:lv_users_prby .
 
       lv_operator = cs_data-userfullname && '(' && cs_data-useremail && ')' .
 
@@ -319,12 +324,6 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                        ev_errortext     = lv_error_text
                                        ev_users         = lv_users_prby ).
 
-      zzcl_wf_utils=>get_polink_by( EXPORTING iv_workflowid    = cs_data-workflowid
-                                             iv_applicationid = cs_data-applicationid
-                                              iv_instanceid     = cs_data-instanceid
-                                   IMPORTING ev_error         = lv_ev_error
-                                             ev_errortext     = lv_error_text
-                                             ev_users         = lv_users_polink ).
 *&--有错 停止
       IF lv_ev_error IS NOT INITIAL.
         cs_data-message = lv_error_text.
@@ -339,7 +338,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                             iv_applicationid = cs_data-applicationid
                                             iv_instanceid    = cs_data-instanceid
                                             iv_users         =  lv_users_prby
-                                            iv_zid           = 'ZMM016'
+                                            iv_zid           = 'ZMM017'
+                                            iv_remark = cs_data-remark
                                    IMPORTING ev_error         = lv_ev_error
                                              ev_errortext     = lv_error_text ).
       IF lv_ev_error IS NOT INITIAL.
@@ -348,20 +348,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         MODIFY ct_data FROM cs_data TRANSPORTING message type.
         CONTINUE.
       ENDIF.
-      "邮件通知   polink
-      zzcl_wf_utils=>send_emails( EXPORTING iv_workflowid    = cs_data-workflowid
-                                            iv_applicationid = cs_data-applicationid
-                                            iv_instanceid    = cs_data-instanceid
-                                            iv_users         = lv_users_polink
-                                            iv_zid           = 'ZMM016'
-                                   IMPORTING ev_error         = lv_ev_error
-                                             ev_errortext     = lv_error_text ).
-      IF lv_ev_error IS NOT INITIAL.
-        cs_data-message = lv_error_text.
-        cs_data-type = 'E'.
-        MODIFY ct_data FROM cs_data TRANSPORTING message type.
-        CONTINUE.
-      ENDIF.
+
       zzcl_wf_utils=>add_approval_history(
        iv_workflowid     = cs_data-workflowid
        iv_instanceid     = cs_data-instanceid
@@ -374,7 +361,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
        iv_approvalstatus = '1'
      ).
 
-      cs_data-message = '成功'.
+      "却下されました。
+      MESSAGE s032(zmm_001)  INTO cs_data-message.
       cs_data-type = 'S'.
 
       MODIFY ct_data FROM cs_data TRANSPORTING message type.
@@ -394,6 +382,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
       lv_instanceid TYPE sysuuid_x16,
       lv_new        TYPE c.
     DATA:lv_operator TYPE  ztbc_1011-operator.
+    DATA:lv_remark TYPE ztbc_1011-remark.
     LOOP AT keys INTO DATA(key).
       CLEAR records.
       /ui2/cl_json=>deserialize(  EXPORTING json = key-%param-zzkey
@@ -409,7 +398,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
       ENDIF.
       LOOP AT records INTO record.
 
-        CLEAR lv_operator.
+        CLEAR: lv_operator,lv_remark .
         lv_operator = record-userfullname && '(' && record-useremail && ')' .
 
 *&--只能申请本公司的PR
@@ -517,6 +506,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
          WHERE pr_no = @record-prno.
         ENDIF.
 *&--生成审批流同时添加审批流日志
+        MESSAGE s033(zmm_001)  INTO lv_remark.
         DATA lv_approve_status TYPE ztmm_1006-approve_status.
         lv_approve_status = '2'.
         zzcl_wf_utils=>add_approval_history(
@@ -527,9 +517,10 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                           iv_operator       = lv_operator
                           iv_email          = CONV #( record-useremail )
                           iv_approvalstatus = lv_approve_status"审批中
-                          iv_remark         = '提交审批' ).
+                          iv_remark         = lv_remark )."申请
 
-        record-message = '申请成功'.
+        "購買申請の承認は送信されました。
+        MESSAGE s029(zmm_001)  INTO record-message.
         record-type = 'S'.
         record-instanceid = lv_instanceid.
         record-approvestatus = lv_approve_status.
@@ -633,7 +624,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                           iv_approvalstatus = lv_approve_status
                           iv_reject         =  abap_true
                           iv_remark         = '撤回' ).
-        record-message = '撤回成功'.
+        "購買申請の承認は取り下げられました。
+        MESSAGE s030(zmm_001)  INTO record-message.
         record-type = 'S'.
         record-approvestatus = lv_approve_status.
         record-applydate = ''.

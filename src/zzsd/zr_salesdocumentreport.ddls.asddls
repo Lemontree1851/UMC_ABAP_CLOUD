@@ -36,21 +36,11 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       ConditionRateValue            : abap.char(10);
       MaterialCost2000              : abap.char(10);
       Manufacturingcost             : abap.char(10);
-       
-//      MRPControllerName             : abap.char(18);
-//      Material                      : abap.char(18);
-//      PurchaseOrderItemText         : abap.char(40);
-//      ManufacturerMaterial          : abap.char(40);
-//      ManufacturerPartNmbr          : abap.char(40);
-//      Manufacturer                  : abap.char(10);
-//      PlannedDeliveryDurationInDays : abap.dec(3);
-//      GoodsReceiptDurationInDays    : abap.dec(3);
-//      LotSizeRoundingQuantity       : abap.quan(13);
-//      OrderQuantity                 : abap.quan(13);
-//      PurchaseOrderQuantityUnit     : abap.unit(3);
-//      ScheduleLineDeliveryDate      : abap.dats;
-//      PurchaseOrderDate             : abap.dats;
-//      NetPrice                      : abap.char(13);
-//      DocumentCurrency              : waers;
+      SalesAmount                   : abap.char(20);
+      ContributionProfit            : abap.char(20);
+      GrossProfit                   : abap.char(20);
+      ContributionProfitTotal       : abap.char(20);
+      GrossProfitTotal              : abap.char(20);
+      salesplanamountindspcrcy      : abap.char(20);
 
 }

@@ -9,11 +9,7 @@ CLASS zcl_http_checkmfgordermdoc_002 DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
-
-
+CLASS zcl_http_checkmfgordermdoc_002 IMPLEMENTATION.
   METHOD if_http_service_extension~handle_request.
     TYPES:
       BEGIN OF ty_req,
@@ -101,14 +97,15 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
       lv_qty_short TYPE p LENGTH 8 DECIMALS 3.
 
     CONSTANTS:
-      lc_zid_zpp008   TYPE string     VALUE 'ZPP008',
-      lc_msgid        TYPE string     VALUE 'ZPP_001',
-      lc_msgty        TYPE string     VALUE 'E',
-      lc_sign_e       TYPE c LENGTH 1 VALUE 'E',
-      lc_opt_eq       TYPE c LENGTH 2 VALUE 'EQ',
-      lc_gmtype_101   TYPE i_materialdocumentitemtp-goodsmovementtype VALUE '101',
-      lc_gmtype_531   TYPE i_materialdocumentitemtp-goodsmovementtype VALUE '531',
-      lc_stocktype_01 TYPE i_materialstock_2-inventorystocktype       VALUE '01'.
+      lc_zid_zpp008    TYPE string     VALUE 'ZPP008',
+      lc_msgid         TYPE string     VALUE 'ZPP_001',
+      lc_msgty         TYPE string     VALUE 'E',
+      lc_stat_code_500 TYPE string     VALUE '500',
+      lc_sign_e        TYPE c LENGTH 1 VALUE 'E',
+      lc_opt_eq        TYPE c LENGTH 2 VALUE 'EQ',
+      lc_gmtype_101    TYPE i_materialdocumentitemtp-goodsmovementtype VALUE '101',
+      lc_gmtype_531    TYPE i_materialdocumentitemtp-goodsmovementtype VALUE '531',
+      lc_stocktype_01  TYPE i_materialstock_2-inventorystocktype       VALUE '01'.
 
 
     "Obtain request data
@@ -221,6 +218,12 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
             IMPORTING
               ev_status_code = DATA(lv_stat_code)
               ev_response    = DATA(lv_resbody_api) ).
+
+          "Could not fetch SCRF token
+          IF lv_stat_code = lc_stat_code_500.
+            ls_res-_msg = lv_resbody_api.
+            RAISE EXCEPTION TYPE cx_abap_api_state.
+          ENDIF.
 
           "JSON->ABAP
           xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(

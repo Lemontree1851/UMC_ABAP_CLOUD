@@ -9,6 +9,12 @@ define root view entity ZR_PRWORKFLOW
  left outer  join ZR_PRWORKFLOWEMAIL  as _Email on  ztmm_1006.workflow_id    = _Email.WorkflowId
                                                       and ztmm_1006.instance_id = _Email.InstanceId
                                                       and ztmm_1006.application_id  = _Email.ApplicationId
+  association [0..1] to ZC_WF_PrType_VH      as _PrType         on  $projection.PrType = _PrType.Zvalue1
+  association [0..1] to ZC_WF_ApplyDepart_VH as _ApplyDepart    on  $projection.ApplyDepart = _ApplyDepart.Zvalue1
+  association [0..1] to ZC_WF_OrderType_VH   as _OrderType      on  $projection.OrderType = _OrderType.Zvalue1
+  association [0..1] to ZC_WF_Location_VH    as _Kyoten         on  $projection.Kyoten = _Kyoten.Zvalue1
+  association [0..1] to ZC_WF_KNTTP_VH       as _KNTTP          on  $projection.AccountType = _KNTTP.Zvalue1       
+  association [0..1] to ZC_WF_ApprovalStatus_VH       as _ApprovalStatus          on  $projection.ApproveStatus = _ApprovalStatus.Zvalue1                                                 
 {
 
    key   ztmm_1006.apply_depart                           as ApplyDepart,
@@ -60,7 +66,7 @@ define root view entity ZR_PRWORKFLOW
       ztmm_1006.document_info_record_doc_numbe         as DocumentInfoRecordDocNumber,
       ztmm_1006.document_info_record_doc_versi         as DocumentInfoRecordDocVersion,
       ztmm_1006.document_info_record_doc_part          as DocumentInfoRecordDocPart,
-      ztmm_1006.apply_date                             as ApplyDate,
+      cast( ztmm_1006.apply_date as abap.dats )                            as ApplyDate,
       ztmm_1006.apply_time                             as ApplyTime,
       ztmm_1006.created_at                             as CreatedAt,
       @Semantics.user.createdBy: true
@@ -76,10 +82,17 @@ define root view entity ZR_PRWORKFLOW
 
       ztmm_1006.workflow_id                    as WorkflowId,
       ztmm_1006.instance_id                    as InstanceId,
-      ztmm_1006.application_id                 as ApplicationId,   
-        _Email.EmailAddress as    EmailAddress,
+      ztmm_1006.application_id                 as ApplicationId, 
       cast('' as bapi_mtype preserving type) as Type,
       cast('' as abap.sstring(256))          as ResultText,
-      cast('' as abap.sstring(1033))         as Message
-
+      cast('' as abap.sstring(1033))         as Message,
+        _Email.EmailAddress as    EmailAddress,
+      _PrType,
+      _ApplyDepart,
+      _OrderType,
+ 
+      _Kyoten,
+      _KNTTP,
+      _ApprovalStatus 
+      
 }where ztmm_1006.instance_id  is not initial

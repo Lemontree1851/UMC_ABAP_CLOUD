@@ -11,9 +11,7 @@ CLASS zcl_materialrequisition_prt DEFINITION
 ENDCLASS.
 
 
-
-CLASS ZCL_MATERIALREQUISITION_PRT IMPLEMENTATION.
-
+CLASS zcl_materialrequisition_prt IMPLEMENTATION.
 
   METHOD if_rap_query_provider~select.
     DATA lt_data TYPE TABLE OF zr_materialrequisition_prt_i.
@@ -33,16 +31,17 @@ CLASS ZCL_MATERIALREQUISITION_PRT IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
 
-    " Filtering
-    zzcl_odata_utils=>filtering( EXPORTING io_filter = io_request->get_filter(  )
-                                 CHANGING  ct_data   = lt_data ).
-
     IF io_request->is_total_numb_of_rec_requested(  ) .
       io_response->set_total_number_of_records( lines( lt_data ) ).
     ENDIF.
+
+    " Filtering
+    zzcl_odata_utils=>filtering( EXPORTING io_filter = io_request->get_filter(  )
+                                 CHANGING  ct_data   = lt_data ).
 
     SORT lt_data BY itemno.
 
     io_response->set_data( lt_data ).
   ENDMETHOD.
+
 ENDCLASS.

@@ -39,8 +39,8 @@ FUNCTION zzfm_dtimp_tbc1013.
       <line>-('Message') = 'The value of update flag cannot be empty.'.
       <line>-('Type')    = 'E'.
       CONTINUE.
-    ELSEIF ls_data-updateflag <> lc_updateflag_insert OR
-           "ls_data-updateflag <> lc_updateflag_update OR
+    ELSEIF ls_data-updateflag <> lc_updateflag_insert AND
+           "ls_data-updateflag <> lc_updateflag_update AND
            ls_data-updateflag <> lc_updateflag_delete.
       <line>-('Message') = 'The value of update flag must be I or D.'.
       <line>-('Type')    = 'E'.
@@ -80,7 +80,8 @@ FUNCTION zzfm_dtimp_tbc1013.
         CONTINUE.
       ENDIF.
 
-      SELECT count( * ) FROM ztbc_1007 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+      SELECT count( * ) FROM ztbc_1007 WHERE user_uuid = @ls_ztbc_1004-user_uuid
+                                         AND role_uuid = @ls_ztbc_1005-role_uuid.
       IF sy-subrc = 0.
         <line>-('Message') = 'User role data is already exist'.
         <line>-('Type')    = 'E'.
@@ -167,16 +168,9 @@ FUNCTION zzfm_dtimp_tbc1013.
 
       DELETE FROM ztbc_1007 WHERE user_uuid = @ls_ztbc_1004-user_uuid
                               AND role_uuid = @ls_ztbc_1005-role_uuid.
-      IF sy-subrc = 0.
-        COMMIT WORK AND WAIT.
-        <line>-('Type') = 'S'.
-        <line>-('Message') = 'Success'.
-      ELSE.
-        ROLLBACK WORK.
-        MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-        <line>-('Type') = 'E'.
-        CONTINUE.
-      ENDIF.
+      COMMIT WORK AND WAIT.
+      <line>-('Type') = 'S'.
+      <line>-('Message') = 'Success'.
 
     ENDIF.
 

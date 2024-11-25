@@ -2,6 +2,8 @@
 @EndUserText.label: 'Purchase Requisition Workflow'
 define root view entity ZR_PRWORKFLOWITEM
   as select from ztmm_1006
+    association [0..1] to ztbc_1001               as _BuyPurposeText     on  $projection.BuyPurpoose = _BuyPurposeText.zvalue1
+                                                                       and _BuyPurposeText.zid     = 'ZMM002'
 {
   key uuid                                   as UUID,
       apply_depart                           as ApplyDepart,
@@ -23,7 +25,12 @@ define root view entity ZR_PRWORKFLOWITEM
       quantity                               as Quantity,
       unit                                   as Unit,
       @Semantics.amount.currencyCode : 'currency'
-      price                                  as Price,
+      //price                                  as Price,
+
+      case currency
+      when 'JPY' then price / 100
+      else price
+      end                           as Price,
       unit_price                             as UnitPrice,
       delivery_date                          as DeliveryDate,
       location                               as Location,
@@ -68,10 +75,18 @@ define root view entity ZR_PRWORKFLOWITEM
       cast('' as bapi_mtype preserving type) as Type,
       cast('' as abap.sstring(256))          as ResultText,
       cast('' as abap.sstring(1033))         as Message,
+          _BuyPurposeText.zvalue3                as BuyPurposeText,
       @Semantics.amount.currencyCode : 'currency'
-      case when unit_price <> 0
+      case currency
+      when 'JPY' then
+      (case when unit_price <> 0
                   then price * quantity / unit_price
-                  else 0
+                  else 0 end  ) / 100
+      else
+            (case when unit_price <> 0
+                  then price * quantity / unit_price
+                  else 0 end  )
+ 
                end                           as amount1
 
 }

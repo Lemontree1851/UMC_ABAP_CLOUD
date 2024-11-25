@@ -87,6 +87,7 @@ CLASS zzcl_wf_utils DEFINITION
                             iv_users         TYPE tt_wf_approvaluser
                             iv_zid           TYPE ztbc_1001-zid
                             iv_uuid          TYPE sysuuid_x16 OPTIONAL
+                            iv_remark        TYPE ztbc_1011-remark OPTIONAL
                   EXPORTING ev_error         TYPE abap_boolean
                             ev_errortext     TYPE string,
       check_plant_access IMPORTING iv_email     TYPE string
@@ -116,24 +117,16 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     WHERE uuid = @iv_uuid
     INTO @DATA(ls_ztmm_1006).
 
-    SELECT * FROM i_plant
-     WITH PRIVILEGED ACCESS
-    WHERE valuationarea = @ls_ztmm_1006-company_code
-    INTO TABLE @DATA(lt_plant) .
-
-    IF lt_plant IS NOT INITIAL.
-      SELECT plant
-       FROM zc_tbc1004 JOIN zc_tbc1006
-      ON zc_tbc1004~useruuid = zc_tbc1006~useruuid
-       FOR ALL ENTRIES IN @lt_plant
-      WHERE plant = @lt_plant-plant
-       AND mail = @iv_email
-      INTO TABLE @DATA(lt_zc_tbc1004).
-    ENDIF.
+    SELECT companycode
+     FROM zc_tbc1004 INNER JOIN zr_tbc1012
+    ON zc_tbc1004~useruuid = zr_tbc1012~useruuid
+    WHERE mail = @iv_email
+    AND companycode = @ls_ztmm_1006-company_code
+    INTO TABLE @DATA(lt_zc_tbc1004).
 
     IF lt_zc_tbc1004 IS INITIAL.
       ev_error = 'X'.
-      MESSAGE s022(zbc_001) WITH ls_ztmm_1006-company_code INTO ev_errortext.
+      MESSAGE s022(zbc_001)  INTO ev_errortext.
     ENDIF.
 
   ENDMETHOD.
@@ -165,7 +158,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
           INTO @DATA(ls_ztbc_buy).
           IF sy-subrc <> 0.
             ev_error = 'X'.
-            MESSAGE s020(zbc_001) WITH ls_ztmm_1006-buy_purpoose INTO ev_errortext.
+            MESSAGE s020(zbc_001) WITH ls_ztmm_1006-buy_purpoose 'ZTBC_1001' lc_buy_zid INTO ev_errortext.
             RETURN.
           ELSE.
             ls_zc_wf_approvalpath-buypurpose = ls_ztbc_buy-zvalue2.
@@ -180,7 +173,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
           INTO @DATA(ls_ztbc_ordertype).
           IF sy-subrc <> 0.
             ev_error = 'X'.
-            MESSAGE s021(zbc_001) WITH ls_ztmm_1006-order_type INTO ev_errortext.
+            MESSAGE s021(zbc_001) WITH ls_ztmm_1006-order_type 'ZTBC_1001' lc_ordertype_zid INTO ev_errortext.
             RETURN.
           ELSE.
             ls_zc_wf_approvalpath-ordertype = ls_ztbc_ordertype-zvalue2.
@@ -572,13 +565,16 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     ENDIF.
 
     lt_recipient = VALUE #( FOR item IN iv_users ( address = item-emailaddress ) ).
+    DATA: ls_recipient    TYPE LINE OF cl_bcs_mail_message=>tyt_recipient.
+    ls_recipient-address = 'siyun.yao@sh.shin-china.com'.
+    APPEND  ls_recipient TO lt_recipient.
     SORT lt_recipient BY address.
     DELETE ADJACENT DUPLICATES FROM lt_recipient COMPARING address.
     DELETE lt_recipient WHERE address IS INITIAL.
     IF lt_recipient IS INITIAL.
       ev_error = 'X'.
       ev_errortext = '送信メールボックスを空にすることはできません'.
-      return.
+      RETURN.
     ENDIF.
     lv_subject = ls_ztbc_1001-zvalue3.
     REPLACE ALL OCCURRENCES OF '&1' IN lv_subject  WITH ls_ztmm_1006-pr_by .
@@ -598,6 +594,63 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
       REPLACE ALL OCCURRENCES OF '&2' IN ls_ztbc_1001-zvalue6  WITH ls_ztmm_1006-pr_no .
       lv_main_content = lv_main_content && |<p style="line-height: 0.5">{ ls_ztbc_1001-zvalue6 }</p>|.
     ENDIF.
+    IF iv_remark IS NOT INITIAL.
+      lv_main_content = lv_main_content && |<p>&nbsp;</p>|.
+      lv_main_content = lv_main_content && |<p style="line-height: 0.5">{ iv_remark }</p>|.
+    ENDIF.
+    IF ls_ztbc_1001-zkey7 IS NOT INITIAL.
+      lv_main_content = lv_main_content && |<a href="{ ls_ztbc_1001-zvalue7 }">{ ls_ztbc_1001-zvalue7 }</a>|.
+    ENDIF.
+
+    IF ls_ztbc_1001-zkey8 IS NOT INITIAL.
+
+      SELECT *
+      FROM zr_prworkflowhistory
+      WHERE  workflowid = @iv_workflowid
+        AND  instanceid = @iv_instanceid
+        AND  applicationid = @iv_applicationid
+      INTO TABLE @DATA(lt_history).
+
+
+
+      " table begin
+      lv_main_content = lv_main_content &&
+                        |<table align="left" border="1" cellspacing="0" cellpadding="5" width="100%" style="margin-bottom: 15px;">| &&
+                          |<thead>| &&
+                            |<tr>| &&
+                              |<th width="200px" align="left">時刻</th>| &&
+                              |<th width="200px" align="left">ステップ</th>| &&
+                              |<th width="150px" align="left">中請者/承認者</th>| &&
+                              |<th width="100px" align="left">承認ステ-タス</th>| &&
+                              |<th width="200px" align="left">コメント</th>| &&
+                            |</tr>| &&
+                          |</thead>| &&
+                        |<tbody>|.
+      LOOP AT lt_history INTO DATA(ls_history).
+        DATA:lv_status(4) TYPE c.
+        CLEAR lv_status.
+        CASE ls_history-approvalstatus.
+          WHEN '1'.
+          lv_status = '却下'.
+          WHEN '2'.
+          lv_status = '承認'.
+          WHEN '3'.
+          lv_status = '承認'.
+
+          WHEN OTHERS.
+          lv_status = ''.
+        ENDCASE.
+        lv_main_content = lv_main_content &&
+                          |<tr>| &&
+                            |<td align="left">{ ls_history-createdat }</td>| &&
+                            |<td align="left">{ ls_history-nodename }</td>| &&
+                            |<td align="left">{ ls_history-operator }</td>| &&
+                            |<td align="left">{ lv_status }</td>| &&
+                            |<td align="left">{ ls_history-remark }</td>| &&
+                          |</tr>|.
+      ENDLOOP.
+    ENDIF.
+
 
 
     TRY.

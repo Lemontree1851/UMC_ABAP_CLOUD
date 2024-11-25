@@ -43,6 +43,9 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
       lv_valuationunitprice         TYPE zc_inventory_aging-valuationunitprice,
       lv_searchterm2                TYPE i_businesspartner-searchterm2,
       lv_fiscalyearperiod           TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
+      lv_totalamount                TYPE zc_inventory_aging-inventoryamount,
+      lv_age                        TYPE ztfi_1019-age,
+      lv_actualprice                TYPE p DECIMALS 6,
       lv_fiscalperiodstartdate      TYPE d,
       lv_fiscalperiodenddate        TYPE d.
 
@@ -284,7 +287,7 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
                a~purchasinghistorydocument,
                a~purchasinghistorydocumentitem,
                a~purordamountincompanycodecrcy,
-               a~quantity,
+               a~quantityinbaseunit,
                a~plant,
                a~material
           FROM c_purchaseorderhistorydex WITH PRIVILEGED ACCESS AS a
@@ -481,9 +484,9 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
                                                                                            material = ls_productplantbasic-product
                                                                                   BINARY SEARCH.
       IF sy-subrc = 0.
-        IF ls_purchaseorderhistorydex-quantity <> 0.
-          ls_data-valuationunitprice = ls_purchaseorderhistorydex-purordamountincompanycodecrcy / ls_purchaseorderhistorydex-quantity.
-          ls_data-valuationamount    = ls_purchaseorderhistorydex-purordamountincompanycodecrcy / ls_purchaseorderhistorydex-quantity
+        IF ls_purchaseorderhistorydex-quantityinbaseunit <> 0.
+          ls_data-valuationunitprice = ls_purchaseorderhistorydex-purordamountincompanycodecrcy / ls_purchaseorderhistorydex-quantityinbaseunit.
+          ls_data-valuationamount    = ls_purchaseorderhistorydex-purordamountincompanycodecrcy / ls_purchaseorderhistorydex-quantityinbaseunit
                                      * ls_data-valuationquantity.
         ENDIF.
       ENDIF.
@@ -539,6 +542,9 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
         ls_data-valuationloss        = ls_data-inventoryamount - ls_data-valuationamount.
       ENDIF.
 
+      "计算月底实际价格（用于调整尾差）
+      lv_actualprice = ls_data-inventoryamount / ls_data-valuationquantity.
+
       READ TABLE lt_ztfi_1019 TRANSPORTING NO FIELDS WITH KEY plant = ls_productplantbasic-valuationarea
                                                               product = ls_productplantbasic-product
                                                      BINARY SEARCH.
@@ -549,117 +555,238 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
             EXIT.
           ENDIF.
 
+          "获取最小的库龄（用于调整尾差）
+          IF lv_age IS INITIAL.
+            lv_age = ls_ztfi_1019-age.
+          ENDIF.
+
           CASE ls_ztfi_1019-age.
             WHEN lsc_age-a001.
               ls_data-quantitymonth1 = ls_ztfi_1019-qty.
               ls_data-amountmonth1   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a002.
               ls_data-quantitymonth2 = ls_ztfi_1019-qty.
               ls_data-amountmonth2   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a003.
               ls_data-quantitymonth3 = ls_ztfi_1019-qty.
               ls_data-amountmonth3   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a004.
               ls_data-quantitymonth4 = ls_ztfi_1019-qty.
               ls_data-amountmonth4   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a005.
               ls_data-quantitymonth5 = ls_ztfi_1019-qty.
               ls_data-amountmonth5   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a006.
               ls_data-quantitymonth6 = ls_ztfi_1019-qty.
               ls_data-amountmonth6   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a007.
               ls_data-quantitymonth7 = ls_ztfi_1019-qty.
               ls_data-amountmonth7   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a008.
               ls_data-quantitymonth8 = ls_ztfi_1019-qty.
               ls_data-amountmonth8   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a009.
               ls_data-quantitymonth9 = ls_ztfi_1019-qty.
               ls_data-amountmonth9   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a010.
               ls_data-quantitymonth10 = ls_ztfi_1019-qty.
               ls_data-amountmonth10   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a011.
               ls_data-quantitymonth11 = ls_ztfi_1019-qty.
               ls_data-amountmonth11   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a012.
               ls_data-quantitymonth12 = ls_ztfi_1019-qty.
               ls_data-amountmonth12   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a013.
               ls_data-quantitymonth13 = ls_ztfi_1019-qty.
               ls_data-amountmonth13   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a014.
               ls_data-quantitymonth14 = ls_ztfi_1019-qty.
               ls_data-amountmonth14   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a015.
               ls_data-quantitymonth15 = ls_ztfi_1019-qty.
               ls_data-amountmonth15   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a016.
               ls_data-quantitymonth16 = ls_ztfi_1019-qty.
               ls_data-amountmonth16   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a017.
               ls_data-quantitymonth17 = ls_ztfi_1019-qty.
               ls_data-amountmonth17   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a018.
               ls_data-quantitymonth18 = ls_ztfi_1019-qty.
               ls_data-amountmonth18   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a019.
               ls_data-quantitymonth19 = ls_ztfi_1019-qty.
               ls_data-amountmonth19   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a020.
               ls_data-quantitymonth20 = ls_ztfi_1019-qty.
               ls_data-amountmonth20   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a021.
               ls_data-quantitymonth21 = ls_ztfi_1019-qty.
               ls_data-amountmonth21   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a022.
               ls_data-quantitymonth22 = ls_ztfi_1019-qty.
               ls_data-amountmonth22   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a023.
               ls_data-quantitymonth23 = ls_ztfi_1019-qty.
               ls_data-amountmonth23   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a024.
               ls_data-quantitymonth24 = ls_ztfi_1019-qty.
               ls_data-amountmonth24   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a025.
               ls_data-quantitymonth25 = ls_ztfi_1019-qty.
               ls_data-amountmonth25   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a026.
               ls_data-quantitymonth26 = ls_ztfi_1019-qty.
               ls_data-amountmonth26   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a027.
               ls_data-quantitymonth27 = ls_ztfi_1019-qty.
               ls_data-amountmonth27   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a028.
               ls_data-quantitymonth28 = ls_ztfi_1019-qty.
               ls_data-amountmonth28   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a029.
               ls_data-quantitymonth29 = ls_ztfi_1019-qty.
               ls_data-amountmonth29   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a030.
               ls_data-quantitymonth30 = ls_ztfi_1019-qty.
               ls_data-amountmonth30   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a031.
               ls_data-quantitymonth31 = ls_ztfi_1019-qty.
               ls_data-amountmonth31   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a032.
               ls_data-quantitymonth32 = ls_ztfi_1019-qty.
               ls_data-amountmonth32   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a033.
               ls_data-quantitymonth33 = ls_ztfi_1019-qty.
               ls_data-amountmonth33   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a034.
               ls_data-quantitymonth34 = ls_ztfi_1019-qty.
               ls_data-amountmonth34   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a035.
               ls_data-quantitymonth35 = ls_ztfi_1019-qty.
               ls_data-amountmonth35   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
             WHEN lsc_age-a036.
               ls_data-quantitymonth36 = ls_ztfi_1019-qty.
               ls_data-amountmonth36   = ls_ztfi_1019-qty * ls_data-actualcost.
+              lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * ls_data-actualcost.
           ENDCASE.
         ENDLOOP.
+
+        "尾差
+        lv_totalamount = ls_data-inventoryamount - lv_totalamount.
+
+        CASE lv_age.
+          WHEN lsc_age-a001.
+            ls_data-amountmonth1 = ls_data-amountmonth1 + lv_totalamount.
+          WHEN lsc_age-a002.
+            ls_data-amountmonth2 = ls_data-amountmonth2 + lv_totalamount.
+          WHEN lsc_age-a003.
+            ls_data-amountmonth3 = ls_data-amountmonth3 + lv_totalamount.
+          WHEN lsc_age-a004.
+            ls_data-amountmonth4 = ls_data-amountmonth4 + lv_totalamount.
+          WHEN lsc_age-a005.
+            ls_data-amountmonth5 = ls_data-amountmonth5 + lv_totalamount.
+          WHEN lsc_age-a006.
+            ls_data-amountmonth6 = ls_data-amountmonth6 + lv_totalamount.
+          WHEN lsc_age-a007.
+            ls_data-amountmonth7 = ls_data-amountmonth7 + lv_totalamount.
+          WHEN lsc_age-a008.
+            ls_data-amountmonth8 = ls_data-amountmonth8 + lv_totalamount.
+          WHEN lsc_age-a009.
+            ls_data-amountmonth9 = ls_data-amountmonth9 + lv_totalamount.
+          WHEN lsc_age-a010.
+            ls_data-amountmonth10 = ls_data-amountmonth10 + lv_totalamount.
+          WHEN lsc_age-a011.
+            ls_data-amountmonth11 = ls_data-amountmonth11 + lv_totalamount.
+          WHEN lsc_age-a012.
+            ls_data-amountmonth12 = ls_data-amountmonth12 + lv_totalamount.
+          WHEN lsc_age-a013.
+            ls_data-amountmonth13 = ls_data-amountmonth13 + lv_totalamount.
+          WHEN lsc_age-a014.
+            ls_data-amountmonth14 = ls_data-amountmonth14 + lv_totalamount.
+          WHEN lsc_age-a015.
+            ls_data-amountmonth15 = ls_data-amountmonth15 + lv_totalamount.
+          WHEN lsc_age-a016.
+            ls_data-amountmonth16 = ls_data-amountmonth16 + lv_totalamount.
+          WHEN lsc_age-a017.
+            ls_data-amountmonth17 = ls_data-amountmonth17 + lv_totalamount.
+          WHEN lsc_age-a018.
+            ls_data-amountmonth18 = ls_data-amountmonth18 + lv_totalamount.
+          WHEN lsc_age-a019.
+            ls_data-amountmonth19 = ls_data-amountmonth19 + lv_totalamount.
+          WHEN lsc_age-a020.
+            ls_data-amountmonth20 = ls_data-amountmonth20 + lv_totalamount.
+          WHEN lsc_age-a021.
+            ls_data-amountmonth21 = ls_data-amountmonth21 + lv_totalamount.
+          WHEN lsc_age-a022.
+            ls_data-amountmonth22 = ls_data-amountmonth22 + lv_totalamount.
+          WHEN lsc_age-a023.
+            ls_data-amountmonth23 = ls_data-amountmonth23 + lv_totalamount.
+          WHEN lsc_age-a024.
+            ls_data-amountmonth24 = ls_data-amountmonth24 + lv_totalamount.
+          WHEN lsc_age-a025.
+            ls_data-amountmonth25 = ls_data-amountmonth25 + lv_totalamount.
+          WHEN lsc_age-a026.
+            ls_data-amountmonth26 = ls_data-amountmonth26 + lv_totalamount.
+          WHEN lsc_age-a027.
+            ls_data-amountmonth27 = ls_data-amountmonth27 + lv_totalamount.
+          WHEN lsc_age-a028.
+            ls_data-amountmonth28 = ls_data-amountmonth28 + lv_totalamount.
+          WHEN lsc_age-a029.
+            ls_data-amountmonth29 = ls_data-amountmonth29 + lv_totalamount.
+          WHEN lsc_age-a030.
+            ls_data-amountmonth30 = ls_data-amountmonth30 + lv_totalamount.
+          WHEN lsc_age-a031.
+            ls_data-amountmonth31 = ls_data-amountmonth31 + lv_totalamount.
+          WHEN lsc_age-a032.
+            ls_data-amountmonth32 = ls_data-amountmonth32 + lv_totalamount.
+          WHEN lsc_age-a033.
+            ls_data-amountmonth33 = ls_data-amountmonth33 + lv_totalamount.
+          WHEN lsc_age-a034.
+            ls_data-amountmonth34 = ls_data-amountmonth34 + lv_totalamount.
+          WHEN lsc_age-a035.
+            ls_data-amountmonth35 = ls_data-amountmonth35 + lv_totalamount.
+          WHEN lsc_age-a036.
+            ls_data-amountmonth36 = ls_data-amountmonth36 + lv_totalamount.
+        ENDCASE.
+
+        CLEAR lv_totalamount.
       ENDIF.
 
       APPEND ls_data TO lt_data.

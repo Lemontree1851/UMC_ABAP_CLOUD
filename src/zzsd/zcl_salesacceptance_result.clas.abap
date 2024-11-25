@@ -52,7 +52,8 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
      WHERE customer IN @lr_kunnr
        AND periodtype = @lv_periodtype
        AND acceptperiod = @lv_acceptperiod
-       AND finishstatus = '0'
+       AND ( finishstatus = '0'
+          OR finishstatus = @space )
       INTO TABLE @DATA(lt_1003).
     IF sy-subrc = 0.
       SELECT *
@@ -83,7 +84,8 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
      WHERE customer IN @lr_kunnr
        AND periodtype = @lv_periodtype
        AND acceptperiodfrom < @lv_from
-       AND finishstatus = '0'
+       AND ( finishstatus = '0'
+          OR finishstatus = @space )
       INTO TABLE @DATA(lt_1003_t).
     IF sy-subrc = 0.
       SELECT *
@@ -211,16 +213,16 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ls_output-outsidedata = ls_1003-outsidedata.  "SAP外売上区分(フラグ)
       ENDIF.
 
-      READ TABLE lt_1012 INTO DATA(ls_1012)
-           WITH KEY salesdocument = ls_so-salesdocument
-                    salesdocumentitem = ls_so-salesdocumentitem BINARY SEARCH.
-      IF sy-subrc = 0.
-        ls_output-remarks = ls_1012-remarks.             "備考
-        ls_output-processstatus = ls_1012-processstatus. "処理ステータス
-        ls_output-reasoncategory = ls_1012-reasoncategory. "要因区分
-        ls_output-reason = ls_1012-reason.                 "差異要因
-      ENDIF.
-
+*      READ TABLE lt_1012 INTO DATA(ls_1012)
+*           WITH KEY salesdocument = ls_so-salesdocument
+*                    salesdocumentitem = ls_so-salesdocumentitem BINARY SEARCH.
+*      IF sy-subrc = 0.
+*        ls_output-remarks = ls_1012-remarks.             "備考
+*        ls_output-processstatus = ls_1012-processstatus. "処理ステータス
+*        ls_output-reasoncategory = ls_1012-reasoncategory. "要因区分
+*        ls_output-reason = ls_1012-reason.                 "差異要因
+*      ENDIF.
+      ls_output-processstatus = '0'.
       READ TABLE lt_billing INTO DATA(ls_billing)
            WITH KEY salesdocument = ls_so-salesdocument
                     salesdocumentitem = ls_so-salesdocumentitem BINARY SEARCH.

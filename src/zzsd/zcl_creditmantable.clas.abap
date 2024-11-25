@@ -79,18 +79,12 @@ CLASS zcl_creditmantable IMPLEMENTATION.
       customerc~customer,      "得意先コード
       customer~customername,  "得意先名称
       credit~creditsegmentcurrency,
-      credit~customercreditlimitamount      AS limitamount ,"与信限度額
+      credit~customercreditlimitamount      AS limitamount,"与信限度額
+      customerpay~customerpaymenttermsname  AS terms,       "回収条件-支払条件
+      payment~paymentterms,
+      payment~PaymentTermsValidityMonthDay,
       payment~bslndtecalcaddlmnths          AS addlmnths,   "追加月
-      payment~cashdiscount1days             AS cadays,      "日数
-      customerpay~customerpaymenttermsname  AS terms        "回収条件-支払条件
-
-*      payment~paymentterms,
-*      payment~PaymentTermsValidityMonthDay,
-*      ' ' AS creditsegmentcurrency,
-*      ' ' AS limitamount ,"与信限度額
-*      ' ' AS addlmnths,   "追加月
-*      ' ' AS cadays,      "日数
-*      ' ' AS terms        "回収条件-支払条件
+      payment~cashdiscount1days             AS cadays      "日数
  FROM i_salesorganization WITH PRIVILEGED ACCESS AS sales
  INNER JOIN i_customercompany WITH PRIVILEGED ACCESS AS customerc
               ON customerc~companycode = sales~companycode
@@ -112,8 +106,10 @@ CLASS zcl_creditmantable IMPLEMENTATION.
              AND customerpay~Language = 'J'
            WHERE sales~salesorganization IN @lr_salesorganization
              AND customerc~customer  IN @lr_customer
-
   INTO TABLE @DATA(lt_customer).
+
+    SORT lt_customer by salesorganization customer customername creditsegmentcurrency limitamount terms paymentterms PaymentTermsValidityMonthDay.
+    DELETE ADJACENT DUPLICATES FROM lt_customer COMPARING salesorganization customer customername creditsegmentcurrency limitamount terms paymentterms.
 
     if lt_customer is NOT INITIAL.
 
@@ -126,17 +122,20 @@ CLASS zcl_creditmantable IMPLEMENTATION.
                                         salesorganization.
         IF lt_customer_n IS NOT INITIAL.
           SELECT
-            salesd~payerparty AS customer,
+            salesd~SalesDocument,
+            salesd~SalesDocumentItem,
+            salesd~SoldToParty AS customer,
             salesd~salesorganization,
             salesd~salesdocumentdate AS zdate,
             salesd~netamount                "売上金額-予
           FROM i_salesdocumentitem         WITH PRIVILEGED ACCESS AS salesd
            FOR ALL ENTRIES IN @lt_customer_n
-         WHERE salesd~payerparty               = @lt_customer_n-customer
+         WHERE salesd~SoldToParty               = @lt_customer_n-customer
            AND salesd~salesorganization        = @lt_customer_n-salesorganization
           INTO TABLE @DATA(lt_salesd).
 
           SELECT
+            billing~BillingDocument,
             billing~payerparty AS customer,
             billing~salesorganization,
             billing~billingdocumentdate AS zdate,
@@ -149,6 +148,12 @@ CLASS zcl_creditmantable IMPLEMENTATION.
           INTO TABLE @DATA(lt_billing).
 
           SELECT
+            glaccount~SourceLedger,
+            glaccount~CompanyCode,
+            glaccount~FiscalYear,
+            glaccount~AccountingDocument,
+            glaccount~LedgerGLLineItem,
+            glaccount~Ledger,
             glaccount~customer,
             glaccount~salesorganization,
             glaccount~postingdate AS zdate,

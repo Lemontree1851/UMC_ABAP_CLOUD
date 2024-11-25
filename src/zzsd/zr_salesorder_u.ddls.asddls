@@ -5,6 +5,10 @@ define root view entity ZR_SALESORDER_U
     left outer join ZTF_SALESORDERSTORLOC(
                         clnt: $session.client ) as SalesStorLoc on  SalesStorLoc.SalesDocument     = basic.SalesDocument
                                                                 and SalesStorLoc.SalesDocumentItem = basic.SalesDocumentItem
+  association [1..1] to I_SalesOrderItemTextTP as _Text on  _Text.SalesOrder     = $projection.SalesDocument
+                                                        and _Text.SalesOrderItem = $projection.SalesDocumentItem
+                                                        and _Text.Language       = $session.system_language
+                                                        and _Text.LongTextID     = '0001'
 {
   key basic.SalesDocument,
   key basic.SalesDocumentItem,
@@ -42,8 +46,19 @@ define root view entity ZR_SALESORDER_U
       basic.ConfdOrderQty,
       basic.DeliveredQty,
       basic.RemainingQty,
-      basic.CurrDeliveryQty,
-      SalesStorLoc.StorageLocation as ShippingStorLoc,
-      basic.DeliveryDocument
+      //本次交货数量（手动输入
+      @Semantics.quantity.unitOfMeasure: 'OrderQuantityUnit'
+      cast(0 as menge_d)             as CurrDeliveryQty,
+      SalesStorLoc.StorageLocation   as CurrStorageLocation,
+      cast( '' as abap.char(2) )     as CurrShippingType,
+      cast( '00000000' as datum )    as CurrPlannedGoodsIssueDate,
+      cast( '00000000' as datum )    as CurrDeliveryDate,
+      // 生成的dn 可跳转至VL03N
+      cast('' as vbeln_vl)           as DeliveryDocument,
+      cast('' as posnr )             as DeliveryDocumentItem,
+      cast('' as msgty)              as Type,
+      cast('' as abap.char(10))      as Status,
+      cast('' as abap.sstring(1000)) as Message,
+      _Text
 }
 // where 删除 确认数量为0的数据

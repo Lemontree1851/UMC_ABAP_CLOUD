@@ -51,6 +51,9 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
     DATA:lt_version3 TYPE STANDARD TABLE OF ty_planversion,
          ls_version3 TYPE ty_planversion.
 
+    DATA: lv_grossprofit        TYPE p DECIMALS 0,
+          lv_contributionprofit TYPE p DECIMALS 0.
+
     CONSTANTS:
       lc_exchangetype    TYPE string VALUE '0'.
 
@@ -106,40 +109,6 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
           lv_second_char       TYPE c LENGTH 1,
           lv_third_char        TYPE c LENGTH 1.
 
-    SELECT
-       a~salesorganization AS salesorganization1,
-       b~customer,
-       b~companycode,
-       c~salesorganization,
-       d~customername,
-       e~material
-     FROM i_customersalesarea WITH PRIVILEGED ACCESS AS a
-     LEFT JOIN i_customercompany WITH PRIVILEGED ACCESS AS b
-       ON a~customer = b~customer
-     LEFT JOIN i_salesorganization WITH PRIVILEGED ACCESS AS c
-       ON c~salesorganization = a~salesorganization
-       AND c~salesorganization = b~companycode
-     LEFT JOIN i_customer WITH PRIVILEGED ACCESS AS d
-       ON  d~customer = a~customer
-       AND d~customer = b~customer
-*     LEFT JOIN ztfi_1010 as e
-*       ON e~Customer = b~customer
-     LEFT JOIN i_materialbomlinkdex WITH PRIVILEGED ACCESS AS e
-       ON e~plant = a~salesorganization
-     WHERE a~salesorganization IN @lr_salesorganization
-       AND b~companycode IN @lr_salesorganization
-       AND b~customer IN @lr_customer
-       INTO TABLE @DATA(lt_basicdata).
-
-    LOOP AT  lt_basicdata INTO DATA(lw_basicdata).
-      MOVE-CORRESPONDING lw_basicdata TO lw_data.
-      APPEND lw_data TO lt_data.
-    ENDLOOP.
-
-    LOOP AT lt_data INTO lw_data.  " 循环遍历 lt_dataS
-      APPEND lw_data TO lt_output.  " 将当前行的 lw_data 追加到 lt_output 内表
-    ENDLOOP.
-
     DATA(lv_typeab) = lv_ztype1 && '%'.  " lv_ztype1 与百分号连接
 
     SELECT
@@ -147,13 +116,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       salesplan,
       salesplanversion
     FROM c_salesplanvaluehelp WITH PRIVILEGED ACCESS
-*    WHERE salesplanversion LIKE @lv_typeab
+    WHERE salesplanversion LIKE @lv_typeab
     INTO TABLE @lt_planversion.
-
-    SELECT *
-    FROM c_salesplanvaluehelp WITH PRIVILEGED ACCESS
-*    WHERE salesplanversion LIKE @lv_typeab
-    INTO TABLE @DATA(lt_planversion2).
 
 ********基础数据获取********
 *得意先名*品名
@@ -174,40 +138,142 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       a~plant,
       a~profitcenter,
       b~customername,
-*      c~\_MatlAccountAssignmentGroup
       d~productname,
       e~product,
       f~billofmaterial,
-      f~billofmaterialvariant
+      f~billofmaterialvariant,
+      g~customer,
+      k~plantname,
+      i~matlaccountassignmentgroup,
+      l~materialcost2000,
+      l~materialcost3000
     FROM i_slsperformanceplanactualcube(
       p_exchangeratetype = 0,
       p_displaycurrency  = 'JPY',
       p_salesplan        = @lw_versionmax-salesplan,
       p_salesplanversion = @lw_versionmax-salesplanversion,
       p_createdbyuser    = @lw_versionmax-createdbyuser ) WITH PRIVILEGED ACCESS AS a
-   LEFT JOIN i_customer WITH PRIVILEGED ACCESS AS b
-   ON b~customername = a~soldtoparty
-*   LEFT JOIN i_productsalesdelivery WITH PRIVILEGED ACCESS AS c
-*   ON c~product = a~product
    LEFT JOIN i_producttext WITH PRIVILEGED ACCESS AS d
    ON d~product = a~product
    LEFT JOIN i_product WITH PRIVILEGED ACCESS AS e
    ON e~product = a~product
    LEFT JOIN i_billofmaterialitemdex_3 WITH PRIVILEGED ACCESS AS f
    ON f~billofmaterialcomponent = a~product
+   LEFT JOIN i_customercompany WITH PRIVILEGED ACCESS AS g
+   ON g~companycode = a~salesorganization
+   LEFT JOIN i_customersalesarea WITH PRIVILEGED ACCESS AS h
+   ON h~salesorganization = a~salesorganization
+   AND h~customer = g~customer
+   LEFT JOIN i_customer WITH PRIVILEGED ACCESS AS b
+   ON b~customername = a~soldtoparty
+   AND b~customer = g~customer
+   LEFT JOIN i_plant WITH PRIVILEGED ACCESS AS k
+   ON k~plant = a~plant
+   LEFT JOIN i_productsalesdelivery WITH PRIVILEGED ACCESS AS j
+   ON j~product = a~product
+   LEFT JOIN i_matlaccountassignmentgroup WITH PRIVILEGED ACCESS AS i
+   ON i~matlaccountassignmentgroup = j~accountdetnproductgroup
+   LEFT JOIN ztfi_1010 AS l
+   ON l~product = a~product
+   AND l~customer = g~customer
    WHERE a~product IN @lr_product
+     AND a~plant IN @lr_salesorganization
+     AND g~customer IN @lr_customer
     INTO TABLE @DATA(lt_result1).
 
+    LOOP AT  lt_result1 INTO DATA(lw_result1).
+      MOVE-CORRESPONDING lw_result1 TO lw_data.
+      " 判断 lw_result1-materialcost2000 是否为空
+      IF lw_result1-materialcost2000 IS INITIAL.
+        lw_data-materialcost2000 = lw_result1-materialcost3000.
+      ENDIF.
+
+      " 根据 MatlAccountAssignmentGroup 的值判断输出文本
+      CASE lw_result1-matlaccountassignmentgroup.
+        WHEN '01'.
+          lw_data-matlaccountassignmentgroup = '量産'.
+        WHEN '02' OR '03'.
+          lw_data-matlaccountassignmentgroup = '部品・その他'.
+        WHEN '04'.
+          lw_data-matlaccountassignmentgroup = 'イニシャル'.
+        WHEN '05' OR '06'.
+          lw_data-matlaccountassignmentgroup = '開発'.
+        WHEN OTHERS.
+          lw_data-matlaccountassignmentgroup = '未定義'.
+      ENDCASE.
+
+      APPEND lw_data TO lt_data.
+    ENDLOOP.
+
+    LOOP AT lt_data INTO lw_data.  " 循环遍历 lt_dataS
+      APPEND lw_data TO lt_output.  " 将当前行的 lw_data 追加到 lt_output 内表
+    ENDLOOP.
+
+****6.02上位BOM番号により、上位半製品/製品の品番取得
+
     IF sy-subrc = 0.
-      DATA(lt_product) = lt_result1.
-      SORT lt_product BY product.
-      DELETE ADJACENT DUPLICATES FROM lt_product COMPARING product.
+      DATA(lt_plant) = lt_result1.
+      SORT lt_plant BY plant.
+      DELETE ADJACENT DUPLICATES FROM lt_plant COMPARING plant.
     ENDIF.
 
-*    SELECT single material
-*    FROM i_materialbomlinkdex WITH PRIVILEGED ACCESS
-*    FOR ALL ENTRIES IN lt_product
+    IF lt_plant IS NOT INITIAL.
 
+      SELECT
+         material,
+         billofmaterial,
+         billofmaterialvariant,
+         plant
+       FROM i_materialbomlinkdex WITH PRIVILEGED ACCESS
+       FOR ALL ENTRIES IN @lt_plant
+        WHERE billofmaterial = @lt_plant-billofmaterial
+          AND billofmaterialvariant = @lt_plant-billofmaterialvariant
+          AND plant = @lt_plant-plant
+       INTO TABLE @DATA(lt_material1).
+
+    ENDIF.
+
+****6.03有償支給品の品番により、上位BOM番号取得
+
+    IF sy-subrc = 0.
+      DATA(lt_material) = lt_material1.
+      SORT lt_material BY material.
+      DELETE ADJACENT DUPLICATES FROM lt_material COMPARING material.
+    ENDIF.
+
+    IF lt_material IS NOT INITIAL.
+
+      SELECT
+         billofmaterial,
+         billofmaterialvariant
+       FROM i_billofmaterialitemdex_3 WITH PRIVILEGED ACCESS
+       FOR ALL ENTRIES IN @lt_material
+        WHERE billofmaterialcomponent = @lt_material-material
+       INTO TABLE @DATA(lt_bom1).
+
+    ENDIF.
+
+****6.04上位BOM番号により、上位半製品/製品の品番取得
+
+    IF sy-subrc = 0.
+      DATA(lt_bom2) = lt_bom1.
+      SORT lt_bom2 BY billofmaterial billofmaterialvariant.
+      DELETE ADJACENT DUPLICATES FROM lt_bom2 COMPARING billofmaterial billofmaterialvariant.
+    ENDIF.
+
+    IF lt_bom2 IS NOT INITIAL.
+
+      SELECT
+         material,
+         billofmaterial,
+         billofmaterialvariant
+       FROM i_materialbomlinkdex WITH PRIVILEGED ACCESS
+       FOR ALL ENTRIES IN @lt_bom2
+        WHERE billofmaterial = @lt_bom2-billofmaterial
+          AND billofmaterialvariant = @lt_bom2-billofmaterialvariant
+       INTO TABLE @DATA(lt_material2).
+
+    ENDIF.
 
 ********計画数量********
 
@@ -241,8 +307,85 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 
     IF sy-subrc = 0.
       DATA(lt_read2) = lt_result2.
-      SORT lt_read2 BY salesplanquantity salesplanperiodname.
-      DELETE ADJACENT DUPLICATES FROM lt_read2 COMPARING salesplanquantity salesplanperiodname.
+      SORT lt_read2 BY salesplanperiodname salesplanquantity.
+      DELETE ADJACENT DUPLICATES FROM lt_read2 COMPARING salesplanperiodname salesplanquantity.
+    ENDIF.
+
+*********単価*********
+    IF lv_ztype1 = 'A'.
+
+      IF lt_read2 IS NOT INITIAL.
+
+        " 遍历 lt_read2，匹配年份和月份，并获取第一条记录
+        LOOP AT lt_read2 INTO DATA(lw_reada).
+          " 提取 salesplanperiodname 的年份和月份
+          DATA(lv_salesplanperiodnamea) = lw_reada-salesplanperiodname(4) && '-' && lw_reada-salesplanperiodname+4(2). " yyyy-MM 格式
+
+          " 查询与年份和月份匹配的 conditionvaliditystartdate 数据
+          DATA(lv_patterna) = lv_salesplanperiodnamea && '-%'. " 拼接成 LIKE 的模式，例如 "2024-11-%"
+
+          SELECT conditionratevalue,
+                 conditionvaliditystartdate
+            FROM i_slsprcgconditionrecord WITH PRIVILEGED ACCESS
+            WHERE conditiontype      = 'ZYP0'
+              AND conditionisdeleted = @space
+              AND conditionvaliditystartdate LIKE @lv_patterna
+            INTO TABLE @DATA(lt_ratevalue_tempa).
+
+          IF lt_ratevalue_tempa IS NOT INITIAL.
+            SORT lt_ratevalue_tempa BY conditionvaliditystartdate ASCENDING. " 根据具体排序字段排序
+            READ TABLE lt_ratevalue_tempa INTO DATA(ls_conditionratevaluea) INDEX 1. " 取排序后的第一条记录
+            lw_data-conditionratevalue = ls_conditionratevaluea-conditionratevalue.
+            lw_data-salesamount = ls_conditionratevaluea-conditionratevalue * lw_reada-salesplanquantity.
+          ENDIF.
+        ENDLOOP.
+
+      ELSE.
+
+        " 遍历 lt_read2，匹配年份和月份，并获取第一条记录
+        LOOP AT lt_read2 INTO DATA(lw_readb).
+          " 提取 salesplanperiodname 的年份和月份
+          DATA(lv_salesplanperiodnameb) = lw_reada-salesplanperiodname(4) && '-' && lw_reada-salesplanperiodname+4(2). " yyyy-MM 格式
+
+          " 查询与年份和月份匹配的 conditionvaliditystartdate 数据
+          DATA(lv_patternb) = lv_salesplanperiodnameb && '-%'. " 拼接成 LIKE 的模式，例如 "2024-11-%"
+
+          SELECT conditionratevalue,
+                 conditionvaliditystartdate
+            FROM i_slsprcgconditionrecord WITH PRIVILEGED ACCESS
+            WHERE conditiontype      = 'PPR0'
+              AND conditionisdeleted = @space
+              AND conditionvaliditystartdate LIKE @lv_patternb
+            INTO TABLE @DATA(lt_ratevalue_tempbppr0).
+
+          IF lt_ratevalue_tempbppr0 IS INITIAL.
+
+            SELECT conditionratevalue,
+                   conditionvaliditystartdate
+            FROM i_slsprcgconditionrecord WITH PRIVILEGED ACCESS
+            WHERE conditiontype      = 'ZZR0'
+              AND conditionisdeleted = @space
+              AND conditionvaliditystartdate LIKE @lv_patternb
+            INTO TABLE @DATA(lt_ratevalue_tempbzzr0).
+
+          ENDIF.
+
+          IF lt_ratevalue_tempbppr0 IS NOT INITIAL.
+            SORT lt_ratevalue_tempbppr0 BY conditionvaliditystartdate ASCENDING. " 根据具体排序字段排序
+            READ TABLE lt_ratevalue_tempbppr0 INTO DATA(ls_conditionratevaluebppr0) INDEX 1. " 取排序后的第一条记录
+            lw_data-conditionratevalue = ls_conditionratevaluebppr0-conditionratevalue.
+            lw_data-salesamount = ls_conditionratevaluebppr0-conditionratevalue * lw_readb-salesplanquantity.
+          ELSE.
+
+            SORT lt_ratevalue_tempbzzr0 BY conditionvaliditystartdate ASCENDING. " 根据具体排序字段排序
+            READ TABLE lt_ratevalue_tempbzzr0 INTO DATA(ls_conditionratevaluebzzr0) INDEX 1. " 取排序后的第一条记录
+            lw_data-conditionratevalue = ls_conditionratevaluebzzr0-conditionratevalue.
+            lw_data-salesamount = ls_conditionratevaluebzzr0-conditionratevalue * lw_readb-salesplanquantity.
+          ENDIF.
+
+        ENDLOOP.
+
+      ENDIF.
     ENDIF.
 
 *********売上*********
@@ -309,11 +452,27 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       p_createdbyuser    = @lw_version2-createdbyuser ) WITH PRIVILEGED ACCESS
     INTO TABLE @DATA(lt_result4).
 
-    IF sy-subrc = 0.
-      DATA(lt_read4) = lt_result4.
-      SORT lt_read4 BY salesplanamountindspcrcy salesplanperiodname.
-      DELETE ADJACENT DUPLICATES FROM lt_read4 COMPARING salesplanamountindspcrcy salesplanperiodname.
-    ENDIF.
+*********貢献利益(単価)********
+    LOOP AT  lt_read2 INTO DATA(lw_contributionprofit).
+      READ TABLE lt_result4 INTO DATA(lw_result4)
+          WITH KEY salesplanperiodname = lw_contributionprofit-salesplanperiodname
+               BINARY SEARCH.
+
+      IF lw_result4-salesplanamountindspcrcy IS NOT INITIAL AND lw_contributionprofit-salesplanquantity IS NOT INITIAL.
+        lv_contributionprofit = ( lw_result4-salesplanamountindspcrcy * 100 ) / lw_contributionprofit-salesplanquantity.
+      ELSE.
+
+        lw_data-contributionprofit = round(
+         val = lv_contributionprofit
+         dec = 0
+         mode = cl_abap_math=>round_half_up
+         ).
+      ENDIF.
+
+    ENDLOOP.
+
+*********貢献利益********
+
 
 *********売上総利益*********
     CLEAR lt_version3.
@@ -344,104 +503,193 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       p_createdbyuser    = @lw_version3-createdbyuser ) WITH PRIVILEGED ACCESS
     INTO TABLE @DATA(lt_result5).
 
-    IF sy-subrc = 0.
-      DATA(lt_read5) = lt_result5.
-      SORT lt_read5 BY salesplanamountindspcrcy salesplanperiodname.
-      DELETE ADJACENT DUPLICATES FROM lt_read5 COMPARING salesplanamountindspcrcy salesplanperiodname.
-    ENDIF.
+*********売上総利益(単価)********
+    LOOP AT  lt_read2 INTO DATA(lw_grossprofit).
+      READ TABLE lt_result5 INTO DATA(lw_result5)
+          WITH KEY salesplanperiodname = lw_grossprofit-salesplanperiodname
+               BINARY SEARCH.
 
-*********単価*********
-    IF lv_ztype1 = 'A'.
+      IF lw_result5-salesplanamountindspcrcy IS NOT INITIAL AND lw_grossprofit-salesplanquantity IS NOT INITIAL.
+       lv_grossprofit = ( lw_result5-salesplanamountindspcrcy * 100 ) / lw_grossprofit-salesplanquantity.
+      ELSE.
 
-*      SELECT
-*        conditionratevalue,
-*        SalesPlanPeriodName
-*      FROM i_slsprcgconditionrecord WITH PRIVILEGED ACCESS
-*      WHERE conditiontype      = 'ZYP0'
-*        AND conditionisdeleted = @space
-*      FOR ALL ENTRIES IN @lt_read2
-*       WHERE ConditionValidityStartDate = @lt_read2-SalesPlanPeriodName
-*      INTO @DATA(lv_ratevaluea).
-
-      IF lt_read2 IS NOT INITIAL.
-        SELECT conditionratevalue
-          FROM i_slsprcgconditionrecord WITH PRIVILEGED ACCESS
-*          FOR ALL ENTRIES IN @lt_read2
-         WHERE conditiontype      = 'ZYP0'
-           AND conditionisdeleted = @space
-*           AND conditionvaliditystartdate = @lt_read2-salesplanperiodname
-
-         INTO TABLE @DATA(lt_ratevaluea).
+        lw_data-grossprofit = round(
+         val = lv_grossprofit
+         dec = 0
+         mode = cl_abap_math=>round_half_up
+         ).
       ENDIF.
+    ENDLOOP.
 
+*********************
 
-    ELSE.
-
-      SELECT SINGLE
-         conditionratevalue
-       FROM i_slsprcgconditionrecord WITH PRIVILEGED ACCESS
-*         FOR ALL ENTRIES IN @lt_read2
-       WHERE conditiontype      = 'PPR0'
-         AND conditionisdeleted = @space
-*       AND ConditionValidityStartDate = @lt_read2-salesplanperiodname
-       INTO @DATA(lv_ratevalueb1).
-
-      IF lv_ratevalueb1 IS INITIAL.
-
-        SELECT SINGLE
-        conditionratevalue
-      FROM i_slsprcgconditionrecord WITH PRIVILEGED ACCESS
-*         FOR ALL ENTRIES IN @lt_read2
-      WHERE conditiontype      = 'ZZR0'
-        AND conditionisdeleted = @space
-*       AND ConditionValidityStartDate = @lt_read2-salesplanperiodname
-      INTO @DATA(lv_ratevalueb2).
-
-      ENDIF.
-
-    ENDIF.
-*********単価*********
+*    * 3.01-3.08 BOM番号
+*    DATA(lt_product_tmp) = lt_product[].
+*    DO.
+** find the upper bom code
+*      SELECT billofmaterial,
+*             billofmaterialvariant,
+*             billofmaterialitemnodenumber,
+*             bominstceinternalchangenumber,
+*             billofmaterialcomponent
+*        FROM i_billofmaterialitemdex_3 WITH PRIVILEGED ACCESS
+*        FOR ALL ENTRIES IN @lt_product_tmp
+*       WHERE billofmaterialcomponent = @lt_product_tmp-product
+*         AND isdeleted = @space
+*        INTO TABLE @DATA(lt_up).
+*      " Exit loop if not find upper bom
+*      IF sy-subrc <> 0.
+*        EXIT.
+*      ENDIF.
+** get material number by bom code
+*      IF lt_up IS NOT INITIAL.
+*        SELECT billofmaterial,
+*               billofmaterialvariant,
+*               material,
+*               plant,
+*               billofmaterialvariantusage
+*          FROM i_materialbomlinkdex WITH PRIVILEGED ACCESS
+*          FOR ALL ENTRIES IN @lt_up
+*         WHERE billofmaterial = @lt_up-billofmaterial
+*           AND billofmaterialvariant = @lt_up-billofmaterialvariant
+*           AND plant IN @lr_plant
+*          INTO TABLE @DATA(lt_expode).
+*      ENDIF.
+** get the cost bom to check
+*      IF lt_expode IS NOT INITIAL.
+*        SELECT costingreferenceobject,
+*               costestimate,
+*               costingtype,
+*               costingdate,
+*               costingversion,
+*               valuationvariant,
+*               costisenteredmanually,
+*               product,
+*               plant,
+*               costestimatevaliditystartdate,
+*               billofmaterial,
+*               alternativebillofmaterial
+*          FROM i_productcostestimate WITH PRIVILEGED ACCESS
+*          FOR ALL ENTRIES IN @lt_expode
+*         WHERE product = @lt_expode-material
+*           AND plant IN @lr_plant
+*           AND costingvariant = 'PYC1'
+*           AND costestimatevaliditystartdate <= @lv_to
+*           AND costestimatestatus = 'FR'
+*          INTO TABLE @DATA(lt_costbom).
+** get lasted date value
+*        SORT lt_costbom BY product plant
+*                           costestimatevaliditystartdate DESCENDING.
+*        DELETE ADJACENT DUPLICATES FROM lt_costbom COMPARING product plant.
+*      ENDIF.
+*      IF lt_costbom IS NOT INITIAL.
+*        SELECT  billofmaterialcategory,
+*                billofmaterial,
+*                billofmaterialvariant,
+*                billofmaterialitemnodenumber,
+*                bominstceinternalchangenumber,
+*                billofmaterialcomponent
+*          FROM i_billofmaterialitemdex_3 WITH PRIVILEGED ACCESS
+*          FOR ALL ENTRIES IN @lt_costbom
+*         WHERE billofmaterial = @lt_costbom-billofmaterial
+*           AND billofmaterialvariant = @lt_costbom-alternativebillofmaterial
+*           AND isdeleted = @space
+*           INTO TABLE @DATA(lt_costbomexpode).
 *
-    "貢献利益"
-
-*      SELECT
-*        a~SalesPlanAmountInDspCrcy,
-*        a~SalesPlanPeriodName,
-*        c~ConditionRateValue
-*        FROM I_SlsPerformancePlanActualCube WITH PRIVILEGED ACCESS AS a
-*        LEFT JOIN C_SalesPlanValueHelp WITH PRIVILEGED ACCESS AS b
-*          ON  a~P_EXCHANGERATETYPE = '0'
-*          AND a~P_CREATEDBYUSER    = b~CreatedByUser
-*          AND a~P_SALESPLAN        = b~SalesPlan
-*          AND a~P_SALESPLANVERSION = @lv_salesplan_version2
-*          AND a~P_DISPLAYCURRENCY  = 'JPY'
-*        LEFT JOIN I_SlsPrcgConditionRecord WITH PRIVILEGED ACCESS AS c
-*          ON c~ConditionType = 'ZYP0'
-*          AND c~ConditionIsDeleted = @SPACE
-*          AND c~ConditionValidityStartDate = a~SalesPlanPeriodName
-*        INTO TABLE @DATA(lt_result2).
-
-*"売上総利益"
+*      ENDIF.
 *
-*      SELECT
-*        a~SalesPlanAmountInDspCrcy,
-*        a~SalesPlanPeriodName
-*        FROM I_SlsPerformancePlanActualCube WITH PRIVILEGED ACCESS AS a
-*        LEFT JOIN C_SalesPlanValueHelp WITH PRIVILEGED ACCESS AS b
-*          ON  a~P_EXCHANGERATETYPE = '0'
-*          AND a~P_CREATEDBYUSER    = b~CreatedByUser
-*          AND a~P_SALESPLAN        = b~SalesPlan
-*          AND a~P_SALESPLANVERSION = @lv_salesplan_version3
-*          AND a~P_DISPLAYCURRENCY  = 'JPY'
-*        INTO TABLE @DATA(lt_result3).
-
-*     SELECT
-*       ConditionRateValue
-*     FROM I_SlsPrcgConditionRecord
-*     WHERE ConditionType = 'ZYPO'
-*       AND ConditionIsDeleted = SPACE
-*       AND ConditionValidityStartDate = lt_result2-SalesPlanPeriodName
-*     INTO TABLE @DATA(lt_RateValue).
+** Check costbom with material bom
+*      SORT lt_costbomexpode BY billofmaterialcomponent billofmaterialvariant.
+*      LOOP AT lt_up INTO DATA(ls_up).
+*        READ TABLE lt_costbomexpode
+*             WITH KEY billofmaterialcomponent = ls_up-billofmaterialcomponent
+*                      billofmaterialvariant = ls_up-billofmaterialvariant BINARY SEARCH
+*             TRANSPORTING NO FIELDS.
+*        IF sy-subrc <> 0.
+*          DELETE lt_up.
+*          CONTINUE.
+*        ENDIF.
+*      ENDLOOP.
+*
+*      SORT lt_up BY billofmaterial billofmaterialvariant.
+*      LOOP AT lt_expode INTO DATA(ls_expode).
+*        READ TABLE lt_up
+*             WITH KEY billofmaterial = ls_expode-billofmaterial
+*                      billofmaterialvariant = ls_expode-billofmaterialvariant BINARY SEARCH
+*             TRANSPORTING NO FIELDS.
+*        IF sy-subrc <> 0.
+*          DELETE lt_expode.
+*          CONTINUE.
+*        ELSE.
+*          lrs_bom-sign = 'I'.
+*          lrs_bom-option = 'EQ'.
+*          lrs_bom-low = ls_expode-material.
+*          APPEND lrs_bom TO lr_bom.
+*          CLEAR: lrs_bom.
+*        ENDIF.
+*      ENDLOOP.
+*
+*
+** edit bom hierarchy
+*      DATA(lt_bom_tmp) = lt_bom[].
+*      CLEAR: lt_bom.
+*      lv_index = lv_index + 1.
+*      lv_num_parent = lv_index.
+*      IF lv_index = 1.
+** Prepare the last layer
+*        LOOP AT lt_expode INTO ls_expode.
+*          ls_bom-parent01 = ls_expode-material.
+*          ls_bom-plant = ls_expode-plant.
+*
+*          READ TABLE lt_up INTO ls_up
+*               WITH KEY billofmaterial = ls_expode-billofmaterial
+*                        billofmaterialvariant = ls_expode-billofmaterialvariant BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            ls_bom-raw = ls_up-billofmaterialcomponent.
+*          ENDIF.
+*          APPEND ls_bom TO lt_bom.
+*          CLEAR: ls_bom.
+*        ENDLOOP.
+*
+*      ELSE.
+** Expand bom from second to last layer to the first layer
+*        DATA(lv_field) = 'PARENT' && lv_num_parent.
+*        lv_num_son = lv_num_parent - 1.
+*        DATA(lv_field_son) = 'PARENT' && lv_num_son.
+*        SORT lt_bom_tmp BY plant (lv_field_son).
+*
+*        LOOP AT lt_expode INTO ls_expode.
+*          READ TABLE lt_up INTO ls_up
+*               WITH KEY billofmaterial = ls_expode-billofmaterial
+*                        billofmaterialvariant = ls_expode-billofmaterialvariant BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            READ TABLE lt_bom_tmp INTO ls_bom
+*                 WITH KEY plant = ls_expode-plant
+*                          (lv_field_son) = ls_up-billofmaterialcomponent BINARY SEARCH.
+*            IF sy-subrc = 0.
+*              DATA(lv_tabix) = sy-tabix.
+*              ASSIGN COMPONENT lv_field OF STRUCTURE ls_bom TO <fs>.
+*              <fs> = ls_expode-material.
+*              APPEND ls_bom TO lt_bom.
+*              DELETE lt_bom_tmp INDEX lv_tabix.
+*              CONTINUE.
+*            ENDIF.
+*            CLEAR: ls_bom.
+*          ENDIF.
+*        ENDLOOP.
+*      ENDIF.
+*      IF lt_bom_tmp IS NOT INITIAL.
+*        APPEND LINES OF lt_bom_tmp TO lt_bom_temp.
+*      ENDIF.
+*      CLEAR: lt_product_tmp.
+*      LOOP AT lt_expode INTO ls_expode.
+*        ls_product-product = ls_expode-material.
+*        ls_product-plant = ls_expode-plant.
+*        APPEND ls_product TO lt_product_tmp.
+*        CLEAR: ls_product.
+*      ENDLOOP.
+*    ENDDO.
+*    APPEND LINES OF lt_bom_temp TO lt_bom.
 
 
 

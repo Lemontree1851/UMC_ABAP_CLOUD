@@ -435,6 +435,10 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
       ENDLOOP.
     ENDIF.
 
+    IF io_request->is_total_numb_of_rec_requested(  ) .
+      io_response->set_total_number_of_records( lines( lt_data ) ).
+    ENDIF.
+
     " Filtering
     zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
                                            it_excluded = VALUE #( ( fieldname = 'REQUISITIONDATE' )
@@ -447,10 +451,6 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
     " Paging
     zzcl_odata_utils=>paging( EXPORTING io_paging = io_request->get_paging(  )
                               CHANGING  ct_data   = lt_data ).
-
-    IF io_request->is_total_numb_of_rec_requested(  ) .
-      io_response->set_total_number_of_records( lines( lt_data ) ).
-    ENDIF.
 
     io_response->set_data( lt_data ).
   ENDMETHOD.

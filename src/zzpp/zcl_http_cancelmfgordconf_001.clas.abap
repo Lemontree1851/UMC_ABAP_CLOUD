@@ -70,7 +70,8 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
       lv_path           TYPE string,
       lv_string         TYPE string,
       lv_unix_timestamp TYPE int8,
-      lv_previous_processed TYPE ztpp_1004-messagetype.
+      lv_previous_processed TYPE ztpp_1004-messagetype,
+      ls_error          TYPE zzcl_odata_utils=>gty_error.
 
     CONSTANTS:
       lc_msgid         TYPE string VALUE 'ZPP_001',
@@ -78,6 +79,7 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
       lc_msgty_s       TYPE string VALUE 'S',
       lc_msgty_w       TYPE string VALUE 'W',
       lc_stat_code_200 TYPE string VALUE '200',
+      lc_stat_code_500 TYPE string VALUE '500',
       lc_updateflag_i  TYPE string VALUE 'I',
       lc_updateflag_c  TYPE string VALUE 'C',
       lc_count_10      TYPE i      VALUE '10',
@@ -207,11 +209,17 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
               ev_status_code = DATA(lv_stat_code)
               ev_response    = DATA(lv_resbody_api) ).
 
-          "JSON->ABAP
-          xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
-              ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_res_api ) ).
+          "Could not fetch SCRF token
+          IF lv_stat_code = lc_stat_code_500.
+            ls_res-_msg = lv_resbody_api.
+            RAISE EXCEPTION TYPE cx_abap_api_state.
+          ENDIF.
 
           IF lv_stat_code = lc_stat_code_200.
+            "JSON->ABAP
+            xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
+                ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_res_api ) ).
+
             "作業実績取消は成功しました！
             MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 028 INTO ls_res-_msg.
             ls_res-_msgty = 'S'.
@@ -235,7 +243,10 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
           ELSE.
             "作業実績取消は失敗しました：
             MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 027 INTO ls_res-_msg.
-            ls_res-_msg = ls_res-_msg && ls_res_api-error-message-value.
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+                                       CHANGING  data = ls_error ).
+            "ls_res-_msg = ls_res-_msg && ls_res_api-error-message-value.
+            ls_res-_msg = ls_res-_msg && ls_error-error-message-value.
             RAISE EXCEPTION TYPE cx_abap_api_state.
           ENDIF.
         ELSE.

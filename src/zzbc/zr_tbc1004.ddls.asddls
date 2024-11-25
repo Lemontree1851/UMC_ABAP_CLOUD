@@ -4,6 +4,8 @@ define root view entity ZR_TBC1004
   as select from ztbc_1004 as _User
 
   composition [0..*] of ZR_TBC1006 as _AssignPlant
+  composition [0..*] of ZR_TBC1012 as _AssignCompany
+  composition [0..*] of ZR_TBC1013 as _AssignSalesOrg
   composition [0..*] of ZR_TBC1007 as _AssignRole
 {
   key user_uuid             as UserUuid,
@@ -23,5 +25,7 @@ define root view entity ZR_TBC1004
       local_last_changed_at as LocalLastChangedAt,
 
       _AssignPlant,
+      _AssignCompany,
+      _AssignSalesOrg,
       _AssignRole
 }

@@ -12,8 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZZCL_SHOW_APPLICATION_LOG IMPLEMENTATION.
-
+CLASS zzcl_show_application_log IMPLEMENTATION.
 
   METHOD if_rap_query_provider~select.
 
@@ -69,6 +68,10 @@ CLASS ZZCL_SHOW_APPLICATION_LOG IMPLEMENTATION.
           " handle exception
       ENDTRY.
 
+      IF io_request->is_total_numb_of_rec_requested(  ) .
+        io_response->set_total_number_of_records( lines( lt_data ) ).
+      ENDIF.
+
       " Filtering
       zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
                                    CHANGING  ct_data     = lt_data ).
@@ -81,13 +84,9 @@ CLASS ZZCL_SHOW_APPLICATION_LOG IMPLEMENTATION.
       zzcl_odata_utils=>paging( EXPORTING io_paging = io_request->get_paging(  )
                                 CHANGING  ct_data   = lt_data ).
 
-
-      IF io_request->is_total_numb_of_rec_requested(  ) .
-        io_response->set_total_number_of_records( lines( lt_data ) ).
-      ENDIF.
-
       io_response->set_data( lt_data ).
     ENDIF.
 
   ENDMETHOD.
+
 ENDCLASS.

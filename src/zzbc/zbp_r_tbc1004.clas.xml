@@ -38,6 +38,18 @@
      <ENTRY>Role Id</ENTRY>
      <LENGTH>50</LENGTH>
     </item>
+    <item>
+     <ID>I</ID>
+     <KEY>005</KEY>
+     <ENTRY>Company Code</ENTRY>
+     <LENGTH>50</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
+     <KEY>006</KEY>
+     <ENTRY>Sales Organization</ENTRY>
+     <LENGTH>50</LENGTH>
+    </item>
    </TPOOL>
    <I18N_TPOOL>
     <item>
@@ -65,6 +77,18 @@
        <ID>I</ID>
        <KEY>004</KEY>
        <ENTRY>ロール</ENTRY>
+       <LENGTH>50</LENGTH>
+      </item>
+      <item>
+       <ID>I</ID>
+       <KEY>005</KEY>
+       <ENTRY>会社コード</ENTRY>
+       <LENGTH>50</LENGTH>
+      </item>
+      <item>
+       <ID>I</ID>
+       <KEY>006</KEY>
+       <ENTRY>販売組織</ENTRY>
        <LENGTH>50</LENGTH>
       </item>
      </TEXTPOOL>

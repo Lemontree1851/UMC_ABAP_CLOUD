@@ -18,5 +18,7 @@ define root view entity ZC_PRWORKFLOWhistory
           CreatedAt,
           LastChangedBy,
           LastChangedAt,
-          LocalLastChangedAt
+          LocalLastChangedAt,
+          title,
+          nodename
 }

@@ -113,6 +113,27 @@ CLASS lhc_pochange IMPLEMENTATION.
                              iv_symbol = '\' ).
       ENDIF.
     ENDLOOP.
+    "Check if po item is exist
+    SELECT purchaseorder,
+           purchaseorderitem
+      FROM i_purchaseorderitemapi01
+     WHERE purchaseorder = @lv_po
+      INTO TABLE @DATA(lt_poitem).
+    SORT lt_poitem BY purchaseorder purchaseorderitem.
+    LOOP AT ct_data INTO ls_data.
+      READ TABLE lt_poitem INTO DATA(ls_poitem)
+           WITH KEY purchaseorder = ls_data-purchaseorder
+                    purchaseorderitem = ls_data-purchaseorderitem.
+      IF sy-subrc <> 0.
+        lv_status = 'E'.
+        lv_message = ls_data-purchaseorderitem && 'not exist'.
+        lv_message = zzcl_common_utils=>merge_message(
+                             iv_message1 = lv_message
+                             iv_message2 = lv_msg
+                             iv_symbol = '\' ).
+        EXIT.
+      ENDIF.
+    ENDLOOP.
 
     IF lv_status = 'E'.
       LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
@@ -413,39 +434,43 @@ CLASS lhc_pochange IMPLEMENTATION.
         APPEND ls_scheduleline_update TO lt_scheduleline_update.
       ENDIF.
 * --PO Item long text
-      SELECT COUNT(*)
-        FROM i_purchaseorderitemnotetp_2
-       WHERE purchaseorder = @lv_po
-         AND purchaseorderitem = @ls_data-purchaseorderitem.
-      IF sy-subrc <> 0.
-        ls_itemnote_create-%key-purchaseorder = lv_po.
-        ls_itemnote_create-%key-purchaseorderitem = ls_data-purchaseorderitem.
-        ls_itemnote_create-%target = VALUE #( ( %cid = 'I001'
-                                                purchaseorder = lv_po
-                                                purchaseorderitem = ls_data-purchaseorderitem
-                                                textobjecttype = 'F01'
-                                                language = sy-langu
-                                                plainlongtext = ls_data-longtext ) ).
-        APPEND ls_itemnote_create TO lt_itemnote_create.
-      ELSE.
-        IF ls_data-longtext IS NOT INITIAL.
+      IF ls_data-longtext IS NOT INITIAL.
+        SELECT COUNT(*)
+          FROM i_purchaseorderitemnotetp_2
+         WHERE purchaseorder = @lv_po
+           AND purchaseorderitem = @ls_data-purchaseorderitem
+           AND textobjecttype = 'F01'
+           AND language = @sy-langu.
+        IF sy-subrc <> 0.
           ls_itemnote_create-%key-purchaseorder = lv_po.
           ls_itemnote_create-%key-purchaseorderitem = ls_data-purchaseorderitem.
-
           ls_itemnote_create-%target = VALUE #( ( %cid = 'I001'
-                                                  purchaseorder = lv_po
-                                                  purchaseorderitem = ls_data-purchaseorderitem
-                                                  textobjecttype = 'F01'
-                                                  language = sy-langu
-                                                  plainlongtext = '#' ) ).
-          APPEND ls_itemnote_create TO lt_itemnote_create.
-          ls_itemnote_create-%target = VALUE #( ( %cid = 'I002'
                                                   purchaseorder = lv_po
                                                   purchaseorderitem = ls_data-purchaseorderitem
                                                   textobjecttype = 'F01'
                                                   language = sy-langu
                                                   plainlongtext = ls_data-longtext ) ).
           APPEND ls_itemnote_create TO lt_itemnote_create.
+        ELSE.
+          IF ls_data-longtext IS NOT INITIAL.
+            ls_itemnote_create-%key-purchaseorder = lv_po.
+            ls_itemnote_create-%key-purchaseorderitem = ls_data-purchaseorderitem.
+
+            ls_itemnote_create-%target = VALUE #( ( %cid = 'I001'
+                                                    purchaseorder = lv_po
+                                                    purchaseorderitem = ls_data-purchaseorderitem
+                                                    textobjecttype = 'F01'
+                                                    language = sy-langu
+                                                    plainlongtext = '#' ) ).
+            APPEND ls_itemnote_create TO lt_itemnote_create.
+            ls_itemnote_create-%target = VALUE #( ( %cid = 'I002'
+                                                    purchaseorder = lv_po
+                                                    purchaseorderitem = ls_data-purchaseorderitem
+                                                    textobjecttype = 'F01'
+                                                    language = sy-langu
+                                                    plainlongtext = ls_data-longtext ) ).
+            APPEND ls_itemnote_create TO lt_itemnote_create.
+          ENDIF.
         ENDIF.
       ENDIF.
       CLEAR: ls_purchaseorder_update, ls_purchaseorderitem_update,
