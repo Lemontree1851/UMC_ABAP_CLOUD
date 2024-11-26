@@ -49,6 +49,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
              update_seq                    TYPE sy-index,
              balance_9                     TYPE menge_d,
              balance_r                     TYPE menge_d,
+             calculation_seq               TYPE sy-index,
            END OF ty_record,
            BEGIN OF ty_result,
              results TYPE TABLE OF ty_record WITH DEFAULT KEY,
@@ -182,7 +183,8 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
     DATA: lv_periodenddate   TYPE datum,
           lv_filter          TYPE string,
           lv_count           TYPE sy-index,
-          lv_sequence        TYPE sy-index,
+          lv_update_seq      TYPE sy-index,
+          lv_calculation_seq TYPE sy-index,
           lv_quantity        TYPE menge_d,
           lv_col_date        TYPE datum,
           lv_begin_month(2)  TYPE n,
@@ -627,11 +629,11 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
           SORT lt_filter_mrpdata BY product mrpelementavailyorrqmtdate.
 
           CLEAR: lt_outofstockdate,lt_update_sequence.
-          lv_sequence = 1.
+          lv_update_seq = 1.
           LOOP AT lt_filter_mrpdata INTO DATA(ls_filter_mrpdata)
                                     GROUP BY ( product = ls_filter_mrpdata-product )
                                     ASSIGNING FIELD-SYMBOL(<lfs_filter_mrpdata_group>).
-            CLEAR lv_quantity.
+            CLEAR: lv_calculation_seq, lv_quantity.
             READ TABLE lt_sum_stockinfo INTO DATA(ls_sum_stockinfo)
                                          WITH KEY product = <lfs_filter_mrpdata_group>-product BINARY SEARCH.
             IF sy-subrc = 0.
@@ -645,6 +647,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
             ENDIF.
 
             LOOP AT GROUP <lfs_filter_mrpdata_group> ASSIGNING FIELD-SYMBOL(<lfs_filter_mrpdata>).
+              lv_calculation_seq += 1.
               " 上位品目
               IF <lfs_filter_mrpdata>-m_r_p_element_category = lc_mrpelement_category_sb.
                 READ TABLE lt_plannedorder INTO DATA(ls_plannedorder)
@@ -673,18 +676,20 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
               <lfs_filter_mrpdata>-balance_9 = lv_quantity.
               " R.BALANCE
               <lfs_filter_mrpdata>-balance_r = lv_quantity.
+              " Calculation order
+              <lfs_filter_mrpdata>-calculation_seq = lv_calculation_seq.
 
               " 计算 R.BALANCE 用
               IF <lfs_filter_mrpdata>-m_r_p_element_category = lc_mrpelement_category_la. " 出荷通知
                 APPEND VALUE #( product   = <lfs_filter_mrpdata>-product
-                                sequence  = lv_sequence
+                                sequence  = lv_update_seq
                                 mrpelementavailyorrqmtdate = <lfs_filter_mrpdata>-mrpelementavailyorrqmtdate
                                 yearmonth = <lfs_filter_mrpdata>-yearmonth
                                 yearweek  = <lfs_filter_mrpdata>-yearweek
                                 quantity  = <lfs_filter_mrpdata>-m_r_p_element_open_quantity ) TO lt_update_sequence.
-                lv_sequence += 1.
+                lv_update_seq += 1.
               ELSE.
-                <lfs_filter_mrpdata>-update_seq = lv_sequence.
+                <lfs_filter_mrpdata>-update_seq = lv_update_seq.
               ENDIF.
 
               " 最初欠品日付
@@ -1061,11 +1066,12 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                  a~m_r_p_plant,
                  a~mrpelementavailyorrqmtdate,
                  a~balance_9,
-                 a~balance_r
+                 a~balance_r,
+                 a~calculation_seq
             FROM @lt_filter_mrpdata AS a
            WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
             INTO TABLE @DATA(lt_period_balance).
-          SORT lt_period_balance BY material mrpelementavailyorrqmtdate.
+          SORT lt_period_balance BY material mrpelementavailyorrqmtdate calculation_seq.
 
           " By Week
           ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
@@ -1074,11 +1080,12 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                  a~m_r_p_plant,
                  a~yearweek,
                  a~balance_9,
-                 a~balance_r
+                 a~balance_r,
+                 a~calculation_seq
             FROM @lt_filter_mrpdata AS a
            WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
             INTO TABLE @DATA(lt_week_balance).
-          SORT lt_week_balance BY material yearweek.
+          SORT lt_week_balance BY material yearweek calculation_seq.
 
           " By Month
           ##ITAB_DB_SELECT ##ITAB_KEY_IN_SELECT
@@ -1087,11 +1094,12 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                  a~m_r_p_plant,
                  a~yearmonth,
                  a~balance_9,
-                 a~balance_r
+                 a~balance_r,
+                 a~calculation_seq
             FROM @lt_filter_mrpdata AS a
            WHERE mrpelementavailyorrqmtdate BETWEEN @lv_system_date AND @lv_periodenddate
             INTO TABLE @DATA(lt_month_balance).
-          SORT lt_month_balance BY material yearmonth.
+          SORT lt_month_balance BY material yearmonth calculation_seq.
           " End 指定期間内のBALANCE取得
         ENDIF.
 

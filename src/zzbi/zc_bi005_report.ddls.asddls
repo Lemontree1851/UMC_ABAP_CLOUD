@@ -1,6 +1,7 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: '先々在庫推移分析'
 @Metadata.ignorePropagatedAnnotations: true
+@Metadata.allowExtensions: true
 define root view entity ZC_BI005_REPORT
   provider contract transactional_query
   as projection on ZI_BI005_REPORT

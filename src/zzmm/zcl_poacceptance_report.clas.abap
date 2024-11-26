@@ -88,14 +88,20 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
                 DATA(lr_matnr) = ls_filter_cond-range.
               WHEN 'PLANT'.
                 DATA(lr_werks) = ls_filter_cond-range.
-              WHEN 'PURGDOCPRICEDATE'.
-                DATA(lr_pricedate) = ls_filter_cond-range.
-              WHEN 'ISCOMPLETELYDELIVERED'.
-                DATA(lr_complete) = ls_filter_cond-range.
-                READ TABLE lr_complete INTO DATA(lrs_complete) INDEX 1.
-                DATA(lv_complete) = lrs_complete-low.
-              WHEN 'NETAMOUNT'.
-                DATA(lr_netpr) = ls_filter_cond-range.
+              WHEN 'PURCHASEORDERITEMUNIQUEID'.
+                DATA(lr_poitem) = ls_filter_cond-range.
+              WHEN 'PURCHASINGORGANIZATION'.
+                DATA(lr_ekorg) = ls_filter_cond-range.
+              WHEN 'MATERIALGROUP'.
+                DATA(lr_matkl) = ls_filter_cond-range.
+              WHEN 'DOCUMENTDATE'.
+                DATA(lr_date1) = ls_filter_cond-range.
+              WHEN 'POSTINGDATE'.
+                DATA(lr_date2) = ls_filter_cond-range.
+              WHEN 'INVOICEDOCUMENTDATE'.
+                DATA(lr_date3) = ls_filter_cond-range.
+              WHEN 'INVOICEDOCUMENTPOSTINGDATE'.
+                DATA(lr_date4) = ls_filter_cond-range.
               WHEN OTHERS.
             ENDCASE.
           ENDLOOP.
@@ -112,91 +118,50 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
         INTO TABLE @DATA(lt_ztbc_1001).
 
 * Get PO data
-      IF lv_complete = 'X'.
-        SELECT a~purchaseorder,
-             a~purchaseordertype,
-             a~purchaseorderdate,
-             a~companycode,
-             a~purchasingorganization,
-             a~purchasinggroup,
-             a~supplier,
-             a~documentcurrency,
-             a~exchangerate,
-             b~purchaseorderitem,
-             b~materialgroup,
-             b~material,
-             b~suppliermaterialnumber,
-             b~purchaseorderitemtext,
-             b~plant,
-             b~purchaseorderquantityunit,
-             b~netpricequantity,
-             b~requirementtracking,
-             b~requisitionername,
-             b~orderpriceunit,
-             b~pricingdatecontrol,
-             b~purchasinginforecord,
-             b~accountassignmentcategory,
-             b~netamount,
-             b~orderquantity,
-             b~netpriceamount,
-             b~taxcode,
-             b~purgdocpricedate
-        FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS AS a
-          INNER JOIN i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS AS b
-          ON ( a~purchaseorder = b~purchaseorder )
-       WHERE a~purchaseorder IN @lr_ebeln
-         AND a~purchasinggroup IN @lr_ekgrp
-         AND a~supplier IN @lr_lifnr
-         AND b~purchasingdocumentdeletioncode = @space
-         AND b~material IN @lr_matnr
-         AND b~plant IN @lr_werks
-         AND b~purgdocpricedate IN @lr_pricedate
-         AND b~iscompletelydelivered = @space
-         AND b~netpriceamount IN @lr_netpr
-        INTO TABLE @DATA(lt_po).
-      ELSE.
-        SELECT a~purchaseorder,
-             a~purchaseordertype,
-             a~purchaseorderdate,
-             a~companycode,
-             a~purchasingorganization,
-             a~purchasinggroup,
-             a~supplier,
-             a~documentcurrency,
-             a~exchangerate,
-             b~purchaseorderitem,
-             b~materialgroup,
-             b~material,
-             b~suppliermaterialnumber,
-             b~purchaseorderitemtext,
-             b~plant,
-             b~purchaseorderquantityunit,
-             b~netpricequantity,
-             b~requirementtracking,
-             b~requisitionername,
-             b~orderpriceunit,
-             b~pricingdatecontrol,
-             b~purchasinginforecord,
-             b~accountassignmentcategory,
-             b~netamount,
-             b~orderquantity,
-             b~netpriceamount,
-             b~taxcode,
-             b~purgdocpricedate
-        FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS AS a
-          INNER JOIN i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS AS b
-          ON ( a~purchaseorder = b~purchaseorder )
-       WHERE a~purchaseorder IN @lr_ebeln
-         AND a~purchasinggroup IN @lr_ekgrp
-         AND a~supplier IN @lr_lifnr
-         AND b~purchasingdocumentdeletioncode = @space
-         AND b~material IN @lr_matnr
-         AND b~plant IN @lr_werks
-         AND b~purgdocpricedate IN @lr_pricedate
-         AND b~netpriceamount IN @lr_netpr
-        INTO TABLE @lt_po.
 
-      ENDIF.
+      SELECT a~purchaseorder,
+           a~purchaseordertype,
+           a~purchaseorderdate,
+           a~companycode,
+           a~purchasingorganization,
+           a~purchasinggroup,
+           a~supplier,
+           a~documentcurrency,
+           a~exchangerate,
+           b~purchaseorderitem,
+           b~purchaseorderitemuniqueid,
+           b~materialgroup,
+           b~material,
+           b~suppliermaterialnumber,
+           b~purchaseorderitemtext,
+           b~plant,
+           b~purchaseorderquantityunit,
+           b~netpricequantity,
+           b~requirementtracking,
+           b~requisitionername,
+           b~orderpriceunit,
+           b~pricingdatecontrol,
+           b~purchasinginforecord,
+           b~accountassignmentcategory,
+           b~netamount,
+           b~orderquantity,
+           b~netpriceamount,
+           b~taxcode,
+           b~purgdocpricedate
+      FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS AS a
+        INNER JOIN i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS AS b
+        ON ( a~purchaseorder = b~purchaseorder )
+     WHERE a~purchaseorder IN @lr_ebeln
+       AND a~purchasinggroup IN @lr_ekgrp
+       AND a~supplier IN @lr_lifnr
+       AND a~purchasingorganization IN @lr_ekorg
+       AND b~purchaseorderitemuniqueid IN @lr_poitem
+       AND b~purchasingdocumentdeletioncode = @space
+       AND b~material IN @lr_matnr
+       AND b~materialgroup IN @lr_matkl
+       AND b~plant IN @lr_werks
+      INTO TABLE @DATA(lt_po).
+
 
       IF lt_po IS NOT INITIAL.
 * Get Product
@@ -289,8 +254,12 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
           FOR ALL ENTRIES IN @lt_po
          WHERE purchaseorder = @lt_po-purchaseorder
            AND purchaseorderitem = @lt_po-purchaseorderitem
-           AND ( purchasinghistorydocumenttype = '1'
-              OR purchasinghistorydocumenttype = '2' )
+           AND ( ( purchasinghistorydocumenttype = '1'  "入出庫伝票
+               AND documentdate IN @lr_date1
+               AND postingdate IN @lr_date2 )
+              OR ( purchasinghistorydocumenttype = '2'  "請求書
+               AND documentdate IN @lr_date3
+               AND postingdate IN @lr_date4 ) )
           INTO TABLE @DATA(lt_ekbe).
 
         IF lt_ekbe IS NOT INITIAL.
@@ -465,6 +434,7 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
         IF sy-subrc = 0.
           ls_output-purchaseorder = ls_pur-purchaseorder.
           ls_output-purchaseorderitem = ls_pur-purchaseorderitem.
+          ls_output-purchaseorderitemuniqueid = ls_po-purchaseorderitemuniqueid.
           ls_output-companycode = ls_po-companycode.
           ls_output-purchasingorganization = ls_po-purchasingorganization.
           ls_output-purchasinggroup = ls_po-purchasinggroup.

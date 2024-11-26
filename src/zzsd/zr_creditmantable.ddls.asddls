@@ -53,4 +53,16 @@ define root custom entity ZR_CREDITMANTABLE
       zymonth10         : abap.char( 30 );
       zymonth11         : abap.char( 30 );
       zymonth12         : abap.char( 30 );
+      zpercent1         : abap.char( 10 );
+      zpercent2         : abap.char( 10 );
+      zpercent3         : abap.char( 10 );
+      zpercent4         : abap.char( 10 );
+      zpercent5         : abap.char( 10 );
+      zpercent6         : abap.char( 10 );
+      zpercent7         : abap.char( 10 );
+      zpercent8         : abap.char( 10 );
+      zpercent9         : abap.char( 10 );
+      zpercent10        : abap.char( 10 );
+      zpercent11        : abap.char( 10 );
+      zpercent12        : abap.char( 10 );
 }

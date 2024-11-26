@@ -17,17 +17,22 @@ define root custom entity ZR_POACCEPTANCE
 
       //購買伝票
       @UI                            : { lineItem: [ { position: 90 } ],
-                                         selectionField: [ { position: 1 } ] }
+                                         selectionField: [ { position: 5 } ] }
       @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'PurchasingDocument', name: 'I_PurchasingDocumentStdVH'}}],
                   filter             : { multipleSelections: true, selectionType: #SINGLE } }
       @EndUserText.label             : '{@i18n>PurchaseOrder}'
   key PurchaseOrder                  : ebeln;
 
       //po item
-      @UI                            : { lineItem: [ { position: 100 } ] }
-      @EndUserText.label             : '{@i18n>PurchaseOrderItem}'
+      //@UI                            : { lineItem: [ { position: 100 } ] }
+      //@EndUserText.label             : '{@i18n>PurchaseOrderItem}'
+      @UI.hidden: true
   key PurchaseOrderItem              : ebelp;
-
+  
+      @UI                            : { lineItem: [ { position: 100 } ],
+                                         selectionField: [ { position: 6 } ] }
+      @EndUserText.label             : '{@i18n>PurchaseOrderItemUniqueID}'
+  key PurchaseOrderItemUniqueID      : abap.char(15);
       //入出庫伝票
       @UI                            : { lineItem: [ { position: 310 } ] }
       @EndUserText.label             : '{@i18n>MaterialDocument}'
@@ -50,8 +55,7 @@ define root custom entity ZR_POACCEPTANCE
 
       //Serial number in same PO/Item
   key buzei                          : abap.numc(4);
-
-
+      
       //会社コード
       @UI                            : { lineItem: [ { position: 10 } ] }
       @EndUserText.label             : '{@i18n>CompanyCode}'
@@ -62,12 +66,15 @@ define root custom entity ZR_POACCEPTANCE
       @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'Plant', name: 'I_PlantStdVH'}}],
                   filter             : { multipleSelections: true, selectionType: #SINGLE } }
       @UI                            : { lineItem: [ { position: 20 } ],
-                                         selectionField: [ { position: 5 } ] }
+                                         selectionField: [ { position: 1 } ] }
       @EndUserText.label             : '{@i18n>Plant}'
       Plant                          : werks_d;
 
       //購買組織
-      @UI                            : { lineItem: [ { position: 30 } ] }
+      @UI                            : { lineItem: [ { position: 30 } ],
+                                         selectionField: [ { position: 2 } ] }
+      @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'PurchasingOrganization', name: 'I_PurchasingOrganization'}}],
+                  filter             : { multipleSelections: true, selectionType: #SINGLE } }
       @EndUserText.label             : '{@i18n>PurchasingOrganization}'
       PurchasingOrganization         : ekorg;
 
@@ -79,6 +86,8 @@ define root custom entity ZR_POACCEPTANCE
       //購買 Group
       @UI                            : { lineItem: [ { position: 50 } ],
                                          selectionField: [ { position: 3 } ] }
+      @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'PurchasingGroup', name: 'I_PurchasingGroup'}}],
+                  filter             : { multipleSelections: true, selectionType: #SINGLE } }
       @EndUserText.label             : '{@i18n>PurchasingGroup}'
       PurchasingGroup                : ekgrp;
 
@@ -89,7 +98,7 @@ define root custom entity ZR_POACCEPTANCE
 
       //仕入先
       @UI                            : { lineItem: [ { position: 70 } ],
-                                         selectionField: [ { position: 2 } ] }
+                                         selectionField: [ { position: 4 } ] }
       @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'Supplier', name: 'I_Supplier_VH'}}],
                   filter             : { multipleSelections: true, selectionType: #SINGLE } }
       @EndUserText.label             : '{@i18n>Supplier}'
@@ -101,20 +110,26 @@ define root custom entity ZR_POACCEPTANCE
       SupplierName                   : abap.char(40);
 
       //品目 Group
-      @UI                            : { lineItem: [ { position: 110 } ] }
+      @UI                            : { lineItem: [ { position: 110 } ],
+                                         selectionField: [ { position: 7 } ] }
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_PRODUCTGROUPVH', element: 'ProductGroup' } }]                                   
+      //@Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'ProductGroup', name: 'ZC_PRODUCTGROUPVH'}}],
+      //            filter             : { multipleSelections: true, selectionType: #SINGLE } }
+              
       @EndUserText.label             : '{@i18n>MaterialGroup}'
       MaterialGroup                  : matkl;
 
       //品目
       @UI                            : { lineItem: [ { position: 120 } ],
-                                         selectionField: [ { position: 4 } ] }
+                                         selectionField: [ { position: 8 } ] }
       @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'Product', name: 'I_ProductStdVH'}}],
                   filter             : { multipleSelections: true, selectionType: #SINGLE } }
       @EndUserText.label             : '{@i18n>Material}'
       Material                       : matnr;
 
       //仕入先品目コード
-      @UI                            : { lineItem: [ { position: 130 } ] }
+      @UI                            : { lineItem: [ { position: 130 } ],
+                                         selectionField: [ { position: 9 } ]}
       @EndUserText.label             : '{@i18n>SupplierMaterialNumber}'
       SupplierMaterialNumber         : abap.char(35);
 
@@ -167,8 +182,7 @@ define root custom entity ZR_POACCEPTANCE
       PurchaseOrderQuantityUnit      : bstme;
 
       //正味発注価格
-      @UI                            : { lineItem: [ { position: 230 } ],
-                                         selectionField: [ { position: 8 } ] }
+      @UI                            : { lineItem: [ { position: 230 } ] }
       @Semantics.amount.currencyCode : 'DocumentCurrency'
       @EndUserText.label             : '{@i18n>NetAmount}'
       NetAmount                      : abap.curr(13,2);
@@ -233,12 +247,14 @@ define root custom entity ZR_POACCEPTANCE
       AccountingDocumentCreationDate : bldat;
 
       //入出庫伝票の伝票日付
-      @UI                            : { lineItem: [ { position: 380 } ] }
+      @UI                            : { lineItem: [ { position: 380 } ],
+                                         selectionField: [ { position: 10 } ] }
       @EndUserText.label             : '{@i18n>DocumentDate}'
       DocumentDate                   : bldat;
 
       //入出庫伝票の転記日付
-      @UI                            : { lineItem: [ { position: 390 } ] }
+      @UI                            : { lineItem: [ { position: 390 } ],
+                                         selectionField: [ { position: 11 } ] }
       @EndUserText.label             : '{@i18n>PostingDate}'
       PostingDate                    : budat;
 
@@ -291,12 +307,14 @@ define root custom entity ZR_POACCEPTANCE
       InvoiceAmount                  : abap.curr(13,2);
 
       //請求書伝票の転記日付
-      @UI                            : { lineItem: [ { position: 510 } ] }
+      @UI                            : { lineItem: [ { position: 510 } ],
+                                         selectionField: [ { position: 13 } ] }
       @EndUserText.label             : '{@i18n>InvoiceDocumentPostingDate}'
       InvoiceDocumentPostingDate     : budat;
 
       //請求書伝票の伝票日付
-      @UI                            : { lineItem: [ { position: 520 } ] }
+      @UI                            : { lineItem: [ { position: 520 } ],
+                                         selectionField: [ { position: 12 } ] }
       @EndUserText.label             : '{@i18n>InvoiceDocumentDate}'
       InvoiceDocumentDate            : bldat;
 
@@ -341,12 +359,10 @@ define root custom entity ZR_POACCEPTANCE
       DlvQty                         : menge_d;
       
       //価格設定日付
-      @UI                            : { selectionField: [ { position: 6 } ] }
       @EndUserText.label             : '{@i18n>PurgDocPriceDate}'
       PurgDocPriceDate               : datum;
       
       //納入完了PO排除
-      @UI                            : { selectionField: [ { position: 7 } ] }
       @EndUserText.label             : '{@i18n>IsCompletelyDelivered}'
       IsCompletelyDelivered          : abap_boolean;
       

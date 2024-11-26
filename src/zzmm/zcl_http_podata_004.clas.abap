@@ -17,7 +17,8 @@ CLASS zcl_http_podata_004 DEFINITION
         fiscalyear                  TYPE c LENGTH 4,    "会計年度"
         invoicingparty              TYPE c LENGTH 10,   "請求元"
         documentdate                TYPE d,             "請求書日付"
-        postingdate                 TYPE c LENGTH 8,    "転記日付"
+        postingdate1                TYPE c LENGTH 8,    "転記日付"
+        postingdate2                TYPE c LENGTH 8,    "伝票日付"
         exchangerate                TYPE c LENGTH 9,    "換算レート"
         duecalculationbasedate      TYPE c LENGTH 8,    "基準日"
         invoicegrossamount          TYPE c LENGTH 13,   "請求書総額"
@@ -46,8 +47,10 @@ CLASS zcl_http_podata_004 DEFINITION
         purchasinggroup             TYPE c LENGTH 3,    "購買グループ
         companycode                 TYPE c LENGTH 4,    "会社コード
         purchasinggroupname         TYPE c LENGTH 18,   "購買グループ名
-        accountingdocument          TYPE c LENGTH 10,   "仕訳
+*        accountingdocument          TYPE c LENGTH 10,   "仕訳
         suppliername                TYPE c LENGTH 20,   "サプライヤ名
+        taxrate                     TYPE c LENGTH 2,    "税率
+        sendflag                    TYPE c LENGTH 1,    "status
       END OF ty_response,
 
       BEGIN OF ty_output,
@@ -59,8 +62,8 @@ PROTECTED SECTION.
   PRIVATE SECTION.
 
     DATA:
-    lt_req TYPE STANDARD TABLE OF ty_inputs,
-    lw_req like LINE OF lt_req.
+      lt_req TYPE STANDARD TABLE OF ty_inputs,
+      lw_req LIKE LINE OF lt_req.
 
     DATA:
       lv_tablename(10)  TYPE c,
@@ -85,7 +88,9 @@ PROTECTED SECTION.
       lt_value   TYPE STANDARD TABLE OF if_web_http_request=>name_value_pairs,
       ls_value   TYPE if_web_http_request=>name_value_pairs.
 
-ENDCLASS.
+    DATA:lv_rate TYPE p DECIMALS 2.
+
+  ENDCLASS.
 
 
 
@@ -116,6 +121,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
     DATA(lv_sy_datum) = cl_abap_context_info=>get_system_date( ).
 
     lw_req-documentdate = lv_sy_datum.
+*     lw_req-documentdate = '2024-11-26'.
 
     APPEND lw_req TO lt_req.
 
@@ -157,11 +163,11 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         APPEND ls_range1 TO lt_range1.
       ENDLOOP.
 
-      " 从 I_JournalEntry 表中根据拼接的字段查询 AccountingDocument
-      SELECT accountingdocument
-        FROM i_journalentry WITH PRIVILEGED ACCESS
-        WHERE originalreferencedocument IN @lt_range1
-        INTO TABLE @DATA(lt_journal_entry1).
+*      " 从 I_JournalEntry 表中根据拼接的字段查询 AccountingDocument
+*      SELECT accountingdocument
+*        FROM i_journalentry WITH PRIVILEGED ACCESS
+*        WHERE originalreferencedocument IN @lt_range1
+*        INTO TABLE @DATA(lt_journal_entry1).
 
       " 从 I_SupplierInvoiceTaxAPI01 表获取数据
       SELECT supplierinvoice,
@@ -175,19 +181,28 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
           AND fiscalyear = @lt_supplier_invoice2-fiscalyear
         INTO TABLE @DATA(lt_tax1).
 
+      IF lt_tax1 IS NOT INITIAL.
+        SORT lt_tax1 BY supplierinvoice fiscalyear DESCENDING.
+        DELETE ADJACENT DUPLICATES FROM lt_tax1 COMPARING supplierinvoice fiscalyear.
+      ENDIF.
+
       " 从 I_SuplrInvcItemPurOrdRefAPI01 表获取数据
-      SELECT supplierinvoice,
-             fiscalyear,
-             supplierinvoiceitem,
-             purchaseorder,
-             purchaseorderitem,
-             debitcreditcode,
-             purchaseorderitemmaterial,
-             purchaseorderquantityunit,
-             quantityinpurchaseorderunit,
-             documentcurrency,
-             supplierinvoiceitemamount
-        FROM i_suplrinvcitempurordrefapi01 WITH PRIVILEGED ACCESS
+      SELECT a~supplierinvoice,
+             a~fiscalyear,
+             a~supplierinvoiceitem,
+             a~purchaseorder,
+             a~purchaseorderitem,
+             a~debitcreditcode,
+             a~purchaseorderitemmaterial,
+             a~purchaseorderquantityunit,
+             a~quantityinpurchaseorderunit,
+             a~documentcurrency,
+             a~supplierinvoiceitemamount,
+             b~postingdate
+        FROM i_suplrinvcitempurordrefapi01 WITH PRIVILEGED ACCESS AS a
+        LEFT JOIN i_materialdocumentheader_2 WITH PRIVILEGED ACCESS AS b
+        ON b~materialdocumentyear = a~referencedocumentfiscalyear
+        AND b~materialdocument    = a~referencedocument
         FOR ALL ENTRIES IN @lt_supplier_invoice2
         WHERE supplierinvoice = @lt_supplier_invoice2-supplierinvoice
           AND fiscalyear = @lt_supplier_invoice2-fiscalyear
@@ -207,18 +222,6 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       ENDIF.
 
       IF lt_po_ref1 IS NOT INITIAL.
-*        " 从 I_SuplrInvcItmAcctAssgmtAPI01 表获取数据
-*        SELECT supplierinvoice,
-*               fiscalyear,
-*               supplierinvoiceitem
-**               costcenter,
-**               glaccount
-*          FROM i_suplrinvcitmacctassgmtapi01 WITH PRIVILEGED ACCESS
-*          FOR ALL ENTRIES IN @lt_po_ref1
-*          WHERE supplierinvoice = @lt_po_ref1-supplierinvoice
-*            AND fiscalyear = @lt_po_ref1-fiscalyear
-*            AND supplierinvoiceitem = @lt_po_ref1-supplierinvoiceitem
-*          INTO TABLE @DATA(lt_acct_assgmt1).
 
         " 从 I_PurOrdAccountAssignmentAPI01 表获取数据
         SELECT purchaseorder,
@@ -230,6 +233,19 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
           WHERE purchaseorder = @lt_po_ref1-purchaseorder
             AND purchaseorderitem = @lt_po_ref1-purchaseorderitem
           INTO TABLE @DATA(lt_acct_assgmt1).
+      ENDIF.
+
+      " 判空
+      IF lt_acct_assgmt1 IS INITIAL.
+        lv_error = 'X'.
+        lv_text = 'No data found in i_purordaccountassignmentapi01'.
+        " Handle the error
+      ELSE.
+        " 排序
+        SORT lt_acct_assgmt1 BY purchaseorder purchaseorderitem.
+
+        " 去重
+        DELETE ADJACENT DUPLICATES FROM lt_acct_assgmt1 COMPARING purchaseorder purchaseorderitem.
       ENDIF.
 
       IF lt_po_ref1 IS NOT INITIAL.
@@ -251,16 +267,30 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
       ENDIF.
 
+      " 判空
+      IF lt_po_item1 IS NOT INITIAL.
+        SORT lt_po_item1 BY purchaseorder purchaseorderitem.
+        DELETE ADJACENT DUPLICATES FROM lt_po_item1 COMPARING purchaseorder purchaseorderitem.
+      ENDIF.
 
       IF lt_po_ref1 IS NOT INITIAL.
         " 从 I_PurchaseOrderAPI01 表获取数据
-        SELECT purchaseorder,
-               purchasinggroup,   "新加字段
-               companycode
-          FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS
+        SELECT a~purchaseorder,
+               a~purchasinggroup,   "新加字段
+               a~companycode,
+               b~purchasinggroupname
+          FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS AS a
+          LEFT JOIN i_purchasinggroup WITH PRIVILEGED ACCESS AS b
+          ON b~purchasinggroup = a~purchasinggroup
           FOR ALL ENTRIES IN @lt_po_ref1
           WHERE purchaseorder = @lt_po_ref1-purchaseorder
           INTO TABLE @DATA(lt_purchase_order1).
+      ENDIF.
+
+      " 判空
+      IF lt_purchase_order1 IS NOT INITIAL.
+        SORT lt_purchase_order1 BY purchaseorder.
+        DELETE ADJACENT DUPLICATES FROM lt_purchase_order1 COMPARING purchaseorder.
       ENDIF.
 
       DATA:
@@ -269,12 +299,13 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
       LOOP AT lt_supplier_invoice1 INTO DATA(lw_supplier_invoice1).
         CLEAR lw_result1.
-        lw_result1-SupplierName           = lw_supplier_invoice1-SupplierName.
+        CLEAR lv_rate.
+        lw_result1-suppliername           = lw_supplier_invoice1-suppliername.
         lw_result1-supplierinvoice        = lw_supplier_invoice1-supplierinvoice.
         lw_result1-fiscalyear             = lw_supplier_invoice1-fiscalyear.
         lw_result1-invoicingparty         = lw_supplier_invoice1-invoicingparty.
         lw_result1-documentdate           = lw_supplier_invoice1-documentdate.
-        lw_result1-postingdate            = lw_supplier_invoice1-postingdate.
+        lw_result1-postingdate1           = lw_supplier_invoice1-postingdate.
         lw_result1-exchangerate           = lw_supplier_invoice1-exchangerate.
         lw_result1-duecalculationbasedate = lw_supplier_invoice1-duecalculationbasedate.
         lw_result1-invoicegrossamount     = lw_supplier_invoice1-invoicegrossamount.
@@ -283,25 +314,31 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
         " 查找相关的 Tax 数据
         READ TABLE lt_tax1 INTO DATA(lw_tax1) WITH KEY supplierinvoice = lw_result1-supplierinvoice
-                                                            fiscalyear = lw_result1-fiscalyear.
+                                                            fiscalyear = lw_result1-fiscalyear
+                                                            BINARY SEARCH.
         IF sy-subrc = 0.
 
           SELECT SINGLE zvalue2
             FROM ztbc_1001
-            WHERE zid = 'MM0001'
+            WHERE zid = 'ZMM001'
             AND zvalue1 = @lw_tax1-taxcode
             INTO @DATA(lv_value2_1).
 
           lw_result1-supplierinvoicetaxcounter = lw_tax1-supplierinvoicetaxcounter.
           lw_result1-taxcode                   = lw_tax1-taxcode.
-          lw_result1-taxamount                 = lv_value2_1 / 2.
+*          lw_result1-taxamount                 = lv_value2_1 / 2.
+          lw_result1-taxrate                   = lv_value2_1.
+          lv_rate = lv_value2_1 / 100.
 
         ENDIF.
 
         " 查找相关的 Purchase Order Reference 数据
         READ TABLE lt_po_ref1 INTO DATA(lw_po_ref1) WITH KEY supplierinvoice = lw_result1-supplierinvoice
-                                                                  fiscalyear = lw_result1-fiscalyear.
+                                                                  fiscalyear = lw_result1-fiscalyear
+                                                                  BINARY SEARCH.
         IF sy-subrc = 0.
+          lw_result1-documentcurrency            = lw_po_ref1-documentcurrency.
+          lw_result1-postingdate2                = lw_po_ref1-postingdate.
           lw_result1-supplierinvoiceitem         = lw_po_ref1-supplierinvoiceitem.
           lw_result1-purchaseorder               = lw_po_ref1-purchaseorder.
           lw_result1-purchaseorderitem           = lw_po_ref1-purchaseorderitem.
@@ -310,6 +347,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
           lw_result1-purchaseorderquantityunit   = lw_po_ref1-purchaseorderquantityunit.
           lw_result1-quantityinpurchaseorderunit = lw_po_ref1-quantityinpurchaseorderunit.
           lw_result1-supplierinvoiceitemamount   = lw_po_ref1-supplierinvoiceitemamount.
+          lw_result1-taxamount                   = lw_po_ref1-supplierinvoiceitemamount * lv_rate.
           lw_result1-totalamount                 = lw_po_ref1-supplierinvoiceitemamount + lw_result1-taxamount.
         ENDIF.
 
@@ -319,29 +357,31 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       ENDLOOP.
 
       LOOP AT lt_acct_assgmt1 INTO DATA(lw_acct_assgmt1).
-        READ TABLE lt_result1 INTO lw_result1 WITH KEY purchaseorder = lw_acct_assgmt1-purchaseorder
-                                                       purchaseorderitem = lw_acct_assgmt1-purchaseorderitem.
+        READ TABLE lt_result1 ASSIGNING FIELD-SYMBOL(<lw_result1>) WITH KEY purchaseorder = lw_acct_assgmt1-purchaseorder
+                                                       purchaseorderitem = lw_acct_assgmt1-purchaseorderitem
+                                                       BINARY SEARCH.
 
         IF sy-subrc = 0.
-          lw_result1-costcenter = lw_acct_assgmt1-costcenter.
-          lw_result1-glaccount  = lw_acct_assgmt1-glaccount.
+          <lw_result1>-costcenter = lw_acct_assgmt1-costcenter.
+          <lw_result1>-glaccount  = lw_acct_assgmt1-glaccount.
         ENDIF.
       ENDLOOP.
 
       LOOP AT lt_po_item1 INTO DATA(lw_po_item1).
-        READ TABLE lt_result1 INTO lw_result1 WITH KEY purchaseorder = lw_po_item1-purchaseorder
-                                                 purchaseorderitem = lw_po_item1-purchaseorderitem.
+        READ TABLE lt_result1 ASSIGNING <lw_result1> WITH KEY purchaseorder = lw_po_item1-purchaseorder
+                                                 purchaseorderitem = lw_po_item1-purchaseorderitem
+                                                 BINARY SEARCH.
         IF sy-subrc = 0.
-          lw_result1-purchaseorderitemtext = lw_po_item1-purchaseorderitemtext.
-          lw_result1-requisitionername     = lw_po_item1-requisitionername.
-          lw_result1-requirementtracking   = lw_po_item1-requirementtracking.
-          lw_result1-plant                 = lw_po_item1-plant.
+          <lw_result1>-purchaseorderitemtext = lw_po_item1-purchaseorderitemtext.
+          <lw_result1>-requisitionername     = lw_po_item1-requisitionername.
+          <lw_result1>-requirementtracking   = lw_po_item1-requirementtracking.
+          <lw_result1>-plant                 = lw_po_item1-plant.
 
           " 检查 NetPriceQuantity 是否为零，避免除零错误
           IF lw_po_item1-netpricequantity <> 0.
-            lw_result1-unitprice = lw_po_item1-netpriceamount / lw_po_item1-netpricequantity.
+            <lw_result1>-unitprice = lw_po_item1-netpriceamount / lw_po_item1-netpricequantity.
           ELSE.
-            lw_result1-unitprice = 0. " 如果数量为 0，可以根据业务需求设定默认值
+            <lw_result1>-unitprice = 0. " 如果数量为 0，可以根据业务需求设定默认值
           ENDIF.
 
         ENDIF.
@@ -349,24 +389,28 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
       " 示例：从 lt_purchase_order2 中获取数据并合并到 lw_result
       LOOP AT lt_purchase_order1 INTO DATA(lw_purchase_order1).
-        READ TABLE lt_result1 INTO lw_result1 WITH KEY purchaseorder = lw_purchase_order1-purchaseorder.
+        READ TABLE lt_result1 ASSIGNING <lw_result1> WITH KEY purchaseorder = lw_purchase_order1-purchaseorder
+                                                                       BINARY SEARCH.
         IF sy-subrc = 0.
-          lw_result1-purchasinggroup = lw_purchase_order1-purchasinggroup.
-          lw_result1-companycode     = lw_purchase_order1-companycode.
+          <lw_result1>-purchasinggroup     = lw_purchase_order1-purchasinggroup.
+          <lw_result1>-companycode         = lw_purchase_order1-companycode.
+          <lw_result1>-purchasinggroupname = lw_purchase_order1-purchasinggroupname.
         ENDIF.
       ENDLOOP.
 
-      LOOP AT lt_journal_entry1 INTO DATA(lw_journal_entry1).
-        " 拼接 OriginalReferenceDocument
-        DATA(lv_combined_key1) = lw_result1-supplierinvoice && lw_result1-fiscalyear.
-
-        " 根据拼接的 key 查找对应的记录
-        READ TABLE lt_result1 INTO lw_result1
-          WITH KEY accountingdocument = lv_combined_key1.
-        IF sy-subrc = 0.
-          lw_result1-accountingdocument = lw_journal_entry1-accountingdocument.
-        ENDIF.
-      ENDLOOP.
+*      LOOP AT lt_journal_entry1 INTO DATA(lw_journal_entry1).
+*        CLEAR lw_result1.
+*        " 拼接 OriginalReferenceDocument
+*        DATA(lv_combined_key1) = lw_result1-supplierinvoice && lw_result1-fiscalyear.
+*
+*        " 根据拼接的 key 查找对应的记录
+*        READ TABLE lt_result1 ASSIGNING <lw_result1>
+*          WITH KEY accountingdocument = lv_combined_key1
+*          BINARY SEARCH.
+*        IF sy-subrc = 0.
+*          <lw_result1>-accountingdocument = lw_journal_entry1-accountingdocument.
+*        ENDIF.
+*      ENDLOOP.
 
       " 合并数据
       LOOP AT lt_result1 INTO lw_result1.
@@ -374,11 +418,13 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         DATA(lv_unit1) = lw_result1-purchaseorderquantityunit.
         DATA(lv_unit11) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit1 ).
 
+        ls_response-suppliername                         = lw_result1-suppliername.
         ls_response-supplierinvoice                      = lw_result1-supplierinvoice.
         ls_response-fiscalyear                           = lw_result1-fiscalyear.
         ls_response-invoicingparty                       = lw_result1-invoicingparty.
         ls_response-documentdate                         = lw_result1-documentdate.
-        ls_response-postingdate                          = lw_result1-postingdate.
+        ls_response-postingdate1                         = lw_result1-postingdate1.
+        ls_response-postingdate2                         = lw_result1-postingdate2.
         ls_response-exchangerate                         = lw_result1-exchangerate.
         ls_response-duecalculationbasedate               = lw_result1-duecalculationbasedate.
         ls_response-invoicegrossamount                   = lw_result1-invoicegrossamount.
@@ -394,6 +440,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ls_response-purchaseorderitemmaterial            = lw_result1-purchaseorderitemmaterial.
         ls_response-documentcurrency                     = lw_result1-documentcurrency.
         ls_response-supplierinvoiceitemamount            = lw_result1-supplierinvoiceitemamount.
+        ls_response-taxrate                              = lw_result1-taxrate.
         ls_response-quantityinpurchaseorderunit          = lw_result1-quantityinpurchaseorderunit.
         ls_response-purchaseorderquantityunit            = lv_unit11.
         ls_response-costcenter                           = lw_result1-costcenter.
@@ -405,8 +452,8 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ls_response-purchasinggroup                      = lw_result1-purchasinggroup.
         ls_response-companycode                          = lw_result1-companycode.
         ls_response-purchasinggroupname                  = lw_result1-purchasinggroupname.
-        ls_response-accountingdocument                   = lw_result1-accountingdocument.
-
+*        ls_response-accountingdocument                   = lw_result1-accountingdocument.
+        ls_response-sendflag                             = lw_result1-sendflag.
         DATA lv_taxamount1    TYPE p LENGTH 10 DECIMALS 2.
         DATA lv_totalamount1  TYPE p LENGTH 10 DECIMALS 2.
 
@@ -453,12 +500,13 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
             ls_response-unitprice   = lw_result1-unitprice.
         ENDCASE.
 
-        CONDENSE ls_response-SupplierName.
+        CONDENSE ls_response-suppliername.
         CONDENSE ls_response-supplierinvoice.
         CONDENSE ls_response-fiscalyear.
         CONDENSE ls_response-invoicingparty.
         CONDENSE ls_response-documentdate.
-        CONDENSE ls_response-postingdate.
+        CONDENSE ls_response-postingdate1.
+        CONDENSE ls_response-postingdate2.
         CONDENSE ls_response-exchangerate.
         CONDENSE ls_response-duecalculationbasedate.
         CONDENSE ls_response-invoicegrossamount.
@@ -485,10 +533,12 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         CONDENSE ls_response-purchasinggroup.
         CONDENSE ls_response-companycode.
         CONDENSE ls_response-purchasinggroupname.
-        CONDENSE ls_response-accountingdocument.
+*        CONDENSE ls_response-accountingdocument.
         CONDENSE ls_response-taxamount.
         CONDENSE ls_response-totalamount.
         CONDENSE ls_response-unitprice.
+        CONDENSE ls_response-taxrate.
+        CONDENSE ls_response-sendflag.
         APPEND   ls_response TO es_response-items.
 
       ENDLOOP.
@@ -530,6 +580,9 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS AS a
         LEFT JOIN i_supplier WITH PRIVILEGED ACCESS AS b
         ON b~supplier = a~invoicingparty
+*        AND a~supplierinvoice = '5105600148'
+        FOR ALL ENTRIES IN @lt_req
+        WHERE a~documentdate = @lt_req-documentdate
         INTO TABLE @DATA(lt_supplier_invoice3).
 
       DATA(lt_supplier_invoice4) = lt_supplier_invoice3[].
@@ -551,11 +604,11 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         APPEND ls_range2 TO lt_range2.
       ENDLOOP.
 
-      " 从 I_JournalEntry 表中根据拼接的字段查询 AccountingDocument
-      SELECT accountingdocument
-        FROM i_journalentry WITH PRIVILEGED ACCESS
-        WHERE originalreferencedocument IN @lt_range2
-        INTO TABLE @DATA(lt_journal_entry2).
+*      " 从 I_JournalEntry 表中根据拼接的字段查询 AccountingDocument
+*      SELECT accountingdocument
+*        FROM i_journalentry WITH PRIVILEGED ACCESS
+*        WHERE originalreferencedocument IN @lt_range2
+*        INTO TABLE @DATA(lt_journal_entry2).
 
       " 从 I_SupplierInvoiceTaxAPI01 表获取数据
       SELECT supplierinvoice,
@@ -569,19 +622,28 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
           AND fiscalyear = @lt_supplier_invoice4-fiscalyear
         INTO TABLE @DATA(lt_tax2).
 
+      IF lt_tax2 IS NOT INITIAL.
+        SORT lt_tax2 BY supplierinvoice fiscalyear DESCENDING.
+        DELETE ADJACENT DUPLICATES FROM lt_tax2 COMPARING supplierinvoice fiscalyear.
+      ENDIF.
+
       " 从 I_SuplrInvcItemPurOrdRefAPI01 表获取数据
-      SELECT supplierinvoice,
-             fiscalyear,
-             supplierinvoiceitem,
-             purchaseorder,
-             purchaseorderitem,
-             debitcreditcode,
-             purchaseorderitemmaterial,
-             purchaseorderquantityunit,
-             quantityinpurchaseorderunit,
-             documentcurrency,
-             supplierinvoiceitemamount
-        FROM i_suplrinvcitempurordrefapi01 WITH PRIVILEGED ACCESS
+      SELECT a~supplierinvoice,
+             a~fiscalyear,
+             a~supplierinvoiceitem,
+             a~purchaseorder,
+             a~purchaseorderitem,
+             a~debitcreditcode,
+             a~purchaseorderitemmaterial,
+             a~purchaseorderquantityunit,
+             a~quantityinpurchaseorderunit,
+             a~documentcurrency,
+             a~supplierinvoiceitemamount,
+             b~postingdate
+        FROM i_suplrinvcitempurordrefapi01 WITH PRIVILEGED ACCESS AS a
+        LEFT JOIN i_materialdocumentheader_2 WITH PRIVILEGED ACCESS AS b
+        ON b~materialdocumentyear = a~referencedocumentfiscalyear
+        AND b~materialdocument    = a~referencedocument
         FOR ALL ENTRIES IN @lt_supplier_invoice4
         WHERE supplierinvoice = @lt_supplier_invoice4-supplierinvoice
           AND fiscalyear = @lt_supplier_invoice4-fiscalyear
@@ -601,18 +663,6 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       ENDIF.
 
       IF lt_po_ref2 IS NOT INITIAL.
-*        " 从 I_SuplrInvcItmAcctAssgmtAPI01 表获取数据
-*        SELECT supplierinvoice,
-*               fiscalyear,
-*               supplierinvoiceitem,
-*               costcenter,
-*               glaccount
-*          FROM i_suplrinvcitmacctassgmtapi01 WITH PRIVILEGED ACCESS
-*          FOR ALL ENTRIES IN @lt_po_ref2
-*          WHERE supplierinvoice = @lt_po_ref2-supplierinvoice
-*            AND fiscalyear = @lt_po_ref2-fiscalyear
-*            AND supplierinvoiceitem = @lt_po_ref2-supplierinvoiceitem
-*          INTO TABLE @DATA(lt_acct_assgmt2).
 
         " 从 I_PurOrdAccountAssignmentAPI01 表获取数据
         SELECT purchaseorder,
@@ -624,6 +674,19 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
           WHERE purchaseorder = @lt_po_ref2-purchaseorder
             AND purchaseorderitem = @lt_po_ref2-purchaseorderitem
           INTO TABLE @DATA(lt_acct_assgmt2).
+      ENDIF.
+
+      " 判空
+      IF lt_acct_assgmt2 IS INITIAL.
+        lv_error = 'X'.
+        lv_text = 'No data found in i_purordaccountassignmentapi01'.
+        " Handle the error
+      ELSE.
+        " 排序
+        SORT lt_acct_assgmt2 BY purchaseorder purchaseorderitem.
+
+        " 去重
+        DELETE ADJACENT DUPLICATES FROM lt_acct_assgmt2 COMPARING purchaseorder purchaseorderitem.
       ENDIF.
 
       IF lt_po_ref2 IS NOT INITIAL.
@@ -643,15 +706,30 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
           INTO TABLE @DATA(lt_po_item2).
       ENDIF.
 
+      " 判空
+      IF lt_po_item2 IS NOT INITIAL.
+        SORT lt_po_item2 BY purchaseorder purchaseorderitem.
+        DELETE ADJACENT DUPLICATES FROM lt_po_item2 COMPARING purchaseorder purchaseorderitem.
+      ENDIF.
+
       IF lt_po_ref2 IS NOT INITIAL.
         " 从 I_PurchaseOrderAPI01 表获取数据
-        SELECT purchaseorder,
-               purchasinggroup,
-               companycode
-          FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS
+        SELECT a~purchaseorder,
+               a~purchasinggroup,   "新加字段
+               a~companycode,
+               b~purchasinggroupname
+          FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS AS a
+          LEFT JOIN i_purchasinggroup WITH PRIVILEGED ACCESS AS b
+          ON b~purchasinggroup = a~purchasinggroup
           FOR ALL ENTRIES IN @lt_po_ref2
           WHERE purchaseorder = @lt_po_ref2-purchaseorder
           INTO TABLE @DATA(lt_purchase_order2).
+      ENDIF.
+
+      " 判空
+      IF lt_purchase_order2 IS NOT INITIAL.
+        SORT lt_purchase_order2 BY purchaseorder.
+        DELETE ADJACENT DUPLICATES FROM lt_purchase_order2 COMPARING purchaseorder.
       ENDIF.
 
     ENDIF.
@@ -662,12 +740,13 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
     LOOP AT lt_supplier_invoice3 INTO DATA(lw_supplier_invoice3).
       CLEAR lw_result.
-      lw_result-SupplierName           = lw_supplier_invoice3-SupplierName.
+      CLEAR lv_rate.
+      lw_result-suppliername           = lw_supplier_invoice3-suppliername.
       lw_result-supplierinvoice        = lw_supplier_invoice3-supplierinvoice.
       lw_result-fiscalyear             = lw_supplier_invoice3-fiscalyear.
       lw_result-invoicingparty         = lw_supplier_invoice3-invoicingparty.
       lw_result-documentdate           = lw_supplier_invoice3-documentdate.
-      lw_result-postingdate            = lw_supplier_invoice3-postingdate.
+      lw_result-postingdate1           = lw_supplier_invoice3-postingdate.
       lw_result-exchangerate           = lw_supplier_invoice3-exchangerate.
       lw_result-duecalculationbasedate = lw_supplier_invoice3-duecalculationbasedate.
       lw_result-invoicegrossamount     = lw_supplier_invoice3-invoicegrossamount.
@@ -676,26 +755,32 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
       " 查找相关的 Tax 数据
       READ TABLE lt_tax2 INTO DATA(lw_tax2) WITH KEY supplierinvoice = lw_result-supplierinvoice
-                                                          fiscalyear = lw_result-fiscalyear.
+                                                          fiscalyear = lw_result-fiscalyear
+                                                          BINARY SEARCH.
 
       IF sy-subrc = 0.
 
         SELECT SINGLE zvalue2
           FROM ztbc_1001
-          WHERE zid = 'MM0001'
+          WHERE zid = 'ZMM001'
           AND zvalue1 = @lw_tax2-taxcode
           INTO @DATA(lv_value2_2).
 
         lw_result-supplierinvoicetaxcounter = lw_tax2-supplierinvoicetaxcounter.
         lw_result-taxcode                   = lw_tax2-taxcode.
-        lw_result-taxamount                 = lv_value2_2 / 2.
+*        lw_result-taxamount                 = lv_value2_2 / 2.
+        lw_result-taxrate                   = lv_value2_2.
+        lv_rate = lv_value2_2 / 100.
 
       ENDIF.
 
       " 查找相关的 Purchase Order Reference 数据
       READ TABLE lt_po_ref2 INTO DATA(lw_po_ref2) WITH KEY supplierinvoice = lw_result-supplierinvoice
-                                                                fiscalyear = lw_result-fiscalyear.
+                                                                fiscalyear = lw_result-fiscalyear
+                                                                BINARY SEARCH.
       IF sy-subrc = 0.
+        lw_result-documentcurrency            = lw_po_ref2-documentcurrency.
+        lw_result-postingdate2                = lw_po_ref2-postingdate.
         lw_result-supplierinvoiceitem         = lw_po_ref2-supplierinvoiceitem.
         lw_result-purchaseorder               = lw_po_ref2-purchaseorder.
         lw_result-purchaseorderitem           = lw_po_ref2-purchaseorderitem.
@@ -704,6 +789,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         lw_result-purchaseorderquantityunit   = lw_po_ref2-purchaseorderquantityunit.
         lw_result-quantityinpurchaseorderunit = lw_po_ref2-quantityinpurchaseorderunit.
         lw_result-supplierinvoiceitemamount   = lw_po_ref2-supplierinvoiceitemamount.
+        lw_result-taxamount                   = lw_po_ref2-supplierinvoiceitemamount * lv_rate.
         lw_result-totalamount                 = lw_po_ref2-supplierinvoiceitemamount + lw_result-taxamount.
       ENDIF.
 
@@ -712,28 +798,33 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
     ENDLOOP.
 
     LOOP AT lt_acct_assgmt2 INTO DATA(lw_acct_assgmt2).
-      READ TABLE lt_result INTO lw_result WITH KEY purchaseorder = lw_acct_assgmt2-purchaseorder
-                                                   purchaseorderitem = lw_acct_assgmt2-purchaseorderitem.
+
+      READ TABLE lt_result ASSIGNING FIELD-SYMBOL(<lw_result>) WITH KEY purchaseorder = lw_acct_assgmt2-purchaseorder
+                                                   purchaseorderitem = lw_acct_assgmt2-purchaseorderitem
+                                                   BINARY SEARCH.
       IF sy-subrc = 0.
-        lw_result-costcenter = lw_acct_assgmt2-costcenter.
-        lw_result-glaccount  = lw_acct_assgmt2-glaccount.
+        <lw_result>-costcenter = lw_acct_assgmt2-costcenter.
+        <lw_result>-glaccount  = lw_acct_assgmt2-glaccount.
       ENDIF.
+
     ENDLOOP.
 
     LOOP AT lt_po_item2 INTO DATA(lw_po_item2).
-      READ TABLE lt_result INTO lw_result WITH KEY purchaseorder = lw_po_item2-purchaseorder
-                                               purchaseorderitem = lw_po_item2-purchaseorderitem.
+
+      READ TABLE lt_result ASSIGNING <lw_result> WITH KEY purchaseorder = lw_po_item2-purchaseorder
+                                               purchaseorderitem = lw_po_item2-purchaseorderitem
+                                               BINARY SEARCH.
       IF sy-subrc = 0.
-        lw_result-purchaseorderitemtext = lw_po_item2-purchaseorderitemtext.
-        lw_result-requisitionername     = lw_po_item2-requisitionername.
-        lw_result-requirementtracking   = lw_po_item2-requirementtracking.
-        lw_result-plant                 = lw_po_item2-plant.
+        <lw_result>-purchaseorderitemtext = lw_po_item2-purchaseorderitemtext.
+        <lw_result>-requisitionername     = lw_po_item2-requisitionername.
+        <lw_result>-requirementtracking   = lw_po_item2-requirementtracking.
+        <lw_result>-plant                 = lw_po_item2-plant.
 
         " 检查 NetPriceQuantity 是否为零，避免除零错误
         IF lw_po_item2-netpricequantity <> 0.
-          lw_result-unitprice = lw_po_item2-netpriceamount / lw_po_item2-netpricequantity.
+          <lw_result>-unitprice = lw_po_item2-netpriceamount / lw_po_item2-netpricequantity.
         ELSE.
-          lw_result-unitprice = 0. " 如果数量为 0，可以根据业务需求设定默认值
+          <lw_result>-unitprice = 0. " 如果数量为 0，可以根据业务需求设定默认值
         ENDIF.
 
       ENDIF.
@@ -742,24 +833,32 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
     " 示例：从 lt_purchase_order2 中获取数据并合并到 lw_result
     LOOP AT lt_purchase_order2 INTO DATA(lw_purchase_order2).
-      READ TABLE lt_result INTO lw_result WITH KEY purchaseorder = lw_purchase_order2-purchaseorder.
+
+      READ TABLE lt_result ASSIGNING <lw_result> WITH KEY purchaseorder = lw_purchase_order2-purchaseorder
+                                                                   BINARY SEARCH.
       IF sy-subrc = 0.
-        lw_result-purchasinggroup = lw_purchase_order2-purchasinggroup.
-        lw_result-companycode     = lw_purchase_order2-companycode.
+        <lw_result>-purchasinggroup     = lw_purchase_order2-purchasinggroup.
+        <lw_result>-companycode         = lw_purchase_order2-companycode.
+        <lw_result>-purchasinggroupname = lw_purchase_order2-purchasinggroupname.
       ENDIF.
+      " 将 lw_result 添加到结果表中
+
     ENDLOOP.
 
-    LOOP AT lt_journal_entry2 INTO DATA(lw_journal_entry2).
-      " 拼接 OriginalReferenceDocument
-      DATA(lv_combined_key) = lw_result-supplierinvoice && lw_result-fiscalyear.
-
-      " 根据拼接的 key 查找对应的记录
-      READ TABLE lt_result INTO lw_result
-        WITH KEY accountingdocument = lv_combined_key.
-      IF sy-subrc = 0.
-        lw_result-accountingdocument = lw_journal_entry2-accountingdocument.
-      ENDIF.
-    ENDLOOP.
+*    LOOP AT lt_journal_entry2 INTO DATA(lw_journal_entry2).
+*      " 拼接 OriginalReferenceDocument
+*      DATA(lv_combined_key) = lw_result-supplierinvoice && lw_result-fiscalyear.
+*
+*      " 根据拼接的 key 查找对应的记录
+*      READ TABLE lt_result ASSIGNING <lw_result>
+*        WITH KEY accountingdocument = lv_combined_key
+*        BINARY SEARCH.
+*      IF sy-subrc = 0.
+*        <lw_result>-accountingdocument = lw_journal_entry2-accountingdocument.
+*      ENDIF.
+*      " 将 lw_result 添加到结果表中
+*
+*    ENDLOOP.
 
     " 合并数据
     LOOP AT lt_result INTO lw_result.
@@ -767,11 +866,13 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       DATA(lv_unit2) = lw_result-purchaseorderquantityunit.
       DATA(lv_unit22) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit2 ).
 
+      ls_response-suppliername                         = lw_result-suppliername.
       ls_response-supplierinvoice                      = lw_result-supplierinvoice.
       ls_response-fiscalyear                           = lw_result-fiscalyear.
       ls_response-invoicingparty                       = lw_result-invoicingparty.
       ls_response-documentdate                         = lw_result-documentdate.
-      ls_response-postingdate                          = lw_result-postingdate.
+      ls_response-postingdate1                         = lw_result-postingdate1.
+      ls_response-postingdate2                         = lw_result-postingdate2.
       ls_response-exchangerate                         = lw_result-exchangerate.
       ls_response-duecalculationbasedate               = lw_result-duecalculationbasedate.
       ls_response-invoicegrossamount                   = lw_result-invoicegrossamount.
@@ -787,6 +888,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       ls_response-purchaseorderitemmaterial            = lw_result-purchaseorderitemmaterial.
       ls_response-documentcurrency                     = lw_result-documentcurrency.
       ls_response-supplierinvoiceitemamount            = lw_result-supplierinvoiceitemamount.
+      ls_response-taxrate                              = lw_result-taxrate.
       ls_response-quantityinpurchaseorderunit          = lw_result-quantityinpurchaseorderunit.
       ls_response-purchaseorderquantityunit            = lv_unit22.
       ls_response-costcenter                           = lw_result-costcenter.
@@ -798,63 +900,65 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       ls_response-purchasinggroup                      = lw_result-purchasinggroup.
       ls_response-companycode                          = lw_result-companycode.
       ls_response-purchasinggroupname                  = lw_result-purchasinggroupname.
-      ls_response-accountingdocument                   = lw_result-accountingdocument.
+*      ls_response-accountingdocument                   = lw_result-accountingdocument.
       ls_response-taxamount                            = lw_result-taxamount.
       ls_response-totalamount                          = lw_result-totalamount.
       ls_response-unitprice                            = lw_result-unitprice.
+      ls_response-sendflag                             = '1'.
 
       DATA lv_taxamount2    TYPE p LENGTH 10 DECIMALS 2.
       DATA lv_totalamount2  TYPE p LENGTH 10 DECIMALS 2.
 
-      CASE lw_result1-documentcurrency.
+      CASE lw_result-documentcurrency.
         WHEN 'JPY'.
           " 保留 3 位小数，四舍五入
-          DATA(lv_unit_price_jpy2) = round( val = lw_result1-unitprice dec = 3 ).
+          DATA(lv_unit_price_jpy2) = round( val = lw_result-unitprice dec = 3 ).
           ls_response-unitprice = lv_unit_price_jpy2.
 
           " 舍弃小数部分，取整
-          DATA(lv_taxamount_jpy2) = floor( lw_result1-taxamount ).
+          DATA(lv_taxamount_jpy2) = floor( lw_result-taxamount ).
           ls_response-totalamount = lv_taxamount_jpy2.
 
         WHEN 'USD'.
           " 保留 5 位小数，四舍五入
-          DATA(lv_unit_price_usd2) = round( val = lw_result1-unitprice dec = 5 ).
+          DATA(lv_unit_price_usd2) = round( val = lw_result-unitprice dec = 5 ).
           ls_response-unitprice = lv_unit_price_usd2.
 
           " 保留 2 位小数，舍弃其他位数
-          lv_taxamount2 = floor( lw_result1-taxamount * 100 ) / 100.
+          lv_taxamount2 = floor( lw_result-taxamount * 100 ) / 100.
           ls_response-taxamount = lv_taxamount2.
 
           " 保留 2 位小数，四舍五入
-          lv_totalamount2 = floor( lw_result1-totalamount * 100 ) / 100.
+          lv_totalamount2 = floor( lw_result-totalamount * 100 ) / 100.
           ls_response-totalamount = lv_totalamount2.
 
         WHEN 'EUR'.
           " 保留 5 位小数，四舍五入
-          DATA(lv_unit_price_eur2) = round( val = lw_result1-unitprice dec = 5 ).
+          DATA(lv_unit_price_eur2) = round( val = lw_result-unitprice dec = 5 ).
           ls_response-unitprice = lv_unit_price_eur2.
 
           " 乘以 100，取整后再除以 100，保留 2 位小数
-          lv_taxamount2 = floor( lw_result1-taxamount * 100 ) / 100.
+          lv_taxamount2 = floor( lw_result-taxamount * 100 ) / 100.
           " 保留 2 位小数，舍弃其他位数
           ls_response-taxamount = lv_taxamount2.
 
           " 保留 2 位小数，四舍五入
-          lv_totalamount2 = floor( lw_result1-totalamount * 100 ) / 100.
+          lv_totalamount2 = floor( lw_result-totalamount * 100 ) / 100.
           ls_response-totalamount = lv_totalamount2.
 
         WHEN OTHERS.
-          ls_response-taxamount   = lw_result1-taxamount.
-          ls_response-totalamount = lw_result1-totalamount.
-          ls_response-unitprice   = lw_result1-unitprice.
+          ls_response-taxamount   = lw_result-taxamount.
+          ls_response-totalamount = lw_result-totalamount.
+          ls_response-unitprice   = lw_result-unitprice.
       ENDCASE.
 
-      CONDENSE ls_response-SupplierName.
+      CONDENSE ls_response-suppliername.
       CONDENSE ls_response-supplierinvoice.
       CONDENSE ls_response-fiscalyear.
       CONDENSE ls_response-invoicingparty.
       CONDENSE ls_response-documentdate.
-      CONDENSE ls_response-postingdate.
+      CONDENSE ls_response-postingdate1.
+      CONDENSE ls_response-postingdate2.
       CONDENSE ls_response-exchangerate.
       CONDENSE ls_response-duecalculationbasedate.
       CONDENSE ls_response-invoicegrossamount.
@@ -881,10 +985,12 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       CONDENSE ls_response-purchasinggroup.
       CONDENSE ls_response-companycode.
       CONDENSE ls_response-purchasinggroupname.
-      CONDENSE ls_response-accountingdocument.
+*      CONDENSE ls_response-accountingdocument.
       CONDENSE ls_response-taxamount.
       CONDENSE ls_response-totalamount.
       CONDENSE ls_response-unitprice.
+      CONDENSE ls_response-taxrate.
+      CONDENSE ls_response-sendflag.
       APPEND   ls_response TO es_response-items.
 
     ENDLOOP.

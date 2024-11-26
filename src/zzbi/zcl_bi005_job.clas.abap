@@ -14,7 +14,7 @@ CLASS zcl_bi005_job DEFINITION
       BEGIN OF ty_results,
         plant                    TYPE werks_d,
         material                 TYPE matnr,
-        supplier                 TYPE lifnr,
+*        supplier                 TYPE lifnr,
         deliverydate             TYPE datum,
         schedulelinedeliverydate TYPE datum,
         confirmedquantity        TYPE p LENGTH 7 DECIMALS 0,
@@ -30,7 +30,7 @@ CLASS zcl_bi005_job DEFINITION
         yearmonth      TYPE n LENGTH 6,
         plant          TYPE werks_d,
         material       TYPE matnr,
-        supplier       TYPE lifnr,
+*        supplier       TYPE lifnr,
         supplyquantity TYPE p LENGTH 7 DECIMALS 0,
       END OF ty_supply,
 
@@ -40,6 +40,7 @@ CLASS zcl_bi005_job DEFINITION
         plant          TYPE werks_d,
         material       TYPE matnr,
         customer       TYPE kunnr,
+
         demandquantity TYPE p LENGTH 7 DECIMALS 0,
       END OF ty_demand,
 
@@ -47,7 +48,7 @@ CLASS zcl_bi005_job DEFINITION
       BEGIN OF ty_response_res,
         plant            TYPE string,
         material         TYPE string,
-        supplier         TYPE lifnr,
+*        supplier         TYPE lifnr,
         arrange_end_date TYPE string,
         arrange_qty_sum  TYPE string,
       END OF ty_response_res,
@@ -117,7 +118,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                                kind    = if_apj_dt_exec_object=>parameter
                                sign    = 'I'
                                option  = 'EQ'
-                               low     = '008' ) ).
+                               low     = '009' ) ).
     TRY.
 *        if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
 
@@ -280,8 +281,10 @@ CLASS zcl_bi005_job IMPLEMENTATION.
            plant,                 "プラント
 *           profitcenter,          "利益センタ
            materialtype,          "品目タイプ
+           materialtypename,
            material,              "品目
            businesspartner,       "得意先
+           businesspartnername,
            valuationquantity,     "数量
            movingaverageprice,    "実際原価
            standardprice,         "標準原価
@@ -384,7 +387,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         ENDIF.
         ls_supply-material = <fs_l_response>-material.
         ls_supply-plant    = <fs_l_response>-plant.
-        ls_supply-supplier = <fs_l_response>-supplier.
+*        ls_supply-supplier = <fs_l_response>-supplier.
         COLLECT ls_supply INTO lt_supply.
         CLEAR ls_supply.
       ENDLOOP.
@@ -429,7 +432,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
           ls_supply-supplyquantity = <fs_l_uweb_api>-arrange_qty_sum.
           ls_supply-material = <fs_l_uweb_api>-material.
           ls_supply-plant    = <fs_l_response>-plant.
-          ls_supply-supplier = <fs_l_uweb_api>-supplier.
+*          ls_supply-supplier = <fs_l_uweb_api>-supplier.
           COLLECT ls_supply INTO lt_supply.
           CLEAR ls_supply.
         ENDLOOP.
@@ -445,11 +448,11 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     SELECT a~material,
            a~requirement_date,
            a~plant,
-           b~businesspartner AS customer,
+           a~customer,
            a~requirement_qty
       FROM ztpp_1012 AS a
       INNER JOIN @lt_material_zfrt AS b ON b~material = a~material
-                                       AND b~businesspartner = a~customer
+*                                       AND b~businesspartner = a~customer
      WHERE a~plant IN @lr_plant
        AND a~requirement_date >= @lv_now_start
        AND a~requirement_date <= @lv_next_end
@@ -461,6 +464,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         ls_demand-material = <fs_l_1012>-material.
         ls_demand-plant    = <fs_l_1012>-plant.
         ls_demand-customer = <fs_l_1012>-customer.
+        ls_demand-demandquantity = <fs_l_1012>-requirement_qty.
         COLLECT ls_demand INTO lt_demand.
         CLEAR ls_demand.
       ENDLOOP.
@@ -489,14 +493,14 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     SORT lt_demand
       BY yearmonth ASCENDING
          plant     ASCENDING
-         material  ASCENDING
-         customer  ASCENDING.
+         material  ASCENDING.
+*         customer  ASCENDING.
 
     SORT lt_supply
       BY yearmonth ASCENDING
          plant     ASCENDING
-         material  ASCENDING
-         supplier  ASCENDING.
+         material  ASCENDING.
+*         supplier  ASCENDING.
 
     SORT lt_bom_api
       BY plant    ASCENDING
@@ -513,15 +517,22 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         ls_bi1003-created_at         = lv_timestamp.
         ls_bi1003-last_changed_by    = sy-uname.
         ls_bi1003-last_changed_at    = lv_timestamp.
+        ls_bi1003-yearmonth          = <fs_l_demand>-yearmonth.
+        ls_bi1003-plant              = <fs_l_demand>-plant.
 
 *       前月の在庫実績の製品
         READ TABLE lt_1016 ASSIGNING FIELD-SYMBOL(<fs_l_1016>)
           WITH KEY plant    = <fs_l_demand>-plant
                    material = <fs_l_demand>-material
-                   businesspartner = <fs_l_demand>-customer
+*                   businesspartner = <fs_l_demand>-customer
                    BINARY SEARCH.
         IF sy-subrc = 0
         AND <fs_l_demand>-demandquantity <= <fs_l_1016>-valuationquantity.
+          ls_bi1003-customer        = <fs_l_1016>-businesspartner.
+          ls_bi1003-customertext    = <fs_l_1016>-businesspartnername.
+          ls_bi1003-materialtype    = <fs_l_1016>-materialtype.
+          ls_bi1003-materialtypetext = <fs_l_1016>-materialtypename.
+
           ls_bi1003-companycode     = <fs_l_1016>-companycode.
           ls_bi1003-product         = <fs_l_1016>-material.
           ls_bi1003-balanceopenning = <fs_l_1016>-valuationquantity.    "Balance（期首）
@@ -566,16 +577,17 @@ CLASS zcl_bi005_job IMPLEMENTATION.
               ls_bi1003-created_at         = lv_timestamp.
               ls_bi1003-last_changed_by    = sy-uname.
               ls_bi1003-last_changed_at    = lv_timestamp.
+              ls_bi1003-yearmonth          = <fs_l_demand>-yearmonth.
 *             前月の在庫実績の半製品
               READ TABLE lt_1016 ASSIGNING <fs_l_1016>
                 WITH KEY plant    = <fs_l_demand>-plant
                          material = <fs_l_bom>-billofmaterialcomponent
-                         businesspartner = <fs_l_demand>-customer
+*                         businesspartner = <fs_l_demand>-customer
                          BINARY SEARCH.
               IF sy-subrc = 0.
                 lv_bom_qty = lv_next_qty * <fs_l_bom>-billofmaterialitemquantity.
-
-                ls_bi1003-companycode = <fs_l_1016>-material.
+                ls_bi1003-companycode     = <fs_l_1016>-companycode.
+                ls_bi1003-product         = <fs_l_1016>-material.
 
                 ls_bi1003-balanceopenning = <fs_l_1016>-valuationquantity.      "Balance（期首）
 *              ls_bi1003-Unit   =       "数量単位
@@ -605,7 +617,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                       WITH KEY yearmonth = <fs_l_demand>-yearmonth
                                plant     = <fs_l_demand>-plant
                                material  = <fs_l_bom>-billofmaterialcomponent
-                               supplier  = <fs_l_demand>-customer
+*                               supplier  = <fs_l_demand>-customer
                                BINARY SEARCH.
                     IF sy-subrc = 0.
                       ls_bi1003-supply = ls_supply-supplyquantity.
@@ -633,7 +645,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 *                   半製品
                     ls_demand-material = <fs_l_bom>-billofmaterialitemquantity.
                     ls_demand-plant    = <fs_l_1016>-plant.
-                    ls_demand-customer = <fs_l_1016>-businesspartner.
+*                    ls_demand-customer = <fs_l_1016>-businesspartner.
                     ls_demand-demandquantity = lv_bom_qty - <fs_l_1016>-valuationquantity.
                     APPEND ls_demand TO lt_demand_zhlb.
                   ENDIF.

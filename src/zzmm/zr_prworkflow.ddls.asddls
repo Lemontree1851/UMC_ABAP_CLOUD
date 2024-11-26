@@ -66,7 +66,7 @@ define root view entity ZR_PRWORKFLOW
       ztmm_1006.document_info_record_doc_numbe         as DocumentInfoRecordDocNumber,
       ztmm_1006.document_info_record_doc_versi         as DocumentInfoRecordDocVersion,
       ztmm_1006.document_info_record_doc_part          as DocumentInfoRecordDocPart,
-      cast( ztmm_1006.apply_date as abap.dats )                            as ApplyDate,
+      ztmm_1006.apply_date                         as ApplyDate,
       ztmm_1006.apply_time                             as ApplyTime,
       ztmm_1006.created_at                             as CreatedAt,
       @Semantics.user.createdBy: true

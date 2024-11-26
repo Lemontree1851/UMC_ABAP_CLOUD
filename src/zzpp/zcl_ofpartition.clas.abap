@@ -411,8 +411,15 @@ CLASS zcl_ofpartition IMPLEMENTATION.
                 ELSE.
                   ls_split_of-requirementqty = 0.
                 ENDIF.
+              " 如果没有分割范围数据，可能是此条数据没有分割主数据，但仍要显示原数据
+              ELSE.
+                READ TABLE lt_orderforecast INTO ls_orderforecast WITH KEY customer = ls_of_key-customer
+                  plant = ls_of_key-plant material = ls_of_key-material requirementdate = temp_date BINARY SEARCH.
+                IF sy-subrc = 0.
+                  ls_split_of-requirementqty = ls_orderforecast-requirementqty.
+                ENDIF.
               ENDIF.
-              "如果是分割范围外的日期，数量直接取原来的
+            "如果是分割范围外的日期，数量直接取原来的
             ELSE.
               READ TABLE lt_orderforecast INTO ls_orderforecast WITH KEY customer = ls_of_key-customer
                 plant = ls_of_key-plant material = ls_of_key-material requirementdate = temp_date BINARY SEARCH.

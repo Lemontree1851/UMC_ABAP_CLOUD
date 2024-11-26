@@ -453,8 +453,8 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
       READ TABLE lt_ofpartition_tmp INTO ls_ofpartition WITH KEY customer = ls_supplydemanditems-mrpelementbusinesspartner plant = ls_supplydemanditems-mrpplant
         material = ls_supplydemanditems-material requirementdate = ls_supplydemanditems-mrprqmtdate BINARY SEARCH.
       IF sy-subrc = 0.
-        "如果对应的日期原本有数据，修改数量即可
-        ls_ofpartition-requirementqty = ls_supplydemanditems-mrpelementopenquantity.
+        "如果对应的日期原本有数据，结合原本的数据修改数量即可
+        ls_ofpartition-requirementqty = ls_ofpartition-requirementqty + ls_supplydemanditems-mrpelementopenquantity.
         MODIFY lt_ofpartition FROM ls_ofpartition TRANSPORTING requirementqty WHERE customer = ls_ofpartition-customer AND plant = ls_ofpartition-plant
           AND material = ls_ofpartition-material AND requirementdate = ls_ofpartition-requirementdate.
       ELSE.

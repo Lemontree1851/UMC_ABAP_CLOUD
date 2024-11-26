@@ -114,9 +114,9 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
       ls_valuation_api TYPE ty_valuation,
       ls_valuation_ecn TYPE ty_valuation_api.
 
-    DATA:lv_path2 TYPE string,
+    DATA:lv_path2   TYPE string,
          lv_dotimes TYPE p LENGTH 5 DECIMALS 3,
-         lv_dec   TYPE i.
+         lv_dec     TYPE i.
 
 
 *    IF io_request->is_data_requested( ).
@@ -696,6 +696,19 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
             CLEAR lw_data-latestoffer.
           ENDIF.
 
+          TRY.
+              lw_data-purgdocorderquantityunit = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lw_data-purgdocorderquantityunit ).
+              lw_data-baseunit = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lw_data-baseunit ).
+              ##NO_HANDLER
+            CATCH zzcx_custom_exception.
+              " handle exception
+          ENDTRY.
+          TRY.
+              DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
+            CATCH cx_uuid_error.
+              "handle exception
+          ENDTRY.
+          lw_data-uuid = lv_uuid.
           APPEND lw_data TO lt_data.
         ENDLOOP.
       ELSE.

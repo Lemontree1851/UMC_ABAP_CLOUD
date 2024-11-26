@@ -255,6 +255,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
           ENDCASE.
 
         ENDLOOP.
+
         lv_rowno = lv_rowno + 1.
         ls_data-text1         = '売上金額:予SAP_SO納入日、正味額'.
         APPEND ls_data TO lt_data.
@@ -264,6 +265,18 @@ CLASS zcl_creditmantable IMPLEMENTATION.
         MOVE-CORRESPONDING ls_data TO ls_data_salesd.
 
         CLEAR:
+          ls_data-zpercent1,
+          ls_data-zpercent2,
+          ls_data-zpercent3,
+          ls_data-zpercent4,
+          ls_data-zpercent5,
+          ls_data-zpercent6,
+          ls_data-zpercent7,
+          ls_data-zpercent8,
+          ls_data-zpercent9,
+          ls_data-zpercent10,
+          ls_data-zpercent11,
+          ls_data-zpercent12,
           ls_data-zmonth1,
           ls_data-zmonth2,
           ls_data-zmonth3,
@@ -314,6 +327,18 @@ CLASS zcl_creditmantable IMPLEMENTATION.
         ls_data-text1         = '売上金額:実SAP売上実績税込価格'.
         APPEND ls_data TO lt_data.
         CLEAR:
+          ls_data-zpercent1,
+          ls_data-zpercent2,
+          ls_data-zpercent3,
+          ls_data-zpercent4,
+          ls_data-zpercent5,
+          ls_data-zpercent6,
+          ls_data-zpercent7,
+          ls_data-zpercent8,
+          ls_data-zpercent9,
+          ls_data-zpercent10,
+          ls_data-zpercent11,
+          ls_data-zpercent12,
           ls_data-zmonth1,
           ls_data-zmonth2,
           ls_data-zmonth3,
@@ -687,6 +712,18 @@ CLASS zcl_creditmantable IMPLEMENTATION.
         ENDTRY.
 
         CLEAR:
+          ls_data-zpercent1,
+          ls_data-zpercent2,
+          ls_data-zpercent3,
+          ls_data-zpercent4,
+          ls_data-zpercent5,
+          ls_data-zpercent6,
+          ls_data-zpercent7,
+          ls_data-zpercent8,
+          ls_data-zpercent9,
+          ls_data-zpercent10,
+          ls_data-zpercent11,
+          ls_data-zpercent12,
           ls_data-zmonth1,
           ls_data-zmonth2,
           ls_data-zmonth3,
@@ -770,6 +807,18 @@ CLASS zcl_creditmantable IMPLEMENTATION.
         ENDTRY.
 
         CLEAR:
+          ls_data-zpercent1,
+          ls_data-zpercent2,
+          ls_data-zpercent3,
+          ls_data-zpercent4,
+          ls_data-zpercent5,
+          ls_data-zpercent6,
+          ls_data-zpercent7,
+          ls_data-zpercent8,
+          ls_data-zpercent9,
+          ls_data-zpercent10,
+          ls_data-zpercent11,
+          ls_data-zpercent12,
           ls_data-zmonth1,
           ls_data-zmonth2,
           ls_data-zmonth3,
@@ -786,12 +835,88 @@ CLASS zcl_creditmantable IMPLEMENTATION.
 *         限度使用額-予
         lv_rowno = lv_rowno + 1.
         ls_data_xy-text1         = '限度使用率:予利用見込÷限度額'.
+
+        if ls_data_xy-zmonth1 <> 0.
+          ls_data_xy-zpercent1 = '%'.
+        ENDIF.
+        if ls_data_xy-zmonth2 <> 0.
+          ls_data_xy-zpercent2 = '%'.
+        ENDIF.
+        if ls_data_xy-zmonth3 <> 0.
+          ls_data_xy-zpercent3 = '%'.
+        ENDIF.
+        if ls_data_xy-zmonth4 <> 0.
+          ls_data_xy-zpercent4 = '%'.
+        ENDIF.
+        if ls_data_xy-zmonth5 <> 0.
+          ls_data_xy-zpercent5 = '%'.
+        ENDIF.
+        if ls_data_xy-zmonth6 <> 0.
+          ls_data_xy-zpercent6 = '%'.
+        ENDIF.
+        if ls_data_xy-zmonth7 <> 0.
+          ls_data_xy-zpercent7 = '%'.
+        ENDIF.
+        if ls_data_xy-zmonth8 <> 0.
+          ls_data_xy-zpercent8 = '%'.
+        ENDIF.
+        if ls_data_xy-zmonth9 <> 0.
+          ls_data_xy-zpercent9 = '%'.
+        ENDIF.
+        if ls_data_xy-zmonth10 <> 0.
+          ls_data_xy-zpercent10 = '%'.
+        ENDIF.
+        if ls_data_xy-zmonth11 <> 0.
+          ls_data_xy-zpercent11 = '%'.
+        ENDIF.
+        if ls_data_xy-zmonth12 <> 0.
+          ls_data_xy-zpercent12 = '%'.
+        ENDIF.
         APPEND ls_data_xy TO lt_data.
+        CLEAr ls_data_xy.
 
 *         限度使用率-実
         lv_rowno = lv_rowno + 1.
         ls_data_xs-text1         = '限度使用率:実利用実績÷限度額'.
+
+        if ls_data_xs-zmonth1 <> 0.
+          ls_data_xs-zpercent1 = '%'.
+        ENDIF.
+        if ls_data_xs-zmonth2 <> 0.
+          ls_data_xs-zpercent2 = '%'.
+        ENDIF.
+        if ls_data_xs-zmonth3 <> 0.
+          ls_data_xs-zpercent3 = '%'.
+        ENDIF.
+        if ls_data_xs-zmonth4 <> 0.
+          ls_data_xs-zpercent4 = '%'.
+        ENDIF.
+        if ls_data_xs-zmonth5 <> 0.
+          ls_data_xs-zpercent5 = '%'.
+        ENDIF.
+        if ls_data_xs-zmonth6 <> 0.
+          ls_data_xs-zpercent6 = '%'.
+        ENDIF.
+        if ls_data_xs-zmonth7 <> 0.
+          ls_data_xs-zpercent7 = '%'.
+        ENDIF.
+        if ls_data_xs-zmonth8 <> 0.
+          ls_data_xs-zpercent8 = '%'.
+        ENDIF.
+        if ls_data_xs-zmonth9 <> 0.
+          ls_data_xs-zpercent9 = '%'.
+        ENDIF.
+        if ls_data_xs-zmonth10 <> 0.
+          ls_data_xs-zpercent10 = '%'.
+        ENDIF.
+        if ls_data_xs-zmonth11 <> 0.
+          ls_data_xs-zpercent11 = '%'.
+        ENDIF.
+        if ls_data_xs-zmonth12 <> 0.
+          ls_data_xs-zpercent12 = '%'.
+        ENDIF.
         APPEND ls_data_xs TO lt_data.
+        clear ls_data_xs.
       ENDLOOP.
     ENDLOOP.
 

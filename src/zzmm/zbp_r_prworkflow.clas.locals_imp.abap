@@ -165,12 +165,48 @@ CLASS lhc_purchasereq IMPLEMENTATION.
 
 *&--下一节点不存在 当前就是最终节点 终点邮件和节点变更
       IF lv_approvalend = abap_true.
+        zzcl_wf_utils=>add_approval_history(
+          iv_workflowid     = cs_data-workflowid
+          iv_instanceid     = cs_data-instanceid
+          iv_applicationid  = cs_data-applicationid
+          iv_currentnode    = lv_current_node
+          iv_nextnode       = lv_next_node
+          iv_operator       = lv_operator
+          iv_email          = cs_data-emailaddress
+          iv_remark         = cs_data-remark
+          iv_approvalstatus = '3'
+        ).
+        IF lv_auto IS NOT INITIAL.
+
+          LOOP AT lv_auto INTO DATA(ls_auto).
+
+            WAIT UP TO  1 SECONDS.
+            "for timeline
+            zzcl_wf_utils=>add_approval_history(
+          iv_workflowid     = cs_data-workflowid
+          iv_instanceid     = cs_data-instanceid
+          iv_applicationid  = cs_data-applicationid
+          iv_currentnode    = ls_auto-currentnode
+          iv_nextnode       = ls_auto-nextnode
+          iv_operator       = ls_auto-operator
+          iv_email          = ls_auto-emailaddress
+          iv_remark         = ls_auto-remark
+          iv_approvalstatus = ls_auto-approvalstatus
+        ).
+
+          ENDLOOP.
+          "承認されました。
+          MESSAGE s031(zmm_001)  INTO cs_data-message.
+          cs_data-type = 'S'.
+          MODIFY ct_data FROM cs_data TRANSPORTING message type.
+        ENDIF.
         "邮件通知 POLINK_BY & PR_BY
         zzcl_wf_utils=>send_emails( EXPORTING iv_workflowid    = cs_data-workflowid
                                               iv_applicationid = cs_data-applicationid
                                               iv_instanceid    = cs_data-instanceid
                                               iv_users         =  lv_users_prby
                                               iv_zid           = 'ZMM015'
+                                               iv_timezone = cs_data-timezone
                                      IMPORTING ev_error         = lv_ev_error
                                                ev_errortext     = lv_error_text ).
         IF lv_ev_error IS NOT INITIAL.
@@ -184,6 +220,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                       iv_instanceid    = cs_data-instanceid
                                       iv_users         = lv_users_polink
                                       iv_zid           = 'ZMM016'
+                                      iv_timezone = cs_data-timezone
                              IMPORTING ev_error         = lv_ev_error
                                        ev_errortext     = lv_error_text ).
         IF lv_ev_error IS NOT INITIAL.
@@ -192,17 +229,6 @@ CLASS lhc_purchasereq IMPLEMENTATION.
           MODIFY ct_data FROM cs_data TRANSPORTING message type.
           CONTINUE.
         ENDIF.
-        zzcl_wf_utils=>add_approval_history(
-         iv_workflowid     = cs_data-workflowid
-         iv_instanceid     = cs_data-instanceid
-         iv_applicationid  = cs_data-applicationid
-         iv_currentnode    = lv_current_node
-         iv_nextnode       = lv_next_node
-         iv_operator       = lv_operator
-         iv_email          = cs_data-emailaddress
-         iv_remark         = cs_data-remark
-         iv_approvalstatus = '3'
-       ).
 
         "承認されました。
         MESSAGE s031(zmm_001)  INTO cs_data-message.
@@ -212,19 +238,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
 
 *&--下一节点存在 正常流程邮件和节点变更
       IF lv_approvalend = abap_false.
-        zzcl_wf_utils=>send_emails( EXPORTING iv_workflowid    = cs_data-workflowid
-                                iv_applicationid = cs_data-applicationid
-                                iv_instanceid    = cs_data-instanceid
-                                iv_users         = lv_users
-                                iv_zid           = 'ZMM013'
-                       IMPORTING ev_error         = lv_ev_error
-                                 ev_errortext     = lv_error_text ).
-        IF lv_ev_error IS NOT INITIAL.
-          cs_data-message = lv_error_text.
-          cs_data-type = 'E'.
-          MODIFY ct_data FROM cs_data TRANSPORTING message type.
-          CONTINUE.
-        ENDIF.
+
         zzcl_wf_utils=>add_approval_history(
           iv_workflowid     = cs_data-workflowid
           iv_instanceid     = cs_data-instanceid
@@ -236,38 +250,53 @@ CLASS lhc_purchasereq IMPLEMENTATION.
           iv_remark         = cs_data-remark
           iv_approvalstatus = '2'
         ).
-        "承認されました。
-        MESSAGE s031(zmm_001)  INTO cs_data-message.
-        cs_data-type = 'S'.
-        MODIFY ct_data FROM cs_data TRANSPORTING message type.
-        "邮件通知下一层的users
-      ENDIF.
+        IF lv_auto IS NOT INITIAL.
 
-      IF lv_auto IS NOT INITIAL.
+          LOOP AT lv_auto INTO ls_auto.
 
-        LOOP AT lv_auto INTO DATA(ls_auto).
+            WAIT UP TO  1 SECONDS.
+            "for timeline
+            zzcl_wf_utils=>add_approval_history(
+          iv_workflowid     = cs_data-workflowid
+          iv_instanceid     = cs_data-instanceid
+          iv_applicationid  = cs_data-applicationid
+          iv_currentnode    = ls_auto-currentnode
+          iv_nextnode       = ls_auto-nextnode
+          iv_operator       = ls_auto-operator
+          iv_email          = ls_auto-emailaddress
+          iv_remark         = ls_auto-remark
+          iv_approvalstatus = ls_auto-approvalstatus
+        ).
 
-          WAIT UP TO  1 SECONDS.
-          "for timeline
-          zzcl_wf_utils=>add_approval_history(
-        iv_workflowid     = cs_data-workflowid
-        iv_instanceid     = cs_data-instanceid
-        iv_applicationid  = cs_data-applicationid
-        iv_currentnode    = ls_auto-currentnode
-        iv_nextnode       = ls_auto-nextnode
-        iv_operator       = ls_auto-operator
-        iv_email          = ls_auto-emailaddress
-        iv_remark         = ls_auto-remark
-        iv_approvalstatus = ls_auto-approvalstatus
-      ).
+          ENDLOOP.
           "承認されました。
           MESSAGE s031(zmm_001)  INTO cs_data-message.
           cs_data-type = 'S'.
           MODIFY ct_data FROM cs_data TRANSPORTING message type.
-        ENDLOOP.
+        ENDIF.
+        "邮件通知下一层的users
+        zzcl_wf_utils=>send_emails( EXPORTING iv_workflowid    = cs_data-workflowid
+                        iv_applicationid = cs_data-applicationid
+                        iv_instanceid    = cs_data-instanceid
+                        iv_users         = lv_users
+                        iv_zid           = 'ZMM013'
+                         iv_timezone = cs_data-timezone
+               IMPORTING ev_error         = lv_ev_error
+                         ev_errortext     = lv_error_text ).
+        IF lv_ev_error IS NOT INITIAL.
+          cs_data-message = lv_error_text.
+          cs_data-type = 'E'.
+          MODIFY ct_data FROM cs_data TRANSPORTING message type.
+          CONTINUE.
+        ENDIF.
 
+        "承認されました。
+        MESSAGE s031(zmm_001)  INTO cs_data-message.
+        cs_data-type = 'S'.
+        MODIFY ct_data FROM cs_data TRANSPORTING message type.
 
       ENDIF.
+
 
     ENDLOOP.
   ENDMETHOD.
@@ -475,21 +504,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
           MODIFY records FROM record TRANSPORTING message type.
           CONTINUE.
         ENDIF.
-*&-- node 10 发邮件
-        zzcl_wf_utils=>send_emails( EXPORTING iv_workflowid    = record-workflowid
-                                              iv_applicationid = record-applicationid
-                                              iv_instanceid    = lv_instanceid
-                                              iv_users         = lv_users
-                                              iv_zid           = 'ZMM013'
-                                              iv_uuid          = record-uuid
-                                     IMPORTING ev_error         = lv_ev_error
-                                               ev_errortext     = lv_error_text ).
-        IF lv_ev_error IS NOT INITIAL.
-          record-message = lv_error_text.
-          record-type = 'E'.
-          MODIFY records FROM record TRANSPORTING message type.
-          CONTINUE.
-        ENDIF.
+
 *&-- 将工作流id写入ztmm_1006
         DATA(current_date) = cl_abap_context_info=>get_system_date( ).
         DATA(current_time) = cl_abap_context_info=>get_system_time( ).
@@ -522,10 +537,27 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         "購買申請の承認は送信されました。
         MESSAGE s029(zmm_001)  INTO record-message.
         record-type = 'S'.
+*&-- node 10 发邮件
+        zzcl_wf_utils=>send_emails( EXPORTING iv_workflowid    = record-workflowid
+                                              iv_applicationid = record-applicationid
+                                              iv_instanceid    = lv_instanceid
+                                              iv_users         = lv_users
+                                              iv_zid           = 'ZMM013'
+                                              iv_uuid          = record-uuid
+                                               iv_timezone = record-timezone
+                                     IMPORTING ev_error         = lv_ev_error
+                                               ev_errortext     = lv_error_text ).
+        IF lv_ev_error IS NOT INITIAL.
+          record-message = lv_error_text.
+          record-type = 'E'.
+          MODIFY records FROM record TRANSPORTING message type.
+          CONTINUE.
+        ENDIF.
         record-instanceid = lv_instanceid.
         record-approvestatus = lv_approve_status.
         record-applydate = current_date.
         record-applytime = current_time.
+
         MODIFY records FROM record TRANSPORTING message type instanceid applicationid approvestatus applydate applytime.
         CLEAR:lv_next_node,lv_approvalend,lv_ev_error,lv_error_text,lv_users,lv_instanceid.
 

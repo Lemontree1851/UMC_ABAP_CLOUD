@@ -53,13 +53,17 @@ CLASS zcl_ecn_bom IMPLEMENTATION.
 *   into table @data(lt_c).
 
 
-   data: lv_num type c LENGTH 3.
+*   data: lv_num type c LENGTH 3.
+*
+*         lv_num = 999.
+*
+*         lv_num = lv_num + 999 .
+*
+*   out->write( lv_num ).
 
-         lv_num = 999.
+data(lv_name) = sy-uname .
+out->write( lv_name ).
 
-         lv_num = lv_num + 999 .
-
-   out->write( lv_num ).
 
   ENDMETHOD.
 

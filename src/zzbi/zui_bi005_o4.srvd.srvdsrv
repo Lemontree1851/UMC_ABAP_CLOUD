@@ -1,0 +1,4 @@
+@EndUserText.label: '先々在庫推移分析'
+define service ZUI_BI005_O4 {
+  expose ZC_BI005_REPORT;
+}

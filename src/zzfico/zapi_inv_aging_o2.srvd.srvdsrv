@@ -1,0 +1,4 @@
+@EndUserText.label: '長期滞在＆低価法レポート'
+define service ZAPI_INV_AGING_O2 {
+  expose ZC_INV_AGING as InvAging;
+}

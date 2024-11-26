@@ -212,6 +212,18 @@
      <MSGNR>033</MSGNR>
      <TEXT>申請</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>034</MSGNR>
+     <TEXT>仕入先品目&amp;1と仕入先&amp;2より、唯一な品目コードを取得できません</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>035</MSGNR>
+     <TEXT>発注品番と仕入先品目コードは少なくとも一つを入力してください</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

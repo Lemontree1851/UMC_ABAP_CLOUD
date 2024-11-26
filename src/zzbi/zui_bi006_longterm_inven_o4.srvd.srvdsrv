@@ -1,0 +1,5 @@
+@EndUserText.label: 'Service Definition for BI006 Long Term Inventory OData V4'
+define service ZUI_BI006_LONGTERM_INVEN_O4 {
+  expose ZC_BI006_LONGTERM_INVENTORY;
+  expose ZI_PRODUCT_VH;
+}

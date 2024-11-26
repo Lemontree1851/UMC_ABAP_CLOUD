@@ -88,6 +88,7 @@ CLASS zzcl_wf_utils DEFINITION
                             iv_zid           TYPE ztbc_1001-zid
                             iv_uuid          TYPE sysuuid_x16 OPTIONAL
                             iv_remark        TYPE ztbc_1011-remark OPTIONAL
+                            iv_timezone      TYPE string OPTIONAL
                   EXPORTING ev_error         TYPE abap_boolean
                             ev_errortext     TYPE string,
       check_plant_access IMPORTING iv_email     TYPE string
@@ -536,6 +537,14 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
           lv_filename     TYPE string,
           lv_timestamp    TYPE timestamp,
           lv_timezone     TYPE tznzone.
+
+    CLEAR lv_timezone.
+    IF iv_timezone IS NOT INITIAL.
+      lv_timezone = iv_timezone.
+    ELSE.
+      lv_timezone = 'UTC+9'.
+    ENDIF.
+
     IF iv_uuid IS INITIAL.
       "get pr_by prno
       SELECT SINGLE *
@@ -565,9 +574,9 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     ENDIF.
 
     lt_recipient = VALUE #( FOR item IN iv_users ( address = item-emailaddress ) ).
-    DATA: ls_recipient    TYPE LINE OF cl_bcs_mail_message=>tyt_recipient.
-    ls_recipient-address = 'siyun.yao@sh.shin-china.com'.
-    APPEND  ls_recipient TO lt_recipient.
+    "DATA: ls_recipient    TYPE LINE OF cl_bcs_mail_message=>tyt_recipient.
+    "ls_recipient-address = ''.
+    "APPEND  ls_recipient TO lt_recipient.
     SORT lt_recipient BY address.
     DELETE ADJACENT DUPLICATES FROM lt_recipient COMPARING address.
     DELETE lt_recipient WHERE address IS INITIAL.
@@ -611,7 +620,9 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
         AND  applicationid = @iv_applicationid
       INTO TABLE @DATA(lt_history).
 
+      SORT lt_history BY createdat DESCENDING.
 
+      lv_main_content = lv_main_content && |<p>&nbsp;</p>|.
 
       " table begin
       lv_main_content = lv_main_content &&
@@ -620,7 +631,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
                             |<tr>| &&
                               |<th width="200px" align="left">時刻</th>| &&
                               |<th width="200px" align="left">ステップ</th>| &&
-                              |<th width="150px" align="left">中請者/承認者</th>| &&
+                              |<th width="150px" align="left">申請者/承認者</th>| &&
                               |<th width="100px" align="left">承認ステ-タス</th>| &&
                               |<th width="200px" align="left">コメント</th>| &&
                             |</tr>| &&
@@ -628,27 +639,43 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
                         |<tbody>|.
       LOOP AT lt_history INTO DATA(ls_history).
         DATA:lv_status(4) TYPE c.
-        CLEAR lv_status.
+        DATA:lv_datum TYPE bldat.
+        DATA:lv_uzeit TYPE uzeit.
+        CLEAR :lv_status,lv_datum .
+        TRY.
+            "时间戳格式转换成日期格式
+            CONVERT TIME STAMP ls_history-createdat TIME ZONE lv_timezone INTO  DATE lv_datum TIME lv_uzeit .
+          CATCH cx_root INTO DATA(lx_root).
+            " handle exception
+            DATA(rv_error_text1) = lx_root->get_longtext(  ).
+            ev_error = 'X'.
+            ev_errortext = rv_error_text1.
+            RETURN.
+        ENDTRY.
         CASE ls_history-approvalstatus.
           WHEN '1'.
-          lv_status = '却下'.
+            lv_status = '却下'.
           WHEN '2'.
-          lv_status = '承認'.
+            lv_status = '承認'.
           WHEN '3'.
-          lv_status = '承認'.
-
+            lv_status = '承認'.
+          WHEN '0'.
+            lv_status = '承認待ち'.
+            CLEAR: lv_datum,lv_uzeit.
           WHEN OTHERS.
-          lv_status = ''.
+            lv_status = ''.
         ENDCASE.
         lv_main_content = lv_main_content &&
                           |<tr>| &&
-                            |<td align="left">{ ls_history-createdat }</td>| &&
+                            |<td align="left">{ lv_datum+0(4) }-{ lv_datum+4(2) }-{ lv_datum+6(2) } { lv_uzeit+0(2) }:{ lv_uzeit+2(2) }:{ lv_uzeit+4(2) }</td>| &&
                             |<td align="left">{ ls_history-nodename }</td>| &&
                             |<td align="left">{ ls_history-operator }</td>| &&
                             |<td align="left">{ lv_status }</td>| &&
                             |<td align="left">{ ls_history-remark }</td>| &&
                           |</tr>|.
       ENDLOOP.
+      " table end
+      lv_main_content = lv_main_content && |</tbody></table>|.
     ENDIF.
 
 
@@ -678,34 +705,37 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
         "handle exception
     ENDTRY.
 
+
+
+
 *&--发起人提交
-    get_next_node( EXPORTING iv_workflowid    = 'purchaserequisition'
-                             iv_applicationid = 1001
-                             iv_instanceid    = lv_instanceid
-                   IMPORTING ev_nextnode      = DATA(lv_next_node)
-                             ev_approvalend   = DATA(lv_approvalend) ).
-
-    add_approval_history(
-      iv_workflowid     = 'purchaserequisition'
-      iv_instanceid     = lv_instanceid
-      iv_applicationid  = 1001
-      iv_nextnode       = lv_next_node
-      iv_operator       = 'XINLEI.XU(xinlei.xu@sh.shin-china.com)'
-      iv_email          = 'xinlei.xu@sh.shin-china.com'
-      iv_approvalstatus = '2'
-      iv_remark         = '提交审批'
-    ).
-
-    DATA:lv_1006 TYPE ztmm_1006.
-    lv_1006-workflow_id    = 'purchaserequisition'.
-    lv_1006-application_id = 1001.
-    lv_1006-instance_id    = lv_instanceid.
-
-    UPDATE ztmm_1006
-       SET workflow_id = @lv_1006-workflow_id
-         , application_id = @lv_1006-application_id
-         , instance_id = @lv_1006-instance_id
-    WHERE pr_no = '1000005'.
+*    get_next_node( EXPORTING iv_workflowid    = 'purchaserequisition'
+*                             iv_applicationid = 1001
+*                             iv_instanceid    = lv_instanceid
+*                   IMPORTING ev_nextnode      = DATA(lv_next_node)
+*                             ev_approvalend   = DATA(lv_approvalend) ).
+*
+*    add_approval_history(
+*      iv_workflowid     = 'purchaserequisition'
+*      iv_instanceid     = lv_instanceid
+*      iv_applicationid  = 1001
+*      iv_nextnode       = lv_next_node
+*      iv_operator       = 'XINLEI.XU(xinlei.xu@sh.shin-china.com)'
+*      iv_email          = 'xinlei.xu@sh.shin-china.com'
+*      iv_approvalstatus = '2'
+*      iv_remark         = '提交审批'
+*    ).
+*
+*    DATA:lv_1006 TYPE ztmm_1006.
+*    lv_1006-workflow_id    = 'purchaserequisition'.
+*    lv_1006-application_id = 1001.
+*    lv_1006-instance_id    = lv_instanceid.
+*
+*    UPDATE ztmm_1006
+*       SET workflow_id = @lv_1006-workflow_id
+*         , application_id = @lv_1006-application_id
+*         , instance_id = @lv_1006-instance_id
+*    WHERE pr_no = '1000005'.
 
 **&--审批中
 *    get_next_node( EXPORTING iv_workflowid    = 'purchaserequisition'

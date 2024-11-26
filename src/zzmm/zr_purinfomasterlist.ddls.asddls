@@ -8,6 +8,7 @@
         } }
 define root custom entity ZR_PURINFOMASTERLIST
 {
+  key uuid                           : sysuuid_x16 ;
       //      @UI                            : { lineItem: [ { position: 10 } ],
       //                                         selectionField: [ { position: 10 } ] }
   key purchasinginforecord           : abap.char(10);

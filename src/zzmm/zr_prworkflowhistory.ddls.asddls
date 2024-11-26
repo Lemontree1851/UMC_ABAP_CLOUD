@@ -60,7 +60,7 @@ union select from ztbc_1011             as ApprovalHistory
           ApprovalHistory.next_node                                                                                          as NextNode,
 
           concat(     concat(_ApprovalUser.UserName,'(')      ,   concat(_ApprovalUser.EmailAddress,')')         )           as Operator,
-          '2'                                                                                                                as ApprovalStatus,
+          '0'                                                                                                                as ApprovalStatus,
           '承認待ち'                                                                                                             as Remark,
           ApprovalHistory.created_by                                                                                         as CreatedBy,
           99991231000000.0000000                                                                                             as CreatedAt,
@@ -68,7 +68,7 @@ union select from ztbc_1011             as ApprovalHistory
           ApprovalHistory.last_changed_at                                                                                    as LastChangedAt,
           ApprovalHistory.local_last_changed_at                                                                              as LocalLastChangedAt,
           ltrim(       concat(    ApprovalHistory.next_node     ,   concat( '-' ,_ApprovalNode.node_name)         ) , '0'  ) as nodename,
-          concat('待ち-', ltrim(       concat(    ApprovalHistory.next_node     ,   concat( '-' ,_ApprovalNode.node_name)         ) , '0'  ) ) as title
+          concat('承認待ち-', ltrim(       concat(    ApprovalHistory.next_node     ,   concat( '-' ,_ApprovalNode.node_name)         ) , '0'  ) ) as title
 
 }
 

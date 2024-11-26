@@ -4,6 +4,19 @@ CLASS lhc_purchasereq DEFINITION INHERITING FROM cl_abap_behavior_handler.
             INCLUDE TYPE zc_tmm_1006.
     TYPES:  row TYPE i,
           END OF ty_batchupload.
+    TYPES:
+      BEGIN OF ty_details,
+        code    TYPE string,
+        message TYPE string,
+      END OF ty_details,
+      BEGIN OF ty_message,
+        code    TYPE string,
+        message TYPE string,
+        details TYPE TABLE OF ty_details WITH DEFAULT KEY,
+      END OF ty_message,
+      BEGIN OF ty_error_v4,
+        error TYPE ty_message,
+      END OF ty_error_v4.
 
     METHODS get_global_authorizations FOR GLOBAL AUTHORIZATION
       IMPORTING REQUEST requested_authorizations FOR purchasereq RESULT result.
@@ -37,6 +50,9 @@ CLASS lhc_purchasereq DEFINITION INHERITING FROM cl_abap_behavior_handler.
                 kyoten      TYPE ztmm_1006-kyoten
       RETURNING VALUE(prno) TYPE string
       RAISING   zzcx_custom_exception .
+    METHODS parse_error_v4
+      IMPORTING iv_response       TYPE string
+      RETURNING VALUE(rv_message) TYPE string.
 
 ENDCLASS.
 
@@ -327,7 +343,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                 ( companycode = lv_company1 field = 'CompanyCode' field_name = TEXT-006 )
                                 ( companycode = lv_company1 field = 'PurchaseOrg' field_name = TEXT-007 )
                                 ( companycode = lv_company1 field = 'PurchaseGrp' field_name = TEXT-008 )
-                                ( companycode = lv_company1 field = 'MatId' field_name = TEXT-009 )
+*                                ( companycode = lv_company1 field = 'MatId' field_name = TEXT-009 )
                                 ( companycode = lv_company1 field = 'Quantity' field_name = TEXT-010 )
                                 ( companycode = lv_company1 field = 'Price' field_name = TEXT-011 )
                                 ( companycode = lv_company1 field = 'Kyoten' field_name = TEXT-015 )
@@ -344,7 +360,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                 ( companycode = lv_company2 field = 'CompanyCode' field_name = TEXT-006 )
                                 ( companycode = lv_company2 field = 'PurchaseOrg' field_name = TEXT-007 )
                                 ( companycode = lv_company2 field = 'PurchaseGrp' field_name = TEXT-008 )
-                                ( companycode = lv_company2 field = 'MatId' field_name = TEXT-009 )
+*                                ( companycode = lv_company2 field = 'MatId' field_name = TEXT-009 )
                                 ( companycode = lv_company2 field = 'Quantity' field_name = TEXT-010 )
                                 ( companycode = lv_company2 field = 'Price' field_name = TEXT-011 )
                                 ( companycode = lv_company2 field = 'PolinkBy' field_name = TEXT-018 )
@@ -374,6 +390,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         MESSAGE e009(zmm_001) WITH TEXT-006 INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
       ELSE.
+        " 单字段必输校验
         LOOP AT required_fields INTO DATA(required) WHERE companycode = <record>-('CompanyCode') .
           IF <record>-(required-field) IS INITIAL.
             is_error = abap_true.
@@ -393,6 +410,63 @@ CLASS lhc_purchasereq IMPLEMENTATION.
             lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
           ENDIF.
         ENDLOOP.
+        "组合字段必输校验
+        IF <record>-('MatId') IS INITIAL AND <record>-('SupplierMat') IS INITIAL.
+          is_error = abap_true.
+          " 明细界面单条值处理时会用到此消息
+          add_reported(
+            EXPORTING
+              record    = <record>
+              target    = required-field
+              id        = 'ZMM_001'
+              number    = '035'
+              severity  = cl_abap_behv=>ms-error
+            CHANGING
+              reported  = repo ).
+          " excel批量导入时，通过action调用会用到此消息
+          MESSAGE e035(zmm_001) INTO lv_msg.
+          lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
+          " 根据客户物料和供应商查找SAP物料
+        ELSEIF <record>-('MatId') IS INITIAL AND <record>-('SupplierMat') IS NOT INITIAL.
+          DATA lv_suppliermat TYPE i_purchasinginforecordapi01-suppliermaterialnumber.
+          DATA lv_supplier TYPE lifnr.
+
+          lv_supplier = <record>-('Supplier').
+          lv_supplier = |{ lv_supplier ALPHA = IN }|.
+          lv_suppliermat = <record>-('SupplierMat').
+          SELECT
+            material,
+            supplier,
+            suppliermaterialnumber
+          FROM i_purchasinginforecordapi01 WITH PRIVILEGED ACCESS AS _purhcasinginforecord
+          WHERE suppliermaterialnumber = @lv_suppliermat
+            AND supplier = @lv_supplier
+            AND isdeleted = ''
+          INTO TABLE @DATA(lt_material).
+          IF lines( lt_material ) <> 1.
+            is_error = abap_true.
+            " 明细界面单条值处理时会用到此消息
+            add_reported(
+              EXPORTING
+                record    = <record>
+                target    = required-field
+                id        = 'ZMM_001'
+                number    = '034'
+                severity  = cl_abap_behv=>ms-error
+                v1        = <record>-('SupplierMat')
+                v2        = <record>-('Supplier')
+              CHANGING
+                reported  = repo ).
+            " excel批量导入时，通过action调用会用到此消息
+            MESSAGE e034(zmm_001) WITH <record>-('SupplierMat') <record>-('Supplier') INTO lv_msg.
+            lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
+          ELSE.
+            READ TABLE lt_material INTO DATA(ls_material) INDEX 1.
+            IF sy-subrc = 0.
+              <record>-('MatId') = ls_material-material.
+            ENDIF.
+          ENDIF.
+        ENDIF.
       ENDIF.
 
       " 标识当前行有错误
@@ -514,7 +588,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                                               iv_symbol   = ';' ).
       ENDIF.
       " 只有审批完成的才可以生成PO
-      IF ls_result-approvestatus <> '3'."承認済
+      IF ls_result-approvestatus <> '3' AND ls_result-approvestatus <> '4'."承認済,送信済
         is_error = abap_true.
         ls_result-type = 'E'.
         MESSAGE e028(zmm_001) INTO lv_msg.
@@ -584,6 +658,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         order_price_unit             TYPE i_purchaseorderitemtp_2-orderpriceunit,
         is_returns_item(5)           TYPE c,
         is_free_of_charge(5)         TYPE c,
+        tax_code                     TYPE i_purchaseorderitemtp_2-taxcode,
         requisitioner_name           TYPE i_purchaseorderitemtp_2-requisitionername,
         requirement_tracking         TYPE i_purchaseorderitemtp_2-requirementtracking,
         international_article_number TYPE i_purchaseorderitemtp_2-internationalarticlenumber,
@@ -612,19 +687,6 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         purchaseorder TYPE ebeln,
       END OF ty_response.
 
-    TYPES:
-      BEGIN OF ty_details,
-        code    TYPE string,
-        message TYPE string,
-      END OF ty_details,
-      BEGIN OF ty_message,
-        code    TYPE string,
-        message TYPE string,
-        details TYPE TABLE OF ty_details WITH DEFAULT KEY,
-      END OF ty_message,
-      BEGIN OF ty_error_v4,
-        error TYPE ty_message,
-      END OF ty_error_v4.
     DATA: ls_request  TYPE ty_purchase_order,
           lt_request  TYPE TABLE OF ty_purchase_order,
           ls_item     TYPE ty_purchase_order_item,
@@ -654,8 +716,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
       "行项目数据
       CLEAR ls_request-to_purchase_order_item.
       CLEAR lt_mm1006.
-      LOOP AT records INTO record_temp WHERE ordertype = record_key-ordertype and supplier = record_key-supplier and companycode = record_key-companycode
-        and purchaseorg = record_key-purchaseorg and purchasegrp = record_key-purchasegrp and currency = record_key-currency.
+      LOOP AT records INTO record_temp WHERE ordertype = record_key-ordertype AND supplier = record_key-supplier AND companycode = record_key-companycode
+        AND purchaseorg = record_key-purchaseorg AND purchasegrp = record_key-purchasegrp AND currency = record_key-currency.
         IF record_temp-returnitem IS NOT INITIAL.
           is_returns_item = 'true'.
         ELSE.
@@ -686,6 +748,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                         requisitioner_name            = record_temp-prby
                         requirement_tracking          = record_temp-prno
                         international_article_number  = record_temp-ean
+                        tax_code                      = record_temp-tax
                         "计划行
                         to_schedule_line = VALUE #( ( purchase_order_item = sy-tabix
                                                       schedule_line = 1
@@ -748,7 +811,9 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         record_temp-purchaseorder = ls_response-purchaseorder.
         " PO创建成功后需要更改审批状态为4送信済
         record_temp-approvestatus = '4'.
-        MODIFY records FROM record_temp TRANSPORTING type message purchaseorder approvestatus WHERE prno = record_key-prno.
+        MODIFY records FROM record_temp TRANSPORTING type message purchaseorder approvestatus WHERE ordertype = record_key-ordertype
+          AND supplier = record_key-supplier AND companycode = record_key-companycode AND purchaseorg = record_key-purchaseorg
+          AND purchasegrp = record_key-purchasegrp AND currency = record_key-currency.
 
         "将PO号更新到ZTMM_1006
         MODIFY ENTITIES OF zr_tmm_1006 IN LOCAL MODE
@@ -756,22 +821,11 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         UPDATE FIELDS ( purchaseorder purchaseorderitem approvestatus )
         WITH CORRESPONDING #( records ).
       ELSE.
-        /ui2/cl_json=>deserialize( EXPORTING json = lv_response
-                                   CHANGING  data = ls_error ).
         record_temp-type = 'E'.
-        IF ls_error-error-message IS NOT INITIAL.
-          record_temp-message = ls_error-error-message.
-        ELSEIF ls_error-error-code IS NOT INITIAL.
-          SPLIT ls_error-error-code AT '/' INTO TABLE DATA(lt_msg).
-          IF lines( lt_msg ) = 2.
-            DATA(lv_msg_class) = lt_msg[ 1 ].
-            DATA(lv_msg_number) = lt_msg[ 2 ].
-            MESSAGE ID lv_msg_class TYPE 'S' NUMBER lv_msg_number INTO record_temp-message.
-          ENDIF.
-        ENDIF.
-        "/IWCOR/CX_OD_BAD_REQUEST/005056A509B11ED1B9BF94F386DD82E6
-        "ls_error-message-details内表中的消息会有多个，可以排除/IWCOR/CX_OD_BAD_REQUEST/  对判断错误起不到作用
-        MODIFY records FROM record_temp TRANSPORTING type message WHERE prno = record_key-prno.
+        record_temp-message = parse_error_v4( lv_response ).
+        MODIFY records FROM record_temp TRANSPORTING type message WHERE ordertype = record_key-ordertype
+          AND supplier = record_key-supplier AND companycode = record_key-companycode AND purchaseorg = record_key-purchaseorg
+          AND purchasegrp = record_key-purchasegrp AND currency = record_key-currency.
       ENDIF.
     ENDLOOP.
 
@@ -780,6 +834,36 @@ CLASS lhc_purchasereq IMPLEMENTATION.
     APPEND VALUE #( %cid    = keys[ 1 ]-%cid
                     %param  = VALUE #( zzkey = lv_json ) ) TO result.
 
+  ENDMETHOD.
+
+  METHOD parse_error_v4.
+    DATA ls_error TYPE ty_error_v4.
+    /ui2/cl_json=>deserialize( EXPORTING json = iv_response
+                               CHANGING  data = ls_error ).
+    IF ls_error-error-message IS NOT INITIAL.
+      IF ls_error-error-details IS NOT INITIAL.
+        LOOP AT ls_error-error-details INTO DATA(ls_detail).
+          "内表中的消息会有多个，可以排除code:/IWCOR/CX_OD_BAD_REQUEST/  CX_SXML_PARSE_ERROR 对用户判断错误起不到作用
+          IF ls_detail-code CS '/IWCOR/CX_OD_BAD_REQUEST' OR
+            ls_detail-code CS 'CX_SXML_PARSE_ERROR'.
+            CONTINUE.
+          ENDIF.
+          IF ls_detail-message IS NOT INITIAL.
+            rv_message = |{ rv_message }{ ls_detail-message };|.
+          ENDIF.
+        ENDLOOP.
+      ENDIF.
+      IF rv_message IS INITIAL.
+        rv_message = ls_error-error-message.
+      ENDIF.
+    ELSEIF ls_error-error-code IS NOT INITIAL.
+      SPLIT ls_error-error-code AT '/' INTO TABLE DATA(lt_msg).
+      IF lines( lt_msg ) = 2.
+        DATA(lv_msg_class) = lt_msg[ 1 ].
+        DATA(lv_msg_number) = lt_msg[ 2 ].
+        MESSAGE ID lv_msg_class TYPE 'S' NUMBER lv_msg_number INTO rv_message.
+      ENDIF.
+    ENDIF.
   ENDMETHOD.
 
 ENDCLASS.

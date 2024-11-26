@@ -278,12 +278,37 @@ CLASS lhc_dnprocess IMPLEMENTATION.
           UPDATE ztsd_1009 SET is_extension_used = @abap_true
             WHERE delivery_document = @ls_response-d-delivery_document.
 
+          "获取库存地点
+          data lv_salesdocument TYPE vbeln.
+          data lv_salesdocumentitem type posnr.
+          lv_salesdocument = |{ record_temp-salesdocument ALPHA = in }|.
+          lv_salesdocumentitem = |{ record_temp-salesdocumentitem ALPHA = in }|.
+          SELECT SINGLE
+            i_salesdocumentitem~salesdocument,
+            i_salesdocumentitem~salesdocumentitem,
+            i_salesdocumentitem~storagelocation,
+            ztf_salesorderstorloc~storagelocation AS shippingstoragelocation
+          FROM i_salesdocumentitem WITH PRIVILEGED ACCESS
+          LEFT JOIN ztf_salesorderstorloc
+            ON i_salesdocumentitem~salesdocument = ztf_salesorderstorloc~salesdocument
+            AND i_salesdocumentitem~salesdocumentitem = ztf_salesorderstorloc~salesdocumentitem
+          WHERE i_salesdocumentitem~salesdocument = @lv_salesdocument
+            AND i_salesdocumentitem~salesdocumentitem = @lv_salesdocumentitem
+          INTO @DATA(ls_storagelocation).
+          data lv_storage_location TYPE lgort_d.
+          clear lv_storage_location.
+          if ls_storagelocation is not INITIAL.
+            if ls_storagelocation-shippingstoragelocation is not INITIAL.
+              lv_storage_location = ls_storagelocation-shippingstoragelocation.
+            else.
+              lv_storage_location = ls_storagelocation-storagelocation.
+            endif.
+          endif.
           "修改行项目
-          "TOFIX 目前库存地点逻辑未确定，先填充固定值A622，后续复制SD-015的库存地点的逻辑
           LOOP AT records INTO record_temp WHERE deliverydocument = ls_response-d-delivery_document.
             DATA(lv_param) = |DeliveryDocument='{ record_temp-deliverydocument }',DeliveryDocumentItem='{ record_temp-deliverydocumentitem }'|.
             lv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryItem({ lv_param })?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-            lv_requestbody = |\{"d":\{"StorageLocation":"A622"\}\}|."由于目前只修改一个字段，所以直接构建字符串
+            lv_requestbody = |\{"d":\{"StorageLocation":"{ lv_storage_location }"\}\}|."由于目前只修改一个字段，所以直接构建字符串
             zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
                                                          iv_method      = if_web_http_client=>patch
                                                          iv_body        = lv_requestbody
