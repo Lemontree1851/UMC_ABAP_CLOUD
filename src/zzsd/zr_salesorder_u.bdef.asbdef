@@ -11,7 +11,7 @@ authorization master ( instance )
   update;
   delete;
 
-  field ( readonly ) SalesDocument, SalesDocumentItem;
+  field ( readonly ) SalesDocument, SalesDocumentItem,OrderQuantityUnit;
 
   static action createDeliveryOrder parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
 }

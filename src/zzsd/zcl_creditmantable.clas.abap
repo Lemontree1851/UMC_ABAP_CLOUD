@@ -78,6 +78,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
       sales~salesorganization,"販売組織
       customerc~customer,      "得意先コード
       customer~customername,  "得意先名称
+      customerc~companycode,
       credit~creditsegmentcurrency,
       credit~customercreditlimitamount      AS limitamount,"与信限度額
       customerpay~customerpaymenttermsname  AS terms,       "回収条件-支払条件
@@ -160,8 +161,8 @@ CLASS zcl_creditmantable IMPLEMENTATION.
             glaccount~amountincompanycodecurrency "与信利用額-実
           FROM i_glaccountlineitem WITH PRIVILEGED ACCESS AS glaccount
            FOR ALL ENTRIES IN @lt_customer_n
-         WHERE glaccount~customer               = @lt_customer_n-customer
-           AND glaccount~salesorganization        = @lt_customer_n-salesorganization
+         WHERE glaccount~customer           = @lt_customer_n-customer
+           AND glaccount~CompanyCode        = @lt_customer_n-companycode
            AND glaccount~accountingdocumentcategory <> 'A'
            AND glaccount~accountingdocumentcategory <> 'S'
           INTO TABLE @DATA(lt_glaccount).
@@ -740,7 +741,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
 *         与信利用額-実
         LOOP AT lt_glaccount ASSIGNING FIELD-SYMBOL(<lfs_glaccount>)
                                     WHERE customer          = <lfs_customerg>-customer
-                                      AND salesorganization = <lfs_customerg>-salesorganization
+                                      AND CompanyCode       = <lfs_customerg>-CompanyCode
                                       AND zdate+0(4)        = lv_zyear.
           CASE <lfs_glaccount>-zdate+4(2).
             WHEN 01.

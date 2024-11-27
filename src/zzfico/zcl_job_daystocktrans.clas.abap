@@ -71,7 +71,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
+CLASS zcl_job_daystocktrans IMPLEMENTATION.
 
 
   METHOD add_message_to_log.
@@ -231,11 +231,12 @@ CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
            c~materialtypename,                        "製品タイプテキスト
            e~businesspartner,                         "ビジネスパートナ
            e~businesspartnername,                     "ビジネスパートナ名
-           f~movingaverageprice,                      "移動平均価
-           f~standardprice,                           "標準原価
+           f~priceunitqty,
+           division( f~movingaverageprice,f~priceunitqty,2 ) AS movingaverageprice, "移動平均価
+           division( f~standardprice,f~priceunitqty,2 ) AS standardprice,           "標準原価
            CASE f~movingaverageprice                  "移動平均価
-               WHEN 0 THEN f~standardprice
-               ELSE f~movingaverageprice
+               WHEN 0 THEN division( f~standardprice,f~priceunitqty,2 )
+               ELSE division( f~movingaverageprice,f~priceunitqty,2 )
            END AS averageprice
       FROM i_inventoryamtbyfsclperd( p_fiscalperiod = @lv_poper , p_fiscalyear = @lv_gjahr ) WITH PRIVILEGED ACCESS AS a
       INNER JOIN i_product WITH PRIVILEGED ACCESS AS b ON b~product = a~material
@@ -383,7 +384,7 @@ CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
         ENDIF.
       ELSE.
         TRY.
-            add_message_to_log( i_text = '' i_type = 'E' ).
+            add_message_to_log( i_text = CONV cl_bali_free_text_setter=>ty_text( lv_response )  i_type = 'E' ).
           CATCH cx_bali_runtime.
         ENDTRY.
         RETURN.
@@ -439,7 +440,7 @@ CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
             ENDIF.
           ELSE.
             TRY.
-                add_message_to_log( i_text = '' i_type = 'E' ).
+                add_message_to_log( i_text = CONV cl_bali_free_text_setter=>ty_text( lv_response ) i_type = 'E' ).
               CATCH cx_bali_runtime.
             ENDTRY.
             RETURN.
@@ -618,15 +619,25 @@ CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
   METHOD if_oo_adt_classrun~main.
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
 *    lt_parameters = VALUE #( ( selname = 'P_COMPAN'
-*                               kind    = if_apj_dt_exec_object=>parameter
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1100' )
+*                               ( selname = 'P_COMPAN'
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1400' )
+*                               ( selname = 'P_PLANT'
+*                               kind    = if_apj_dt_exec_object=>select_option
 *                               sign    = 'I'
 *                               option  = 'EQ'
 *                               low     = '1100' )
 *                               ( selname = 'P_PLANT'
-*                               kind    = if_apj_dt_exec_object=>parameter
+*                               kind    = if_apj_dt_exec_object=>select_option
 *                               sign    = 'I'
 *                               option  = 'EQ'
-*                               low     = '1100' ) ).
+*                               low     = '1400' ) ).
     TRY.
         if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
 

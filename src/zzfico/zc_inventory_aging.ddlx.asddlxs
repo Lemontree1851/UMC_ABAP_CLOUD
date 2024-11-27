@@ -13,4 +13,7 @@ annotate entity ZC_INVENTORY_AGING with
 
   @Consumption.valueHelpDefinition: [ { entity: { element: 'Ledger', name: 'ZC_LedgerVH' } } ]
   Ledger;
+  
+  @Consumption.filter.selectionType: #SINGLE
+  KeyDate;
 }

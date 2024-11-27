@@ -9,9 +9,10 @@ CLASS zcl_http_podata_001 DEFINITION
       BEGIN OF ty_inputs,
         pono         TYPE c    LENGTH 10,               "購買発注"
         dno          TYPE n    LENGTH 5,                "購買発注明細"
-*        seq          TYPE c    LENGTH 4,                "連続番号"
+        seq          TYPE c    LENGTH 4,                "連続番号"
         deliverydate TYPE c    LENGTH 10,               "納品日"
-        quantity     TYPE p    DECIMALS 3 LENGTH 13,    "納品数量"
+*        quantity     TYPE p    DECIMALS 3 LENGTH 13,    "納品数量"
+        quantity     TYPE c    LENGTH 16,               "納品数量"
         delflag      TYPE c    LENGTH 1,                "削除フラグ（納期回答）"
         extnumber    TYPE c    LENGTH 35,               "参照
       END OF ty_inputs.
@@ -21,7 +22,7 @@ CLASS zcl_http_podata_001 DEFINITION
       BEGIN OF ty_output,
         pono         TYPE c    LENGTH 10,
         dno          TYPE c    LENGTH 5,
-*        seq          TYPE c    LENGTH 4,
+        seq          TYPE c    LENGTH 4,
         deliverydate TYPE c    LENGTH 10,
         quantity     TYPE c    LENGTH 13,
         delflag      TYPE c    LENGTH 1,
@@ -84,11 +85,12 @@ CLASS zcl_http_podata_001 DEFINITION
       lv_sum_qty    TYPE p LENGTH 13 DECIMALS 0. " 新增变量用于存储数量总和
 
     DATA:
-*          ls_request  TYPE ty_request,
       lv_request  TYPE string,
       ls_response TYPE ty_response,
       lt_value    TYPE STANDARD TABLE OF if_web_http_request=>name_value_pairs,
       ls_value    TYPE if_web_http_request=>name_value_pairs.
+
+    DATA: lt_ztmm_1009 TYPE STANDARD TABLE OF ztmm_1009.   " 数据库表的内表
 
     DATA:
       base_url      TYPE string,
@@ -96,9 +98,7 @@ CLASS zcl_http_podata_001 DEFINITION
       lv_token      TYPE string,
       lv_status     TYPE i.
 
-ENDCLASS.
-
-
+  ENDCLASS.
 
 CLASS zcl_http_podata_001 IMPLEMENTATION.
 
@@ -187,7 +187,7 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
 
           ls_output-pono                    = ls_req-pono.
           ls_output-dno                     = ls_req-dno.
-*          ls_output-seq                     = ls_req-seq.
+          ls_output-seq                     = ls_req-seq.
           ls_output-deliverydate            = ls_req-deliverydate.
           ls_output-quantity                = ls_req-quantity.
           ls_output-delflag                 = ls_req-delflag.
@@ -195,7 +195,7 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
 
           CONDENSE ls_output-pono.
           CONDENSE ls_output-dno.
-*          CONDENSE ls_output-seq.
+          CONDENSE ls_output-seq.
           CONDENSE ls_output-deliverydate.
           CONDENSE ls_output-deliverydate.
           CONDENSE ls_output-delflag.
@@ -496,6 +496,42 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
         response->set_text( lv_response_json_succ ).
         response->set_header_field( i_name  = lc_header_content
                                     i_value = lc_content_type ).
+
+        " 清空数据库表数据
+        LOOP AT lt_req INTO DATA(ls_delete).
+          DELETE FROM ztmm_1009 WHERE pono = @ls_delete-pono AND dno = @ls_delete-dno.
+        ENDLOOP.
+
+*        IF sy-subrc = 0.
+
+        " 将接口数据逐行处理并构造数据库表的内表
+        LOOP AT lt_req INTO DATA(ls_insert).
+
+          CONDENSE ls_insert-quantity.
+
+          " 构造数据表行
+          APPEND VALUE #(
+            client       = sy-mandt
+            pono         = ls_insert-pono
+            dno          = ls_insert-dno
+            seq          = ls_insert-seq
+            deliverydate = ls_insert-deliverydate
+            quantity     = ls_insert-quantity
+            extnumber    = ls_insert-extnumber
+          ) TO lt_ztmm_1009.
+        ENDLOOP.
+
+        " 将内表数据插入数据库表
+        IF lt_ztmm_1009 IS NOT INITIAL.
+          TRY.
+              INSERT ztmm_1009 FROM TABLE @lt_ztmm_1009.
+              COMMIT WORK.
+            CATCH cx_sy_open_sql_db INTO DATA(lx_sql_error).
+
+          ENDTRY.
+        ENDIF.
+
+*        ENDIF.
 
       ENDIF.
     ENDIF.

@@ -8,7 +8,7 @@ define root custom entity ZC_INVENTORY_AGING
   key Plant                : werks_d;
   key FiscalYear           : gjahr;
   key FiscalPeriod         : poper;
-  key product              : matnr;
+  key Product              : matnr;
       ProductDescription   : maktx;
       ProductType          : mtart;
       ProductTypeName      : abap.char(25);
@@ -180,4 +180,6 @@ define root custom entity ZC_INVENTORY_AGING
       @Semantics.amount.currencyCode : 'Currency'
       AmountMonth36        : abap.dec( 15, 2 );
 
+      //filter field
+      KeyDate              : abap.dats;
 }

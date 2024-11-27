@@ -15,6 +15,10 @@ define view entity ZR_SalesOrderSLItem
       min(DeliveryDate)                  as DeliveryDate,
       @Semantics.quantity.unitOfMeasure: 'OrderQuantityUnit'
       sum(ConfdOrderQtyByMatlAvailCheck) as ConfdOrderQty,
+      @Semantics.quantity.unitOfMeasure: 'OrderQuantityUnit'
+      sum(DeliveredQtyInOrderQtyUnit) as DeliveredQty,
+      @Semantics.quantity.unitOfMeasure: 'OrderQuantityUnit'
+      sum(OpenReqdDelivQtyInOrdQtyUnit) as RemainingQty,
       OrderQuantityUnit
 
 }

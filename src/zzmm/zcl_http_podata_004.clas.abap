@@ -51,7 +51,26 @@ CLASS zcl_http_podata_004 DEFINITION
         suppliername                TYPE c LENGTH 20,   "サプライヤ名
         taxrate                     TYPE c LENGTH 2,    "税率
         sendflag                    TYPE c LENGTH 1,    "status
+        documentheadertext          TYPE c LENGTH 40,
+        taxamountheader             TYPE c LENGTH 13,   "消費税額header
       END OF ty_response,
+
+*----------------------------------------------uweb调用参考 pickinglist。
+      BEGIN OF ty_response_res,
+        inv_no  TYPE c LENGTH 10,
+        gl_year TYPE c LENGTH 4,
+
+      END OF ty_response_res,
+
+      BEGIN OF ty_response_d,
+        results TYPE TABLE OF ty_response_res WITH DEFAULT KEY,
+      END OF ty_response_d,
+
+      BEGIN OF ty_maxinvoice,
+        d TYPE ty_response_d,
+      END OF ty_maxinvoice,
+
+**********************************************************************
 
       BEGIN OF ty_output,
         items TYPE STANDARD TABLE OF ty_response WITH EMPTY KEY,
@@ -64,6 +83,9 @@ PROTECTED SECTION.
     DATA:
       lt_req TYPE STANDARD TABLE OF ty_inputs,
       lw_req LIKE LINE OF lt_req.
+
+    DATA:  lt_uweb_api   TYPE STANDARD TABLE OF ty_response_res,
+           ls_maxinvoice TYPE ty_maxinvoice.
 
     DATA:
       lv_tablename(10)  TYPE c,
@@ -138,6 +160,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
              a~invoicegrossamount,
              a~createdbyuser,
              a~lastchangedbyuser,
+             a~documentheadertext,
              b~suppliername
         FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS AS a
         LEFT JOIN i_supplier WITH PRIVILEGED ACCESS AS b
@@ -311,8 +334,10 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         lw_result1-invoicegrossamount     = lw_supplier_invoice1-invoicegrossamount.
         lw_result1-createdbyuser          = lw_supplier_invoice1-createdbyuser.
         lw_result1-lastchangedbyuser      = lw_supplier_invoice1-lastchangedbyuser.
+        lw_result1-documentheadertext     = lw_supplier_invoice1-documentheadertext.
 
-        " 查找相关的 Tax 数据
+
+        SORT lt_tax1 BY supplierinvoice fiscalyear DESCENDING.
         READ TABLE lt_tax1 INTO DATA(lw_tax1) WITH KEY supplierinvoice = lw_result1-supplierinvoice
                                                             fiscalyear = lw_result1-fiscalyear
                                                             BINARY SEARCH.
@@ -326,13 +351,14 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
           lw_result1-supplierinvoicetaxcounter = lw_tax1-supplierinvoicetaxcounter.
           lw_result1-taxcode                   = lw_tax1-taxcode.
+          lw_result1-taxamountheader           = lw_tax1-taxamount.
 *          lw_result1-taxamount                 = lv_value2_1 / 2.
           lw_result1-taxrate                   = lv_value2_1.
           lv_rate = lv_value2_1 / 100.
 
         ENDIF.
 
-        " 查找相关的 Purchase Order Reference 数据
+        SORT lt_po_ref1 BY supplierinvoice fiscalyear DESCENDING.
         READ TABLE lt_po_ref1 INTO DATA(lw_po_ref1) WITH KEY supplierinvoice = lw_result1-supplierinvoice
                                                                   fiscalyear = lw_result1-fiscalyear
                                                                   BINARY SEARCH.
@@ -357,6 +383,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       ENDLOOP.
 
       LOOP AT lt_acct_assgmt1 INTO DATA(lw_acct_assgmt1).
+        SORT lt_result1 BY purchaseorder purchaseorderitem DESCENDING.
         READ TABLE lt_result1 ASSIGNING FIELD-SYMBOL(<lw_result1>) WITH KEY purchaseorder = lw_acct_assgmt1-purchaseorder
                                                        purchaseorderitem = lw_acct_assgmt1-purchaseorderitem
                                                        BINARY SEARCH.
@@ -368,6 +395,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       ENDLOOP.
 
       LOOP AT lt_po_item1 INTO DATA(lw_po_item1).
+        SORT lt_result1 BY purchaseorder purchaseorderitem DESCENDING.
         READ TABLE lt_result1 ASSIGNING <lw_result1> WITH KEY purchaseorder = lw_po_item1-purchaseorder
                                                  purchaseorderitem = lw_po_item1-purchaseorderitem
                                                  BINARY SEARCH.
@@ -389,6 +417,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
       " 示例：从 lt_purchase_order2 中获取数据并合并到 lw_result
       LOOP AT lt_purchase_order1 INTO DATA(lw_purchase_order1).
+        SORT lt_result1 BY purchaseorder purchaseorderitem DESCENDING.
         READ TABLE lt_result1 ASSIGNING <lw_result1> WITH KEY purchaseorder = lw_purchase_order1-purchaseorder
                                                                        BINARY SEARCH.
         IF sy-subrc = 0.
@@ -398,19 +427,41 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ENDIF.
       ENDLOOP.
 
-*      LOOP AT lt_journal_entry1 INTO DATA(lw_journal_entry1).
-*        CLEAR lw_result1.
-*        " 拼接 OriginalReferenceDocument
-*        DATA(lv_combined_key1) = lw_result1-supplierinvoice && lw_result1-fiscalyear.
-*
-*        " 根据拼接的 key 查找对应的记录
-*        READ TABLE lt_result1 ASSIGNING <lw_result1>
-*          WITH KEY accountingdocument = lv_combined_key1
-*          BINARY SEARCH.
-*        IF sy-subrc = 0.
-*          <lw_result1>-accountingdocument = lw_journal_entry1-accountingdocument.
-*        ENDIF.
-*      ENDLOOP.
+      "uweb 接口
+      zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |http://220.248.121.53:11380/srv/odata/v2/TableService/PCH_T04_PAYMENT_H|
+                                                              iv_client_id     = CONV #( 'Tom' )
+                                                              iv_client_secret = CONV #( '1' )
+                                                             iv_authtype      = 'Basic'
+                                                    IMPORTING ev_status_code   = DATA(lv_status_code_uweb)
+                                                              ev_response      = DATA(lv_response_uweb) ).
+      IF lv_status_code_uweb = 200.
+        xco_cp_json=>data->from_string( lv_response_uweb )->apply( VALUE #(
+*            ( xco_cp_json=>transformation->pascal_case_to_underscore )
+          ( xco_cp_json=>transformation->boolean_to_abap_bool )
+        ) )->write_to( REF #( ls_maxinvoice ) ).
+
+        IF ls_maxinvoice-d-results IS NOT INITIAL.
+
+          APPEND LINES OF ls_maxinvoice-d-results TO lt_uweb_api.
+
+        ENDIF.
+
+      ENDIF.
+
+      SORT lt_uweb_api BY gl_year inv_no DESCENDING.
+      DELETE ADJACENT DUPLICATES FROM lt_uweb_api COMPARING gl_year inv_no.
+
+      "inv_no
+      READ TABLE lt_uweb_api INDEX 1 INTO DATA(lw_versionmax).
+
+      SORT lt_result1 BY supplierinvoice fiscalyear DESCENDING.
+
+      " 删除 supplierinvoice 小于 lw_versionmax-inv_no 的数据
+      DELETE lt_result1 WHERE supplierinvoice < lw_versionmax-inv_no.
+
+      " 删除 supplierinvoiceitem 为空且 taxamountheader 不等于 '仮払消費税調整' 的数据
+      DELETE lt_result1 WHERE supplierinvoiceitem IS INITIAL
+                          AND documentheadertext <> '仮払消費税調整'.
 
       " 合并数据
       LOOP AT lt_result1 INTO lw_result1.
@@ -418,6 +469,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         DATA(lv_unit1) = lw_result1-purchaseorderquantityunit.
         DATA(lv_unit11) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit1 ).
 
+        ls_response-documentheadertext                   = lw_result1-documentheadertext.
         ls_response-suppliername                         = lw_result1-suppliername.
         ls_response-supplierinvoice                      = lw_result1-supplierinvoice.
         ls_response-fiscalyear                           = lw_result1-fiscalyear.
@@ -433,6 +485,11 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ls_response-supplierinvoicetaxcounter            = lw_result1-debitcreditcode.
         ls_response-taxcode                              = lw_result1-taxcode.
         ls_response-taxamount                            = lw_result1-debitcreditcode.
+        IF lw_result1-supplierinvoiceitem IS INITIAL AND lw_result1-documentheadertext = '仮払消費税調整'.
+          ls_response-supplierinvoiceitem = '000001'.
+        ELSE.
+          ls_response-supplierinvoiceitem                  = lw_result1-supplierinvoiceitem.
+        ENDIF.
         ls_response-supplierinvoiceitem                  = lw_result1-supplierinvoiceitem.
         ls_response-purchaseorder                        = lw_result1-purchaseorder.
         ls_response-purchaseorderitem                    = lw_result1-purchaseorderitem.
@@ -453,7 +510,9 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ls_response-companycode                          = lw_result1-companycode.
         ls_response-purchasinggroupname                  = lw_result1-purchasinggroupname.
 *        ls_response-accountingdocument                   = lw_result1-accountingdocument.
-        ls_response-sendflag                             = lw_result1-sendflag.
+        ls_response-sendflag                             = '1'.
+        ls_response-taxamountheader                      = lw_result1-taxamountheader.
+
         DATA lv_taxamount1    TYPE p LENGTH 10 DECIMALS 2.
         DATA lv_totalamount1  TYPE p LENGTH 10 DECIMALS 2.
 
@@ -539,6 +598,8 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         CONDENSE ls_response-unitprice.
         CONDENSE ls_response-taxrate.
         CONDENSE ls_response-sendflag.
+        CONDENSE ls_response-documentheadertext.
+        CONDENSE ls_response-taxamountheader.
         APPEND   ls_response TO es_response-items.
 
       ENDLOOP.
@@ -576,13 +637,14 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
              a~invoicegrossamount,
              a~createdbyuser,
              a~lastchangedbyuser,
+             a~documentheadertext,
              b~suppliername
         FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS AS a
         LEFT JOIN i_supplier WITH PRIVILEGED ACCESS AS b
         ON b~supplier = a~invoicingparty
 *        AND a~supplierinvoice = '5105600148'
-        FOR ALL ENTRIES IN @lt_req
-        WHERE a~documentdate = @lt_req-documentdate
+*        FOR ALL ENTRIES IN @lt_req
+*        WHERE a~documentdate = @lt_req-documentdate
         INTO TABLE @DATA(lt_supplier_invoice3).
 
       DATA(lt_supplier_invoice4) = lt_supplier_invoice3[].
@@ -752,8 +814,9 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       lw_result-invoicegrossamount     = lw_supplier_invoice3-invoicegrossamount.
       lw_result-createdbyuser          = lw_supplier_invoice3-createdbyuser.
       lw_result-lastchangedbyuser      = lw_supplier_invoice3-lastchangedbyuser.
+      lw_result-documentheadertext     = lw_supplier_invoice3-documentheadertext.
 
-      " 查找相关的 Tax 数据
+      SORT lt_tax2 BY supplierinvoice fiscalyear DESCENDING.
       READ TABLE lt_tax2 INTO DATA(lw_tax2) WITH KEY supplierinvoice = lw_result-supplierinvoice
                                                           fiscalyear = lw_result-fiscalyear
                                                           BINARY SEARCH.
@@ -769,12 +832,13 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         lw_result-supplierinvoicetaxcounter = lw_tax2-supplierinvoicetaxcounter.
         lw_result-taxcode                   = lw_tax2-taxcode.
 *        lw_result-taxamount                 = lv_value2_2 / 2.
+        lw_result-taxamountheader           = lw_tax2-taxamount.
         lw_result-taxrate                   = lv_value2_2.
         lv_rate = lv_value2_2 / 100.
 
       ENDIF.
 
-      " 查找相关的 Purchase Order Reference 数据
+      SORT lt_po_ref2 BY supplierinvoice fiscalyear DESCENDING.
       READ TABLE lt_po_ref2 INTO DATA(lw_po_ref2) WITH KEY supplierinvoice = lw_result-supplierinvoice
                                                                 fiscalyear = lw_result-fiscalyear
                                                                 BINARY SEARCH.
@@ -798,7 +862,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
     ENDLOOP.
 
     LOOP AT lt_acct_assgmt2 INTO DATA(lw_acct_assgmt2).
-
+      SORT lt_result BY purchaseorder purchaseorderitem DESCENDING.
       READ TABLE lt_result ASSIGNING FIELD-SYMBOL(<lw_result>) WITH KEY purchaseorder = lw_acct_assgmt2-purchaseorder
                                                    purchaseorderitem = lw_acct_assgmt2-purchaseorderitem
                                                    BINARY SEARCH.
@@ -810,7 +874,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
     ENDLOOP.
 
     LOOP AT lt_po_item2 INTO DATA(lw_po_item2).
-
+      SORT lt_result BY purchaseorder purchaseorderitem DESCENDING.
       READ TABLE lt_result ASSIGNING <lw_result> WITH KEY purchaseorder = lw_po_item2-purchaseorder
                                                purchaseorderitem = lw_po_item2-purchaseorderitem
                                                BINARY SEARCH.
@@ -833,7 +897,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
     " 示例：从 lt_purchase_order2 中获取数据并合并到 lw_result
     LOOP AT lt_purchase_order2 INTO DATA(lw_purchase_order2).
-
+      SORT lt_result BY purchaseorder purchaseorderitem DESCENDING.
       READ TABLE lt_result ASSIGNING <lw_result> WITH KEY purchaseorder = lw_purchase_order2-purchaseorder
                                                                    BINARY SEARCH.
       IF sy-subrc = 0.
@@ -845,20 +909,42 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
     ENDLOOP.
 
-*    LOOP AT lt_journal_entry2 INTO DATA(lw_journal_entry2).
-*      " 拼接 OriginalReferenceDocument
-*      DATA(lv_combined_key) = lw_result-supplierinvoice && lw_result-fiscalyear.
-*
-*      " 根据拼接的 key 查找对应的记录
-*      READ TABLE lt_result ASSIGNING <lw_result>
-*        WITH KEY accountingdocument = lv_combined_key
-*        BINARY SEARCH.
-*      IF sy-subrc = 0.
-*        <lw_result>-accountingdocument = lw_journal_entry2-accountingdocument.
-*      ENDIF.
-*      " 将 lw_result 添加到结果表中
-*
-*    ENDLOOP.
+    "uweb 接口
+    zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |http://220.248.121.53:11380/srv/odata/v2/TableService/PCH_T04_PAYMENT_H|
+                                                            iv_client_id     = CONV #( 'Tom' )
+                                                            iv_client_secret = CONV #( '1' )
+                                                           iv_authtype      = 'Basic'
+                                                  IMPORTING ev_status_code   = DATA(lv_status_code_uweb1)
+                                                            ev_response      = DATA(lv_response_uweb1) ).
+    IF lv_status_code_uweb1 = 200.
+      xco_cp_json=>data->from_string( lv_response_uweb1 )->apply( VALUE #(
+*            ( xco_cp_json=>transformation->pascal_case_to_underscore )
+        ( xco_cp_json=>transformation->boolean_to_abap_bool )
+      ) )->write_to( REF #( ls_maxinvoice ) ).
+
+      IF ls_maxinvoice-d-results IS NOT INITIAL.
+
+        APPEND LINES OF ls_maxinvoice-d-results TO lt_uweb_api.
+
+      ENDIF.
+
+    ENDIF.
+
+    SORT lt_uweb_api BY gl_year inv_no DESCENDING.
+    DELETE ADJACENT DUPLICATES FROM lt_uweb_api COMPARING gl_year inv_no.
+
+    "获取supplierinvoice最大的记录
+    READ TABLE lt_uweb_api INDEX 1 INTO DATA(lw_versionmax1).
+
+    SORT lt_result BY supplierinvoice fiscalyear DESCENDING.
+
+    " 删除 supplierinvoice 小于 lw_versionmax-inv_no 的数据
+    DELETE lt_result WHERE supplierinvoice < lw_versionmax1-inv_no.
+*    DELETE lt_result WHERE supplierinvoice < '5105600150'.
+
+    " 删除 supplierinvoiceitem 为空且 taxamountheader 不等于 '仮払消費税調整' 的数据
+    DELETE lt_result WHERE supplierinvoiceitem IS INITIAL
+                        AND documentheadertext <> '仮払消費税調整'.
 
     " 合并数据
     LOOP AT lt_result INTO lw_result.
@@ -866,6 +952,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       DATA(lv_unit2) = lw_result-purchaseorderquantityunit.
       DATA(lv_unit22) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit2 ).
 
+      ls_response-documentheadertext                   = lw_result-documentheadertext.
       ls_response-suppliername                         = lw_result-suppliername.
       ls_response-supplierinvoice                      = lw_result-supplierinvoice.
       ls_response-fiscalyear                           = lw_result-fiscalyear.
@@ -881,7 +968,11 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       ls_response-supplierinvoicetaxcounter            = lw_result-debitcreditcode.
       ls_response-taxcode                              = lw_result-taxcode.
       ls_response-taxamount                            = lw_result-debitcreditcode.
-      ls_response-supplierinvoiceitem                  = lw_result-supplierinvoiceitem.
+      IF lw_result-supplierinvoiceitem IS INITIAL AND lw_result-documentheadertext = '仮払消費税調整'.
+        ls_response-supplierinvoiceitem = '000001'.
+      ELSE.
+        ls_response-supplierinvoiceitem                  = lw_result-supplierinvoiceitem.
+      ENDIF.
       ls_response-purchaseorder                        = lw_result-purchaseorder.
       ls_response-purchaseorderitem                    = lw_result-purchaseorderitem.
       ls_response-debitcreditcode                      = lw_result-debitcreditcode.
@@ -905,6 +996,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       ls_response-totalamount                          = lw_result-totalamount.
       ls_response-unitprice                            = lw_result-unitprice.
       ls_response-sendflag                             = '1'.
+      ls_response-taxamountheader                      = lw_result-taxamountheader.
 
       DATA lv_taxamount2    TYPE p LENGTH 10 DECIMALS 2.
       DATA lv_totalamount2  TYPE p LENGTH 10 DECIMALS 2.
@@ -991,6 +1083,8 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       CONDENSE ls_response-unitprice.
       CONDENSE ls_response-taxrate.
       CONDENSE ls_response-sendflag.
+      CONDENSE ls_response-documentheadertext.
+      CONDENSE ls_response-taxamountheader.
       APPEND   ls_response TO es_response-items.
 
     ENDLOOP.

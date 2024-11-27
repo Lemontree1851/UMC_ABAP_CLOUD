@@ -9,8 +9,10 @@ define root view entity ZC_SALESORDER_U
   key SalesDocument,
   key SalesDocumentItem,
       SalesOrganization,
+      SalesOffice,
       SalesGroup,
       SalesDocumentType,
+      YY1_SalesDocType_SDH, //受注伝票タイプ（Old）
       CreationDate,
       ShippingPoint,
       ShippingPointName,
@@ -68,5 +70,6 @@ define root view entity ZC_SALESORDER_U
       @EndUserText.label: '結果'
       Status,
       @EndUserText.label: 'メッセージ'
-      Message
+      Message,
+      Language
 }

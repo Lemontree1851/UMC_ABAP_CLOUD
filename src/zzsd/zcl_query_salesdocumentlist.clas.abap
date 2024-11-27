@@ -464,6 +464,8 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
     SORT lt_materialdocumentitem BY deliverydocument deliverydocumentitem goodsmovementtype debitcreditcode.
 
     LOOP AT lt_salesdocumentitem INTO DATA(ls_salesdocumentitem).
+      CLEAR ls_data.
+
       "DN未出庫
       IF lv_indicator2 = abap_true.
         "Read data of delivery document item
@@ -854,7 +856,6 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
       ENDIF.
 
       APPEND ls_data TO lt_data.
-      CLEAR ls_data.
     ENDLOOP.
 
     IF lr_confirmeddeliverydate IS NOT INITIAL.

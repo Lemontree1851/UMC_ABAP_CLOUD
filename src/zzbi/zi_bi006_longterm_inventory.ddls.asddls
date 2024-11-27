@@ -16,6 +16,7 @@ define root view entity ZI_BI006_LONGTERM_INVENTORY
   key Product,
       FiscalYear,
       Period,
+      FiscalPeriod,
       Type,
       CompanyCodeName,
       PlantName,
@@ -26,14 +27,15 @@ define root view entity ZI_BI006_LONGTERM_INVENTORY
       ProfitCenterName,
       Customer,
       CustomerName,
-
+      Currency,
+      ValuationArea,
+      Qty,
       @Semantics.amount.currencyCode: 'Currency'
       ActualPrice,
 
       @Semantics.amount.currencyCode: 'Currency'
-      InventoryAmount,
-      Currency,
-      Qty
+      InventoryAmount
+      
 }
 union select from ZI_BI006_FIN_PROD_INVEN_REPORT
 {
@@ -43,6 +45,7 @@ union select from ZI_BI006_FIN_PROD_INVEN_REPORT
   key Product,
       FiscalYear,
       Period,
+      FiscalPeriod,
       Type,
       CompanyCodeName,
       PlantName,
@@ -53,9 +56,10 @@ union select from ZI_BI006_FIN_PROD_INVEN_REPORT
       ProfitCenterName,
       Customer,
       CustomerName,
-      ActualPrice,
-      InventoryAmount,
       Currency,
-      Qty
+      ValuationArea,
+      Qty, 
+      ActualPrice, 
+      InventoryAmount
 
 }

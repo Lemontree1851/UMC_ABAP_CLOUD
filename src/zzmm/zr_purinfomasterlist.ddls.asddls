@@ -83,7 +83,7 @@ define root custom entity ZR_PURINFOMASTERLIST
       standardpurchaseorderquantity  : abap.dec(15,3);
       //      @Semantics.amount.currencyCode : 'Currency_plnt'
       Taxprice                       : abap.dec(15,3);
-      @Semantics.amount.currencyCode : 'Currency_plnt'
+      @Semantics.amount.currencyCode : 'Currency_standard'
       UnitPrice_plnt                 : abap.curr(15,2);
       //      @Semantics.amount.currencyCode : 'Currency_plnt'
       UnitPrice_standard             : abap.dec(15,3);

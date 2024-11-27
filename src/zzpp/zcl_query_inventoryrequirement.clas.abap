@@ -384,16 +384,19 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                           |MRPElement,MRPElementItem,MRPElementScheduleLine,SourceMRPElement,SourceMRPElementCategory,SourceMRPElementItem,SourceMRPElementScheduleLine|.
 
         lv_filter = |MRPPlant eq '{ lv_plant }' and MRPArea eq '{ lv_mrparea }'|.
-        CLEAR lv_count.
-        LOOP AT lt_temp INTO DATA(ls_temp).
-          lv_count += 1.
-          IF lv_count = 1.
-            lv_filter = |{ lv_filter } and (Material eq '{ ls_temp-product }'|.
-          ELSE.
-            lv_filter = |{ lv_filter } or Material eq '{ ls_temp-product }'|.
-          ENDIF.
-        ENDLOOP.
-        lv_filter = |{ lv_filter })|.
+
+        IF lines( lt_temp ) < 30.
+          CLEAR lv_count.
+          LOOP AT lt_temp INTO DATA(ls_temp).
+            lv_count += 1.
+            IF lv_count = 1.
+              lv_filter = |{ lv_filter } and (Material eq '{ ls_temp-product }'|.
+            ELSE.
+              lv_filter = |{ lv_filter } or Material eq '{ ls_temp-product }'|.
+            ENDIF.
+          ENDLOOP.
+          lv_filter = |{ lv_filter })|.
+        ENDIF.
 
         zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
                                                      iv_method      = if_web_http_client=>get

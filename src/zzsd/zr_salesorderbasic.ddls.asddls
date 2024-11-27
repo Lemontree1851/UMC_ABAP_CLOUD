@@ -11,9 +11,9 @@ define view entity ZR_SALESORDERBASIC
     inner join      I_SalesDocumentItem as vbap             on vbap.SalesDocument = vbak.SalesDocument
     left outer join ZR_SalesOrderSLItem as vbep             on  vbap.SalesDocument     = vbep.SalesDocument
                                                             and vbap.SalesDocumentItem = vbep.SalesDocumentItem
-    left outer join ZR_DELIVERYEDQTY    as DeliveryedQty    on  DeliveryedQty.SalesOrder     = vbap.SalesDocument
-                                                            and DeliveryedQty.SalesOrderItem = vbap.SalesDocumentItem
-                                                            and DeliveryedQty.BaseUnit       = vbap.OrderQuantityUnit
+//    left outer join ZR_DELIVERYEDQTY    as DeliveryedQty    on  DeliveryedQty.SalesOrder     = vbap.SalesDocument
+//                                                            and DeliveryedQty.SalesOrderItem = vbap.SalesDocumentItem
+//                                                            and DeliveryedQty.BaseUnit       = vbap.OrderQuantityUnit
 //    left outer join I_RouteText         as _RouteText       on  _RouteText.Route    = vbap.Route
 //                                                            and _RouteText.Language = $session.system_language
 {
@@ -66,12 +66,10 @@ define view entity ZR_SALESORDERBASIC
       vbep.ConfdOrderQty,
       //已发货数量
       @Semantics.quantity.unitOfMeasure: 'OrderQuantityUnit'
-      // FIXME 当前CDS数量单位为订单单位，但取值的DN数量为基本单位，当两者不一致时会取不到值 by zoukun
-      DeliveryedQty.DeliveredQuantity                      as DeliveredQty,
+      vbep.DeliveredQty,
       //剩余数量
-      //如果vbup-lfsta  = A 未发货 送货数量=0 剩余数量就等于确认数量,但vbup表根本没有值，所以当做不等于A处理？
       @Semantics.quantity.unitOfMeasure: 'OrderQuantityUnit'
-      vbep.ConfdOrderQty - DeliveryedQty.DeliveredQuantity as RemainingQty
+      vbep.RemainingQty
 }
 where
        vbap.SalesDocumentRjcnReason = ''

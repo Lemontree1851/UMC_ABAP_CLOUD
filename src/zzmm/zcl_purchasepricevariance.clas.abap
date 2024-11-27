@@ -11,9 +11,7 @@ CLASS zcl_purchasepricevariance DEFINITION
 ENDCLASS.
 
 
-
-CLASS ZCL_PURCHASEPRICEVARIANCE IMPLEMENTATION.
-
+CLASS zcl_purchasepricevariance IMPLEMENTATION.
 
   METHOD if_sadl_exit_calc_element_read~calculate.
     TYPES: BEGIN OF ty_record,
@@ -91,27 +89,31 @@ CLASS ZCL_PURCHASEPRICEVARIANCE IMPLEMENTATION.
                         |,PurchasingOrganization,Plant,PurchasingInfoRecordCategory|.
       lv_filter = |ConditionType eq 'PPR0'|.
 
-      CLEAR lv_count.
-      LOOP AT lt_supplier INTO DATA(ls_supplier).
-        lv_count += 1.
-        IF lv_count = 1.
-          lv_filter = |{ lv_filter } and (Supplier eq '{ ls_supplier-supplier }'|.
-        ELSE.
-          lv_filter = |{ lv_filter } or Supplier eq '{ ls_supplier-supplier }'|.
-        ENDIF.
-      ENDLOOP.
-      lv_filter = |{ lv_filter })|.
+      IF lines( lt_supplier ) < 20.
+        CLEAR lv_count.
+        LOOP AT lt_supplier INTO DATA(ls_supplier).
+          lv_count += 1.
+          IF lv_count = 1.
+            lv_filter = |{ lv_filter } and (Supplier eq '{ ls_supplier-supplier }'|.
+          ELSE.
+            lv_filter = |{ lv_filter } or Supplier eq '{ ls_supplier-supplier }'|.
+          ENDIF.
+        ENDLOOP.
+        lv_filter = |{ lv_filter })|.
+      ENDIF.
 
-      CLEAR lv_count.
-      LOOP AT lt_material INTO DATA(ls_material).
-        lv_count += 1.
-        IF lv_count = 1.
-          lv_filter = |{ lv_filter } and (Material eq '{ ls_material-material }'|.
-        ELSE.
-          lv_filter = |{ lv_filter } or Material eq '{ ls_material-material }'|.
-        ENDIF.
-      ENDLOOP.
-      lv_filter = |{ lv_filter })|.
+      IF lines( lt_material ) < 20.
+        CLEAR lv_count.
+        LOOP AT lt_material INTO DATA(ls_material).
+          lv_count += 1.
+          IF lv_count = 1.
+            lv_filter = |{ lv_filter } and (Material eq '{ ls_material-material }'|.
+          ELSE.
+            lv_filter = |{ lv_filter } or Material eq '{ ls_material-material }'|.
+          ENDIF.
+        ENDLOOP.
+        lv_filter = |{ lv_filter })|.
+      ENDIF.
 
       CLEAR lv_count.
       LOOP AT lt_plant INTO DATA(ls_plant).
@@ -312,7 +314,7 @@ CLASS ZCL_PURCHASEPRICEVARIANCE IMPLEMENTATION.
     ct_calculated_data = CORRESPONDING #( lt_original_data ).
   ENDMETHOD.
 
-
   METHOD if_sadl_exit_calc_element_read~get_calculation_info.
   ENDMETHOD.
+
 ENDCLASS.

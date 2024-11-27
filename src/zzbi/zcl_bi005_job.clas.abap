@@ -328,28 +328,38 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     lv_filter = |{ lv_filter })|.
     lv_filter3 = lv_filter.
 
-    CLEAR lv_count.
-    LOOP AT lt_supplier INTO DATA(ls_supplier).
-      lv_count += 1.
-      IF lv_count = 1.
-        lv_filter = |{ lv_filter } and (Supplier eq '{ ls_supplier-businesspartner }'|.
-      ELSE.
-        lv_filter = |{ lv_filter } or Supplier eq '{ ls_supplier-businesspartner }'|.
-      ENDIF.
-    ENDLOOP.
-    lv_filter = |{ lv_filter })|.
-    lv_filter2 = lv_filter.
+    IF lines( lt_supplier ) < 20.
+      CLEAR lv_count.
+      LOOP AT lt_supplier INTO DATA(ls_supplier).
+        lv_count += 1.
+        IF lv_count = 1.
+          lv_filter = |{ lv_filter } and (Supplier eq '{ ls_supplier-businesspartner }'|.
+        ELSE.
+          lv_filter = |{ lv_filter } or Supplier eq '{ ls_supplier-businesspartner }'|.
+        ENDIF.
+      ENDLOOP.
+      lv_filter = |{ lv_filter })|.
+      lv_filter2 = lv_filter.
+    ELSE.
+      lv_filter = |{ lv_filter } and Supplier ne ''|.
+      lv_filter2 = lv_filter.
+    ENDIF.
 
-*    CLEAR lv_count.
-*    LOOP AT lt_material INTO DATA(ls_material).
-*      lv_count += 1.
-*      IF lv_count = 1.
-*        lv_filter = |{ lv_filter } and (Material eq '{ ls_material-material }'|.
-*      ELSE.
-*        lv_filter = |{ lv_filter } or Material eq '{ ls_material-material }'|.
-*      ENDIF.
-*    ENDLOOP.
-    lv_filter = |{ lv_filter } and Material ne ''|.
+    IF lines( lt_material ) < 20.
+      CLEAR lv_count.
+      LOOP AT lt_material INTO DATA(ls_material).
+        lv_count += 1.
+        IF lv_count = 1.
+          lv_filter = |{ lv_filter } and (Material eq '{ ls_material-material }'|.
+        ELSE.
+          lv_filter = |{ lv_filter } or Material eq '{ ls_material-material }'|.
+        ENDIF.
+      ENDLOOP.
+      lv_filter = |{ lv_filter })|.
+    ELSE.
+      lv_filter = |{ lv_filter } and Material ne ''|.
+    ENDIF.
+
 
 *   部品の入庫予測データを取得
 *   PO登録した後の原材料Supplyの数字を取得する（ZMM80）
@@ -508,6 +518,8 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 
     GET TIME STAMP FIELD DATA(lv_timestamp).
 
+*    DELETE lt_demand FROM 2.
+
     LOOP AT lt_demand ASSIGNING FIELD-SYMBOL(<fs_l_group>)
       GROUP BY ( yearmonth = <fs_l_group>-yearmonth ).
 
@@ -562,10 +574,10 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 *         製品
           APPEND ls_bi1003 TO lt_bi1003.
           CLEAR ls_bi1003.
-*         次の月の期首在庫は前月の期末予測在庫になります
-          <fs_l_1016>-valuationquantity = 0.
 
           lv_next_qty = <fs_l_demand>-demandquantity - <fs_l_1016>-valuationquantity.
+*         次の月の期首在庫は前月の期末予測在庫になります
+          <fs_l_1016>-valuationquantity = 0.
           DATA(lv_next) = <fs_l_demand>-material.
           WHILE lv_next IS NOT INITIAL .
             LOOP AT lt_bom_api ASSIGNING FIELD-SYMBOL(<fs_l_bom>)
@@ -638,27 +650,24 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 
 *                 半製品
                   APPEND ls_bi1003 TO lt_bi1003.
-*                 次の月の期首在庫は前月の期末予測在庫になります
-                  <fs_l_1016>-valuationquantity = 0.
 
                   IF <fs_l_bom>-isassembly IS NOT INITIAL.
 *                   半製品
-                    ls_demand-material = <fs_l_bom>-billofmaterialitemquantity.
+                    ls_demand-material = <fs_l_1016>-material.
                     ls_demand-plant    = <fs_l_1016>-plant.
 *                    ls_demand-customer = <fs_l_1016>-businesspartner.
                     ls_demand-demandquantity = lv_bom_qty - <fs_l_1016>-valuationquantity.
                     APPEND ls_demand TO lt_demand_zhlb.
                   ENDIF.
+*                 次の月の期首在庫は前月の期末予測在庫になります
+                  <fs_l_1016>-valuationquantity = 0.
                 ELSE.
 *                  CONTINUE.
                 ENDIF.
               ENDIF.
               CLEAR:
-                ls_demand,
                 ls_bi1003,
-                lv_bom_qty,
-                lv_next,
-                lv_next_qty.
+                lv_bom_qty.
             ENDLOOP.
 
             READ TABLE lt_demand_zhlb INTO ls_demand INDEX 1.
@@ -667,6 +676,10 @@ CLASS zcl_bi005_job IMPLEMENTATION.
               lv_next_qty = ls_demand-demandquantity.
               DELETE lt_demand_zhlb INDEX 1.
             ENDIF.
+            CLEAR:
+              ls_demand,
+              lv_next,
+              lv_next_qty.
           ENDWHILE.
         ENDIF.
         CLEAR ls_bi1003.

@@ -328,39 +328,14 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
       DATA(lv_select) = |ConditionRecord,ConditionValidityStartDate,ConditionValidityEndDate,PurchasingInfoRecord| &&
                         |,Supplier,Material,Plant,PurchasingOrganization,PurchasingInfoRecordCategory|.
 
-      lv_filter = |ConditionType eq 'PPR0' and Supplier ne '' and Material ne ''|.
-      lv_filter2 = |Product ne ''|.
-*      CLEAR lv_count.
-*      LOOP AT lt_supplier INTO DATA(ls_supplier1).
-*        lv_count += 1.
-*        IF lv_count = 1.
-*          lv_filter = |{ lv_filter } and (Supplier eq '{ ls_supplier1-supplier }'|.
-*        ELSE.
-*          lv_filter = |{ lv_filter } or Supplier eq '{ ls_supplier1-supplier }'|.
-*        ENDIF.
-*      ENDLOOP.
-*      lv_filter = |{ lv_filter })|.
-*
-*      CLEAR lv_count.
-*      LOOP AT lt_material INTO DATA(ls_material1).
-*        lv_count += 1.
-*        IF lv_count = 1.
-*          lv_filter = |{ lv_filter } and (Material eq '{ ls_material1-material }'|.
-*          lv_filter2 = |(Product eq '{ ls_material1-material }'|.
-*        ELSE.
-*          lv_filter = |{ lv_filter } or Material eq '{ ls_material1-material }'|.
-*          lv_filter2 = |{ lv_filter2 } or Product eq '{ ls_material1-material }'|.
-*        ENDIF.
-*      ENDLOOP.
-*      lv_filter = |{ lv_filter })|.
-*      lv_filter2 = |{ lv_filter2 })|.
+      lv_filter = |ConditionType eq 'PPR0'|.
 
       CLEAR lv_count.
       LOOP AT lt_plant INTO DATA(ls_plant1).
         lv_count += 1.
         IF lv_count = 1.
           lv_filter = |{ lv_filter } and (Plant eq '{ ls_plant1-plant }'|.
-          lv_filter2 = |{ lv_filter2 } and (ValuationArea eq '{ ls_plant1-plant }'|.
+          lv_filter2 = |(ValuationArea eq '{ ls_plant1-plant }'|.
         ELSE.
           lv_filter = |{ lv_filter } or Plant eq '{ ls_plant1-plant }'|.
           lv_filter2 = |{ lv_filter2 } or ValuationArea eq '{ ls_plant1-plant }'|.
@@ -368,6 +343,35 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
       ENDLOOP.
       lv_filter = |{ lv_filter })|.
       lv_filter2 = |{ lv_filter2 })|.
+
+      IF lines( lt_supplier ) < 20.
+        CLEAR lv_count.
+        LOOP AT lt_supplier INTO DATA(ls_supplier1).
+          lv_count += 1.
+          IF lv_count = 1.
+            lv_filter = |{ lv_filter } and (Supplier eq '{ ls_supplier1-supplier }'|.
+          ELSE.
+            lv_filter = |{ lv_filter } or Supplier eq '{ ls_supplier1-supplier }'|.
+          ENDIF.
+        ENDLOOP.
+        lv_filter = |{ lv_filter })|.
+      ENDIF.
+
+      IF lines( lt_material ) < 20.
+        CLEAR lv_count.
+        LOOP AT lt_material INTO DATA(ls_material1).
+          lv_count += 1.
+          IF lv_count = 1.
+            lv_filter = |{ lv_filter } and (Material eq '{ ls_material1-material }'|.
+            lv_filter2 = |{ lv_filter2 } and (Product eq '{ ls_material1-material }'|.
+          ELSE.
+            lv_filter = |{ lv_filter } or Material eq '{ ls_material1-material }'|.
+            lv_filter2 = |{ lv_filter2 } or Product eq '{ ls_material1-material }'|.
+          ENDIF.
+        ENDLOOP.
+        lv_filter = |{ lv_filter })|.
+        lv_filter2 = |{ lv_filter2 })|.
+      ENDIF.
 
       CLEAR lv_count.
       LOOP AT lt_organization INTO DATA(ls_organization).
@@ -716,15 +720,24 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
 *        lw_data-condition_validity_end_date   = ' '.
 *        APPEND lw_data TO lt_data.
       ENDIF.
-      CLEAR lw_recdvalidity.
-      CLEAR lw_data.
+      CLEAR:
+        lw_recdvalidity,
+        lw_unitprice,
+        lw_data,
+        lv_unitprice_plnt,
+        lv_dec,
+        lv_unitprice_standard,
+        lv_price,
+        lv_rate,
+        lv_rate_display,
+        lv_lastflg.
     ENDLOOP.
 
-    CLEAR lv_unitprice_standard.
-    CLEAR lv_unitprice_plnt.
-    CLEAR lv_rate.
-    CLEAR lv_price.
-    CLEAR lv_rate_display.
+*    CLEAR lv_unitprice_standard.
+*    CLEAR lv_unitprice_plnt.
+*    CLEAR lv_rate.
+*    CLEAR lv_price.
+*    CLEAR lv_rate_display.
 
     " 如果 lv_ztype1 为 'X'，删除符合条件的记录
     IF lv_ztype1 <> 'X'.
@@ -738,6 +751,13 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
 *    LOOP AT lt_data INTO lw_data.  " 循环遍历 lt_dataS
 *      APPEND lw_data TO lt_output.  " 将当前行的 lw_data 追加到 lt_output 内表
 *    ENDLOOP.
+
+    SORT lt_data
+      BY purchasinginforecord ASCENDING
+         purchasinginforecordcategory ASCENDING
+         condition_validity_start_date ASCENDING
+         conditionscalequantity ASCENDING.
+
     MOVE-CORRESPONDING lt_data[] TO lt_output[].
 
     IF io_request->is_total_numb_of_rec_requested(  ) .

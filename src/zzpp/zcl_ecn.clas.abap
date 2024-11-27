@@ -509,9 +509,7 @@ CLASS zcl_ecn IMPLEMENTATION.
 
         MOVE-CORRESPONDING <fs_bomapi1> TO lw_basic.
 
-
-
-        READ TABLE lt_ecn_api INTO lw_ecn WITH KEY changenumber = <fs_bomapi>-engineeringchangedocument  .
+        READ TABLE lt_ecn_api INTO lw_ecn WITH KEY changenumber = <fs_bomapi1>-engineeringchangedocument  .
 
         IF sy-subrc = 0.
 

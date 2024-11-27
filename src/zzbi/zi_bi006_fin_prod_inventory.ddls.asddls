@@ -16,6 +16,7 @@ define view entity ZI_BI006_FIN_PROD_INVENTORY
   key Product,
       FiscalYear,
       Period,
+      FiscalPeriod,
       CompanyCodeName,
       PlantName,
       ProductName,
@@ -25,13 +26,13 @@ define view entity ZI_BI006_FIN_PROD_INVENTORY
       ProfitCenterName,
       Customer,
       CustomerName,
-
+      Currency,
+      ValuationArea,
       @Semantics.amount.currencyCode: 'Currency'
       ActualPrice,
 
       @Semantics.amount.currencyCode: 'Currency'
       InventoryAmount,
-      Currency,
       sum(Qty) as Qty
 }
 where
@@ -47,6 +48,7 @@ group by
   Product,
   FiscalYear,
   Period,
+  FiscalPeriod,
   CompanyCodeName,
   PlantName,
   ProductName,
@@ -56,6 +58,7 @@ group by
   ProfitCenterName,
   Customer,
   CustomerName,
+  Currency,
+  ValuationArea,
   ActualPrice,
-  InventoryAmount,
-  Currency
+  InventoryAmount

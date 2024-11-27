@@ -694,6 +694,9 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         APPEND ls_product TO lt_product_tmp.
         CLEAR: ls_product.
       ENDLOOP.
+      IF lt_product_tmp IS INITIAL.
+        EXIT.
+      ENDIF.
     ENDDO.
     APPEND LINES OF lt_bom_temp TO lt_bom.
 
@@ -1658,28 +1661,38 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
 
       IF ls_1010-purgrpamount <> 0.
         ls_1011-chargeableamount = lv_chargeable.   "当期有償支給品仕入金額
-        ls_1011-chargeablerate = lv_chargeable / ls_1010-purgrpamount.  "当期仕入率
+        ls_1011-chargeablerate = lv_chargeable / <lfs_member>-purgrpamount.  "当期仕入率
       ENDIF.
 
-      ls_1011-previousstocktotal = ls_1010-previousstockamount.  "在庫金額（前期末）-合計
+      ls_1011-previousstocktotal = <lfs_member>-previousstockamount.  "在庫金額（前期末）-合計
       ls_1011-currentstockpaid = lv_currentstockamt.  "在庫金額（当期末）-有償支給品
       ls_1011-currentstocksemi = lv_semi * ls_1011-chargeablerate. "在庫金額（当期末）-半製品
       ls_1011-currentstockfin = lv_fin * ls_1011-chargeablerate.  "在庫金額（当期末）-製品
       ls_1011-currentstocktotal = ls_1011-currentstockpaid + ls_1011-currentstocksemi
                                 + ls_1011-currentstockfin. "在庫金額（当期末）-合計
       "在庫増減金額
-      ls_1011-stockchangeamount = ls_1010-previousstockamount - ls_1011-currentstocktotal.
+      ls_1011-stockchangeamount = <lfs_member>-previousstockamount - ls_1011-currentstocktotal.
       "払いだし材料費
       ls_1011-paidmaterialcost = ls_1011-stockchangeamount + ls_1011-chargeableamount.
       "該当得意先の総売上高
-      ls_1011-customerrevenue = ls_1010-customerrevenue.
+      ls_1011-customerrevenue = <lfs_member>-customerrevenue.
       "会社レベルの総売上高
-      ls_1011-revenue = ls_1010-revenue.
+      ls_1011-revenue = <lfs_member>-revenue.
       "総売上金額占有率
       IF ls_1011-revenue <> 0.
         ls_1011-revenuerate = ls_1011-customerrevenue / ls_1011-revenue.
       ENDIF.
 
+      ls_1011-companycode = <lfs_member>-companycode.
+      ls_1011-fiscalyear = <lfs_member>-fiscalyear.
+      ls_1011-period = <lfs_member>-period.
+      ls_1011-customer = <lfs_member>-customer.
+      ls_1011-supplier = <lfs_member>-supplier.
+      ls_1011-profitcenter = <lfs_member>-profitcenter.
+      ls_1011-purchasinggroup = <lfs_member>-purchasinggroup.
+      ls_1011-customername = <lfs_member>-customername.
+      ls_1011-suppliername  = <lfs_member>-suppliername.
+      ls_1011-profitcentername = <lfs_member>-profitcentername.
       APPEND ls_1011 TO lt_1011.
       CLEAR: ls_1011, lv_chargeable, lv_currentstockamt,
              lv_semi, lv_fin.

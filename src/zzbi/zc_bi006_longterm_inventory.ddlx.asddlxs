@@ -73,4 +73,9 @@ annotate entity ZC_BI006_LONGTERM_INVENTORY with
   @UI.hidden: true
   Currency;
 
+  @UI.hidden: true
+  ValuationArea;
+  
+  @UI.hidden: true
+  FiscalPeriod;
 }

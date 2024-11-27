@@ -38,14 +38,19 @@ define root view entity ZC_BI006_LONGTERM_INVENTORY
       @ObjectModel.text.element: [ 'CustomerName' ]
       Customer,
       CustomerName,
-
+      
+      ValuationArea,
       @Semantics.amount.currencyCode: 'Currency'
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_BI006_ACTUAL_PRICE'
       @EndUserText.label: '実際原価'
       ActualPrice,
 
       @Semantics.amount.currencyCode: 'Currency'
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_BI006_ACTUAL_PRICE'
       @EndUserText.label: '長期滞留在庫金額'
       InventoryAmount,
+      
+      FiscalPeriod,
       Currency,
       Qty
 }

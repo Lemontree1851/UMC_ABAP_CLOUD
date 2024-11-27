@@ -13,8 +13,10 @@ define root view entity ZR_SALESORDER_U
   key basic.SalesDocument,
   key basic.SalesDocumentItem,
       basic.SalesOrganization,
+      basic.SalesOffice,
       basic.SalesGroup,
       basic.SalesDocumentType,
+      basic.YY1_SalesDocType_SDH, //受注伝票タイプ（Old）
       basic.CreationDate,
       basic.ShippingPoint,
       basic.ShippingPointName,
@@ -49,16 +51,21 @@ define root view entity ZR_SALESORDER_U
       //本次交货数量（手动输入
       @Semantics.quantity.unitOfMeasure: 'OrderQuantityUnit'
       cast(0 as menge_d)             as CurrDeliveryQty,
+      @Consumption.valueHelpDefinition: [{  entity:{ name: 'I_StorageLocationStdVH', element: 'StorageLocation' },
+                                            additionalBinding: [{ localElement: 'Plant', element: 'Plant', usage: #FILTER }] }]
       SalesStorLoc.StorageLocation   as CurrStorageLocation,
+      @Consumption.valueHelpDefinition: [{  entity:{ name: 'I_ShippingTypeText', element: 'ShippingType' },
+                                            additionalBinding: [{ localElement: 'Language', element: 'Language', usage: #FILTER }] }]
       cast( '' as abap.char(2) )     as CurrShippingType,
       cast( '00000000' as datum )    as CurrPlannedGoodsIssueDate,
       cast( '00000000' as datum )    as CurrDeliveryDate,
       // 生成的dn 可跳转至VL03N
       cast('' as vbeln_vl)           as DeliveryDocument,
       cast('' as posnr )             as DeliveryDocumentItem,
-      cast('' as msgty)              as Type,
+      cast('' as msgty )              as Type,
       cast('' as abap.char(10))      as Status,
       cast('' as abap.sstring(1000)) as Message,
+      $session.system_language as Language,
       _Text
 }
 // where 删除 确认数量为0的数据

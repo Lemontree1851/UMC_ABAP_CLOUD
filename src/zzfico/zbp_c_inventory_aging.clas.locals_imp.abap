@@ -23,23 +23,25 @@ CLASS lhc_inventoryaging DEFINITION INHERITING FROM cl_abap_behavior_handler.
         amountincompanycodecurrency TYPE i_inventoryamtbyfsclperd-amountincompanycodecurrency,
       END OF ty_inventoryamtbyfsclperd,
 
+      BEGIN OF ty_materialdocumentitem,
+        materialdocumentyear      TYPE i_materialdocumentitem_2-materialdocumentyear,
+        materialdocument          TYPE i_materialdocumentitem_2-materialdocument,
+        materialdocumentitem      TYPE i_materialdocumentitem_2-materialdocumentitem,
+        goodsmovementtype         TYPE i_materialdocumentitem_2-goodsmovementtype,
+        inventoryspecialstocktype TYPE i_materialdocumentitem_2-inventoryspecialstocktype,
+        plant                     TYPE i_materialdocumentitem_2-plant,
+        material                  TYPE i_materialdocumentitem_2-material,
+        isautomaticallycreated    TYPE i_materialdocumentitem_2-isautomaticallycreated,
+        debitcreditcode           TYPE i_materialdocumentitem_2-debitcreditcode,
+        quantityinbaseunit        TYPE i_materialdocumentitem_2-quantityinbaseunit,
+      END OF ty_materialdocumentitem,
+
       BEGIN OF ty_goosmovment,
         plant    TYPE i_materialdocumentitem_2-plant,
         material TYPE i_materialdocumentitem_2-material,
         receipt  TYPE i_materialdocumentitem_2-quantityinbaseunit,
         issue    TYPE i_materialdocumentitem_2-quantityinbaseunit,
       END OF ty_goosmovment,
-
-      BEGIN OF ty_materialdocumentitem_309,
-        materialdocumentyear   TYPE i_materialdocumentitem_2-materialdocumentyear,
-        materialdocument       TYPE i_materialdocumentitem_2-materialdocument,
-        materialdocumentitem   TYPE i_materialdocumentitem_2-materialdocumentitem,
-        plant                  TYPE i_materialdocumentitem_2-plant,
-        material               TYPE i_materialdocumentitem_2-material,
-        isautomaticallycreated TYPE i_materialdocumentitem_2-isautomaticallycreated,
-        debitcreditcode        TYPE i_materialdocumentitem_2-debitcreditcode,
-        quantityinbaseunit     TYPE i_materialdocumentitem_2-quantityinbaseunit,
-      END OF ty_materialdocumentitem_309,
 
       BEGIN OF ty_ztfi_1004,
         plant    TYPE ztfi_1004-plant,
@@ -121,18 +123,23 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
     DATA:
       lt_inventoryamtbyfsclperd      TYPE STANDARD TABLE OF ty_inventoryamtbyfsclperd,
       lt_inventoryamtbyfsclperd_sum  TYPE STANDARD TABLE OF ty_inventoryamtbyfsclperd,
+      lt_materialdocumentitem        TYPE STANDARD TABLE OF ty_materialdocumentitem,
+      lt_materialdocumentitem_issue  TYPE STANDARD TABLE OF ty_materialdocumentitem,
       lt_goosmovment                 TYPE STANDARD TABLE OF ty_goosmovment,
-      lt_materialdocumentitem_309    TYPE STANDARD TABLE OF ty_materialdocumentitem_309,
-      lt_materialdocumentitem_309tmp TYPE STANDARD TABLE OF ty_materialdocumentitem_309,
+      lt_materialdocumentitem_309    TYPE STANDARD TABLE OF ty_materialdocumentitem,
+      lt_materialdocumentitem_309tmp TYPE STANDARD TABLE OF ty_materialdocumentitem,
       lt_ztbc_1001                   TYPE STANDARD TABLE OF ty_ztbc_1001,
       lt_ztfi_1004                   TYPE STANDARD TABLE OF ty_ztfi_1004,
+      lt_ztfi_1004_last              TYPE STANDARD TABLE OF ty_ztfi_1004,
       lt_ztfi_1019                   TYPE STANDARD TABLE OF ty_ztfi_1019,
+      lt_ztfi_1019_last              TYPE STANDARD TABLE OF ty_ztfi_1019,
       lt_ztfi_1019_tmp               TYPE STANDARD TABLE OF ty_ztfi_1019,
       lt_ztfi_1019_cal               TYPE STANDARD TABLE OF ty_ztfi_1019,
       lt_ztfi_1019_cal_tmp           TYPE STANDARD TABLE OF ty_ztfi_1019,
       lt_ztfi_1019_db                TYPE STANDARD TABLE OF ztfi_1019,
       lr_mvtype                      TYPE RANGE OF bwart,
-      ls_materialdocumentitem_309tmp TYPE ty_materialdocumentitem_309,
+      ls_materialdocumentitem_309tmp TYPE ty_materialdocumentitem,
+      ls_ztfi_1014                   TYPE ty_ztfi_1004,
       ls_ztfi_1019_cal               TYPE ty_ztfi_1019,
       ls_ztfi_1019_db                TYPE ztfi_1019,
       ls_goosmovment                 TYPE ty_goosmovment,
@@ -345,6 +352,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
                  inventoryspecialstocktype,
                  plant,
                  material,
+                 isautomaticallycreated,
                  debitcreditcode,
                  quantityinbaseunit
             FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
@@ -354,7 +362,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
              AND material = @lt_productplantbasic-product
              AND postingdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
              AND goodsmovementtype IN @lr_mvtype
-            INTO TABLE @DATA(lt_materialdocumentitem).
+            INTO TABLE @lt_materialdocumentitem.
         ENDIF.
 
         LOOP AT lt_materialdocumentitem INTO DATA(ls_materialdocumentitem).
@@ -385,6 +393,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
             ELSE.
               ls_goosmovment-issue = - ls_materialdocumentitem-quantityinbaseunit.
             ENDIF.
+
+            APPEND ls_materialdocumentitem TO lt_materialdocumentitem_issue.
           ENDIF.
 
           COLLECT ls_goosmovment INTO lt_goosmovment.
@@ -429,23 +439,45 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         ENDLOOP.
 
         lt_ztfi_1019 = lt_ztfi_1019_tmp.
-        DATA(lt_ztfi_1019_309) = lt_ztfi_1019.
+*        DATA(lt_ztfi_1019_309) = lt_ztfi_1019.
 
         "Obtain data of material document item
-        SELECT materialdocumentyear,
-               materialdocument,
-               materialdocumentitem,
-               plant,
-               material,
-               isautomaticallycreated,
-               debitcreditcode,
-               quantityinbaseunit
-          FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
+*        SELECT materialdocumentyear,
+*               materialdocument,
+*               materialdocumentitem,
+*               plant,
+*               material,
+*               isautomaticallycreated,
+*               debitcreditcode,
+*               quantityinbaseunit
+*          FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
+*           FOR ALL ENTRIES IN @lt_productplantbasic
+*         WHERE companycode = @lt_productplantbasic-companycode
+*           AND plant = @lt_productplantbasic-valuationarea
+*           AND goodsmovementtype IN (@lc_goodsmovementtype_309,@lc_goodsmovementtype_310)
+*           AND postingdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
+*          INTO TABLE @lt_materialdocumentitem_309.
+
+        SELECT a~materialdocumentyear,
+               a~materialdocument,
+               a~materialdocumentitem,
+               a~goodsmovementtype,
+               a~inventoryspecialstocktype,
+               a~plant,
+               a~material,
+               a~isautomaticallycreated,
+               a~debitcreditcode,
+               a~quantityinbaseunit
+          FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS AS a
            FOR ALL ENTRIES IN @lt_productplantbasic
-         WHERE companycode = @lt_productplantbasic-companycode
-           AND plant = @lt_productplantbasic-valuationarea
-           AND goodsmovementtype IN (@lc_goodsmovementtype_309,@lc_goodsmovementtype_310)
-           AND postingdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
+         WHERE a~companycode = @lt_productplantbasic-companycode
+           AND a~plant = @lt_productplantbasic-valuationarea
+           AND a~goodsmovementtype = @lc_goodsmovementtype_309
+           AND a~postingdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
+           AND NOT EXISTS ( SELECT materialdocument FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
+                             WHERE reversedmaterialdocumentyear = a~materialdocumentyear
+                               AND reversedmaterialdocument = a~materialdocument
+                               AND reversedmaterialdocumentitem = a~materialdocumentitem )
           INTO TABLE @lt_materialdocumentitem_309.
 
         LOOP AT lt_materialdocumentitem_309 INTO DATA(ls_materialdocumentitem_309).
@@ -466,6 +498,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
             ELSE.
               ls_goosmovment-issue = - ls_materialdocumentitem_309-quantityinbaseunit.
             ENDIF.
+
+            APPEND ls_materialdocumentitem_309 TO lt_materialdocumentitem_issue.
           ENDIF.
 
           COLLECT ls_goosmovment INTO lt_goosmovment.
@@ -606,8 +640,90 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         ENDIF.
       ENDLOOP.
 
+      "获取309物料（isautomaticallycreated为空）
+      DATA(lt_matdocitem_309_from) = lt_materialdocumentitem_309.
+      DELETE lt_matdocitem_309_from WHERE isautomaticallycreated = abap_true.
+
+      IF lt_matdocitem_309_from IS NOT INITIAL.
+        CLEAR lt_ztfi_1004_tmp.
+
+        "获取309物料（isautomaticallycreated为空）的期初库龄（上个期间）
+        SELECT plant,
+               material,
+               age,
+               qty
+          FROM ztfi_1004
+           FOR ALL ENTRIES IN @lt_matdocitem_309_from
+         WHERE plant = @lt_matdocitem_309_from-plant
+           AND material = @lt_matdocitem_309_from-material
+           AND calendaryear = @lv_fiscalyear_last
+           AND calendarmonth = @lv_fiscalperiod_last
+          INTO TABLE @lt_ztfi_1004_tmp.
+
+        "期初库龄初始化
+        LOOP AT lt_ztfi_1004_tmp INTO ls_ztfi_1004_tmp.
+          ls_ztfi_1014-plant    = ls_ztfi_1004_tmp-plant.
+          ls_ztfi_1014-material = ls_ztfi_1004_tmp-material.
+          ls_ztfi_1014-qty      = ls_ztfi_1004_tmp-qty.
+
+          lv_age = ls_ztfi_1004_tmp-age.
+          lv_age = lv_age + 1.
+
+          ls_ztfi_1014-age = lv_age.
+          CONDENSE ls_ztfi_1014-age.
+
+          IF lv_age > lc_maxage_36.
+            ls_ztfi_1014-age = lc_maxage_36.
+          ENDIF.
+
+          COLLECT ls_ztfi_1014 INTO lt_ztfi_1004_last.
+          CLEAR ls_ztfi_1014.
+        ENDLOOP.
+
+        CLEAR lt_ztfi_1019_tmp.
+
+        "获取309物料（isautomaticallycreated为空）的期初库龄（上个期间）
+        SELECT plant,
+               product,
+               age,
+               qty
+          FROM ztfi_1019
+           FOR ALL ENTRIES IN @lt_matdocitem_309_from
+         WHERE plant = @lt_matdocitem_309_from-plant
+           AND product = @lt_matdocitem_309_from-material
+           AND fiscalyear = @lv_fiscalyear_last
+           AND fiscalperiod = @lv_fiscalperiod_last
+          INTO TABLE @lt_ztfi_1019_tmp.
+
+        LOOP AT lt_ztfi_1019_tmp INTO ls_ztfi_1019.
+          lv_age = ls_ztfi_1019-age.
+          lv_age = lv_age + 1.
+
+          ls_ztfi_1019-age = lv_age.
+          CONDENSE ls_ztfi_1019-age.
+
+          IF lv_age > lc_maxage_36.
+            ls_ztfi_1019-age = lc_maxage_36.
+          ENDIF.
+
+          COLLECT ls_ztfi_1019 INTO lt_ztfi_1019_last.
+        ENDLOOP.
+      ENDIF.
+
+      SORT lt_materialdocumentitem_309 by plant material.
+      SORT lt_materialdocumentitem_issue BY plant material materialdocument materialdocumentitem.
+
+      "获取309物料（isautomaticallycreated为空）的出库记录
+*    LOOP AT
+
+
+
+
+
+
+
       SORT lt_materialdocumentitem_309tmp BY plant material.
-      SORT lt_ztfi_1019_309 BY plant product age DESCENDING.
+*      SORT lt_ztfi_1019_309 BY plant product age DESCENDING.
 
       "309
 *      LOOP AT lt_materialdocumentitem_309tmp INTO ls_materialdocumentitem_309tmp.

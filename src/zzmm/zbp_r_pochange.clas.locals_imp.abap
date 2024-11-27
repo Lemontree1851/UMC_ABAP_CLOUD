@@ -49,6 +49,14 @@ CLASS lhc_pochange DEFINITION INHERITING FROM cl_abap_behavior_handler.
         _schedulel_line_delivery_date TYPE datum,
       END OF ts_schedule,
 
+      BEGIN OF ts_itemnotes,
+        _purchase_order      TYPE ebeln,
+        _purchase_order_item TYPE c LENGTH 5,
+        _text_object_type    TYPE c LENGTH 4,
+        _language            TYPE c LENGTH 2,
+        _plain_long_text     TYPE string,
+      END OF ts_itemnotes,
+
       BEGIN OF ts_error,
         code    TYPE string,
         message TYPE string,
@@ -196,7 +204,10 @@ CLASS lhc_pochange IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-
+    SELECT SINGLE LanguageISOCode
+      FROM I_Language
+     WHERE Language = @sy-langu
+      INTO @DATA(lv_langu).
 ** Change Process
 *    LOOP AT ct_data INTO ls_data.
 ** Check if delete firstly
@@ -667,11 +678,12 @@ CLASS lhc_pochange IMPLEMENTATION.
 
 * API
     DATA:
-      ls_order    TYPE ts_order,
-      ls_item     TYPE ts_item,
-      ls_account  TYPE ts_account,
-      ls_schedule TYPE ts_schedule,
-      ls_res_api  TYPE ts_res_api.
+      ls_order     TYPE ts_order,
+      ls_item      TYPE ts_item,
+      ls_account   TYPE ts_account,
+      ls_schedule  TYPE ts_schedule,
+      ls_itemnotes TYPE ts_itemnotes,
+      ls_res_api   TYPE ts_res_api.
 
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<ls_data>).
       lv_po = |{ <ls_data>-purchaseorder ALPHA = IN }|.
@@ -683,10 +695,10 @@ CLASS lhc_pochange IMPLEMENTATION.
                                            IMPORTING ev_status_code = DATA(lv_status_code)
                                                      ev_response    = DATA(lv_response) ).
         IF lv_status_code = 204.
-          <ls_data>-Status = 'S'.
+          <ls_data>-status = 'S'.
           MESSAGE s013(zmm_001) WITH <ls_data>-purchaseorder INTO <ls_data>-message.
         ELSE.
-          <ls_data>-Status = 'E'.
+          <ls_data>-status = 'E'.
           /ui2/cl_json=>deserialize(
                             EXPORTING json = lv_response
                             CHANGING data = ls_res_api ).
@@ -708,30 +720,46 @@ CLASS lhc_pochange IMPLEMENTATION.
         ls_order-_purchasing_group = <ls_data>-purchasinggroup.
       ENDIF.
       IF ls_order IS NOT INITIAL.
+        DATA(lv_reqbody_api) = /ui2/cl_json=>serialize( data = ls_order
+                                                    compress = 'X'
+                                                    pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+        REPLACE ALL OCCURRENCES OF lc_null IN lv_reqbody_api WITH space.
+        zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = |/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrder/{ lv_po }|
+                                                     iv_method      = if_web_http_client=>patch
+                                                     iv_body        = lv_reqbody_api
+                                           IMPORTING ev_status_code = lv_status_code
+                                                     ev_response    = lv_response ).
+
+        IF lv_status_code = 200.
+          lv_status = 'S'.
+        ELSE.
+          lv_status = 'E'.
+          /ui2/cl_json=>deserialize(
+                            EXPORTING json = lv_response
+                            CHANGING data = ls_res_api ).
+          lv_msg = ls_res_api-error-message.
+          lv_message = zzcl_common_utils=>merge_message(
+                           iv_message1 = lv_msg
+                           iv_message2 = lv_message
+                           iv_symbol = '\' ).
+        ENDIF.
 
       ENDIF.
+
 * --PO Item
 
       "AccountAssignment
       IF <ls_data>-accountassignmentcategory IS NOT INITIAL.
-        IF <ls_data>-accountassignmentcategory = lc_null.
-          ls_item-_account_assignment_category = ` `.
-        ELSE.
-          ls_item-_account_assignment_category = <ls_data>-accountassignmentcategory.
-        ENDIF.
+        ls_item-_account_assignment_category = <ls_data>-accountassignmentcategory.
       ENDIF.
       "Item Category
       IF <ls_data>-purchaseorderitemcategory IS NOT INITIAL.
-        IF <ls_data>-purchaseorderitemcategory = lc_null.
-          ls_item-_purchase_order_item_category = ` `.
-        ELSE.
-          ls_item-_purchase_order_item_category = <ls_data>-purchaseorderitemcategory.
-        ENDIF.
+        ls_item-_purchase_order_item_category = <ls_data>-purchaseorderitemcategory.
       ENDIF.
       "Material
       IF <ls_data>-material IS NOT INITIAL.
         IF <ls_data>-material = lc_null.
-          ls_item-_material = ` `.
+          ls_item-_material = lc_null.
         ELSE.
           ls_item-_material = zzcl_common_utils=>conversion_matn1(
                                                   EXPORTING iv_alpha = 'IN'
@@ -740,19 +768,11 @@ CLASS lhc_pochange IMPLEMENTATION.
       ENDIF.
       "Short text
       IF <ls_data>-purchaseorderitemtext IS NOT INITIAL.
-        IF <ls_data>-purchaseorderitemtext = lc_null.
-          ls_item-_purchase_order_item_text = ` `.
-        ELSE.
-          ls_item-_purchase_order_item_text = <ls_data>-purchaseorderitemtext.
-        ENDIF.
+        ls_item-_purchase_order_item_text = <ls_data>-purchaseorderitemtext.
       ENDIF.
       "Material Group
       IF <ls_data>-materialgroup IS NOT INITIAL.
-        IF <ls_data>-materialgroup = lc_null.
-          ls_item-_material_group = ` `.
-        ELSE.
-          ls_item-_material_group = <ls_data>-materialgroup.
-        ENDIF.
+        ls_item-_material_group = <ls_data>-materialgroup.
       ENDIF.
       "Order Qty
       IF <ls_data>-orderquantity IS NOT INITIAL.
@@ -780,19 +800,11 @@ CLASS lhc_pochange IMPLEMENTATION.
       ENDIF.
       "Requisitioner Name
       IF <ls_data>-requisitionername IS NOT INITIAL.
-        IF <ls_data>-requisitionername = lc_null.
-          ls_item-_requisitioner_name = ` `.
-        ELSE.
-          ls_item-_requisitioner_name = <ls_data>-requisitionername.
-        ENDIF.
+        ls_item-_requisitioner_name = <ls_data>-requisitionername.
       ENDIF.
       "Requirement Tracking
       IF <ls_data>-requirementtracking IS NOT INITIAL.
-        IF <ls_data>-requirementtracking = lc_null.
-          ls_item-_requirement_tracking = ` `.
-        ELSE.
-          ls_item-_requirement_tracking = <ls_data>-requirementtracking.
-        ENDIF.
+        ls_item-_requirement_tracking = <ls_data>-requirementtracking.
       ENDIF.
       "IS Return Item
       IF <ls_data>-isreturnitem IS NOT INITIAL.
@@ -804,27 +816,15 @@ CLASS lhc_pochange IMPLEMENTATION.
       ENDIF.
       "EAN
       IF <ls_data>-internationalarticlenumber IS NOT INITIAL.
-        IF <ls_data>-internationalarticlenumber = lc_null.
-          ls_item-_international_article_number = ` `.
-        ELSE.
           ls_item-_international_article_number = <ls_data>-internationalarticlenumber.
-        ENDIF.
       ENDIF.
       "DiscountInKindEligibility
       IF <ls_data>-discountinkindeligibility IS NOT INITIAL.
-        IF <ls_data>-discountinkindeligibility = lc_null.
-          ls_item-_discount_in_kind_eligibility = ` `.
-        ELSE.
-          ls_item-_discount_in_kind_eligibility = <ls_data>-discountinkindeligibility.
-        ENDIF.
+        ls_item-_discount_in_kind_eligibility = <ls_data>-discountinkindeligibility.
       ENDIF.
       "Tax Code
       IF <ls_data>-taxcode IS NOT INITIAL.
-        IF <ls_data>-taxcode = lc_null.
-          ls_item-_tax_code = ` `.
-        ELSE.
-          ls_item-_tax_code = <ls_data>-taxcode.
-        ENDIF.
+        ls_item-_tax_code = <ls_data>-taxcode.
       ENDIF.
       "Is Completely Delivered
       IF <ls_data>-iscompletelydelivered IS NOT INITIAL.
@@ -836,41 +836,238 @@ CLASS lhc_pochange IMPLEMENTATION.
       ENDIF.
       "Pricing Date Control
       IF <ls_data>-pricingdatecontrol IS NOT INITIAL.
-        IF <ls_data>-pricingdatecontrol = lc_null.
-          ls_item-_pricing_date_control = ` `.
-        ELSE.
-          ls_item-_pricing_date_control = <ls_data>-pricingdatecontrol.
-        ENDIF.
+        ls_item-_pricing_date_control = <ls_data>-pricingdatecontrol.
       ENDIF.
       "PurgDocPriceDate
       IF <ls_data>-purgdocpricedate IS NOT INITIAL.
-        IF <ls_data>-purgdocpricedate = lc_null.
-          ls_item-_purg_doc_price_date = ` `.
-        ELSE.
-          ls_item-_purg_doc_price_date = <ls_data>-purgdocpricedate.
-        ENDIF.
+        ls_item-_purg_doc_price_date = <ls_data>-purgdocpricedate.
       ENDIF.
-
+* Call item api
       IF ls_item IS NOT INITIAL.
+        lv_reqbody_api = /ui2/cl_json=>serialize( data = ls_item
+                                                  compress = 'X'
+                                                  pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+        REPLACE ALL OCCURRENCES OF lc_null IN lv_reqbody_api WITH space.
         zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = |/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrderItem/{ lv_po }/{ lv_item }|
                                                      iv_method      = if_web_http_client=>patch
+                                                     iv_body        = lv_reqbody_api
                                            IMPORTING ev_status_code = lv_status_code
                                                      ev_response    = lv_response ).
 
-        IF lv_status_code = 204.
-          <ls_data>-Status = 'S'.
-          MESSAGE s013(zmm_001) WITH <ls_data>-purchaseorder INTO <ls_data>-message.
+        IF lv_status_code = 200.
+          lv_status = 'S'.
         ELSE.
-          <ls_data>-Status = 'E'.
+          lv_status = 'E'.
           /ui2/cl_json=>deserialize(
                             EXPORTING json = lv_response
                             CHANGING data = ls_res_api ).
-          <ls_data>-message = ls_res_api-error-message.
+          lv_msg = ls_res_api-error-message.
+          lv_message = zzcl_common_utils=>merge_message(
+                           iv_message1 = lv_msg
+                           iv_message2 = lv_message
+                           iv_symbol = '\' ).
         ENDIF.
-
       ENDIF.
 
+* --PO Item Account Assignment
+      "GL Account
+      IF <ls_data>-glaccount IS NOT INITIAL.
+        ls_account-_g_l_account = <ls_data>-glaccount.
+      ENDIF.
+      "Cost Center
+      IF <ls_data>-costcenter IS NOT INITIAL.
+        ls_account-_cost_center = <ls_data>-costcenter.
+      ENDIF.
+      "Master Fixed Asset
+      IF <ls_data>-masterfixedasset IS NOT INITIAL.
+        IF <ls_data>-masterfixedasset = lc_null.
+          ls_account-_master_fixed_asset = lc_null.
+        ELSE.
+          ls_account-_master_fixed_asset = |{ <ls_data>-masterfixedasset ALPHA = IN }|.
+        ENDIF.
+      ENDIF.
+      "Fixed Asset
+      IF <ls_data>-fixedasset IS NOT INITIAL.
+        IF <ls_data>-fixedasset = lc_null.
+          ls_account-_fixed_asset = lc_null.
+        ELSE.
+          ls_account-_fixed_asset = |{ <ls_data>-fixedasset ALPHA = IN }|.
+        ENDIF.
+      ENDIF.
+      "Order ID
+      IF <ls_data>-orderid IS NOT INITIAL.
+        IF <ls_data>-orderid = lc_null.
+          ls_account-_order_i_d = lc_null.
+        ELSE.
+          ls_account-_order_i_d = |{ <ls_data>-orderid ALPHA = IN }|.
+        ENDIF.
+      ENDIF.
+      "WBS Element ExternalID
+      IF <ls_data>-wbselementinternalid_2 IS NOT INITIAL.
+        ls_account-_w_b_s_element_external_i_d = <ls_data>-wbselementinternalid_2.
+      ENDIF.
+* account assignment api
+      IF ls_account IS NOT INITIAL.
+        lv_reqbody_api = /ui2/cl_json=>serialize( data = ls_account
+                                                         compress = 'X'
+                                                         pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+        REPLACE ALL OCCURRENCES OF lc_null IN lv_reqbody_api WITH space.
+        zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = |/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrderAccountAssignment/{ lv_po }/{ lv_item }/1|
+                                                     iv_method      = if_web_http_client=>patch
+                                                     iv_body        = lv_reqbody_api
+                                           IMPORTING ev_status_code = lv_status_code
+                                                     ev_response    = lv_response ).
 
+        IF lv_status_code = 200.
+          lv_status = 'S'.
+        ELSE.
+          lv_status = 'E'.
+          /ui2/cl_json=>deserialize(
+                            EXPORTING json = lv_response
+                            CHANGING data = ls_res_api ).
+          lv_msg = ls_res_api-error-message.
+          lv_message = zzcl_common_utils=>merge_message(
+                           iv_message1 = lv_msg
+                           iv_message2 = lv_message
+                           iv_symbol = '\' ).
+        ENDIF.
+      ENDIF.
+
+* --PO Item schedule line
+      IF <ls_data>-schedulelinedeliverydate IS NOT INITIAL.
+        ls_schedule-_schedulel_line_delivery_date = <ls_data>-schedulelinedeliverydate.
+      ENDIF.
+
+      IF ls_schedule IS NOT INITIAL.
+        lv_reqbody_api = /ui2/cl_json=>serialize( data = ls_account
+                                                           compress = 'X'
+                                                           pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+        REPLACE ALL OCCURRENCES OF lc_null IN lv_reqbody_api WITH space.
+        zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = |/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrderScheduleLine/{ lv_po }/{ lv_item }/1|
+                                                     iv_method      = if_web_http_client=>patch
+                                                     iv_body        = lv_reqbody_api
+                                           IMPORTING ev_status_code = lv_status_code
+                                                     ev_response    = lv_response ).
+
+        IF lv_status_code = 200.
+          lv_status = 'S'.
+        ELSE.
+          lv_status = 'E'.
+          /ui2/cl_json=>deserialize(
+                            EXPORTING json = lv_response
+                            CHANGING data = ls_res_api ).
+          lv_msg = ls_res_api-error-message.
+          lv_message = zzcl_common_utils=>merge_message(
+                           iv_message1 = lv_msg
+                           iv_message2 = lv_message
+                           iv_symbol = '\' ).
+        ENDIF.
+      ENDIF.
+
+* --PO Item long text
+      IF <ls_data>-longtext IS NOT INITIAL.
+        SELECT COUNT(*)
+          FROM i_purchaseorderitemnotetp_2
+         WHERE purchaseorder = @lv_po
+           AND purchaseorderitem = @<ls_data>-purchaseorderitem
+           AND textobjecttype = 'F01'
+           AND language = @sy-langu.
+        IF sy-subrc <> 0.
+          ls_itemnotes-_purchase_order = lv_po.
+          ls_itemnotes-_purchase_order_item = <ls_data>-purchaseorderitem.
+          ls_itemnotes-_text_object_type = 'F01'.
+          ls_itemnotes-_language = lv_langu.
+          ls_itemnotes-_plain_long_text = <ls_data>-longtext.
+          lv_reqbody_api = /ui2/cl_json=>serialize( data = ls_itemnotes
+                                                           compress = 'X'
+                                                           pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = |/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrderItem/{ lv_po }/{ lv_item }/_PurchaseOrderItemNote|
+                                                       iv_method      = if_web_http_client=>post
+                                                       iv_body        = lv_reqbody_api
+                                             IMPORTING ev_status_code = lv_status_code
+                                                       ev_response    = lv_response ).
+
+          IF lv_status_code = 201.
+            lv_status = 'S'.
+          ELSE.
+            lv_status = 'E'.
+            /ui2/cl_json=>deserialize(
+                              EXPORTING json = lv_response
+                              CHANGING data = ls_res_api ).
+            lv_msg = ls_res_api-error-message.
+            lv_message = zzcl_common_utils=>merge_message(
+                             iv_message1 = lv_msg
+                             iv_message2 = lv_message
+                             iv_symbol = '\' ).
+          ENDIF.
+
+        ELSE.
+
+          ls_itemnotes-_purchase_order = lv_po.
+          ls_itemnotes-_purchase_order_item = <ls_data>-purchaseorderitem.
+          ls_itemnotes-_text_object_type = 'F01'.
+          ls_itemnotes-_language = lv_langu.
+          ls_itemnotes-_plain_long_text = '#'.
+          lv_reqbody_api = /ui2/cl_json=>serialize( data = ls_itemnotes
+                                                           compress = 'X'
+                                                           pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = |/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrderItem/{ lv_po }/{ lv_item }/_PurchaseOrderItemNote|
+                                                       iv_method      = if_web_http_client=>post
+                                                       iv_body        = lv_reqbody_api
+                                             IMPORTING ev_status_code = lv_status_code
+                                                       ev_response    = lv_response ).
+
+          IF lv_status_code = 201.
+            lv_status = 'S'.
+            ls_itemnotes-_purchase_order = lv_po.
+            ls_itemnotes-_purchase_order_item = <ls_data>-purchaseorderitem.
+            ls_itemnotes-_text_object_type = 'F01'.
+            ls_itemnotes-_language = lv_langu.
+            ls_itemnotes-_plain_long_text = <ls_data>-longtext.
+            lv_reqbody_api = /ui2/cl_json=>serialize( data = ls_itemnotes
+                                                             compress = 'X'
+                                                             pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+            zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = |/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrderItem/{ lv_po }/{ lv_item }/_PurchaseOrderItemNote|
+                                                         iv_method      = if_web_http_client=>post
+                                                         iv_body        = lv_reqbody_api
+                                               IMPORTING ev_status_code = lv_status_code
+                                                         ev_response    = lv_response ).
+
+            IF lv_status_code = 201.
+              lv_status = 'S'.
+            ELSE.
+              lv_status = 'E'.
+              /ui2/cl_json=>deserialize(
+                                EXPORTING json = lv_response
+                                CHANGING data = ls_res_api ).
+              lv_msg = ls_res_api-error-message.
+              lv_message = zzcl_common_utils=>merge_message(
+                               iv_message1 = lv_msg
+                               iv_message2 = lv_message
+                               iv_symbol = '\' ).
+            ENDIF.
+          ELSE.
+            lv_status = 'E'.
+            /ui2/cl_json=>deserialize(
+                              EXPORTING json = lv_response
+                              CHANGING data = ls_res_api ).
+            lv_msg = ls_res_api-error-message.
+            lv_message = zzcl_common_utils=>merge_message(
+                             iv_message1 = lv_msg
+                             iv_message2 = lv_message
+                             iv_symbol = '\' ).
+          ENDIF.
+        ENDIF.
+      ENDIF.
+
+      IF lv_status = 'S'.
+        <ls_data>-status = lv_status.
+        MESSAGE s013(zmm_001) WITH <ls_data>-purchaseorder INTO <ls_data>-message.
+      ELSE.
+        <ls_data>-status = lv_status.
+        <ls_data>-message = lv_message.
+      ENDIF.
+      CLEAR: ls_order, ls_item, ls_account, ls_schedule, ls_itemnotes.
     ENDLOOP.
 
   ENDMETHOD.

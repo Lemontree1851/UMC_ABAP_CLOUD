@@ -16,6 +16,7 @@ define view entity ZI_BI006_FIN_PROD_INVEN_REPORT
   key Product,
       FiscalYear,
       Period,
+      FiscalPeriod,
       cast('長滞在庫' as abap.char( 20 ) ) as Type,
       CompanyCodeName,
       PlantName,
@@ -26,12 +27,12 @@ define view entity ZI_BI006_FIN_PROD_INVEN_REPORT
       ProfitCenterName,
       Customer,
       CustomerName,
-
+      Currency,
+      ValuationArea,
       @Semantics.amount.currencyCode: 'Currency'
       ActualPrice,
 
       @Semantics.amount.currencyCode: 'Currency'
       InventoryAmount,
-      Currency,
       Qty
 }

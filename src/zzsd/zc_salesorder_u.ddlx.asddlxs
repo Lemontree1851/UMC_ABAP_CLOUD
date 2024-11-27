@@ -6,36 +6,48 @@
         title: { type: #STANDARD, label: 'Sales Info', value: 'SalesDocument' }
     }
 }
+@UI.presentationVariant:[{ requestAtLeast:['Language'] }]
 //前端使用freestyle 所以目前这里只设置filter
 annotate entity ZC_SALESORDER_U with
 {
-  @UI.selectionField: [{ position: 55 }]
-  SalesDocument;
+
   @Consumption.filter:{ mandatory: false }
   @UI.selectionField: [{ position: 5 }]
   SalesOrganization;
-  //交货类型
-  //交货类型描述
-  @UI.selectionField: [{ position: 15 }]
-  SoldToParty;
-  @UI.selectionField: [{ position: 20 }]
-  BillingToParty;
-  @UI.selectionField: [{ position: 35 }]
-  Material;
-  @UI.selectionField: [{ position: 40 }]
-  MaterialByCustomer;
   @Consumption.filter:{ mandatory: false }
   @UI.selectionField: [{ position: 10 }]
   Plant;
+  @UI.selectionField: [{ position: 15 }]
+  ShippingPoint;
+  @UI.selectionField: [{ position: 20 }]
+  SalesOffice;
   @UI.selectionField: [{ position: 25 }]
-  ShipToParty;
-  //库存地点
+  SalesGroup;
   @UI.selectionField: [{ position: 30 }]
-  SalesDocumentType;
+  @EndUserText.label: '得意先'
+  SoldToParty;
+  @UI.selectionField: [{ position: 35 }]
+  @EndUserText.label: '出荷先'
+  ShipToParty;
+  @UI.selectionField: [{ position: 40 }]
+  PurchaseOrderByCustomer;
   @UI.selectionField: [{ position: 45 }]
-  DeliveryDate;
+  @EndUserText.label: 'SAP品番'
+  Material;
   @UI.selectionField: [{ position: 50 }]
+  @EndUserText.label: '登録日（ヘッダー）'
   CreationDate;
-
+  @UI.selectionField: [{ position: 55 }]
+  RequestedDeliveryDate;
+  //计划出库日
+//  @UI.selectionField: [{ position: 60 }]
+//  GoodsIssueDate;
+  @UI.selectionField: [{ position: 65 }]
+  @EndUserText.label: '受注伝票タイプ（Old）'
+  YY1_SalesDocType_SDH;
+  @UI.selectionField: [{ position: 70 }]
+  SalesDocument;
+  @UI.hidden: true
+  Language;
 
 }

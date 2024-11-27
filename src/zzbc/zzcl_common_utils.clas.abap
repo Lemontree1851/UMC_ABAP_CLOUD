@@ -35,6 +35,40 @@ CLASS zzcl_common_utils DEFINITION
           END OF ts_dyn_name,
           tt_dyn_name TYPE STANDARD TABLE OF ts_dyn_name WITH EMPTY KEY.
 
+    TYPES:
+      "odata v2 api message structure
+      BEGIN OF ty_message,
+        lang  TYPE string,
+        value TYPE string,
+      END OF ty_message,
+      BEGIN OF ty_odata_error,
+        code    TYPE string,
+        message TYPE ty_message,
+      END OF ty_odata_error,
+      BEGIN OF ty_errordetails,
+        code    TYPE string,
+        message TYPE string,
+      END OF ty_errordetails,
+      BEGIN OF ty_innererror,
+        errordetails TYPE TABLE OF ty_errordetails WITH DEFAULT KEY,
+      END OF ty_innererror,
+      BEGIN OF ty_message_v2,
+        code       TYPE string,
+        message    TYPE ty_message,
+        innererror TYPE ty_innererror,
+      END OF ty_message_v2,
+      BEGIN OF ty_error_v2,
+        error TYPE ty_message_v2,
+      END OF ty_error_v2,
+      "odata v4 api message structure
+      BEGIN OF ty_message_v4,
+        code    TYPE string,
+        message TYPE string,
+        details TYPE TABLE OF ty_errordetails WITH DEFAULT KEY,
+      END OF ty_message_v4,
+      BEGIN OF ty_error_v4,
+        error TYPE ty_message_v4,
+      END OF ty_error_v4.
     CLASS-DATA: BEGIN OF date,
                   j(4),
                   m(2),
@@ -232,7 +266,13 @@ CLASS zzcl_common_utils DEFINITION
 
       is_workingday IMPORTING iv_plant             TYPE werks_d
                               iv_date              TYPE datum
-                    RETURNING VALUE(rv_workingday) TYPE abap_bool.
+                    RETURNING VALUE(rv_workingday) TYPE abap_bool,
+      parse_error_v4
+        IMPORTING iv_response       TYPE string
+        RETURNING VALUE(rv_message) TYPE string,
+      parse_error_v2
+        IMPORTING iv_response       TYPE string
+        RETURNING VALUE(rv_message) TYPE string.
 
   PROTECTED SECTION.
   PRIVATE SECTION.
@@ -1087,4 +1127,63 @@ CLASS zzcl_common_utils IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
 
+  METHOD parse_error_v4.
+    DATA ls_error TYPE ty_error_v4.
+    /ui2/cl_json=>deserialize( EXPORTING json = iv_response
+                               CHANGING  data = ls_error ).
+    IF ls_error-error-message IS NOT INITIAL.
+      IF ls_error-error-details IS NOT INITIAL.
+        LOOP AT ls_error-error-details INTO DATA(ls_detail).
+          "内表中的消息会有多个，可以排除code:/IWCOR/CX_OD_BAD_REQUEST/  CX_SXML_PARSE_ERROR 对用户判断错误起不到作用
+          IF ls_detail-code CS '/IWCOR/CX_OD_BAD_REQUEST' OR
+            ls_detail-code CS 'CX_SXML_PARSE_ERROR'.
+            CONTINUE.
+          ENDIF.
+          IF ls_detail-message IS NOT INITIAL.
+            rv_message = |{ rv_message }{ ls_detail-message };|.
+          ENDIF.
+        ENDLOOP.
+      ENDIF.
+      IF rv_message IS INITIAL.
+        rv_message = ls_error-error-message.
+      ENDIF.
+    ELSEIF ls_error-error-code IS NOT INITIAL.
+      SPLIT ls_error-error-code AT '/' INTO TABLE DATA(lt_msg).
+      IF lines( lt_msg ) = 2.
+        DATA(lv_msg_class) = lt_msg[ 1 ].
+        DATA(lv_msg_number) = lt_msg[ 2 ].
+        MESSAGE ID lv_msg_class TYPE 'S' NUMBER lv_msg_number INTO rv_message.
+      ENDIF.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD parse_error_v2.
+    data ls_error TYPE ty_error_v2.
+    /ui2/cl_json=>deserialize( EXPORTING json = iv_response
+                               CHANGING  data = ls_error ).
+    IF ls_error-error-message-value IS NOT INITIAL.
+      IF ls_error-error-innererror-errordetails IS NOT INITIAL.
+        LOOP AT ls_error-error-innererror-errordetails INTO DATA(ls_detail).
+          "内表中的消息会有多个，可以排除code:/IWCOR/CX_OD_BAD_REQUEST/  CX_SXML_PARSE_ERROR 对用户判断错误起不到作用
+          IF ls_detail-code CS '/IWCOR/CX_OD_BAD_REQUEST' OR
+            ls_detail-code CS 'CX_SXML_PARSE_ERROR'.
+            CONTINUE.
+          ENDIF.
+          IF ls_detail-message IS NOT INITIAL.
+            rv_message = |{ rv_message }{ ls_detail-message };|.
+          ENDIF.
+        ENDLOOP.
+      ENDIF.
+      IF rv_message IS INITIAL.
+        rv_message = ls_error-error-message-value.
+      ENDIF.
+    ELSEIF ls_error-error-code IS NOT INITIAL.
+      SPLIT ls_error-error-code AT '/' INTO TABLE DATA(lt_msg).
+      IF lines( lt_msg ) = 2.
+        DATA(lv_msg_class) = lt_msg[ 1 ].
+        DATA(lv_msg_number) = lt_msg[ 2 ].
+        MESSAGE ID lv_msg_class TYPE 'S' NUMBER lv_msg_number INTO rv_message.
+      ENDIF.
+    ENDIF.
+  ENDMETHOD.
 ENDCLASS.

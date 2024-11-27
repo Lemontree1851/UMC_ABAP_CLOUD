@@ -354,89 +354,89 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
       ENDTRY.
 
       lo_response->get_status( RECEIVING r_value = DATA(ls_http_status) ).
-*      IF ls_http_status-code = 200.
-      DATA(lv_string) = lo_response->get_text( ).
 
-*        /ui2/cl_json=>deserialize(
-*        EXPORTING json = lv_string
-*        pretty_name = /ui2/cl_json=>pretty_mode-camel_case
-*        CHANGING data = ls_response ).
+      IF ls_http_status-code = 200.
+        DATA(lv_string) = lo_response->get_text( ).
+        DATA(lv_xstr) = cl_abap_conv_codepage=>create_out( )->convert( source = lv_string ).
+        DATA(lo_xml_reader) = cl_sxml_string_reader=>create( lv_xstr ).
+        DATA:lv_string1 TYPE string,
+             lv_string2 TYPE string.
+        CLEAR lv_string2.
+        DO.
+          DATA(lo_xml_node) = lo_xml_reader->read_next_node( ).
+          IF lo_xml_node IS INITIAL.
+            EXIT.
+          ENDIF.
+
+          IF lo_xml_node->type = if_sxml_node=>co_nt_element_open.
+            DATA(lo_xml_open_element) = CAST if_sxml_open_element( lo_xml_node ).
+            DATA(lv_name) = lo_xml_open_element->qname-name.
+            lv_string1 = |{ lv_string1 },{ lv_name }|.
+          ENDIF.
+          IF  lv_name = 'AccountingDocument'
+          AND lo_xml_node->type = if_sxml_node=>co_nt_value.
+            lv_string1 = lo_xml_reader->value.
+          ENDIF.
+
+          IF  lv_name = 'Note'
+          AND lo_xml_node->type = if_sxml_node=>co_nt_value.
+            IF lv_string2 IS INITIAL.
+              lv_string2 = lo_xml_reader->value.
+            ELSE.
+              lv_string2 = lv_string2 && ' ' && lo_xml_reader->value.
+            ENDIF.
+          ENDIF.
+        ENDDO.
+
+        <lfs_item>-accountingdocument1 = lv_string1.
+
+        IF <lfs_item>-accountingdocument1 <> '0000000000'.
+
+          " 成功消息
+          lv_text = '処理が成功しました。'.
+          lv_error = ''.
 
 
-      DATA(lv_xstr) = cl_abap_conv_codepage=>create_out( )->convert( source = lv_string ).
-      DATA(lo_xml_reader) = cl_sxml_string_reader=>create( lv_xstr ).
-      DATA:lv_string1 TYPE string,
-           lv_string2 TYPE string.
-      CLEAR lv_string2.
-      DO.
-        DATA(lo_xml_node) = lo_xml_reader->read_next_node( ).
-        IF lo_xml_node IS INITIAL.
+          <lfs_item>-message = lv_text.
+
+*       仕訳が転記された後、アドオンテーブルに保存する
+          CLEAR ls_ztfi_1014.
+          ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
+          ls_ztfi_1014-companycode         = <lfs_item>-companycode.
+          ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
+          ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
+          ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
+          ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
+          ls_ztfi_1014-accountingdocument2 = ''.
+*        ls_ztfi_1014-message             = <lfs_item>-message.
+          MODIFY ztfi_1014 FROM @ls_ztfi_1014.
+        ELSE.
+          CLEAR <lfs_item>-accountingdocument1.
+          lv_string = lo_response->get_text( ).
+          lv_text = lv_string2.
+
+          lv_error = 'X'.
+          <lfs_item>-uuid1 = lv_uuid.
+          <lfs_item>-message = lv_text.
+
+*       仕訳が転記された後、アドオンテーブルに保存する
+          CLEAR ls_ztfi_1014.
+          ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
+          ls_ztfi_1014-companycode         = <lfs_item>-companycode.
+          ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
+          ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
+          ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
+          ls_ztfi_1014-accountingdocument1 = ''.
+          ls_ztfi_1014-accountingdocument2 = ''.
+          ls_ztfi_1014-message             = ''.
+          MODIFY ztfi_1014 FROM @ls_ztfi_1014.
           EXIT.
         ENDIF.
-
-        IF lo_xml_node->type = if_sxml_node=>co_nt_element_open.
-          DATA(lo_xml_open_element) = CAST if_sxml_open_element( lo_xml_node ).
-          DATA(lv_name) = lo_xml_open_element->qname-name.
-          lv_string1 = |{ lv_string1 },{ lv_name }|.
-        ENDIF.
-        IF  lv_name = 'AccountingDocument'
-        AND lo_xml_node->type = if_sxml_node=>co_nt_value.
-          lv_string1 = lo_xml_reader->value.
-        ENDIF.
-
-        IF  lv_name = 'Note'
-        AND lo_xml_node->type = if_sxml_node=>co_nt_value.
-          IF lv_string2 IS INITIAL.
-            lv_string2 = lo_xml_reader->value.
-          ELSE.
-            lv_string2 = lv_string2 && ' ' && lo_xml_reader->value.
-          ENDIF.
-        ENDIF.
-      ENDDO.
-
-      <lfs_item>-accountingdocument1 = lv_string1.
-
-      IF <lfs_item>-accountingdocument1 <> '0000000000'.
-
-        " 成功消息
-        lv_text = '処理が成功しました。'.
-        lv_error = ''.
-
-
-        <lfs_item>-message = lv_text.
-
-*       仕訳が転記された後、アドオンテーブルに保存する
-        CLEAR ls_ztfi_1014.
-        ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
-        ls_ztfi_1014-companycode         = <lfs_item>-companycode.
-        ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
-        ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
-        ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
-        ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
-        ls_ztfi_1014-accountingdocument2 = ''.
-*        ls_ztfi_1014-message             = <lfs_item>-message.
-        MODIFY ztfi_1014 FROM @ls_ztfi_1014.
       ELSE.
         CLEAR <lfs_item>-accountingdocument1.
-        lv_string = lo_response->get_text( ).
-        lv_text = lv_string2.
-
         lv_error = 'X'.
         <lfs_item>-uuid1 = lv_uuid.
-        <lfs_item>-message = lv_text.
-
-*       仕訳が転記された後、アドオンテーブルに保存する
-        CLEAR ls_ztfi_1014.
-        ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
-        ls_ztfi_1014-companycode         = <lfs_item>-companycode.
-        ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
-        ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
-        ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
-        ls_ztfi_1014-accountingdocument1 = ''.
-        ls_ztfi_1014-accountingdocument2 = ''.
-        ls_ztfi_1014-message             = ''.
-        MODIFY ztfi_1014 FROM @ls_ztfi_1014.
-        EXIT.
+        <lfs_item>-message = |{ ls_http_status-code } { ls_http_status-reason }|.
       ENDIF.
 
 * 仕訳2：決済対象会社仕訳
@@ -612,77 +612,87 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
 
         lo_response->get_status( RECEIVING r_value = ls_http_status ).
         lv_string = lo_response->get_text( ).
-        lv_xstr = cl_abap_conv_codepage=>create_out( )->convert( source = lv_string ).
-        lo_xml_reader = cl_sxml_string_reader=>create( lv_xstr ).
-        CLEAR lv_string2.
-        DO.
-          lo_xml_node = lo_xml_reader->read_next_node( ).
-          IF lo_xml_node IS INITIAL.
+
+        IF ls_http_status-code = 200.
+          lv_xstr = cl_abap_conv_codepage=>create_out( )->convert( source = lv_string ).
+          lo_xml_reader = cl_sxml_string_reader=>create( lv_xstr ).
+          CLEAR lv_string2.
+          DO.
+            lo_xml_node = lo_xml_reader->read_next_node( ).
+            IF lo_xml_node IS INITIAL.
+              EXIT.
+            ENDIF.
+
+            IF lo_xml_node->type = if_sxml_node=>co_nt_element_open.
+              lo_xml_open_element = CAST if_sxml_open_element( lo_xml_node ).
+              lv_name = lo_xml_open_element->qname-name.
+              lv_string1 = |{ lv_string1 },{ lv_name }|.
+            ENDIF.
+            IF  lv_name = 'AccountingDocument'
+            AND lo_xml_node->type = if_sxml_node=>co_nt_value.
+              lv_string1 = lo_xml_reader->value.
+            ENDIF.
+
+            IF  lv_name = 'Note'
+            AND lo_xml_node->type = if_sxml_node=>co_nt_value.
+              IF lv_string2 IS INITIAL.
+                lv_string2 = lo_xml_reader->value.
+              ELSE.
+                lv_string2 = lv_string2 && ' ' && lo_xml_reader->value.
+              ENDIF.
+            ENDIF.
+          ENDDO.
+
+          <lfs_item>-accountingdocument2 = lv_string1.
+          IF <lfs_item>-accountingdocument2 <> '0000000000'.
+
+            " 成功消息
+            lv_text = '処理が成功しました。'.
+            lv_error = ''.
+
+            <lfs_item>-message = lv_text.
+
+*       仕訳が転記された後、アドオンテーブルに保存する
+            CLEAR ls_ztfi_1014.
+            ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
+            ls_ztfi_1014-companycode         = <lfs_item>-companycode.
+            ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
+            ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
+            ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
+            ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
+            ls_ztfi_1014-accountingdocument2 = <lfs_item>-accountingdocument2.
+*          ls_ztfi_1014-message             = <lfs_item>-message.
+            MODIFY ztfi_1014 FROM @ls_ztfi_1014.
+          ELSE.
+            CLEAR <lfs_item>-accountingdocument2.
+
+            lv_text = lv_string2.
+
+            lv_error = 'X'.
+            <lfs_item>-uuid1 = lv_uuid.
+            <lfs_item>-message = lv_text.
+
+*       仕訳が転記された後、アドオンテーブルに保存する
+            CLEAR ls_ztfi_1014.
+            ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
+            ls_ztfi_1014-companycode         = <lfs_item>-companycode.
+            ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
+            ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
+            ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
+            ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
+            ls_ztfi_1014-accountingdocument2 = ''.
+            ls_ztfi_1014-message             = ''.
+            MODIFY ztfi_1014 FROM @ls_ztfi_1014.
             EXIT.
           ENDIF.
 
-          IF lo_xml_node->type = if_sxml_node=>co_nt_element_open.
-            lo_xml_open_element = CAST if_sxml_open_element( lo_xml_node ).
-            lv_name = lo_xml_open_element->qname-name.
-            lv_string1 = |{ lv_string1 },{ lv_name }|.
-          ENDIF.
-          IF  lv_name = 'AccountingDocument'
-          AND lo_xml_node->type = if_sxml_node=>co_nt_value.
-            lv_string1 = lo_xml_reader->value.
-          ENDIF.
-
-          IF  lv_name = 'Note'
-          AND lo_xml_node->type = if_sxml_node=>co_nt_value.
-            IF lv_string2 IS INITIAL.
-              lv_string2 = lo_xml_reader->value.
-            ELSE.
-              lv_string2 = lv_string2 && ' ' && lo_xml_reader->value.
-            ENDIF.
-          ENDIF.
-        ENDDO.
-
-        <lfs_item>-accountingdocument2 = lv_string1.
-        IF <lfs_item>-accountingdocument2 <> '0000000000'.
-
-          " 成功消息
-          lv_text = '処理が成功しました。'.
-          lv_error = ''.
-
-          <lfs_item>-message = lv_text.
-
-*       仕訳が転記された後、アドオンテーブルに保存する
-          CLEAR ls_ztfi_1014.
-          ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
-          ls_ztfi_1014-companycode         = <lfs_item>-companycode.
-          ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
-          ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
-          ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
-          ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
-          ls_ztfi_1014-accountingdocument2 = <lfs_item>-accountingdocument2.
-*          ls_ztfi_1014-message             = <lfs_item>-message.
-          MODIFY ztfi_1014 FROM @ls_ztfi_1014.
         ELSE.
           CLEAR <lfs_item>-accountingdocument2.
-
-          lv_text = lv_string2.
-
           lv_error = 'X'.
           <lfs_item>-uuid1 = lv_uuid.
-          <lfs_item>-message = lv_text.
-
-*       仕訳が転記された後、アドオンテーブルに保存する
-          CLEAR ls_ztfi_1014.
-          ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
-          ls_ztfi_1014-companycode         = <lfs_item>-companycode.
-          ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
-          ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
-          ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
-          ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
-          ls_ztfi_1014-accountingdocument2 = ''.
-          ls_ztfi_1014-message             = ''.
-          MODIFY ztfi_1014 FROM @ls_ztfi_1014.
-          EXIT.
+          <lfs_item>-message = |{ ls_http_status-code } { ls_http_status-reason }|.
         ENDIF.
+
 ** document
 *        i += 1.
 *        ls_deep-%cid = |My%CID_{ i }|.

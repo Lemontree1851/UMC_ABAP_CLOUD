@@ -224,6 +224,12 @@
      <MSGNR>035</MSGNR>
      <TEXT>発注品番と仕入先品目コードは少なくとも一つを入力してください</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>036</MSGNR>
+     <TEXT>発注品番、仕入先品目コード、品目テキストは少なくとも一つを入力してください</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

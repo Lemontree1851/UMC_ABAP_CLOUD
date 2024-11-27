@@ -200,24 +200,6 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
               AND salesdocumentitem = ls_document_item-reference_s_d_document_item.
         ENDLOOP.
         CLEAR record_temp.
-        "修改DN
-
-*        "保存一些无法通过API或者BOI修改的字段信息到自建表，后续通过再次调用修改API 通过增强实现
-*        "有些字段在创建时无法赋值，需要通过修改来实现，
-*        "其中【外部実績日付】【内部実績日付】无法直接需改，需要通过增强逻辑实现（和AcceptDate保持一致）
-*        DATA ls_sd1009 TYPE ztsd_1009.
-*        ls_sd1009-delivery_document = |{ ls_response-d-delivery_document ALPHA = IN }|.
-*        ls_sd1009-purchase_order_by_customer = record_key-purchaseorderbycustomer.
-*        ls_sd1009-sold_to_party = |{ record_key-soldtoparty ALPHA = IN }|.
-*        ls_sd1009-product_by_purchase = |{ record_key-productbypurchase ALPHA = IN }|.
-*        ls_sd1009-accept_quantity = record_key-acceptquantity.
-*        ls_sd1009-accept_unit = record_key-acceptunit.
-*        ls_sd1009-accept_date = record_key-acceptdate.
-*        ls_sd1009-is_extension_used = abap_false.
-*        ls_sd1009-created_by = cl_abap_context_info=>get_user_technical_name( ).
-*        ls_sd1009-created_on = cl_abap_context_info=>get_system_date( ).
-*        ls_sd1009-created_at = cl_abap_context_info=>get_system_time( ).
-*        MODIFY ztsd_1009 FROM @ls_sd1009.
 
         "修改DN抬头
         "有些字段在创建时无法赋值，需要通过修改来实现，
@@ -273,29 +255,30 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
               ENDIF.
             ENDIF.
           ENDLOOP.
-          IF is_error = abap_false.
-            "获取ETag
-            lv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader('{ ls_response-d-delivery_document }')?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-            zzcl_common_utils=>get_api_etag(  EXPORTING iv_odata_version = 'V2'
-                                                        iv_path          = lv_path
-                                              IMPORTING ev_status_code   = lv_status_code
-                                                        ev_response      = lv_response
-                                                        ev_etag          = DATA(lv_etag) ).
-            IF lv_status_code <> 200.
-              is_error = abap_true.
-            ELSE.
-              "过账DN
-              lv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/PostGoodsIssue?DeliveryDocument='{ ls_response-d-delivery_document }'|.
-              zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
-                                                           iv_method      = if_web_http_client=>post
-                                                           iv_etag        = lv_etag
-                                                 IMPORTING ev_status_code = lv_status_code
-                                                           ev_response    = lv_response ).
-              IF lv_status_code <> 200.
-                is_error = abap_true.
-              ENDIF.
-            ENDIF.
-          ENDIF.
+*          "过账DN
+*          IF is_error = abap_false.
+*            "获取ETag
+*            lv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader('{ ls_response-d-delivery_document }')?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+*            zzcl_common_utils=>get_api_etag(  EXPORTING iv_odata_version = 'V2'
+*                                                        iv_path          = lv_path
+*                                              IMPORTING ev_status_code   = lv_status_code
+*                                                        ev_response      = lv_response
+*                                                        ev_etag          = DATA(lv_etag) ).
+*            IF lv_status_code <> 200.
+*              is_error = abap_true.
+*            ELSE.
+*              "过账DN
+*              lv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/PostGoodsIssue?DeliveryDocument='{ ls_response-d-delivery_document }'|.
+*              zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
+*                                                           iv_method      = if_web_http_client=>post
+*                                                           iv_etag        = lv_etag
+*                                                 IMPORTING ev_status_code = lv_status_code
+*                                                           ev_response    = lv_response ).
+*              IF lv_status_code <> 200.
+*                is_error = abap_true.
+*              ENDIF.
+*            ENDIF.
+*          ENDIF.
         ELSE.
           is_error = abap_true.
         ENDIF.
@@ -304,14 +287,10 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
         is_error = abap_true.
       ENDIF.
       IF is_error = abap_true.
-        xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
-          ( xco_cp_json=>transformation->pascal_case_to_underscore )
-        ) )->write_to( REF #( ls_error_v2 ) ).
-
         LOOP AT records INTO record_temp WHERE salesdocument = record_key-salesdocument.
           record_temp-type = 'E'.
           record_temp-message = zzcl_common_utils=>merge_message( iv_message1 = record_temp-message
-                                                                  iv_message2 = ls_error_v2-error-message-value
+                                                                  iv_message2 = zzcl_common_utils=>parse_error_v2( lv_response )
                                                                   iv_symbol   = ';' ).
           MODIFY records FROM record_temp.
         ENDLOOP.
