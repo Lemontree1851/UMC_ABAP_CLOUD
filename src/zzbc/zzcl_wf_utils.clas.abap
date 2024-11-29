@@ -116,7 +116,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     SELECT SINGLE *
     FROM ztmm_1006
     WHERE uuid = @iv_uuid
-    INTO @DATA(ls_ztmm_1006).
+    INTO @DATA(ls_ztmm_1006).                 "#EC CI_ALL_FIELDS_NEEDED
 
     SELECT companycode
      FROM zc_tbc1004 INNER JOIN zr_tbc1012
@@ -144,7 +144,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
         SELECT SINGLE *
         FROM ztmm_1006
         WHERE uuid = @iv_uuid
-        INTO @DATA(ls_ztmm_1006).
+        INTO @DATA(ls_ztmm_1006).             "#EC CI_ALL_FIELDS_NEEDED
 
         IF ls_ztmm_1006-company_code = lc_company_1100.
 
@@ -156,7 +156,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
           WHERE  zid   = @lc_buy_zid
             AND zkey1  = @lc_zkey6
             AND zvalue1 = @ls_ztmm_1006-buy_purpoose
-          INTO @DATA(ls_ztbc_buy).
+          INTO @DATA(ls_ztbc_buy).            "#EC CI_ALL_FIELDS_NEEDED
           IF sy-subrc <> 0.
             ev_error = 'X'.
             MESSAGE s020(zbc_001) WITH ls_ztmm_1006-buy_purpoose 'ZTBC_1001' lc_buy_zid INTO ev_errortext.
@@ -171,7 +171,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
           WHERE  zid   = @lc_ordertype_zid
             AND zkey1  = @lc_zkey7
             AND zvalue1 = @ls_ztmm_1006-order_type
-          INTO @DATA(ls_ztbc_ordertype).
+          INTO @DATA(ls_ztbc_ordertype).      "#EC CI_ALL_FIELDS_NEEDED
           IF sy-subrc <> 0.
             ev_error = 'X'.
             MESSAGE s021(zbc_001) WITH ls_ztmm_1006-order_type 'ZTBC_1001' lc_ordertype_zid INTO ev_errortext.
@@ -459,7 +459,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     WHERE  workflow_id    = @iv_workflowid
       AND application_id = @iv_applicationid
       AND instance_id    = @iv_instanceid
-    INTO @DATA(ls_ztmm_1006).
+    INTO @DATA(ls_ztmm_1006).                 "#EC CI_ALL_FIELDS_NEEDED
     IF ls_ztmm_1006-pr_by IS INITIAL.
       ev_error = 'X'.
       MESSAGE s013(zbc_001) WITH ls_ztmm_1006-pr_no INTO ev_errortext.
@@ -474,7 +474,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
       AND zkey1  = @lc_zkey3
       AND zkey2  = @lc_zkey5
       AND zvalue1 = @ls_ztmm_1006-pr_by
-    INTO @DATA(ls_ztbc_1001).
+    INTO @DATA(ls_ztbc_1001).                 "#EC CI_ALL_FIELDS_NEEDED
 
     IF ls_ztbc_1001-zvalue2 IS NOT INITIAL.
 
@@ -497,7 +497,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     WHERE  workflow_id    = @iv_workflowid
       AND application_id = @iv_applicationid
       AND instance_id    = @iv_instanceid
-    INTO @DATA(ls_ztmm_1006).
+    INTO @DATA(ls_ztmm_1006).                 "#EC CI_ALL_FIELDS_NEEDED
     IF ls_ztmm_1006-polink_by IS INITIAL.
       ev_error = 'X'.
       MESSAGE s015(zbc_001) WITH ls_ztmm_1006-pr_no INTO ev_errortext.
@@ -513,7 +513,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
       AND zkey1  = @lc_zkey4
       AND zkey2  = @lc_zkey5
       AND zvalue1 = @ls_ztmm_1006-polink_by
-    INTO @DATA(ls_ztbc_1001).
+    INTO @DATA(ls_ztbc_1001).                 "#EC CI_ALL_FIELDS_NEEDED
 
     IF ls_ztbc_1001-zvalue2 IS NOT INITIAL.
 
@@ -552,13 +552,13 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
       WHERE  workflow_id    = @iv_workflowid
         AND application_id = @iv_applicationid
         AND instance_id    = @iv_instanceid
-      INTO @DATA(ls_ztmm_1006).
+      INTO @DATA(ls_ztmm_1006).               "#EC CI_ALL_FIELDS_NEEDED
     ELSE.
       "get pr_by prno
       SELECT SINGLE *
         FROM ztmm_1006
       WHERE uuid    = @iv_uuid
-      INTO @ls_ztmm_1006.
+      INTO @ls_ztmm_1006.                     "#EC CI_ALL_FIELDS_NEEDED
     ENDIF.
 
     "get email setting

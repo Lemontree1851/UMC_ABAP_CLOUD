@@ -33,6 +33,8 @@ define root view entity ZR_TMM_1006
       price                                  as Price,
       unit_price                             as UnitPrice,
       delivery_date                          as DeliveryDate,
+      @Consumption.valueHelpDefinition: [{  entity:{ name: 'I_StorageLocationStdVH', element: 'StorageLocation' },
+                                            additionalBinding: [{ localElement: 'Plant', element: 'Plant', usage: #FILTER }] }]
       location                               as Location,
       return_item                            as ReturnItem,
       free                                   as Free,

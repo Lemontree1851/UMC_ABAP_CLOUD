@@ -2,9 +2,10 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 define root view entity ZC_SALESORDER_U
-  provider contract transactional_query as projection on ZR_SALESORDER_U
-//  association [1..1] to I_SalesOrderItemTextTP as _Text on _Text.SalesOrder = $projection.SalesOrder
-//      and _Text.SalesOrderItem = $projection.SalesOrderItem
+  provider contract transactional_query
+  as projection on ZR_SALESORDER_U
+  //  association [1..1] to I_SalesOrderItemTextTP as _Text on _Text.SalesOrder = $projection.SalesOrder
+  //      and _Text.SalesOrderItem = $projection.SalesOrderItem
 {
   key SalesDocument,
   key SalesDocumentItem,
@@ -38,7 +39,7 @@ define root view entity ZC_SALESORDER_U
       @EndUserText.label: '指定納入日付（明細）'
       RequestedDeliveryDate,
       @EndUserText.label: '計画出庫日付'
-      DeliveryDate,
+      GoodsIssueDate,
       OrderQuantity,
       OrderQuantityUnit,
       IncotermsClassification,
@@ -70,6 +71,6 @@ define root view entity ZC_SALESORDER_U
       @EndUserText.label: '結果'
       Status,
       @EndUserText.label: 'メッセージ'
-      Message,
-      Language
+      Message
+      //      Language
 }

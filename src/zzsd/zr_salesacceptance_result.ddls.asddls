@@ -49,11 +49,13 @@ define root custom entity ZR_SALESACCEPTANCE_RESULT
       OutsideData            : abap.char(1); //SAP外売上区分
       Remarks                : abap.char(100); //備考
       ProcessStatus          : abap.char(2); //処理ステータス
-      ProcessStatusTxt       : abap.char(20); //ProcessStatus text
       ReasonCategory         : abap.char(2); //要因区分
-      ReasonCategoryTxt      : abap.char(20); //ReasonCategory text
       Reason                 : abap.char(2); //差異要因
-      ReasonTxt              : abap.char(20); //Reason text
+      CustomerName           : abap.char(80); //Customer Name
+      PeriodTypeText         : abap.char(30);
+      AcceptPeriodText       : abap.char(30);
+      AcceptPeriodFromText   : abap.char(30);
+      AcceptPeriodToText     : abap.char(30);
       @Semantics.unitOfMeasure       : true
       unit                   : meins;
 

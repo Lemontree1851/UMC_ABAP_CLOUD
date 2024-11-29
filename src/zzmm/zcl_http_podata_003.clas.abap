@@ -201,7 +201,7 @@ DATA: lv_date       TYPE D,
 
 *--------------------------------------------------------------just for test
 
-*DELETE lt_poitem WHERE purchaseorder <> '0007000121'.
+*DELETE lt_poitem WHERE purchaseorder <> '2100001894'.
 
 *--------------------------------------------------------------just for test
 

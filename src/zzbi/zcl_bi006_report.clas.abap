@@ -116,12 +116,12 @@ CLASS zcl_bi006_report IMPLEMENTATION.
             ls_fiscalyear-low    = ls_range-low.
             ls_fiscalyear-high    = ls_range-high.
             APPEND ls_fiscalyear TO er_fiscalyear.
-          WHEN 'FISCALPERIOD'.
+          WHEN 'PERIOD'.
             CLEAR ls_fiscalperiod.
             ls_fiscalperiod-sign   = ls_range-sign.
             ls_fiscalperiod-option = ls_range-option.
             ls_fiscalperiod-low    = ls_range-low.
-            ls_fiscalperiod-low    = ls_range-low.
+            ls_fiscalperiod-high    = ls_range-high.
             APPEND ls_fiscalperiod TO er_fiscalperiod.
           WHEN 'PRODUCT'.
             CLEAR ls_product.

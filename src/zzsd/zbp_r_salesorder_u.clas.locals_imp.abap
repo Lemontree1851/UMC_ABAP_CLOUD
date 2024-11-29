@@ -51,6 +51,9 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
   METHOD createdeliveryorder.
     DATA records_input TYPE TABLE OF zc_salesorder_u.
     DATA lv_message TYPE string.
+    DATA lv_etag TYPE string.
+    data is_check_error TYPE abap_bool.
+    data lv_json TYPE string.
 
     LOOP AT keys INTO DATA(key).
       CLEAR records_input.
@@ -74,14 +77,16 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
 
     DATA record_temp LIKE LINE OF records.
 
-*    LOOP AT keys INTO DATA(ls_keys).
-**        ls_keys-%param-DeliveryType "获取参数
-*    ENDLOOP.
+    is_check_error = abap_false.
     LOOP AT records INTO DATA(record).
       READ TABLE records_input INTO record_input WITH KEY salesdocument = record-salesdocument
         salesdocumentitem = record-salesdocumentitem BINARY SEARCH.
       IF sy-subrc = 0.
-        record-currdeliveryqty = record_input-currdeliveryqty.
+        if record_input-currdeliveryqty <= 0.
+          record-currdeliveryqty = record-RemainingQty.
+        else.
+          record-currdeliveryqty = record_input-currdeliveryqty.
+        endif.
         record-orderquantityunit = record_input-orderquantityunit.
         record-currstoragelocation = record_input-currstoragelocation.
         record-currshippingtype = record_input-currshippingtype.
@@ -90,11 +95,26 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
       ENDIF.
 
       "校验
-      IF record-currdeliveryqty < 0 OR record-currdeliveryqty > record-remainingqty.
-        "不能为0，不能大于剩余数量
+      "不能大于剩余数量
+      IF record-currdeliveryqty > record-remainingqty.
+        is_check_error = abap_true.
+        record-type = 'E'.
+        message e022(zsd_001) into record-message.
       ENDIF.
       MODIFY records FROM record.
     ENDLOOP.
+    if is_check_error = abap_true.
+      LOOP AT records INTO record.
+        record-salesdocument = |{ record-salesdocument ALPHA = OUT }|.
+        record-salesdocumentitem = |{ record-salesdocumentitem ALPHA = OUT }|.
+        MODIFY records FROM record.
+      ENDLOOP.
+      lv_json = /ui2/cl_json=>serialize( records ).
+      APPEND VALUE #( %cid    = key-%cid
+                      %param  = VALUE #( zzkey = lv_json ) ) TO result.
+      exit.
+    endif.
+
     "创建DN的结构 创建DN时允许的字段有限，请参考note 2899036
     TYPES:
       "创建DN的行项目结构
@@ -119,17 +139,16 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
       BEGIN OF ty_response,
         d TYPE ty_delivery_reponse,
       END OF ty_response.
-    DATA: ls_request  TYPE ty_outb_delivery_head,
-          ls_bom_item TYPE ty_delivery_document_item,
-          ls_response TYPE ty_response,
-          ls_error_v2 TYPE zzcl_odata_utils=>gty_error,
-          is_error    TYPE abap_boolean.
+    DATA: ls_request       TYPE ty_outb_delivery_head,
+          ls_delivery_item TYPE ty_delivery_document_item,
+          ls_response      TYPE ty_response,
+          ls_error_v2      TYPE zzcl_odata_utils=>gty_error,
+          is_error         TYPE abap_boolean.
     TYPES:
       "DN修改的抬头结构
       BEGIN OF ty_update_header,
-        shipping_type               TYPE i_outbounddeliverytp-shippingtype,
-        planned_goods_movement_date TYPE i_outbounddeliverytp-plannedgoodsmovementdate,
-        delivery_date               TYPE i_outbounddeliverytp-deliverydate,
+        planned_goods_issue_date TYPE string,
+        delivery_date            TYPE string,
 *        actual_goods_movement_date TYPE string,
       END OF ty_update_header,
 
@@ -141,6 +160,8 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
         header_data TYPE ty_update_header,
       END OF ty_update_request.
     DATA: ls_update_request TYPE ty_update_request.
+
+    DATA lv_item_index TYPE i.
 
     "TOFIX 实际不是按照so划分DN 应该是按照几个字段来判定是否为一个DN
     "一个so对应一个dn 所以用SO作为抬头
@@ -157,14 +178,20 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
 
       CLEAR ls_request-to_delivery_document_item-results.
       " 行项目信息
+      CLEAR lv_item_index.
       LOOP AT records INTO record_temp WHERE salesdocument = record_key-salesdocument.
-        ls_bom_item-reference_s_d_document = record_temp-salesdocument.
-        ls_bom_item-reference_s_d_document_item = record_temp-salesdocumentitem.
-        ls_bom_item-actual_delivery_quantity = record_temp-currdeliveryqty.
-        ls_bom_item-delivery_quantity_unit = record_temp-orderquantityunit.
-        CONDENSE ls_bom_item-actual_delivery_quantity NO-GAPS.
-        APPEND ls_bom_item TO ls_request-to_delivery_document_item-results.
-        CLEAR ls_bom_item.
+        ls_delivery_item-reference_s_d_document = record_temp-salesdocument.
+        ls_delivery_item-reference_s_d_document_item = record_temp-salesdocumentitem.
+        ls_delivery_item-actual_delivery_quantity = record_temp-currdeliveryqty.
+        ls_delivery_item-delivery_quantity_unit = record_temp-orderquantityunit.
+        CONDENSE ls_delivery_item-actual_delivery_quantity NO-GAPS.
+        APPEND ls_delivery_item TO ls_request-to_delivery_document_item-results.
+        CLEAR ls_delivery_item.
+
+        "根据目前测试判定 生成的DN行项目和参考so行项目无关，和内表顺序有关，所以不能用so行项目代替DN行项目
+        lv_item_index = lv_item_index + 10."SO 行项目编码规则为10 20 30
+        record_temp-deliverydocumentitem = lv_item_index.
+        MODIFY records FROM record_temp.
       ENDLOOP.
 
       "将数据转换成json格式
@@ -194,8 +221,7 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
         "回写生成的DN和DN行项目以及消息
         LOOP AT ls_request-to_delivery_document_item-results INTO DATA(ls_document_item).
           record_temp-deliverydocument = ls_response-d-delivery_document.
-          record_temp-deliverydocumentitem = ls_document_item-reference_s_d_document_item.
-          MODIFY records FROM record_temp TRANSPORTING type message deliverydocument deliverydocumentitem
+          MODIFY records FROM record_temp TRANSPORTING type message deliverydocument
             WHERE salesdocument = ls_document_item-reference_s_d_document
               AND salesdocumentitem = ls_document_item-reference_s_d_document_item.
         ENDLOOP.
@@ -207,27 +233,27 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
         "判定可以指定的字段是否有输入值，如果没则不需要修改DN
         DATA lv_need_change TYPE abap_bool.
         lv_need_change = abap_false.
-        IF record_key-shippingtype IS NOT INITIAL OR record_key-currplannedgoodsissuedate IS NOT INITIAL.
+        IF record_key-currplannedgoodsissuedate IS NOT INITIAL OR record_key-currdeliverydate IS NOT INITIAL.
           lv_need_change = abap_true.
         ENDIF.
         IF lv_need_change = abap_true.
           CLEAR ls_update_request.
-          "TOFIX 对于api来说，或许不处理的字段结构中也不能有，那么可能无法使用abap2json 需要直接拼接json字符串
-          IF record_key-shippingtype IS NOT INITIAL.
-            ls_update_request-header_data-shipping_type = record_key-shippingtype.
-          ENDIF.
           IF record_key-currplannedgoodsissuedate IS NOT INITIAL.
-            ls_update_request-header_data-planned_goods_movement_date = format_date_to_odata( record_key-currplannedgoodsissuedate ).
+            ls_update_request-header_data-planned_goods_issue_date = format_date_to_odata( record_key-currplannedgoodsissuedate ).
           ENDIF.
-          IF record_key-deliverydate IS NOT INITIAL.
-            ls_update_request-header_data-delivery_date = format_date_to_odata( record_key-deliverydate ).
+          IF record_key-currdeliverydate IS NOT INITIAL.
+            ls_update_request-header_data-delivery_date = format_date_to_odata( record_key-currdeliverydate ).
           ENDIF.
           "将数据转换成json格式
           lv_requestbody = xco_cp_json=>data->from_abap( ls_update_request )->apply( VALUE #(
               ( xco_cp_json=>transformation->underscore_to_pascal_case )
             ) )->to_string( ).
-
           REPLACE ALL OCCURRENCES OF 'HeaderData' IN lv_requestbody WITH 'd'.
+          "如果日期字段没有值，则结构中不能出现，所以替换掉空值
+          REPLACE ALL OCCURRENCES OF ',"DeliveryDate":""' IN lv_requestbody WITH ''.
+          REPLACE ALL OCCURRENCES OF '"DeliveryDate":"",' IN lv_requestbody WITH ''.
+          REPLACE ALL OCCURRENCES OF ',"PlannedGoodsIssueDate":""' IN lv_requestbody WITH ''.
+          REPLACE ALL OCCURRENCES OF '"PlannedGoodsIssueDate":"",' IN lv_requestbody WITH ''.
           lv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader('{ ls_response-d-delivery_document }')?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
           zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
                                                        iv_method      = if_web_http_client=>patch
@@ -239,9 +265,10 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
           lv_status_code = 204.
         ENDIF.
         IF lv_status_code = 204.
-          "修改DN行项目 目前DN行项目只修改一个库存地点，且库存地点会填充默认值，所以直接修改库存地点即可，不需要判定是否有手动输入的值
+          "修改DN行项目 目前DN行项目只修改一个库存地点
           LOOP AT records INTO record_temp WHERE deliverydocument = ls_response-d-delivery_document.
-            IF record_temp-currstoragelocation IS NOT INITIAL.
+            "如果没有输入新的库存地点，或者输入的库存地点和SO的库存地点相同 则不需要修改
+            IF record_temp-currstoragelocation IS NOT INITIAL AND record_temp-currstoragelocation <> record_temp-storagelocation.
               DATA(lv_param) = |DeliveryDocument='{ record_temp-deliverydocument }',DeliveryDocumentItem='{ record_temp-deliverydocumentitem }'|.
               lv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryItem({ lv_param })?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
               lv_requestbody = |\{"d":\{"StorageLocation":"{ record_temp-currstoragelocation }"\}\}|."由于目前只修改一个字段，所以直接构建字符串
@@ -302,7 +329,7 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
       record-salesdocumentitem = |{ record-salesdocumentitem ALPHA = OUT }|.
       MODIFY records FROM record.
     ENDLOOP.
-    DATA(lv_json) = /ui2/cl_json=>serialize( records ).
+    lv_json = /ui2/cl_json=>serialize( records ).
     APPEND VALUE #( %cid    = key-%cid
                     %param  = VALUE #( zzkey = lv_json ) ) TO result.
 

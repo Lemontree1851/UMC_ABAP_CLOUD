@@ -19,15 +19,31 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       lw_data              LIKE LINE OF lt_data,
       lt_output            TYPE STANDARD TABLE OF zr_salesdocumentreport,
       lr_salesorganization TYPE RANGE OF zr_salesdocumentreport-salesorganization,  "販売組織
-      lr_yeardate          TYPE RANGE OF zr_salesdocumentreport-yeardate,           "年月
+*      lr_yeardate          TYPE RANGE OF zr_salesdocumentreport-yeardate,           "年月
       lr_customer          TYPE RANGE OF zr_salesdocumentreport-customer,           "得意先
       lr_product           TYPE RANGE OF zr_salesdocumentreport-product,            "品目
 *      lr_plantype          TYPE RANGE OF zr_salesdocumentreport-plantype,           "計画タイプ
       ls_salesorganization LIKE LINE OF  lr_salesorganization,
-      ls_yeardate          LIKE LINE OF  lr_yeardate,
+*      ls_yeardate          LIKE LINE OF  lr_yeardate,
       ls_customer          LIKE LINE OF  lr_customer,
       ls_product           LIKE LINE OF  lr_product.
 *      ls_plantype          LIKE LINE OF  lr_plantype.
+
+    TYPES:
+      BEGIN OF ty_finalproductinfo,
+        highlevelmaterial            TYPE matnr,
+        plant                        TYPE werks_d,
+        billofmaterialcomponent      TYPE matnr,
+        material                     TYPE matnr,
+        validitystartdate            TYPE matnr,
+        billofmaterialitemnumber     TYPE n LENGTH 4,
+        billofmaterialitemquantity   TYPE i_billofmaterialitemdex_3-billofmaterialitemquantity,
+        billofmaterialitemunit       TYPE meins,
+        billofmaterialvariant        TYPE i_materialbomlink-billofmaterialvariant,
+        billofmaterial               TYPE i_materialbomlink-billofmaterial,
+        billofmaterialitemnodenumber TYPE i_billofmaterialitemdex_3-billofmaterialitemnodenumber,
+        billofmaterialcategory       TYPE i_materialbomlink-billofmaterialcategory,
+      END OF ty_finalproductinfo.
 
     TYPES:
       BEGIN OF ty_planversion,
@@ -51,8 +67,34 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
     DATA:lt_version3 TYPE STANDARD TABLE OF ty_planversion,
          ls_version3 TYPE ty_planversion.
 
-    DATA: lv_grossprofit        TYPE p DECIMALS 0,
-          lv_contributionprofit TYPE p DECIMALS 0.
+    DATA: lv_grossprofit           TYPE p DECIMALS 0,
+          lv_contributionprofit    TYPE p DECIMALS 0,
+          lt_usagelist             TYPE STANDARD TABLE OF zcl_bom_where_used=>ty_usagelist,
+          lt_highlevelmaterialinfo TYPE STANDARD TABLE OF zcl_bom_where_used=>ty_usagelist,
+          lt_finalproductinfo      TYPE STANDARD TABLE OF ty_finalproductinfo,
+          ls_finalproductinfo      TYPE ty_finalproductinfo.
+
+    DATA:
+      lv_previousperiod TYPE monat,
+      lv_poper          TYPE poper,
+      lv_amt(8)         TYPE p DECIMALS 2,
+      lv_amt_bukrs(8)   TYPE p DECIMALS 2,
+      lv_amt_2000(8)    TYPE p DECIMALS 2,
+      lv_amt_3000(8)    TYPE p DECIMALS 2,
+      lv_year           TYPE c LENGTH 4,
+      lv_lastyear       TYPE c LENGTH 4,
+      lv_month          TYPE monat,
+      lv_nextmonth      TYPE budat,
+      lv_from           TYPE budat,
+      lv_to             TYPE budat,
+      lv_i              TYPE i,
+      lv_j              TYPE i,
+      lv_num_parent     TYPE n LENGTH 2,
+      lv_num_son        TYPE n LENGTH 2,
+      lv_num            TYPE n LENGTH 2,
+      lv_index          TYPE i,
+      lv_peinh(7)       TYPE p DECIMALS 3,
+      lv_length         TYPE i.
 
     CONSTANTS:
       lc_exchangetype    TYPE string VALUE '0'.
@@ -78,9 +120,9 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
             APPEND ls_salesorganization TO lr_salesorganization.
             CLEAR ls_salesorganization.
           WHEN 'YEARDATE'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_yeardate.
-            APPEND ls_yeardate TO lr_yeardate.
-            CLEAR ls_yeardate.
+            DATA(lr_yeardate) = ls_filter_cond-range.
+            READ TABLE lr_yeardate INTO DATA(lrs_yeardate) INDEX 1.
+            DATA(lv_yeardate) = lrs_yeardate-low.
           WHEN 'CUSTOMER'.
             MOVE-CORRESPONDING str_rec_l_range TO ls_customer.
             APPEND ls_customer TO lr_customer.
@@ -140,8 +182,6 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       b~customername,
       d~productname,
       e~product,
-      f~billofmaterial,
-      f~billofmaterialvariant,
       g~customer,
       k~plantname,
       i~matlaccountassignmentgroup,
@@ -157,8 +197,6 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
    ON d~product = a~product
    LEFT JOIN i_product WITH PRIVILEGED ACCESS AS e
    ON e~product = a~product
-   LEFT JOIN i_billofmaterialitemdex_3 WITH PRIVILEGED ACCESS AS f
-   ON f~billofmaterialcomponent = a~product
    LEFT JOIN i_customercompany WITH PRIVILEGED ACCESS AS g
    ON g~companycode = a~salesorganization
    LEFT JOIN i_customersalesarea WITH PRIVILEGED ACCESS AS h
@@ -205,76 +243,26 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       APPEND lw_data TO lt_data.
     ENDLOOP.
 
-    LOOP AT lt_data INTO lw_data.  " 循环遍历 lt_dataS
-      APPEND lw_data TO lt_output.  " 将当前行的 lw_data 追加到 lt_output 内表
-    ENDLOOP.
+*    LOOP AT lt_data INTO lw_data.  " 循环遍历 lt_dataS
+*      APPEND lw_data TO lt_output.  " 将当前行的 lw_data 追加到 lt_output 内表
+*    ENDLOOP.
 
-****6.02上位BOM番号により、上位半製品/製品の品番取得
+*    * 6.01-6.08 BOM番号
 
-    IF sy-subrc = 0.
-      DATA(lt_plant) = lt_result1.
-      SORT lt_plant BY plant.
-      DELETE ADJACENT DUPLICATES FROM lt_plant COMPARING plant.
-    ENDIF.
+    SORT lt_result1 BY plant product.
 
-    IF lt_plant IS NOT INITIAL.
+     LOOP AT lt_result1 INTO DATA(ls_result1).
+        "Obtain data of high level material of component
+        zcl_bom_where_used=>get_data(
+          EXPORTING
+            iv_plant                   = ls_result1-plant
+            iv_billofmaterialcomponent = ls_result1-product
+          IMPORTING
+            et_usagelist               = lt_usagelist ).
 
-      SELECT
-         material,
-         billofmaterial,
-         billofmaterialvariant,
-         plant
-       FROM i_materialbomlinkdex WITH PRIVILEGED ACCESS
-       FOR ALL ENTRIES IN @lt_plant
-        WHERE billofmaterial = @lt_plant-billofmaterial
-          AND billofmaterialvariant = @lt_plant-billofmaterialvariant
-          AND plant = @lt_plant-plant
-       INTO TABLE @DATA(lt_material1).
-
-    ENDIF.
-
-****6.03有償支給品の品番により、上位BOM番号取得
-
-    IF sy-subrc = 0.
-      DATA(lt_material) = lt_material1.
-      SORT lt_material BY material.
-      DELETE ADJACENT DUPLICATES FROM lt_material COMPARING material.
-    ENDIF.
-
-    IF lt_material IS NOT INITIAL.
-
-      SELECT
-         billofmaterial,
-         billofmaterialvariant
-       FROM i_billofmaterialitemdex_3 WITH PRIVILEGED ACCESS
-       FOR ALL ENTRIES IN @lt_material
-        WHERE billofmaterialcomponent = @lt_material-material
-       INTO TABLE @DATA(lt_bom1).
-
-    ENDIF.
-
-****6.04上位BOM番号により、上位半製品/製品の品番取得
-
-    IF sy-subrc = 0.
-      DATA(lt_bom2) = lt_bom1.
-      SORT lt_bom2 BY billofmaterial billofmaterialvariant.
-      DELETE ADJACENT DUPLICATES FROM lt_bom2 COMPARING billofmaterial billofmaterialvariant.
-    ENDIF.
-
-    IF lt_bom2 IS NOT INITIAL.
-
-      SELECT
-         material,
-         billofmaterial,
-         billofmaterialvariant
-       FROM i_materialbomlinkdex WITH PRIVILEGED ACCESS
-       FOR ALL ENTRIES IN @lt_bom2
-        WHERE billofmaterial = @lt_bom2-billofmaterial
-          AND billofmaterialvariant = @lt_bom2-billofmaterialvariant
-       INTO TABLE @DATA(lt_material2).
-
-    ENDIF.
-
+        APPEND LINES OF lt_usagelist TO lt_highlevelmaterialinfo.
+        CLEAR lt_usagelist.
+      ENDLOOP.
 ********計画数量********
 
     CLEAR lt_version0.
@@ -453,6 +441,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
     INTO TABLE @DATA(lt_result4).
 
 *********貢献利益(単価)********
+    SORT lt_result4 BY salesplanperiodname DESCENDING.
     LOOP AT  lt_read2 INTO DATA(lw_contributionprofit).
       READ TABLE lt_result4 INTO DATA(lw_result4)
           WITH KEY salesplanperiodname = lw_contributionprofit-salesplanperiodname
@@ -504,13 +493,15 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
     INTO TABLE @DATA(lt_result5).
 
 *********売上総利益(単価)********
+    SORT lt_result5 BY salesplanperiodname DESCENDING.
     LOOP AT  lt_read2 INTO DATA(lw_grossprofit).
+
       READ TABLE lt_result5 INTO DATA(lw_result5)
           WITH KEY salesplanperiodname = lw_grossprofit-salesplanperiodname
                BINARY SEARCH.
 
       IF lw_result5-salesplanamountindspcrcy IS NOT INITIAL AND lw_grossprofit-salesplanquantity IS NOT INITIAL.
-       lv_grossprofit = ( lw_result5-salesplanamountindspcrcy * 100 ) / lw_grossprofit-salesplanquantity.
+        lv_grossprofit = ( lw_result5-salesplanamountindspcrcy * 100 ) / lw_grossprofit-salesplanquantity.
       ELSE.
 
         lw_data-grossprofit = round(
@@ -522,177 +513,6 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
     ENDLOOP.
 
 *********************
-
-*    * 3.01-3.08 BOM番号
-*    DATA(lt_product_tmp) = lt_product[].
-*    DO.
-** find the upper bom code
-*      SELECT billofmaterial,
-*             billofmaterialvariant,
-*             billofmaterialitemnodenumber,
-*             bominstceinternalchangenumber,
-*             billofmaterialcomponent
-*        FROM i_billofmaterialitemdex_3 WITH PRIVILEGED ACCESS
-*        FOR ALL ENTRIES IN @lt_product_tmp
-*       WHERE billofmaterialcomponent = @lt_product_tmp-product
-*         AND isdeleted = @space
-*        INTO TABLE @DATA(lt_up).
-*      " Exit loop if not find upper bom
-*      IF sy-subrc <> 0.
-*        EXIT.
-*      ENDIF.
-** get material number by bom code
-*      IF lt_up IS NOT INITIAL.
-*        SELECT billofmaterial,
-*               billofmaterialvariant,
-*               material,
-*               plant,
-*               billofmaterialvariantusage
-*          FROM i_materialbomlinkdex WITH PRIVILEGED ACCESS
-*          FOR ALL ENTRIES IN @lt_up
-*         WHERE billofmaterial = @lt_up-billofmaterial
-*           AND billofmaterialvariant = @lt_up-billofmaterialvariant
-*           AND plant IN @lr_plant
-*          INTO TABLE @DATA(lt_expode).
-*      ENDIF.
-** get the cost bom to check
-*      IF lt_expode IS NOT INITIAL.
-*        SELECT costingreferenceobject,
-*               costestimate,
-*               costingtype,
-*               costingdate,
-*               costingversion,
-*               valuationvariant,
-*               costisenteredmanually,
-*               product,
-*               plant,
-*               costestimatevaliditystartdate,
-*               billofmaterial,
-*               alternativebillofmaterial
-*          FROM i_productcostestimate WITH PRIVILEGED ACCESS
-*          FOR ALL ENTRIES IN @lt_expode
-*         WHERE product = @lt_expode-material
-*           AND plant IN @lr_plant
-*           AND costingvariant = 'PYC1'
-*           AND costestimatevaliditystartdate <= @lv_to
-*           AND costestimatestatus = 'FR'
-*          INTO TABLE @DATA(lt_costbom).
-** get lasted date value
-*        SORT lt_costbom BY product plant
-*                           costestimatevaliditystartdate DESCENDING.
-*        DELETE ADJACENT DUPLICATES FROM lt_costbom COMPARING product plant.
-*      ENDIF.
-*      IF lt_costbom IS NOT INITIAL.
-*        SELECT  billofmaterialcategory,
-*                billofmaterial,
-*                billofmaterialvariant,
-*                billofmaterialitemnodenumber,
-*                bominstceinternalchangenumber,
-*                billofmaterialcomponent
-*          FROM i_billofmaterialitemdex_3 WITH PRIVILEGED ACCESS
-*          FOR ALL ENTRIES IN @lt_costbom
-*         WHERE billofmaterial = @lt_costbom-billofmaterial
-*           AND billofmaterialvariant = @lt_costbom-alternativebillofmaterial
-*           AND isdeleted = @space
-*           INTO TABLE @DATA(lt_costbomexpode).
-*
-*      ENDIF.
-*
-** Check costbom with material bom
-*      SORT lt_costbomexpode BY billofmaterialcomponent billofmaterialvariant.
-*      LOOP AT lt_up INTO DATA(ls_up).
-*        READ TABLE lt_costbomexpode
-*             WITH KEY billofmaterialcomponent = ls_up-billofmaterialcomponent
-*                      billofmaterialvariant = ls_up-billofmaterialvariant BINARY SEARCH
-*             TRANSPORTING NO FIELDS.
-*        IF sy-subrc <> 0.
-*          DELETE lt_up.
-*          CONTINUE.
-*        ENDIF.
-*      ENDLOOP.
-*
-*      SORT lt_up BY billofmaterial billofmaterialvariant.
-*      LOOP AT lt_expode INTO DATA(ls_expode).
-*        READ TABLE lt_up
-*             WITH KEY billofmaterial = ls_expode-billofmaterial
-*                      billofmaterialvariant = ls_expode-billofmaterialvariant BINARY SEARCH
-*             TRANSPORTING NO FIELDS.
-*        IF sy-subrc <> 0.
-*          DELETE lt_expode.
-*          CONTINUE.
-*        ELSE.
-*          lrs_bom-sign = 'I'.
-*          lrs_bom-option = 'EQ'.
-*          lrs_bom-low = ls_expode-material.
-*          APPEND lrs_bom TO lr_bom.
-*          CLEAR: lrs_bom.
-*        ENDIF.
-*      ENDLOOP.
-*
-*
-** edit bom hierarchy
-*      DATA(lt_bom_tmp) = lt_bom[].
-*      CLEAR: lt_bom.
-*      lv_index = lv_index + 1.
-*      lv_num_parent = lv_index.
-*      IF lv_index = 1.
-** Prepare the last layer
-*        LOOP AT lt_expode INTO ls_expode.
-*          ls_bom-parent01 = ls_expode-material.
-*          ls_bom-plant = ls_expode-plant.
-*
-*          READ TABLE lt_up INTO ls_up
-*               WITH KEY billofmaterial = ls_expode-billofmaterial
-*                        billofmaterialvariant = ls_expode-billofmaterialvariant BINARY SEARCH.
-*          IF sy-subrc = 0.
-*            ls_bom-raw = ls_up-billofmaterialcomponent.
-*          ENDIF.
-*          APPEND ls_bom TO lt_bom.
-*          CLEAR: ls_bom.
-*        ENDLOOP.
-*
-*      ELSE.
-** Expand bom from second to last layer to the first layer
-*        DATA(lv_field) = 'PARENT' && lv_num_parent.
-*        lv_num_son = lv_num_parent - 1.
-*        DATA(lv_field_son) = 'PARENT' && lv_num_son.
-*        SORT lt_bom_tmp BY plant (lv_field_son).
-*
-*        LOOP AT lt_expode INTO ls_expode.
-*          READ TABLE lt_up INTO ls_up
-*               WITH KEY billofmaterial = ls_expode-billofmaterial
-*                        billofmaterialvariant = ls_expode-billofmaterialvariant BINARY SEARCH.
-*          IF sy-subrc = 0.
-*            READ TABLE lt_bom_tmp INTO ls_bom
-*                 WITH KEY plant = ls_expode-plant
-*                          (lv_field_son) = ls_up-billofmaterialcomponent BINARY SEARCH.
-*            IF sy-subrc = 0.
-*              DATA(lv_tabix) = sy-tabix.
-*              ASSIGN COMPONENT lv_field OF STRUCTURE ls_bom TO <fs>.
-*              <fs> = ls_expode-material.
-*              APPEND ls_bom TO lt_bom.
-*              DELETE lt_bom_tmp INDEX lv_tabix.
-*              CONTINUE.
-*            ENDIF.
-*            CLEAR: ls_bom.
-*          ENDIF.
-*        ENDLOOP.
-*      ENDIF.
-*      IF lt_bom_tmp IS NOT INITIAL.
-*        APPEND LINES OF lt_bom_tmp TO lt_bom_temp.
-*      ENDIF.
-*      CLEAR: lt_product_tmp.
-*      LOOP AT lt_expode INTO ls_expode.
-*        ls_product-product = ls_expode-material.
-*        ls_product-plant = ls_expode-plant.
-*        APPEND ls_product TO lt_product_tmp.
-*        CLEAR: ls_product.
-*      ENDLOOP.
-*    ENDDO.
-*    APPEND LINES OF lt_bom_temp TO lt_bom.
-
-
-
 
     IF io_request->is_total_numb_of_rec_requested(  ) .
       io_response->set_total_number_of_records( lines( lt_output ) ).

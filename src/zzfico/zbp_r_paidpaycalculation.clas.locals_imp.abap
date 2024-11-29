@@ -1366,6 +1366,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       ls_1010-fiscalyear = cv_gjahr.
       "会計期間
       ls_1010-period = cv_monat.
+      ls_1010-yearmonth = cv_gjahr && cv_monat.
       "得意先コード/仕入先コード
       READ TABLE lt_mrp INTO ls_mrp
            WITH KEY product = ls_product-product
@@ -1686,6 +1687,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       ls_1011-companycode = <lfs_member>-companycode.
       ls_1011-fiscalyear = <lfs_member>-fiscalyear.
       ls_1011-period = <lfs_member>-period.
+      ls_1011-yearmonth = <lfs_member>-fiscalyear && <lfs_member>-period.
       ls_1011-customer = <lfs_member>-customer.
       ls_1011-supplier = <lfs_member>-supplier.
       ls_1011-profitcenter = <lfs_member>-profitcenter.

@@ -116,5 +116,11 @@ annotate view ZZC_DTIMP_CONF with
   LastChangedAt;
 
   @UI.hidden: true
+  @Consumption.filter.hidden: true
+  TemplateMimeType;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  TemplateName;
+  @UI.hidden: true
   LocalLastChangedAt;
 }

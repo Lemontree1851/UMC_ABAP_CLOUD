@@ -2,7 +2,7 @@
 @Metadata.allowExtensions: true
 @EndUserText.label: '###GENERATED Core Data Service Entity'
 define root view entity ZR_TFI_1010000
-  as select from ZTFI_1010
+  as select from ztfi_1010
 {
   key companycode as Companycode,
   key fiscalyear as Fiscalyear,
@@ -93,6 +93,7 @@ define root view entity ZR_TFI_1010000
   customerrevenue as Customerrevenue,
   @Semantics.amount.currencyCode: 'Currency'
   revenue as Revenue,
+  yearmonth as YearMonth,
   unitofmeasure as Unitofmeasure,
   currency as Currency
   

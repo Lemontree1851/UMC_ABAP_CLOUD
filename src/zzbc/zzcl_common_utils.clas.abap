@@ -512,7 +512,7 @@ CLASS zzcl_common_utils IMPLEMENTATION.
         ev_status_code = 500.
         ev_response = lx_root->get_text(  ).
     ENDTRY.
-  ENDMETHOD.
+  ENDMETHOD.                                             "#EC CI_VALPAR
 
 
   METHOD get_begindate_of_month.
@@ -1103,11 +1103,11 @@ CLASS zzcl_common_utils IMPLEMENTATION.
                         p_unique     = abap_false ).
 
     CREATE DATA rv_value TYPE HANDLE lo_new_tab.
-  ENDMETHOD.
+  ENDMETHOD.                                             "#EC CI_VALPAR
 
   METHOD set_datadescr.
     rv_descr ?= cl_abap_elemdescr=>describe_by_name( iv_types ).
-  ENDMETHOD.
+  ENDMETHOD.                                             "#EC CI_VALPAR
 
   METHOD is_workingday.
     rv_workingday = abap_false.
@@ -1158,7 +1158,7 @@ CLASS zzcl_common_utils IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD parse_error_v2.
-    data ls_error TYPE ty_error_v2.
+    DATA ls_error TYPE ty_error_v2.
     /ui2/cl_json=>deserialize( EXPORTING json = iv_response
                                CHANGING  data = ls_error ).
     IF ls_error-error-message-value IS NOT INITIAL.

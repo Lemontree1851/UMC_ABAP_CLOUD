@@ -31,7 +31,7 @@ authorization master ( instance )
   draft action Resume;
   draft determine action Prepare;
 
-  association _User;
+  association _User{ with draft; create; }
 
   mapping for ztbc_1005
     {
@@ -61,5 +61,5 @@ with unmanaged save
   field ( readonly, numbering : managed ) Uuid;
   field ( readonly ) RoleUuid;
 
-  association _Role;
+  association _Role{ with draft; }
 }

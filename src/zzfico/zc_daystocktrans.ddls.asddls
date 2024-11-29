@@ -46,6 +46,8 @@ define root view entity ZC_DAYSTOCKTRANS
       @UI                        : { lineItem: [ { position: 110, label: '売上予測（翌月）' } ] }
       @Semantics.amount.currencyCode: 'DisplayCurrency'
       Saleforcast,
-      @UI                        : { lineItem: [ { position: 120, label: '通貨' } ] }
+      @UI                        : { lineItem: [ { position: 120, label: '価格単位' } ] }
+      Priceunitqty,
+      @UI                        : { lineItem: [ { position: 130, label: '通貨' } ] }
       DisplayCurrency
 }

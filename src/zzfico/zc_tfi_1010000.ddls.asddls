@@ -2,7 +2,7 @@
 @EndUserText.label: '###GENERATED Core Data Service Entity'
 @AccessControl.authorizationCheck: #CHECK
 define root view entity ZC_TFI_1010000
-  provider contract TRANSACTIONAL_QUERY
+  provider contract transactional_query
   as projection on ZR_TFI_1010000
 {
   key Companycode,
@@ -66,6 +66,7 @@ define root view entity ZC_TFI_1010000
   Currentstockamount,
   Customerrevenue,
   Revenue,
+  YearMonth,
   @Semantics.unitOfMeasure: true
   Unitofmeasure,
   @Semantics.currencyCode: true

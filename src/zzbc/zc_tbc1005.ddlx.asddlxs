@@ -2,7 +2,9 @@
 @UI: {
   headerInfo: {
     typeName: 'Authority Role',
-    typeNamePlural: 'Authority Role'
+    typeNamePlural: 'Authority Role',
+    title: { type: #STANDARD , value: 'RoleId'},
+    description: { type: #STANDARD , value: 'RoleName'}
   }
 }
 annotate view ZC_TBC1005 with

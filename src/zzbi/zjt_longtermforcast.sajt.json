@@ -1,0 +1,41 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "長期滞留在庫予測",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "catalogName": "ZJCE_LONGTERMFORCAST"
+  },
+  "parameters": {
+    "singleValueParameters": [
+      {
+        "name": "P_MONAT",
+        "value": ""
+      },
+      {
+        "name": "P_YEAR",
+        "value": ""
+      }
+    ],
+    "valueRangesParameters": [
+      {
+        "name": "S_BUKRS",
+        "valueRanges": []
+      },
+      {
+        "name": "S_CUST",
+        "valueRanges": []
+      },
+      {
+        "name": "S_PLANT",
+        "valueRanges": []
+      },
+      {
+        "name": "S_PROD",
+        "valueRanges": []
+      }
+    ]
+  }
+}

@@ -84,8 +84,12 @@ define view ZC_FIXEDASSETPRINT as select from I_FixedAssetAssgmt as A
     A._FixedAsset._AssetValuationForLedger[1:Ledger = '0L' and AssetRealDepreciationArea = '01'].PlannedUsefulLifeInYears,//⑫耐用年数
     @UI:{
         lineItem: [ { position: 130 } ]
-    }             
-    A._FixedAsset.OriginalAcquisitionAmount,//⑬取得価額
+    }    
+    @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_FIXEDASSET_CAL'
+    @EndUserText.label: '取得価額'             
+    //A._FixedAsset.OriginalAcquisitionAmount,//⑬取得価額
+    @Semantics.amount.currencyCode : 'OriginalAcquisitionCurrency'
+    cast( 0 as abap.curr(23,2)  ) as OriginalAcquisitionAmount,
    // @UI:{
   //      lineItem: [ { position: 140 } ]
   //  }       
@@ -107,6 +111,8 @@ define view ZC_FIXEDASSETPRINT as select from I_FixedAssetAssgmt as A
     @EndUserText.label: '不動産所有区分'  
     cast( '' as abap.sstring(2)  ) as YY1_FIXEDASSET1_FAA  , //⑰不動産所有区分    
     @UI.hidden: true
+    @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_FIXEDASSET_CAL'
+    @EndUserText.label: '货币'   
     A._FixedAsset.OriginalAcquisitionCurrency,
     @UI.hidden: true
     A._FixedAsset._AssetValuationForLedger[1:Ledger = '0L'and AssetRealDepreciationArea = '01'].DepreciationKey

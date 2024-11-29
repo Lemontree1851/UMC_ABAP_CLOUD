@@ -6,7 +6,7 @@
         title: { type: #STANDARD, label: 'Sales Info', value: 'SalesDocument' }
     }
 }
-@UI.presentationVariant:[{ requestAtLeast:['Language'] }]
+//@UI.presentationVariant:[{ requestAtLeast:['Language'] }]
 //前端使用freestyle 所以目前这里只设置filter
 annotate entity ZC_SALESORDER_U with
 {
@@ -39,15 +39,13 @@ annotate entity ZC_SALESORDER_U with
   CreationDate;
   @UI.selectionField: [{ position: 55 }]
   RequestedDeliveryDate;
-  //计划出库日
-//  @UI.selectionField: [{ position: 60 }]
-//  GoodsIssueDate;
+  @EndUserText.label: '計画出庫日付'
+  @UI.selectionField: [{ position: 60 }]
+  GoodsIssueDate;
   @UI.selectionField: [{ position: 65 }]
   @EndUserText.label: '受注伝票タイプ（Old）'
   YY1_SalesDocType_SDH;
   @UI.selectionField: [{ position: 70 }]
   SalesDocument;
-  @UI.hidden: true
-  Language;
 
 }

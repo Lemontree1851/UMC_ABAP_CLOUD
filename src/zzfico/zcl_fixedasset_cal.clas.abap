@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
+CLASS zcl_fixedasset_cal IMPLEMENTATION.
 
 
   METHOD if_sadl_exit_calc_element_read~calculate.
@@ -22,10 +22,10 @@ CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
 
     TYPES:
       BEGIN OF ty_results,
-        companycode              TYPE i_fixedassetassgmt-companycode,
-        masterfixedasset         TYPE i_fixedassetassgmt-masterfixedasset,
-        fixedasset               TYPE i_fixedassetassgmt-fixedasset,
-        spc(3) TYPE c,
+        companycode      TYPE i_fixedassetassgmt-companycode,
+        masterfixedasset TYPE i_fixedassetassgmt-masterfixedasset,
+        fixedasset       TYPE i_fixedassetassgmt-fixedasset,
+        spc(3)           TYPE c,
       END OF ty_results,
       tt_results TYPE STANDARD TABLE OF ty_results WITH DEFAULT KEY,
       BEGIN OF ty_d,
@@ -40,6 +40,14 @@ CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
         "language(1)             TYPE c,
         depreciationkeyname(50) TYPE c,
       END OF ty_results1,
+      BEGIN OF ty_sum,
+        companycode             TYPE  i_glaccountlineitem-companycode,
+        masterfixedasset        TYPE  i_glaccountlineitem-masterfixedasset,
+        fixedasset              TYPE  i_glaccountlineitem-fixedasset ,
+        debitamountincocodecrcy TYPE  i_glaccountlineitem-debitamountincocodecrcy,
+        companycodecurrency     TYPE  i_glaccountlineitem-companycodecurrency,
+
+      END OF ty_sum,
       tt_results1 TYPE STANDARD TABLE OF ty_results1 WITH DEFAULT KEY,
       BEGIN OF ty_d1,
         results TYPE tt_results1,
@@ -50,10 +58,39 @@ CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
     DATA:lv_path     TYPE string.
     DATA:ls_res_api  TYPE ty_res_api.
     DATA:ls_res_api1 TYPE ty_res_api1.
+    DATA:ls_sum TYPE ty_sum.
+    DATA:lt_sum TYPE STANDARD TABLE OF ty_sum.
     DATA:lt_original_data TYPE STANDARD TABLE OF zc_fixedassetprint WITH DEFAULT KEY.
 
     DATA:lv_masterfixedasset        TYPE i_fixedassetassgmt-masterfixedasset.
     DATA:lv_fixedasset              TYPE i_fixedassetassgmt-fixedasset.
+
+    DATA:lv_from TYPE bldat.
+    DATA:lv_to TYPE bldat.
+    lt_original_data = CORRESPONDING #( it_original_data ).
+    IF lt_original_data IS NOT INITIAL.
+
+      SELECT companycode,masterfixedasset,fixedasset, debitamountincocodecrcy ,companycodecurrency FROM
+      i_glaccountlineitem
+      FOR ALL ENTRIES IN @lt_original_data
+      WHERE masterfixedasset = @lt_original_data-masterfixedasset
+      AND fixedasset = @lt_original_data-fixedasset
+      AND sourceledger = '0L'
+      AND ledger = '0L'
+      AND subledgeracctlineitemtype = '7000'
+      AND masterfixedasset IS NOT INITIAL
+      AND debitamountincocodecrcy IS NOT INITIAL
+      INTO TABLE @DATA(lt_glaccountlineitem).
+      SORT lt_glaccountlineitem BY companycode masterfixedasset fixedasset.
+
+      LOOP AT lt_glaccountlineitem INTO DATA(lt_glaccountlineitem1).
+        CLEAR ls_sum.
+        MOVE-CORRESPONDING lt_glaccountlineitem1 TO ls_sum.
+        COLLECT ls_sum INTO lt_sum.
+      ENDLOOP.
+      SORT lt_sum BY companycode masterfixedasset fixedasset.
+
+    ENDIF.
 
     lv_path = |/YY1_FIXEDASSETCOUNTRYDATA_CDS/YY1_FixedAssetCountryData|.
     "Call API
@@ -89,9 +126,9 @@ CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
       SORT ls_res_api-d-results BY companycode masterfixedasset fixedasset.
       SORT ls_res_api1-d-results BY chartofdepreciation depreciationkey .
 
-      lt_original_data = CORRESPONDING #( it_original_data ).
+
       IF lt_original_data IS NOT INITIAL.
-        SELECT companycode, masterfixedasset, fixedasset ,YY1_fixedasset2_FAA as yy1_fixedasset1_faa
+        SELECT companycode, masterfixedasset, fixedasset ,yy1_fixedasset2_faa AS yy1_fixedasset1_faa
         FROM i_fixedasset WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_original_data
         WHERE companycode = @lt_original_data-companycode
@@ -110,7 +147,7 @@ CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
           <fs_original_data>-jp_prptytxrptspcldepr =  ls_result-spc.
         ENDIF.
         IF <fs_original_data>-jp_prptytxrptspcldepr = 'JP0'.
-        <fs_original_data>-jp_prptytxrptspcldepr = '非课税'.
+          <fs_original_data>-jp_prptytxrptspcldepr = '非课税'.
         ENDIF.
         READ TABLE ls_res_api1-d-results INTO DATA(ls_result1) WITH KEY chartofdepreciation = '1510'
         depreciationkey = <fs_original_data>-depreciationkey BINARY SEARCH.
@@ -121,11 +158,19 @@ CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
         masterfixedasset = <fs_original_data>-masterfixedasset fixedasset = <fs_original_data>-fixedasset BINARY SEARCH.
         IF sy-subrc = 0.
           IF ls_fixedasset-yy1_fixedasset1_faa = '01'.
-          <fs_original_data>-yy1_fixedasset1_faa = '所有'.
+            <fs_original_data>-yy1_fixedasset1_faa = '所有'.
           ELSEIF ls_fixedasset-yy1_fixedasset1_faa = '02'.
-          <fs_original_data>-yy1_fixedasset1_faa = '借家'.
+            <fs_original_data>-yy1_fixedasset1_faa = '借家'.
           ENDIF.
         ENDIF.
+        READ TABLE lt_sum INTO DATA(ls_glaccountlineitem) WITH KEY companycode = <fs_original_data>-companycode
+  masterfixedasset = <fs_original_data>-masterfixedasset fixedasset = <fs_original_data>-fixedasset BINARY SEARCH.
+        IF sy-subrc = 0.
+
+          <fs_original_data>-originalacquisitionamount = ls_glaccountlineitem-debitamountincocodecrcy.
+          <fs_original_data>-originalacquisitioncurrency = ls_glaccountlineitem-companycodecurrency.
+        ENDIF.
+
       ENDLOOP.
     ENDIF.
     ct_calculated_data = CORRESPONDING #(  lt_original_data ).
@@ -140,6 +185,17 @@ CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
           INSERT `MASTERFIXEDASSET` INTO TABLE et_requested_orig_elements.
           INSERT `FIXEDASSET` INTO TABLE et_requested_orig_elements.
         WHEN 'DEPRECIATIONKEYNAME'.
+          INSERT `COMPANYCODE` INTO TABLE et_requested_orig_elements.
+          INSERT `MASTERFIXEDASSET` INTO TABLE et_requested_orig_elements.
+          INSERT `FIXEDASSET` INTO TABLE et_requested_orig_elements.
+          INSERT `DEPRECIATIONKEY` INTO TABLE et_requested_orig_elements.
+
+        WHEN 'ORIGINALACQUISITIONAMOUNT'.
+          INSERT `COMPANYCODE` INTO TABLE et_requested_orig_elements.
+          INSERT `MASTERFIXEDASSET` INTO TABLE et_requested_orig_elements.
+          INSERT `FIXEDASSET` INTO TABLE et_requested_orig_elements.
+          INSERT `DEPRECIATIONKEY` INTO TABLE et_requested_orig_elements.
+        WHEN 'ORIGINALACQUISITIONCURRENCY'.
           INSERT `COMPANYCODE` INTO TABLE et_requested_orig_elements.
           INSERT `MASTERFIXEDASSET` INTO TABLE et_requested_orig_elements.
           INSERT `FIXEDASSET` INTO TABLE et_requested_orig_elements.

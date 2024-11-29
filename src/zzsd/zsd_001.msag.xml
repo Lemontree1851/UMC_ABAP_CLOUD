@@ -140,6 +140,12 @@
      <MSGNR>021</MSGNR>
      <TEXT>出荷伝票&amp;1は内部転記済みのため、実績日は更新できない。</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZSD_001</ARBGB>
+     <MSGNR>022</MSGNR>
+     <TEXT>今回納品数は受注残数より大きくできません</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

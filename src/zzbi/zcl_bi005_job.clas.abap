@@ -22,6 +22,7 @@ CLASS zcl_bi005_job DEFINITION
       END OF ty_results,
       tt_results TYPE STANDARD TABLE OF ty_results WITH DEFAULT KEY,
       BEGIN OF ty_podataanalysis_api,
+        count TYPE i,
         value TYPE tt_results,
       END OF ty_podataanalysis_api,
 
@@ -99,28 +100,38 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 
   METHOD if_oo_adt_classrun~main.
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
-    lt_parameters = VALUE #( ( selname = 'P_BUKRS'
-                               kind    = if_apj_dt_exec_object=>select_option
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '1100' )
-                               ( selname = 'P_PLANT'
-                               kind    = if_apj_dt_exec_object=>select_option
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '1100' )
-                               ( selname = 'P_GJAHR'
-                               kind    = if_apj_dt_exec_object=>parameter
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '2024' )
-                               ( selname = 'P_POPER'
-                               kind    = if_apj_dt_exec_object=>parameter
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '009' ) ).
+*    lt_parameters = VALUE #( ( selname = 'P_BUKRS'
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1100' )
+*                               ( selname = 'P_BUKRS'
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1400' )
+*                               ( selname = 'P_PLANT'
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1100' )
+*                               ( selname = 'P_PLANT'
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1400' )
+*                               ( selname = 'P_GJAHR'
+*                               kind    = if_apj_dt_exec_object=>parameter
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '2024' )
+*                               ( selname = 'P_POPER'
+*                               kind    = if_apj_dt_exec_object=>parameter
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '009' ) ).
     TRY.
-*        if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
+        if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
 
         if_apj_rt_exec_object~execute( lt_parameters ).
       CATCH cx_root INTO DATA(lo_root).
@@ -174,6 +185,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       ls_companycode    LIKE LINE OF lr_companycode,
       ls_plant          LIKE LINE OF lr_plant,
       ls_podataanalysis TYPE ty_podataanalysis_api,
+      lt_podataanalysis TYPE tt_results,
       lv_gjahr          TYPE gjahr,
       lv_poper          TYPE poper,
       lv_lastpoper      TYPE poper,
@@ -226,7 +238,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 
 *   会社コード Parameterの存在Check
     SELECT SINGLE COUNT( * )
-      FROM i_companycode
+      FROM i_companycode WITH PRIVILEGED ACCESS
      WHERE companycode IN @lr_companycode.
 
     IF sy-subrc <> 0.
@@ -241,7 +253,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 
 *   プラント Parameterの存在Check
     SELECT SINGLE COUNT( * )
-      FROM i_plant
+      FROM i_plant WITH PRIVILEGED ACCESS
      WHERE plant IN @lr_plant.
     IF sy-subrc <> 0.
       CLEAR lv_msg.
@@ -277,30 +289,48 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     DATA(lv_next_end) = zzcl_common_utils=>get_enddate_of_month( EXPORTING iv_date = lv_next_start ).
 
 *   前月の在庫実績を抽出
-    SELECT companycode,           "会社コード
-           plant,                 "プラント
+    SELECT a~companycode,           "会社コード
+           b~companycodename,       "会社コードテキスト
+           a~plant,                 "プラント
+           c~plantname,             "プラントテキスト
 *           profitcenter,          "利益センタ
-           materialtype,          "品目タイプ
-           materialtypename,
-           material,              "品目
-           businesspartner,       "得意先
-           businesspartnername,
-           valuationquantity,     "数量
-           movingaverageprice,    "実際原価
-           standardprice,         "標準原価
-           displaycurrency
-      FROM ztfi_1016
-     WHERE companycode IN @lr_companycode
-       AND plant       IN @lr_plant
+           materialtype,            "品目タイプ
+           materialtypename,        "品目タイプテキスト
+           a~material,              "品目
+           d~productdescription AS productname,           "品目テキスト
+           businesspartner,         "得意先
+           businesspartnername,     "得意先テキスト
+           valuationquantity,       "数量
+           movingaverageprice,      "実際原価
+           standardprice,           "標準原価
+           displaycurrency,         "通貨
+           unit
+      FROM ztfi_1016 AS a
+      LEFT JOIN i_companycode WITH PRIVILEGED ACCESS AS b
+             ON b~companycode = a~companycode
+            AND b~language = @sy-langu
+      LEFT JOIN i_plant WITH PRIVILEGED ACCESS AS c
+             ON c~plant = a~plant
+            AND c~language = @sy-langu
+      LEFT JOIN i_productdescription WITH PRIVILEGED ACCESS AS d
+             ON d~product = a~material
+            AND d~language = @sy-langu
+     WHERE a~companycode IN @lr_companycode
+       AND a~plant       IN @lr_plant
        AND yearmonth    = @lv_lastyearperiod
+*       and ( a~material   = 'K9Y25-60E/DMAN:CU0'
+*        or   a~material   = 'AH1ASY02535AC'
+*        or   a~material   = 'AH1ASY02535AC-SMTB' )
       INTO TABLE @DATA(lt_1016).
 
     IF sy-subrc <> 0.
       RETURN.
     ELSE.
-      SORT lt_1016 BY plant ASCENDING
-                      material ASCENDING
-                      businesspartner ASCENDING.
+      SORT lt_1016 BY plant       ASCENDING
+                      material    ASCENDING
+                      companycode ASCENDING.
+      DELETE ADJACENT DUPLICATES FROM lt_1016 COMPARING plant material companycode.
+
     ENDIF.
 
     DATA(lt_material) = lt_1016.
@@ -312,9 +342,9 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     SORT lt_plant BY plant.
     DELETE ADJACENT DUPLICATES FROM lt_plant COMPARING plant.
 
-    DATA(lt_supplier) = lt_1016.
-    SORT lt_supplier BY businesspartner.
-    DELETE ADJACENT DUPLICATES FROM lt_supplier COMPARING businesspartner.
+*    DATA(lt_supplier) = lt_1016.
+*    SORT lt_supplier BY businesspartner.
+*    DELETE ADJACENT DUPLICATES FROM lt_supplier COMPARING businesspartner.
 
     CLEAR lv_count.
     LOOP AT lt_plant INTO DATA(ls_plant1).
@@ -328,24 +358,24 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     lv_filter = |{ lv_filter })|.
     lv_filter3 = lv_filter.
 
-    IF lines( lt_supplier ) < 20.
-      CLEAR lv_count.
-      LOOP AT lt_supplier INTO DATA(ls_supplier).
-        lv_count += 1.
-        IF lv_count = 1.
-          lv_filter = |{ lv_filter } and (Supplier eq '{ ls_supplier-businesspartner }'|.
-        ELSE.
-          lv_filter = |{ lv_filter } or Supplier eq '{ ls_supplier-businesspartner }'|.
-        ENDIF.
-      ENDLOOP.
-      lv_filter = |{ lv_filter })|.
-      lv_filter2 = lv_filter.
-    ELSE.
-      lv_filter = |{ lv_filter } and Supplier ne ''|.
-      lv_filter2 = lv_filter.
-    ENDIF.
+*    IF lines( lt_supplier ) < 20.
+*      CLEAR lv_count.
+*      LOOP AT lt_supplier INTO DATA(ls_supplier).
+*        lv_count += 1.
+*        IF lv_count = 1.
+*          lv_filter = |{ lv_filter } and (Supplier eq '{ ls_supplier-businesspartner }'|.
+*        ELSE.
+*          lv_filter = |{ lv_filter } or Supplier eq '{ ls_supplier-businesspartner }'|.
+*        ENDIF.
+*      ENDLOOP.
+*      lv_filter = |{ lv_filter })|.
+*      lv_filter2 = lv_filter.
+*    ELSE.
+*      lv_filter = |{ lv_filter } and Supplier ne ''|.
+*      lv_filter2 = lv_filter.
+*    ENDIF.
 
-    IF lines( lt_material ) < 20.
+    IF lines( lt_material ) < 40.
       CLEAR lv_count.
       LOOP AT lt_material INTO DATA(ls_material).
         lv_count += 1.
@@ -360,48 +390,63 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       lv_filter = |{ lv_filter } and Material ne ''|.
     ENDIF.
 
+    DATA(lv_top) = 5000.
+    DATA(lv_skip) = 0.
+    DATA(lv_while) = abap_on.
 
 *   部品の入庫予測データを取得
 *   PO登録した後の原材料Supplyの数字を取得する（ZMM80）
-    DATA(lv_path) = |/zui_podataanalysis_o4/srvd/sap/zui_podataanalysis_o4/0001/PODataAnalysis?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-    DATA(lv_select) = |Plant,Material,Supplier,DeliveryDate,ScheduleLineDeliveryDate,ConfirmedQuantity,OrderQuantity|.
-    zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
-                                                 iv_method      = if_web_http_client=>get
-                                                 iv_select      = lv_select
-                                                 iv_filter      = lv_filter
-                                                 iv_format      = 'json'
-                                       IMPORTING ev_status_code = DATA(lv_status_code)
-                                                 ev_response    = DATA(lv_response) ).
-    IF lv_status_code = 200.
+    WHILE lv_while IS NOT INITIAL.
+      clear lv_while.
+      DATA(lv_path) = |/zui_podataanalysis_o4/srvd/sap/zui_podataanalysis_o4/0001/PODataAnalysis?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+      DATA(lv_select) = |Plant,Material,Supplier,DeliveryDate,ScheduleLineDeliveryDate,ConfirmedQuantity,OrderQuantity|.
+      zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+                                                   iv_method      = if_web_http_client=>get
+                                                   iv_select      = lv_select
+                                                   iv_filter      = lv_filter
+                                                   iv_format      = 'json'
+                                         IMPORTING ev_status_code = DATA(lv_status_code)
+                                                   ev_response    = DATA(lv_response) ).
+      IF lv_status_code = 200.
+        REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_response  WITH `count`.
 *     json => abap
 *      xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
 *        ( xco_cp_json=>transformation->pascal_case_to_underscore )
 *      ) )->write_to( REF #( ls_podataanalysis ) ).
-      /ui2/cl_json=>deserialize( EXPORTING json = lv_response
-                                 CHANGING  data = ls_podataanalysis ).
+        /ui2/cl_json=>deserialize( EXPORTING json = lv_response
+                                   CHANGING  data = ls_podataanalysis ).
 
-      DELETE ls_podataanalysis-value WHERE ( ( deliverydate IS NOT INITIAL AND ( deliverydate < lv_now_start OR deliverydate > lv_next_end ) OR
-                                   deliverydate IS INITIAL AND ( schedulelinedeliverydate < lv_now_start OR schedulelinedeliverydate > lv_next_end )  ) ).
-
-      LOOP AT ls_podataanalysis-value ASSIGNING FIELD-SYMBOL(<fs_l_response>).
-        IF <fs_l_response>-deliverydate IS NOT INITIAL.
-          ls_supply-yearmonth = <fs_l_response>-deliverydate+0(6).
-        ELSEIF <fs_l_response>-schedulelinedeliverydate IS NOT INITIAL.
-          ls_supply-yearmonth = <fs_l_response>-schedulelinedeliverydate+0(6).
+        APPEND LINES OF ls_podataanalysis-value TO lt_podataanalysis.
+        if lines( lt_podataanalysis ) < ls_podataanalysis-count.
+            lv_while = abap_on.
+            lv_top = ls_podataanalysis-count - lines( lt_podataanalysis ).
+            lv_skip = 5000 * sy-index.
         ENDIF.
+      ENDIF.
+    ENDWHILE.
 
-        IF <fs_l_response>-confirmedquantity IS NOT INITIAL.
-          ls_supply-supplyquantity = <fs_l_response>-confirmedquantity.
-        ELSEIF <fs_l_response>-orderquantity IS NOT INITIAL.
-          ls_supply-supplyquantity = <fs_l_response>-orderquantity.
-        ENDIF.
-        ls_supply-material = <fs_l_response>-material.
-        ls_supply-plant    = <fs_l_response>-plant.
+    DELETE lt_podataanalysis WHERE ( ( deliverydate IS NOT INITIAL AND ( deliverydate < lv_now_start OR deliverydate > lv_next_end ) OR
+                                 deliverydate IS INITIAL AND ( schedulelinedeliverydate < lv_now_start OR schedulelinedeliverydate > lv_next_end )  ) ).
+
+    LOOP AT lt_podataanalysis ASSIGNING FIELD-SYMBOL(<fs_l_response>).
+      IF <fs_l_response>-deliverydate IS NOT INITIAL.
+        ls_supply-yearmonth = <fs_l_response>-deliverydate+0(6).
+      ELSEIF <fs_l_response>-schedulelinedeliverydate IS NOT INITIAL.
+        ls_supply-yearmonth = <fs_l_response>-schedulelinedeliverydate+0(6).
+      ENDIF.
+
+      IF <fs_l_response>-confirmedquantity IS NOT INITIAL.
+        ls_supply-supplyquantity = <fs_l_response>-confirmedquantity.
+      ELSEIF <fs_l_response>-orderquantity IS NOT INITIAL.
+        ls_supply-supplyquantity = <fs_l_response>-orderquantity.
+      ENDIF.
+      ls_supply-material = <fs_l_response>-material.
+      ls_supply-plant    = <fs_l_response>-plant.
 *        ls_supply-supplier = <fs_l_response>-supplier.
-        COLLECT ls_supply INTO lt_supply.
-        CLEAR ls_supply.
-      ENDLOOP.
-    ENDIF.
+      COLLECT ls_supply INTO lt_supply.
+      CLEAR ls_supply.
+    ENDLOOP.
+
 
 *   PO登録されない原材料のSupplyの数字を取得する（ZMM06）
 *    DATA(lv_select) = |Plant,Material,DeliveryDate,ScheduleLineDeliveryDate,ConfirmedQuantity,OrderQuantity|.
@@ -529,7 +574,10 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         ls_bi1003-created_at         = lv_timestamp.
         ls_bi1003-last_changed_by    = sy-uname.
         ls_bi1003-last_changed_at    = lv_timestamp.
-        ls_bi1003-yearmonth          = <fs_l_demand>-yearmonth.
+        zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date   = |{ <fs_l_demand>-yearmonth }01|
+                                                   IMPORTING ev_year   = lv_gjahr
+                                                             ev_period = lv_poper ).
+        ls_bi1003-yearmonth          = |{ lv_gjahr }{ lv_poper }|.
         ls_bi1003-plant              = <fs_l_demand>-plant.
 
 *       前月の在庫実績の製品
@@ -540,44 +588,89 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                    BINARY SEARCH.
         IF sy-subrc = 0
         AND <fs_l_demand>-demandquantity <= <fs_l_1016>-valuationquantity.
-          ls_bi1003-customer        = <fs_l_1016>-businesspartner.
-          ls_bi1003-customertext    = <fs_l_1016>-businesspartnername.
-          ls_bi1003-materialtype    = <fs_l_1016>-materialtype.
-          ls_bi1003-materialtypetext = <fs_l_1016>-materialtypename.
+          ls_bi1003-customer           = <fs_l_1016>-businesspartner.
+          ls_bi1003-customertext       = <fs_l_1016>-businesspartnername.
+          ls_bi1003-materialtype       = <fs_l_1016>-materialtype.
+          ls_bi1003-materialtypetext   = <fs_l_1016>-materialtypename.
 
-          ls_bi1003-companycode     = <fs_l_1016>-companycode.
-          ls_bi1003-product         = <fs_l_1016>-material.
+          ls_bi1003-companycode        = <fs_l_1016>-companycode.
+          ls_bi1003-product            = <fs_l_1016>-material.
+          ls_bi1003-planttext          = <fs_l_1016>-plantname.
+          ls_bi1003-companycodetext    = <fs_l_1016>-companycodename.
+          ls_bi1003-productdescription = <fs_l_1016>-productname.
+
           ls_bi1003-balanceopenning = <fs_l_1016>-valuationquantity.    "Balance（期首）
           ls_bi1003-demand          = <fs_l_demand>-demandquantity.     "Demand
           ls_bi1003-balanceclosing  = <fs_l_1016>-valuationquantity     "Balance（期末）
                                     - <fs_l_demand>-demandquantity.
 
-*              ls_bi1003-Unit   =       "数量単位
+          ls_bi1003-unit   = <fs_l_1016>-unit.     "数量単位
           ls_bi1003-standardprice = <fs_l_1016>-standardprice.            "標準原価
           ls_bi1003-actualprice   = <fs_l_1016>-movingaverageprice.       "実際原価
           ls_bi1003-companycodecurrency = <fs_l_1016>-displaycurrency.    "通貨
-
+*         期末在庫金額
+          IF ls_bi1003-actualprice IS NOT INITIAL.
+            ls_bi1003-closinginventorytotal = ls_bi1003-actualprice * ls_bi1003-balanceclosing.
+          ELSE.
+            ls_bi1003-closinginventorytotal = ls_bi1003-standardprice * ls_bi1003-balanceclosing.
+          ENDIF.
 *         次の月の期首在庫は前月の期末予測在庫になります
-          <fs_l_1016>-valuationquantity = <fs_l_1016>-valuationquantity - <fs_l_demand>-demandquantity.
+          <fs_l_1016>-valuationquantity = ls_bi1003-balanceclosing.
 
 *         製品
-          APPEND ls_bi1003 TO lt_bi1003.
-        ELSEIF <fs_l_demand>-demandquantity > <fs_l_1016>-valuationquantity.
-          ls_bi1003-companycode     = <fs_l_1016>-companycode.
-          ls_bi1003-product         = <fs_l_1016>-material.
-          ls_bi1003-balanceopenning = <fs_l_1016>-valuationquantity.    "Balance（期首）
-          ls_bi1003-demand          = <fs_l_1016>-valuationquantity.    "Demand
-          ls_bi1003-balanceclosing  = 0.                                "Balance（期末）
-          ls_bi1003-standardprice = <fs_l_1016>-standardprice.            "標準原価
-          ls_bi1003-actualprice   = <fs_l_1016>-movingaverageprice.       "実際原価
-          ls_bi1003-companycodecurrency = <fs_l_1016>-displaycurrency.    "通貨
-*         製品
-          APPEND ls_bi1003 TO lt_bi1003.
-          CLEAR ls_bi1003.
+          READ TABLE lt_bi1003 ASSIGNING FIELD-SYMBOL(<fs_l_bi1003>)
+            WITH KEY yearmonth = ls_bi1003-yearmonth
+                     plant     = ls_bi1003-plant
+                     product   = ls_bi1003-product.
+          IF sy-subrc <> 0.
+            APPEND ls_bi1003 TO lt_bi1003.
+          ELSE.
+            <fs_l_bi1003>-demand         = <fs_l_bi1003>-demand + ls_bi1003-demand.         "Demand
+            <fs_l_bi1003>-balanceclosing = ls_bi1003-balanceclosing.                        "Balance（期末）
+            <fs_l_bi1003>-closinginventorytotal = ls_bi1003-closinginventorytotal.          "期末在庫金額
+          ENDIF.
+        ELSE.
+          IF  sy-subrc = 0
+          AND <fs_l_demand>-demandquantity > <fs_l_1016>-valuationquantity.
+            ls_bi1003-customer         = <fs_l_1016>-businesspartner.
+            ls_bi1003-customertext     = <fs_l_1016>-businesspartnername.
+            ls_bi1003-materialtype     = <fs_l_1016>-materialtype.
+            ls_bi1003-materialtypetext = <fs_l_1016>-materialtypename.
 
-          lv_next_qty = <fs_l_demand>-demandquantity - <fs_l_1016>-valuationquantity.
-*         次の月の期首在庫は前月の期末予測在庫になります
-          <fs_l_1016>-valuationquantity = 0.
+            ls_bi1003-companycode        = <fs_l_1016>-companycode.
+            ls_bi1003-product            = <fs_l_1016>-material.
+            ls_bi1003-planttext          = <fs_l_1016>-plantname.
+            ls_bi1003-companycodetext    = <fs_l_1016>-companycodename.
+            ls_bi1003-productdescription = <fs_l_1016>-productname.
+            ls_bi1003-unit               = <fs_l_1016>-unit.     "数量単位
+            ls_bi1003-balanceopenning = <fs_l_1016>-valuationquantity.    "Balance（期首）
+            ls_bi1003-demand          = <fs_l_1016>-valuationquantity.    "Demand
+            ls_bi1003-balanceclosing  = 0.                                "Balance（期末）
+            ls_bi1003-closinginventorytotal = 0.                            "期末在庫金額
+            ls_bi1003-standardprice = <fs_l_1016>-standardprice.            "標準原価
+            ls_bi1003-actualprice   = <fs_l_1016>-movingaverageprice.       "実際原価
+            ls_bi1003-companycodecurrency = <fs_l_1016>-displaycurrency.    "通貨
+*             製品
+            READ TABLE lt_bi1003 ASSIGNING <fs_l_bi1003>
+              WITH KEY yearmonth = ls_bi1003-yearmonth
+                       plant     = ls_bi1003-plant
+                       product   = ls_bi1003-product.
+            IF sy-subrc <> 0.
+              APPEND ls_bi1003 TO lt_bi1003.
+            ELSE.
+              <fs_l_bi1003>-demand         = <fs_l_bi1003>-demand + ls_bi1003-demand.         "Demand
+              <fs_l_bi1003>-balanceclosing = ls_bi1003-balanceclosing.                        "Balance（期末）
+              <fs_l_bi1003>-closinginventorytotal = ls_bi1003-closinginventorytotal.          "期末在庫金額
+            ENDIF.
+            CLEAR ls_bi1003.
+
+            lv_next_qty = <fs_l_demand>-demandquantity - <fs_l_1016>-valuationquantity.
+*             次の月の期首在庫は前月の期末予測在庫になります
+            <fs_l_1016>-valuationquantity = 0.
+          ELSE.
+            lv_next_qty = <fs_l_demand>-demandquantity.
+          ENDIF.
+*         BOM 展开
           DATA(lv_next) = <fs_l_demand>-material.
           WHILE lv_next IS NOT INITIAL .
             LOOP AT lt_bom_api ASSIGNING FIELD-SYMBOL(<fs_l_bom>)
@@ -589,7 +682,11 @@ CLASS zcl_bi005_job IMPLEMENTATION.
               ls_bi1003-created_at         = lv_timestamp.
               ls_bi1003-last_changed_by    = sy-uname.
               ls_bi1003-last_changed_at    = lv_timestamp.
-              ls_bi1003-yearmonth          = <fs_l_demand>-yearmonth.
+              ls_bi1003-yearmonth          = |{ lv_gjahr }{ lv_poper }|.
+              ls_bi1003-plant              = <fs_l_demand>-plant.
+
+              lv_bom_qty = lv_next_qty * <fs_l_bom>-billofmaterialitemquantity.
+
 *             前月の在庫実績の半製品
               READ TABLE lt_1016 ASSIGNING <fs_l_1016>
                 WITH KEY plant    = <fs_l_demand>-plant
@@ -597,15 +694,23 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 *                         businesspartner = <fs_l_demand>-customer
                          BINARY SEARCH.
               IF sy-subrc = 0.
-                lv_bom_qty = lv_next_qty * <fs_l_bom>-billofmaterialitemquantity.
                 ls_bi1003-companycode     = <fs_l_1016>-companycode.
-                ls_bi1003-product         = <fs_l_1016>-material.
+                ls_bi1003-product         = <fs_l_bom>-billofmaterialcomponent.
 
                 ls_bi1003-balanceopenning = <fs_l_1016>-valuationquantity.      "Balance（期首）
-*              ls_bi1003-Unit   =       "数量単位
+                ls_bi1003-unit   = <fs_l_1016>-unit.     "数量単位
                 ls_bi1003-standardprice = <fs_l_1016>-standardprice.            "標準原価
                 ls_bi1003-actualprice   = <fs_l_1016>-movingaverageprice.       "実際原価
                 ls_bi1003-companycodecurrency = <fs_l_1016>-displaycurrency.    "通貨
+
+                ls_bi1003-customer        = <fs_l_1016>-businesspartner.
+                ls_bi1003-customertext    = <fs_l_1016>-businesspartnername.
+                ls_bi1003-materialtype    = <fs_l_1016>-materialtype.
+                ls_bi1003-materialtypetext = <fs_l_1016>-materialtypename.
+
+                ls_bi1003-planttext          = <fs_l_1016>-plantname.
+                ls_bi1003-companycodetext    = <fs_l_1016>-companycodename.
+                ls_bi1003-productdescription = <fs_l_1016>-productname.
 
                 IF lv_bom_qty <= <fs_l_1016>-valuationquantity
                 OR <fs_l_bom>-isassembly IS INITIAL.
@@ -620,7 +725,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                   ENDIF.
 
 *                 次の月の期首在庫は前月の期末予測在庫になります
-                  <fs_l_1016>-valuationquantity = <fs_l_1016>-valuationquantity - lv_bom_qty.
+                  <fs_l_1016>-valuationquantity = ls_bi1003-balanceclosing.
 
 *                 原材料の場合
                   IF <fs_l_bom>-isassembly IS INITIAL.
@@ -635,11 +740,22 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                       ls_bi1003-supply = ls_supply-supplyquantity.
                       ls_bi1003-balanceclosing  = ls_bi1003-balanceclosing     "Balance（期末）
                                                 + ls_bi1003-supply.
+                      <fs_l_1016>-valuationquantity = ls_bi1003-balanceclosing.
                     ENDIF.
                   ENDIF.
 
 *                 半製品/原材料
-                  APPEND ls_bi1003 TO lt_bi1003.
+                  READ TABLE lt_bi1003 ASSIGNING <fs_l_bi1003>
+                    WITH KEY yearmonth = ls_bi1003-yearmonth
+                             plant     = ls_bi1003-plant
+                             product   = ls_bi1003-product.
+                  IF sy-subrc <> 0.
+                    APPEND ls_bi1003 TO lt_bi1003.
+                  ELSE.
+                    <fs_l_bi1003>-demand         = <fs_l_bi1003>-demand + ls_bi1003-demand.         "Demand
+                    <fs_l_bi1003>-balanceclosing = ls_bi1003-balanceclosing.                        "Balance（期末）
+                    <fs_l_bi1003>-closinginventorytotal = ls_bi1003-closinginventorytotal.          "期末在庫金額
+                  ENDIF.
                 ELSEIF lv_bom_qty > <fs_l_1016>-valuationquantity.
 *                  ls_bi1003-companycode     = <fs_l_1016>-material.
 *                  ls_bi1003-balanceopenning = <fs_l_1016>-valuationquantity.    "Balance（期首）
@@ -649,11 +765,21 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                   ls_bi1003-closinginventorytotal = 0.
 
 *                 半製品
-                  APPEND ls_bi1003 TO lt_bi1003.
+                  READ TABLE lt_bi1003 ASSIGNING <fs_l_bi1003>
+                    WITH KEY yearmonth = ls_bi1003-yearmonth
+                             plant     = ls_bi1003-plant
+                             product   = ls_bi1003-product.
+                  IF sy-subrc <> 0.
+                    APPEND ls_bi1003 TO lt_bi1003.
+                  ELSE.
+                    <fs_l_bi1003>-demand         = <fs_l_bi1003>-demand + ls_bi1003-demand.         "Demand
+                    <fs_l_bi1003>-balanceclosing = ls_bi1003-balanceclosing.                        "Balance（期末）
+                    <fs_l_bi1003>-closinginventorytotal = ls_bi1003-closinginventorytotal.          "期末在庫金額
+                  ENDIF.
 
                   IF <fs_l_bom>-isassembly IS NOT INITIAL.
 *                   半製品
-                    ls_demand-material = <fs_l_1016>-material.
+                    ls_demand-material = <fs_l_bom>-billofmaterialcomponent.
                     ls_demand-plant    = <fs_l_1016>-plant.
 *                    ls_demand-customer = <fs_l_1016>-businesspartner.
                     ls_demand-demandquantity = lv_bom_qty - <fs_l_1016>-valuationquantity.
@@ -664,11 +790,24 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                 ELSE.
 *                  CONTINUE.
                 ENDIF.
+              ELSE.
+                IF <fs_l_bom>-isassembly IS NOT INITIAL.
+*                 半製品
+                  ls_demand-material = <fs_l_bom>-billofmaterialcomponent.
+                  ls_demand-plant    = <fs_l_demand>-plant.
+*                    ls_demand-customer = <fs_l_1016>-businesspartner.
+                  ls_demand-demandquantity = lv_bom_qty.
+                  APPEND ls_demand TO lt_demand_zhlb.
+                ENDIF.
               ENDIF.
               CLEAR:
+                ls_demand,
                 ls_bi1003,
                 lv_bom_qty.
             ENDLOOP.
+            CLEAR:
+              lv_next,
+              lv_next_qty.
 
             READ TABLE lt_demand_zhlb INTO ls_demand INDEX 1.
             IF sy-subrc = 0.
@@ -676,10 +815,6 @@ CLASS zcl_bi005_job IMPLEMENTATION.
               lv_next_qty = ls_demand-demandquantity.
               DELETE lt_demand_zhlb INDEX 1.
             ENDIF.
-            CLEAR:
-              ls_demand,
-              lv_next,
-              lv_next_qty.
           ENDWHILE.
         ENDIF.
         CLEAR ls_bi1003.

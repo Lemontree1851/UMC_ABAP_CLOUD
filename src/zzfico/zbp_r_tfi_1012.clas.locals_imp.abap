@@ -85,6 +85,8 @@ CLASS lhc_zr_tfi_1012 DEFINITION INHERITING FROM cl_abap_behavior_handler.
             page_num                         TYPE i,
             total_page_num                   TYPE i,
             print_user(30)                   TYPE c,
+            currentdate                      TYPE string,
+            currenttime                      TYPE string,
           END OF lty_prt_h.
     TYPES:tt_prt_i TYPE STANDARD TABLE OF lty_prt_i WITH DEFAULT KEY.
     TYPES:BEGIN OF lty_prts,
@@ -123,7 +125,7 @@ CLASS lhc_zr_tfi_1012 DEFINITION INHERITING FROM cl_abap_behavior_handler.
             accountingdoccreationdate_w      TYPE    bldat,
             accountingdoccategory_w          TYPE    char1,
             accountingdocumentstatusname(60) TYPE    c,
-            wrkflwtskcreationutcdatetime     TYPE    tzntstmpl,
+            wrkflwtskcreationutcdatetime     TYPE    string,
             reversedocumentfiscalyear        TYPE gjahr,
             reversedocument                  TYPE belnr_d,
             "ITEM
@@ -198,7 +200,7 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
            servicedefinitionname,
            xdpcontent
       FROM zzr_prt_template
-     WHERE templateid = 'YY1_TEST1'
+     WHERE templateid = 'YY1_ACCOUNT_PRT'
       INTO @DATA(ls_template).
 
     READ TABLE keys INTO DATA(key) INDEX 1.
@@ -282,9 +284,9 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
         workitem                       TYPE string,
         accountingdocumentcategory     TYPE string,
         createdbyusername              TYPE string,
-        accountingdocumentcreationdate TYPE string,
+        accountingdocumentcreationdate TYPE timestamp,
         accountingdocumentstatusname   TYPE string,
-
+        accountingdocument_d           TYPE sy-datum,
       END OF ty_results,
       tt_results TYPE STANDARD TABLE OF ty_results WITH DEFAULT KEY,
       BEGIN OF ty_d,
@@ -296,7 +298,9 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
       BEGIN OF ty_results1,
         workflowinternalid           TYPE string,
 
-        wrkflwtskcreationutcdatetime TYPE string,
+        wrkflwtskcreationutcdatetime TYPE timestamp,
+
+        wrkflwtsk_d                  TYPE sy-datum,
       END OF ty_results1,
       tt_results1 TYPE STANDARD TABLE OF ty_results1 WITH DEFAULT KEY,
       BEGIN OF ty_d1,
@@ -439,8 +443,10 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
           ev_status_code = DATA(lv_stat_code)
           ev_response    = DATA(lv_resbody_api) ).
       "JSON->ABAP
-      xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
-          ( xco_cp_json=>transformation->underscore_to_camel_case ) ) )->write_to( REF #( ls_res_api ) ).
+      "xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
+      "    ( xco_cp_json=>transformation->underscore_to_camel_case ) ) )->write_to( REF #( ls_res_api ) ).
+      /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+                   CHANGING  data = ls_res_api ).
       IF ls_res_api-d-results IS NOT INITIAL.
 
         lv_path = |/YY1_WORKFLOWSTATUSOVERVIEW_CDS/YY1_WorkflowStatusOverview|.
@@ -455,8 +461,10 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
             ev_response    = DATA(lv_resbody_api1) ).
         TRY.
             "JSON->ABAP
-            xco_cp_json=>data->from_string( lv_resbody_api1 )->apply( VALUE #(
-               ( xco_cp_json=>transformation->underscore_to_camel_case ) ) )->write_to( REF #( ls_res_api1 ) ).
+            "xco_cp_json=>data->from_string( lv_resbody_api1 )->apply( VALUE #(
+            "   ( xco_cp_json=>transformation->underscore_to_camel_case ) ) )->write_to( REF #( ls_res_api1 ) ).
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
+                   CHANGING  data = ls_res_api1 ).
           CATCH cx_root INTO DATA(lx_root1).
         ENDTRY.
       ENDIF.
@@ -866,12 +874,16 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
             ls_select-workitem = ls_result1-workitem .
             ls_select-accountingdoccategory_w  = ls_result1-accountingdocumentcategory  .
             ls_select-createdbyusername = ls_result1-createdbyusername .
-            ls_select-accountingdoccreationdate_w = ls_result1-accountingdocumentcreationdate .
+            "ls_select-accountingdoccreationdate_w = ls_result1-accountingdocumentcreationdate .
             ls_select-accountingdocumentstatusname = ls_result1-accountingdocumentstatusname .
+            ls_result1-accountingdocument_d = CONV string( ls_result1-accountingdocumentcreationdate DIV 1000000 ).
+            ls_select-accountingdoccreationdate_w = ls_result1-accountingdocument_d .
+
             READ TABLE ls_res_api1-d-results INTO DATA(ls_result11)
             WITH KEY workflowinternalid = ls_select-workitem .
             IF sy-subrc = 0.
-              ls_select-wrkflwtskcreationutcdatetime = ls_result11-wrkflwtskcreationutcdatetime.
+              ls_result11-wrkflwtsk_d = CONV string( ls_result11-wrkflwtskcreationutcdatetime DIV 1000000 ).
+              ls_select-wrkflwtskcreationutcdatetime = ls_result11-wrkflwtsk_d.
             ENDIF.
           ENDIF.
           READ TABLE lt_sum1 INTO ls_sum
@@ -1207,6 +1219,8 @@ WITH KEY companycode = ls_select-companycode
             IF ls_select-accountingdoccreationdate_w IS INITIAL.
               CLEAR ls_header-accountingdoccreationdate_w.
             ENDIF.
+            ls_header-currentdate = sy-datum+0(4) && '/' && sy-datum+4(2) && '/' && sy-datum+6(2).
+            ls_header-currenttime = sy-uzeit+0(2) && ':' && sy-uzeit+2(2) && ':' && sy-uzeit+4(2).
             ls_print-_header = ls_header.
             IF lv_page < c_page.
               DO c_page - lv_page TIMES.
@@ -1232,6 +1246,20 @@ WITH KEY companycode = ls_select-companycode
           ls_item-transactioncurrency  = ls_select-transactioncurrency_i .
           ls_item-debitamountintranscrcy = ls_select-debitamountintranscrcy_i .
           ls_item-creditamountintranscrcy  = ls_select-creditamountintranscrcy_i.
+
+          "金额零不显示
+          IF ls_select-debitamountintranscrcy_i IS INITIAL.
+            CLEAR ls_item-debitamountintranscrcy.
+          ENDIF.
+          IF ls_select-creditamountintranscrcy_i IS INITIAL.
+            CLEAR ls_item-creditamountintranscrcy.
+          ENDIF.
+          IF ls_select-creditamountincocodecrcy IS INITIAL.
+            CLEAR ls_item-creditamountincocodecrcy.
+          ENDIF.
+          IF ls_select-debitamountincocodecrcy IS INITIAL.
+            CLEAR ls_item-debitamountincocodecrcy.
+          ENDIF.
 
           CONDENSE :ls_item-glaccountname,ls_item-bpname,ls_item-yy1_f_fins1z02_cob,ls_item-yy1_f_fins2z02_cob,ls_item-fixedassetdescription.
           ls_item-glaccountname = |{ ls_item-glaccount ALPHA = OUT }|  && ls_item-glaccountname.
@@ -1275,6 +1303,8 @@ WITH KEY companycode = ls_select-companycode
             IF ls_select-accountingdoccreationdate_w IS INITIAL.
               CLEAR ls_header-accountingdoccreationdate_w.
             ENDIF.
+            ls_header-currentdate = sy-datum+0(4) && '/' && sy-datum+4(2) && '/' && sy-datum+6(2).
+            ls_header-currenttime = sy-uzeit+0(2) && ':' && sy-uzeit+2(2) && ':' && sy-uzeit+4(2).
             ls_print-_header = ls_header.
             ls_print-_item   = lt_item.
 
@@ -1312,6 +1342,8 @@ WITH KEY companycode = ls_select-companycode
           ENDIF.
 
 
+          ls_header-currentdate = sy-datum+0(4) && '/' && sy-datum+4(2) && '/' && sy-datum+6(2).
+          ls_header-currenttime = sy-uzeit+0(2) && ':' && sy-uzeit+2(2) && ':' && sy-uzeit+4(2).
 
           ls_print-_header = ls_header.
           IF lv_page < c_page.

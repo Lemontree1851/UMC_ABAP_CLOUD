@@ -19,6 +19,9 @@ CLASS lhc_splitrule DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS excute CHANGING ct_data TYPE lty_request_t.
     METHODS export IMPORTING it_data              TYPE lty_request_t
                    RETURNING VALUE(rv_recorduuid) TYPE sysuuid_c36.
+
+    METHODS is_invalid_datestr IMPORTING iv_input          TYPE string
+                               RETURNING VALUE(rv_invalid) TYPE abap_boolean.
 ENDCLASS.
 
 CLASS lhc_splitrule IMPLEMENTATION.
@@ -137,6 +140,9 @@ CLASS lhc_splitrule IMPLEMENTATION.
 
       IF <lfs_data>-validend IS INITIAL.
         MESSAGE e010(zpp_001) WITH TEXT-006 INTO lv_msg.
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+      ELSEIF is_invalid_datestr( CONV #( <lfs_data>-validend ) ).
+        MESSAGE e111(zpp_001) WITH TEXT-006 INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
       ELSE.
         SELECT SINGLE *
@@ -281,6 +287,26 @@ CLASS lhc_splitrule IMPLEMENTATION.
           " handle exception
       ENDTRY.
     ENDIF.
+  ENDMETHOD.
+
+  METHOD is_invalid_datestr.
+    rv_invalid = abap_false.
+
+    DATA(lv_date_str) = replace( val = iv_input sub = '/' with = '' ).
+
+    DATA(lv_slash_count) = strlen( iv_input ) - strlen( lv_date_str ).
+    IF lv_slash_count <> 1.
+      rv_invalid = abap_true.
+      RETURN.
+    ENDIF.
+
+    IF strlen( lv_date_str ) <> 6.
+      rv_invalid = abap_true.
+      RETURN.
+    ENDIF.
+
+    DATA(lv_date) = |{ lv_date_str }01|.
+    rv_invalid = zzcl_common_utils=>is_valid_date( CONV #( lv_date ) ).
   ENDMETHOD.
 
 ENDCLASS.

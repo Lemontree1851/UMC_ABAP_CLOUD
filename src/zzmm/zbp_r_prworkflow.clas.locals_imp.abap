@@ -94,6 +94,9 @@ CLASS lhc_purchasereq IMPLEMENTATION.
     DATA:lv_users_prby TYPE STANDARD TABLE OF zc_wf_approvaluser.
     DATA:lv_users_polink TYPE STANDARD TABLE OF zc_wf_approvaluser.
     DATA:lv_auto TYPE STANDARD TABLE OF zc_wf_approvalhistory.
+
+    SELECT * FROM c_SalesPlanValueHelp WITH PRIVILEGED ACCESS INTO TABLE @data(lt_test).
+
     LOOP AT ct_data INTO DATA(cs_data).
 
       CLEAR:lv_current_node,lv_next_node,lv_approvalend, lv_operator,lv_ev_error,lv_error_text,lv_users.

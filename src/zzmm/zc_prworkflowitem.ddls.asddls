@@ -70,5 +70,6 @@ define root view entity ZC_PRWORKFLOWITEM
       @EndUserText.label        : '購入目的テキスト'
       @Consumption.filter.hidden: true
       BuyPurposeText,
-      amount1
+      amount1,
+      zattachment
 }

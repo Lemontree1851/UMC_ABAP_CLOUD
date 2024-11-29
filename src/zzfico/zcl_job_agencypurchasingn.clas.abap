@@ -133,10 +133,7 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
            CASE WHEN jour1~accountingdocument = ztfi_1014~accountingdocument1 THEN ' '
            ELSE ztfi_1014~accountingdocument1 END AS accountingdocument1,
            CASE WHEN jour2~accountingdocument = ztfi_1014~accountingdocument2 THEN ' '
-           ELSE ztfi_1014~accountingdocument2 END AS accountingdocument2,
-           ztfi_1014~message,
-           ztfi_1014~uuid1,
-           ztfi_1014~uuid2
+           ELSE ztfi_1014~accountingdocument2 END AS accountingdocument2
       FROM zr_journalentryitem  AS item1
     INNER JOIN      ztbc_1001                   ON  ztbc_1001~zid     = 'ZFI001'
                                                 AND ztbc_1001~zvalue1 = item1~glaccount
@@ -176,14 +173,11 @@ GROUP BY
   jour2~accountingdocument,
   ztfi_1014~accountingdocument1,
   ztfi_1014~accountingdocument2,
-  ztfi_1014~message,
   item1~companycode,
   item2~companycode,
   item1~companycodecurrency,
   item1~taxcode,
-  item1~glaccount,
-  ztfi_1014~uuid1,
-  ztfi_1014~uuid2
+  item1~glaccount
   INTO TABLE @DATA(lt_data_l).
 
     LOOP AT lt_data_l ASSIGNING FIELD-SYMBOL(<lfs_data_l>).
@@ -200,9 +194,6 @@ GROUP BY
       ls_data-currency3 = ls_data-currency2 - ls_data-currency1.
       ls_data-accountingdocument1 = <lfs_data_l>-accountingdocument1.
       ls_data-accountingdocument2 = <lfs_data_l>-accountingdocument2.
-      ls_data-message = <lfs_data_l>-message.
-      ls_data-uuid1   = '1001'.
-      ls_data-uuid2   = '1002'.
       APPEND ls_data TO lt_item.
     ENDLOOP.
 
@@ -292,8 +283,6 @@ GROUP BY
           " 处理 UUID 错误
           lv_error = 'X'.
           lv_text = 'UUID 作成に失敗しました: ' && lx_uuid_error->get_text( ).
-          " 处理错误或记录日志
-          <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
           lv_msgt = <lfs_item>-message.
           TRY.
@@ -314,7 +303,6 @@ GROUP BY
           " 处理上下文信息错误
           lv_error = 'X'.
           lv_text = 'システムURLの取得に失敗しました: ' && lx_context_error->get_text( ).
-          <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
           lv_msgt = <lfs_item>-message.
           TRY.
@@ -326,7 +314,6 @@ GROUP BY
           " 处理 HTTP 目的地提供者错误
           lv_error = 'X'.
           lv_text = 'HTTP宛先の作成に失敗しました: ' && lx_http_dest_provider_error->get_text( ).
-          <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
           lv_msgt = <lfs_item>-message.
           TRY.
@@ -354,7 +341,6 @@ GROUP BY
             lv_error = 'X'.
             lv_text = 'ZC_TBC1001テーブルからユーザー名またはパスワードを読み込めませんでした'.
 
-            <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
             lv_msgt = <lfs_item>-message.
             TRY.
@@ -375,7 +361,6 @@ GROUP BY
           lv_error = 'X'.
           lv_text = 'HTTP 要求失敗: ' && lx_web_http_client_error->get_text( ).
 
-          <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
           lv_msgt = <lfs_item>-message.
           TRY.
@@ -459,7 +444,6 @@ GROUP BY
           " 在这里处理异常，例如记录错误日志或返回自定义错误消息
           lv_text = 'HTTP リクエストに失敗しました。接続や設定を確認してください。'.
           lv_error = 'X'.
-          <lfs_item>-uuid1 = lv_uuid.
           <lfs_item>-message = lv_text.
           lv_msgt = <lfs_item>-message.
           TRY.
@@ -470,99 +454,97 @@ GROUP BY
       ENDTRY.
 
       lo_response->get_status( RECEIVING r_value = DATA(ls_http_status) ).
-*      IF ls_http_status-code = 200.
-      DATA(lv_string) = lo_response->get_text( ).
 
-*        /ui2/cl_json=>deserialize(
-*        EXPORTING json = lv_string
-*        pretty_name = /ui2/cl_json=>pretty_mode-camel_case
-*        CHANGING data = ls_response ).
+      IF ls_http_status-code = 200.
+        DATA(lv_string) = lo_response->get_text( ).
+        DATA(lv_xstr) = cl_abap_conv_codepage=>create_out( )->convert( source = lv_string ).
+        DATA(lo_xml_reader) = cl_sxml_string_reader=>create( lv_xstr ).
+        DATA:lv_string1 TYPE string,
+             lv_string2 TYPE string.
+        CLEAR lv_string2.
+        DO.
+          DATA(lo_xml_node) = lo_xml_reader->read_next_node( ).
+          IF lo_xml_node IS INITIAL.
+            EXIT.
+          ENDIF.
+
+          IF lo_xml_node->type = if_sxml_node=>co_nt_element_open.
+            DATA(lo_xml_open_element) = CAST if_sxml_open_element( lo_xml_node ).
+            DATA(lv_name) = lo_xml_open_element->qname-name.
+            lv_string1 = |{ lv_string1 },{ lv_name }|.
+          ENDIF.
+          IF  lv_name = 'AccountingDocument'
+          AND lo_xml_node->type = if_sxml_node=>co_nt_value.
+            lv_string1 = lo_xml_reader->value.
+          ENDIF.
+
+          IF  lv_name = 'Note'
+          AND lo_xml_node->type = if_sxml_node=>co_nt_value.
+            IF lv_string2 IS INITIAL.
+              lv_string2 = lo_xml_reader->value.
+            ELSE.
+              lv_string2 = lv_string2 && ' ' && lo_xml_reader->value.
+            ENDIF.
+          ENDIF.
+        ENDDO.
+
+        <lfs_item>-accountingdocument1 = lv_string1.
+
+        IF <lfs_item>-accountingdocument1 <> '0000000000'.
+
+          " 成功消息
+          lv_text = '処理が成功しました。'.
+          lv_error = ''.
 
 
-      DATA(lv_xstr) = cl_abap_conv_codepage=>create_out( )->convert( source = lv_string ).
-      DATA(lo_xml_reader) = cl_sxml_string_reader=>create( lv_xstr ).
-      DATA:lv_string1 TYPE string,
-           lv_string2 TYPE string.
-      CLEAR lv_string2.
-      DO.
-        DATA(lo_xml_node) = lo_xml_reader->read_next_node( ).
-        IF lo_xml_node IS INITIAL.
+          <lfs_item>-message = lv_text.
+
+*       仕訳が転記された後、アドオンテーブルに保存する
+          CLEAR ls_ztfi_1014.
+          ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
+          ls_ztfi_1014-companycode         = <lfs_item>-companycode.
+          ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
+          ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
+          ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
+          ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
+          ls_ztfi_1014-accountingdocument2 = ''.
+*        ls_ztfi_1014-message             = <lfs_item>-message.
+          MODIFY ztfi_1014 FROM @ls_ztfi_1014.
+          lv_msgt = <lfs_item>-message.
+          TRY.
+              add_message_to_log( i_text = lv_msgt i_type = 'S' ).
+            CATCH cx_bali_runtime.
+          ENDTRY.
+        ELSE.
+          CLEAR <lfs_item>-accountingdocument1.
+          lv_string = lo_response->get_text( ).
+          lv_text = lv_string2.
+
+          lv_error = 'X'.
+          <lfs_item>-message = lv_text.
+
+*       仕訳が転記された後、アドオンテーブルに保存する
+          CLEAR ls_ztfi_1014.
+          ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
+          ls_ztfi_1014-companycode         = <lfs_item>-companycode.
+          ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
+          ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
+          ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
+          ls_ztfi_1014-accountingdocument1 = ''.
+          ls_ztfi_1014-accountingdocument2 = ''.
+          ls_ztfi_1014-message             = ''.
+          MODIFY ztfi_1014 FROM @ls_ztfi_1014.
+          lv_msgt = <lfs_item>-message.
+          TRY.
+              add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+            CATCH cx_bali_runtime.
+          ENDTRY.
           EXIT.
         ENDIF.
-
-        IF lo_xml_node->type = if_sxml_node=>co_nt_element_open.
-          DATA(lo_xml_open_element) = CAST if_sxml_open_element( lo_xml_node ).
-          DATA(lv_name) = lo_xml_open_element->qname-name.
-          lv_string1 = |{ lv_string1 },{ lv_name }|.
-        ENDIF.
-        IF  lv_name = 'AccountingDocument'
-        AND lo_xml_node->type = if_sxml_node=>co_nt_value.
-          lv_string1 = lo_xml_reader->value.
-        ENDIF.
-
-        IF  lv_name = 'Note'
-        AND lo_xml_node->type = if_sxml_node=>co_nt_value.
-          IF lv_string2 IS INITIAL.
-            lv_string2 = lo_xml_reader->value.
-          ELSE.
-            lv_string2 = lv_string2 && ' ' && lo_xml_reader->value.
-          ENDIF.
-        ENDIF.
-      ENDDO.
-
-      <lfs_item>-accountingdocument1 = lv_string1.
-
-      IF <lfs_item>-accountingdocument1 <> '0000000000'.
-
-        " 成功消息
-        lv_text = '処理が成功しました。'.
-        lv_error = ''.
-
-
-        <lfs_item>-message = lv_text.
-
-*       仕訳が転記された後、アドオンテーブルに保存する
-        CLEAR ls_ztfi_1014.
-        ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
-        ls_ztfi_1014-companycode         = <lfs_item>-companycode.
-        ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
-        ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
-        ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
-        ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
-        ls_ztfi_1014-accountingdocument2 = ''.
-*        ls_ztfi_1014-message             = <lfs_item>-message.
-        MODIFY ztfi_1014 FROM @ls_ztfi_1014.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'S' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
       ELSE.
         CLEAR <lfs_item>-accountingdocument1.
-        lv_string = lo_response->get_text( ).
-        lv_text = lv_string2.
-
         lv_error = 'X'.
-        <lfs_item>-uuid1 = lv_uuid.
-        <lfs_item>-message = lv_text.
-
-*       仕訳が転記された後、アドオンテーブルに保存する
-        CLEAR ls_ztfi_1014.
-        ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
-        ls_ztfi_1014-companycode         = <lfs_item>-companycode.
-        ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
-        ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
-        ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
-        ls_ztfi_1014-accountingdocument1 = ''.
-        ls_ztfi_1014-accountingdocument2 = ''.
-        ls_ztfi_1014-message             = ''.
-        MODIFY ztfi_1014 FROM @ls_ztfi_1014.
-        lv_msgt = <lfs_item>-message.
-        TRY.
-            add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-          CATCH cx_bali_runtime.
-        ENDTRY.
-        EXIT.
+        <lfs_item>-message = |{ ls_http_status-code } { ls_http_status-reason }|.
       ENDIF.
 
 * 仕訳2：決済対象会社仕訳
@@ -589,7 +571,6 @@ GROUP BY
             lv_error = 'X'.
             lv_text = 'UUID 作成に失敗しました: ' && lx_uuid_error->get_text( ).
             " 处理错误或记录日志
-            <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
             lv_msgt = <lfs_item>-message.
             TRY.
@@ -609,7 +590,6 @@ GROUP BY
             " 处理上下文信息错误
             lv_error = 'X'.
             lv_text = 'システムURLの取得に失敗しました: ' && lx_context_error->get_text( ).
-            <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
             lv_msgt = <lfs_item>-message.
             TRY.
@@ -621,7 +601,6 @@ GROUP BY
             " 处理 HTTP 目的地提供者错误
             lv_error = 'X'.
             lv_text = 'HTTP宛先の作成に失敗しました: ' && lx_http_dest_provider_error->get_text( ).
-            <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
             lv_msgt = <lfs_item>-message.
             TRY.
@@ -646,7 +625,6 @@ GROUP BY
               lv_error = 'X'.
               lv_text = 'ZC_TBC1001テーブルからユーザー名またはパスワードを読み込めませんでした'.
 
-              <lfs_item>-uuid1 = lv_uuid.
               <lfs_item>-message = lv_text.
               lv_msgt = <lfs_item>-message.
               TRY.
@@ -667,7 +645,6 @@ GROUP BY
             lv_error = 'X'.
             lv_text = 'HTTP 要求失敗: ' && lx_web_http_client_error->get_text( ).
 
-            <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
             lv_msgt = <lfs_item>-message.
             TRY.
@@ -756,7 +733,6 @@ GROUP BY
             " 在这里处理异常，例如记录错误日志或返回自定义错误消息
             lv_text = 'HTTP リクエストに失敗しました。接続や設定を確認してください。'.
             lv_error = 'X'.
-            <lfs_item>-uuid1 = lv_uuid.
             <lfs_item>-message = lv_text.
             lv_msgt = <lfs_item>-message.
             TRY.
@@ -768,89 +744,94 @@ GROUP BY
 
         lo_response->get_status( RECEIVING r_value = ls_http_status ).
         lv_string = lo_response->get_text( ).
-        lv_xstr = cl_abap_conv_codepage=>create_out( )->convert( source = lv_string ).
-        lo_xml_reader = cl_sxml_string_reader=>create( lv_xstr ).
-        CLEAR lv_string2.
-        DO.
-          lo_xml_node = lo_xml_reader->read_next_node( ).
-          IF lo_xml_node IS INITIAL.
+
+        IF ls_http_status-code = 200.
+          lv_xstr = cl_abap_conv_codepage=>create_out( )->convert( source = lv_string ).
+          lo_xml_reader = cl_sxml_string_reader=>create( lv_xstr ).
+          CLEAR lv_string2.
+          DO.
+            lo_xml_node = lo_xml_reader->read_next_node( ).
+            IF lo_xml_node IS INITIAL.
+              EXIT.
+            ENDIF.
+
+            IF lo_xml_node->type = if_sxml_node=>co_nt_element_open.
+              lo_xml_open_element = CAST if_sxml_open_element( lo_xml_node ).
+              lv_name = lo_xml_open_element->qname-name.
+              lv_string1 = |{ lv_string1 },{ lv_name }|.
+            ENDIF.
+            IF  lv_name = 'AccountingDocument'
+            AND lo_xml_node->type = if_sxml_node=>co_nt_value.
+              lv_string1 = lo_xml_reader->value.
+            ENDIF.
+
+            IF  lv_name = 'Note'
+            AND lo_xml_node->type = if_sxml_node=>co_nt_value.
+              IF lv_string2 IS INITIAL.
+                lv_string2 = lo_xml_reader->value.
+              ELSE.
+                lv_string2 = lv_string2 && ' ' && lo_xml_reader->value.
+              ENDIF.
+            ENDIF.
+          ENDDO.
+
+          <lfs_item>-accountingdocument2 = lv_string1.
+          IF <lfs_item>-accountingdocument2 <> '0000000000'.
+
+            " 成功消息
+            lv_text = '処理が成功しました。'.
+            lv_error = ''.
+
+            <lfs_item>-message = lv_text.
+
+*       仕訳が転記された後、アドオンテーブルに保存する
+            CLEAR ls_ztfi_1014.
+            ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
+            ls_ztfi_1014-companycode         = <lfs_item>-companycode.
+            ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
+            ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
+            ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
+            ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
+            ls_ztfi_1014-accountingdocument2 = <lfs_item>-accountingdocument2.
+*          ls_ztfi_1014-message             = <lfs_item>-message.
+            MODIFY ztfi_1014 FROM @ls_ztfi_1014.
+            lv_msgt = <lfs_item>-message.
+            TRY.
+                add_message_to_log( i_text = lv_msgt i_type = 'S' ).
+              CATCH cx_bali_runtime.
+            ENDTRY.
+          ELSE.
+            CLEAR <lfs_item>-accountingdocument2.
+
+            lv_text = lv_string2.
+
+            lv_error = 'X'.
+            <lfs_item>-message = lv_text.
+
+*       仕訳が転記された後、アドオンテーブルに保存する
+            CLEAR ls_ztfi_1014.
+            ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
+            ls_ztfi_1014-companycode         = <lfs_item>-companycode.
+            ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
+            ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
+            ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
+            ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
+            ls_ztfi_1014-accountingdocument2 = ''.
+            ls_ztfi_1014-message             = ''.
+            MODIFY ztfi_1014 FROM @ls_ztfi_1014.
+            lv_msgt = <lfs_item>-message.
+            TRY.
+                add_message_to_log( i_text = lv_msgt i_type = 'E' ).
+              CATCH cx_bali_runtime.
+            ENDTRY.
             EXIT.
           ENDIF.
-
-          IF lo_xml_node->type = if_sxml_node=>co_nt_element_open.
-            lo_xml_open_element = CAST if_sxml_open_element( lo_xml_node ).
-            lv_name = lo_xml_open_element->qname-name.
-            lv_string1 = |{ lv_string1 },{ lv_name }|.
-          ENDIF.
-          IF  lv_name = 'AccountingDocument'
-          AND lo_xml_node->type = if_sxml_node=>co_nt_value.
-            lv_string1 = lo_xml_reader->value.
-          ENDIF.
-
-          IF  lv_name = 'Note'
-          AND lo_xml_node->type = if_sxml_node=>co_nt_value.
-            IF lv_string2 IS INITIAL.
-              lv_string2 = lo_xml_reader->value.
-            ELSE.
-              lv_string2 = lv_string2 && ' ' && lo_xml_reader->value.
-            ENDIF.
-          ENDIF.
-        ENDDO.
-
-        <lfs_item>-accountingdocument2 = lv_string1.
-        IF <lfs_item>-accountingdocument2 <> '0000000000'.
-
-          " 成功消息
-          lv_text = '処理が成功しました。'.
-          lv_error = ''.
-
-          <lfs_item>-message = lv_text.
-
-*       仕訳が転記された後、アドオンテーブルに保存する
-          CLEAR ls_ztfi_1014.
-          ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
-          ls_ztfi_1014-companycode         = <lfs_item>-companycode.
-          ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
-          ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
-          ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
-          ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
-          ls_ztfi_1014-accountingdocument2 = <lfs_item>-accountingdocument2.
-*          ls_ztfi_1014-message             = <lfs_item>-message.
-          MODIFY ztfi_1014 FROM @ls_ztfi_1014.
-          lv_msgt = <lfs_item>-message.
-          TRY.
-              add_message_to_log( i_text = lv_msgt i_type = 'S' ).
-            CATCH cx_bali_runtime.
-          ENDTRY.
-        ELSE.
-          CLEAR <lfs_item>-accountingdocument2.
-
-          lv_text = lv_string2.
-
-          lv_error = 'X'.
-          <lfs_item>-uuid1 = lv_uuid.
-          <lfs_item>-message = lv_text.
-
-*       仕訳が転記された後、アドオンテーブルに保存する
-          CLEAR ls_ztfi_1014.
-          ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
-          ls_ztfi_1014-companycode         = <lfs_item>-companycode.
-          ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
-          ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
-          ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
-          ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
-          ls_ztfi_1014-accountingdocument2 = ''.
-          ls_ztfi_1014-message             = ''.
-          MODIFY ztfi_1014 FROM @ls_ztfi_1014.
-          lv_msgt = <lfs_item>-message.
-          TRY.
-              add_message_to_log( i_text = lv_msgt i_type = 'E' ).
-            CATCH cx_bali_runtime.
-          ENDTRY.
-          EXIT.
         ENDIF.
+      ELSE.
+        CLEAR <lfs_item>-accountingdocument2.
+        lv_error = 'X'.
+        <lfs_item>-message = |{ ls_http_status-code } { ls_http_status-reason }|.
       ENDIF.
-
 
     ENDLOOP.
 

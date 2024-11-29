@@ -166,7 +166,7 @@ CLASS lhc_dnprocess IMPLEMENTATION.
         d TYPE ty_delivery_reponse,
       END OF ty_response.
     DATA: ls_request  TYPE ty_outb_delivery_head,
-          ls_bom_item TYPE ty_delivery_document_item,
+          ls_delivery_item TYPE ty_delivery_document_item,
           ls_response TYPE ty_response,
           ls_error_v2 TYPE zzcl_odata_utils=>gty_error,
           is_error    TYPE abap_boolean.
@@ -198,13 +198,13 @@ CLASS lhc_dnprocess IMPLEMENTATION.
       CLEAR ls_request-to_delivery_document_item-results.
       " 行项目信息
       LOOP AT records INTO record_temp WHERE salesdocument = record_key-salesdocument.
-        ls_bom_item-reference_s_d_document = record_temp-salesdocument.
-        ls_bom_item-reference_s_d_document_item = record_temp-salesdocumentitem.
-        ls_bom_item-actual_delivery_quantity = record_temp-acceptquantity.
-        ls_bom_item-delivery_quantity_unit = record_temp-orderquantityunit.
-        CONDENSE ls_bom_item-actual_delivery_quantity NO-GAPS.
-        APPEND ls_bom_item TO ls_request-to_delivery_document_item-results.
-        CLEAR ls_bom_item.
+        ls_delivery_item-reference_s_d_document = record_temp-salesdocument.
+        ls_delivery_item-reference_s_d_document_item = record_temp-salesdocumentitem.
+        ls_delivery_item-actual_delivery_quantity = record_temp-acceptquantity.
+        ls_delivery_item-delivery_quantity_unit = record_temp-orderquantityunit.
+        CONDENSE ls_delivery_item-actual_delivery_quantity NO-GAPS.
+        APPEND ls_delivery_item TO ls_request-to_delivery_document_item-results.
+        CLEAR ls_delivery_item.
       ENDLOOP.
 
       "将数据转换成json格式

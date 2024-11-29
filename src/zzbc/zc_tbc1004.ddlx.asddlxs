@@ -3,7 +3,8 @@
   headerInfo: {
     typeName: 'Authority User',
     typeNamePlural: 'Authority User',
-    title: { type: #STANDARD , value: 'UserId'}
+    title: { type: #STANDARD , value: 'UserId'},
+    description: { type: #STANDARD , value: 'UserName'}
   }
 }
 annotate view ZC_TBC1004 with

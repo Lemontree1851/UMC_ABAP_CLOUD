@@ -27,6 +27,10 @@ CLASS lhc_salesacceptance DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS append CHANGING ct_data         TYPE lty_request_t
                             cv_periodtype   TYPE c
                             cv_acceptperiod TYPE monat.
+    METHODS calc_date CHANGING cv_periodtype   TYPE c
+                               cv_acceptperiod TYPE monat
+                               cv_from         TYPE d
+                               cv_to           TYPE d.
 
     CONSTANTS:
       lc_fin   TYPE c LENGTH 1 VALUE '0'.
@@ -107,50 +111,10 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       lv_msg       TYPE string.
 
 * Calculate date
-    CASE cv_periodtype.
-      WHEN 'A'.  "1日~月末
-        lv_year = xco_cp=>sy->date( )->year.
-        lv_from = lv_year && cv_acceptperiod && '01'.
-        IF cv_acceptperiod = 12.
-          lv_year = lv_year + 1.
-          lv_nextmonth = lv_year && '01' && '01'.
-        ELSE.
-          lv_month = cv_acceptperiod + 1.
-          lv_nextmonth = lv_year && lv_month && '01'.
-        ENDIF.
-        lv_to = lv_nextmonth - 1.
-      WHEN 'B'.  "16日~次月15日
-        lv_year = xco_cp=>sy->date( )->year.
-        lv_from = lv_year && cv_acceptperiod && '16'.
-        IF cv_acceptperiod = 12.
-          lv_year = lv_year + 1.
-          lv_month = '01'.
-        ELSE.
-          lv_month = cv_acceptperiod + 1.
-        ENDIF.
-        lv_to = lv_year && lv_month && '15'.
-      WHEN 'C'.  "21日~次月20日
-        lv_year = xco_cp=>sy->date( )->year.
-        lv_from = lv_year && cv_acceptperiod && '21'.
-        IF cv_acceptperiod = 12.
-          lv_year = lv_year + 1.
-          lv_month = '01'.
-        ELSE.
-          lv_month = cv_acceptperiod + 1.
-        ENDIF.
-        lv_to = lv_year && lv_month && '20'.
-
-      WHEN 'D'.  "26日~次月25日
-        lv_year = xco_cp=>sy->date( )->year.
-        lv_from = lv_year && cv_acceptperiod && '26'.
-        IF cv_acceptperiod = 12.
-          lv_year = lv_year + 1.
-          lv_month = '01'.
-        ELSE.
-          lv_month = cv_acceptperiod + 1.
-        ENDIF.
-        lv_to = lv_year && lv_month && '25'.
-    ENDCASE.
+    calc_date( CHANGING cv_periodtype = cv_periodtype
+                        cv_acceptperiod = cv_acceptperiod
+                        cv_from = lv_from
+                        cv_to = lv_to ).
 
 * Material conversion alpha IN
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
@@ -182,19 +146,8 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
        AND customer = @ct_data-customer
       INTO TABLE @DATA(lt_customermaterial).
 
-*    SELECT SalesOrganization,
-*           Customer,
-*           Product,
-*           MaterialByCustomer
-*      FROM I_AdditionalCustomerMaterial
-*      WITH PRIVILEGED ACCESS
-*      FOR ALL ENTRIES IN @ct_data
-*     WHERE SalesOrganization = @ct_data-SalesOrganization
-*       AND customer = @ct_data-Customer
-*      INTO TABLE @DATA(lt_additionalcustomermaterial).
-
     SORT lt_mara BY product.
-    SORT lt_customermaterial BY salesorganization customer materialbycustomer.
+    SORT lt_customermaterial BY salesorganization customer.
 
     LOOP AT ct_data ASSIGNING <lfs_data>.
       CLEAR lv_message.
@@ -250,15 +203,10 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
         " 'UMCProductCode'は値がない、且つ'CustomerMaterial'は値□がある
         READ TABLE lt_customermaterial INTO DATA(ls_customermaterial)
              WITH KEY salesorganization = <lfs_data>-salesorganization
-                      customer = <lfs_data>-customer
-                      materialbycustomer = <lfs_data>-customermaterial BINARY SEARCH.
+                      customer = <lfs_data>-customer BINARY SEARCH.
         IF sy-subrc <> 0.
-*          READ TABLE lt_additionalcustomermaterial
-
-          IF sy-subrc <> 0.
-            MESSAGE s003(zsd_001) WITH <lfs_data>-row TEXT-010 <lfs_data>-customermaterial INTO lv_msg.
-            lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
-          ENDIF.
+          MESSAGE s003(zsd_001) WITH <lfs_data>-row TEXT-010 <lfs_data>-customermaterial INTO lv_msg.
+          lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
         ELSE.
           <lfs_data>-umcproductcode = ls_customermaterial-product.
         ENDIF.
@@ -309,6 +257,11 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       lv_to        TYPE budat,
       lv_message   TYPE string,
       lv_msg       TYPE string.
+* Calculate date
+    calc_date( CHANGING cv_periodtype = cv_periodtype
+                            cv_acceptperiod = cv_acceptperiod
+                            cv_from = lv_from
+                            cv_to = lv_to ).
 
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
       <lfs_data>-umcproductcode = zzcl_common_utils=>conversion_matn1(
@@ -343,8 +296,19 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
        WHERE product = @ct_data-umcproductcode
         INTO TABLE @DATA(lt_mara).
 
-      SORT lt_mara BY product.
+      SELECT salesorganization,
+             customer,
+             product,
+             materialbycustomer
+        FROM i_customermaterial_2
+        WITH PRIVILEGED ACCESS
+        FOR ALL ENTRIES IN @ct_data
+       WHERE salesorganization = @ct_data-salesorganization
+         AND customer = @ct_data-customer
+        INTO TABLE @DATA(lt_customermaterial).
 
+      SORT lt_mara BY product.
+      SORT lt_customermaterial BY salesorganization customer.
 
       LOOP AT ct_data ASSIGNING <lfs_data>.
         ls_ztsd_1003-salesorganization = <lfs_data>-salesorganization.
@@ -353,9 +317,18 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
         ls_ztsd_1003-acceptperiod = <lfs_data>-acceptperiod.
         ls_ztsd_1003-customerpo = <lfs_data>-customerpo.
         ls_ztsd_1003-itemno = <lfs_data>-itemno.
-        ls_ztsd_1003-acceptperiodfrom = <lfs_data>-acceptperiodfrom.
-        ls_ztsd_1003-acceptperiodto = <lfs_data>-acceptperiodto.
-        ls_ztsd_1003-umcproductcode = <lfs_data>-umcproductcode.
+        ls_ztsd_1003-acceptperiodfrom = lv_from.
+        ls_ztsd_1003-acceptperiodto = lv_to.
+        IF <lfs_data>-umcproductcode IS NOT INITIAL.
+          ls_ztsd_1003-umcproductcode = <lfs_data>-umcproductcode.
+        ELSE.
+          READ TABLE lt_customermaterial INTO DATA(ls_customermaterial)
+               WITH KEY salesorganization = <lfs_data>-salesorganization
+                        customer = <lfs_data>-customer BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_ztsd_1003-umcproductcode = ls_customermaterial-product.
+          ENDIF.
+        ENDIF.
         ls_ztsd_1003-customermaterial = <lfs_data>-customermaterial.
         ls_ztsd_1003-customermaterialtext = <lfs_data>-customermaterialtext.
         ls_ztsd_1003-receiptdate = <lfs_data>-receiptdate.
@@ -409,9 +382,15 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       ls_ztsd_1003 TYPE ztsd_1003.
     DATA:
       lv_matnr   TYPE matnr,
+      lv_from    TYPE budat,
+      lv_to      TYPE budat,
       lv_message TYPE string,
       lv_msg     TYPE string.
-
+* Calculate date
+    calc_date( CHANGING cv_periodtype = cv_periodtype
+                            cv_acceptperiod = cv_acceptperiod
+                            cv_from = lv_from
+                            cv_to = lv_to ).
 * Check if exist
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
       <lfs_data>-umcproductcode = zzcl_common_utils=>conversion_matn1(
@@ -475,7 +454,19 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
      WHERE product = @ct_data-umcproductcode
       INTO TABLE @DATA(lt_mara).
 
+    SELECT salesorganization,
+                 customer,
+                 product,
+                 materialbycustomer
+            FROM i_customermaterial_2
+            WITH PRIVILEGED ACCESS
+            FOR ALL ENTRIES IN @ct_data
+           WHERE salesorganization = @ct_data-salesorganization
+             AND customer = @ct_data-customer
+            INTO TABLE @DATA(lt_customermaterial).
+
     SORT lt_mara BY product.
+    SORT lt_customermaterial BY salesorganization customer.
 
     LOOP AT ct_data ASSIGNING <lfs_data>.
       ls_ztsd_1003-salesorganization = <lfs_data>-salesorganization.
@@ -484,9 +475,18 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       ls_ztsd_1003-acceptperiod = <lfs_data>-acceptperiod.
       ls_ztsd_1003-customerpo = <lfs_data>-customerpo.
       ls_ztsd_1003-itemno = <lfs_data>-itemno.
-      ls_ztsd_1003-acceptperiodfrom = <lfs_data>-acceptperiodfrom.
-      ls_ztsd_1003-acceptperiodto = <lfs_data>-acceptperiodto.
-      ls_ztsd_1003-umcproductcode = <lfs_data>-umcproductcode.
+      ls_ztsd_1003-acceptperiodfrom = lv_from.
+      ls_ztsd_1003-acceptperiodto = lv_to.
+      IF <lfs_data>-umcproductcode IS NOT INITIAL.
+        ls_ztsd_1003-umcproductcode = <lfs_data>-umcproductcode.
+      ELSE.
+        READ TABLE lt_customermaterial INTO DATA(ls_customermaterial)
+             WITH KEY salesorganization = <lfs_data>-salesorganization
+                      customer = <lfs_data>-customer BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_ztsd_1003-umcproductcode = ls_customermaterial-product.
+        ENDIF.
+      ENDIF.
       ls_ztsd_1003-customermaterial = <lfs_data>-customermaterial.
       ls_ztsd_1003-customermaterialtext = <lfs_data>-customermaterialtext.
       ls_ztsd_1003-receiptdate = <lfs_data>-receiptdate.
@@ -498,11 +498,11 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       ls_ztsd_1003-acceptprice = zzcl_common_utils=>conversion_amount(
                                                        iv_alpha = 'IN'
                                                        iv_currency = <lfs_data>-currency
-                                                       iv_input = ls_ztsd_1003-acceptprice ).
+                                                       iv_input = <lfs_data>-acceptprice ).
       ls_ztsd_1003-accceptamount = zzcl_common_utils=>conversion_amount(
                                                        iv_alpha = 'IN'
                                                        iv_currency = <lfs_data>-currency
-                                                       iv_input = ls_ztsd_1003-accceptamount ).
+                                                       iv_input = <lfs_data>-accceptamount ).
       ls_ztsd_1003-currency = <lfs_data>-currency.
       ls_ztsd_1003-taxrate = <lfs_data>-taxrate.
       ls_ztsd_1003-outsidedata = <lfs_data>-outsidedata.
@@ -609,9 +609,16 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       ls_ztsd_1003 TYPE ztsd_1003.
     DATA:
       lv_matnr   TYPE matnr,
+      lv_from    TYPE budat,
+      lv_to      TYPE budat,
       lv_message TYPE string,
       lv_msg     TYPE string.
 
+* Calculate date
+    calc_date( CHANGING cv_periodtype = cv_periodtype
+                            cv_acceptperiod = cv_acceptperiod
+                            cv_from = lv_from
+                            cv_to = lv_to ).
 * Check if exist
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
       <lfs_data>-umcproductcode = zzcl_common_utils=>conversion_matn1(
@@ -657,13 +664,24 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
     ENDIF.
 
     SELECT product,
-               baseunit
-          FROM i_product
-           FOR ALL ENTRIES IN @ct_data
-         WHERE product = @ct_data-umcproductcode
-          INTO TABLE @DATA(lt_mara).
+           baseunit
+      FROM i_product
+      FOR ALL ENTRIES IN @ct_data
+     WHERE product = @ct_data-umcproductcode
+      INTO TABLE @DATA(lt_mara).
+
+    SELECT salesorganization,
+           customer,
+           product,
+           materialbycustomer
+      FROM i_customermaterial_2 WITH PRIVILEGED ACCESS
+      FOR ALL ENTRIES IN @ct_data
+     WHERE salesorganization = @ct_data-salesorganization
+       AND customer = @ct_data-customer
+       INTO TABLE @DATA(lt_customermaterial).
 
     SORT lt_mara BY product.
+    SORT lt_customermaterial BY salesorganization customer.
 
     LOOP AT ct_data ASSIGNING <lfs_data>.
       ls_ztsd_1003-salesorganization = <lfs_data>-salesorganization.
@@ -672,9 +690,18 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       ls_ztsd_1003-acceptperiod = <lfs_data>-acceptperiod.
       ls_ztsd_1003-customerpo = <lfs_data>-customerpo.
       ls_ztsd_1003-itemno = <lfs_data>-itemno.
-      ls_ztsd_1003-acceptperiodfrom = <lfs_data>-acceptperiodfrom.
-      ls_ztsd_1003-acceptperiodto = <lfs_data>-acceptperiodto.
-      ls_ztsd_1003-umcproductcode = <lfs_data>-umcproductcode.
+      ls_ztsd_1003-acceptperiodfrom = lv_from.
+      ls_ztsd_1003-acceptperiodto = lv_to.
+      IF <lfs_data>-umcproductcode IS NOT INITIAL.
+        ls_ztsd_1003-umcproductcode = <lfs_data>-umcproductcode.
+      ELSE.
+        READ TABLE lt_customermaterial INTO DATA(ls_customermaterial)
+             WITH KEY salesorganization = <lfs_data>-salesorganization
+                      customer = <lfs_data>-customer BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_ztsd_1003-umcproductcode = ls_customermaterial-product.
+        ENDIF.
+      ENDIF.
       ls_ztsd_1003-customermaterial = <lfs_data>-customermaterial.
       ls_ztsd_1003-customermaterialtext = <lfs_data>-customermaterialtext.
       ls_ztsd_1003-receiptdate = <lfs_data>-receiptdate.
@@ -686,11 +713,11 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       ls_ztsd_1003-acceptprice = zzcl_common_utils=>conversion_amount(
                                                        iv_alpha = 'IN'
                                                        iv_currency = <lfs_data>-currency
-                                                       iv_input = ls_ztsd_1003-acceptprice ).
+                                                       iv_input = <lfs_data>-acceptprice ).
       ls_ztsd_1003-accceptamount = zzcl_common_utils=>conversion_amount(
                                                        iv_alpha = 'IN'
                                                        iv_currency = <lfs_data>-currency
-                                                       iv_input = ls_ztsd_1003-accceptamount ).
+                                                       iv_input = <lfs_data>-accceptamount ).
       ls_ztsd_1003-currency = <lfs_data>-currency.
       ls_ztsd_1003-taxrate = <lfs_data>-taxrate.
       ls_ztsd_1003-outsidedata = <lfs_data>-outsidedata.
@@ -719,6 +746,61 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
         <lfs_data>-message = TEXT-024.  "Update failed
       ENDLOOP.
     ENDIF.
+  ENDMETHOD.
+
+  METHOD calc_date.
+    DATA:
+      lv_year      TYPE c LENGTH 4,
+      lv_month     TYPE monat,
+      lv_nextmonth TYPE budat,
+      lv_from      TYPE budat,
+      lv_to        TYPE budat.
+    CASE cv_periodtype.
+      WHEN 'A'.  "1日~月末
+        lv_year = xco_cp=>sy->date( )->year.
+        lv_from = lv_year && cv_acceptperiod && '01'.
+        IF cv_acceptperiod = 12.
+          lv_year = lv_year + 1.
+          lv_nextmonth = lv_year && '01' && '01'.
+        ELSE.
+          lv_month = cv_acceptperiod + 1.
+          lv_nextmonth = lv_year && lv_month && '01'.
+        ENDIF.
+        lv_to = lv_nextmonth - 1.
+      WHEN 'B'.  "16日~次月15日
+        lv_year = xco_cp=>sy->date( )->year.
+        lv_from = lv_year && cv_acceptperiod && '16'.
+        IF cv_acceptperiod = 12.
+          lv_year = lv_year + 1.
+          lv_month = '01'.
+        ELSE.
+          lv_month = cv_acceptperiod + 1.
+        ENDIF.
+        lv_to = lv_year && lv_month && '15'.
+      WHEN 'C'.  "21日~次月20日
+        lv_year = xco_cp=>sy->date( )->year.
+        lv_from = lv_year && cv_acceptperiod && '21'.
+        IF cv_acceptperiod = 12.
+          lv_year = lv_year + 1.
+          lv_month = '01'.
+        ELSE.
+          lv_month = cv_acceptperiod + 1.
+        ENDIF.
+        lv_to = lv_year && lv_month && '20'.
+
+      WHEN 'D'.  "26日~次月25日
+        lv_year = xco_cp=>sy->date( )->year.
+        lv_from = lv_year && cv_acceptperiod && '26'.
+        IF cv_acceptperiod = 12.
+          lv_year = lv_year + 1.
+          lv_month = '01'.
+        ELSE.
+          lv_month = cv_acceptperiod + 1.
+        ENDIF.
+        lv_to = lv_year && lv_month && '25'.
+    ENDCASE.
+    cv_from = lv_from.
+    cv_to = lv_to.
   ENDMETHOD.
 
 ENDCLASS.

@@ -525,7 +525,7 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
         lw_data-loginflag = ''.
       ENDIF.
 
-      lw_data-deliverylt = lw_data2-materialplanneddeliverydurn + lrs_plusday-low.
+      lw_data-deliverylt = lw_data2-materialplanneddeliverydurn + lv_plusday.
 
       IF lw_data2-materialpriceunitqty <> 0.
         lv_unitprice_plnt = zzcl_common_utils=>conversion_amount( iv_alpha    = zzcl_common_utils=>lc_alpha_out
@@ -747,6 +747,8 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
     IF lv_ztype2 = 'X'.
       DELETE lt_data WHERE condition_validity_end_date <= sy-datum OR condition_validity_start_date >= sy-datum.
     ENDIF.
+
+    DELETE lt_data WHERE latestoffer not in lr_latestoffer.
 
 *    LOOP AT lt_data INTO lw_data.  " 循环遍历 lt_dataS
 *      APPEND lw_data TO lt_output.  " 将当前行的 lw_data 追加到 lt_output 内表

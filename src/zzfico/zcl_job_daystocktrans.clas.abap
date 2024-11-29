@@ -226,6 +226,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
            a~material AS product,                     "品目
            a~valuationarea AS plant,                  "プラント
            a~valuationquantity,                       "評価数量
+           a~unitofmeasure,
            a~companycodecurrency AS currency,         "通貨
            b~producttype,                             "製品タイプ
            c~materialtypename,                        "製品タイプテキスト
@@ -271,7 +272,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
            a~billingquantityunit,
            a~netamount,
            a~transactioncurrency
-      FROM i_billingdocumentitem AS a
+      FROM i_billingdocumentitem WITH PRIVILEGED ACCESS AS a
        INNER JOIN i_product WITH PRIVILEGED ACCESS AS b ON b~product = a~product
      WHERE companycode IN @lr_companycode
        AND plant IN @lr_plant
@@ -342,7 +343,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
         DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
         " Get UQMS Access configuration
         SELECT SINGLE *
-          FROM zc_tbc1001
+          FROM zc_tbc1001 WITH PRIVILEGED ACCESS
          WHERE zid = 'ZBC003'
            AND zvalue1 = @lv_system_url
           INTO @DATA(ls_config).
@@ -523,6 +524,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       GET TIME STAMP FIELD lv_timestamp.
       ls_1015-displaycurrency = <fs_l_group2>-currency.  "照会通貨
 *      ls_1015-uuid = lv_uuid.
+      ls_1015-unit = <fs_l_group2>-unitofmeasure.
       ls_1015-created_by         = sy-uname.
       ls_1015-created_at         = lv_timestamp.
       ls_1015-last_changed_by    = sy-uname.
@@ -561,6 +563,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       ls_1016-type              = |在庫実績|.                  "タイプ
 
 *      GET TIME STAMP FIELD lv_timestamp.
+      ls_1016-unit = <fs_l_group_m>-unitofmeasure.
       ls_1016-displaycurrency    = <fs_l_group_m>-currency.  "照会通貨
       ls_1016-material           = <fs_l_group_m>-product.
       ls_1016-materialtype       = <fs_l_group_m>-producttype.

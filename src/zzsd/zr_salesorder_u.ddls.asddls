@@ -40,7 +40,7 @@ define root view entity ZR_SALESORDER_U
       basic.ShipToParty,
       basic.ShipToPartyName,
       basic.RequestedDeliveryDate,
-      basic.DeliveryDate,
+      basic.GoodsIssueDate,
       basic.OrderQuantity,
       basic.OrderQuantityUnit,
       basic.IncotermsClassification,
@@ -54,9 +54,9 @@ define root view entity ZR_SALESORDER_U
       @Consumption.valueHelpDefinition: [{  entity:{ name: 'I_StorageLocationStdVH', element: 'StorageLocation' },
                                             additionalBinding: [{ localElement: 'Plant', element: 'Plant', usage: #FILTER }] }]
       SalesStorLoc.StorageLocation   as CurrStorageLocation,
-      @Consumption.valueHelpDefinition: [{  entity:{ name: 'I_ShippingTypeText', element: 'ShippingType' },
-                                            additionalBinding: [{ localElement: 'Language', element: 'Language', usage: #FILTER }] }]
+      @Consumption.valueHelpDefinition: [{  entity:{ name: 'ZR_ShippingTypeVH', element: 'ShippingType' } }]
       cast( '' as abap.char(2) )     as CurrShippingType,
+      @Semantics.dateTime: false
       cast( '00000000' as datum )    as CurrPlannedGoodsIssueDate,
       cast( '00000000' as datum )    as CurrDeliveryDate,
       // 生成的dn 可跳转至VL03N
@@ -65,7 +65,7 @@ define root view entity ZR_SALESORDER_U
       cast('' as msgty )              as Type,
       cast('' as abap.char(10))      as Status,
       cast('' as abap.sstring(1000)) as Message,
-      $session.system_language as Language,
+//      $session.system_language as Language,
       _Text
 }
 // where 删除 确认数量为0的数据

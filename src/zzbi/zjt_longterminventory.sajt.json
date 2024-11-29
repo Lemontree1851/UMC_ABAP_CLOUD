@@ -1,0 +1,39 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "長期滞留在庫実績",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "catalogName": "ZJCE_LONGTERMINVENTORY"
+  },
+  "parameters": {
+    "valueRangesParameters": [
+      {
+        "name": "S_BUKRS",
+        "valueRanges": []
+      },
+      {
+        "name": "S_CUST",
+        "valueRanges": []
+      },
+      {
+        "name": "S_MONAT",
+        "valueRanges": []
+      },
+      {
+        "name": "S_PLANT",
+        "valueRanges": []
+      },
+      {
+        "name": "S_PROD",
+        "valueRanges": []
+      },
+      {
+        "name": "S_YEAR",
+        "valueRanges": []
+      }
+    ]
+  }
+}

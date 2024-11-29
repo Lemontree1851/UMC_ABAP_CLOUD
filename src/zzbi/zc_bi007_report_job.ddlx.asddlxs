@@ -1,0 +1,84 @@
+@Metadata.layer: #CUSTOMER
+@UI.headerInfo.title.type: #STANDARD
+@UI.headerInfo.title.value: 'ProductName'
+@UI.headerInfo.description.type: #STANDARD
+@UI.headerInfo.description.value: 'Product'
+@Search.searchable: true
+annotate entity ZC_BI007_REPORT_JOB with
+{
+
+  @UI.lineItem: [{ position: 10, label: 'YearMonth' }]
+  FiscalYearMonth;
+
+  @UI.lineItem: [{ position: 20, label: 'Type' }]
+  Type;
+
+  @UI.selectionField: [{ position: 10 }]
+  @UI.lineItem: [{ position: 30, label: 'Company Code' }]
+  CompanyCode;
+
+  @UI.hidden: true
+  CompanyCodeName;
+
+  @UI.selectionField: [{ position: 20 }]
+  FiscalYear;
+
+  @UI.selectionField: [{ position: 30 }]
+  Period;
+
+  @UI.lineItem: [{ position: 40, label: 'Plant' }]
+  @UI.selectionField: [{ position: 40 }]
+  Plant;
+
+  @UI.lineItem: [{ position: 50, label: 'Product Type' }]
+  ProductType;
+
+  @UI.lineItem: [{ position: 60, label: 'Product' }]
+  @UI.selectionField: [{ position: 50 }]
+  @Search.defaultSearchElement: true
+  Product;
+
+  @UI.hidden: true
+  PlantName;
+
+  @UI.hidden: true
+  ProductName;
+
+  @UI.hidden: true
+  ProductTypeName;
+
+  @UI.lineItem: [{ position: 70, label: 'Profit Center' }]
+  ProfitCenter;
+
+  @UI.hidden: true
+  ProfitCenterName;
+
+  @UI.lineItem: [{ position: 80, label: 'Customer' }]
+  @UI.selectionField: [{ position: 60 }]
+  Customer;
+
+  @UI.hidden: true
+  CustomerName;
+
+  @UI.lineItem: [{ position: 90, label: 'Actual Price' }]
+  ActualPrice;
+
+
+  @UI.lineItem: [{ position: 100, label: 'Quantity' }]
+  Qty;
+
+  @UI.lineItem: [{ position: 110, label: 'Inventory Amount' }]
+  InventoryAmount;
+
+  @UI.hidden: true
+  Currency;
+
+  @UI.hidden: true
+  ValuationArea;
+
+  @UI.hidden: true
+  FiscalPeriod;
+
+  @UI.hidden: true
+  BaseYearMonth;
+}

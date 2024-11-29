@@ -17,6 +17,7 @@ define root view entity ZR_MONTHSTOCKTRANS
       movingaverageprice    as Movingaverageprice,
       @Semantics.amount.currencyCode : 'DisplayCurrency'
       standardprice         as Standardprice,
+      priceunitqty          as Priceunitqty,
       valuationquantity     as Valuationquantity,
       @Semantics.amount.currencyCode : 'DisplayCurrency'
       total                 as Total,

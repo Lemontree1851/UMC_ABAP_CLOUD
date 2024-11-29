@@ -18,9 +18,10 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       ls_output TYPE zr_salesacceptance_result.
 
     DATA:
-      lv_from  TYPE budat,
-      lv_year  TYPE c LENGTH 4,
-      lv_month TYPE monat.
+      lv_from     TYPE budat,
+      lv_year     TYPE c LENGTH 4,
+      lv_month    TYPE monat,
+      lv_netpr(8) TYPE p DECIMALS 2.
 
 * Get filter range
     TRY.
@@ -45,6 +46,12 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         io_response->set_data( lt_output ).
     ENDTRY.
 
+* ZTBC_1001
+    SELECT *
+      FROM ztbc_1001
+     WHERE zid = 'ZSD003'
+        OR zid = 'ZSD004'
+      INTO TABLE @DATA(lt_1001).
 *A 指定される期間の検収データと実績データを抽出
 *A 以前期間に保留となった検収と実績データ
     SELECT *
@@ -96,6 +103,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
        AND periodtype = @lt_1003-periodtype
        AND acceptperiod = @lt_1003-acceptperiod
        AND customerpo = @lt_1003-customerpo
+       AND processstatus = '4'
       INTO TABLE @DATA(lt_1012_t).
     ENDIF.
 
@@ -107,6 +115,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       APPEND LINES OF lt_1012_t TO lt_1012.
     ENDIF.
 
+* Customer Name
 * B I_SalesDocument
 * D I_SalesDocumentItem
     IF lt_1003 IS NOT INITIAL.
@@ -122,6 +131,13 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         FOR ALL ENTRIES IN @lt_1003
        WHERE a~purchaseorderbycustomer = @lt_1003-customerpo
         INTO TABLE @DATA(lt_so).
+
+      SELECT customer,
+             customername
+        FROM i_customer
+        FOR ALL ENTRIES IN @lt_1003
+       WHERE customer = @lt_1003-customer
+        INTO TABLE @DATA(lt_customer).
     ENDIF.
 
     IF lt_so IS NOT INITIAL.
@@ -161,7 +177,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
              referencedocument,
              referencedocumentitem,
              postingdate
-        FROM i_journalentryitem
+        FROM i_journalentryitem WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_billing
        WHERE referencedocument = @lt_billing-billingdocument
          AND referencedocumentitem = @lt_billing-billingdocumentitem
@@ -175,10 +191,12 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
              conditionratevalue,
              conditioncurrency,
              conditionquantity
-        FROM i_billingdocumentitemprcgelmnt
+        FROM i_billingdocumentitemprcgelmnt WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_billing
        WHERE billingdocument = @lt_billing-billingdocument
          AND billingdocumentitem = @lt_billing-billingdocumentitem
+         AND conditiontype = 'PPR0'
+         AND conditioninactivereason = @space
         INTO TABLE @DATA(lt_prcd_elements).
     ENDIF.
 
@@ -189,6 +207,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
     SORT lt_auart BY salesdocumenttype.
     SORT lt_bkpf BY referencedocument referencedocumentitem.
     SORT lt_prcd_elements BY billingdocument billingdocumentitem.
+    SORT lt_customer BY customer.
 
     LOOP AT lt_so INTO DATA(ls_so).
       ls_output-salesdocument = ls_so-salesdocument.
@@ -209,20 +228,11 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ls_output-acceptqty = ls_1003-acceptqty.     "検収数
         ls_output-acceptprice = ls_1003-acceptprice. "検収単価
         ls_output-accceptamount = ls_1003-accceptamount. "検収金額
+        ls_output-acccepttaxamount = ls_1003-accceptamount * ls_1003-taxrate."検収税額
         ls_output-currency = ls_1003-currency.        "検収通貨(受注通貨)
         ls_output-outsidedata = ls_1003-outsidedata.  "SAP外売上区分(フラグ)
       ENDIF.
 
-*      READ TABLE lt_1012 INTO DATA(ls_1012)
-*           WITH KEY salesdocument = ls_so-salesdocument
-*                    salesdocumentitem = ls_so-salesdocumentitem BINARY SEARCH.
-*      IF sy-subrc = 0.
-*        ls_output-remarks = ls_1012-remarks.             "備考
-*        ls_output-processstatus = ls_1012-processstatus. "処理ステータス
-*        ls_output-reasoncategory = ls_1012-reasoncategory. "要因区分
-*        ls_output-reason = ls_1012-reason.                 "差異要因
-*      ENDIF.
-      ls_output-processstatus = '0'.
       READ TABLE lt_billing INTO DATA(ls_billing)
            WITH KEY salesdocument = ls_so-salesdocument
                     salesdocumentitem = ls_so-salesdocumentitem BINARY SEARCH.
@@ -251,11 +261,51 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ENDIF.
       ENDIF.
 
+      READ TABLE lt_1012 INTO DATA(ls_1012)
+           WITH KEY salesdocument = ls_so-salesdocument
+                    salesdocumentitem = ls_so-salesdocumentitem BINARY SEARCH.
+      IF sy-subrc = 0.
+        ls_output-remarks = ls_1012-remarks.             "備考
+        ls_output-processstatus = ls_1012-processstatus. "処理ステータス
+        ls_output-reasoncategory = ls_1012-reasoncategory. "要因区分
+        ls_output-reason = ls_1012-reason.                 "差異要因
+      ELSE.
+        IF ls_output-conditionquantity <> 0.
+          lv_netpr = ls_output-conditioncurrency / ls_output-conditionquantity.
+        ENDIF.
+        IF ls_output-acceptqty = ls_output-billingquantity
+       AND ls_output-acceptprice = lv_netpr
+       AND ls_output-accceptamount = ls_output-netamount
+       AND ls_output-acccepttaxamount = ls_output-taxamount.
+          ls_output-processstatus = '0'.
+        ELSE.
+          ls_output-processstatus = '2'.
+        ENDIF.
+      ENDIF.
+      "编辑表头描述
+      READ TABLE lt_customer INTO DATA(ls_customer)
+           WITH KEY customer = ls_1003-customer BINARY SEARCH.
+      IF sy-subrc = 0.
+        ls_output-customername = |{ ls_output-customer ALPHA = OUT }|.
+        ls_output-customername = ls_output-customername && ` ` && ls_customer-customername.
+      ENDIF.
+      READ TABLE lt_1001 INTO DATA(ls_1001)
+           WITH KEY zid = 'ZSD003'
+                    zvalue1 = lv_periodtype.
+      IF sy-subrc = 0.
+        ls_output-periodtypetext = lv_periodtype && ` ` && ls_1001-zvalue2.
+      ENDIF.
+      READ TABLE lt_1001 INTO ls_1001
+           WITH KEY zid = 'ZSD004'
+                    zvalue1 = lv_acceptperiod.
+      IF sy-subrc = 0.
+        ls_output-acceptperiodtext = lv_acceptperiod && ` ` && ls_1001-zvalue2.
+      ENDIF.
+      ls_output-acceptperiodfromtext = |{ ls_output-acceptperiodfrom+0(4) }/{ ls_output-acceptperiodfrom+4(2) }/{ ls_output-acceptperiodfrom+6(2) }|.
+      ls_output-acceptperiodtotext = |{ ls_output-acceptperiodto+0(4) }/{ ls_output-acceptperiodto+4(2) }/{ ls_output-acceptperiodto+6(2) }|.
       APPEND ls_output TO lt_output.
       CLEAR: ls_output.
     ENDLOOP.
-
-
 
 
 *    " Filtering

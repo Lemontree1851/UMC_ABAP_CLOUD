@@ -58,20 +58,20 @@ FUNCTION zzfm_dtimp_tbc1011.
 
     "Check update flag
     IF ls_data-updateflag IS INITIAL.
-      <line>-('Message') = 'The value of update flag cannot be empty.'.
+      MESSAGE e006(zbc_001) WITH TEXT-001 INTO <line>-('Message').
       <line>-('Type')    = 'E'.
       CONTINUE.
     ELSEIF ls_data-updateflag <> lc_updateflag_insert AND
            ls_data-updateflag <> lc_updateflag_update AND
            ls_data-updateflag <> lc_updateflag_delete.
-      <line>-('Message') = 'The value of update flag must be I or U or D.'.
+      MESSAGE e008(zbc_001) WITH TEXT-001 ls_data-updateflag INTO <line>-('Message').
       <line>-('Type')    = 'E'.
       CONTINUE.
     ENDIF.
 
     "Check user id
     IF ls_data-user_id IS INITIAL.
-      <line>-('Message') = 'The value of user cannot be empty.'.
+      MESSAGE e006(zbc_001) WITH TEXT-002 INTO <line>-('Message').
       <line>-('Type')    = 'E'.
       CONTINUE.
     ENDIF.
@@ -87,7 +87,7 @@ FUNCTION zzfm_dtimp_tbc1011.
       IF ls_ztbc_1004 IS INITIAL.
 
         IF ls_data-mail IS INITIAL.
-          <line>-('Message') = 'The value of mail cannot be empty.'.
+          MESSAGE e006(zbc_001) WITH TEXT-003 INTO <line>-('Message').
           <line>-('Type')    = 'E'.
           CONTINUE.
         ENDIF.
@@ -128,7 +128,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 
         SELECT count( * ) FROM ztbc_1006 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
         IF sy-subrc = 0.
-          <line>-('Message') = 'User plant data is already exist'.
+          MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-009 INTO <line>-('Message').    "User plant data already exist
           <line>-('Type')    = 'E'.
           CONTINUE.
         ENDIF.
@@ -175,7 +175,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 
         SELECT count( * ) FROM ztbc_1012 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
         IF sy-subrc = 0.
-          <line>-('Message') = 'User company data is already exist'.
+          MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-010 INTO <line>-('Message').    "User company data already exist
           <line>-('Type')    = 'E'.
           CONTINUE.
         ENDIF.
@@ -222,7 +222,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 
         SELECT count( * ) FROM ztbc_1013 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
         IF sy-subrc = 0.
-          <line>-('Message') = 'User sales organization data is already exist'.
+          MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-011 INTO <line>-('Message').    "User sales organization data already exist
           <line>-('Type')    = 'E'.
           CONTINUE.
         ENDIF.
@@ -265,8 +265,8 @@ FUNCTION zzfm_dtimp_tbc1011.
       ENDIF.
 
       IF <line>-('Type') IS INITIAL.
-        <line>-('Message') = 'User data is already exist'.
-        <line>-('Type')    = 'E'.
+        MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-012 INTO <line>-('Message').    "User data already exist
+        <line>-('Type') = 'E'.
         CONTINUE.
       ENDIF.
 
@@ -277,7 +277,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 
 *     Update user data
       IF ls_ztbc_1004 IS INITIAL.
-        <line>-('Message') = 'The user is not existed, please create the user first'.
+        MESSAGE e007(zbc_001) WITH TEXT-002 ls_data-user_id INTO <line>-('Message').
         <line>-('Type')    = 'E'.
         CONTINUE.
       ENDIF.

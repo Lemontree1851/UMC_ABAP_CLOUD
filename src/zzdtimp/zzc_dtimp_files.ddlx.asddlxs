@@ -126,9 +126,33 @@ annotate view ZZC_DTIMP_FILES with
   TemplateContent;
 
   @UI.hidden: true
+  @Consumption.filter.hidden: true
   TemplateMimeType;
   @UI.hidden: true
+  @Consumption.filter.hidden: true
   TemplateName;
   @UI.hidden: true
+  @Consumption.filter.hidden: true
+  FileMimeType;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  FileName;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  JobStatus;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  JobStatusCriticality;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  LogStatus;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  LogStatusCriticality;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  ApplicationLogUrl;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
   LocalLastChangedAt;
 }

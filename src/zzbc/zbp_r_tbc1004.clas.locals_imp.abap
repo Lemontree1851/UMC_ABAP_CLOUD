@@ -24,7 +24,7 @@ CLASS lhc_user IMPLEMENTATION.
     IF lt_result IS NOT INITIAL.
       SELECT userid
         FROM zc_tbc1004
-        INTO TABLE @DATA(lt_user).
+        INTO TABLE @DATA(lt_user).                      "#EC CI_NOWHERE
       SORT lt_user BY userid.
 
       LOOP AT lt_result INTO DATA(ls_result).
@@ -201,7 +201,7 @@ CLASS lhc_assignrole IMPLEMENTATION.
         FROM zc_tbc1005
          FOR ALL ENTRIES IN @lt_result
        WHERE roleid = @lt_result-roleid
-        INTO TABLE @DATA(lt_role).
+        INTO TABLE @DATA(lt_role).            "#EC CI_ALL_FIELDS_NEEDED
       SORT lt_role BY roleid.
 
       LOOP AT lt_result INTO DATA(ls_result).

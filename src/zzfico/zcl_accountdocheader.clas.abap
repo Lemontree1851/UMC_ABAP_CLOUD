@@ -281,6 +281,11 @@ CLASS ZCL_ACCOUNTDOCHEADER IMPLEMENTATION.
           COLLECT ls_sum INTO lt_sum3 .
 
         ENDLOOP.
+
+        sort lt_sum1 by companycode fiscalyear accountingdocument debitcreditcode .
+        sort lt_sum2 by companycode fiscalyear accountingdocument debitcreditcode .
+        sort lt_sum3 by companycode fiscalyear accountingdocument debitcreditcode .
+
         SORT lt_glaccountlineitem BY companycode fiscalyear accountingdocument amountincompanycodecurrency DESCENDING.
 
         SELECT companycode, companycodename
@@ -325,7 +330,7 @@ CLASS ZCL_ACCOUNTDOCHEADER IMPLEMENTATION.
 WITH KEY companycode = ls_zc_accountingdoc-companycode
          fiscalyear = ls_zc_accountingdoc-fiscalyear
          accountingdocument = ls_zc_accountingdoc-accountingdocument
-         debitcreditcode = 'S'.
+         debitcreditcode = 'S' BINARY SEARCH.
           IF sy-subrc = 0.
             ls_zc_accountingdoc-amountincompanycodecurrency = ls_sum-amountintransactioncurrency.
             ls_zc_accountingdoc-companycodecurrency = ls_sum-transactioncurrency.
@@ -334,7 +339,7 @@ WITH KEY companycode = ls_zc_accountingdoc-companycode
             WITH KEY companycode = ls_zc_accountingdoc-companycode
                fiscalyear = ls_zc_accountingdoc-fiscalyear
                accountingdocument = ls_zc_accountingdoc-accountingdocument
-               debitcreditcode = 'S'.
+               debitcreditcode = 'S' BINARY SEARCH.
             IF sy-subrc = 0.
               ls_zc_accountingdoc-amountincompanycodecurrency = ls_sum-amountintransactioncurrency.
               ls_zc_accountingdoc-companycodecurrency = ls_sum-transactioncurrency.
@@ -343,7 +348,7 @@ WITH KEY companycode = ls_zc_accountingdoc-companycode
               WITH KEY companycode = ls_zc_accountingdoc-companycode
                  fiscalyear = ls_zc_accountingdoc-fiscalyear
                  accountingdocument = ls_zc_accountingdoc-accountingdocument
-                 debitcreditcode = 'S'.
+                 debitcreditcode = 'S' BINARY SEARCH.
               IF sy-subrc = 0.
                 ls_zc_accountingdoc-amountincompanycodecurrency = ls_sum-amountintransactioncurrency.
                 ls_zc_accountingdoc-companycodecurrency = ls_sum-transactioncurrency.

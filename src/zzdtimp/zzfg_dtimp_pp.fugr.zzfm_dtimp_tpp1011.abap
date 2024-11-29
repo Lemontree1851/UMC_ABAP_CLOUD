@@ -86,30 +86,74 @@ FUNCTION zzfm_dtimp_tpp1011.
       <line>-('Type') = 'E'.
       <line>-('Message') = lv_all_msg.
     ELSE.
-      TRY.
-          ls_data-uuid = cl_system_uuid=>create_uuid_x16_static( ).
-        CATCH cx_uuid_error.
+      <line>-('Type') = 'S'.
+      <line>-('Message') = 'Success'.
+      APPEND ls_data TO lt_data.
+
+"      TRY.
+"          ls_data-uuid = cl_system_uuid=>create_uuid_x16_static( ).
+"        CATCH cx_uuid_error.
           " handle exception
-      ENDTRY.
+"      ENDTRY.
 
-      ls_data-created_by = sy-uname.
-      GET TIME STAMP FIELD ls_data-created_at.
+"      ls_data-created_by = sy-uname.
+"      GET TIME STAMP FIELD ls_data-created_at.
 
-      ls_data-last_changed_by = sy-uname.
-      GET TIME STAMP FIELD ls_data-last_changed_at.
-      GET TIME STAMP FIELD ls_data-local_last_changed_at.
+"      ls_data-last_changed_by = sy-uname.
+"      GET TIME STAMP FIELD ls_data-last_changed_at.
+"      GET TIME STAMP FIELD ls_data-local_last_changed_at.
 
-      MODIFY ztpp_1011 FROM @ls_data.
-      IF sy-subrc = 0.
-        COMMIT WORK AND WAIT.
-        <line>-('Type') = 'S'.
-        <line>-('Message') = 'Success'.
-      ELSE.
-        ROLLBACK WORK.
-        MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-        <line>-('Type') = 'E'.
-      ENDIF.
+"      MODIFY ztpp_1011 FROM @ls_data.
+"      IF sy-subrc = 0.
+"        COMMIT WORK AND WAIT.
+"        <line>-('Type') = 'S'.
+"        <line>-('Message') = 'Success'.
+"      ELSE.
+"        ROLLBACK WORK.
+"        MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+"        <line>-('Type') = 'E'.
+"      ENDIF.
     ENDIF.
+
+  ENDLOOP.
+
+  LOOP AT lt_data ASSIGNING FIELD-SYMBOL(<lfs_data>)
+    GROUP BY ( plant = <lfs_data>-plant customer = <lfs_data>-customer ).
+
+    DELETE FROM ztpp_1011 WHERE plant = @<lfs_data>-plant AND customer = @<lfs_data>-customer.
+
+    LOOP AT GROUP <lfs_data> INTO ls_data.
+
+       TRY.
+           ls_data-uuid = cl_system_uuid=>create_uuid_x16_static( ).
+         CATCH cx_uuid_error.
+          " handle exception
+       ENDTRY.
+
+       ls_data-created_by = sy-uname.
+       GET TIME STAMP FIELD ls_data-created_at.
+
+       ls_data-last_changed_by = sy-uname.
+       GET TIME STAMP FIELD ls_data-last_changed_at.
+       GET TIME STAMP FIELD ls_data-local_last_changed_at.
+
+       MODIFY ztpp_1011 FROM @ls_data.
+       IF sy-subrc = 0.
+         COMMIT WORK AND WAIT.
+       ELSE.
+         ROLLBACK WORK.
+         READ TABLE eo_data->* ASSIGNING <line> WITH KEY ('Plant')        = ls_data-plant
+                                                         ('Customer')     = ls_data-customer
+                                                         ('Receiver')     = ls_data-receiver
+                                                         ('ReceiverType') = ls_data-receiver_type
+                                                         ('MailAddress')  = ls_data-mail_address.
+         IF <line> IS ASSIGNED.
+           MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+           <line>-('Type') = 'E'.
+         ENDIF..
+       ENDIF.
+
+    ENDLOOP.
 
   ENDLOOP.
 

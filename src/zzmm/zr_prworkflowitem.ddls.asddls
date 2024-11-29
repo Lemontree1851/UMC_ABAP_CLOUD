@@ -2,8 +2,12 @@
 @EndUserText.label: 'Purchase Requisition Workflow'
 define root view entity ZR_PRWORKFLOWITEM
   as select from ztmm_1006
-    association [0..1] to ztbc_1001               as _BuyPurposeText     on  $projection.BuyPurpoose = _BuyPurposeText.zvalue1
-                                                                       and _BuyPurposeText.zid     = 'ZMM002'
+  association [0..1] to ztbc_1001            as _BuyPurposeText    on  $projection.BuyPurpoose = _BuyPurposeText.zvalue1
+                                                                   and _BuyPurposeText.zid     = 'ZMM002'
+ 
+
+
+
 {
   key uuid                                   as UUID,
       apply_depart                           as ApplyDepart,
@@ -30,7 +34,7 @@ define root view entity ZR_PRWORKFLOWITEM
       case currency
       when 'JPY' then price / 100
       else price
-      end                           as Price,
+      end                                    as Price,
       unit_price                             as UnitPrice,
       delivery_date                          as DeliveryDate,
       location                               as Location,
@@ -75,7 +79,7 @@ define root view entity ZR_PRWORKFLOWITEM
       cast('' as bapi_mtype preserving type) as Type,
       cast('' as abap.sstring(256))          as ResultText,
       cast('' as abap.sstring(1033))         as Message,
-          _BuyPurposeText.zvalue3                as BuyPurposeText,
+      _BuyPurposeText.zvalue3                as BuyPurposeText,
       @Semantics.amount.currencyCode : 'currency'
       case currency
       when 'JPY' then
@@ -86,7 +90,11 @@ define root view entity ZR_PRWORKFLOWITEM
             (case when unit_price <> 0
                   then price * quantity / unit_price
                   else 0 end  )
- 
-               end                           as amount1
+
+               end                           as amount1,
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_ATTACHMENT'
+      @EndUserText.label: '添付ファイル'
+      cast( '' as abap.sstring(4)  )         as zattachment
+
 
 }

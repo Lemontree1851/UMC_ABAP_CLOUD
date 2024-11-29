@@ -372,6 +372,7 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
                                    |</MessageHeader>| &&
                                    |<OrderConfirmation>| &&
                                    |<PurchaseOrderID>{ ls_req-pono }</PurchaseOrderID>| &&
+*                                   |<SalesOrderID>{ ls_req-extnumber }</SalesOrderID>| &&
                                    |<Item>| &&
                                    |<PurchaseOrderItemID>{ ls_req-dno }</PurchaseOrderItemID>|.
 

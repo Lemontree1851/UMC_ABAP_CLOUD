@@ -137,6 +137,12 @@ CLASS lhc_zr_ledplannedordercomponen IMPLEMENTATION.
           DATA(lv_msgv3) = ls_reported-plannedordercomponent[ 1 ]-%msg->if_t100_dyn_msg~msgv3.
           DATA(lv_msgv4) = ls_reported-plannedordercomponent[ 1 ]-%msg->if_t100_dyn_msg~msgv4.
           MESSAGE ID lv_msgid TYPE lv_msgty NUMBER lv_msgno WITH lv_msgv1 lv_msgv2 lv_msgv3 lv_msgv4 INTO <fs_l_data>-message.
+          if lv_msgty = 'W'.
+            <fs_l_data>-status = '3'.
+            <fs_l_data>-statustext = 'Success'.
+*           提案が受入できました。
+            MESSAGE s102(zpp_001) INTO <fs_l_data>-message.
+          ENDIF.
         ENDIF.
       ELSEIF <fs_l_data>-message IS NOT INITIAL.
         <fs_l_data>-status = '1'.

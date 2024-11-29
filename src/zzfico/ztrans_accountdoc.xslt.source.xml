@@ -126,9 +126,18 @@
               <TOTAL_PAGE_NUM>
                 <tt:value ref="$ref._HEADER.total_page_num"/>
               </TOTAL_PAGE_NUM>
-                            <PRINT_USER>
+
+                    <PRINT_USER>
                 <tt:value ref="$ref._HEADER.print_user"/>
               </PRINT_USER>
+              <CURRENTDATE>
+                <tt:value ref="$ref._HEADER.currentdate"/>
+              </CURRENTDATE>
+              <CURRENTTIME>
+                <tt:value ref="$ref._HEADER.currenttime"/>
+              </CURRENTTIME>
+
+
                 </ZR_ACCOUNTINGDOC_PRT_H>
               </_HEADER>
               <_ITEM>

@@ -7,15 +7,19 @@
   dataClass: #MIXED
 }
 define view entity ZR_SALESORDERBASIC
-  as select from    I_SalesDocument     as vbak
-    inner join      I_SalesDocumentItem as vbap             on vbap.SalesDocument = vbak.SalesDocument
-    left outer join ZR_SalesOrderSLItem as vbep             on  vbap.SalesDocument     = vbep.SalesDocument
-                                                            and vbap.SalesDocumentItem = vbep.SalesDocumentItem
-//    left outer join ZR_DELIVERYEDQTY    as DeliveryedQty    on  DeliveryedQty.SalesOrder     = vbap.SalesDocument
-//                                                            and DeliveryedQty.SalesOrderItem = vbap.SalesDocumentItem
-//                                                            and DeliveryedQty.BaseUnit       = vbap.OrderQuantityUnit
-//    left outer join I_RouteText         as _RouteText       on  _RouteText.Route    = vbap.Route
-//                                                            and _RouteText.Language = $session.system_language
+  as select from    I_SalesDocument             as vbak
+    inner join      I_SalesDocumentItem         as vbap  on vbap.SalesDocument = vbak.SalesDocument
+    left outer join ZR_SalesOrderSLItem         as vbep  on  vbap.SalesDocument     = vbep.SalesDocument
+                                                         and vbap.SalesDocumentItem = vbep.SalesDocumentItem
+  // 业务逻辑上 认为 DeliveryDate 不会重复，所以应该也能取到唯一值
+    left outer join I_SalesDocumentScheduleLine as vbep1 on  vbep1.SalesDocument     = vbap.SalesDocument
+                                                         and vbep1.SalesDocumentItem = vbap.SalesDocumentItem
+                                                         and vbep1.DeliveryDate      = vbap.RequestedDeliveryDate
+  //    left outer join ZR_DELIVERYEDQTY    as DeliveryedQty    on  DeliveryedQty.SalesOrder     = vbap.SalesDocument
+  //                                                            and DeliveryedQty.SalesOrderItem = vbap.SalesDocumentItem
+  //                                                            and DeliveryedQty.BaseUnit       = vbap.OrderQuantityUnit
+  //    left outer join I_RouteText         as _RouteText       on  _RouteText.Route    = vbap.Route
+  //                                                            and _RouteText.Language = $session.system_language
 {
   key vbak.SalesDocument,
   key vbap.SalesDocumentItem,
@@ -29,10 +33,10 @@ define view entity ZR_SALESORDERBASIC
       vbap._ShippingPointText[ Language = $session.system_language ].ShippingPointName,
       vbak.SoldToParty,
       vbak._SoldToParty.CustomerName,
-      vbak._Partner[1: PartnerFunction = 'RE'].Customer    as BillingToParty,
-      vbak._Partner[1: PartnerFunction = 'RE'].FullName    as BillingToPartyName,
-      vbak._Partner[1: PartnerFunction = 'WE'].Customer    as ShipToParty,
-      vbak._Partner[1: PartnerFunction = 'WE'].FullName    as ShipToPartyName,
+      vbak._Partner[1: PartnerFunction = 'RE'].Customer as BillingToParty,
+      vbak._Partner[1: PartnerFunction = 'RE'].FullName as BillingToPartyName,
+      vbak._Partner[1: PartnerFunction = 'WE'].Customer as ShipToParty,
+      vbak._Partner[1: PartnerFunction = 'WE'].FullName as ShipToPartyName,
 
       //客户PO
       vbak.PurchaseOrderByCustomer,
@@ -50,14 +54,14 @@ define view entity ZR_SALESORDERBASIC
       vbap.StorageLocation,
       vbap._StorageLocation.StorageLocationName,
       vbap.Route,
-//      vbap._Route._Text.RouteName,
+      //      vbap._Route._Text.RouteName,
       //装运类型
       vbap.ShippingType,
       vbap._ShippingType._Text[ Language = $session.system_language ].ShippingTypeName,
       //指定納入日付（明細）
       vbap.RequestedDeliveryDate,
-      //计划行最小的日期 計画出庫日付?
-      vbep.DeliveryDate,
+      //計画出庫日付
+      vbep1.GoodsIssueDate,
       vbap.OrderQuantity,
       vbap.OrderQuantityUnit,
       vbap.IncotermsClassification,

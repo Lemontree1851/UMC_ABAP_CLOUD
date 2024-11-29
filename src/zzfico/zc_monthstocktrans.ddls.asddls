@@ -15,6 +15,7 @@ define root view entity ZC_MONTHSTOCKTRANS
       Materialtypename,
       Movingaverageprice,
       Standardprice,
+      Priceunitqty,
       Valuationquantity,
       Total,
       @Semantics.currencyCode: true

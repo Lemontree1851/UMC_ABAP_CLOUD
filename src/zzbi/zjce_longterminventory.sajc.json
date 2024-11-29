@@ -1,0 +1,31 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "長期滞留在庫実績",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "className": "ZCL_BI006_JOB"
+  },
+  "parameters": [
+    {
+      "name": "S_BUKRS"
+    },
+    {
+      "name": "S_YEAR"
+    },
+    {
+      "name": "S_MONAT"
+    },
+    {
+      "name": "S_PLANT"
+    },
+    {
+      "name": "S_PROD"
+    },
+    {
+      "name": "S_CUST"
+    }
+  ]
+}

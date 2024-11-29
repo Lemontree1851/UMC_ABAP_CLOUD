@@ -817,6 +817,8 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
           IF lv_indicator3 = abap_true.
             IF lv_indicator3_ok = abap_false.
               CONTINUE.
+            ELSE.
+              CLEAR lv_indicator3_ok.
             ENDIF.
           ENDIF.
 

@@ -35,37 +35,37 @@ FUNCTION zzfm_dtimp_tbc1012.
 
     "Check update flag
     IF ls_data-updateflag IS INITIAL.
-      <line>-('Message') = 'The value of update flag cannot be empty.'.
+      MESSAGE e006(zbc_001) WITH TEXT-001 INTO <line>-('Message').
       <line>-('Type')    = 'E'.
       CONTINUE.
     ELSEIF ls_data-updateflag <> lc_updateflag_insert AND
            ls_data-updateflag <> lc_updateflag_update AND
            ls_data-updateflag <> lc_updateflag_delete.
-      <line>-('Message') = 'The value of update flag must be I or U or D.'.
+      MESSAGE e008(zbc_001) WITH TEXT-001 ls_data-updateflag INTO <line>-('Message').
       <line>-('Type')    = 'E'.
       CONTINUE.
     ENDIF.
 
     IF ls_data-role_id IS INITIAL.
-      <line>-('Message') = 'The value of role cannot be empty.'.
+      MESSAGE e006(zbc_001) WITH TEXT-004 INTO <line>-('Message').
       <line>-('Type')    = 'E'.
       CONTINUE.
     ENDIF.
 
     IF ls_data-function_id IS INITIAL.
-      <line>-('Message') = 'The value of functionid cannot be empty.'.
+      MESSAGE e006(zbc_001) WITH TEXT-006 INTO <line>-('Message').
       <line>-('Type')    = 'E'.
       CONTINUE.
     ENDIF.
 
     IF ls_data-access_id IS INITIAL.
-      <line>-('Message') = 'The value of accessid cannot be empty.'.
+      MESSAGE e006(zbc_001) WITH TEXT-007 INTO <line>-('Message').
       <line>-('Type')    = 'E'.
       CONTINUE.
     ENDIF.
 
     IF ls_data-access_name IS INITIAL.
-      <line>-('Message') = 'The value of access name cannot be empty.'.
+      MESSAGE e006(zbc_001) WITH TEXT-008 INTO <line>-('Message').
       <line>-('Type')    = 'E'.
       CONTINUE.
     ENDIF.
@@ -75,7 +75,7 @@ FUNCTION zzfm_dtimp_tbc1012.
 
       SELECT count( * ) FROM ztbc_1005 WHERE role_id = @ls_data-role_id.
       IF sy-subrc = 0.
-        <line>-('Message') = 'The role data is already exist'.
+        MESSAGE e009(zbc_001) WITH TEXT-013 space INTO <line>-('Message').
         <line>-('Type')    = 'E'.
         CONTINUE.
       ENDIF.
@@ -119,7 +119,7 @@ FUNCTION zzfm_dtimp_tbc1012.
 
       SELECT SINGLE * FROM ztbc_1005 WHERE role_id = @ls_data-role_id INTO @ls_ztbc_1005.
       IF sy-subrc <> 0.
-        <line>-('Message') = 'The role is not existed, please create the role first'.
+        MESSAGE e007(zbc_001) WITH TEXT-004 ls_data-role_id INTO <line>-('Message').
         <line>-('Type')    = 'E'.
         CONTINUE.
       ENDIF.
@@ -149,6 +149,11 @@ FUNCTION zzfm_dtimp_tbc1012.
 
 *   Delete data
     IF ls_data-updateflag = lc_updateflag_delete.
+
+      SELECT SINGLE * FROM ztbc_1005 WHERE role_id = @ls_data-role_id INTO @ls_ztbc_1005.
+      IF sy-subrc = 0.
+        DELETE FROM ztbc_1007 WHERE role_uuid = @ls_ztbc_1005-role_uuid.
+      ENDIF.
 
       DELETE FROM ztbc_1005 WHERE role_id = @ls_data-role_id.
 

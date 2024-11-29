@@ -674,6 +674,12 @@
      <MSGNR>110</MSGNR>
      <TEXT>該当データは前回処理済みです！</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>111</MSGNR>
+     <TEXT>Please enter the &amp;1 in YYYY/MM format.</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

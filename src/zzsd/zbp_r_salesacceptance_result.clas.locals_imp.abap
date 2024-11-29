@@ -1,5 +1,10 @@
 CLASS lhc_zr_salesacceptance_result DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
+    TYPES:BEGIN OF lty_request.
+            INCLUDE TYPE zr_salesacceptance_result.
+    TYPES:  row TYPE i,
+          END OF lty_request,
+          lty_request_t TYPE TABLE OF lty_request.
 
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
       IMPORTING keys REQUEST requested_authorizations FOR zr_salesacceptance_result RESULT result.
@@ -45,6 +50,23 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD processlogic.
+    DATA: lt_request TYPE TABLE OF lty_request.
+
+    CHECK keys IS NOT INITIAL.
+    DATA(lv_event) = keys[ 1 ]-%param-event.
+
+    LOOP AT keys INTO DATA(key).
+
+
+
+
+
+      DATA(lv_json) = /ui2/cl_json=>serialize( data = lt_request ).
+
+      APPEND VALUE #( %cid   = key-%cid
+                      %param = VALUE #( event = lv_event
+                                        zzkey = lv_json ) ) TO result.
+    ENDLOOP.
   ENDMETHOD.
 
 ENDCLASS.
