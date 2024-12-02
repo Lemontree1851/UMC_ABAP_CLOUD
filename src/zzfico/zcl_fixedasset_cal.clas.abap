@@ -43,7 +43,7 @@ CLASS zcl_fixedasset_cal IMPLEMENTATION.
       BEGIN OF ty_sum,
         companycode             TYPE  i_glaccountlineitem-companycode,
         masterfixedasset        TYPE  i_glaccountlineitem-masterfixedasset,
-        fixedasset              TYPE  i_glaccountlineitem-fixedasset ,
+        fixedasset              TYPE  i_glaccountlineitem-fixedasset,
         debitamountincocodecrcy TYPE  i_glaccountlineitem-debitamountincocodecrcy,
         companycodecurrency     TYPE  i_glaccountlineitem-companycodecurrency,
 
@@ -72,6 +72,7 @@ CLASS zcl_fixedasset_cal IMPLEMENTATION.
 
       SELECT companycode,masterfixedasset,fixedasset, debitamountincocodecrcy ,companycodecurrency FROM
       i_glaccountlineitem
+      WITH PRIVILEGED ACCESS
       FOR ALL ENTRIES IN @lt_original_data
       WHERE masterfixedasset = @lt_original_data-masterfixedasset
       AND fixedasset = @lt_original_data-fixedasset
@@ -127,16 +128,16 @@ CLASS zcl_fixedasset_cal IMPLEMENTATION.
       SORT ls_res_api1-d-results BY chartofdepreciation depreciationkey .
 
 
-      IF lt_original_data IS NOT INITIAL.
-        SELECT companycode, masterfixedasset, fixedasset ,yy1_fixedasset2_faa AS yy1_fixedasset1_faa
-        FROM i_fixedasset WITH PRIVILEGED ACCESS
-        FOR ALL ENTRIES IN @lt_original_data
-        WHERE companycode = @lt_original_data-companycode
-        AND masterfixedasset = @lt_original_data-masterfixedasset
-        AND fixedasset = @lt_original_data-fixedasset
-        INTO TABLE @DATA(lt_fixedasset).
-      ENDIF.
-      SORT lt_fixedasset BY companycode  masterfixedasset  fixedasset.
+*      IF lt_original_data IS NOT INITIAL.
+*        SELECT companycode, masterfixedasset, fixedasset ,yy1_fixedasset1_faa AS yy1_fixedasset1_faa
+*        FROM i_fixedasset WITH PRIVILEGED ACCESS
+*        FOR ALL ENTRIES IN @lt_original_data
+*        WHERE companycode = @lt_original_data-companycode
+*        AND masterfixedasset = @lt_original_data-masterfixedasset
+*        AND fixedasset = @lt_original_data-fixedasset
+*        INTO TABLE @DATA(lt_fixedasset).
+*      ENDIF.
+      "SORT lt_fixedasset BY companycode  masterfixedasset  fixedasset.
 
       LOOP AT lt_original_data ASSIGNING FIELD-SYMBOL(<fs_original_data>).
         lv_masterfixedasset =  |{ <fs_original_data>-masterfixedasset ALPHA = OUT }|.
@@ -154,15 +155,15 @@ CLASS zcl_fixedasset_cal IMPLEMENTATION.
         IF sy-subrc = 0.
           <fs_original_data>-depreciationkeyname =  ls_result1-depreciationkeyname.
         ENDIF.
-        READ TABLE lt_fixedasset INTO DATA(ls_fixedasset) WITH KEY companycode = <fs_original_data>-companycode
-        masterfixedasset = <fs_original_data>-masterfixedasset fixedasset = <fs_original_data>-fixedasset BINARY SEARCH.
-        IF sy-subrc = 0.
-          IF ls_fixedasset-yy1_fixedasset1_faa = '01'.
-            <fs_original_data>-yy1_fixedasset1_faa = '所有'.
-          ELSEIF ls_fixedasset-yy1_fixedasset1_faa = '02'.
-            <fs_original_data>-yy1_fixedasset1_faa = '借家'.
-          ENDIF.
-        ENDIF.
+*        READ TABLE lt_fixedasset INTO DATA(ls_fixedasset) WITH KEY companycode = <fs_original_data>-companycode
+*        masterfixedasset = <fs_original_data>-masterfixedasset fixedasset = <fs_original_data>-fixedasset BINARY SEARCH.
+*        IF sy-subrc = 0.
+*          IF ls_fixedasset-yy1_fixedasset1_faa = '01'.
+*            <fs_original_data>-yy1_fixedasset1_faa = '所有'.
+*          ELSEIF ls_fixedasset-yy1_fixedasset1_faa = '02'.
+*            <fs_original_data>-yy1_fixedasset1_faa = '借家'.
+*          ENDIF.
+*        ENDIF.
         READ TABLE lt_sum INTO DATA(ls_glaccountlineitem) WITH KEY companycode = <fs_original_data>-companycode
   masterfixedasset = <fs_original_data>-masterfixedasset fixedasset = <fs_original_data>-fixedasset BINARY SEARCH.
         IF sy-subrc = 0.
@@ -170,6 +171,14 @@ CLASS zcl_fixedasset_cal IMPLEMENTATION.
           <fs_original_data>-originalacquisitionamount = ls_glaccountlineitem-debitamountincocodecrcy.
           <fs_original_data>-originalacquisitioncurrency = ls_glaccountlineitem-companycodecurrency.
         ENDIF.
+        <fs_original_data>-barcode = <fs_original_data>-companycode && ';' &&  <fs_original_data>-masterfixedasset && ';' && <fs_original_data>-fixedasset && ';' .
+        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-inventorynote && ';' && <fs_original_data>-fixedassetdescription && ';' &&  <fs_original_data>-fixedassetexternalid && ';' && <fs_original_data>-inventory && ';' .
+        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-costcenter && ';' && <fs_original_data>-costcentername && ';' &&  <fs_original_data>-assetcapitalizationdate && ';' && <fs_original_data>-depreciationstartdate && ';' .
+        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-assetaccountdeterminationdesc && ';' && <fs_original_data>-depreciationkeyname && ';' &&  <fs_original_data>-leasedassetnote && ';'.
+        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-plannedusefullifeinyears && ';' && <fs_original_data>-originalacquisitionamount && ';' && <fs_original_data>-investmentreason && ';' .
+        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-assettypename && ';' && <fs_original_data>-yy1_fixedasset1_faa && ';'  && ';' && <fs_original_data>-jp_prptytxrptspcldepr .
+
+
 
       ENDLOOP.
     ENDIF.

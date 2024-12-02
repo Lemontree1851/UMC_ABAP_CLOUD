@@ -8,13 +8,13 @@
     dataClass: #MIXED
 }
 define view entity ZI_BI003_REPORT_003_BILLING
-  as select from    ZI_BI003_REPORT_002_BILLING( p_recover_type: 'IN', p_condition_type: 'ZPIN' ) as billing
-    left outer join I_FiscCalendarDateForCompCode                                                 as FiscalCalendarDate on  FiscalCalendarDate.CalendarDate = billing.BillingDocumentDate
-                                                                                                                        and FiscalCalendarDate.CompanyCode  = billing.CompanyCode
-    left outer join ZI_BI003_REPORT_REC_NEC_AMT_S                                                 as TOTALAMT           on  billing.RecoveryManagementNumber    =  TOTALAMT.RecoveryManagementNumber
-                                                                                                                        and FiscalCalendarDate.FiscalYearPeriod <= TOTALAMT.FiscalYearPeriod
-    left outer join ZI_BI003_REPORT_REC_NEC_AMT_GS( p_product_group:'400' )                       as GRPTOTAL           on  billing.RecoveryManagementNumber    = GRPTOTAL.RecoveryManagementNumber
-                                                                                                                        and FiscalCalendarDate.FiscalYearPeriod = GRPTOTAL.FiscalYearPeriod
+  as select from    ZI_BI003_REPORT_002_BILLING_F3( p_recover_type: 'IN', p_condition_type: 'ZPIN' ) as billing
+    left outer join I_FiscCalendarDateForCompCode                                                    as FiscalCalendarDate on  FiscalCalendarDate.CalendarDate = billing.BillingDocumentDate
+                                                                                                                           and FiscalCalendarDate.CompanyCode  = billing.CompanyCode
+    left outer join ZI_BI003_REPORT_REC_NEC_AMT_S                                                    as TOTALAMT           on  billing.RecoveryManagementNumber    =  TOTALAMT.RecoveryManagementNumber
+                                                                                                                           and FiscalCalendarDate.FiscalYearPeriod <= TOTALAMT.FiscalYearPeriod
+    left outer join ZI_BI003_REPORT_REC_NEC_AMT_GS( p_product_group:'400' )                          as GRPTOTAL           on  billing.RecoveryManagementNumber    = GRPTOTAL.RecoveryManagementNumber
+                                                                                                                           and FiscalCalendarDate.FiscalYearPeriod = GRPTOTAL.FiscalYearPeriod
 {
   key billing.BillingDocument,
   key billing.BillingDocumentItem,

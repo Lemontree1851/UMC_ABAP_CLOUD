@@ -1,4 +1,4 @@
-@EndUserText.label: 'Service Definition for BI006 Long Term FORCAST OData V2'
+@EndUserText.label: '長期滞留在庫予測'
 define service ZUI_BI007_LONGTERM_FORCAST_O2 {
   expose ZI_BI007_REPORT;
   expose ZI_BI007_REPORT_JOB;

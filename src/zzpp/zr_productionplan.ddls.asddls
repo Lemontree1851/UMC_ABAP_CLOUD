@@ -41,16 +41,14 @@ define root custom entity ZR_PRODUCTIONPLAN
       WO                   : abap.char(1); //checkbox
       exOut                  : abap.char(1); //checkbox
 
-      Capacity             : abap.char(30); //capacity
+      Capacity             : abap.char(20); //capacity
       Remark               : abap.char(20); //Remark
-      @Semantics.quantity.unitOfMeasure: 'Unit'
-      StockQty             : labst;
-      Rounding             : abap.char(30); //Rouding
-      Delta                : abap.char(30);
-      HistorySO            : abap.char(30); //This Month S/O
-      FutureSO             : abap.char(30); //Furtrue S/O
-      @Semantics.quantity.unitOfMeasure: 'Unit'
-      BalanceQTY           : abap.quan(15,3); //Balance QTY
+      StockQty             : abap.char(20);
+      Rounding             : abap.char(20); //Rouding
+      Delta                : abap.char(20);
+      HistorySO            : abap.char(20); //This Month S/O
+      FutureSO             : abap.char(20); //Furtrue S/O
+      BalanceQTY           : abap.char(20); //Balance QTY
       Unit                 : meins;
       //@Semantics.quantity.unitOfMeasure: 'Unit'
       Summary              : abap.char(20); //Summary

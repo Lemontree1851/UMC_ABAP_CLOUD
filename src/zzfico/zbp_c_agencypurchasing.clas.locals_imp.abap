@@ -97,7 +97,8 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
           lv_password    TYPE string,
           lv_request     TYPE string,
           lv_string1     TYPE string,
-          lv_string2     TYPE string.
+          lv_string2     TYPE string,
+          lv_has_error   TYPE abap_boolean.
 
     CHECK cs_data IS NOT INITIAL.
 
@@ -178,13 +179,13 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
       |<DocumentDate>{ lv_lastday_d }</DocumentDate>| &&
       |<AccountingDocumentType>KR</AccountingDocumentType>| &&
       |<DocumentHeaderText>{ <lfs_item>-postingdate && '代行購買決済対象会社' && <lfs_item>-companycode2 }</DocumentHeaderText>| &&
-      |<CreatedByUser>XXL_TEST</CreatedByUser>| &&
+      |<CreatedByUser>{ sy-uname }</CreatedByUser>| &&
       |<TaxDeterminationDate>{ lv_lastday_d }</TaxDeterminationDate>| &&
       |<Item>| &&
       |<ReferenceDocumentItem>1</ReferenceDocumentItem>| &&
       |<GLAccount>{ <lfs_item>-glaccount }</GLAccount>| &&
       |<DocumentItemText>{ <lfs_item>-postingdate && '代行購買決済対象会社' && <lfs_item>-companycode2 }</DocumentItemText>| &&
-      |<AmountInTransactionCurrency currencyCode="JPY">{ <lfs_item>-currency1 * -1 }</AmountInTransactionCurrency>| &&
+      |<AmountInTransactionCurrency currencyCode="{ <lfs_item>-companycodecurrency }">{ <lfs_item>-currency1 * -1 }</AmountInTransactionCurrency>| &&
       |<Tax>| &&
       |<TaxCode>{ <lfs_item>-taxcode }</TaxCode>| &&
       |</Tax>| &&
@@ -194,13 +195,13 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
       |<Creditor>{ ls_config-zvalue3 }</Creditor>| &&
       |<AltvRecnclnAccts listID="2">0021100010</AltvRecnclnAccts>| &&
       |<DocumentItemText>{ <lfs_item>-postingdate && '代行購買決済対象会社' && <lfs_item>-companycode2 }</DocumentItemText>| &&
-      |<AmountInTransactionCurrency currencyCode="JPY">{ <lfs_item>-currency2 }</AmountInTransactionCurrency>| &&
+      |<AmountInTransactionCurrency currencyCode="{ <lfs_item>-companycodecurrency }">{ <lfs_item>-currency2 }</AmountInTransactionCurrency>| &&
       |</CreditorItem>| &&
       |<ProductTaxItem>| &&
       |<TaxCode>{ <lfs_item>-taxcode }</TaxCode>| &&
       |<TaxItemClassification>VST</TaxItemClassification>| &&
-      |<AmountInTransactionCurrency currencyCode="JPY">{ <lfs_item>-currency3 * -1 }</AmountInTransactionCurrency>| &&
-      |<TaxBaseAmountInTransCrcy currencyCode="JPY">{ <lfs_item>-currency1 * -1 }</TaxBaseAmountInTransCrcy>| &&
+      |<AmountInTransactionCurrency currencyCode="{ <lfs_item>-companycodecurrency }">{ <lfs_item>-currency3 * -1 }</AmountInTransactionCurrency>| &&
+      |<TaxBaseAmountInTransCrcy currencyCode="{ <lfs_item>-companycodecurrency }">{ <lfs_item>-currency1 * -1 }</TaxBaseAmountInTransCrcy>| &&
       |</ProductTaxItem>| &&
       |</JournalEntry>| &&
       |</JournalEntryCreateRequest>| &&
@@ -266,8 +267,8 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
 
         <lfs_item>-accountingdocument1 = lv_string1.
 
+        CLEAR lv_has_error.
         IF <lfs_item>-accountingdocument1 <> '0000000000'.
-          <lfs_item>-message = '処理が成功しました。'.
           " 仕訳が転記された後、アドオンテーブルに保存する
           CLEAR ls_ztfi_1014.
           ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
@@ -281,13 +282,15 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
         ELSE.
           CLEAR <lfs_item>-accountingdocument1.
           <lfs_item>-message = lv_string2.
+          lv_has_error = abap_true.
         ENDIF.
       ELSE.
         <lfs_item>-message = |{ ls_http_status-code } { ls_http_status-reason }|.
+        lv_has_error = abap_true.
       ENDIF.
 
 * 仕訳2：決済対象会社仕訳
-      IF <lfs_item>-message IS INITIAL.
+      IF lv_has_error = abap_false.
         TRY.
             lv_uuid = cl_system_uuid=>create_uuid_c32_static( ).
             lv_formatted_uuid = |{ lv_uuid+0(8) }-{ lv_uuid+8(4) }-{ lv_uuid+12(4) }-{ lv_uuid+16(4) }-{ lv_uuid+20(12) }|.
@@ -326,13 +329,13 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
         |<DocumentDate>{ lv_lastday_d }</DocumentDate>| &&
         |<AccountingDocumentType>KR</AccountingDocumentType>| &&
         |<DocumentHeaderText>{ <lfs_item>-postingdate && '代行購買転記先会社' && <lfs_item>-companycode }</DocumentHeaderText>| &&
-        |<CreatedByUser>XXL_TEST</CreatedByUser>| &&
+        |<CreatedByUser>{ sy-uname }</CreatedByUser>| &&
         |<TaxDeterminationDate>{ lv_lastday_d }</TaxDeterminationDate>| &&
         |<Item>| &&
         |<ReferenceDocumentItem>1</ReferenceDocumentItem>| &&
         |<GLAccount>{ <lfs_item>-glaccount }</GLAccount>| &&
         |<DocumentItemText>{ <lfs_item>-postingdate && '代行購買転記先会社' && <lfs_item>-companycode }</DocumentItemText>| &&
-        |<AmountInTransactionCurrency currencyCode="JPY">{ <lfs_item>-currency1 }</AmountInTransactionCurrency>| &&
+        |<AmountInTransactionCurrency currencyCode="{ <lfs_item>-companycodecurrency }">{ <lfs_item>-currency1 }</AmountInTransactionCurrency>| &&
         |<Tax>| &&
         |<TaxCode>{ <lfs_item>-taxcode }</TaxCode>| &&
         |</Tax>| &&
@@ -342,13 +345,13 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
         |<Creditor>{ ls_config2-zvalue3 }</Creditor>| &&
         |<AltvRecnclnAccts listID="2">0021100010</AltvRecnclnAccts>| &&
         |<DocumentItemText>{ <lfs_item>-postingdate && '代行購買転記先会社' && <lfs_item>-companycode }</DocumentItemText>| &&
-        |<AmountInTransactionCurrency currencyCode="JPY">{ <lfs_item>-currency2 * -1 }</AmountInTransactionCurrency>| &&
+        |<AmountInTransactionCurrency currencyCode="{ <lfs_item>-companycodecurrency }">{ <lfs_item>-currency2 * -1 }</AmountInTransactionCurrency>| &&
         |</CreditorItem>| &&
         |<ProductTaxItem>| &&
         |<TaxCode>{ <lfs_item>-taxcode }</TaxCode>| &&
         |<TaxItemClassification>VST</TaxItemClassification>| &&
-        |<AmountInTransactionCurrency currencyCode="JPY">{ <lfs_item>-currency3 }</AmountInTransactionCurrency>| &&
-        |<TaxBaseAmountInTransCrcy currencyCode="JPY">{ <lfs_item>-currency1 }</TaxBaseAmountInTransCrcy>| &&
+        |<AmountInTransactionCurrency currencyCode="{ <lfs_item>-companycodecurrency }">{ <lfs_item>-currency3 }</AmountInTransactionCurrency>| &&
+        |<TaxBaseAmountInTransCrcy currencyCode="{ <lfs_item>-companycodecurrency }">{ <lfs_item>-currency1 }</TaxBaseAmountInTransCrcy>| &&
         |</ProductTaxItem>| &&
         |</JournalEntry>| &&
         |</JournalEntryCreateRequest>| &&
@@ -415,8 +418,6 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
           <lfs_item>-accountingdocument2 = lv_string1.
 
           IF <lfs_item>-accountingdocument2 <> '0000000000'.
-            <lfs_item>-message = '処理が成功しました。'.
-
             " 仕訳が転記された後、アドオンテーブルに保存する
             CLEAR ls_ztfi_1014.
             ls_ztfi_1014-postingdate         = <lfs_item>-postingdate.
@@ -428,14 +429,20 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
             ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
             ls_ztfi_1014-fiscalyear2         = <lfs_item>-postingdate+0(4).
             ls_ztfi_1014-accountingdocument2 = <lfs_item>-accountingdocument2.
-            ls_ztfi_1014-amount              = <lfs_item>-currency2.
+            ls_ztfi_1014-amount              = zzcl_common_utils=>conversion_amount(
+                                                 iv_alpha    = zzcl_common_utils=>lc_alpha_in
+                                                 iv_currency = <lfs_item>-companycodecurrency
+                                                 iv_input    = <lfs_item>-currency2 ) .
             MODIFY ztfi_1014 FROM @ls_ztfi_1014.
+            <lfs_item>-message = '処理が成功しました。'.
           ELSE.
             CLEAR <lfs_item>-accountingdocument2.
             <lfs_item>-message = lv_string2.
+            lv_has_error = abap_true.
           ENDIF.
         ELSE.
           <lfs_item>-message = |{ ls_http_status-code } { ls_http_status-reason }|.
+          lv_has_error = abap_true.
         ENDIF.
       ENDIF.
     ENDLOOP.

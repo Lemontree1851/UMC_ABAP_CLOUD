@@ -5,6 +5,7 @@ define root view entity ZC_STOCKAGEUPLOAD
   provider contract transactional_query
   as projection on ZR_STOCKAGEUPLOAD
 {
+  key           InventoryType,
                 @Consumption.valueHelpDefinition: [{ entity:  { name:'ZC_LedgerVH', element: 'Ledger' }}]
   key           Ledger,
   key           CalendarYear,
@@ -28,7 +29,7 @@ define root view entity ZC_STOCKAGEUPLOAD
                 LastChangedBy,
                 //LastChangedAt,
                 LocalLastChangedAt,
-
+                _Product.BaseUnit,
                 //@UI.hidden: true
                 _ProductText.ProductName,
                  //@UI.hidden: true

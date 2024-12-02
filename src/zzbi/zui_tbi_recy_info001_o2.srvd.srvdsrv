@@ -1,9 +1,10 @@
-@EndUserText.label: 'Service Definition for Recovery Info OData V2'
+@EndUserText.label: '回収進捗管理分析'
 define service ZUI_TBI_RECY_INFO001_O2 {
   expose ZC_RECOVER_TYPE_VH;
   expose ZC_RECOVER_STATUS_VH;
   expose ZC_RECOVERY_NUMBER_VH;
   expose ZC_TBI_RECY_INFO001;
+  expose ZC_BI003_REPORT_001;
   expose ZC_BI003_REPORT_002;
   expose ZC_BI003_REPORT_003;
   expose ZC_BI003_REPORT_004;

@@ -12,8 +12,11 @@ define root view entity ZR_SALESORDER_U
 {
   key basic.SalesDocument,
   key basic.SalesDocumentItem,
+      @Consumption.valueHelpDefinition: [{ entity:{ name: 'ZC_SalesOrganization_VH', element: 'SalesOrganization' } }]
       basic.SalesOrganization,
+      @Consumption.valueHelpDefinition: [{ entity:{ name: 'ZR_SalesOfficeVH', element: 'SalesOffice' } }]
       basic.SalesOffice,
+      @Consumption.valueHelpDefinition: [{ entity:{ name: 'ZR_SalesGroupVH', element: 'SalesGroup' } }]
       basic.SalesGroup,
       basic.SalesDocumentType,
       basic.YY1_SalesDocType_SDH, //受注伝票タイプ（Old）
@@ -30,8 +33,11 @@ define root view entity ZR_SALESORDER_U
       basic.DeliveryBlockReasonText,
       basic.Material,
       basic.MaterialByCustomer,
+      @Consumption.valueHelpDefinition: [{ entity:{ name: 'ZC_PlantVH', element: 'Plant' } }]
       basic.Plant,
       basic.TransitPlant,
+      @Consumption.valueHelpDefinition: [{  entity:{ name: 'I_StorageLocationStdVH', element: 'StorageLocation' },
+                                            additionalBinding: [{ localElement: 'Plant', element: 'Plant', usage: #FILTER }] }]
       basic.StorageLocation,
       basic.StorageLocationName,
       basic.Route,

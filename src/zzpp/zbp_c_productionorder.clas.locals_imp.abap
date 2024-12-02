@@ -18,6 +18,8 @@ CLASS lhc_zc_productionorder DEFINITION INHERITING FROM cl_abap_behavior_handler
       END OF lty_request.
 
     CONSTANTS:
+      lc_stat_code_200    TYPE if_web_http_response=>http_status-code VALUE '200',
+      lc_odata_version_v2 TYPE string VALUE 'V2',
       lc_msgid_zpp_001    TYPE string VALUE 'ZPP_001',
       lc_msgty_e          TYPE string VALUE 'E',
       lc_type_e           TYPE string VALUE `Error`,
@@ -103,8 +105,10 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
 
   METHOD release.
     DATA:
+      ls_error_v2           TYPE zzcl_odata_utils=>gty_error,
       lv_manufacturingorder TYPE zc_productionorder-manufacturingorder,
-      lv_message            TYPE zc_productionorder-message.
+      lv_path               TYPE string,
+      lv_message            TYPE string.
 
     check( CHANGING cs_data = cs_data ).
 
@@ -113,39 +117,46 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
     LOOP AT cs_data-items ASSIGNING FIELD-SYMBOL(<fs_item>).
       lv_manufacturingorder = |{ <fs_item>-manufacturingorder ALPHA = IN }|.
 
-      MODIFY ENTITY PRIVILEGED i_productionordertp
-      EXECUTE release
-      FROM VALUE #( ( %key-productionorder = lv_manufacturingorder %param-ordrelispmtddsptmisgparts = abap_true ) )
-      REQUEST VALUE #( )
-      RESULT DATA(result_rel)
-      FAILED DATA(failed_rel)
-      REPORTED DATA(reported_rel).
+      "/API_PRODUCTION_ORDER_2_SRV/A_ProductionOrder_2?$filter
+      lv_path = |/API_PRODUCTION_ORDER_2_SRV/A_ProductionOrder_2?$filter=ManufacturingOrder eq '{ lv_manufacturingorder }'|.
 
-      IF failed_rel IS NOT INITIAL.
-        LOOP AT reported_rel-productionorder INTO DATA(ls_productionorder).
-          IF ls_productionorder-%msg->if_t100_dyn_msg~msgty CA 'EAX'.
-            DATA(lv_msgid) = ls_productionorder-%msg->if_t100_message~t100key-msgid.
-            DATA(lv_msgno) = ls_productionorder-%msg->if_t100_message~t100key-msgno.
-            DATA(lv_msgty) = ls_productionorder-%msg->if_t100_dyn_msg~msgty.
-            DATA(lv_msgv1) = ls_productionorder-%msg->if_t100_dyn_msg~msgv1.
-            DATA(lv_msgv2) = ls_productionorder-%msg->if_t100_dyn_msg~msgv2.
-            DATA(lv_msgv3) = ls_productionorder-%msg->if_t100_dyn_msg~msgv3.
-            DATA(lv_msgv4) = ls_productionorder-%msg->if_t100_dyn_msg~msgv4.
-            MESSAGE ID lv_msgid TYPE lv_msgty NUMBER lv_msgno WITH lv_msgv1 lv_msgv2 lv_msgv3 lv_msgv4 INTO lv_message.
+      "获取ETag
+      zzcl_common_utils=>get_api_etag(  EXPORTING iv_odata_version = lc_odata_version_v2
+                                                  iv_path          = lv_path
+                                        IMPORTING ev_status_code   = DATA(lv_status_code)
+                                                  ev_response      = DATA(lv_response)
+                                                  ev_etag          = DATA(lv_etag) ).
+      IF lv_status_code <> lc_stat_code_200.
+        DATA(lv_error) = abap_true.
+      ELSE.
+        "/API_PRODUCTION_ORDER_2_SRV/ReleaseOrder
+        lv_path = |/API_PRODUCTION_ORDER_2_SRV/ReleaseOrder?ManufacturingOrder='{ lv_manufacturingorder }'|.
 
-            IF <fs_item>-message IS INITIAL.
-              <fs_item>-message = lv_message.
-            ELSE.
-              CONCATENATE <fs_item>-message
-                          lv_message
-                     INTO <fs_item>-message
-                SEPARATED BY lc_seprator_virgule.
-            ENDIF.
-          ENDIF.
-        ENDLOOP.
+        "Call API of releasing production order
+        zzcl_common_utils=>request_api_v2(
+          EXPORTING
+            iv_path        = lv_path
+            iv_method      = if_web_http_client=>post
+            iv_etag        = lv_etag
+          IMPORTING
+            ev_status_code = lv_status_code
+            ev_response    = lv_response ).
+        IF lv_status_code <> lc_stat_code_200.
+          lv_error = abap_true.
+        ENDIF.
+      ENDIF.
+
+      IF lv_error = abap_true.
+        xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
+         ( xco_cp_json=>transformation->pascal_case_to_underscore )
+       ) )->write_to( REF #( ls_error_v2 ) ).
+
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message
+                                                       iv_message2 = ls_error_v2-error-message-value
+                                                       iv_symbol   = lc_seprator_virgule ).
 
         <fs_item>-criticality = lc_criticality_1.
-        lv_message = <fs_item>-message.
+        <fs_item>-message = lv_message.
 
         "製造指図 &1: &2
         MESSAGE ID lc_msgid_zpp_001 TYPE lc_msgty_e NUMBER 099 WITH lv_manufacturingorder lv_message INTO lv_message.
@@ -168,6 +179,8 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
                         subtitle    = lv_message
                         description = lv_message ) TO cs_data-messageitems.
       ENDIF.
+
+      CLEAR lv_message.
     ENDLOOP.
   ENDMETHOD.
 

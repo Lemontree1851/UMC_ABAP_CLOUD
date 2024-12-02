@@ -38,7 +38,26 @@ CLASS zcl_agencypurchasing IMPLEMENTATION.
         ENDLOOP.
       CATCH cx_rap_query_filter_no_range.
         "handle exception
-        io_response->set_data( lt_data ).
+        io_response->set_total_number_of_records( lines( lt_sumdata ) ).
+
+        "Sort
+        IF io_request->get_sort_elements( ) IS NOT INITIAL.
+          zzcl_odata_utils=>orderby(
+            EXPORTING
+              it_order = io_request->get_sort_elements( )
+            CHANGING
+              ct_data  = lt_sumdata ).
+        ENDIF.
+
+        "Page
+        zzcl_odata_utils=>paging(
+          EXPORTING
+            io_paging = io_request->get_paging( )
+          CHANGING
+            ct_data   = lt_sumdata ).
+
+        io_response->set_data( lt_sumdata ).
+        RETURN.
     ENDTRY.
 
 **********************************************************************

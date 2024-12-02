@@ -12,8 +12,9 @@ define view entity ZI_BI003_REPORT_002_BILLING
     p_recover_type   : ze_recycle_type,
     p_condition_type : kscha
   as select from    I_BillingDocumentItem          as billingitem
-    inner join      ZR_TBI_RECY_INFO001            as recover_info  on  billingitem.YY1_ManagementNo_BDI = recover_info.RecoveryManagementNumber
-                                                                    and recover_info.RecoveryType        = $parameters.p_recover_type
+    inner join      ZR_TBI_RECY_INFO001            as recover_info  on  //billingitem.YY1_ManagementNo_BDI = recover_info.RecoveryManagementNumber
+                                                                        billingitem.YY1_ManagementNo_1_BDI = recover_info.RecoveryManagementNumber
+                                                                    and recover_info.RecoveryType          = $parameters.p_recover_type
     left outer join I_BillingDocItemPrcgElmntBasic as BillingPrice  on  BillingPrice.BillingDocument     = billingitem.BillingDocument
                                                                     and BillingPrice.BillingDocumentItem = billingitem.BillingDocumentItem
                                                                     and BillingPrice.ConditionType       = $parameters.p_condition_type

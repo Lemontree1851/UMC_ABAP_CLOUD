@@ -190,17 +190,18 @@ CLASS zcl_productionplan IMPLEMENTATION.
       components TYPE abap_component_tab.
 
     DATA:
-      lv_dayc  TYPE c LENGTH 30,
-      lv_day   TYPE d,
-      lv_vdate TYPE d,
-      lv_color TYPE c LENGTH 30,
-      lv_index TYPE n LENGTH 3,
-      lv_qty   TYPE menge_d,
-      lv_qty_t TYPE menge_d,
-      lv_atp   TYPE menge_d,
-      lv_atp_t TYPE menge_d,
-      lv_sum   TYPE menge_d,
-      lv_field TYPE menge_d.
+      lv_dayc       TYPE c LENGTH 30,
+      lv_day        TYPE d,
+      lv_vdate      TYPE d,
+      lv_color      TYPE c LENGTH 30,
+      lv_index      TYPE n LENGTH 3,
+      lv_qty        TYPE menge_d,
+      lv_qty_t      TYPE menge_d,
+      lv_atp        TYPE menge_d,
+      lv_atp_t      TYPE menge_d,
+      lv_sum        TYPE menge_d,
+      lv_field      TYPE menge_d,
+      lv_field2(12) TYPE p.
 
     FIELD-SYMBOLS:
       <lt_tab>     TYPE STANDARD TABLE,
@@ -1310,22 +1311,47 @@ CLASS zcl_productionplan IMPLEMENTATION.
       ls_output-capacity = <l_capacity>.
       CONDENSE ls_output-capacity NO-GAPS.
       ls_output-remark = <l_remark>.
-      ls_output-stockqty = <l_stockqty>.
-      ls_output-rounding = <l_rounding>.
-      CONDENSE ls_output-rounding NO-GAPS.
-      ls_output-delta = <l_delta>.
-      CONDENSE ls_output-delta NO-GAPS.
-      ls_output-historyso = <l_history>.
-      CONDENSE ls_output-historyso NO-GAPS.
-      ls_output-futureso = <l_future>.
-      CONDENSE ls_output-futureso NO-GAPS.
-      ls_output-balanceqty = <l_balance>.
-      ls_output-summary = <l_field>.
-      CONDENSE ls_output-summary NO-GAPS.
+      lv_field2 = <l_stockqty>.
+      IF lv_field2 <> 0.
+        ls_output-stockqty = lv_field2.
+        CONDENSE ls_output-stockqty NO-GAPS.
+      ENDIF.
+      lv_field2 = <l_rounding>.
+      IF lv_field2 <> 0.
+        ls_output-rounding = lv_field2.
+        CONDENSE ls_output-rounding NO-GAPS.
+      ENDIF.
+      lv_field2 = <l_delta>.
+      IF lv_field2 <> 0.
+        ls_output-delta = lv_field2.
+        CONDENSE ls_output-delta NO-GAPS.
+      ENDIF.
+
+      lv_field2 = <l_history>.
+      IF lv_field2 <> 0.
+        ls_output-historyso = lv_field2.
+        CONDENSE ls_output-historyso NO-GAPS.
+      ENDIF.
+
+      lv_field2 = <l_future>.
+      IF lv_field2 <> 0.
+        ls_output-futureso = lv_field2.
+        CONDENSE ls_output-futureso NO-GAPS.
+      ENDIF.
+      lv_field2 = <l_balance>.
+      IF lv_field2 <> 0.
+        ls_output-balanceqty = lv_field2.
+        CONDENSE ls_output-balanceqty NO-GAPS.
+      ENDIF.
+      lv_field2 = <l_field>.
+      IF lv_field2 <> 0.
+        ls_output-summary = lv_field2.
+        CONDENSE ls_output-summary NO-GAPS.
+      ENDIF.
       READ TABLE lt_marc_zhlb INTO ls_marc_zhlb
            WITH KEY plant = <l_plant>
                     product = <l_idnrk> BINARY SEARCH.
-      if sy-subrc = 0.
+      IF sy-subrc = 0.
         ls_output-sobmx = ls_marc_zhlb-specialprocurementtype.
       ENDIF.
 
@@ -1347,9 +1373,11 @@ CLASS zcl_productionplan IMPLEMENTATION.
         IF <l_field> IS ASSIGNED
        AND <l_field2> IS ASSIGNED.
           IF <l_field> <> 0.
-            <l_field2> = <l_field>.
+            lv_field2 = <l_field>.
+            <l_field2> = lv_field2.
             CONDENSE <l_field2> NO-GAPS.
           ENDIF.
+
         ENDIF.
 
         IF <l_plantype> = 'C'.   "ECN
@@ -1383,7 +1411,8 @@ CLASS zcl_productionplan IMPLEMENTATION.
        AND <l_field2> IS ASSIGNED
        AND <l_color> IS ASSIGNED.
           IF <l_field> <> 0.
-            <l_field2> = <l_field>.
+            lv_field2 = <l_field>.
+            <l_field2> = lv_field2.
             CONCATENATE <l_color> <l_field2> INTO <l_field2>.
             CONDENSE <l_field2> NO-GAPS.
           ENDIF.
@@ -1394,17 +1423,13 @@ CLASS zcl_productionplan IMPLEMENTATION.
        AND <l_field> IS ASSIGNED
        AND <l_field2> IS ASSIGNED.
           IF <l_field> <> 0.
-            lv_field = <l_field>.
+            lv_field2 = <l_field>.
+            <l_field2> = lv_field2.
+            CONDENSE <l_field2> NO-GAPS.
           ELSE.
-            IF lv_field <> 0.
-              <l_field2> = lv_field.
-              CONDENSE <l_field2> NO-GAPS.
-            ELSE.
-              <l_field2> = '0'.
-              CONDENSE <l_field2> NO-GAPS.
-            ENDIF.
+            <l_field2> = '0'.
+            CONDENSE <l_field2> NO-GAPS.
           ENDIF.
-
         ENDIF.
       ENDDO.
 

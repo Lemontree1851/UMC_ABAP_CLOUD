@@ -6,7 +6,7 @@
     <METADATA>
      <NAME>ZUI_TBI_RECY_INFO001_O2</NAME>
      <TYPE>SRVB/SVB</TYPE>
-     <DESCRIPTION>Service Binding for Recover Info OData V2</DESCRIPTION>
+     <DESCRIPTION>回収進捗管理分析</DESCRIPTION>
      <LANGUAGE>EN</LANGUAGE>
      <MASTER_LANGUAGE>EN</MASTER_LANGUAGE>
      <ABAP_LANGU_VERSION>5</ABAP_LANGU_VERSION>
@@ -25,9 +25,9 @@
          <SERVICE_VERSION>0001</SERVICE_VERSION>
          <RELEASE_STATE>NOT_RELEASED</RELEASE_STATE>
          <SRVD_REF>
-          <URI>/sap/bc/adt/ddic/srvd/sources/zui_tbi_recy_info001_o4</URI>
+          <URI>/sap/bc/adt/ddic/srvd/sources/zui_tbi_recy_info001_o2</URI>
           <TYPE>SRVD/SRV</TYPE>
-          <NAME>ZUI_TBI_RECY_INFO001_O4</NAME>
+          <NAME>ZUI_TBI_RECY_INFO001_O2</NAME>
          </SRVD_REF>
          <BIND_TYPE_DATA>
           <CONTENT>

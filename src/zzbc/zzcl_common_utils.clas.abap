@@ -35,6 +35,19 @@ CLASS zzcl_common_utils DEFINITION
           END OF ts_dyn_name,
           tt_dyn_name TYPE STANDARD TABLE OF ts_dyn_name WITH EMPTY KEY.
 
+    TYPES: BEGIN OF ty_etag,
+             etag TYPE string,
+           END OF   ty_etag,
+           BEGIN OF ty_metadata,
+             metadata TYPE ty_etag,
+           END OF   ty_metadata,
+           BEGIN OF ty_odata_res,
+             results TYPE TABLE OF ty_metadata WITH DEFAULT KEY,
+           END OF   ty_odata_res,
+           BEGIN OF ty_odata_res_d,
+             d TYPE ty_odata_res,
+           END OF   ty_odata_res_d.
+
     TYPES:
       "odata v2 api message structure
       BEGIN OF ty_message,
@@ -69,6 +82,7 @@ CLASS zzcl_common_utils DEFINITION
       BEGIN OF ty_error_v4,
         error TYPE ty_message_v4,
       END OF ty_error_v4.
+
     CLASS-DATA: BEGIN OF date,
                   j(4),
                   m(2),
@@ -457,6 +471,8 @@ CLASS zzcl_common_utils IMPLEMENTATION.
 
 
   METHOD get_api_etag.
+    DATA: ls_odata_result TYPE ty_odata_res_d.
+
     DATA(lv_path) = iv_path.
 
     " Find CA by Scenario ID
@@ -498,7 +514,16 @@ CLASS zzcl_common_utils IMPLEMENTATION.
 
         ev_status_code = lo_response->get_status( )-code.
         ev_response = lo_response->get_text(  ).
-        ev_etag = lo_response->get_header_field( 'etag' ).
+
+        IF ev_status_code = 200.
+          REPLACE ALL OCCURRENCES OF `__metadata` IN ev_response WITH 'metadata'.
+          /ui2/cl_json=>deserialize( EXPORTING json = ev_response
+                                               pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+                                     CHANGING  data = ls_odata_result ).
+          IF ls_odata_result-d-results IS NOT INITIAL.
+            ev_etag = ls_odata_result-d-results[ 1 ]-metadata-etag.
+          ENDIF.
+        ENDIF.
 
         lo_http_client->close(  ).
 
@@ -754,22 +779,32 @@ CLASS zzcl_common_utils IMPLEMENTATION.
   METHOD get_workingday.
     DATA lv_date TYPE datum.
 
-    SELECT SINGLE factorycalendarid
+    SELECT SINGLE factorycalendarid,
+                  factorycalendarvalidityenddate
       FROM i_factorycalendarbasic WITH PRIVILEGED ACCESS AS a
       JOIN i_plant AS b ON b~factorycalendar = a~factorycalendarlegacyid
      WHERE b~plant = @iv_plant
-      INTO @DATA(lv_factorycalendar_id).
+      INTO @DATA(ls_factorycalendar).
     IF sy-subrc = 0.
       TRY.
-          DATA(lo_fcal_run) = cl_fhc_calendar_runtime=>create_factorycalendar_runtime( iv_factorycalendar_id = lv_factorycalendar_id ).
+          DATA(lo_fcal_run) = cl_fhc_calendar_runtime=>create_factorycalendar_runtime( iv_factorycalendar_id = ls_factorycalendar-factorycalendarid ).
           DATA(lv_flag) = lo_fcal_run->is_date_workingday( iv_date = iv_date ).
 
           " is a holiday
           IF lv_flag = abap_false.
-*
+
+            IF iv_date > ls_factorycalendar-factorycalendarvalidityenddate.
+              rv_workingday = '12340506'. " 用于标识，超过工厂日历范围
+              RETURN.
+            ENDIF.
+
             lv_date = iv_date.
             DO.
               lv_date += 1.
+              IF iv_date > ls_factorycalendar-factorycalendarvalidityenddate.
+                rv_workingday = '12340506'. " 用于标识，超过工厂日历范围
+                RETURN.
+              ENDIF.
               IF lo_fcal_run->is_date_workingday( iv_date = lv_date ).
                 rv_workingday = lv_date.
                 EXIT.

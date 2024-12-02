@@ -5,12 +5,13 @@ define root view entity ZR_STOCKAGEUPLOAD
   as select from ztfi_1004
   association [0..1] to I_BusinessUserVH as _CreateUser  on  $projection.CreatedBy = _CreateUser.UserID
   association [0..1] to I_BusinessUserVH as _UpdateUser  on  $projection.LastChangedBy = _UpdateUser.UserID
+  association [0..1] to I_Product    as _Product on  $projection.Material  = _Product.Product
   association [0..1] to I_ProductText    as _ProductText on  $projection.Material  = _ProductText.Product
                                                          and _ProductText.Language = $session.system_language
   association [0..1] to I_CompanyCode    as _CompanyCode on  $projection.CompanyCode = _CompanyCode.CompanyCode
   association [0..1] to I_Plant          as _Plant       on  $projection.Plant = _Plant.Plant
 {
-
+  key inventorytype     as InventoryType,
   key ledger                as Ledger,
   key calendaryear          as CalendarYear,
   key calendarmonth         as CalendarMonth,
@@ -33,6 +34,7 @@ define root view entity ZR_STOCKAGEUPLOAD
       last_changed_at       as LastChangedAt,
       @Semantics.systemDateTime.localInstanceLastChangedAt: true
       local_last_changed_at as LocalLastChangedAt,
+      _Product,
       _ProductText,
       _CompanyCode,
       _Plant,

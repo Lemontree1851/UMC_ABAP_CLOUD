@@ -76,7 +76,7 @@ CLASS zcl_tf_batchcreationdn IMPLEMENTATION.
                 end
              -- 如果三个条件没有取到值就将billingtoparty固定为空(sd1001b)
               ELSE
-                case
+                CASE
                   when basic.yy1_salesdoctype_sdh = ''
                     then sd1001b.finishedstoragelocation
                   when ( select count( * ) from ztbc_1001 where zid = 'ZSD013' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
@@ -94,8 +94,8 @@ CLASS zcl_tf_batchcreationdn IMPLEMENTATION.
       left outer join zr_tsd_1001              as sd1001a  on  sd1001a.customer       = basic.soldtoparty
                                                            and sd1001a.billingtoparty = basic.billingtoparty
                                                            and sd1001a.plant          = basic.plant
-      left outer join :lt_table_without_billto as sd1001b  on  sd1001b.customer = basic.soldtoparty
-                                                           and sd1001a.billingtoparty = ''
+      left outer join zr_tsd_1001              as sd1001b  on  sd1001b.customer = basic.soldtoparty
+                                                           and sd1001b.billingtoparty = ''
                                                            and sd1001b.plant    = basic.plant;
 
   endmethod.

@@ -1,4 +1,4 @@
-@EndUserText.label: 'Service Definition for BI006 Long Term Inventory OData V2'
+@EndUserText.label: '長期滞留在庫実績'
 define service ZUI_BI006_LONGTERM_INVEN_O2 {
   expose ZI_BI006_REPORT;
   expose ZI_BI006_REPORT_JOB;

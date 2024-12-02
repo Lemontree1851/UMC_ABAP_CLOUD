@@ -42,7 +42,9 @@ define root custom entity ZC_BDGLACCOUNT
 //@AnalyticsDetails.query.totals:#SHOW
   key FinancialStatementItem         : abap.char(10);
       @UI                            : {
-      lineItem                       : [ { position: 30, label: 'G/L勘定' } ] }
+     lineItem                       : [ { position: 30, label: 'G/L勘定' } ] }
+      
+      
       @EndUserText.label             : 'G/L勘定'
   key GLAccount                      : abap.char(10);
       @UI.hidden                     : true

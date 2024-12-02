@@ -59,6 +59,7 @@ CLASS lhc_paidpay IMPLEMENTATION.
 
   METHOD check.
     DATA:
+      lv_count   TYPE i,
       lv_int     TYPE string,
       lv_decimal TYPE string,
       lv_text    TYPE string,
@@ -192,6 +193,36 @@ CLASS lhc_paidpay IMPLEMENTATION.
       CLEAR: lv_status, lv_message, lv_msg.
     ENDLOOP.
 
+* Duplication check
+    LOOP AT ct_data INTO DATA(ls_data)
+                    GROUP BY ( companycode = ls_data-companycode
+                               fiscalyear = ls_data-fiscalyear
+                               period = ls_data-period
+                               profitcenter = ls_data-profitcenter
+                               businesspartner = ls_data-businesspartner
+                               purchasinggroup = ls_data-purchasinggroup )
+                    REFERENCE INTO DATA(mem).
+      LOOP AT GROUP mem ASSIGNING FIELD-SYMBOL(<ls_mem>).
+        lv_count = lv_count + 1.
+      ENDLOOP.
+      IF lv_count > 1.
+        LOOP AT ct_data ASSIGNING <ls_data>
+                        WHERE companycode = <ls_mem>-companycode
+                          AND fiscalyear = <ls_mem>-fiscalyear
+                          AND period = <ls_mem>-period
+                          AND profitcenter = <ls_mem>-profitcenter
+                          AND businesspartner = <ls_mem>-businesspartner
+                          AND purchasinggroup = <ls_mem>-purchasinggroup.
+          <ls_data>-status = 'E'.
+          MESSAGE s029(zfico_001) INTO lv_msg.
+          <ls_data>-message = zzcl_common_utils=>merge_message(
+                                 iv_message1 = lv_msg
+                                 iv_message2 = <ls_data>-message
+                                 iv_symbol = '\' ).
+        ENDLOOP.
+      ENDIF.
+      CLEAR: lv_count.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD excute.
@@ -231,7 +262,7 @@ CLASS lhc_paidpay IMPLEMENTATION.
                                             iv_alpha = 'IN'
                                             iv_currency = ls_bukrs-currency
                                             iv_input = <ls_data>-prestockamt ).
-            ls_ztfi_1008-businesspartner = |{ <ls_data>-BusinessPartner ALPHA = IN }|.
+            ls_ztfi_1008-businesspartner = |{ <ls_data>-businesspartner ALPHA = IN }|.
           ENDIF.
           APPEND ls_ztfi_1008 TO lt_ztfi_1008.
           CLEAR: ls_ztfi_1008.
@@ -268,7 +299,7 @@ CLASS lhc_paidpay IMPLEMENTATION.
                WITH KEY companycode = <ls_data>-companycode BINARY SEARCH.
           IF sy-subrc = 0.
             ls_ztfi_1009-currency = ls_bukrs-currency.
-            ls_ztfi_1009-businesspartner = |{ <ls_data>-BusinessPartner ALPHA = IN }|.
+            ls_ztfi_1009-businesspartner = |{ <ls_data>-businesspartner ALPHA = IN }|.
             ls_ztfi_1009-begpurgrpamt = zzcl_common_utils=>conversion_amount(
                                             iv_alpha = 'IN'
                                             iv_currency = ls_bukrs-currency

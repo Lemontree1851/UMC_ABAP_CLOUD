@@ -180,13 +180,20 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       a~plant,
       a~profitcenter,
       b~customername,
+      c~customeraccountassignmentgroup,
       d~productname,
       e~product,
       g~customer,
       k~plantname,
+      j~firstsalesspecproductgroup,
+      j~secondsalesspecproductgroup,
+      j~thirdsalesspecproductgroup,
+      j~accountdetnproductgroup,
       i~matlaccountassignmentgroup,
       l~materialcost2000,
-      l~materialcost3000
+      l~materialcost3000,
+      m~mrpresponsible,
+      n~profitcenter AS profitcenter_bom
     FROM i_slsperformanceplanactualcube(
       p_exchangeratetype = 0,
       p_displaycurrency  = 'JPY',
@@ -205,6 +212,9 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
    LEFT JOIN i_customer WITH PRIVILEGED ACCESS AS b
    ON b~customername = a~soldtoparty
    AND b~customer = g~customer
+   LEFT JOIN i_customersalesarea WITH PRIVILEGED ACCESS AS c
+   ON c~customer = g~customer
+   AND c~salesorganization = a~salesorganization
    LEFT JOIN i_plant WITH PRIVILEGED ACCESS AS k
    ON k~plant = a~plant
    LEFT JOIN i_productsalesdelivery WITH PRIVILEGED ACCESS AS j
@@ -214,6 +224,13 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
    LEFT JOIN ztfi_1010 AS l
    ON l~product = a~product
    AND l~customer = g~customer
+   LEFT JOIN i_productplantmrp WITH PRIVILEGED ACCESS AS m
+   ON m~plant = a~plant
+   AND m~product = a~product
+   LEFT JOIN i_profitcentertoproduct WITH PRIVILEGED ACCESS AS n
+   ON n~plant = a~plant
+   AND n~product = a~product
+   AND n~companycode = a~plant
    WHERE a~product IN @lr_product
      AND a~plant IN @lr_salesorganization
      AND g~customer IN @lr_customer
@@ -251,18 +268,18 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 
     SORT lt_result1 BY plant product.
 
-     LOOP AT lt_result1 INTO DATA(ls_result1).
-        "Obtain data of high level material of component
-        zcl_bom_where_used=>get_data(
-          EXPORTING
-            iv_plant                   = ls_result1-plant
-            iv_billofmaterialcomponent = ls_result1-product
-          IMPORTING
-            et_usagelist               = lt_usagelist ).
+    LOOP AT lt_result1 INTO DATA(ls_result1).
+      "Obtain data of high level material of component
+      zcl_bom_where_used=>get_data(
+        EXPORTING
+          iv_plant                   = ls_result1-plant
+          iv_billofmaterialcomponent = ls_result1-product
+        IMPORTING
+          et_usagelist               = lt_usagelist ).
 
-        APPEND LINES OF lt_usagelist TO lt_highlevelmaterialinfo.
-        CLEAR lt_usagelist.
-      ENDLOOP.
+      APPEND LINES OF lt_usagelist TO lt_highlevelmaterialinfo.
+      CLEAR lt_usagelist.
+    ENDLOOP.
 ********計画数量********
 
     CLEAR lt_version0.

@@ -176,6 +176,10 @@ calendaryear = <lfs_data>-calendaryear calendarmonth = <lfs_data>-calendarmonth 
         CONDENSE cs_data1-calendaryear.
         CONDENSE cs_data1-calendarmonth.
       ENDIF.
+      IF <lfs_data>-InventoryType ne 'A' AND <lfs_data>-InventoryType ne 'B' .
+        MESSAGE s042(zfico_001) INTO lv_msg.
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
+      ENDIF.
       IF <lfs_data>-ledger IS INITIAL.
         MESSAGE s036(zfico_001) INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
@@ -343,11 +347,13 @@ calendaryear = <lfs_data>-calendaryear calendarmonth = <lfs_data>-calendarmonth 
 *    INTO TABLE @DATA(lt_ztfi_1004) .
 *    SORT lt_ztfi_1004 BY plant material calendaryear calendarmonth .
     DATA(lt_data_temp) = ct_data .
-    SORT lt_data_temp BY ledger companycode plant calendaryear calendarmonth.
-    DELETE ADJACENT DUPLICATES FROM lt_data_temp COMPARING ledger companycode plant calendaryear calendarmonth.
+    SORT lt_data_temp BY inventorytype ledger companycode plant calendaryear calendarmonth.
+
+    DELETE ADJACENT DUPLICATES FROM lt_data_temp COMPARING inventorytype ledger companycode plant calendaryear calendarmonth.
     LOOP AT lt_data_temp ASSIGNING FIELD-SYMBOL(<lfs_data_temp>) WHERE status = ''.
 
-      DELETE FROM ztfi_1004 WHERE ledger = @<lfs_data_temp>-ledger
+      DELETE FROM ztfi_1004 WHERE inventorytype = @<lfs_data_temp>-inventorytype
+      AND  ledger = @<lfs_data_temp>-ledger
       AND  companycode = @<lfs_data_temp>-companycode
       AND  plant = @<lfs_data_temp>-plant
       AND  calendaryear = @<lfs_data_temp>-calendaryear
@@ -364,6 +370,7 @@ calendaryear = <lfs_data>-calendaryear calendarmonth = <lfs_data>-calendarmonth 
       "ENDIF.
 
       MODIFY ztfi_1004 FROM @( VALUE #(
+                                                  inventorytype = <lfs_data>-inventorytype
                                                   ledger = <lfs_data>-ledger
                                                   companycode =  <lfs_data>-companycode
                                                   plant              = <lfs_data>-plant
@@ -381,6 +388,7 @@ calendaryear = <lfs_data>-calendaryear calendarmonth = <lfs_data>-calendarmonth 
       IF sy-subrc = 0.
         INSERT INTO ztfi_1003 VALUES @( VALUE #(
                                             uuid                = lv_uuid
+                                            inventorytype = <lfs_data>-inventorytype
                                             ledger = <lfs_data>-ledger
                                             companycode =  <lfs_data>-companycode
                                                   plant              = <lfs_data>-plant
@@ -412,14 +420,16 @@ calendaryear = <lfs_data>-calendaryear calendarmonth = <lfs_data>-calendarmonth 
   METHOD export.
 
     TYPES:BEGIN OF lty_export,
+            inventorytype TYPE ztfi_1003-inventorytype,
             ledger        TYPE ztfi_1003-ledger,
             companycode   TYPE ztfi_1003-companycode,
+                        calendaryear  TYPE ztfi_1003-calendaryear,
+            calendarmonth TYPE ztfi_1003-calendarmonth,
             plant         TYPE ztfi_1003-plant,
             material      TYPE ztfi_1003-material,
             age           TYPE ztfi_1003-age,
             qty           TYPE ztfi_1003-qty,
-            calendaryear  TYPE ztfi_1003-calendaryear,
-            calendarmonth TYPE ztfi_1003-calendarmonth,
+
 
             status        TYPE ztfi_1003-status,
             message       TYPE ztfi_1003-message,

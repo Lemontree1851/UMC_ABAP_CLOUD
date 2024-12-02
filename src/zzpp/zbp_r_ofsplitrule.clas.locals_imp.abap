@@ -14,6 +14,8 @@ CLASS lhc_splitrule DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS processlogic FOR MODIFY
       IMPORTING keys FOR ACTION splitrule~processlogic RESULT result.
+    METHODS validationfields FOR VALIDATE ON SAVE
+      IMPORTING keys FOR splitrule~validationfields.
 
     METHODS check  CHANGING ct_data TYPE lty_request_t.
     METHODS excute CHANGING ct_data TYPE lty_request_t.
@@ -306,7 +308,57 @@ CLASS lhc_splitrule IMPLEMENTATION.
     ENDIF.
 
     DATA(lv_date) = |{ lv_date_str }01|.
-    rv_invalid = zzcl_common_utils=>is_valid_date( CONV #( lv_date ) ).
+    DATA(lv_valid) = zzcl_common_utils=>is_valid_date( CONV #( lv_date ) ).
+    IF lv_valid = abap_false.
+      rv_invalid = abap_true.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD validationfields.
+    DATA: lv_message TYPE string.
+
+    READ ENTITIES OF zr_ofsplitrule IN LOCAL MODE
+    ENTITY splitrule
+    ALL FIELDS WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result).
+
+    LOOP AT lt_result ASSIGNING FIELD-SYMBOL(<lfs_result>).
+      IF <lfs_result>-shipunit IS INITIAL.
+        MESSAGE e010(zpp_001) WITH TEXT-004 INTO lv_message.
+        APPEND VALUE #( %tky = <lfs_result>-%tky ) TO failed-splitrule.
+        APPEND VALUE #( %tky = <lfs_result>-%tky
+                        %element-shipunit = if_abap_behv=>mk-on
+                        %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error
+                                                      text     = lv_message ) ) TO reported-splitrule.
+      ENDIF.
+
+      CLEAR lv_message.
+      IF <lfs_result>-validend IS INITIAL.
+        MESSAGE e010(zpp_001) WITH TEXT-006 INTO lv_message.
+      ELSEIF is_invalid_datestr( CONV #( <lfs_result>-validend ) ).
+        MESSAGE e111(zpp_001) WITH TEXT-006 INTO lv_message.
+      ELSE.
+        SELECT SINGLE *
+          FROM zc_ofsplitrule
+         WHERE customer      =  @<lfs_result>-customer
+           AND splitmaterial =  @<lfs_result>-splitmaterial
+           AND plant         =  @<lfs_result>-plant
+           AND splitunit     <> @<lfs_result>-splitunit
+           AND validend      =  @<lfs_result>-validend
+           AND deleteflag    <> @abap_true
+          INTO @DATA(ls_ofsplitrule).         "#EC CI_ALL_FIELDS_NEEDED
+        IF sy-subrc = 0.
+          MESSAGE e083(zpp_001) INTO lv_message.
+        ENDIF.
+      ENDIF.
+      IF lv_message IS NOT INITIAL.
+        APPEND VALUE #( %tky = <lfs_result>-%tky ) TO failed-splitrule.
+        APPEND VALUE #( %tky = <lfs_result>-%tky
+                        %element-validend = if_abap_behv=>mk-on
+                        %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error
+                                                      text     = lv_message ) ) TO reported-splitrule.
+      ENDIF.
+    ENDLOOP.
   ENDMETHOD.
 
 ENDCLASS.

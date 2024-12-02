@@ -20,7 +20,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BDGLACCOUNT IMPLEMENTATION.
+CLASS zcl_bdglaccount IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -104,6 +104,7 @@ CLASS ZCL_BDGLACCOUNT IMPLEMENTATION.
     DATA:lv_companycode TYPE zc_bdglaccount-companycode.
     DATA:lv_ledger TYPE zc_bdglaccount-ledger.
     DATA:lv_calendarmonth_s TYPE string.
+    DATA:lv_sum TYPE abap_bool.
     DATA:lv_date_f TYPE aedat.
     DATA:lv_date_t TYPE aedat.
     DATA:lv_date_s TYPE aedat.
@@ -204,8 +205,16 @@ CLASS ZCL_BDGLACCOUNT IMPLEMENTATION.
           lv_to =  lv_date_t+0(4) && '-' && lv_date_t+4(2) && '-' && lv_date_t+6(2) && 'T00%3A00'.
         ENDIF.
       ENDIF.
-
-
+      CLEAR lv_sum.
+      READ TABLE lt_filter_cond INTO DATA(ls_filter_gl) WITH KEY name = 'GLACCOUNT' .
+      IF sy-subrc EQ 0.
+        READ TABLE ls_filter_gl-range INTO DATA(ls_sel_opt_gl) INDEX 1.
+        IF sy-subrc EQ 0 .
+          IF  ls_sel_opt_gl-low IS NOT INITIAL.
+            lv_sum = abap_true.
+          ENDIF.
+        ENDIF.
+      ENDIF.
 
 
 
@@ -304,7 +313,7 @@ INTO TABLE @DATA(lt_glaccount).
 
       LOOP AT lt_collect INTO ls_collect .
 
-      clear ls_bdglaccount.
+        CLEAR ls_bdglaccount.
 
 
         ls_bdglaccount-ledger = ls_collect-ledger.
@@ -363,7 +372,9 @@ INTO TABLE @DATA(lt_glaccount).
 
       ENDLOOP.
 
-
+      IF lv_sum IS NOT INITIAL.
+        DELETE lt_bdglaccount WHERE glaccount NE '合計'.
+      ENDIF.
 
 
 

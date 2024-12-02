@@ -47,5 +47,9 @@ annotate entity ZC_SALESORDER_U with
   YY1_SalesDocType_SDH;
   @UI.selectionField: [{ position: 70 }]
   SalesDocument;
+//  @UI.hidden: true
+//  @Consumption.filter.hidden: true
+//  Language;
+  
 
 }

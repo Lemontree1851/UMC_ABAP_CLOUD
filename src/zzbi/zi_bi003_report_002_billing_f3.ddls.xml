@@ -3,10 +3,10 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <DDLS>
-    <DDLNAME>ZC_FIXEDASSETPRINTS</DDLNAME>
+    <DDLNAME>ZI_BI003_REPORT_002_BILLING_F3</DDLNAME>
     <DDLANGUAGE>E</DDLANGUAGE>
-    <DDTEXT>Fixed Asset Print</DDTEXT>
-    <SOURCE_TYPE>Q</SOURCE_TYPE>
+    <DDTEXT>BI003 Report 002 Billing Info New for Report 003</DDTEXT>
+    <SOURCE_TYPE>W</SOURCE_TYPE>
    </DDLS>
   </asx:values>
  </asx:abap>

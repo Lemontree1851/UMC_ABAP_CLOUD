@@ -8,7 +8,7 @@
     dataClass: #MIXED
 }
 define view entity ZI_BI003_REPORT_005_BILLING
-  as select from ZI_BI003_REPORT_002_BILLING( p_recover_type: 'SS', p_condition_type: 'ZPSS' )
+  as select from ZI_BI003_REPORT_002_BILLING_F5( p_recover_type: 'SS', p_condition_type: 'ZPSS' )
 {
   key BillingDocument,
   key BillingDocumentItem,

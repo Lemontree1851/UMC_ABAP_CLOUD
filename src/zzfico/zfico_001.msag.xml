@@ -260,6 +260,12 @@
      <MSGNR>041</MSGNR>
      <TEXT>補助内訳区分を入力してください。</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZFICO_001</ARBGB>
+     <MSGNR>042</MSGNR>
+     <TEXT>カテゴリの値はAかBしかありません</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

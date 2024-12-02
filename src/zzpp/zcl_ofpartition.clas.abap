@@ -92,8 +92,8 @@ CLASS zcl_ofpartition IMPLEMENTATION.
 
         "获取要取值的范围, 执行当月初，到24个月后的月末
         DATA(lv_date_range) = get_process_date_range( ).
-        data(lv_startdate) = lv_date_range-startdate.
-        data(lv_enddate) = lv_date_range-enddate.
+        DATA(lv_startdate) = lv_date_range-startdate.
+        DATA(lv_enddate) = lv_date_range-enddate.
         "获取OF数据
         SELECT
           customer,
@@ -393,25 +393,30 @@ CLASS zcl_ofpartition IMPLEMENTATION.
             ls_split_of-materialbycustomer = ls_additional-materialbycustomer.
             ls_split_of-materialname = ls_additional-productname.
           ENDIF.
-          DATA(temp_date) = lv_date_range-startdate.
-          WHILE temp_date <= lv_date_range-enddate.
-            ls_split_of-requirementdate = temp_date.
-            "如果是分割范围内的日期，数量需要重新分配
-            IF temp_date >= lv_splitstartdate AND temp_date <= lv_splitenddate.
-              READ TABLE lt_split_date INTO ls_split_date WITH KEY customer = ls_of_key-customer
-                plant = ls_of_key-plant material = ls_of_key-material splitdate = temp_date BINARY SEARCH.
-              IF sy-subrc = 0.
-                READ TABLE lt_split_coll INTO ls_split_coll WITH KEY customer = ls_of_key-customer
-                  plant = ls_of_key-plant material = ls_of_key-material requirementmonth = ls_split_date-splitmonth BINARY SEARCH.
+
+          READ TABLE lt_split_date INTO ls_split_date WITH KEY customer = ls_of_key-customer
+            plant = ls_of_key-plant material = ls_of_key-material BINARY SEARCH.
+          IF sy-subrc = 0.
+            DATA(temp_date) = lv_date_range-startdate.
+            WHILE temp_date <= lv_date_range-enddate.
+              ls_split_of-requirementdate = temp_date.
+              "如果是分割范围内的日期，数量需要重新分配
+              IF temp_date >= lv_splitstartdate AND temp_date <= lv_splitenddate.
+                READ TABLE lt_split_date INTO ls_split_date WITH KEY customer = ls_of_key-customer
+                  plant = ls_of_key-plant material = ls_of_key-material splitdate = temp_date BINARY SEARCH.
                 IF sy-subrc = 0.
-                  ls_split_of-requirementqty = get_splitqty(  x = ls_split_date-datecount
-                                                              y = ls_split_coll-requirementqty
-                                                              z = ls_split_date-shipunit
-                                                              n = ls_split_date-dateindex ).
-                ELSE.
-                  ls_split_of-requirementqty = 0.
+                  READ TABLE lt_split_coll INTO ls_split_coll WITH KEY customer = ls_of_key-customer
+                    plant = ls_of_key-plant material = ls_of_key-material requirementmonth = ls_split_date-splitmonth BINARY SEARCH.
+                  IF sy-subrc = 0.
+                    ls_split_of-requirementqty = get_splitqty(  x = ls_split_date-datecount
+                                                                y = ls_split_coll-requirementqty
+                                                                z = ls_split_date-shipunit
+                                                                n = ls_split_date-dateindex ).
+                  ELSE.
+                    ls_split_of-requirementqty = 0.
+                  ENDIF.
                 ENDIF.
-              " 如果没有分割范围数据，可能是此条数据没有分割主数据，但仍要显示原数据
+                "如果是分割范围外的日期，数量直接取原来的
               ELSE.
                 READ TABLE lt_orderforecast INTO ls_orderforecast WITH KEY customer = ls_of_key-customer
                   plant = ls_of_key-plant material = ls_of_key-material requirementdate = temp_date BINARY SEARCH.
@@ -419,18 +424,20 @@ CLASS zcl_ofpartition IMPLEMENTATION.
                   ls_split_of-requirementqty = ls_orderforecast-requirementqty.
                 ENDIF.
               ENDIF.
-            "如果是分割范围外的日期，数量直接取原来的
-            ELSE.
-              READ TABLE lt_orderforecast INTO ls_orderforecast WITH KEY customer = ls_of_key-customer
-                plant = ls_of_key-plant material = ls_of_key-material requirementdate = temp_date BINARY SEARCH.
-              IF sy-subrc = 0.
-                ls_split_of-requirementqty = ls_orderforecast-requirementqty.
-              ENDIF.
-            ENDIF.
-            APPEND ls_split_of TO lt_split_of.
-            CLEAR ls_split_of-requirementqty.
-            temp_date = temp_date + 1.
-          ENDWHILE.
+              APPEND ls_split_of TO lt_split_of.
+              CLEAR ls_split_of-requirementqty.
+              temp_date = temp_date + 1.
+            ENDWHILE.
+            "如果没有分割范围数据，可能是此条数据没有分割主数据，但仍要显示原数据
+          ELSE.
+            LOOP AT lt_orderforecast INTO ls_orderforecast WHERE customer = ls_of_key-customer AND
+              plant = ls_of_key-plant AND material = ls_of_key-material.
+              ls_split_of-requirementdate = ls_orderforecast-requirementdate.
+              ls_split_of-requirementqty = ls_orderforecast-requirementqty.
+              APPEND ls_split_of TO lt_split_of.
+            ENDLOOP.
+            CLEAR ls_split_of.
+          ENDIF.
         ENDLOOP.
 
         " 处理数据时 lt_of_key 已经排序，所以这里的排序可以省略

@@ -177,9 +177,15 @@ CLASS lhc_zr_orderforecast IMPLEMENTATION.
         MESSAGE e010(zpp_001) WITH TEXT-005 INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
       ELSE.
-        <lfs_data>-requirementdate = zzcl_common_utils=>get_workingday( iv_date  = <lfs_data>-requirementdate
-                                                                        iv_next  = abap_false
-                                                                        iv_plant = <lfs_data>-plant ).
+        DATA(lv_workingday) = zzcl_common_utils=>get_workingday( iv_date  = <lfs_data>-requirementdate
+                                                                 iv_next  = abap_false
+                                                                 iv_plant = <lfs_data>-plant ).
+        IF lv_workingday = '12340506'. " 用于标识，超过工厂日历范围
+          MESSAGE e112(zpp_001) INTO lv_msg.
+          lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+        ELSE.
+          <lfs_data>-requirementdate = lv_workingday.
+        ENDIF.
       ENDIF.
 
       IF <lfs_data>-requirementqtystr IS INITIAL.

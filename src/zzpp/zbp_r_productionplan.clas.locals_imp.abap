@@ -107,7 +107,8 @@ CLASS lhc_zr_productionplan DEFINITION INHERITING FROM cl_abap_behavior_handler.
         check TYPE string,
       END OF ts_authcheck,
 
-      cs_zday TYPE c LENGTH 20.
+      cs_zday      TYPE c LENGTH 20,
+      cv_planorder TYPE c LENGTH 10.
 
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
       IMPORTING keys REQUEST requested_authorizations FOR zr_productionplan RESULT result.
@@ -142,7 +143,8 @@ CLASS lhc_zr_productionplan DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS create_planorder CHANGING cs_planorder TYPE ts_plan
                                       cs_data      TYPE lts_request_t
                                       cv_qty       TYPE menge_d
-                                      cv_day       TYPE d.
+                                      cv_day       TYPE d
+                                      cv_planorder TYPE cv_planorder.
 
     METHODS create_pir CHANGING cs_data TYPE lts_request_t
                                 cv_qty  TYPE menge_d
@@ -236,17 +238,18 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
 
     DATA:
 
-      lv_dayc  TYPE c LENGTH 30,
-      lv_dayi  TYPE c LENGTH 30,
-      lv_day   TYPE d,
-      lv_vdate TYPE d,
-      lv_index TYPE n LENGTH 3,
-      lv_first TYPE c LENGTH 1,
-      lv_diff  TYPE menge_d,
-      lv_qty   TYPE menge_d,
-      lv_left  TYPE menge_d,
-      lv_field TYPE string,
-      lv_tabix TYPE i.
+      lv_dayc      TYPE c LENGTH 30,
+      lv_dayi      TYPE c LENGTH 30,
+      lv_day       TYPE d,
+      lv_vdate     TYPE d,
+      lv_index     TYPE n LENGTH 3,
+      lv_first     TYPE c LENGTH 1,
+      lv_diff      TYPE menge_d,
+      lv_qty       TYPE menge_d,
+      lv_left      TYPE menge_d,
+      lv_field     TYPE string,
+      lv_planorder TYPE c LENGTH 10,
+      lv_tabix     TYPE i.
 
     FIELD-SYMBOLS:
       <l_field>   TYPE any,
@@ -403,7 +406,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                           startdate = lv_day.
             IF sy-subrc = 0.
               "確定計画手配の処理:比较
-              lv_qty = <l_field>.
+              lv_qty = <l_field>.  "画面更新的数量
               IF lv_qty <> ls_confirm-plannedtotalqtyinbaseunit.  "原始数据
                 "把数量修改到第一张planorder，同时删除当天其他planorder
                 lv_first = 'X'.
@@ -436,12 +439,12 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                 lv_tabix = sy-tabix.
                 CLEAR: <ls_data_w>-status, <ls_data_w>-message.
                 lv_diff = lv_qty - ls_confirm-plannedtotalqtyinbaseunit.
-                IF lv_diff > 0.  "数量从小改大
+                IF lv_diff > 0.  "计划手配数量从小改大，那么未分配数量要从大到小
                   LOOP AT lt_unconfirmplan INTO DATA(ls_unconfirmplan).
-                    IF ls_unconfirmplan-plannedtotalqtyinbaseunit <= lv_qty.
+                    IF ls_unconfirmplan-plannedtotalqtyinbaseunit <= lv_diff.
                       delete_planorder( CHANGING cs_planorder = ls_unconfirmplan
                                                      cs_data = <ls_data_w> ).
-                      lv_qty = lv_qty - ls_unconfirmplan-plannedtotalqtyinbaseunit.
+                      lv_diff = lv_diff - ls_unconfirmplan-plannedtotalqtyinbaseunit.
                       IF <ls_data_w>-status = 'S'.
                         DELETE TABLE lt_unconfirmplan FROM ls_unconfirmplan.
                       ENDIF.
@@ -449,7 +452,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                         EXIT.
                       ENDIF.
                     ELSE.
-                      lv_qty = ls_unconfirmplan-plannedtotalqtyinbaseunit - lv_qty.
+                      lv_qty = ls_unconfirmplan-plannedtotalqtyinbaseunit - lv_diff.
                       update_planorder( CHANGING cs_planorder = ls_unconfirmplan
                                                    cs_data = <ls_data_w>
                                                    cv_qty = lv_qty ).
@@ -461,7 +464,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                       EXIT.   "修改后跳出不处理后续
                     ENDIF.
                   ENDLOOP.
-                ELSEIF lv_diff < 0.  "数量从大改小
+                ELSEIF lv_diff < 0.  "计划手配数量从大改小
                   LOOP AT lt_unconfirmplan INTO ls_unconfirmplan.
                     lv_qty = ls_unconfirmplan-plannedtotalqtyinbaseunit - lv_diff.
 
@@ -482,11 +485,16 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                     create_planorder( CHANGING cs_planorder = ls_unconfirmplan
                                              cs_data = <ls_data_w>
                                              cv_qty = lv_qty
-                                             cv_day = lv_day ).
+                                             cv_day = lv_day
+                                             cv_planorder = lv_planorder ).
+                    "append to lt_unconfirmplan
+                    ls_unconfirmplan-plndorderplannedstartdate = lv_day.
+                    ls_unconfirmplan-startdate = lv_day.
+                    ls_unconfirmplan-plannedtotalqtyinbaseunit = lv_qty.
+                    ls_unconfirmplan-plannedorder = lv_planorder.
+                    APPEND ls_unconfirmplan TO lt_unconfirmplan.
                   ENDIF.
-
                 ENDIF.
-
               ENDIF.
             ELSE.
               "確定計画手配の処理: if zero before,Create plan order
@@ -498,7 +506,8 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                 create_planorder( CHANGING cs_planorder = ls_confirmedplan
                                            cs_data = <ls_data>
                                            cv_qty = lv_qty
-                                           cv_day = lv_day ).
+                                           cv_day = lv_day
+                                           cv_planorder = lv_planorder ).
                 "W行处理
                 READ TABLE ct_data INTO <ls_data_w>
                      WITH KEY product = <ls_data>-product
@@ -760,6 +769,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
       ELSE.
         cs_data-message = cs_data-message && ';' && lv_planorder && ` create`.
       ENDIF.
+      cv_planorder = lv_planorder.
     ELSE.
 
       IF cs_data-message IS INITIAL.

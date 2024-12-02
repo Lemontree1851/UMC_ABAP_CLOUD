@@ -5,7 +5,7 @@
    <SRVD>
     <NAME>ZUI_TBI_RECY_INFO001_O2</NAME>
     <TYPE>SRVD/SRV</TYPE>
-    <DESCRIPTION>Service Definition for Recovery Info OData V2</DESCRIPTION>
+    <DESCRIPTION>回収進捗管理分析</DESCRIPTION>
     <LANGUAGE>EN</LANGUAGE>
     <MASTER_LANGUAGE>EN</MASTER_LANGUAGE>
     <SOURCE_URI>./zui_tbi_recy_info001_o2/source/main</SOURCE_URI>

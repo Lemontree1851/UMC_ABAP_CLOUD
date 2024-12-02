@@ -11,7 +11,7 @@ lock master total etag LastChangedAt
 authorization master ( global )
 {
 
-  field ( mandatory ) Ledger,CalendarYear, CalendarMonth,CompanyCode,Plant, Material, Age ;
+  field ( mandatory ) InventoryType,Ledger,CalendarYear, CalendarMonth,CompanyCode,Plant, Material, Age ;
   field ( readonly )
   CreatedAt,
   CreatedBy,

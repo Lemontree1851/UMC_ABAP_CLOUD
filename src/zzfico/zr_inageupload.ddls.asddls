@@ -5,7 +5,7 @@ define root view entity ZR_INAGEUPLOAD
   as select from ztfi_1003
 {
   key uuid                  as UUID,
-      
+      inventorytype     as InventoryType,
       ledger as Ledger,
       companycode as CompanyCode,
       plant                 as Plant,

@@ -39,6 +39,10 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
               DATA(lr_acceptperiod) = ls_filter_cond-range.
               READ TABLE lr_acceptperiod INTO DATA(lrs_acceptperiod) INDEX 1.
               DATA(lv_acceptperiod) = lrs_acceptperiod-low.
+            WHEN 'LAYER'.
+              DATA(lr_layer) = ls_filter_cond-range.
+              READ TABLE lr_layer INTO DATA(lrs_layer) INDEX 1.
+              DATA(lv_layer) = lrs_layer-low.
           ENDCASE.
         ENDLOOP.
       CATCH cx_rap_query_filter_no_range.
@@ -51,28 +55,10 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       FROM ztbc_1001
      WHERE zid = 'ZSD003'
         OR zid = 'ZSD004'
+        OR zid = 'ZSD008'
+        OR zid = 'ZSD009'
+        OR zid = 'ZSD010'
       INTO TABLE @DATA(lt_1001).
-*A 指定される期間の検収データと実績データを抽出
-*A 以前期間に保留となった検収と実績データ
-    SELECT *
-      FROM ztsd_1003 WITH PRIVILEGED ACCESS
-     WHERE customer IN @lr_kunnr
-       AND periodtype = @lv_periodtype
-       AND acceptperiod = @lv_acceptperiod
-       AND ( finishstatus = '0'
-          OR finishstatus = @space )
-      INTO TABLE @DATA(lt_1003).
-    IF sy-subrc = 0.
-      SELECT *
-      FROM ztsd_1012 WITH PRIVILEGED ACCESS
-      FOR ALL ENTRIES IN @lt_1003
-     WHERE salesorganization = @lt_1003-salesorganization
-       AND customer = @lt_1003-customer
-       AND periodtype = @lt_1003-periodtype
-       AND acceptperiod = @lt_1003-acceptperiod
-       AND customerpo = @lt_1003-customerpo
-      INTO TABLE @DATA(lt_1012).
-    ENDIF.
 
     lv_year = xco_cp=>sy->date( )->year.
     CASE lv_periodtype.
@@ -85,35 +71,102 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       WHEN 'D'.  "26日~次月25日
         lv_from = lv_year && lv_acceptperiod && '26'.
     ENDCASE.
+    CASE lv_layer.
+      WHEN '1'.   "第一个页面
+*A 指定される期間の検収データと実績データを抽出
+*A 以前期間に保留となった検収と実績データ
+        SELECT *
+          FROM ztsd_1003 WITH PRIVILEGED ACCESS
+         WHERE customer IN @lr_kunnr
+           AND periodtype = @lv_periodtype
+           AND acceptperiod = @lv_acceptperiod
+           AND ( finishstatus = '0'
+              OR finishstatus = @space )
+          INTO TABLE @DATA(lt_1003).
+        IF sy-subrc = 0.
+          SELECT *
+          FROM ztsd_1012 WITH PRIVILEGED ACCESS
+          FOR ALL ENTRIES IN @lt_1003
+         WHERE salesorganization = @lt_1003-salesorganization
+           AND customer = @lt_1003-customer
+           AND periodtype = @lt_1003-periodtype
+           AND acceptperiod = @lt_1003-acceptperiod
+           AND customerpo = @lt_1003-customerpo
+          INTO TABLE @DATA(lt_1012).
+        ENDIF.
 
-    SELECT *
-      FROM ztsd_1003 WITH PRIVILEGED ACCESS
-     WHERE customer IN @lr_kunnr
-       AND periodtype = @lv_periodtype
-       AND acceptperiodfrom < @lv_from
-       AND ( finishstatus = '0'
-          OR finishstatus = @space )
-      INTO TABLE @DATA(lt_1003_t).
-    IF sy-subrc = 0.
-      SELECT *
-      FROM ztsd_1012 WITH PRIVILEGED ACCESS
-      FOR ALL ENTRIES IN @lt_1003
-     WHERE salesorganization = @lt_1003-salesorganization
-       AND customer = @lt_1003-customer
-       AND periodtype = @lt_1003-periodtype
-       AND acceptperiod = @lt_1003-acceptperiod
-       AND customerpo = @lt_1003-customerpo
-       AND processstatus = '4'
-      INTO TABLE @DATA(lt_1012_t).
-    ENDIF.
 
-    IF lt_1003_t IS NOT INITIAL.
-      APPEND LINES OF lt_1003_t TO lt_1003.
-    ENDIF.
 
-    IF lt_1012_t IS NOT INITIAL.
-      APPEND LINES OF lt_1012_t TO lt_1012.
-    ENDIF.
+        SELECT *
+          FROM ztsd_1003 WITH PRIVILEGED ACCESS
+         WHERE customer IN @lr_kunnr
+           AND periodtype = @lv_periodtype
+           AND acceptperiodfrom < @lv_from
+           AND ( finishstatus = '0'
+              OR finishstatus = @space )
+          INTO TABLE @DATA(lt_1003_t).
+        IF sy-subrc = 0.
+          SELECT *
+          FROM ztsd_1012 WITH PRIVILEGED ACCESS
+          FOR ALL ENTRIES IN @lt_1003
+         WHERE salesorganization = @lt_1003-salesorganization
+           AND customer = @lt_1003-customer
+           AND periodtype = @lt_1003-periodtype
+           AND acceptperiod = @lt_1003-acceptperiod
+           AND customerpo = @lt_1003-customerpo
+           AND processstatus = '4'
+          INTO TABLE @DATA(lt_1012_t).
+        ENDIF.
+
+        IF lt_1003_t IS NOT INITIAL.
+          APPEND LINES OF lt_1003_t TO lt_1003.
+        ENDIF.
+
+        IF lt_1012_t IS NOT INITIAL.
+          APPEND LINES OF lt_1012_t TO lt_1012.
+        ENDIF.
+
+
+      WHEN '2'.  "第2页面
+
+*A 指定される期間の検収データと実績データを抽出
+*A 以前期間に保留となった検収と実績データ
+        SELECT *
+          FROM ztsd_1003 WITH PRIVILEGED ACCESS
+         WHERE customer IN @lr_kunnr
+           AND periodtype = @lv_periodtype
+           AND acceptperiod = @lv_acceptperiod
+           AND ( finishstatus = '0'
+              OR finishstatus = @space )
+          INTO TABLE @lt_1003.
+
+        SELECT *
+          FROM ztsd_1003 WITH PRIVILEGED ACCESS
+         WHERE customer IN @lr_kunnr
+           AND periodtype = @lv_periodtype
+           AND acceptperiodfrom < @lv_from
+           AND ( finishstatus = '0'
+              OR finishstatus = @space )
+          INTO TABLE @lt_1003_t.
+
+        IF lt_1003_t IS NOT INITIAL.
+          APPEND LINES OF lt_1003_t TO lt_1003.
+        ENDIF.
+
+        IF lt_1003 IS NOT INITIAL.
+          SELECT *
+            FROM ztsd_1012
+            FOR ALL ENTRIES IN @lt_1003
+           WHERE salesorganization = @lt_1003-salesorganization
+             AND customer = @lt_1003-customer
+             AND periodtype = @lt_1003-periodtype
+             AND acceptperiod = @lt_1003-acceptperiod
+             AND customerpo = @lt_1003-customerpo
+            INTO TABLE @lt_1012.
+        ENDIF.
+
+
+    ENDCASE.
 
 * Customer Name
 * B I_SalesDocument
@@ -202,7 +255,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
 
 * Edit output
     SORT lt_1003 BY customerpo.
-    SORT lt_1012 BY salesdocument salesdocumentitem.
+    SORT lt_1012 BY salesdocument salesdocumentitem billingdocument.
     SORT lt_billing BY salesdocument salesdocumentitem.
     SORT lt_auart BY salesdocumenttype.
     SORT lt_bkpf BY referencedocument referencedocumentitem.
@@ -226,9 +279,22 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ls_output-acceptperiodto = ls_1003-acceptperiodto.
         ls_output-acceptdate = ls_1003-acceptdate.   "検収日付
         ls_output-acceptqty = ls_1003-acceptqty.     "検収数
-        ls_output-acceptprice = ls_1003-acceptprice. "検収単価
-        ls_output-accceptamount = ls_1003-accceptamount. "検収金額
-        ls_output-acccepttaxamount = ls_1003-accceptamount * ls_1003-taxrate."検収税額
+        "検収単価
+        ls_output-acceptprice = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'OUT'
+                                                         iv_currency = ls_1003-currency
+                                                         iv_input = ls_1003-acceptprice ).
+        "検収金額
+        ls_output-accceptamount = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'OUT'
+                                                         iv_currency = ls_1003-currency
+                                                         iv_input = ls_1003-accceptamount ).
+        "検収税額
+        ls_output-acccepttaxamount = ls_1003-accceptamount * ls_1003-taxrate.
+        ls_output-acccepttaxamount = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'OUT'
+                                                         iv_currency = ls_1003-currency
+                                                         iv_input = ls_output-acccepttaxamount ).
         ls_output-currency = ls_1003-currency.        "検収通貨(受注通貨)
         ls_output-outsidedata = ls_1003-outsidedata.  "SAP外売上区分(フラグ)
       ENDIF.
@@ -241,14 +307,26 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ls_output-accountingexchangerate = ls_billing-accountingexchangerate. "為替レート
         ls_output-exchangeratedate = ls_billing-exchangeratedate.  "為替日付
         ls_output-billingquantity = ls_billing-billingquantity.    "出庫数
-        ls_output-netamount = ls_billing-netamount.                "請求金額
-        ls_output-taxamount = ls_billing-taxamount.                "請求税額
+        "請求金額
+        ls_output-netamount = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'OUT'
+                                                         iv_currency = ls_1003-currency
+                                                         iv_input = ls_billing-netamount ).
+         "請求税額
+        ls_output-taxamount = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'OUT'
+                                                         iv_currency = ls_1003-currency
+                                                         iv_input = ls_billing-taxamount ).
 
         READ TABLE lt_prcd_elements INTO DATA(ls_prcd)
              WITH KEY billingdocument = ls_billing-billingdocument
                       billingdocumentitem = ls_billing-billingdocumentitem BINARY SEARCH.
         IF sy-subrc = 0.
-          ls_output-conditionratevalue = ls_prcd-conditionratevalue. "請求単価
+          "請求単価
+          ls_output-conditionratevalue = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'OUT'
+                                                         iv_currency = ls_1003-currency
+                                                         iv_input = ls_prcd-conditionratevalue ).
           ls_output-conditioncurrency = ls_prcd-conditioncurrency.   "単価通貨
           ls_output-conditionquantity = ls_prcd-conditionquantity.   "単価数量単位
         ENDIF.
@@ -261,15 +339,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ENDIF.
       ENDIF.
 
-      READ TABLE lt_1012 INTO DATA(ls_1012)
-           WITH KEY salesdocument = ls_so-salesdocument
-                    salesdocumentitem = ls_so-salesdocumentitem BINARY SEARCH.
-      IF sy-subrc = 0.
-        ls_output-remarks = ls_1012-remarks.             "備考
-        ls_output-processstatus = ls_1012-processstatus. "処理ステータス
-        ls_output-reasoncategory = ls_1012-reasoncategory. "要因区分
-        ls_output-reason = ls_1012-reason.                 "差異要因
-      ELSE.
+      IF lv_layer = '1'.
         IF ls_output-conditionquantity <> 0.
           lv_netpr = ls_output-conditioncurrency / ls_output-conditionquantity.
         ENDIF.
@@ -281,7 +351,20 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ELSE.
           ls_output-processstatus = '2'.
         ENDIF.
+      ELSE.
+        READ TABLE lt_1012 INTO DATA(ls_1012)
+             WITH KEY salesdocument = ls_so-salesdocument
+                      salesdocumentitem = ls_so-salesdocumentitem
+                      billingdocument = ls_billing-billingdocument BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_output-remarks = ls_1012-remarks.
+          ls_output-processstatus = ls_1012-processstatus.
+          ls_output-reasoncategory = ls_1012-reasoncategory.
+          ls_output-reason = ls_1012-reason.
+        ENDIF.
+
       ENDIF.
+
       "编辑表头描述
       READ TABLE lt_customer INTO DATA(ls_customer)
            WITH KEY customer = ls_1003-customer BINARY SEARCH.
@@ -307,6 +390,28 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       CLEAR: ls_output.
     ENDLOOP.
 
+    IF lv_layer = '2'.
+      DATA:
+        lv_first TYPE c VALUE 'X'.
+      DATA(lt_tmp) = lt_output[].
+      CLEAR: lt_output.
+      LOOP AT lt_tmp INTO DATA(ls_tmp)
+                        GROUP BY ( processstatus = ls_tmp-processstatus )
+                        REFERENCE INTO DATA(member).
+        LOOP AT GROUP member INTO DATA(ls_mem).
+          IF lv_first = 'X'.
+            READ TABLE lt_1001 INTO ls_1001
+                 WITH KEY zid = 'ZSD008'
+                          zvalue1 = ls_mem-processstatus.
+            ls_output-customerpo = ls_1001-zvalue2.
+            APPEND ls_output TO lt_output.
+          ENDIF.
+          CLEAR: lv_first.
+          APPEND ls_mem TO lt_output.
+        ENDLOOP.
+        lv_first = 'X'.
+      ENDLOOP.
+    ENDIF.
 
 *    " Filtering
 *    zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )

@@ -17,11 +17,17 @@ define root view entity ZC_SALESORDER_U
       CreationDate,
       ShippingPoint,
       ShippingPointName,
+      @EndUserText.label: '受注先'
       SoldToParty,
+      @EndUserText.label: '受注先名'
       CustomerName,
+      @EndUserText.label: '請求先'
       BillingToParty,
+      @EndUserText.label: '請求先名'
       BillingToPartyName,
+      @EndUserText.label: '出荷先'
       ShipToParty,
+      @EndUserText.label: '出荷先名'
       ShipToPartyName,
       PurchaseOrderByCustomer,
       UnderlyingPurchaseOrderItem,
@@ -72,5 +78,5 @@ define root view entity ZC_SALESORDER_U
       Status,
       @EndUserText.label: 'メッセージ'
       Message
-      //      Language
+//      Language
 }

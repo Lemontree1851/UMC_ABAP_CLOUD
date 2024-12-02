@@ -67,6 +67,7 @@ CLASS zcl_http_podata_003 DEFINITION
         purchaseorderitem              TYPE c LENGTH  5,
         documentcurrency               TYPE c LENGTH  5,
         material                       TYPE c LENGTH  18,
+        TaxCode                        TYPE c Length  12,
         plant                          type c LENGTH  4 ,
         purchaseorderitemtext          TYPE c LENGTH  40,
         orderquantity                  TYPE c LENGTH  13,
@@ -74,6 +75,7 @@ CLASS zcl_http_podata_003 DEFINITION
         netpricequantity               TYPE c LENGTH  5,
         netpriceamount                 TYPE c length  16,
         netamount                      TYPE c LENGTH  16,
+        taxamount                      type c LENGTH  16,
         storagelocation                TYPE c LENGTH  4,
         storagelocationname            TYPE c LENGTH  20,
         textobjecttype                 TYPE c LENGTH  4,
@@ -168,6 +170,7 @@ DATA: lv_date       TYPE D,
            b~netamount,
            b~storagelocation,
            b~SupplierMaterialNumber,
+           b~TaxCode,
 
            b~InternationalArticleNumber,
            b~RequisitionerName,
@@ -197,13 +200,21 @@ DATA: lv_date       TYPE D,
         ON b~purchaseorder = e~purchaseorder
        AND b~purchaseorderitem = e~purchaseorderitem
      WHERE a~LastChangeDateTime >= @lv_timestampl
+
       INTO TABLE @data(lt_poitem).
 
 *--------------------------------------------------------------just for test
 
-*DELETE lt_poitem WHERE purchaseorder <> '2100001894'.
+*DELETE lt_poitem WHERE purchaseorder <> '2100001939'.
 
 *--------------------------------------------------------------just for test
+
+      SELECT
+      zvalue1,
+      zvalue2
+      FROM ztbc_1001 WITH PRIVILEGED ACCESS
+      WHERE ZID = 'ZMM001'
+      into TABLE @data(lt_1001).
 
       if  lt_poitem is NOT INITIAL.
 
@@ -233,6 +244,10 @@ DATA: lv_date       TYPE D,
       where TextObjectType = 'F01'
       into TABLE @data(lt_note).
 
+      if    lt_note is NOT INITIAL.
+        SORT lt_note by purchaseorder purchaseorderitem.
+      ENDIF.
+
     DATA:
       lt_result TYPE STANDARD TABLE OF ty_response,
       lw_result TYPE ty_response.
@@ -260,6 +275,12 @@ DATA: lv_date       TYPE D,
       IF lv_stat_code1 = '200' AND ls_res_workflow-d-results IS NOT INITIAL.
 
         APPEND LINES OF ls_res_workflow-d-results TO lt_workflow_api.
+
+      ENDIF.
+
+      if lt_workflow_api is NOT INITIAL.
+
+        SORT lt_workflow_api by SAPBusinessObjectNodeKey1.
 
       ENDIF.
 
@@ -298,10 +319,10 @@ DATA: lv_date       TYPE D,
 
     LOOP AT lt_poitem INTO DATA(lw_poitems).
 
-        READ TABLE lt_workflow_api into data(lw_workflow) WITH KEY SAPBusinessObjectNodeKey1 = lw_poitems-purchaseorder.
+        READ TABLE lt_workflow_api into data(lw_workflow) WITH KEY SAPBusinessObjectNodeKey1 = lw_poitems-purchaseorder BINARY SEARCH.
 
             if sy-subrc = 0.
-               READ TABLE lt_workflowdetail_api into data(lw_workflow_d) WITH key WorkflowInternalID = lw_workflow-WorkflowInternalID.
+               READ TABLE lt_workflowdetail_api into data(lw_workflow_d) WITH key WorkflowInternalID = lw_workflow-WorkflowInternalID BINARY SEARCH.
 
                "如果能在detail中取到WorkflowTaskInternalID
                if sy-subrc = 0.
@@ -341,7 +362,7 @@ DATA: lv_date       TYPE D,
 
               MOVE-CORRESPONDING lw_poitems to lw_result.
 
-              READ TABLE lt_note into data(lw_note) WITH KEY purchaseorder = lw_poitems-purchaseorder purchaseorderitem = lw_poitems-purchaseorderitem.
+              READ TABLE lt_note into data(lw_note) WITH KEY purchaseorder = lw_poitems-purchaseorder purchaseorderitem = lw_poitems-purchaseorderitem BINARY SEARCH.
               if  sy-subrc = 0.
               lw_result-plainlongtext = lw_note-PlainLongText .
               ENDIF.
@@ -360,6 +381,11 @@ DATA: lv_date       TYPE D,
             clear:lv_response,lw_result,lw_note,lw_workflow,lw_workflow_d.
 
     ENDLOOP.
+
+
+    DATA lv_taxamount1        TYPE p LENGTH 10 DECIMALS 2."两位小数
+
+    DATA lv_taxamount        TYPE p LENGTH 10  ."两位小数
 
     LOOP AT lt_result INTO lw_result.
 
@@ -380,14 +406,79 @@ DATA: lv_date       TYPE D,
       ls_response-purchaseorderquantityunit          = lw_result-purchaseorderquantityunit      .
       ls_response-netpricequantity                   = lw_result-netpricequantity               .
 
-      if  lw_result-documentcurrency = 'JPY'.
-        ls_response-netpriceamount                   = lw_result-netpriceamount * 100           .
-        ls_response-netamount                        = lw_result-netamount  * 100               .
-      ELSE.
-        ls_response-netpriceamount                   = lw_result-netpriceamount                 .
-        ls_response-netamount                        = lw_result-netamount                      .
-      ENDIF.
 
+      ls_response-netamount = zzcl_common_utils=>conversion_amount(
+        EXPORTING
+          iv_alpha    = 'OUT'
+          iv_currency = lw_result-documentcurrency
+          iv_input    = lw_result-netamount
+*        RECEIVING
+*          rv_output   =
+      ).
+
+      ls_response-netpriceamount = zzcl_common_utils=>conversion_amount(
+        EXPORTING
+          iv_alpha    = 'OUT'
+          iv_currency = lw_result-documentcurrency
+          iv_input    = lw_result-netpriceamount
+*        RECEIVING
+*          rv_output   =
+      ).
+
+
+
+       READ TABLE lt_1001 into data(lw_1001) WITH KEY Zvalue1 = lw_result-TaxCode.
+*
+      if sy-subrc = 0.
+
+        data(lv_value) = lw_1001-zvalue2.
+
+      endif.
+      clear lw_1001.
+
+      CASE lw_result-documentcurrency.
+          WHEN 'JPY'.
+
+            ls_response-taxamount = lv_value / 100 * ls_response-netamount.
+
+
+*            lv_taxamount2 = floor( lw_result-taxamount * 100 ) / 100.
+*            ls_response-taxamount = lv_taxamount2.
+
+            " 舍弃小数部分，取整
+            CONDENSE ls_response-taxamount.
+
+
+            lv_taxamount = floor( ls_response-taxamount ).
+            ls_response-taxamount = lv_taxamount.
+
+          WHEN 'USD'.
+
+            ls_response-taxamount = lv_value / 100 * ls_response-netamount.
+
+            " 舍弃小数部分，取整
+            CONDENSE ls_response-taxamount.
+
+            lv_taxamount1 = floor( ls_response-taxamount * 100 ) / 100.
+            ls_response-taxamount = lv_taxamount1.
+
+          WHEN 'EUR'.
+
+            ls_response-taxamount = lv_value / 100 * ls_response-netamount.
+
+
+            CONDENSE ls_response-taxamount.
+            lv_taxamount1 = floor( ls_response-taxamount * 100 ) / 100.
+            ls_response-taxamount = lv_taxamount1.
+
+          WHEN OTHERS.
+
+
+
+
+        ENDCASE.
+
+        clear :  lv_value, lv_taxamount1.
 
       ls_response-storagelocation                    = lw_result-storagelocation                .
       ls_response-storagelocationname                = lw_result-storagelocationname            .
@@ -395,6 +486,7 @@ DATA: lv_date       TYPE D,
       ls_response-plainlongtext                      = lw_result-plainlongtext                  .
       ls_response-schedulelinedeliverydate           = lw_result-schedulelinedeliverydate       .
       ls_response-SupplierMaterialNumber             = lw_result-SupplierMaterialNumber         .
+      ls_response-TaxCode                            = lw_result-TaxCode.
 
       ls_response-InternationalArticleNumber         = lw_result-InternationalArticleNumber.
       ls_response-RequisitionerName                  = lw_result-RequisitionerName.
@@ -418,13 +510,15 @@ DATA: lv_date       TYPE D,
       CONDENSE ls_response-purchaseorderquantityunit      .
       CONDENSE ls_response-netpricequantity               .
       CONDENSE ls_response-netamount                      .
-      CONDENSE ls_response-netpriceamount                    .
+      CONDENSE ls_response-taxamount                      .
+      CONDENSE ls_response-netpriceamount                 .
       CONDENSE ls_response-storagelocation                .
       CONDENSE ls_response-storagelocationname            .
       CONDENSE ls_response-textobjecttype                 .
       CONDENSE ls_response-plainlongtext                  .
       CONDENSE ls_response-schedulelinedeliverydate       .
       CONDENSE ls_response-SupplierMaterialNumber       .
+      CONDENSE ls_response-TaxCode.
       CONDENSE ls_response-InternationalArticleNumber     .
       CONDENSE ls_response-RequisitionerName     .
       condense ls_response-CorrespncInternalReference .

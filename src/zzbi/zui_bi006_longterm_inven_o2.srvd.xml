@@ -5,7 +5,7 @@
    <SRVD>
     <NAME>ZUI_BI006_LONGTERM_INVEN_O2</NAME>
     <TYPE>SRVD/SRV</TYPE>
-    <DESCRIPTION>Service Definition for BI006 Long Term Inventory OData V2</DESCRIPTION>
+    <DESCRIPTION>長期滞留在庫実績</DESCRIPTION>
     <LANGUAGE>EN</LANGUAGE>
     <MASTER_LANGUAGE>EN</MASTER_LANGUAGE>
     <SOURCE_URI>./zui_bi006_longterm_inven_o2/source/main</SOURCE_URI>
