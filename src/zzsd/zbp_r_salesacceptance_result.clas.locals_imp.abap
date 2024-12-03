@@ -119,6 +119,14 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       <lfs_accept>-product = |{ <lfs_accept>-product ALPHA = IN }|.
     ENDLOOP.
 
+    SELECT *
+      FROM ztsd_1012
+      FOR ALL ENTRIES IN @ct_accept
+     WHERE customer = @ct_accept-customer
+       AND salesdocument = @ct_accept-salesdocument
+       AND billingdocument = @ct_accept-billingdocument
+      INTO TABLE @DATA(lt_table).
+
     SELECT salesdocument,
            salesorganization,
            soldtoparty
@@ -151,14 +159,32 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       ls_1012-acceptdate = ls_accept-acceptdate.
       ls_1012-acceptqty = ls_accept-acceptdate.
       ls_1012-billingquantity = ls_accept-billingquantity.
-      ls_1012-acceptprice = ls_accept-acceptprice.
-      ls_1012-conditionratevalue = ls_accept-conditionratevalue.
+      ls_1012-acceptprice = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'IN'
+                                                         iv_currency = ls_accept-currency
+                                                         iv_input = ls_accept-acceptprice ).
+      ls_1012-conditionratevalue = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'IN'
+                                                         iv_currency = ls_accept-currency
+                                                         iv_input = ls_accept-conditionratevalue ).
       ls_1012-conditioncurrency = ls_accept-conditioncurrency.
       ls_1012-conditionquantity = ls_accept-conditionquantity.
-      ls_1012-accceptamount = ls_accept-accceptamount.
-      ls_1012-netamount = ls_accept-netamount.
-      ls_1012-acccepttaxamount = ls_accept-acccepttaxamount.
-      ls_1012-taxamount = ls_accept-taxamount.
+      ls_1012-accceptamount = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'IN'
+                                                         iv_currency = ls_accept-currency
+                                                         iv_input = ls_accept-accceptamount ).
+      ls_1012-netamount = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'IN'
+                                                         iv_currency = ls_accept-currency
+                                                         iv_input = ls_accept-netamount ).
+      ls_1012-acccepttaxamount = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'IN'
+                                                         iv_currency = ls_accept-currency
+                                                         iv_input = ls_accept-acccepttaxamount ).
+      ls_1012-taxamount = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'IN'
+                                                         iv_currency = ls_accept-currency
+                                                         iv_input = ls_accept-taxamount ).
       ls_1012-accceptcurrency = ls_accept-currency.
       ls_1012-accountingexchangerate = ls_accept-accountingexchangerate.
       ls_1012-exchangeratedate = ls_accept-exchangeratedate.
@@ -201,6 +227,15 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       lt_1003    TYPE STANDARD TABLE OF ztsd_1003,
       ls_1003    TYPE ztsd_1003,
       ls_request TYPE lty_request.
+
+* Ckeck if proccessstatus = 2
+    READ TABLE ct_accept WITH KEY processstatus = space TRANSPORTING NO FIELDS.
+    IF sy-subrc = 0.
+      ls_request-status = 'E'.
+      ls_request-message = TEXT-003.
+      APPEND ls_request TO ct_data.
+      RETURN.
+    ENDIF.
 * alpha in
     LOOP AT ct_accept ASSIGNING FIELD-SYMBOL(<lfs_accept>).
       <lfs_accept>-customer = |{ <lfs_accept>-customer ALPHA = IN }|.
@@ -208,6 +243,15 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       <lfs_accept>-billingdocument = |{ <lfs_accept>-billingdocument ALPHA = IN }|.
       <lfs_accept>-product = |{ <lfs_accept>-product ALPHA = IN }|.
     ENDLOOP.
+
+    SELECT *
+      FROM ztsd_1003
+      FOR ALL ENTRIES IN @ct_accept
+     WHERE periodtype = @cv_periodtype
+       AND acceptperiod = @cv_acceptperiod
+       AND customerpo = @ct_accept-customerpo
+      INTO TABLE @DATA(lt_table).
+
 
     SELECT salesdocument,
            salesorganization,
@@ -218,7 +262,38 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       INTO TABLE @DATA(lt_so).
 
     SORT lt_so BY salesdocument.
+    LOOP AT ct_accept ASSIGNING <lfs_accept>.
+      READ TABLE lt_so INTO DATA(ls_so)
+           WITH KEY salesdocument = <lfs_accept>-salesdocument BINARY SEARCH.
+      IF sy-subrc = 0.
+        <lfs_accept>-customer = ls_so-soldtoparty.
+        <lfs_accept>-salesorganization = ls_so-salesorganization.
+      ENDIF.
+    ENDLOOP.
 
+    DELETE ct_accept WHERE processstatus = '4'.
+    SORT ct_accept BY salesorganization customer periodtype acceptperiod customerpo.
+    LOOP AT lt_table INTO ls_1003.
+      READ TABLE ct_accept INTO DATA(ls_accept)
+           WITH KEY salesorganization = ls_1003-salesorganization
+                    customer = ls_1003-customer
+                    periodtype = ls_1003-periodtype
+                    acceptperiod = ls_1003-acceptperiod
+                    customerpo = ls_1003-customerpo.
+      IF sy-subrc = 0.
+        ls_1003-finishstatus = '1'.
+        APPEND ls_1003 TO lt_1003.
+        CLEAR: ls_1003.
+      ENDIF.
+    ENDLOOP.
+    IF lt_1003 IS NOT INITIAL.
+      MODIFY ztsd_1003 FROM TABLE @lt_1003.
+      IF sy-subrc = 0.
+        ls_request-status = 'S'.
+        ls_request-message = TEXT-002.
+        APPEND ls_request TO ct_data.
+      ENDIF.
+    ENDIF.
   ENDMETHOD.
 
 ENDCLASS.

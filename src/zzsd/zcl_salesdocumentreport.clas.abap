@@ -135,6 +135,12 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
             DATA(lr_plantype) = ls_filter_cond-range.
             READ TABLE lr_plantype INTO DATA(lrs_plantype) INDEX 1.
             DATA(lv_ztype1) = lrs_plantype-low.
+          WHEN 'SPLITRANGE'.
+            DATA(r_splitrange) = ls_filter_cond-range.
+            READ TABLE r_splitrange INTO DATA(rs_splitrange) INDEX 1.
+            IF sy-subrc = 0.
+              SPLIT rs_splitrange-low AT '-' INTO DATA(lv_splitstart) DATA(lv_splitend).
+            ENDIF.
           WHEN OTHERS.
 
         ENDCASE.
@@ -528,6 +534,105 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
          ).
       ENDIF.
     ENDLOOP.
+************************************************************
+*     test 数据集
+************************************************************
+    DATA:
+     ls_output            TYPE  zr_salesdocumentreport.
+
+    CLEAR ls_output.
+    ls_output-salesorganization = '11'.
+    ls_output-yeardate = '202401'.
+
+    ls_output-conditionratevalue_n = 12.
+    ls_output-salesplanamountindspcrcy_n = 124.
+    ls_output-salesamount_n  = 1234.
+    ls_output-contributionprofittotal_n = 0.
+    ls_output-grossprofittotal_n = 0.
+    APPEND ls_output TO lt_output.
+
+
+    CLEAR ls_output.
+    ls_output-salesorganization = '11'.
+    ls_output-yeardate = '202402'.
+    ls_output-conditionratevalue_n = 1112.
+    ls_output-salesplanamountindspcrcy_n = 0.
+    ls_output-salesamount_n  = 0.
+    ls_output-contributionprofittotal_n = 0.
+    ls_output-grossprofittotal_n = 0.
+    APPEND ls_output TO lt_output.
+
+
+
+    CLEAR ls_output.
+    ls_output-salesorganization = '11'.
+    ls_output-yeardate = '202403'.
+
+    ls_output-conditionratevalue_n = 0.
+    ls_output-salesplanamountindspcrcy_n = 0.
+    ls_output-salesamount_n  = 0.
+    ls_output-contributionprofittotal_n = 0.
+    ls_output-grossprofittotal_n = 0.
+
+    APPEND ls_output TO lt_output.
+    CLEAR ls_output.
+    ls_output-salesorganization = '2'.
+    ls_output-yeardate = '202403'.
+    ls_output-conditionratevalue_n = 0.
+    ls_output-salesplanamountindspcrcy_n = 0.
+    ls_output-salesamount_n  = 0.
+    ls_output-contributionprofittotal_n = 0.
+    ls_output-grossprofittotal_n = 0.
+    APPEND ls_output TO lt_output.
+    CLEAR ls_output.
+    "如果选了202401-202404 但是202404没值 也要有等于0的行
+    ls_output-salesorganization = '32'.
+    ls_output-yeardate = '202404'.
+    ls_output-conditionratevalue_n = 0.
+    ls_output-salesplanamountindspcrcy_n = 124.
+    ls_output-salesamount_n  = 0.
+    ls_output-contributionprofittotal_n = 0.
+    ls_output-grossprofittotal_n = 7.
+    APPEND ls_output TO lt_output.
+
+
+    "重要非常重要 非常非常重要！！！
+    "请给第一key的 添加yeardate 最多列 无值用0填充
+    "或者干脆就所有行 无值0
+
+    SORT lt_output BY salesorganization customer product plantype.
+    READ TABLE lt_output INTO ls_output INDEX 1.
+    IF sy-subrc = 0.
+
+      DO 50 TIMES.
+        DATA:lv_yeardatetemp TYPE bldat.
+        DATA:lv_yeardatetemp1(6) TYPE c.
+        lv_index = sy-index.
+        lv_yeardatetemp =  zzcl_common_utils=>calc_date_add( date = lv_splitstart && '01' month = lv_index ).
+        lv_yeardatetemp1 = lv_yeardatetemp+0(6).
+
+        READ TABLE lt_output TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_output-salesorganization customer = ls_output-customer product = ls_output-product
+        plantype = ls_output-plantype yeardate = lv_yeardatetemp1.
+        IF sy-subrc <> 0.
+          CLEAR :ls_output-conditionratevalue_n,ls_output-salesplanamountindspcrcy_n,
+          ls_output-salesamount_n,ls_output-contributionprofittotal_n,ls_output-grossprofittotal_n.
+          ls_output-yeardate = lv_yeardatetemp1.
+          APPEND ls_output TO lt_output.
+        ENDIF.
+        IF lv_yeardatetemp1 = lv_splitend.
+          EXIT.
+        ENDIF.
+      ENDDO.
+
+
+    ENDIF.
+
+
+
+
+
+
+    DELETE lt_output WHERE yeardate < lv_splitstart OR yeardate > lv_splitend.
 
 *********************
 

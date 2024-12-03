@@ -95,8 +95,6 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
           INTO TABLE @DATA(lt_1012).
         ENDIF.
 
-
-
         SELECT *
           FROM ztsd_1003 WITH PRIVILEGED ACCESS
          WHERE customer IN @lr_kunnr
@@ -312,7 +310,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
                                                          iv_alpha = 'OUT'
                                                          iv_currency = ls_1003-currency
                                                          iv_input = ls_billing-netamount ).
-         "請求税額
+        "請求税額
         ls_output-taxamount = zzcl_common_utils=>conversion_amount(
                                                          iv_alpha = 'OUT'
                                                          iv_currency = ls_1003-currency
@@ -340,19 +338,27 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       ENDIF.
 
       IF lv_layer = '1'.
-        IF ls_output-conditionquantity <> 0.
-          lv_netpr = ls_output-conditioncurrency / ls_output-conditionquantity.
-        ENDIF.
-        IF ls_output-acceptqty = ls_output-billingquantity
-       AND ls_output-acceptprice = lv_netpr
-       AND ls_output-accceptamount = ls_output-netamount
-       AND ls_output-acccepttaxamount = ls_output-taxamount.
-          ls_output-processstatus = '0'.
+        READ TABLE lt_1012 INTO DATA(ls_1012)
+             WITH KEY salesdocument = ls_output-salesdocument
+                      salesdocumentitem = ls_output-salesdocumentitem
+                      billingdocument = ls_output-billingdocument BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_output-processstatus = ls_1012-processstatus.
         ELSE.
-          ls_output-processstatus = '2'.
+          IF ls_output-conditionquantity <> 0.
+            lv_netpr = ls_output-conditioncurrency / ls_output-conditionquantity.
+          ENDIF.
+          IF ls_output-acceptqty = ls_output-billingquantity
+         AND ls_output-acceptprice = lv_netpr
+         AND ls_output-accceptamount = ls_output-netamount
+         AND ls_output-acccepttaxamount = ls_output-taxamount.
+            ls_output-processstatus = '0'.
+          ELSE.
+            ls_output-processstatus = '2'.
+          ENDIF.
         ENDIF.
       ELSE.
-        READ TABLE lt_1012 INTO DATA(ls_1012)
+        READ TABLE lt_1012 INTO ls_1012
              WITH KEY salesdocument = ls_so-salesdocument
                       salesdocumentitem = ls_so-salesdocumentitem
                       billingdocument = ls_billing-billingdocument BINARY SEARCH.
@@ -403,13 +409,20 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
             READ TABLE lt_1001 INTO ls_1001
                  WITH KEY zid = 'ZSD008'
                           zvalue1 = ls_mem-processstatus.
-            ls_output-customerpo = ls_1001-zvalue2.
-            APPEND ls_output TO lt_output.
+            IF sy-subrc = 0.
+              ls_output-customerpo = ls_1001-zvalue2.
+              APPEND ls_output TO lt_output.
+            ELSE.
+              DATA(lv_flg) = 'X'.
+            ENDIF.
           ENDIF.
           CLEAR: lv_first.
-          APPEND ls_mem TO lt_output.
+          IF lv_flg IS INITIAL.
+            APPEND ls_mem TO lt_output.
+          ENDIF.
         ENDLOOP.
         lv_first = 'X'.
+        CLEAR: lv_flg.
       ENDLOOP.
     ENDIF.
 

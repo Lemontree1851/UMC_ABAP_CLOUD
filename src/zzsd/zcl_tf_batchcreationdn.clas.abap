@@ -63,6 +63,8 @@ CLASS zcl_tf_batchcreationdn IMPLEMENTATION.
             CASE when sd1001a.customer is not null
               then
                 case
+                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD016' and zvalue1 = basic.salesdocumenttype ) > 1
+                    then sd1001a.returnstoragelocation
                   when basic.yy1_salesdoctype_sdh = ''
                     then sd1001a.finishedstoragelocation
                   when ( select count( * ) from ztbc_1001 where zid = 'ZSD013' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
@@ -71,12 +73,12 @@ CLASS zcl_tf_batchcreationdn IMPLEMENTATION.
                     then case when sd1001a.vmistoragelocation = '' THEN sd1001a.partsstoragelocation else sd1001a.vmistoragelocation end
                   when ( select count( * ) from ztbc_1001 where zid = 'ZSD015' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
                     then sd1001a.repairstoragelocation
-                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD016' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
-                    then sd1001a.returnstoragelocation
                 end
              -- 如果三个条件没有取到值就将billingtoparty固定为空(sd1001b)
               ELSE
                 CASE
+                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD016' and zvalue1 = basic.salesdocumenttype ) > 1
+                    then sd1001b.returnstoragelocation
                   when basic.yy1_salesdoctype_sdh = ''
                     then sd1001b.finishedstoragelocation
                   when ( select count( * ) from ztbc_1001 where zid = 'ZSD013' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
@@ -85,8 +87,6 @@ CLASS zcl_tf_batchcreationdn IMPLEMENTATION.
                     then case when sd1001b.vmistoragelocation = '' THEN sd1001b.partsstoragelocation else sd1001b.vmistoragelocation end
                   when ( select count( * ) from ztbc_1001 where zid = 'ZSD015' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
                     then sd1001b.repairstoragelocation
-                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD016' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
-                    then sd1001b.returnstoragelocation
                 end
             end
           end as storagelocation

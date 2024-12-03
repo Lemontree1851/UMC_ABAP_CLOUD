@@ -55,8 +55,8 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
       ls_output TYPE zr_poacceptance.
 
     DATA:
-      lv_netpr_jp(7) TYPE p DECIMALS 3,
-      lv_netpr(7)    TYPE p DECIMALS 5,
+      lv_netpr_jp(12) TYPE p DECIMALS 3,
+      lv_netpr(12)    TYPE p DECIMALS 5,
       lv_ebeln       TYPE ebeln,
       lv_ebelp       TYPE ebelp,
       lv_tabix       TYPE i,

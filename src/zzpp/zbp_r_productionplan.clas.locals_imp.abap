@@ -448,7 +448,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                       IF <ls_data_w>-status = 'S'.
                         DELETE TABLE lt_unconfirmplan FROM ls_unconfirmplan.
                       ENDIF.
-                      IF lv_qty = 0.  "如果最后为0，跳出不处理后续
+                      IF lv_diff <= 0.  "如果最后为0，跳出不处理后续
                         EXIT.
                       ENDIF.
                     ELSE.
@@ -524,7 +524,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                     IF <ls_data_w>-status = 'S'.
                       DELETE TABLE lt_unconfirmplan FROM ls_unconfirmplan.
                     ENDIF.
-                    IF lv_qty = 0.
+                    IF lv_qty <= 0.
                       EXIT.
                     ENDIF.
                   ELSE.

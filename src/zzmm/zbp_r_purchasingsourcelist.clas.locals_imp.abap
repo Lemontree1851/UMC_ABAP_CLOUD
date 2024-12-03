@@ -395,7 +395,7 @@ CLASS lhc_sourcelist IMPLEMENTATION.
            AND <ls_data>-sourceofsupplyisblocked <> ls_list1-sourceofsupplyisblocked.
               ls_item_update-sourceofsupplyisblocked = <ls_data>-sourceofsupplyisblocked.
               IF <ls_data>-sourceofsupplyisblocked = lc_null.
-                CLEAR: <ls_data>-sourceofsupplyisblocked.
+                CLEAR: ls_item_update-sourceofsupplyisblocked.
               ENDIF.
               ls_item_update-%control-sourceofsupplyisblocked = if_abap_behv=>mk-on.
               lv_flg = 'X'.
@@ -407,7 +407,7 @@ CLASS lhc_sourcelist IMPLEMENTATION.
              AND <ls_data>-mrpsourcingcontrol <> ls_list1-mrpsourcingcontrol.
               ls_item_update-mrpsourcingcontrol = <ls_data>-mrpsourcingcontrol.
               IF <ls_data>-mrpsourcingcontrol = lc_null.
-                CLEAR: <ls_data>-mrpsourcingcontrol.
+                CLEAR: ls_item_update-mrpsourcingcontrol.
               ENDIF.
               ls_item_update-%control-mrpsourcingcontrol = if_abap_behv=>mk-on.
               lv_flg = 'X'.

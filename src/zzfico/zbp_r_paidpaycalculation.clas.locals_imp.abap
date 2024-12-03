@@ -344,7 +344,24 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
        WHERE searchterm2 IN @lr_sort
         INTO TABLE @DATA(lt_bp).
     ENDIF.
+* 2.05 BPマスタから得意先の有償支給得意先BPコードとBPテキスト
+    IF lt_bp IS NOT INITIAL.
+      SELECT customer,
+             companycode
+        FROM i_customercompany WITH PRIVILEGED ACCESS
+        FOR ALL ENTRIES IN @lt_bp
+       WHERE customer = @lt_bp-businesspartner
+         AND companycode = @cv_bukrs
+        INTO TABLE @DATA(lt_kunnr).
 
+      SELECT supplier,
+             companycode
+        FROM i_suppliercompany
+        FOR ALL ENTRIES IN @lt_bp
+       WHERE supplier = @lt_bp-businesspartner
+         AND companycode = @cv_bukrs
+        INTO TABLE @DATA(lt_lifnr).
+    ENDIF.
 * 2.07 Get maktx
     IF lt_product IS NOT INITIAL.
       SELECT product,
@@ -387,6 +404,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
 
 * 2.11 期首の購買グループ金額
 * 4.04 期首の売上高を取得
+
     lv_previousperiod = cv_monat - 1.
     IF lv_previousperiod <> 0.
       SELECT companycode,
@@ -407,44 +425,30 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
          AND profitcenter = @lt_prctr-profitcenter
          AND purchasinggroup IN @lr_ekgrp
         INTO TABLE @DATA(lt_ztfi_1009).
-      IF sy-subrc <> 0.
-* 2.12 有償支給品の仕入金額取得
-* 4.05 期首の売上高を取得
-        SELECT companycode,
-               fiscalyear,
-               period,
-               profitcenter,
-               purchasinggroup,
-               purgrpamount,
-               chargeableamount,
-               customerrevenue,
-               revenue
-          FROM ztfi_1011
-          FOR ALL ENTRIES IN @lt_prctr        "#EC CI_FAE_LINES_ENSURED
-       WHERE companycode = @cv_bukrs
-         AND fiscalyear = @cv_gjahr
-         AND period = @lv_previousperiod
-         AND profitcenter = @lt_prctr-profitcenter
-         AND purchasinggroup IN @lr_ekgrp
-        INTO TABLE @DATA(lt_ztfi_1011).
-      ENDIF.
+
+
     ENDIF.
 
 * 2.13 購買グループ単位の購買発注伝票
 * 2.14 有償支給品の購買発注伝票(from 2.13)
     SORT lt_product BY product.
     SORT lt_bp BY businesspartner.
+    SORT lt_lifnr BY supplier.
 
-    SELECT purchaseorder,
-           purchaseorderitem,
-           purchasinggroup,
-           supplier,
-           material,
-           plant
-      FROM c_purchaseorderitemdex WITH PRIVILEGED ACCESS
-     WHERE purchasinggroup IN @lr_ekgrp
-       AND companycode = @cv_bukrs
-      INTO TABLE @DATA(lt_po).
+    IF lt_lifnr IS NOT INITIAL.
+      SELECT purchaseorder,
+             purchaseorderitem,
+             purchasinggroup,
+             supplier,
+             material,
+             plant
+        FROM c_purchaseorderitemdex WITH PRIVILEGED ACCESS
+        FOR ALL ENTRIES IN @lt_lifnr
+       WHERE purchasinggroup IN @lr_ekgrp
+         AND companycode = @cv_bukrs
+         AND supplier = @lt_lifnr-supplier
+        INTO TABLE @DATA(lt_po).
+    ENDIF.
     LOOP AT lt_po INTO DATA(ls_po).
       "購買グループ単位の購買発注伝票
       ls_chgamt_ekgrp-ekgrp = ls_po-purchasinggroup.
@@ -816,7 +820,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
          AND costestimatevaliditystartdate <= @lv_to
          AND costestimatestatus = 'FR'
         INTO TABLE @DATA(lt_lotsize).
-* 3.16 上位品番の標準原価-材料費を取得
+* 3.16 上位品番の標準原価-材料費を取得f
       SELECT costingreferenceobject,
              costestimate,
              costingtype,
@@ -1349,7 +1353,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     SORT lt_prctr BY product plant.
     SORT lt_prctrname BY profitcenter.
     SORT lt_ztfi_1009 BY profitcenter purchasinggroup.
-    SORT lt_ztfi_1011 BY profitcenter purchasinggroup.
+
     SORT lt_1008 BY profitcenter purchasinggroup.
     SORT lt_1011 BY profitcenter purchasinggroup.
     SORT lt_invtotalamt BY matnr plant.
@@ -1421,15 +1425,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         ls_1010-customerrevenue = ls_1010-customerrevenue + ls_1009-begcustomerrev. "期首得意先の総売上高
         ls_1010-revenue = ls_1010-revenue + ls_1009-begrev. "期首会社レベルの総売上高
       ELSE.
-        READ TABLE lt_ztfi_1011 INTO DATA(ls_1011)
-             WITH KEY profitcenter = ls_1010-profitcenter
-                    purchasinggroup = ls_1010-purchasinggroup BINARY SEARCH.
-        IF sy-subrc = 0.
-          ls_1010-purgrpamount = ls_1010-purgrpamount + ls_1011-purgrpamount. "期首購買グループ仕入れ金額
-          ls_1010-chargeableamount = ls_1010-chargeableamount + ls_1011-chargeableamount."期首有償支給品仕入れ金額
-          ls_1010-customerrevenue = ls_1010-customerrevenue + ls_1011-customerrevenue. "期首得意先の総売上高
-          ls_1010-revenue = ls_1010-revenue + ls_1011-revenue. "期首会社レベルの総売上高
-        ENDIF.
+
       ENDIF.
 
       READ TABLE lt_chgamt_ekgrp INTO ls_chgamt_ekgrp

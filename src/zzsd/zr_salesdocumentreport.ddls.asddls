@@ -47,8 +47,23 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       SecondSalesSpecProductGroup    : abap.char(3);
       ThirdSalesSpecProductGroup     : abap.char(3);
       AccountDetnProductGroup        : abap.char(3);
-      
-      
+
+      SplitRange                     : char13;
+ 
+
+      Unit                           : meins;
+ 
+      @Semantics.quantity.unitOfMeasure: 'Unit'
+      ConditionRateValue_n           : menge_d;
+      @Semantics.quantity.unitOfMeasure: 'Unit'
+      salesplanamountindspcrcy_n     : menge_d;
+      @Semantics.quantity.unitOfMeasure: 'Unit'
+      SalesAmount_n                  : menge_d;
+      @Semantics.quantity.unitOfMeasure: 'Unit'
+      ContributionProfitTotal_n      : menge_d;
+      @Semantics.quantity.unitOfMeasure: 'Unit'
+      GrossProfitTotal_n             : menge_d;
+
       ConditionRateValue01           : abap.char(10);
       ConditionRateValue02           : abap.char(10);
       ConditionRateValue03           : abap.char(10);
@@ -61,7 +76,7 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       ConditionRateValue10           : abap.char(10);
       ConditionRateValue11           : abap.char(10);
       ConditionRateValue12           : abap.char(10);
-      
+
       salesplanamountindspcrcy01     : abap.char(20);
       salesplanamountindspcrcy02     : abap.char(20);
       salesplanamountindspcrcy03     : abap.char(20);
@@ -74,7 +89,7 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       salesplanamountindspcrcy10     : abap.char(20);
       salesplanamountindspcrcy11     : abap.char(20);
       salesplanamountindspcrcy12     : abap.char(20);
-      
+
       SalesAmount01                  : abap.char(20);
       SalesAmount02                  : abap.char(20);
       SalesAmount03                  : abap.char(20);
@@ -87,7 +102,7 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       SalesAmount10                  : abap.char(20);
       SalesAmount11                  : abap.char(20);
       SalesAmount12                  : abap.char(20);
-      
+
       ContributionProfitTotal01      : abap.char(20);
       ContributionProfitTotal02      : abap.char(20);
       ContributionProfitTotal03      : abap.char(20);
@@ -100,7 +115,7 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       ContributionProfitTotal10      : abap.char(20);
       ContributionProfitTotal11      : abap.char(20);
       ContributionProfitTotal12      : abap.char(20);
-      
+
       GrossProfitTotal01             : abap.char(20);
       GrossProfitTotal02             : abap.char(20);
       GrossProfitTotal03             : abap.char(20);
