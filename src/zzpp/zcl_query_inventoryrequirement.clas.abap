@@ -452,6 +452,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                     iv_date = <lfs_mrpdata>-mrpelementavailyorrqmtdate
                   IMPORTING
                     ev_year_week = <lfs_mrpdata>-yearweek ).
+                ##NO_HANDLER
               CATCH cx_scal.
                 "handle exception
             ENDTRY.
@@ -1224,6 +1225,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                     IMPORTING
                       ev_year = DATA(lv_end_year)
                       ev_week = DATA(lv_end_week) ).
+                  ##NO_HANDLER
                 CATCH cx_scal.
                   "handle exception
               ENDTRY.
@@ -1249,6 +1251,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                         IMPORTING
                           ev_year = DATA(lv_col_year)
                           ev_week = DATA(lv_col_week) ).
+                      ##NO_HANDLER
                     CATCH cx_scal.
                       "handle exception
                   ENDTRY.

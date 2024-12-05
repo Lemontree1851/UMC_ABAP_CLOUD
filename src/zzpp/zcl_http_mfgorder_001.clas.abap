@@ -620,7 +620,7 @@ CLASS ZCL_HTTP_MFGORDER_001 IMPLEMENTATION.
 
           TRY.
               ls_bom-_base_unit = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out iv_input = ls_bom-_base_unit ).
-            CATCH zzcx_custom_exception INTO lo_root_exc.
+            CATCH zzcx_custom_exception INTO lo_root_exc ##NO_HANDLER.
           ENDTRY.
 
           APPEND ls_bom TO ls_res-_data-_bom.
@@ -666,7 +666,7 @@ CLASS ZCL_HTTP_MFGORDER_001 IMPLEMENTATION.
                                                iv_input = ls_routing-workcenterstandardworkqtyunit5 ).
               ls_routing-workcenterstandardworkqtyunit6 = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
                                                iv_input = ls_routing-workcenterstandardworkqtyunit6 ).
-            CATCH zzcx_custom_exception INTO lo_root_exc.
+            CATCH zzcx_custom_exception INTO lo_root_exc ##NO_HANDLER.
           ENDTRY.
           APPEND ls_routing TO ls_res-_data-_routing.
           CLEAR ls_routing.

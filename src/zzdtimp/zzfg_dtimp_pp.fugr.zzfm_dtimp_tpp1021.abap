@@ -47,29 +47,30 @@ FUNCTION zzfm_dtimp_tpp1021.
     ls_data-unloading_point  = <line>-('unloading_point').
 
     TRY.
-      ls_data-order_number  = |{ ls_data-order_number ALPHA = IN }|.
-      ls_data-material      = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_data-material ).
-      ls_data-quantity_uom  = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_data-quantity_uom ).
-      ls_data-profit_center = |{ ls_data-profit_center ALPHA = IN }|.
-      "ls_data-wbs_element
-    CATCH zzcx_custom_exception INTO lo_root_exc.
+        ls_data-order_number  = |{ ls_data-order_number ALPHA = IN }|.
+        ls_data-material      = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_data-material ).
+        ls_data-quantity_uom  = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_data-quantity_uom ).
+        ls_data-profit_center = |{ ls_data-profit_center ALPHA = IN }|.
+        "ls_data-wbs_element
+        ##NO_HANDLER
+      CATCH zzcx_custom_exception INTO lo_root_exc.
     ENDTRY.
 
-    MODIFY ENTITY I_ProductionOrderTP
+    MODIFY ENTITY i_productionordertp
     CREATE FIELDS (
                     product
                     productionplant
                     productionordertype
                     orderplannedtotalqty
                     productionunit
-                    OrderPlannedStartDate
-                    OrderPlannedEndDate
+                    orderplannedstartdate
+                    orderplannedenddate
                     productionversion
-                    MRPController
-                    WBSElementInternalID
-                    ProfitCenter
-                    GoodsRecipientName
-                    UnloadingPointName
+                    mrpcontroller
+                    wbselementinternalid
+                    profitcenter
+                    goodsrecipientname
+                    unloadingpointname
                   )
     AUTO FILL CID WITH VALUE #(
                   (
@@ -78,14 +79,14 @@ FUNCTION zzfm_dtimp_tpp1021.
                     %data-productionordertype    = ls_data-order_type
                     %data-orderplannedtotalqty   = ls_data-quantity
                     %data-productionunit         = ls_data-quantity_uom
-                    %data-OrderPlannedStartDate  = ls_data-basic_start_date
-                    %data-OrderPlannedEndDate    = ls_data-basic_end_date
+                    %data-orderplannedstartdate  = ls_data-basic_start_date
+                    %data-orderplannedenddate    = ls_data-basic_end_date
                     %data-productionversion      = ls_data-prod_version
-                    %data-MRPController          = ls_data-mrp_controller
-                    %data-WBSElementInternalID   = ls_data-wbs_element
-                    %data-ProfitCenter           = ls_data-profit_center
-                    %data-GoodsRecipientName     = ls_data-goods_recipient
-                    %data-UnloadingPointName     = ls_data-unloading_point
+                    %data-mrpcontroller          = ls_data-mrp_controller
+                    %data-wbselementinternalid   = ls_data-wbs_element
+                    %data-profitcenter           = ls_data-profit_center
+                    %data-goodsrecipientname     = ls_data-goods_recipient
+                    %data-unloadingpointname     = ls_data-unloading_point
                   )
                               )
     FAILED DATA(failed)
@@ -103,16 +104,16 @@ FUNCTION zzfm_dtimp_tpp1021.
          FROM TEMPORARY VALUE #( %pid = mapped-productionorder[ 1 ]-%pid
                                  %tmp = mapped-productionorder[ 1 ]-%key )
          TO FINAL(ls_finalkey).
-     ENDIF.
-     COMMIT ENTITIES END.
-     lv_aufnr = |{ ls_finalkey-productionorder ALPHA = OUT }|.
-     <line>-('Message') = lv_aufnr.
-     <line>-('Type')    = 'S'.
-   ELSE.
-     ROLLBACK ENTITIES.
-     MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-     <line>-('Type') = 'E'.
-   ENDIF.
+      ENDIF.
+      COMMIT ENTITIES END.
+      lv_aufnr = |{ ls_finalkey-productionorder ALPHA = OUT }|.
+      <line>-('Message') = lv_aufnr.
+      <line>-('Type')    = 'S'.
+    ELSE.
+      ROLLBACK ENTITIES.
+      MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+      <line>-('Type') = 'E'.
+    ENDIF.
 
   ENDLOOP.
 

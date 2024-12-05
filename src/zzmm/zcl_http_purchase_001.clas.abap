@@ -159,8 +159,14 @@ CLASS zcl_http_purchase_001 IMPLEMENTATION.
         " 组装输出数据
         CLEAR ls_response.
         DATA(lv_unit) = ls_porecord01-baseunit.
-        DATA(lv_unit1) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit ).
-*        ls_porecord01-baseunit = |{ ls_porecord01-baseunit ALPHA = IN }|.
+*        DATA(lv_unit1) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit ).
+
+        TRY.
+            DATA(lv_unit1) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit ).
+          CATCH zzcx_custom_exception INTO DATA(lo_exc).
+            ls_response-baseunit                       = ls_porecord01-baseunit.
+        ENDTRY.
+
         ls_response-baseunit                       = lv_unit1.
         ls_response-suppliercertorigincountry      = ls_porecord01-suppliercertorigincountry.
         ls_response-purchasinginforecord           = ls_porecord01-purchasinginforecord.

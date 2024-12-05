@@ -246,7 +246,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       MESSAGE e027(zfico_001) WITH ls_companycode-low INTO lv_msg.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'E' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime ##NO_HANDLER.
       ENDTRY.
       RETURN.
     ENDIF.
@@ -260,7 +260,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       MESSAGE e007(zfico_001) WITH ls_plant-low INTO lv_msg.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'E' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime ##NO_HANDLER.
       ENDTRY.
       RETURN.
     ENDIF.
@@ -397,7 +397,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 *   部品の入庫予測データを取得
 *   PO登録した後の原材料Supplyの数字を取得する（ZMM80）
     WHILE lv_while IS NOT INITIAL.
-      clear lv_while.
+      CLEAR lv_while.
       DATA(lv_path) = |/zui_podataanalysis_o4/srvd/sap/zui_podataanalysis_o4/0001/PODataAnalysis?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
       DATA(lv_select) = |Plant,Material,Supplier,DeliveryDate,ScheduleLineDeliveryDate,ConfirmedQuantity,OrderQuantity|.
       zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
@@ -417,10 +417,10 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                                    CHANGING  data = ls_podataanalysis ).
 
         APPEND LINES OF ls_podataanalysis-value TO lt_podataanalysis.
-        if lines( lt_podataanalysis ) < ls_podataanalysis-count.
-            lv_while = abap_on.
-            lv_top = ls_podataanalysis-count - lines( lt_podataanalysis ).
-            lv_skip = 5000 * sy-index.
+        IF lines( lt_podataanalysis ) < ls_podataanalysis-count.
+          lv_while = abap_on.
+          lv_top = ls_podataanalysis-count - lines( lt_podataanalysis ).
+          lv_skip = 5000 * sy-index.
         ENDIF.
       ENDIF.
     ENDWHILE.
@@ -829,7 +829,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         MESSAGE s005(zbi003) INTO lv_msg.
         TRY.
             add_message_to_log( i_text = lv_msg i_type = 'S' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime ##NO_HANDLER.
         ENDTRY.
       ELSE.
         ROLLBACK WORK.
@@ -837,7 +837,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         MESSAGE s006(zbi003) INTO lv_msg.
         TRY.
             add_message_to_log( i_text = lv_msg i_type = 'E' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime ##NO_HANDLER.
         ENDTRY.
       ENDIF.
     ENDIF.
@@ -850,8 +850,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                                                                        subobject   = 'ZZ_LOG_BI005_SUB'
 *                                                                       external_id = CONV #( mv_uuid )
                                                                        ) ).
-      CATCH cx_bali_runtime.
-        " handle exception
+      CATCH cx_bali_runtime ##NO_HANDLER.
     ENDTRY.
   ENDMETHOD.
 
@@ -874,8 +873,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         ELSE.
 *          mo_out->write( i_text ).
         ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
-        " handle exception
+      CATCH cx_bali_runtime ##NO_HANDLER.
     ENDTRY.
   ENDMETHOD.
 

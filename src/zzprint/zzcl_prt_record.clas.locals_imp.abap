@@ -62,14 +62,17 @@ CLASS lhc_record IMPLEMENTATION.
         READ TABLE lt_template INTO DATA(ls_template) WITH KEY templateuuid = <lfs_record>-templateuuid
                                                                BINARY SEARCH.
         IF sy-subrc = 0.
-          TRY.
-              DATA(lv_uuid) = cl_system_uuid=>create_uuid_c36_static(  ).
-            CATCH cx_uuid_error.
-              " handle exception
-          ENDTRY.
-
           <lfs_record>-pdfmimetype = 'application/pdf'.
-          <lfs_record>-pdffilename = |{ lv_uuid }.pdf |.
+
+          IF <lfs_record>-pdffilename IS INITIAL.
+            TRY.
+                DATA(lv_uuid) = cl_system_uuid=>create_uuid_c36_static(  ).
+                ##NO_HANDLER
+              CATCH cx_uuid_error.
+                " handle exception
+            ENDTRY.
+            <lfs_record>-pdffilename = |{ lv_uuid }.pdf |.
+          ENDIF.
 
           <lfs_record>-datamimetype = 'application/xml'.
           <lfs_record>-datafilename = 'data.xml'.
@@ -180,7 +183,8 @@ CLASS lhc_record IMPLEMENTATION.
                                           templateuuid = ls_template-templateuuid
                                           isexternalprovideddata = key-%param-isexternalprovideddata
                                           externalprovideddata = key-%param-externalprovideddata
-                                          providedkeys = key-%param-providedkeys ).
+                                          providedkeys = key-%param-providedkeys
+                                          pdffilename = key-%param-filename ).
             APPEND ls_create_printing TO lt_create_printing.
           ENDIF.
         ENDLOOP.
@@ -190,7 +194,8 @@ CLASS lhc_record IMPLEMENTATION.
         CREATE FIELDS ( templateuuid
                         isexternalprovideddata
                         externalprovideddata
-                        providedkeys )
+                        providedkeys
+                        pdffilename )
         WITH lt_create_printing
         MAPPED mapped
         REPORTED reported
@@ -304,6 +309,7 @@ CLASS lhc_record IMPLEMENTATION.
         TRY.
             " Merge both documents and receive the result
             DATA(l_merged_pdf) = l_merger->merge_documents( ).
+            ##NO_HANDLER
           CATCH cx_rspo_pdf_merger INTO DATA(l_exception).
             " Add a useful error handling here
         ENDTRY.
@@ -312,6 +318,7 @@ CLASS lhc_record IMPLEMENTATION.
             DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
             cl_system_uuid=>convert_uuid_x16_static( EXPORTING uuid = lv_uuid
                                                      IMPORTING uuid_c36 = DATA(lv_recorduuid)  ).
+            ##NO_HANDLER
           CATCH cx_uuid_error.
             "handle exception
         ENDTRY.

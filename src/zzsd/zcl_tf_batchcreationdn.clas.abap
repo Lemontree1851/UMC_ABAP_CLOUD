@@ -9,8 +9,7 @@ CLASS zcl_tf_batchcreationdn DEFINITION
 
     CLASS-METHODS:
       get_storloc
-        FOR TABLE FUNCTION ztf_salesorderstorloc.
-
+        FOR TABLE FUNCTION ztf_salesorderstorloc .
   PROTECTED SECTION.
   PRIVATE SECTION.
 ENDCLASS.
@@ -22,10 +21,9 @@ CLASS zcl_tf_batchcreationdn IMPLEMENTATION.
 
   METHOD get_storloc
     BY DATABASE FUNCTION FOR HDB LANGUAGE SQLSCRIPT OPTIONS READ-ONLY
-    USING zr_tsd_1001 zr_salesorderbasic ztbc_1001.
+    USING zr_tsd_1001 zr_salesorderbasic zr_tbc1001.
     lt_table =
       select
-        mandt,
         Customer,
         billingtoparty,
         plant,
@@ -40,7 +38,6 @@ CLASS zcl_tf_batchcreationdn IMPLEMENTATION.
 
       lt_table_without_billto =
         SELECT
-          mandt AS client,
           customer,
           plant,
           partsstoragelocation,
@@ -59,33 +56,33 @@ CLASS zcl_tf_batchcreationdn IMPLEMENTATION.
         case when basic.storagelocation <> ''
           then basic.storagelocation
           else
-          -- 判定三个条件是否取到值(sd1001a) customer billingtoparty plant
+          -- Determine whether the three conditions have taken values(sd1001a) customer billingtoparty plant
             CASE when sd1001a.customer is not null
               then
                 case
-                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD016' and zvalue1 = basic.salesdocumenttype ) > 1
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD016' and zvalue1 = basic.salesdocumenttype ) > 1
                     then sd1001a.returnstoragelocation
                   when basic.yy1_salesdoctype_sdh = ''
                     then sd1001a.finishedstoragelocation
-                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD013' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD013' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
                     then sd1001a.finishedstoragelocation
-                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD014' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD014' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
                     then case when sd1001a.vmistoragelocation = '' THEN sd1001a.partsstoragelocation else sd1001a.vmistoragelocation end
-                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD015' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD015' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
                     then sd1001a.repairstoragelocation
                 end
-             -- 如果三个条件没有取到值就将billingtoparty固定为空(sd1001b)
-              ELSE
-                CASE
-                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD016' and zvalue1 = basic.salesdocumenttype ) > 1
+             -- if the three conditions do not take a value, fix billingtoparty as empty(sd1001b)
+              else
+                case
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD016' and zvalue1 = basic.salesdocumenttype ) > 1
                     then sd1001b.returnstoragelocation
                   when basic.yy1_salesdoctype_sdh = ''
                     then sd1001b.finishedstoragelocation
-                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD013' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD013' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
                     then sd1001b.finishedstoragelocation
-                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD014' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD014' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
                     then case when sd1001b.vmistoragelocation = '' THEN sd1001b.partsstoragelocation else sd1001b.vmistoragelocation end
-                  when ( select count( * ) from ztbc_1001 where zid = 'ZSD015' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD015' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
                     then sd1001b.repairstoragelocation
                 end
             end
@@ -94,9 +91,12 @@ CLASS zcl_tf_batchcreationdn IMPLEMENTATION.
       left outer join zr_tsd_1001              as sd1001a  on  sd1001a.customer       = basic.soldtoparty
                                                            and sd1001a.billingtoparty = basic.billingtoparty
                                                            and sd1001a.plant          = basic.plant
-      left outer join zr_tsd_1001              as sd1001b  on  sd1001b.customer = basic.soldtoparty
+                                                           and sd1001a.mandt = :clnt
+      left outer join zr_tsd_1001              as sd1001b  ON  sd1001b.customer = basic.soldtoparty
                                                            and sd1001b.billingtoparty = ''
-                                                           and sd1001b.plant    = basic.plant;
+                                                           and sd1001b.plant    = basic.plant
+                                                           and sd1001b.mandt = :clnt
+      where basic.mandt = :clnt;
 
-  endmethod.
+  ENDMETHOD.
 ENDCLASS.

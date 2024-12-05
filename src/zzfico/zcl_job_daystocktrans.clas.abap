@@ -93,8 +93,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
         ELSE.
 *          mo_out->write( i_text ).
         ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
-        " handle exception
+      CATCH cx_bali_runtime ##NO_HANDLER.
     ENDTRY.
   ENDMETHOD.
 
@@ -202,7 +201,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       MESSAGE e027(zfico_001) WITH ls_companycode-low INTO lv_msg.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'E' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime ##NO_HANDLER.
       ENDTRY.
       RETURN.
     ENDIF.
@@ -216,7 +215,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       MESSAGE e007(zfico_001) WITH ls_plant-low INTO lv_msg.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'E' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime ##NO_HANDLER.
       ENDTRY.
       RETURN.
     ENDIF.
@@ -300,7 +299,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
               IMPORTING
                 local_amount      = <fs_l_group_last>-netamount
             ).
-          CATCH cx_exchange_rates.
+          CATCH cx_exchange_rates ##NO_HANDLER.
         ENDTRY.
         <fs_l_group_last>-transactioncurrency = lv_currency.
       ENDIF.
@@ -347,8 +346,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
          WHERE zid = 'ZBC003'
            AND zvalue1 = @lv_system_url
           INTO @DATA(ls_config).
-      CATCH cx_abap_context_info_error.
-        "handle exception
+      CATCH cx_abap_context_info_error ##NO_HANDLER.
     ENDTRY.
 
     IF ls_config IS NOT INITIAL.
@@ -386,7 +384,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       ELSE.
         TRY.
             add_message_to_log( i_text = CONV cl_bali_free_text_setter=>ty_text( lv_response )  i_type = 'E' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime ##NO_HANDLER.
         ENDTRY.
         RETURN.
       ENDIF.
@@ -395,63 +393,64 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
 *     売上予測の編集
     lt_next_tmp = lt_next.
     CLEAR lt_next.
-    LOOP AT lt_next_tmp ASSIGNING FIELD-SYMBOL(<fs_l_group_next>)
-      GROUP BY ( plant       = <fs_l_group_next>-plant           "プラント
+    IF lt_results_h IS NOT INITIAL.
+      LOOP AT lt_next_tmp ASSIGNING FIELD-SYMBOL(<fs_l_group_next>)
+        GROUP BY ( plant       = <fs_l_group_next>-plant           "プラント
 *                 producttype = <fs_l_group_next>-producttype    "品目タイプ
-                 customer    = <fs_l_group_next>-customer ).    "ビジネスパートナ
+                   customer    = <fs_l_group_next>-customer ).    "ビジネスパートナ
 
-      DATA(lv_salesforcast) = <fs_l_group_next>-salesforcast.
+        DATA(lv_salesforcast) = <fs_l_group_next>-salesforcast.
 
-      LOOP AT GROUP <fs_l_group_next> ASSIGNING FIELD-SYMBOL(<fs_l_next>).
-        IF ls_config IS NOT INITIAL.
-          DATA(ls_results_h) = lt_results_h[ 1 ].
-          lv_filter = |SAP_MAT_ID eq '{ <fs_l_next>-material }' and PROJECT_NO eq '{ ls_results_h-project_no }' and REQUISITION_VERSION eq '{ ls_results_h-requisition_version }'|.
-          CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
-          CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
-          CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
-          CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
-          zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T02_QUO_D?sap-language={ zzcl_common_utils=>get_current_language( ) }|
-                                                                  iv_odata_filter  = lv_filter
-                                                                  iv_token_url     = CONV #( ls_config-zvalue3 )
-                                                                  iv_client_id     = CONV #( ls_config-zvalue4 )
-                                                                  iv_client_secret = CONV #( ls_config-zvalue5 )
-                                                                  iv_authtype      = 'OAuth2.0'
-                                                        IMPORTING ev_status_code   = lv_status_code
-                                                                  ev_response      = lv_response ).
-          IF lv_status_code = 200.
-            xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
+        LOOP AT GROUP <fs_l_group_next> ASSIGNING FIELD-SYMBOL(<fs_l_next>).
+          IF ls_config IS NOT INITIAL.
+            DATA(ls_results_h) = lt_results_h[ 1 ].
+            lv_filter = |SAP_MAT_ID eq '{ <fs_l_next>-material }' and PROJECT_NO eq '{ ls_results_h-project_no }' and REQUISITION_VERSION eq '{ ls_results_h-requisition_version }'|.
+            CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
+            CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
+            CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
+            CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
+            zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T02_QUO_D?sap-language={ zzcl_common_utils=>get_current_language( ) }|
+                                                                    iv_odata_filter  = lv_filter
+                                                                    iv_token_url     = CONV #( ls_config-zvalue3 )
+                                                                    iv_client_id     = CONV #( ls_config-zvalue4 )
+                                                                    iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                                    iv_authtype      = 'OAuth2.0'
+                                                          IMPORTING ev_status_code   = lv_status_code
+                                                                    ev_response      = lv_response ).
+            IF lv_status_code = 200.
+              xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
 *              ( xco_cp_json=>transformation->pascal_case_to_underscore )
-              ( xco_cp_json=>transformation->boolean_to_abap_bool )
-            ) )->write_to( REF #( ls_response_d ) ).
+                ( xco_cp_json=>transformation->boolean_to_abap_bool )
+              ) )->write_to( REF #( ls_response_d ) ).
 
-            IF ls_response_d-d-results IS NOT INITIAL.
+              IF ls_response_d-d-results IS NOT INITIAL.
 *              DATA(lv_sales_price) = ls_response_d-d-results[ 1 ]-sales_price.
-              DATA(lv_sales_price) = zzcl_common_utils=>conversion_amount(
-                                              iv_alpha = 'IN'
-                                              iv_currency = ls_results_h-currency
-                                              iv_input = ls_response_d-d-results[ 1 ]-sales_price ).
+                DATA(lv_sales_price) = zzcl_common_utils=>conversion_amount(
+                                                iv_alpha = 'IN'
+                                                iv_currency = ls_results_h-currency
+                                                iv_input = ls_response_d-d-results[ 1 ]-sales_price ).
 
+                TRY.
+                    <fs_l_next>-salesforcast = <fs_l_next>-requirement_qty * lv_sales_price.
+                    lv_salesforcast = lv_salesforcast + <fs_l_next>-salesforcast.
+                  CATCH cx_root ##NO_HANDLER.
+                ENDTRY.
+                EXIT.
+              ENDIF.
+            ELSE.
               TRY.
-                  <fs_l_next>-salesforcast = <fs_l_next>-requirement_qty * lv_sales_price.
-                  lv_salesforcast = lv_salesforcast + <fs_l_next>-salesforcast.
-                CATCH cx_root.
-                  "handle exception
+                  add_message_to_log( i_text = CONV cl_bali_free_text_setter=>ty_text( lv_response ) i_type = 'E' ).
+                CATCH cx_bali_runtime ##NO_HANDLER.
               ENDTRY.
-              EXIT.
+              RETURN.
             ENDIF.
-          ELSE.
-            TRY.
-                add_message_to_log( i_text = CONV cl_bali_free_text_setter=>ty_text( lv_response ) i_type = 'E' ).
-              CATCH cx_bali_runtime.
-            ENDTRY.
-            RETURN.
           ENDIF.
-        ENDIF.
+        ENDLOOP.
+        <fs_l_group_next>-salesprice = lv_sales_price.
+        <fs_l_group_next>-salesforcast = lv_salesforcast.
+        APPEND <fs_l_group_next> TO lt_next.
       ENDLOOP.
-      <fs_l_group_next>-salesprice = lv_sales_price.
-      <fs_l_group_next>-salesforcast = lv_salesforcast.
-      APPEND <fs_l_group_next> TO lt_next.
-    ENDLOOP.
+    ENDIF.
 
 *     データを日別、得意先別、品目タイプ別に集計
     LOOP AT lt_productplant ASSIGNING FIELD-SYMBOL(<fs_l_group2>)
@@ -583,7 +582,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       MESSAGE s006(zfico_001) INTO lv_msg.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'S' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime ##NO_HANDLER.
       ENDTRY.
     ELSE.
       ROLLBACK WORK.
@@ -591,7 +590,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
           CLEAR lv_msg.
           MESSAGE e005(zfico_001) INTO lv_msg.
           add_message_to_log( i_text = lv_msg i_type = 'E' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime ##NO_HANDLER.
       ENDTRY.
     ENDIF.
 
@@ -604,7 +603,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       MESSAGE s006(zfico_001) INTO lv_msg.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'S' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime ##NO_HANDLER.
       ENDTRY.
     ELSE.
       ROLLBACK WORK.
@@ -612,7 +611,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       MESSAGE e005(zfico_001) INTO lv_msg.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'E' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime ##NO_HANDLER.
       ENDTRY.
     ENDIF.
 *    ENDIF.
@@ -658,8 +657,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
                                                                        subobject   = 'ZZ_LOG_BI002_SUB'
 *                                                                       external_id = CONV #( mv_uuid )
                                                                        ) ).
-      CATCH cx_bali_runtime.
-        " handle exception
+      CATCH cx_bali_runtime ##NO_HANDLER.
     ENDTRY.
   ENDMETHOD.
 ENDCLASS.

@@ -10,31 +10,23 @@ define root view entity ZC_STOCKAGEUPLOAD
   key           Ledger,
   key           CalendarYear,
   key           CalendarMonth,
-                //@ObjectModel.text.element: ['CompanyCodeName']
                 @Consumption.valueHelpDefinition: [{ entity:  { name:'I_CompanyCodeStdVH', element: 'CompanyCode' }}]
   key           CompanyCode,
-                //@ObjectModel.text.element: ['PlantName']
                 @Consumption.valueHelpDefinition: [{ entity:  { name:'I_PlantStdVH', element: 'Plant' }}]
   key           Plant,
-                //@ObjectModel.text.element: ['ProductName']
   key           Material,
 
   key           Age,
 
                 Qty,
-                //Status,  // ステータス
-                //Message, // メッセージ
                 CreatedBy,
                 CreatedAt,
                 LastChangedBy,
                 //LastChangedAt,
                 LocalLastChangedAt,
-                _Product.BaseUnit,
-                //@UI.hidden: true
+                cast(_Product.BaseUnit as meins preserving type ) as BaseUnit ,
                 _ProductText.ProductName,
-                 //@UI.hidden: true
                 _CompanyCode.CompanyCodeName,
-                //@UI.hidden: true
                 _Plant.PlantName,
                 @UI.hidden: true
                 _CreateUser.PersonFullName as CreateUserName,

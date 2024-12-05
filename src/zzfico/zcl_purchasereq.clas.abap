@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PURCHASEREQ IMPLEMENTATION.
+CLASS zcl_purchasereq IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -143,7 +143,7 @@ CLASS ZCL_PURCHASEREQ IMPLEMENTATION.
       TRY.
           "get and add filter
           DATA(lt_filter_cond) = io_request->get_filter( )->get_as_ranges( ).
-        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option).
+        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option) ##NO_HANDLER.
 
       ENDTRY.
       DATA(lv_top)     = io_request->get_paging( )->get_page_size( ).
@@ -221,12 +221,7 @@ CLASS ZCL_PURCHASEREQ IMPLEMENTATION.
       lt_PRWORKFLOW_dup_out TYPE STANDARD TABLE OF ZR_PRWORKFLOW_dup,
       ls_PRWORKFLOW_dup     TYPE ZR_PRWORKFLOW_dup.
 
-      SELECT
-         apply_depart                           as ApplyDepart_dup,
-        pr_no                                  as PrNo_dup,
-         uuid                                   as UUID_dup
 
-      FROM ztmm_1006 INTO CORRESPONDING FIELDS OF TABLE @lt_PRWORKFLOW_dup.
 
       " Filtering
       "zzcl_odata_utils=>filtering( EXPORTING io_filter = io_request->get_filter(  )

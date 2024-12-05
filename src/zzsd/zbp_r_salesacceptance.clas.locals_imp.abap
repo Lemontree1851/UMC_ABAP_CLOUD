@@ -630,7 +630,7 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
 
       <lfs_data>-customer = |{ <lfs_data>-customer ALPHA = IN }|.
     ENDLOOP.
-    SELECT *
+    SELECT *               "#EC CI_ALL_FIELDS_NEEDED
       FROM ztsd_1003
       FOR ALL ENTRIES IN @ct_data
      WHERE salesorganization = @ct_data-salesorganization

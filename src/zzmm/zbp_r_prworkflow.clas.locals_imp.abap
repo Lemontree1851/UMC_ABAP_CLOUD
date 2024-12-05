@@ -95,8 +95,6 @@ CLASS lhc_purchasereq IMPLEMENTATION.
     DATA:lv_users_polink TYPE STANDARD TABLE OF zc_wf_approvaluser.
     DATA:lv_auto TYPE STANDARD TABLE OF zc_wf_approvalhistory.
 
-    SELECT * FROM c_SalesPlanValueHelp WITH PRIVILEGED ACCESS INTO TABLE @data(lt_test).
-
     LOOP AT ct_data INTO DATA(cs_data).
 
       CLEAR:lv_current_node,lv_next_node,lv_approvalend, lv_operator,lv_ev_error,lv_error_text,lv_users.
@@ -421,7 +419,9 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                   CHANGING  data = records ).
       IF records IS NOT INITIAL.
         SELECT
-          *
+          uuid,
+          pr_no,
+          approve_status
         FROM ztmm_1006
         FOR ALL ENTRIES IN @records
         WHERE uuid = @records-uuid
@@ -588,7 +588,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         lv_operator = record-userfullname && '(' && record-useremail && ')' .
 
         "1. 获取 workflowid applicationid instanceid
-        SELECT SINGLE *
+        SELECT SINGLE uuid,pr_no,workflow_id, application_id, instance_id
           FROM ztmm_1006
         WHERE uuid = @record-uuid
         INTO @DATA(ls_ztmm_1006).

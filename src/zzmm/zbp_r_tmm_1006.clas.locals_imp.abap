@@ -494,6 +494,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
     repo-purchasereq = <reported>-('purchasereq').
     " 新增一个空行，通过往空行中添加达到使用FIELD-SYMBOL新增行的目的
     APPEND INITIAL LINE TO repo-purchasereq ASSIGNING FIELD-SYMBOL(<repo_line>).
+
     TRY.
         ASSIGN record TO  FIELD-SYMBOL(<fs_record>).
         <repo_line>-('%key') = <fs_record>-('%key').
@@ -510,7 +511,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                   v2        = v2
                                   v3        = v3
                                   v4        = v4 ).
-      CATCH cx_root INTO DATA(e).
+      CATCH cx_root INTO DATA(e) ##NO_HANDLER.
 
     ENDTRY.
     <reported>-('purchasereq') = repo-purchasereq.

@@ -24,7 +24,7 @@ define root view entity ZR_PRWORKFLOWHIstory
           ApprovalHistory.last_changed_at                                                                                 as LastChangedAt,
           ApprovalHistory.local_last_changed_at                                                                           as LocalLastChangedAt,
           ltrim(   concat(    ApprovalHistory.current_node      ,   concat( '-' ,_ApprovalNode.node_name)      ) , '0'  ) as nodename,
-          case ApprovalHistory.approval_status
+          cast(case ApprovalHistory.approval_status
           when '2' then
           concat('承認-', ltrim(   concat(    ApprovalHistory.current_node      ,   concat( '-' ,_ApprovalNode.node_name)      ) , '0'  ) )
           when '3' then
@@ -33,8 +33,8 @@ define root view entity ZR_PRWORKFLOWHIstory
           concat('却下-', ltrim(   concat(    ApprovalHistory.current_node      ,   concat( '-' ,_ApprovalNode.node_name)      ) , '0'  ) )
           else
           ltrim(   concat(    ApprovalHistory.current_node      ,   concat( '-' ,_ApprovalNode.node_name)      ) , '0'  )
-          end
-
+          end as abap.sstring(50)) 
+          
                                                                                                                           as title
 }
 where
@@ -68,7 +68,7 @@ union select from ztbc_1011             as ApprovalHistory
           ApprovalHistory.last_changed_at                                                                                    as LastChangedAt,
           ApprovalHistory.local_last_changed_at                                                                              as LocalLastChangedAt,
           ltrim(       concat(    ApprovalHistory.next_node     ,   concat( '-' ,_ApprovalNode.node_name)         ) , '0'  ) as nodename,
-          concat('承認待ち-', ltrim(       concat(    ApprovalHistory.next_node     ,   concat( '-' ,_ApprovalNode.node_name)         ) , '0'  ) ) as title
+          cast(concat('承認待ち-', ltrim(       concat(    ApprovalHistory.next_node     ,   concat( '-' ,_ApprovalNode.node_name)         ) , '0'  ) ) as abap.sstring(50))  as title
 
 }
 

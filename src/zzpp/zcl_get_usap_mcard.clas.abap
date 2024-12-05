@@ -42,6 +42,7 @@ CLASS zcl_get_usap_mcard IMPLEMENTATION.
          WHERE zid = 'ZBC002'
            AND zvalue1 = @lv_system_url
           INTO @DATA(ls_config).
+        ##NO_HANDLER
       CATCH cx_abap_context_info_error.
         "handle exception
     ENDTRY.

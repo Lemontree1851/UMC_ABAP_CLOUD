@@ -53,5 +53,4 @@ provider contract transactional_query  as projection on ZR_INVOICEREPORT
 // 效率太低，且报表不展示,只打印时获取，考虑在调用打印的actin返回数据之后再获取一下文本
   @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_GET_INVOICEREPORT_LONGTEXT' 
   virtual RemitAddress : abap.string
-//  RemitAddress
 }

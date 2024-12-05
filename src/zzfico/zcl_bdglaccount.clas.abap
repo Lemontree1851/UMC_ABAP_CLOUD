@@ -128,7 +128,7 @@ CLASS zcl_bdglaccount IMPLEMENTATION.
       TRY.
           "get and add filter
           DATA(lt_filter_cond) = io_request->get_filter( )->get_as_ranges( ).
-        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option).
+        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option) ##NO_HANDLER.
 
       ENDTRY.
       DATA(lv_top)     = io_request->get_paging( )->get_page_size( ).
@@ -243,10 +243,10 @@ CLASS zcl_bdglaccount IMPLEMENTATION.
           "JSON->ABAP
           xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
              ( xco_cp_json=>transformation->underscore_to_camel_case ) ) )->write_to( REF #( ls_res_api ) ).
-        CATCH cx_root INTO DATA(lx_root1).
+        CATCH cx_root INTO DATA(lx_root1) ##NO_HANDLER.
       ENDTRY.
 
-      SELECT * FROM ztfi_1002 INTO TABLE @DATA(lt_fi1002) .
+      SELECT * FROM ztfi_1002 INTO TABLE @DATA(lt_fi1002) . "#EC CI_NOWHERE
       SORT lt_fi1002 BY glaccount.
 
 

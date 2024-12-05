@@ -93,9 +93,10 @@ FUNCTION zzfm_dtimp_tbc1011.
         ENDIF.
 
         TRY.
-          ls_ztbc_1004-user_uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-        CATCH cx_uuid_error.
-          " handle exception
+            ls_ztbc_1004-user_uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+            ##NO_HANDLER
+          CATCH cx_uuid_error.
+            " handle exception
         ENDTRY.
 
         ls_ztbc_1004-user_id    = ls_data-user_id.
@@ -126,7 +127,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Insert plant data
       IF ls_data-plant IS NOT INITIAL.
 
-        SELECT count( * ) FROM ztbc_1006 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+        SELECT COUNT( * ) FROM ztbc_1006 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
         IF sy-subrc = 0.
           MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-009 INTO <line>-('Message').    "User plant data already exist
           <line>-('Type')    = 'E'.
@@ -148,9 +149,10 @@ FUNCTION zzfm_dtimp_tbc1011.
         SPLIT ls_data-plant AT lc_splitflag INTO TABLE lt_plant.
         LOOP AT lt_plant INTO DATA(ls_plant).
           TRY.
-            ls_ztbc_1006-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-          CATCH cx_uuid_error.
-            " handle exception
+              ls_ztbc_1006-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+              ##NO_HANDLER
+            CATCH cx_uuid_error.
+              " handle exception
           ENDTRY.
           ls_ztbc_1006-plant = ls_plant-plant.
           APPEND ls_ztbc_1006 TO lt_ztbc_1006.
@@ -173,7 +175,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Insert company data
       IF ls_data-company_code IS NOT INITIAL.
 
-        SELECT count( * ) FROM ztbc_1012 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+        SELECT COUNT( * ) FROM ztbc_1012 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
         IF sy-subrc = 0.
           MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-010 INTO <line>-('Message').    "User company data already exist
           <line>-('Type')    = 'E'.
@@ -195,9 +197,10 @@ FUNCTION zzfm_dtimp_tbc1011.
         SPLIT ls_data-company_code AT lc_splitflag INTO TABLE lt_company.
         LOOP AT lt_company INTO DATA(ls_company).
           TRY.
-            ls_ztbc_1012-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-          CATCH cx_uuid_error.
-            " handle exception
+              ls_ztbc_1012-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+              ##NO_HANDLER
+            CATCH cx_uuid_error.
+              " handle exception
           ENDTRY.
           ls_ztbc_1012-company_code = ls_company-company.
           APPEND ls_ztbc_1012 TO lt_ztbc_1012.
@@ -220,7 +223,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Insert sales organization data
       IF ls_data-sales_organization IS NOT INITIAL.
 
-        SELECT count( * ) FROM ztbc_1013 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+        SELECT COUNT( * ) FROM ztbc_1013 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
         IF sy-subrc = 0.
           MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-011 INTO <line>-('Message').    "User sales organization data already exist
           <line>-('Type')    = 'E'.
@@ -242,9 +245,10 @@ FUNCTION zzfm_dtimp_tbc1011.
         SPLIT ls_data-sales_organization AT lc_splitflag INTO TABLE lt_salesorg.
         LOOP AT lt_salesorg INTO DATA(ls_salesorg).
           TRY.
-            ls_ztbc_1013-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-          CATCH cx_uuid_error.
-            " handle exception
+              ls_ztbc_1013-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+              ##NO_HANDLER
+            CATCH cx_uuid_error.
+              " handle exception
           ENDTRY.
           ls_ztbc_1013-sales_organization = ls_salesorg-salesorg.
           APPEND ls_ztbc_1013 TO lt_ztbc_1013.
@@ -332,9 +336,10 @@ FUNCTION zzfm_dtimp_tbc1011.
           SPLIT ls_data-plant AT lc_splitflag INTO TABLE lt_plant.
           LOOP AT lt_plant INTO ls_plant.
             TRY.
-              ls_ztbc_1006-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-            CATCH cx_uuid_error.
-              " handle exception
+                ls_ztbc_1006-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+                ##NO_HANDLER
+              CATCH cx_uuid_error.
+                " handle exception
             ENDTRY.
             ls_ztbc_1006-plant = ls_plant-plant.
             APPEND ls_ztbc_1006 TO lt_ztbc_1006.
@@ -382,9 +387,10 @@ FUNCTION zzfm_dtimp_tbc1011.
           SPLIT ls_data-company_code AT lc_splitflag INTO TABLE lt_company.
           LOOP AT lt_company INTO ls_company.
             TRY.
-              ls_ztbc_1012-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-            CATCH cx_uuid_error.
-              " handle exception
+                ls_ztbc_1012-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+                ##NO_HANDLER
+              CATCH cx_uuid_error.
+                " handle exception
             ENDTRY.
             ls_ztbc_1012-company_code = ls_company-company.
             APPEND ls_ztbc_1012 TO lt_ztbc_1012.
@@ -432,9 +438,10 @@ FUNCTION zzfm_dtimp_tbc1011.
           SPLIT ls_data-sales_organization AT lc_splitflag INTO TABLE lt_salesorg.
           LOOP AT lt_salesorg INTO ls_salesorg.
             TRY.
-              ls_ztbc_1013-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-            CATCH cx_uuid_error.
-              " handle exception
+                ls_ztbc_1013-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+                ##NO_HANDLER
+              CATCH cx_uuid_error.
+                " handle exception
             ENDTRY.
             ls_ztbc_1013-sales_organization = ls_salesorg-salesorg.
             APPEND ls_ztbc_1013 TO lt_ztbc_1013.

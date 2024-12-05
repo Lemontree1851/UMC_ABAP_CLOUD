@@ -101,7 +101,7 @@ define custom entity ZR_PODATAANALYSIS
       
       @UI                           : { lineItem: [ { position: 200, label: 'PO発注数量' } ]}
       @EndUserText.label            : 'PO発注数量'
-      OrderQuantity                 : abap.quan(13);
+      OrderQuantity                 : abap.quan(13,3);
       
       @UI                           : { lineItem: [ { position: 210, label: '発注単位' } ]}
       @EndUserText.label            : '発注単位'
@@ -228,12 +228,7 @@ define custom entity ZR_PODATAANALYSIS
       @UI                           : { lineItem: [ { position: 470, label: '供給者部門テキスト' } ]}
       @EndUserText.label            : '供給者部門テキスト'
       SupplierSubrangetext          : abap.char(50);      
-      
-      
-      @UI                            : { lineItem: [ { position: 480, label: '基軸通貨(製造業者)' } ]}
-      @EndUserText.label             : '基軸通貨(製造業者)'
-      SuplrCertOriginClassfctnNumber : abap.char(16);
-      
+         
       @UI                            : { lineItem: [ { position: 490, label: 'NCNR、CANCELルール' } ]}
       @EndUserText.label             : 'NCNR、CANCELルール'
       ShippingInstructionName : abap.char(30);  

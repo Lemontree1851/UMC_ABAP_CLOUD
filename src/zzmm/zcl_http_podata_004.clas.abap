@@ -414,7 +414,13 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       LOOP AT lt_result1 INTO lw_result1.
 
         DATA(lv_unit1) = lw_result1-purchaseorderquantityunit.
-        DATA(lv_unit11) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit1 ).
+*        DATA(lv_unit11) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit1 ).
+
+        TRY.
+            DATA(lv_unit11) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit1 ).
+          CATCH zzcx_custom_exception INTO DATA(lo_exc).
+            ls_response-purchaseorderquantityunit = lw_result1-purchaseorderquantityunit.
+        ENDTRY.
 
         ls_response-documentheadertext                   = lw_result1-documentheadertext.
         ls_response-suppliername                         = lw_result1-suppliername.
@@ -867,7 +873,13 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
       LOOP AT lt_result INTO lw_result.
 
         DATA(lv_unit2) = lw_result-purchaseorderquantityunit.
-        DATA(lv_unit22) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit2 ).
+*        DATA(lv_unit22) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit2 ).
+
+        TRY.
+            DATA(lv_unit22) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit2 ).
+          CATCH zzcx_custom_exception INTO DATA(lo_exc1).
+            ls_response-purchaseorderquantityunit = lw_result-purchaseorderquantityunit.
+        ENDTRY.
 
         ls_response-documentheadertext                   = lw_result-documentheadertext.
         ls_response-suppliername                         = lw_result-suppliername.

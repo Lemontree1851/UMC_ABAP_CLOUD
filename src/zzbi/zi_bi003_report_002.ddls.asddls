@@ -147,7 +147,7 @@ union select from ZI_BI003_REPORT_002_BILLING(p_condition_type: 'ZPSB', p_recove
 
          cast('0' as abap.quan( 13, 3 ))    as OrderQuantity,
 
-         cast('0.00' as dmbtr)              as NetPriceAmount,
+         cast('0.00' as abap.curr(11, 2))   as NetPriceAmount,
 
          CompanyCode,
          cast('' as matnr)                  as SpotbuyMaterial,

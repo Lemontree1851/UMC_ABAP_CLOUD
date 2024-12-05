@@ -25,7 +25,7 @@ CLASS lsc_zzr_dtimp_files IMPLEMENTATION.
       FROM zzt_dtimp_start
        FOR ALL ENTRIES IN @lt_files
      WHERE uuid_file = @lt_files-uuidfile
-      INTO TABLE @DATA(lt_files_start).
+      INTO TABLE @DATA(lt_files_start).         "#EC CI_FAE_NO_LINES_OK
 
     SORT lt_files_start BY uuid_file.
 

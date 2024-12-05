@@ -411,11 +411,6 @@ annotate view ZC_TMM_1006 with
     label: 'IsLink'
   } ]
   IsLink;
-  @UI.identification: [ {
-    position: 365 , 
-    label: 'Attachment'
-  } ]
-  Attachment;
   @UI.hidden: true
   LocalLastChangedAt;
 }

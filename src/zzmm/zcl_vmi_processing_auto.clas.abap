@@ -318,7 +318,7 @@ CLASS zcl_vmi_processing_auto IMPLEMENTATION.
 
         TRY.
             lr_lock->dequeue( it_parameter = lt_lock_parameter ).
-          CATCH cx_abap_lock_failure INTO lx_abap_lock_failure.
+          CATCH cx_abap_lock_failure INTO lx_abap_lock_failure ##NO_HANDLER.
         ENDTRY.
 
         CLEAR lt_lock_parameter.

@@ -11,9 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
-
-
+CLASS zcl_paidpaycalculation IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
     DATA:
       lt_output TYPE STANDARD TABLE OF zr_paidpaycalculation,
@@ -41,6 +39,10 @@ CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
               DATA(lr_ztype) = ls_filter_cond-range.
               READ TABLE lr_ztype INTO DATA(lrs_ztype) INDEX 1.
               DATA(lv_ztype) = lrs_ztype-low.
+            WHEN 'LEDGE'.
+              DATA(lr_ledge) = ls_filter_cond-range.
+              READ TABLE lr_ledge INTO DATA(lrs_ledge) INDEX 1.
+              DATA(lv_ledge) = lrs_ledge-low.
           ENDCASE.
         ENDLOOP.
       CATCH cx_rap_query_filter_no_range.
@@ -55,6 +57,7 @@ CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
          WHERE companycode = @lv_bukrs
            AND fiscalyear = @lv_gjahr
            AND period = @lv_monat
+           AND ledge = @lv_ledge
           INTO TABLE @DATA(lt_1010).
         IF sy-subrc = 0.
           LOOP AT lt_1010 INTO DATA(ls_1010).
@@ -66,27 +69,38 @@ CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
             ls_output-supplier = ls_1010-supplier. "仕入先コード
             ls_output-product = ls_1010-product.   "有償支給品番
             ls_output-profitcenter = ls_1010-profitcenter. "利益センタ
+            ls_output-ledge = lv_ledge.
             ls_output-purchasinggroup = ls_1010-purchasinggroup.  "購買グループ
             ls_output-upperproduct01 = ls_1010-upperproduct01.    "上位品番
             ls_output-valuationclass01 = ls_1010-valuationclass01.   "評価クラス
+            ls_output-valuationquantity01 = ls_1010-valuationquantity01.
             ls_output-upperproduct02 = ls_1010-upperproduct02.    "上位品番
             ls_output-valuationclass02 = ls_1010-valuationclass02.   "評価クラス
+            ls_output-valuationquantity02 = ls_1010-valuationquantity02.
             ls_output-upperproduct03 = ls_1010-upperproduct03.    "上位品番
             ls_output-valuationclass03 = ls_1010-valuationclass03.   "評価クラス
+            ls_output-valuationquantity03 = ls_1010-valuationquantity03.
             ls_output-upperproduct04 = ls_1010-upperproduct04.    "上位品番
             ls_output-valuationclass04 = ls_1010-valuationclass04.   "評価クラス
+            ls_output-valuationquantity04 = ls_1010-valuationquantity04.
             ls_output-upperproduct05 = ls_1010-upperproduct05.    "上位品番
             ls_output-valuationclass05 = ls_1010-valuationclass05.   "評価クラス
+            ls_output-valuationquantity05 = ls_1010-valuationquantity05.
             ls_output-upperproduct06 = ls_1010-upperproduct06.    "上位品番
             ls_output-valuationclass06 = ls_1010-valuationclass06.   "評価クラス
+            ls_output-valuationquantity06 = ls_1010-valuationquantity06.
             ls_output-upperproduct07 = ls_1010-upperproduct07.    "上位品番
             ls_output-valuationclass07 = ls_1010-valuationclass07.   "評価クラス
+            ls_output-valuationquantity07 = ls_1010-valuationquantity07.
             ls_output-upperproduct08 = ls_1010-upperproduct08.    "上位品番
             ls_output-valuationclass08 = ls_1010-valuationclass08.   "評価クラス
+            ls_output-valuationquantity08 = ls_1010-valuationquantity08.
             ls_output-upperproduct09 = ls_1010-upperproduct09.    "上位品番
             ls_output-valuationclass09 = ls_1010-valuationclass09.   "評価クラス
+            ls_output-valuationquantity09 = ls_1010-valuationquantity09.
             ls_output-upperproduct10 = ls_1010-upperproduct10.    "上位品番
             ls_output-valuationclass10 = ls_1010-valuationclass10.   "評価クラス
+            ls_output-valuationquantity10 = ls_1010-valuationquantity10.
 
             ls_output-customername = ls_1010-customername.   "得意先名称
             ls_output-suppliername = ls_1010-suppliername.   "仕入先名称
@@ -104,11 +118,17 @@ CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
             ls_output-cost10 = ls_1010-cost10.
             ls_output-materialcost2000 = ls_1010-materialcost2000.    "標準原価-材料費合計-2000
             ls_output-materialcost3000 = ls_1010-materialcost3000.    "標準原価-材料費合計-3000
-            ls_output-purgrpamount = ls_1010-purgrpamount.      "当期購買グループ別仕入金額
+            ls_output-purgrpamount1 = ls_1010-purgrpamount1.      "当期購買グループ別仕入金額期初
+            ls_output-purgrpamount2 = ls_1010-purgrpamount2.      "当期購買グループ別仕入金額本年初-上个月末
+            ls_output-purgrpamount = ls_1010-purgrpamount.      "当期購買グループ別仕入金額当前期间
+            ls_output-chargeableamount1 = ls_1010-chargeableamount1.  "当期有償支給品仕入金額期初
+            ls_output-chargeableamount2 = ls_1010-chargeableamount2.  "当期有償支給品仕入金額本年初-上个月末
             ls_output-chargeableamount = ls_1010-chargeableamount.  "当期有償支給品仕入金額
             ls_output-previousstockamount = ls_1010-previousstockamount. "在庫金額（前期末）
             ls_output-currentstockamount = ls_1010-currentstockamount. "在庫金額（当期末）-有償支給品
+            ls_output-customerrevenue1 = ls_1010-customerrevenue1. "該当得意先の総売上高期初
             ls_output-customerrevenue = ls_1010-customerrevenue. "該当得意先の総売上高
+            ls_output-revenue1 = ls_1010-revenue1.  "会社レベルの総売上高期初
             ls_output-revenue = ls_1010-revenue.  "会社レベルの総売上高
             ls_output-currency = ls_1010-currency.
             APPEND ls_output TO lt_output.
@@ -122,6 +142,7 @@ CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
          WHERE companycode = @lv_bukrs
            AND fiscalyear = @lv_gjahr
            AND period = @lv_monat
+           AND ledge = @lv_ledge
           INTO TABLE @DATA(lt_1011).
         IF sy-subrc = 0.
           LOOP AT lt_1011 INTO DATA(ls_1011).
@@ -133,7 +154,7 @@ CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
             ls_output-supplier = ls_1011-supplier. "仕入先コード
             ls_output-profitcenter = ls_1011-profitcenter. "利益センタ
             ls_output-purchasinggroup = ls_1011-purchasinggroup.  "購買グループ
-
+            ls_output-ledge = lv_ledge.
             ls_output-customername = ls_1011-customername.   "得意先名称
             ls_output-suppliername = ls_1011-suppliername.   "仕入先名称
             ls_output-profitcentername = ls_1011-profitcentername.  "利益センタテキスト
@@ -176,4 +197,5 @@ CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
     io_response->set_data( lt_output ).
 
   ENDMETHOD.
+
 ENDCLASS.

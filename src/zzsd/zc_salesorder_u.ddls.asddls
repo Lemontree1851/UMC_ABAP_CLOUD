@@ -15,6 +15,7 @@ define root view entity ZC_SALESORDER_U
       SalesDocumentType,
       YY1_SalesDocType_SDH, //受注伝票タイプ（Old）
       CreationDate,
+      @EndUserText.label: '出荷ポイント'
       ShippingPoint,
       ShippingPointName,
       @EndUserText.label: '受注先'
@@ -33,7 +34,7 @@ define root view entity ZC_SALESORDER_U
       UnderlyingPurchaseOrderItem,
       DeliveryBlockReason,
       DeliveryBlockReasonText,
-      Material,
+      cast( Material as matnr preserving type ) as Material,
       MaterialByCustomer,
       Plant,
       TransitPlant,

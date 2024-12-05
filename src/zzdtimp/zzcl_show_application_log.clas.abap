@@ -64,17 +64,18 @@ CLASS zzcl_show_application_log IMPLEMENTATION.
             <lfs_data>-timestamp     = l_item_entry-item->timestamp.
             <lfs_data>-messagetext   = l_item_entry-item->get_message_text( ).
           ENDLOOP.
+          ##NO_HANDLER
         CATCH cx_bali_runtime INTO DATA(l_exception).
           " handle exception
       ENDTRY.
 
-      IF io_request->is_total_numb_of_rec_requested(  ) .
-        io_response->set_total_number_of_records( lines( lt_data ) ).
-      ENDIF.
-
       " Filtering
       zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
                                    CHANGING  ct_data     = lt_data ).
+
+      IF io_request->is_total_numb_of_rec_requested(  ) .
+        io_response->set_total_number_of_records( lines( lt_data ) ).
+      ENDIF.
 
       "Sort
       zzcl_odata_utils=>orderby( EXPORTING it_order = io_request->get_sort_elements( )

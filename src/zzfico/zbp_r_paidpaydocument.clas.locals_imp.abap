@@ -318,7 +318,9 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
             lv_url = cl_abap_context_info=>get_system_url( ) && 'sap/bc/http/sap/Z_HTTP_PAIDPAY_001'.
             DATA(lo_destination) = cl_http_destination_provider=>create_by_url( i_url = lv_url ).
           CATCH cx_abap_context_info_error INTO DATA(lx_context_error).
+            IF sy-subrc = 0. ENDIF.
           CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
+            IF sy-subrc = 0. ENDIF.
         ENDTRY.
 
         TRY.
@@ -329,7 +331,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
             i_password = lv_pwd ).
 
           CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
-
+            IF sy-subrc = 0. ENDIF.
         ENDTRY.
         DATA(lo_http_request) = lo_http_client->get_http_request( ).
         /ui2/cl_json=>serialize(
@@ -347,7 +349,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
         TRY.
             DATA(lo_response) = lo_http_client->execute( i_method = if_web_http_client=>post ).
           CATCH cx_web_http_client_error INTO DATA(lx_http_error).
-
+            IF sy-subrc = 0. ENDIF.
         ENDTRY.
         lo_response->get_status( RECEIVING r_value = DATA(ls_http_status) ).
         IF ls_http_status-code = 200
@@ -418,7 +420,9 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
             lv_url = cl_abap_context_info=>get_system_url( ) && 'sap/bc/http/sap/Z_HTTP_PAIDPAY_002'.
             lo_destination = cl_http_destination_provider=>create_by_url( i_url = lv_url ).
           CATCH cx_abap_context_info_error INTO lx_context_error.
+            IF sy-subrc = 0. ENDIF.
           CATCH cx_http_dest_provider_error INTO lx_http_dest_provider_error.
+            IF sy-subrc = 0. ENDIF.
         ENDTRY.
 
         TRY.
@@ -429,7 +433,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
             i_password = lv_pwd ).
 
           CATCH cx_web_http_client_error INTO lx_web_http_client_error.
-
+            IF sy-subrc = 0. ENDIF.
         ENDTRY.
         lo_http_request = lo_http_client->get_http_request( ).
         /ui2/cl_json=>serialize(
@@ -447,7 +451,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
         TRY.
             lo_response = lo_http_client->execute( i_method = if_web_http_client=>post ).
           CATCH cx_web_http_client_error INTO lx_http_error.
-
+            IF sy-subrc = 0. ENDIF.
         ENDTRY.
         lo_response->get_status( RECEIVING r_value = ls_http_status ).
         IF ls_http_status-code = 200
@@ -570,7 +574,9 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
             lv_url = cl_abap_context_info=>get_system_url( ) && 'sap/bc/http/sap/Z_HTTP_PAIDPAY_001'.
             DATA(lo_destination) = cl_http_destination_provider=>create_by_url( i_url = lv_url ).
           CATCH cx_abap_context_info_error INTO DATA(lx_context_error).
+            IF sy-subrc = 0. ENDIF.
           CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
+            IF sy-subrc = 0. ENDIF.
         ENDTRY.
 
         TRY.
@@ -581,7 +587,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
             i_password = lv_pwd ).
 
           CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
-
+            IF sy-subrc = 0. ENDIF.
         ENDTRY.
         DATA(lo_http_request) = lo_http_client->get_http_request( ).
         /ui2/cl_json=>serialize(
@@ -599,7 +605,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
         TRY.
             DATA(lo_response) = lo_http_client->execute( i_method = if_web_http_client=>post ).
           CATCH cx_web_http_client_error INTO DATA(lx_http_error).
-
+            IF sy-subrc = 0. ENDIF.
         ENDTRY.
         lo_response->get_status( RECEIVING r_value = DATA(ls_http_status) ).
         IF ls_http_status-code = 200
@@ -672,7 +678,9 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
             lo_destination = cl_http_destination_provider=>create_by_url( i_url = lv_url ).
 
           CATCH cx_abap_context_info_error INTO lx_context_error.
+            IF sy-subrc = 0. ENDIF.
           CATCH cx_http_dest_provider_error INTO lx_http_dest_provider_error.
+            IF sy-subrc = 0. ENDIF.
         ENDTRY.
 
         TRY.
@@ -683,7 +691,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
             i_password = lv_pwd ).
 
           CATCH cx_web_http_client_error INTO lx_web_http_client_error.
-
+            IF sy-subrc = 0. ENDIF.
         ENDTRY.
         lo_http_request = lo_http_client->get_http_request( ).
         /ui2/cl_json=>serialize(
@@ -701,7 +709,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
         TRY.
             lo_response = lo_http_client->execute( i_method = if_web_http_client=>post ).
           CATCH cx_web_http_client_error INTO lx_http_error.
-
+            IF sy-subrc = 0. ENDIF.
         ENDTRY.
         lo_response->get_status( RECEIVING r_value = ls_http_status ).
         IF ls_http_status-code = 200

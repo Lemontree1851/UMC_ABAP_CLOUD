@@ -69,7 +69,7 @@ CLASS ZCL_JOB_BPBANK IMPLEMENTATION.
         ELSE.
 *          mo_out->write( i_text ).
         ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
+      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime) ##NO_HANDLER.
         " handle exception
     ENDTRY.
   ENDMETHOD.
@@ -137,13 +137,13 @@ CLASS ZCL_JOB_BPBANK IMPLEMENTATION.
         MESSAGE s032(zfico_001) WITH ls_businesspartnerbank-businesspartner INTO lv_msg.
         TRY.
             add_message_to_log( i_text = lv_msg i_type = 'S' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime INTO DATA(e) ##NO_HANDLER.
         ENDTRY.
       ELSE.
         lv_msg = ls_businesspartnerbank-businesspartner  && ':' && lv_resbody_api.
         TRY.
             add_message_to_log( i_text = lv_msg i_type = 'E' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime INTO DATA(e1) ##NO_HANDLER.
         ENDTRY.
       ENDIF.
 
@@ -169,13 +169,13 @@ CLASS ZCL_JOB_BPBANK IMPLEMENTATION.
         MESSAGE s031(zfico_001) WITH ls_old-bp INTO lv_msg.
         TRY.
             add_message_to_log( i_text = lv_msg i_type = 'S' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime INTO DATA(e2) ##NO_HANDLER.
         ENDTRY.
       ELSE.
         lv_msg = ls_old-bp && ':' && lv_resbody_api2.
         TRY.
             add_message_to_log( i_text = lv_msg i_type = 'E' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime INTO DATA(e3) ##NO_HANDLER.
         ENDTRY.
       ENDIF.
     ENDLOOP.
@@ -186,7 +186,7 @@ CLASS ZCL_JOB_BPBANK IMPLEMENTATION.
       lv_msg = '未发生变更'.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'S' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime INTO DATA(e4) ##NO_HANDLER.
       ENDTRY.
     ENDIF.
 
@@ -204,7 +204,7 @@ CLASS ZCL_JOB_BPBANK IMPLEMENTATION.
     TRY.
 *        if_apj_rt_exec_object~execute( it_parameters = lt_parameters ).
         if_apj_rt_exec_object~execute( lt_parameters ).
-      CATCH cx_root INTO DATA(lo_root).
+      CATCH cx_root INTO DATA(lo_root) ##NO_HANDLER.
         out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
     ENDTRY.
   ENDMETHOD.
@@ -217,7 +217,7 @@ CLASS ZCL_JOB_BPBANK IMPLEMENTATION.
                                                                        subobject   = 'ZZ_LOG_FI015_SUB'
 *                                                                       external_id = CONV #( mv_uuid )
                                                                        ) ).
-      CATCH cx_bali_runtime.
+      CATCH cx_bali_runtime INTO DATA(e) ##NO_HANDLER.
         " handle exception
     ENDTRY.
   ENDMETHOD.

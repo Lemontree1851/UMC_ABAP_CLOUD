@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_ACCOUNTDOCHEADER IMPLEMENTATION.
+CLASS zcl_accountdocheader IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -66,7 +66,7 @@ CLASS ZCL_ACCOUNTDOCHEADER IMPLEMENTATION.
       TRY.
           "get and add filter
           DATA(lt_filter_cond) = io_request->get_filter( )->get_as_ranges( ).
-        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option).
+        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option) ##NO_HANDLER.
 
       ENDTRY.
       DATA(lv_top)     = io_request->get_paging( )->get_page_size( ).
@@ -282,9 +282,9 @@ CLASS ZCL_ACCOUNTDOCHEADER IMPLEMENTATION.
 
         ENDLOOP.
 
-        sort lt_sum1 by companycode fiscalyear accountingdocument debitcreditcode .
-        sort lt_sum2 by companycode fiscalyear accountingdocument debitcreditcode .
-        sort lt_sum3 by companycode fiscalyear accountingdocument debitcreditcode .
+        SORT lt_sum1 BY companycode fiscalyear accountingdocument debitcreditcode .
+        SORT lt_sum2 BY companycode fiscalyear accountingdocument debitcreditcode .
+        SORT lt_sum3 BY companycode fiscalyear accountingdocument debitcreditcode .
 
         SORT lt_glaccountlineitem BY companycode fiscalyear accountingdocument amountincompanycodecurrency DESCENDING.
 
@@ -306,7 +306,7 @@ CLASS ZCL_ACCOUNTDOCHEADER IMPLEMENTATION.
         *
         FROM i_user
         WITH PRIVILEGED ACCESS
-        INTO TABLE @DATA(lt_user).
+        INTO TABLE @DATA(lt_user).                      "#EC CI_NOWHERE
         SORT lt_user BY userid.
 
         LOOP AT lt_journalentry INTO DATA(ls_journalentry).

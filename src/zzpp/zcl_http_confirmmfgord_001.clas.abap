@@ -494,7 +494,7 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
           ls_ztpp_1004-opworkquantityunit4 = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_ztpp_1004-opworkquantityunit4 ).
           ls_ztpp_1004-opworkquantityunit5 = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_ztpp_1004-opworkquantityunit5 ).
           ls_ztpp_1004-opworkquantityunit6 = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_ztpp_1004-opworkquantityunit6 ).
-        CATCH zzcx_custom_exception INTO lo_root_exc.
+        CATCH zzcx_custom_exception INTO lo_root_exc ##NO_HANDLER.
       ENDTRY.
 
       GET TIME STAMP FIELD ls_ztpp_1004-creationdate.

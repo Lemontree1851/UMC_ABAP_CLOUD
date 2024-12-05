@@ -144,6 +144,7 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
            WHERE zid = 'ZBC002'
              AND zvalue1 = @lv_system_url
             INTO @DATA(ls_config).
+          ##NO_HANDLER
         CATCH cx_abap_context_info_error.
           "handle exception
       ENDTRY.
@@ -435,16 +436,17 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
       ENDLOOP.
     ENDIF.
 
-    IF io_request->is_total_numb_of_rec_requested(  ) .
-      io_response->set_total_number_of_records( lines( lt_data ) ).
-    ENDIF.
-
     " Filtering
     zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
                                            it_excluded = VALUE #( ( fieldname = 'REQUISITIONDATE' )
                                                                   ( fieldname = 'STORAGELOCATIONFROM' )
                                                                   ( fieldname = 'MATERIAL' ) )
                                  CHANGING  ct_data     = lt_data ).
+
+    IF io_request->is_total_numb_of_rec_requested(  ) .
+      io_response->set_total_number_of_records( lines( lt_data ) ).
+    ENDIF.
+
     "Sort
     zzcl_odata_utils=>orderby( EXPORTING it_order = io_request->get_sort_elements( )
                                CHANGING  ct_data  = lt_data ).

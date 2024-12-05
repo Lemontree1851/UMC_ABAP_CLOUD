@@ -143,7 +143,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
       TRY.
           "get and add filter
           DATA(lt_filter_cond) = io_request->get_filter( )->get_as_ranges( ).
-        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option).
+        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option) ##NO_HANDLER.
 
       ENDTRY.
       DATA(lv_top)     = io_request->get_paging( )->get_page_size( ).
@@ -342,7 +342,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
             SORT lt_component BY material assembly.
             DELETE ADJACENT DUPLICATES FROM lt_component COMPARING material assembly.
 
-          CATCH cx_root INTO DATA(lx_root3).
+          CATCH cx_root INTO DATA(lx_root3) ##NO_HANDLER.
         ENDTRY.
 
 
@@ -416,7 +416,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
             /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
                                CHANGING  data = ls_res_api ).
 
-          CATCH cx_root INTO DATA(lx_root1).
+          CATCH cx_root INTO DATA(lx_root1) ##NO_HANDLER.
         ENDTRY.
 
         lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$filter=ValidityStartFiscalYear%20eq%20'{ lv_calendaryear }'%20and%20ValidityStartFiscalPeriod%20eq%20'{ lv_calendarmonth_s }'&$top=1000|.
@@ -436,7 +436,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
             /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
                      CHANGING  data = ls_res_api1 ).
 
-          CATCH cx_root INTO DATA(lx_root2).
+          CATCH cx_root INTO DATA(lx_root2) ##NO_HANDLER.
         ENDTRY.
 
 *        LOOP AT ls_res_api-value INTO DATA(ls_data1).

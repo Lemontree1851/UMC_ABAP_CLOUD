@@ -348,21 +348,21 @@ CLASS lhc_deliverydocumentlist IMPLEMENTATION.
 
   METHOD export.
     TYPES:BEGIN OF lty_export,
-            deliverydocument               TYPE char10,
-            shippingpoint                  TYPE char4,
-            salesorganization              TYPE char4,
-            salesoffice                    TYPE char4,
-            soldtoparty                    TYPE char10,
-            shiptoparty                    TYPE char10,
-            documentdate                   TYPE char8,
-            deliverydate                   TYPE char8,
-            actualgoodsmovementdate        TYPE char8,
-            overallgoodsmovementstatus     TYPE char1,
-            intcoextplndtransfofctrldtetme TYPE char24,
-            intcoextactltransfofctrldtetme TYPE char24,
-            intcointplndtransfofctrldtetme TYPE char24,
-            intcointactltransfofctrldtetme TYPE char24,
-            yy1_salesdoctype_dlh           TYPE char8,
+            deliverydocument               TYPE c LENGTH 10,
+            shippingpoint                  TYPE c LENGTH 4,
+            salesorganization              TYPE c LENGTH 4,
+            salesoffice                    TYPE c LENGTH 4,
+            soldtoparty                    TYPE c LENGTH 10,
+            shiptoparty                    TYPE c LENGTH 10,
+            documentdate                   TYPE c LENGTH 8,
+            deliverydate                   TYPE c LENGTH 8,
+            actualgoodsmovementdate        TYPE c LENGTH 8,
+            overallgoodsmovementstatus     TYPE c LENGTH 1,
+            intcoextplndtransfofctrldtetme TYPE c LENGTH 24,
+            intcoextactltransfofctrldtetme TYPE c LENGTH 24,
+            intcointplndtransfofctrldtetme TYPE c LENGTH 24,
+            intcointactltransfofctrldtetme TYPE c LENGTH 24,
+            yy1_salesdoctype_dlh           TYPE c LENGTH 8,
           END OF lty_export,
           lty_export_t TYPE TABLE OF lty_export.
 
@@ -433,7 +433,10 @@ CLASS lhc_deliverydocumentlist IMPLEMENTATION.
 *      <fs_l_export>-postingdate   = |{ <fs_l_export>-postingdate+0(4) }/{ <fs_l_export>-postingdate+4(2) }/{ <fs_l_export>-postingdate+6(2) }|.
     ENDLOOP.
 
-    SELECT SINGLE *
+    SELECT SINGLE
+           templatecontent,
+           startcolumn,
+           startrow
       FROM zzc_dtimp_conf WITH PRIVILEGED ACCESS
      WHERE object = 'ZDOWNLOAD_DNDATEUPDATE'
       INTO @DATA(ls_file_conf).
@@ -458,8 +461,7 @@ CLASS lhc_deliverydocumentlist IMPLEMENTATION.
 
       TRY.
           DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
-        CATCH cx_uuid_error.
-          "handle exception
+        CATCH cx_uuid_error ##NO_HANDLER.
       ENDTRY.
 
       GET TIME STAMP FIELD DATA(lv_timestamp).
@@ -480,8 +482,7 @@ CLASS lhc_deliverydocumentlist IMPLEMENTATION.
       TRY.
           cl_system_uuid=>convert_uuid_x16_static( EXPORTING uuid = lv_uuid
                                                    IMPORTING uuid_c36 = rv_recorduuid  ).
-        CATCH cx_uuid_error.
-          " handle exception
+        CATCH cx_uuid_error ##NO_HANDLER.
       ENDTRY.
     ENDIF.
   ENDMETHOD.

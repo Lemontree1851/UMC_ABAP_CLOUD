@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_QUERY_ROUTINGLIST IMPLEMENTATION.
+CLASS zcl_query_routinglist IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -122,6 +122,7 @@ CLASS ZCL_QUERY_ROUTINGLIST IMPLEMENTATION.
 
             TRY.
                 <lfs_data>-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+                ##NO_HANDLER
               CATCH cx_uuid_error.
                 " handle exception
             ENDTRY.
@@ -131,7 +132,8 @@ CLASS ZCL_QUERY_ROUTINGLIST IMPLEMENTATION.
 
       " Filtering
       zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
-                                             it_excluded = VALUE #( ( fieldname = 'VALIDITYSTARTDATE' )
+                                             it_excluded = VALUE #( ( fieldname = 'PRODUCT' )
+                                                                    ( fieldname = 'VALIDITYSTARTDATE' )
                                                                     ( fieldname = 'VALIDITYENDDATE' )
                                                                     ( fieldname = 'ISMARKEDFORDELETION' ) )
                                    CHANGING  ct_data     = lt_data ).
@@ -205,6 +207,7 @@ CLASS ZCL_QUERY_ROUTINGLIST IMPLEMENTATION.
 
         TRY.
             ls_response-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+            ##NO_HANDLER
           CATCH cx_uuid_error.
             " handle exception
         ENDTRY.

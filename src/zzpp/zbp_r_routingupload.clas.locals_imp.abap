@@ -397,7 +397,7 @@ CLASS lhc_routingupload IMPLEMENTATION.
     SELECT SINGLE *
       FROM zzc_dtimp_conf
      WHERE object = 'ZDOWNLOAD_ROUTING'
-      INTO @DATA(ls_file_conf).
+      INTO @DATA(ls_file_conf).               "#EC CI_ALL_FIELDS_NEEDED
     IF sy-subrc = 0.
       " FILE_CONTENT must be populated with the complete file content of the .XLSX file
       " whose content shall be processed programmatically.
@@ -419,6 +419,7 @@ CLASS lhc_routingupload IMPLEMENTATION.
 
       TRY.
           DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
+          ##NO_HANDLER
         CATCH cx_uuid_error.
           "handle exception
       ENDTRY.
@@ -439,6 +440,7 @@ CLASS lhc_routingupload IMPLEMENTATION.
       TRY.
           cl_system_uuid=>convert_uuid_x16_static( EXPORTING uuid = lv_uuid
                                                    IMPORTING uuid_c36 = rv_recorduuid  ).
+          ##NO_HANDLER
         CATCH cx_uuid_error.
           " handle exception
       ENDTRY.

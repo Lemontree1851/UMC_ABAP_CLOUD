@@ -10,8 +10,8 @@ FUNCTION zzfm_dtimp_tbc1013.
 **********************************************************************
 
   DATA:
-    ls_data TYPE zzs_dtimp_tbc1013,
-    lt_data TYPE TABLE OF zzs_dtimp_tbc1013,
+    ls_data      TYPE zzs_dtimp_tbc1013,
+    lt_data      TYPE TABLE OF zzs_dtimp_tbc1013,
     ls_ztbc_1004 TYPE ztbc_1004,            "User information
     ls_ztbc_1005 TYPE ztbc_1005,            "Role information
     ls_ztbc_1007 TYPE ztbc_1007.            "User role information
@@ -71,7 +71,7 @@ FUNCTION zzfm_dtimp_tbc1013.
       CONTINUE.
     ENDIF.
 
-    SELECT SINGLE * FROM ztbc_1005 WHERE role_id = @ls_data-role_id INTO @ls_ztbc_1005.
+    SELECT SINGLE * FROM ztbc_1005 WHERE role_id = @ls_data-role_id INTO @ls_ztbc_1005. "#EC CI_ALL_FIELDS_NEEDED
     IF sy-subrc <> 0.
       MESSAGE e007(zbc_001) WITH TEXT-004 ls_data-role_id INTO <line>-('Message').
       <line>-('Type')    = 'E'.
@@ -81,7 +81,7 @@ FUNCTION zzfm_dtimp_tbc1013.
 *   Insert data
     IF ls_data-updateflag = lc_updateflag_insert.
 
-      SELECT count( * ) FROM ztbc_1007 WHERE user_uuid = @ls_ztbc_1004-user_uuid
+      SELECT COUNT( * ) FROM ztbc_1007 WHERE user_uuid = @ls_ztbc_1004-user_uuid
                                          AND role_uuid = @ls_ztbc_1005-role_uuid.
       IF sy-subrc = 0.
         MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-013 INTO <line>-('Message').    "User role data already exist
@@ -93,9 +93,10 @@ FUNCTION zzfm_dtimp_tbc1013.
         ls_ztbc_1007.
 
       TRY.
-        ls_ztbc_1007-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-      CATCH cx_uuid_error.
-        " handle exception
+          ls_ztbc_1007-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+          ##NO_HANDLER
+        CATCH cx_uuid_error.
+          " handle exception
       ENDTRY.
 
       ls_ztbc_1007-user_uuid  = ls_ztbc_1004-user_uuid.
@@ -144,7 +145,7 @@ FUNCTION zzfm_dtimp_tbc1013.
   LOOP AT lt_data ASSIGNING FIELD-SYMBOL(<lfs_data>)
     GROUP BY ( user_id = <lfs_data>-user_id ).
 
-    SELECT SINGLE * FROM ztbc_1004 WHERE user_id = @<lfs_data>-user_id INTO @ls_ztbc_1004.
+    SELECT SINGLE * FROM ztbc_1004 WHERE user_id = @<lfs_data>-user_id INTO @ls_ztbc_1004. "#EC CI_ALL_FIELDS_NEEDED
 
     DELETE FROM ztbc_1007 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
 
@@ -154,14 +155,15 @@ FUNCTION zzfm_dtimp_tbc1013.
         ls_ztbc_1007.
 
       TRY.
-        ls_ztbc_1007-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-      CATCH cx_uuid_error.
-        " handle exception
+          ls_ztbc_1007-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+          ##NO_HANDLER
+        CATCH cx_uuid_error.
+          " handle exception
       ENDTRY.
 
       ls_ztbc_1007-user_uuid  = ls_ztbc_1004-user_uuid.
 
-      SELECT SINGLE * FROM ztbc_1005 WHERE role_id = @ls_data-role_id INTO @ls_ztbc_1005.
+      SELECT SINGLE * FROM ztbc_1005 WHERE role_id = @ls_data-role_id INTO @ls_ztbc_1005. "#EC CI_ALL_FIELDS_NEEDED
       ls_ztbc_1007-role_uuid  = ls_ztbc_1005-role_uuid.
 
       ls_ztbc_1007-created_by = sy-uname.
@@ -178,7 +180,7 @@ FUNCTION zzfm_dtimp_tbc1013.
         READ TABLE eo_data->* ASSIGNING <line> WITH KEY ('updateflag') = ls_data-updateflag
                                                         ('user_id')    = ls_data-user_id
                                                         ('mail')       = ls_data-mail
-                                                        ('role_id')    = ls_data-role_id.
+                                                        ('role_id')    = ls_data-role_id. "#EC CI_ANYSEQ
         IF <line> IS ASSIGNED.
           MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
           <line>-('Type') = 'E'.

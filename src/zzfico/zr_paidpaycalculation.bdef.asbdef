@@ -11,7 +11,7 @@ authorization master ( instance )
   update;
   delete;
   field ( readonly ) CompanyCode, FiscalYear, Period, Customer, Supplier, Product, ProfitCenter, PurchasingGroup, UpperProduct01, ValuationClass01, UpperProduct02, ValuationClass02, UpperProduct03, ValuationClass03, UpperProduct04, ValuationClass04,
-  UpperProduct05, ValuationClass05, UpperProduct06, ValuationClass06, UpperProduct07, ValuationClass07, UpperProduct08, ValuationClass08, UpperProduct09, ValuationClass09, UpperProduct10, ValuationClass10;
+  UpperProduct05, ValuationClass05, UpperProduct06, ValuationClass06, UpperProduct07, ValuationClass07, UpperProduct08, ValuationClass08, UpperProduct09, ValuationClass09, UpperProduct10, ValuationClass10, Ledge;
 
   static action processLogic parameter ZD_PARAFORPAIDPAYCALCU result [1] ZD_PARAFORPAIDPAYCALCU;
 

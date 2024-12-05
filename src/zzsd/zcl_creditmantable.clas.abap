@@ -24,7 +24,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
       ls_salesorganization LIKE LINE OF lr_salesorganization,
       lr_customer          TYPE RANGE OF zr_creditmantable-customer,
       lS_customer          LIKE LINE OF lr_customer,
-      lv_termsno           TYPE char10,
+*      lv_termsno           TYPE char10,
       lv_zyear             TYPE zr_creditmantable-zyear.
     DATA:
       lv_rowno  TYPE n LENGTH 4,
@@ -206,7 +206,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
         IF <lfs_customerg>-cadays = 0.
 
           ls_data-terms1     = <lfs_customerg>-addlmnths.
-          lv_termsno = |{ ls_data-terms1 alpha = out }|.
+          data(lv_termsno) = |{ ls_data-terms1 alpha = out }|.
           ls_data-termstext1 = lv_termsno && 'か月後回収'.
 
 *         日数がゼロ以外の場合

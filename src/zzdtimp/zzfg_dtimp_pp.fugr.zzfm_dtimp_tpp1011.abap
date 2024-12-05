@@ -39,7 +39,7 @@ FUNCTION zzfm_dtimp_tpp1011.
     IF ls_data-plant IS INITIAL.
       MESSAGE e006(zbc_001) WITH TEXT-001 INTO lv_all_msg.
     ELSE.
-      SELECT SINGLE * FROM i_plant WHERE plant = @ls_data-plant INTO @DATA(ls_plant).
+      SELECT SINGLE * FROM i_plant WHERE plant = @ls_data-plant INTO @DATA(ls_plant). "#EC CI_ALL_FIELDS_NEEDED
       IF sy-subrc <> 0.
         MESSAGE e007(zbc_001) WITH TEXT-001 ls_data-plant INTO lv_all_msg.
       ENDIF.
@@ -51,7 +51,7 @@ FUNCTION zzfm_dtimp_tpp1011.
     ELSE.
       DATA(lv_customer) = |{ ls_data-customer ALPHA = IN }|.
       CONDENSE lv_customer NO-GAPS.
-      SELECT SINGLE * FROM i_customer WHERE customer = @lv_customer INTO @DATA(ls_customer).
+      SELECT SINGLE * FROM i_customer WHERE customer = @lv_customer INTO @DATA(ls_customer). "#EC CI_ALL_FIELDS_NEEDED
       IF sy-subrc <> 0.
         MESSAGE e007(zbc_001) WITH TEXT-002 ls_data-customer INTO lv_message.
         lv_all_msg = zzcl_common_utils=>merge_message( iv_message1 = lv_all_msg iv_message2 = lv_message iv_symbol = '/' ).
@@ -90,29 +90,29 @@ FUNCTION zzfm_dtimp_tpp1011.
       <line>-('Message') = 'Success'.
       APPEND ls_data TO lt_data.
 
-"      TRY.
-"          ls_data-uuid = cl_system_uuid=>create_uuid_x16_static( ).
-"        CATCH cx_uuid_error.
-          " handle exception
-"      ENDTRY.
+      "      TRY.
+      "          ls_data-uuid = cl_system_uuid=>create_uuid_x16_static( ).
+      "        CATCH cx_uuid_error.
+      " handle exception
+      "      ENDTRY.
 
-"      ls_data-created_by = sy-uname.
-"      GET TIME STAMP FIELD ls_data-created_at.
+      "      ls_data-created_by = sy-uname.
+      "      GET TIME STAMP FIELD ls_data-created_at.
 
-"      ls_data-last_changed_by = sy-uname.
-"      GET TIME STAMP FIELD ls_data-last_changed_at.
-"      GET TIME STAMP FIELD ls_data-local_last_changed_at.
+      "      ls_data-last_changed_by = sy-uname.
+      "      GET TIME STAMP FIELD ls_data-last_changed_at.
+      "      GET TIME STAMP FIELD ls_data-local_last_changed_at.
 
-"      MODIFY ztpp_1011 FROM @ls_data.
-"      IF sy-subrc = 0.
-"        COMMIT WORK AND WAIT.
-"        <line>-('Type') = 'S'.
-"        <line>-('Message') = 'Success'.
-"      ELSE.
-"        ROLLBACK WORK.
-"        MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-"        <line>-('Type') = 'E'.
-"      ENDIF.
+      "      MODIFY ztpp_1011 FROM @ls_data.
+      "      IF sy-subrc = 0.
+      "        COMMIT WORK AND WAIT.
+      "        <line>-('Type') = 'S'.
+      "        <line>-('Message') = 'Success'.
+      "      ELSE.
+      "        ROLLBACK WORK.
+      "        MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+      "        <line>-('Type') = 'E'.
+      "      ENDIF.
     ENDIF.
 
   ENDLOOP.
@@ -124,34 +124,35 @@ FUNCTION zzfm_dtimp_tpp1011.
 
     LOOP AT GROUP <lfs_data> INTO ls_data.
 
-       TRY.
-           ls_data-uuid = cl_system_uuid=>create_uuid_x16_static( ).
-         CATCH cx_uuid_error.
+      TRY.
+          ls_data-uuid = cl_system_uuid=>create_uuid_x16_static( ).
+          ##NO_HANDLER
+        CATCH cx_uuid_error.
           " handle exception
-       ENDTRY.
+      ENDTRY.
 
-       ls_data-created_by = sy-uname.
-       GET TIME STAMP FIELD ls_data-created_at.
+      ls_data-created_by = sy-uname.
+      GET TIME STAMP FIELD ls_data-created_at.
 
-       ls_data-last_changed_by = sy-uname.
-       GET TIME STAMP FIELD ls_data-last_changed_at.
-       GET TIME STAMP FIELD ls_data-local_last_changed_at.
+      ls_data-last_changed_by = sy-uname.
+      GET TIME STAMP FIELD ls_data-last_changed_at.
+      GET TIME STAMP FIELD ls_data-local_last_changed_at.
 
-       MODIFY ztpp_1011 FROM @ls_data.
-       IF sy-subrc = 0.
-         COMMIT WORK AND WAIT.
-       ELSE.
-         ROLLBACK WORK.
-         READ TABLE eo_data->* ASSIGNING <line> WITH KEY ('Plant')        = ls_data-plant
-                                                         ('Customer')     = ls_data-customer
-                                                         ('Receiver')     = ls_data-receiver
-                                                         ('ReceiverType') = ls_data-receiver_type
-                                                         ('MailAddress')  = ls_data-mail_address.
-         IF <line> IS ASSIGNED.
-           MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-           <line>-('Type') = 'E'.
-         ENDIF..
-       ENDIF.
+      MODIFY ztpp_1011 FROM @ls_data.
+      IF sy-subrc = 0.
+        COMMIT WORK AND WAIT.
+      ELSE.
+        ROLLBACK WORK.
+        READ TABLE eo_data->* ASSIGNING <line> WITH KEY ('Plant')        = ls_data-plant
+                                                        ('Customer')     = ls_data-customer
+                                                        ('Receiver')     = ls_data-receiver
+                                                        ('ReceiverType') = ls_data-receiver_type
+                                                        ('MailAddress')  = ls_data-mail_address. "#EC CI_ANYSEQ
+        IF <line> IS ASSIGNED.
+          MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+          <line>-('Type') = 'E'.
+        ENDIF..
+      ENDIF.
 
     ENDLOOP.
 

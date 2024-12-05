@@ -58,6 +58,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
         ELSE.
 *          mo_out->write( i_text ).
         ENDIF.
+        ##NO_HANDLER
       CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
         " handle exception
     ENDTRY.
@@ -90,6 +91,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
           TRY.
               add_message_to_log( i_text = |Sheet { ms_configuration-sheetname } does not exist in the data file.|
                                   i_type = if_bali_constants=>c_severity_error ).
+              ##NO_HANDLER
             CATCH cx_bali_runtime.
               " handle exception
           ENDTRY.
@@ -106,6 +108,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
         TRY.
             add_message_to_log( i_text = |Data structure of Import Object { ms_configuration-objectname } not found.|
                                 i_type = if_bali_constants=>c_severity_error ).
+            ##NO_HANDLER
           CATCH cx_bali_runtime.
             " handle exception
         ENDTRY.
@@ -163,6 +166,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
       TRY.
           add_message_to_log( i_text = |Record for UUID { mv_uuid } not found.|
                               i_type = if_bali_constants=>c_severity_error ).
+          ##NO_HANDLER
         CATCH cx_bali_runtime.
           " handle exception
       ENDTRY.
@@ -171,6 +175,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
 
     TRY.
         add_message_to_log( |Process batch import UUID of { mv_uuid }| ).
+        ##NO_HANDLER
       CATCH cx_bali_runtime.
         " handle exception
     ENDTRY.
@@ -180,6 +185,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
 
     TRY.
         add_message_to_log( |File name: { ms_file-filename }| ).
+        ##NO_HANDLER
       CATCH cx_bali_runtime.
         " handle exception
     ENDTRY.
@@ -188,6 +194,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
       TRY.
           add_message_to_log( i_text = |Record for File UUID { mv_uuid } not found.|
                               i_type = if_bali_constants=>c_severity_error ).
+          ##NO_HANDLER
         CATCH cx_bali_runtime.
           " handle exception
       ENDTRY.
@@ -198,6 +205,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
       TRY.
           add_message_to_log( i_text = |File not found.|
                               i_type = if_bali_constants=>c_severity_error ).
+          ##NO_HANDLER
         CATCH cx_bali_runtime.
           " handle exception
       ENDTRY.
@@ -209,6 +217,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
 
     TRY.
         add_message_to_log( |Import object: { ms_configuration-objectname }| ).
+        ##NO_HANDLER
       CATCH cx_bali_runtime.
         " handle exception
     ENDTRY.
@@ -218,6 +227,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
       TRY.
           add_message_to_log( i_text = |Configuration not found for this batch import record.|
                               i_type = if_bali_constants=>c_severity_error ).
+          ##NO_HANDLER
         CATCH cx_bali_runtime.
           " handle exception
       ENDTRY.
@@ -230,6 +240,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
       TRY.
           add_message_to_log( i_text = |No data was read from the file.|
                               i_type = if_bali_constants=>c_severity_error ).
+          ##NO_HANDLER
         CATCH cx_bali_runtime.
           " handle exception
       ENDTRY.
@@ -238,6 +249,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
 
     TRY.
         add_message_to_log( |Batch data import - Start.| ).
+        ##NO_HANDLER
       CATCH cx_bali_runtime.
         " handle exception
     ENDTRY.
@@ -270,6 +282,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
                                header = cl_bali_header_setter=>create( object      = 'ZZ_LOG_DTIMP'
                                                                        subobject   = 'ZZ_LOG_DTIMP_SUB'
                                                                        external_id = CONV #( mv_uuid ) ) ).
+        ##NO_HANDLER
       CATCH cx_bali_runtime.
         " handle exception
     ENDTRY.
@@ -301,6 +314,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
         TRY.
             add_message_to_log( i_text = |The logic processing function contains errors.|
                                 i_type = if_bali_constants=>c_severity_error ).
+            ##NO_HANDLER
           CATCH cx_bali_runtime.
             " handle exception
         ENDTRY.
@@ -334,12 +348,14 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
       TRY.
           add_message_to_log( i_text = |Batch import processing contains errors.|
                               i_type = if_bali_constants=>c_severity_error ).
+          ##NO_HANDLER
         CATCH cx_bali_runtime.
           " handle exception
       ENDTRY.
     ELSE.
       TRY.
           add_message_to_log( |Batch data import - Completed.| ).
+          ##NO_HANDLER
         CATCH cx_bali_runtime.
           " handle exception
       ENDTRY.
@@ -355,6 +371,7 @@ CLASS zzcl_dtimp_process IMPLEMENTATION.
                                                          ev_jobcount       = DATA(lv_jobcount)
                                                          ev_catalog_name   = DATA(lv_catalog)
                                                          ev_template_name  = DATA(lv_template) ).
+          ##NO_HANDLER
         CATCH cx_apj_rt.
           " handle exception
       ENDTRY.

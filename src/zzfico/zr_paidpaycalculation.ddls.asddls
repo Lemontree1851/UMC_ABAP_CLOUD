@@ -46,6 +46,9 @@ define root custom entity ZR_PAIDPAYCALCULATION
   key ValuationClass09    : bklas;
   key UpperProduct10      : matnr;
   key ValuationClass10    : bklas;
+  @UI                 : { lineItem: [ { position: 60 } ],
+                                             selectionField: [ { position: 4 } ] }
+  key Ledge               : abap.char(2);
       Ztype               : abap.char(1); //A:品番別; B:購買グルー合計
       CustomerName        : abap.char(80); //得意先名称
       SupplierName        : abap.char(80); //仕入先名称
@@ -102,13 +105,13 @@ define root custom entity ZR_PAIDPAYCALCULATION
       @Semantics.amount.currencyCode : 'Currency'
       PurGrpAmount2       : abap.curr(16,2); //当期購買グループ別仕入金額本年初-上个月末
       @Semantics.amount.currencyCode : 'Currency'
-      PurGrpAmount        : abap.curr(16,2); //当期購買グループ別仕入金額=期初+(本年初-上个月末)
+      PurGrpAmount        : abap.curr(16,2); //当期購買グループ別仕入金額当前期间
       @Semantics.amount.currencyCode : 'Currency'
       ChargeableAmount1   : abap.curr(16,2); //当期有償支給品仕入金額-期初
       @Semantics.amount.currencyCode : 'Currency'
       ChargeableAmount2   : abap.curr(16,2); //当期有償支給品仕入金額本年初-上个月末
       @Semantics.amount.currencyCode : 'Currency'
-      ChargeableAmount    : abap.curr(16,2); //当期有償支給品仕入金額=期初+(本年初-上个月末)
+      ChargeableAmount    : abap.curr(16,2); //当期有償支給品仕入金額当前期间
       @Semantics.amount.currencyCode : 'Currency'
       PreviousStockAmount : abap.curr(16,2); //在庫金額（前期末）
       @Semantics.amount.currencyCode : 'Currency'

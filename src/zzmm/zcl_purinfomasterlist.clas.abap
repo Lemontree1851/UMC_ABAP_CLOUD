@@ -124,6 +124,8 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
         "Get and add filter
         DATA(lt_filter_cond) = io_request->get_filter( )->get_as_ranges( ).
       CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option).
+        IF sy-subrc = 0.
+        ENDIF.
     ENDTRY.
 
     DATA(lv_top)    = io_request->get_paging( )->get_page_size( ).
@@ -150,8 +152,8 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
             CLEAR ls_purchasingorganization.
           WHEN 'MATERIAL'.
             MOVE-CORRESPONDING str_rec_l_range TO ls_material.
-            ls_material-low = |{ ls_material-low ALPHA = IN }|.
-            ls_material-high = |{ ls_material-high ALPHA = IN }|.
+            ls_material-low  = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = ls_material-low  ).
+            ls_material-high = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = ls_material-high ).
             APPEND ls_material TO lr_material.
             CLEAR ls_material.
           WHEN 'SUPPLIERMATERIALNUMBER'.
@@ -706,11 +708,15 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
               ##NO_HANDLER
             CATCH zzcx_custom_exception.
               " handle exception
+              IF sy-subrc = 0.
+              ENDIF.
           ENDTRY.
           TRY.
               DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
             CATCH cx_uuid_error.
               "handle exception
+              IF sy-subrc = 0.
+              ENDIF.
           ENDTRY.
           lw_data-uuid = lv_uuid.
           APPEND lw_data TO lt_data.
@@ -748,7 +754,7 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
       DELETE lt_data WHERE condition_validity_end_date <= sy-datum OR condition_validity_start_date >= sy-datum.
     ENDIF.
 
-    DELETE lt_data WHERE latestoffer not in lr_latestoffer.
+    DELETE lt_data WHERE latestoffer NOT IN lr_latestoffer.
 
 *    LOOP AT lt_data INTO lw_data.  " 循环遍历 lt_dataS
 *      APPEND lw_data TO lt_output.  " 将当前行的 lw_data 追加到 lt_output 内表
@@ -761,6 +767,17 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
          conditionscalequantity ASCENDING.
 
     MOVE-CORRESPONDING lt_data[] TO lt_output[].
+
+    " Filtering
+    zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
+                                           it_excluded = VALUE #( ( fieldname = 'MATERIAL' )
+                                                                  ( fieldname = 'SUPPLIER' )
+                                                                  ( fieldname = 'CREATIONDATE_1' )
+                                                                  ( fieldname = 'CREATIONDATE_2' )
+                                                                  ( fieldname = 'PLUSDAY' )
+                                                                  ( fieldname = 'ZTYPE1' )
+                                                                  ( fieldname = 'ZTYPE2' ) )
+                                 CHANGING  ct_data     = lt_output ).
 
     IF io_request->is_total_numb_of_rec_requested(  ) .
       io_response->set_total_number_of_records( lines( lt_output ) ).

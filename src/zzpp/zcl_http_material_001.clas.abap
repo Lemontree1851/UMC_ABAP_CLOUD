@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_MATERIAL_001 IMPLEMENTATION.
+CLASS zcl_http_material_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -227,7 +227,7 @@ CLASS ZCL_HTTP_MATERIAL_001 IMPLEMENTATION.
       TRY.
           ls_material-_base_unit = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
                                                                                   iv_input = ls_material-_base_unit ).
-        CATCH zzcx_custom_exception INTO lo_root_exc.
+        CATCH zzcx_custom_exception INTO lo_root_exc ##NO_HANDLER.
       ENDTRY.
 
       lv_timestamp = trunc( ls_material-_last_change_date_time ).

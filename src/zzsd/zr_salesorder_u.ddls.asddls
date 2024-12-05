@@ -21,7 +21,7 @@ define root view entity ZR_SALESORDER_U
       basic.SalesDocumentType,
       basic.YY1_SalesDocType_SDH, //受注伝票タイプ（Old）
       basic.CreationDate,
-      basic.ShippingPoint,
+      cast( basic.ShippingPoint as abap.char(4) ) as ShippingPoint,
       basic.ShippingPointName,
       basic.SoldToParty,
       basic.CustomerName,

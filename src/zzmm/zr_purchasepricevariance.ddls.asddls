@@ -1,8 +1,10 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'Purchase Price Variance Report'
 define root view entity ZR_PURCHASEPRICEVARIANCE
-  as select from I_PurchaseOrderAPI01     as _PurchaseOrder
-    inner join   I_PurchaseOrderItemAPI01 as _PurchaseOrderItem on _PurchaseOrderItem.PurchaseOrder = _PurchaseOrder.PurchaseOrder
+  as select from    I_PurchaseOrderAPI01        as _PurchaseOrder
+    inner join      I_PurchaseOrderItemAPI01    as _PurchaseOrderItem on _PurchaseOrderItem.PurchaseOrder = _PurchaseOrder.PurchaseOrder
+    left outer join I_PurchasingInfoRecordApi01 as _PurInfoRecord     on  _PurInfoRecord.Supplier = _PurchaseOrder.Supplier
+                                                                      and _PurInfoRecord.Material = _PurchaseOrderItem.Material
 
   association [0..1] to I_PurOrdScheduleLineAPI01      as _PurOrdScheduleLine      on  $projection.PurchaseOrder                     = _PurOrdScheduleLine.PurchaseOrder
                                                                                    and $projection.PurchaseOrderItem                 = _PurOrdScheduleLine.PurchaseOrderItem
@@ -40,7 +42,8 @@ define root view entity ZR_PURCHASEPRICEVARIANCE
       _PurchaseOrderItem.NetPriceQuantity,
       _PurchaseOrderItem.Plant,
       _PurchaseOrderItem.StorageLocation,
-      _PurchaseOrderItem.PurchasingInfoRecord,
+      // _PurchaseOrderItem.PurchasingInfoRecord,
+      _PurInfoRecord.PurchasingInfoRecord,
       _PurchaseOrderItem.PricingDateControl                                        as PricingDateControl,
       _PurchaseOrderItem.PurgDocPriceDate,
       _PurchaseOrderItem.IsCompletelyDelivered,

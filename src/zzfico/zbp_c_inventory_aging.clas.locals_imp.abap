@@ -103,12 +103,10 @@ CLASS lhc_inventoryaging DEFINITION INHERITING FROM cl_abap_behavior_handler.
         goodsmovementtype TYPE i_materialdocumentitem_2-goodsmovementtype,
       END OF ty_ztbc_1001_zfi003,
 
-      BEGIN OF ty_ztbc_1001_zfi005,
+      BEGIN OF ty_ztbc_1001_zfi004,
         supplier                TYPE i_materialdocumentitem_2-supplier,
         issuingorreceivingplant TYPE i_materialdocumentitem_2-issuingorreceivingplant,
-      END OF ty_ztbc_1001_zfi005.
-
-
+      END OF ty_ztbc_1001_zfi004.
 
     CONSTANTS:
       lc_event_recalculate     TYPE string VALUE 'ReCalculate',
@@ -117,7 +115,7 @@ CLASS lhc_inventoryaging DEFINITION INHERITING FROM cl_abap_behavior_handler.
       lc_invspecialstocktype_t TYPE string VALUE 'T',
       lc_invspecialstocktype_e TYPE string VALUE 'E',
       lc_zid_zfi003            TYPE string VALUE 'ZFI003',
-      lc_zid_zfi005            TYPE string VALUE 'ZFI005',
+      lc_zid_zfi004            TYPE string VALUE 'ZFI004',
       lc_goodsmovementtype_309 TYPE string VALUE '309',
       lc_goodsmovementtype_310 TYPE string VALUE '310',
       lc_debitcreditcode_s     TYPE string VALUE 'S',
@@ -196,7 +194,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
       lt_stock                       TYPE STANDARD TABLE OF ty_stock,
       lt_materialdocumentitem_309tmp TYPE STANDARD TABLE OF ty_materialdocumentitem,
       lt_ztbc_1001_zfi003            TYPE STANDARD TABLE OF ty_ztbc_1001_zfi003,
-      lt_ztbc_1001_zfi005            TYPE STANDARD TABLE OF ty_ztbc_1001_zfi005,
+      lt_ztbc_1001_zfi004            TYPE STANDARD TABLE OF ty_ztbc_1001_zfi004,
 *      lt_ztfi_1004                   TYPE STANDARD TABLE OF ty_ztfi_1004,
 *      lt_ztfi_1004_last              TYPE STANDARD TABLE OF ty_ztfi_1004,
       lt_ztfi_1019                   TYPE STANDARD TABLE OF ty_ztfi_1019,
@@ -216,7 +214,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
       ls_qc_vendor                   TYPE ty_qc_vendor,
       ls_entries                     TYPE ty_entries,
       ls_ztbc_1001_zfi003            TYPE ty_ztbc_1001_zfi003,
-      ls_ztbc_1001_zfi005            TYPE ty_ztbc_1001_zfi005,
+      ls_ztbc_1001_zfi004            TYPE ty_ztbc_1001_zfi004,
       ls_productplant                TYPE ty_productplant,
       ls_stock                       TYPE ty_stock,
 *      ls_ztfi_1014                   TYPE ty_ztfi_1004,
@@ -387,7 +385,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
       lt_productplantbasic = lt_productplantbasic_tmp.
     ENDIF.
 
-    DELETE lt_productplantbasic WHERE product <> 'ZTEST_RAW001' AND product <> 'ZTEST_RAW002' .
+*    DELETE lt_productplantbasic WHERE product <> 'ZTEST_RAW001' AND product <> 'ZTEST_RAW002' .
+*    DELETE lt_productplantbasic WHERE product <> 'ZTEST_RAW002'.
 
     IF lt_productplantbasic IS NOT INITIAL.
       lv_fiscalyearperiod = lv_fiscalyear && lv_fiscalperiod.
@@ -416,7 +415,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
              zvalue1,
              zvalue2
         FROM ztbc_1001
-       WHERE zid IN (@lc_zid_zfi003,@lc_zid_zfi005)
+       WHERE zid IN (@lc_zid_zfi003,@lc_zid_zfi004)
         INTO TABLE @DATA(lt_ztbc_1001).
 
       SORT lt_ztbc_1001 BY zid zvalue1 zvalue2.
@@ -432,10 +431,10 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
             CLEAR ls_ztbc_1001_zfi003.
           ENDIF.
         ELSE.
-          ls_ztbc_1001_zfi005-supplier = |{ ls_ztbc_1001-zvalue1 ALPHA = IN }|.
-          ls_ztbc_1001_zfi005-issuingorreceivingplant = ls_ztbc_1001-zvalue2.
-          APPEND ls_ztbc_1001_zfi005 TO lt_ztbc_1001_zfi005.
-          CLEAR ls_ztbc_1001_zfi005.
+          ls_ztbc_1001_zfi004-supplier = |{ ls_ztbc_1001-zvalue1 ALPHA = IN }|.
+          ls_ztbc_1001_zfi004-issuingorreceivingplant = ls_ztbc_1001-zvalue2.
+          APPEND ls_ztbc_1001_zfi004 TO lt_ztbc_1001_zfi004.
+          CLEAR ls_ztbc_1001_zfi004.
         ENDIF.
       ENDLOOP.
 
@@ -466,7 +465,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
       ENDIF.
 
       SORT lt_ztbc_1001_zfi003 BY goodsmovementtype.
-      SORT lt_ztbc_1001_zfi005 BY supplier.
+      SORT lt_ztbc_1001_zfi004 BY supplier.
 
       LOOP AT lt_materialdocumentitem INTO DATA(ls_materialdocumentitem).
         ls_receipt-plant              = ls_materialdocumentitem-plant.
@@ -486,12 +485,12 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
           COLLECT ls_receipt INTO lt_receipt_309.
         ELSE.
           "根据供应商，到配置表匹配关联公司的原始工厂，并将原始物料=物料
-          READ TABLE lt_ztbc_1001_zfi005 INTO ls_ztbc_1001_zfi005 WITH KEY supplier = ls_materialdocumentitem-supplier
+          READ TABLE lt_ztbc_1001_zfi004 INTO ls_ztbc_1001_zfi004 WITH KEY supplier = ls_materialdocumentitem-supplier
                                                                   BINARY SEARCH.
           IF sy-subrc = 0.
             ls_receipt-supplier = ls_materialdocumentitem-supplier.
             ls_receipt-issgorrcvgmaterial = ls_materialdocumentitem-material.
-            ls_receipt-issuingorreceivingplant = ls_ztbc_1001_zfi005-issuingorreceivingplant.
+            ls_receipt-issuingorreceivingplant = ls_ztbc_1001_zfi004-issuingorreceivingplant.
 
             "关联公司
             COLLECT ls_receipt INTO lt_receipt_vendor.
@@ -590,6 +589,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
               ENDIF.
             ENDIF.
           ENDLOOP.
+
+          CLEAR lv_totalqty.
         ENDIF.
       ENDLOOP.
 
@@ -980,6 +981,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
           lt_receipt_tmp.
 
         SORT lt_fiscalyearperiod_last BY nextfiscalperiod nextfiscalperiodfiscalyear.
+        SORT lt_materialdocumentitem BY plant material.
 
         LOOP AT lt_receipt_vendor INTO DATA(ls_receipt_vendor).
           READ TABLE lt_materialdocumentitem TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_vendor-issuingorreceivingplant
@@ -1452,7 +1454,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
               ls_receipt_tmp2 = ls_receipt_tmp.
               ls_receipt_tmp2-postingdate = ls_receipt_309new-postingdate_receipt.
               ls_receipt_tmp2-quantityinbaseunit = ls_receipt_309new-quantityinbaseunit.
-              APPEND ls_receipt_tmp TO lt_receipt_tmp2.
+              APPEND ls_receipt_tmp2 TO lt_receipt_tmp2.
               CLEAR ls_receipt_tmp2.
             ENDLOOP.
 
@@ -1615,7 +1617,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
       MODIFY ztfi_1019 FROM TABLE @lt_ztfi_1019_db.
     ENDIF.
 
-*    DELETE FROM ztfi_1019 WHERE fiscalyear = '2024' AND fiscalperiod = '006'
+*    DELETE FROM ztfi_1019 WHERE fiscalyear = '2024' AND fiscalperiod = '006'.
 *                             and ( product = 'ZTEST_RAW001' OR product = 'ZTEST_RAW002' ).
   ENDMETHOD.
 ENDCLASS.

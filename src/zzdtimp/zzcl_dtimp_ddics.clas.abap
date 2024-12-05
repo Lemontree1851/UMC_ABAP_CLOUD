@@ -22,7 +22,7 @@ ENDCLASS.
 
 
 
-CLASS ZZCL_DTIMP_DDICS IMPLEMENTATION.
+CLASS zzcl_dtimp_ddics IMPLEMENTATION.
 
 
   METHOD get_function_modules.
@@ -35,8 +35,8 @@ CLASS ZZCL_DTIMP_DDICS IMPLEMENTATION.
     " Get function modules under every function group
     lt_data = VALUE #( FOR group IN lt_function_groups
                          FOR function IN group->function_modules->all->get(  )
-                           ( FunctionModuleName = function->name
-                             FunctionModuleDesc = function->content(  )->get_short_text(  ) ) ).
+                           ( functionmodulename = function->name
+                             functionmoduledesc = function->content(  )->get_short_text(  ) ) ).
 
     " Filtering
     zzcl_odata_utils=>filtering( EXPORTING io_filter = io_request->get_filter(  )
@@ -68,8 +68,8 @@ CLASS ZZCL_DTIMP_DDICS IMPLEMENTATION.
 
     " Get function modules under every function group
     lt_data = VALUE #( FOR structure IN lt_structures
-                         ( StructureName = structure->name
-                           StructureDesc = structure->content(  )->get_short_description(  ) ) ).
+                         ( structurename = structure->name
+                           structuredesc = structure->content(  )->get_short_description(  ) ) ).
 
     " Filtering
     zzcl_odata_utils=>filtering( EXPORTING io_filter = io_request->get_filter(  )
@@ -100,6 +100,7 @@ CLASS ZZCL_DTIMP_DDICS IMPLEMENTATION.
           WHEN 'ZZR_DTIMP_STRUC'.
             get_structures( io_request = io_request io_response = io_response ).
         ENDCASE.
+        ##NO_HANDLER
       CATCH cx_rap_query_provider.
     ENDTRY.
   ENDMETHOD.

@@ -329,7 +329,7 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
           lv_msg = '表名' && lv_table && '不存在' .
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'E' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime INTO DATA(e) ##NO_HANDLER.
       ENDTRY.
     ENDIF.
   ENDMETHOD.
@@ -450,7 +450,7 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
           SORT lt_component BY material assembly.
           DELETE ADJACENT DUPLICATES FROM lt_component COMPARING material assembly.
 
-        CATCH cx_root INTO DATA(lx_root3).
+        CATCH cx_root INTO DATA(lx_root3) ##NO_HANDLER.
       ENDTRY.
 
 
@@ -524,7 +524,7 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
           /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
                              CHANGING  data = ls_res_api ).
 
-        CATCH cx_root INTO DATA(lx_root1).
+        CATCH cx_root INTO DATA(lx_root1) ##NO_HANDLER.
       ENDTRY.
 
       lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$filter=ValidityStartFiscalYear%20eq%20'{ lv_calendaryear }'%20and%20ValidityStartFiscalPeriod%20eq%20'{ lv_calendarmonth_s }'&$top=1000|.
@@ -544,7 +544,7 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
           /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
                    CHANGING  data = ls_res_api1 ).
 
-        CATCH cx_root INTO DATA(lx_root2).
+        CATCH cx_root INTO DATA(lx_root2) ##NO_HANDLER.
       ENDTRY.
 
 *        LOOP AT ls_res_api-value INTO DATA(ls_data1).
@@ -963,7 +963,7 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
       lv_msg = 'ztfi_1020保存成功'.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'S' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime INTO DATA(e) ##NO_HANDLER.
       ENDTRY.
     ENDIF.
   ENDMETHOD.
@@ -1139,7 +1139,7 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
       lv_msg = 'ztfi_1021保存成功'.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'S' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime INTO DATA(e) ##NO_HANDLER.
       ENDTRY.
     ENDIF.
 
@@ -1377,7 +1377,7 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
       lv_msg = 'ztfi_1022保存成功'.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'S' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime INTO DATA(e) ##NO_HANDLER.
       ENDTRY.
     ENDIF.
 
@@ -1385,11 +1385,41 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
   METHOD if_oo_adt_classrun~main.
     " for debugger
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
-*    lt_parameters = VALUE #( ( selname = 'P_ID'
-*                               kind    = if_apj_dt_exec_object=>parameter
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '8B3CF2B54B611EEFA2D72EB68B20D50C' ) ).
+    lt_parameters = VALUE #( ( selname = 'P_COMPAN'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1100' )
+
+                               ( selname = 'P_PLANT'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1100' )
+                               ( selname = 'P_YEAR'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '2024' )
+                                                              ( selname = 'P_MONTH'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '8' )
+                                                              ( selname = 'P_TABEL'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '8' )
+
+
+
+
+
+
+
+
+                               ).
     TRY.
 *        if_apj_rt_exec_object~execute( it_parameters = lt_parameters ).
         if_apj_rt_exec_object~execute( lt_parameters ).
@@ -1405,7 +1435,7 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
                                                                        subobject   = 'ZZ_LOG_BI001_SUB'
 *                                                                       external_id = CONV #( mv_uuid )
                                                                        ) ).
-      CATCH cx_bali_runtime.
+      CATCH cx_bali_runtime INTO DATA(e) ##NO_HANDLER.
         " handle exception
     ENDTRY.
   ENDMETHOD.
@@ -1429,7 +1459,7 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
         ELSE.
 *          mo_out->write( i_text ).
         ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
+      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime) ##NO_HANDLER.
         " handle exception
     ENDTRY.
   ENDMETHOD.

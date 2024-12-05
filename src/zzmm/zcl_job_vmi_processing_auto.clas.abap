@@ -64,7 +64,7 @@ CLASS zcl_job_vmi_processing_auto IMPLEMENTATION.
 
         TRY.
             add_message_to_log( i_text = lv_message i_type = 'E' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime ##NO_HANDLER.
         ENDTRY.
     ENDTRY.
 
@@ -75,7 +75,7 @@ CLASS zcl_job_vmi_processing_auto IMPLEMENTATION.
 
         TRY.
             add_message_to_log( i_text = lv_message i_type = 'S' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime ##NO_HANDLER.
         ENDTRY.
 
         LOOP AT lt_results INTO DATA(ls_results).
@@ -93,7 +93,7 @@ CLASS zcl_job_vmi_processing_auto IMPLEMENTATION.
 
           TRY.
               add_message_to_log( i_text = lv_message i_type = lv_type ).
-            CATCH cx_bali_runtime.
+            CATCH cx_bali_runtime ##NO_HANDLER.
           ENDTRY.
         ENDLOOP.
       ELSE.
@@ -102,7 +102,7 @@ CLASS zcl_job_vmi_processing_auto IMPLEMENTATION.
 
         TRY.
             add_message_to_log( i_text = lv_message i_type = 'S' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime ##NO_HANDLER.
         ENDTRY.
       ENDIF.
     ENDIF.
@@ -133,8 +133,8 @@ CLASS zcl_job_vmi_processing_auto IMPLEMENTATION.
                                                                        subobject   = 'ZZ_LOG_MM037_SUB'
 *                                                                       external_id = CONV #( mv_uuid )
                                                                        ) ).
-      CATCH cx_bali_runtime.
-        "handle exception
+      CATCH cx_bali_runtime ##NO_HANDLER.
+
     ENDTRY.
   ENDMETHOD.
 
@@ -157,8 +157,7 @@ CLASS zcl_job_vmi_processing_auto IMPLEMENTATION.
         ELSE.
 *          mo_out->write( i_text ).
         ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
-        " handle exception
+      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime) ##NO_HANDLER.
     ENDTRY.
   ENDMETHOD.
 ENDCLASS.

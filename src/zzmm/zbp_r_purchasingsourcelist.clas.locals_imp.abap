@@ -210,13 +210,12 @@ CLASS lhc_sourcelist IMPLEMENTATION.
           ls_sourcelist-_m_r_p_sourcing_control = <ls_data>-mrpsourcingcontrol.
           APPEND ls_sourcelist TO lt_sourcelist.
 
-          lv_path = '/API_PURCHASING_SOURCE_SRV/A_PurchasingSource'.
           DATA(lv_reqbody_api) = /ui2/cl_json=>serialize( data = ls_sourcelist
                                                       compress = 'X'
                                                       pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
           zzcl_common_utils=>request_api_v2(
             EXPORTING
-              iv_path        = lv_path
+              iv_path        = |/API_PURCHASING_SOURCE_SRV/A_PurchasingSource?sap-language={ zzcl_common_utils=>get_current_language(  ) }|
               iv_method      = if_web_http_client=>post
               iv_body        = lv_reqbody_api
             IMPORTING
@@ -230,6 +229,8 @@ CLASS lhc_sourcelist IMPLEMENTATION.
             MESSAGE s006(zmm_001) INTO lv_message.
             "Call boi update
             IF <ls_data>-supplierisfixed IS NOT INITIAL.
+              <ls_data>-Material = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = 'IN' iv_input = <ls_data>-material ).
+              <ls_data>-supplier = |{ <ls_data>-supplier ALPHA = IN }|.
               SELECT SINGLE
                      a~material,                "#EC CI_FAE_NO_LINES_OK
                      a~plant,

@@ -105,7 +105,7 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       ls_1012    TYPE ztsd_1012,
       ls_request TYPE lty_request.
 
-    SELECT *
+    SELECT *                    "#EC CI_ALL_FIELDS_NEEDED
       FROM ztbc_1001
      WHERE zid = 'ZSD008'
         OR zid = 'ZSD009'
@@ -119,7 +119,7 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       <lfs_accept>-product = |{ <lfs_accept>-product ALPHA = IN }|.
     ENDLOOP.
 
-    SELECT *
+    SELECT *                 "#EC CI_ALL_FIELDS_NEEDED
       FROM ztsd_1012
       FOR ALL ENTRIES IN @ct_accept
      WHERE customer = @ct_accept-customer

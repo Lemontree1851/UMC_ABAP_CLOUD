@@ -256,6 +256,7 @@ CLASS lhc_purinforecordheader IMPLEMENTATION.
                           EXPORTING iv_alpha = 'OUT'
                                     iv_input = lv_meins ).
       CATCH zzcx_custom_exception INTO lo_root_exc.
+        IF sy-subrc = 0. ENDIF.
     ENDTRY.
 
     DATA(lv_startdate) = xco_cp_time=>moment( iv_year   = ls_data-conditionvaliditystartdate+0(4)

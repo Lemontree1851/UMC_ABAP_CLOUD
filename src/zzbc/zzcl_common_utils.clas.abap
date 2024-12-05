@@ -43,6 +43,7 @@ CLASS zzcl_common_utils DEFINITION
            END OF   ty_metadata,
            BEGIN OF ty_odata_res,
              results TYPE TABLE OF ty_metadata WITH DEFAULT KEY,
+             metadata TYPE ty_etag,
            END OF   ty_odata_res,
            BEGIN OF ty_odata_res_d,
              d TYPE ty_odata_res,
@@ -522,6 +523,8 @@ CLASS zzcl_common_utils IMPLEMENTATION.
                                      CHANGING  data = ls_odata_result ).
           IF ls_odata_result-d-results IS NOT INITIAL.
             ev_etag = ls_odata_result-d-results[ 1 ]-metadata-etag.
+          ELSE.
+            ev_etag = ls_odata_result-d-metadata-etag.
           ENDIF.
         ENDIF.
 

@@ -673,6 +673,7 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
         IF sy-subrc <> 0.
           ls_output-purchaseorder = ls_po-purchaseorder.
           ls_output-purchaseorderitem = ls_po-purchaseorderitem.
+          ls_output-purchaseorderitemuniqueid = ls_po-purchaseorderitemuniqueid.
           ls_output-companycode = ls_po-companycode.
           ls_output-purchasingorganization = ls_po-purchasingorganization.
           ls_output-purchasinggroup = ls_po-purchasinggroup.

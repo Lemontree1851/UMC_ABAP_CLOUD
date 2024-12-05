@@ -10,9 +10,9 @@ FUNCTION zzfm_dtimp_tpp1022.
 **********************************************************************
 
   DATA:
-    ls_data TYPE zzs_dtimp_tpp1022,
-    lt_data TYPE TABLE OF zzs_dtimp_tpp1022,
-    lo_root_exc  TYPE REF TO cx_root.
+    ls_data     TYPE zzs_dtimp_tpp1022,
+    lt_data     TYPE TABLE OF zzs_dtimp_tpp1022,
+    lo_root_exc TYPE REF TO cx_root.
 
   CONSTANTS:
     lc_alpha_in  TYPE string        VALUE 'IN'.
@@ -34,19 +34,20 @@ FUNCTION zzfm_dtimp_tpp1022.
     ls_data-unloading_point  = <line>-('unloading_point').
 
     TRY.
-      ls_data-order_number  = |{ ls_data-order_number ALPHA = IN }|.
-      ls_data-material      = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_data-material ).
-    CATCH zzcx_custom_exception INTO lo_root_exc.
+        ls_data-order_number  = |{ ls_data-order_number ALPHA = IN }|.
+        ls_data-material      = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_data-material ).
+        ##NO_HANDLER
+      CATCH zzcx_custom_exception INTO lo_root_exc.
     ENDTRY.
 
-    MODIFY ENTITY I_ProductionOrderTP
+    MODIFY ENTITY i_productionordertp
     UPDATE FIELDS (
-                    UnloadingPointName
+                    unloadingpointname
                   )
     WITH VALUE #(
                   (
                     %key-productionorder     = ls_data-order_number
-                    %data-UnloadingPointName = ls_data-unloading_point
+                    %data-unloadingpointname = ls_data-unloading_point
                   )
                  )
     FAILED DATA(failed)

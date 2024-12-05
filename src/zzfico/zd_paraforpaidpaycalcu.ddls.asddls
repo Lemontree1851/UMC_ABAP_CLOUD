@@ -5,4 +5,5 @@ define abstract entity ZD_PARAFORPAIDPAYCALCU
   FiscalYear   : gjahr;
   Period       : monat;
   Ztype        : abap.char(1);
+  Ledge        : abap.char(2);
 }

@@ -111,6 +111,7 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
   METHOD if_apj_rt_exec_object~execute.
 
     DATA:
+      lv_err         TYPE    c LENGTH 1,
       lv_date        TYPE datum,
       lv_datetime    TYPE string,
       lv_currencyold TYPE i_companycode-currency,
@@ -174,7 +175,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
 
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'E' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime INTO DATA(cx_erro).
+        DATA ls_msg TYPE scx_t100key.
+        DATA(lv_msge) = cx_erro->get_text( ).
       ENDTRY.
       RETURN.
 
@@ -196,7 +199,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
 
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'E' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime  INTO cx_erro.
+        DATA ls_msgm TYPE scx_t100key.
+        DATA(lv_msgm) = cx_erro->get_text( ).
       ENDTRY.
       RETURN.
     ENDIF.
@@ -209,7 +214,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
          WHERE zid = 'ZBC003'
            AND zvalue1 = @lv_system_url
           INTO @DATA(ls_config).
-      CATCH cx_abap_context_info_error.
+      CATCH cx_abap_context_info_error INTO DATA(cx_erra).
+
+        DATA(lv_msga) = cx_erra->get_text( ).
         "handle exception
     ENDTRY.
 
@@ -273,7 +280,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
       ELSE.
         TRY.
             add_message_to_log( i_text = 'データはQMS_T01_QUO_Hで存在していません' i_type = 'E' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime INTO DATA(cx_errb).
+        DATA ls_msgb TYPE scx_t100key.
+        DATA(lv_msgb) = cx_errb->get_text( ).
         ENDTRY.
         RETURN.
       ENDIF.
@@ -325,7 +334,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
       ELSE.
         TRY.
             add_message_to_log( i_text = 'データはQMS_T02_QUO_Dで存在していません' i_type = 'E' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime INTO DATA(cx_errc).
+        DATA ls_msgc TYPE scx_t100key.
+        DATA(lv_msgc) = cx_errc->get_text( ).
         ENDTRY.
         RETURN.
       ENDIF.
@@ -408,7 +419,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
                       IMPORTING
                         local_amount      = <lfs_t07_all>-submit_price
                     ).
-                  CATCH cx_exchange_rates.
+                  CATCH cx_exchange_rates INTO DATA(cx_errd).
+                    DATA ls_msgd TYPE scx_t100key.
+                    DATA(lv_msgd) = cx_errd->get_text( ).
                 ENDTRY.
                 <lfs_t07_all>-submit_curr = lv_currency.
               ENDIF.
@@ -421,7 +434,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
       ELSE.
         TRY.
             add_message_to_log( i_text = 'データはQQMS_T07_QUOTATION_Dで存在していません' i_type = 'E' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime INTO DATA(cx_errf).
+            DATA ls_msgf TYPE scx_t100key.
+            DATA(lv_msgf) = cx_errf->get_text( ).
         ENDTRY.
         RETURN.
       ENDIF.
@@ -523,7 +538,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
                 IMPORTING
                   local_amount      = <lfs_supplierc>-supplierinvoiceitemamount
               ).
-            CATCH cx_exchange_rates.
+            CATCH cx_exchange_rates INTO DATA(cx_errg).
+              DATA ls_msgg TYPE scx_t100key.
+              DATA(lv_msgg) = cx_errg->get_text( ).
           ENDTRY.
           <lfs_supplierc>-currency = lv_currency.
         ENDIF.
@@ -732,7 +749,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
                 IMPORTING
                   local_amount      = <lfs_basic>-movingaverageprice
               ).
-            CATCH cx_exchange_rates.
+            CATCH cx_exchange_rates INTO DATA(cx_erre).
+              DATA ls_msge TYPE scx_t100key.
+              DATA(lv_msgee) = cx_erre->get_text( ).
           ENDTRY.
           <lfs_basic>-currency = lv_currency.
         ENDIF.
@@ -759,12 +778,16 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
 
       TRY.
           add_message_to_log( i_text = '部品費逆ザヤ防止分析が更新に成功しました' i_type = 'S' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime  INTO DATA(cx_errh).
+          DATA ls_msgh TYPE scx_t100key.
+          DATA(lv_msgh) = cx_errh->get_text( ).
       ENDTRY.
     ELSE.
       TRY.
           add_message_to_log( i_text = '部品費逆ザヤ防止分析が更新に失敗しました' i_type = 'E' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime INTO DATA(cx_erri).
+          DATA ls_msgi TYPE scx_t100key.
+          DATA(lv_msgi) = cx_erri->get_text( ).
       ENDTRY.
     ENDIF.
 
@@ -956,12 +979,16 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
       MODIFY ztbi_1002 FROM TABLE @lt_dataj.
       TRY.
           add_message_to_log( i_text = '加工費逆ザヤ防止分析が更新に成功しました' i_type = 'S' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime  INTO DATA(cx_errj).
+          DATA ls_msgj TYPE scx_t100key.
+          DATA(lv_msgj) = cx_errj->get_text( ).
       ENDTRY.
     ELSE.
       TRY.
           add_message_to_log( i_text = '加工費逆ザヤ防止分析が更新に失敗しました' i_type = 'E' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime INTO DATA(cx_errk).
+          DATA ls_msgk TYPE scx_t100key.
+          DATA(lv_msgk) = cx_errk->get_text( ).
       ENDTRY.
     ENDIF.
 
@@ -1048,8 +1075,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
         ELSE.
 *          mo_out->write( i_text ).
         ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
-        " handle exception
+      CATCH cx_bali_runtime INTO  DATA(cx_erro).
+        DATA ls_msg TYPE scx_t100key.
+        DATA(lv_msg) = cx_erro->get_text( ).
     ENDTRY.
   ENDMETHOD.
 
@@ -1060,8 +1088,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
                                                                        subobject   = 'ZZ_LOG_BI004_SUB'
 *                                                                       external_id = CONV #( mv_uuid )
                                                                        ) ).
-      CATCH cx_bali_runtime.
-        " handle exception
+      CATCH cx_bali_runtime INTO DATA(cx_erro).
+        DATA ls_msg TYPE scx_t100key.
+        DATA(lv_msg) = cx_erro->get_text( ).
     ENDTRY.
   ENDMETHOD.
 

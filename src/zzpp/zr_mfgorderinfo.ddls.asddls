@@ -9,7 +9,7 @@ define root view entity ZR_MFGORDERINFO
   key _MfgOrder.ManufacturingOrder,
       _MfgOrder.ProductionPlant,
       _MfgOrder.ProductionSupervisor,
-      _MfgOrder.Material,
+      cast(_MfgOrder.Material as matnr preserving type) as Material,
       _MfgOrder.ProductionVersion,
       _MfgOrder.MRPController,
       _MfgOrder.MfgOrderPlannedTotalQty,

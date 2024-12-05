@@ -52,8 +52,10 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
     DATA records_input TYPE TABLE OF zc_salesorder_u.
     DATA lv_message TYPE string.
     DATA lv_etag TYPE string.
-    data is_check_error TYPE abap_bool.
-    data lv_json TYPE string.
+    DATA is_check_error TYPE abap_bool.
+    DATA lv_json TYPE string.
+    DATA lv_api_head TYPE string.
+    DATA lv_api_item TYPE string.
 
     LOOP AT keys INTO DATA(key).
       CLEAR records_input.
@@ -82,11 +84,11 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
       READ TABLE records_input INTO record_input WITH KEY salesdocument = record-salesdocument
         salesdocumentitem = record-salesdocumentitem BINARY SEARCH.
       IF sy-subrc = 0.
-        if record_input-currdeliveryqty <= 0.
-          record-currdeliveryqty = record-RemainingQty.
-        else.
+        IF record_input-currdeliveryqty <= 0.
+          record-currdeliveryqty = record-remainingqty.
+        ELSE.
           record-currdeliveryqty = record_input-currdeliveryqty.
-        endif.
+        ENDIF.
         record-orderquantityunit = record_input-orderquantityunit.
         record-currstoragelocation = record_input-currstoragelocation.
         record-currshippingtype = record_input-currshippingtype.
@@ -99,11 +101,11 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
       IF record-currdeliveryqty > record-remainingqty.
         is_check_error = abap_true.
         record-type = 'E'.
-        message e022(zsd_001) into record-message.
+        MESSAGE e022(zsd_001) INTO record-message.
       ENDIF.
       MODIFY records FROM record.
     ENDLOOP.
-    if is_check_error = abap_true.
+    IF is_check_error = abap_true.
       LOOP AT records INTO record.
         record-salesdocument = |{ record-salesdocument ALPHA = OUT }|.
         record-salesdocumentitem = |{ record-salesdocumentitem ALPHA = OUT }|.
@@ -112,8 +114,8 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
       lv_json = /ui2/cl_json=>serialize( records ).
       APPEND VALUE #( %cid    = key-%cid
                       %param  = VALUE #( zzkey = lv_json ) ) TO result.
-      exit.
-    endif.
+      EXIT.
+    ENDIF.
 
     "创建DN的结构 创建DN时允许的字段有限，请参考note 2899036
     TYPES:
@@ -148,7 +150,9 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
       "DN修改的抬头结构
       BEGIN OF ty_update_header,
         planned_goods_issue_date TYPE string,
+        goods_issue_time         TYPE string,
         delivery_date            TYPE string,
+        delivery_time            TYPE string,
 *        actual_goods_movement_date TYPE string,
       END OF ty_update_header,
 
@@ -194,6 +198,20 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
         MODIFY records FROM record_temp.
       ENDLOOP.
 
+      SELECT
+        COUNT( * )
+      FROM ztbc_1001
+      WHERE zid = 'ZSD016'
+      AND zvalue1 = @record_key-salesdocumenttype.
+      "返品DN
+      IF SY-SUBRC = 0.
+        lv_api_head = '/API_CUSTOMER_RETURNS_DELIVERY_SRV;v=0002/A_ReturnsDeliveryHeader'.
+        lv_api_item = '/API_CUSTOMER_RETURNS_DELIVERY_SRV;v=0002/A_ReturnsDeliveryItem'.
+      else.
+        lv_api_head = '/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader'.
+        lv_api_item = '/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryItem'.
+      ENDIF.
+
       "将数据转换成json格式
       DATA(lv_requestbody) = xco_cp_json=>data->from_abap( ls_request )->apply( VALUE #(
           ( xco_cp_json=>transformation->underscore_to_pascal_case )
@@ -202,7 +220,7 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
       REPLACE ALL OCCURRENCES OF 'ToDeliveryDocumentItem' IN  lv_requestbody WITH 'to_DeliveryDocumentItem'.
       REPLACE ALL OCCURRENCES OF 'Results' IN  lv_requestbody WITH 'results'.
 
-      DATA(lv_path) = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+      DATA(lv_path) = |{ lv_api_head }?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
 
       zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
                                                    iv_method      = if_web_http_client=>post
@@ -240,9 +258,11 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
           CLEAR ls_update_request.
           IF record_key-currplannedgoodsissuedate IS NOT INITIAL.
             ls_update_request-header_data-planned_goods_issue_date = format_date_to_odata( record_key-currplannedgoodsissuedate ).
+            ls_update_request-header_data-goods_issue_time = 'PT00H00M00S'.
           ENDIF.
           IF record_key-currdeliverydate IS NOT INITIAL.
             ls_update_request-header_data-delivery_date = format_date_to_odata( record_key-currdeliverydate ).
+            ls_update_request-header_data-delivery_time = 'PT00H00M00S'.
           ENDIF.
           "将数据转换成json格式
           lv_requestbody = xco_cp_json=>data->from_abap( ls_update_request )->apply( VALUE #(
@@ -250,11 +270,12 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
             ) )->to_string( ).
           REPLACE ALL OCCURRENCES OF 'HeaderData' IN lv_requestbody WITH 'd'.
           "如果日期字段没有值，则结构中不能出现，所以替换掉空值
-          REPLACE ALL OCCURRENCES OF ',"DeliveryDate":""' IN lv_requestbody WITH ''.
-          REPLACE ALL OCCURRENCES OF '"DeliveryDate":"",' IN lv_requestbody WITH ''.
-          REPLACE ALL OCCURRENCES OF ',"PlannedGoodsIssueDate":""' IN lv_requestbody WITH ''.
-          REPLACE ALL OCCURRENCES OF '"PlannedGoodsIssueDate":"",' IN lv_requestbody WITH ''.
-          lv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader('{ ls_response-d-delivery_document }')?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+          REPLACE ALL OCCURRENCES OF ',"DeliveryDate":"","DeliveryTime":""' IN lv_requestbody WITH ''.
+          REPLACE ALL OCCURRENCES OF '"DeliveryDate":"","DeliveryTime":"",' IN lv_requestbody WITH ''.
+          REPLACE ALL OCCURRENCES OF ',"PlannedGoodsIssueDate":"","GoodsIssueTime":""' IN lv_requestbody WITH ''.
+          REPLACE ALL OCCURRENCES OF '"PlannedGoodsIssueDate":"","GoodsIssueTime":"",' IN lv_requestbody WITH ''.
+
+          lv_path = |{ lv_api_head }('{ ls_response-d-delivery_document }')?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
           zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
                                                        iv_method      = if_web_http_client=>patch
                                                        iv_body        = lv_requestbody
@@ -270,7 +291,7 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
             "如果没有输入新的库存地点，或者输入的库存地点和SO的库存地点相同 则不需要修改
             IF record_temp-currstoragelocation IS NOT INITIAL AND record_temp-currstoragelocation <> record_temp-storagelocation.
               DATA(lv_param) = |DeliveryDocument='{ record_temp-deliverydocument }',DeliveryDocumentItem='{ record_temp-deliverydocumentitem }'|.
-              lv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryItem({ lv_param })?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+              lv_path = |{ lv_api_item }({ lv_param })?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
               lv_requestbody = |\{"d":\{"StorageLocation":"{ record_temp-currstoragelocation }"\}\}|."由于目前只修改一个字段，所以直接构建字符串
               zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
                                                            iv_method      = if_web_http_client=>patch
@@ -336,7 +357,16 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD format_date_to_odata.
-    rv_date = |{ iv_date+0(4) }-{ iv_date+4(2) }-{ iv_date+6(2) }T00:00:00|.
+    DATA lv_timestamp TYPE timestamp.
+    DATA lv_timestamp_str TYPE string.
+    TRY.
+        DATA(lv_timezone) = cl_abap_context_info=>get_user_time_zone( ).
+        CONVERT DATE iv_date TIME '000000' INTO TIME STAMP lv_timestamp TIME ZONE lv_timezone.
+      CATCH cx_abap_context_info_error INTO DATA(sef).
+        lv_timestamp = |{ iv_date }000000|.
+    ENDTRY.
+    lv_timestamp_str = lv_timestamp.
+    rv_date = |{ lv_timestamp_str+0(4) }-{ lv_timestamp_str+4(2) }-{ lv_timestamp_str+6(2) }T{ lv_timestamp_str+8(2) }:{ lv_timestamp_str+10(2) }:{ lv_timestamp_str+12(2) }|.
   ENDMETHOD.
 
 ENDCLASS.

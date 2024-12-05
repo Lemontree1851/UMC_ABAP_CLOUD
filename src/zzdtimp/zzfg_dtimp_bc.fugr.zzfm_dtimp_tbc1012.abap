@@ -73,7 +73,7 @@ FUNCTION zzfm_dtimp_tbc1012.
 *   Insert data
     IF ls_data-updateflag = lc_updateflag_insert.
 
-      SELECT count( * ) FROM ztbc_1005 WHERE role_id = @ls_data-role_id.
+      SELECT COUNT( * ) FROM ztbc_1005 WHERE role_id = @ls_data-role_id.
       IF sy-subrc = 0.
         MESSAGE e009(zbc_001) WITH TEXT-013 space INTO <line>-('Message').
         <line>-('Type')    = 'E'.
@@ -84,9 +84,10 @@ FUNCTION zzfm_dtimp_tbc1012.
         ls_ztbc_1005.
 
       TRY.
-        ls_ztbc_1005-role_uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-      CATCH cx_uuid_error.
-        " handle exception
+          ls_ztbc_1005-role_uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+          ##NO_HANDLER
+        CATCH cx_uuid_error.
+          " handle exception
       ENDTRY.
 
       ls_ztbc_1005-role_id     = ls_data-role_id.

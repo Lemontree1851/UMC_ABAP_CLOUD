@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BOM IMPLEMENTATION.
+CLASS zcl_bom IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -77,7 +77,7 @@ CLASS ZCL_BOM IMPLEMENTATION.
       TRY.
           "Get and add filter
           DATA(lt_filter_cond) = io_request->get_filter( )->get_as_ranges( ).
-        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option).
+        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option) ##NO_HANDLER.
       ENDTRY.
 
 *      DATA(lv_top)    = io_request->get_paging( )->get_page_size( ).

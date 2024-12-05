@@ -20,7 +20,6 @@ define root view entity ZR_INVOICEOUTPUT
                                                                              and $projection.BillingDocumentItem = _SD1008.billing_document_item
   association [0..1] to ztbc_1001                      as _BC1001            on  $projection.ShippingPoint = _BC1001.zvalue1
                                                                              and _BC1001.zid               = 'ZSD007'
-
 {
   key BillingDocument,
   key BillingDocumentItem,
@@ -30,9 +29,10 @@ define root view entity ZR_INVOICEOUTPUT
       _Head.SalesOrganization,
       _Head.PayerParty,
       BillToParty,
-      ShippingPoint,
+      @EndUserText.label: '出荷ポイント'
+      cast( ShippingPoint as abap.char(4) ) as ShippingPoint,
       SalesOffice,
-      Product,
+      cast( Product as matnr preserving type ) as Product,
       BillingQuantity,
       BillingQuantityUnit,
       NetAmount,

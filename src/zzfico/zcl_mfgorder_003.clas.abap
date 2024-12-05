@@ -92,7 +92,7 @@ CLASS ZCL_MFGORDER_003 IMPLEMENTATION.
       TRY.
           "get and add filter
           DATA(lt_filter_cond) = io_request->get_filter( )->get_as_ranges( ).
-        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option).
+        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option) ##NO_HANDLER.
 
       ENDTRY.
       DATA(lv_top)     = io_request->get_paging( )->get_page_size( ).

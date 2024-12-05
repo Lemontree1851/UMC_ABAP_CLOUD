@@ -120,7 +120,7 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
     TRY.
         "Get and add filter
         DATA(lt_filter_cond) = io_request->get_filter( )->get_as_ranges( ).
-      CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option).
+      CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option) ##NO_HANDLER.
     ENDTRY.
 
     LOOP AT lt_filter_cond INTO DATA(ls_filter_cond).

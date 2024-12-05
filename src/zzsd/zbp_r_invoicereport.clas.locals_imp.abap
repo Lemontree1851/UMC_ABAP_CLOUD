@@ -125,7 +125,7 @@ CLASS lhc_invoicereport IMPLEMENTATION.
       INTO TABLE @DATA(lt_print).
 
       IF lt_print IS NOT INITIAL.
-        SELECT
+        SELECT "#EC CI_NO_TRANSFORM
           *
         FROM zc_invoicereport
         FOR ALL ENTRIES IN @lt_print
@@ -249,8 +249,7 @@ CLASS lhc_invoicereport IMPLEMENTATION.
                       iv_object = CONV ztbc_1002-object( prefix )
                       iv_datum  = cl_abap_context_info=>get_system_date( )
                       iv_nrlen  = 2 ).
-      CATCH zzcx_custom_exception INTO DATA(exc).
-        RAISE EXCEPTION exc.
+      CATCH zzcx_custom_exception INTO DATA(exc) ##NO_HANDLER.
     ENDTRY.
     invoice_no = prefix && lv_no.
   ENDMETHOD.

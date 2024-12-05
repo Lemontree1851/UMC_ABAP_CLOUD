@@ -138,7 +138,7 @@ CLASS lhc_inageupload IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
 
-    SELECT plant, product AS material
+    SELECT plant, product AS material         "#EC CI_FAE_LINES_ENSURED
     FROM i_productplantbasic WITH PRIVILEGED ACCESS
     FOR ALL ENTRIES IN @lt_matnr
     WHERE product = @lt_matnr-material
@@ -147,7 +147,7 @@ CLASS lhc_inageupload IMPLEMENTATION.
     SORT lt_productplantbasic BY plant material.
 
     SELECT plant FROM i_plant
-    INTO TABLE @DATA(lt_plant).
+    INTO TABLE @DATA(lt_plant).                         "#EC CI_NOWHERE
     SORT lt_plant BY plant.
 
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
@@ -251,13 +251,13 @@ CLASS lhc_inageupload IMPLEMENTATION.
     DATA: lv_matnr TYPE matnr.
     TRY.
         DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
-      CATCH cx_uuid_error.
+      CATCH cx_uuid_error INTO DATA(e) ##NO_HANDLER.
         "handle exception
     ENDTRY.
 
     GET TIME STAMP FIELD lv_timestamp.
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>) WHERE status NE 'E' .
-      clear lv_message.
+      CLEAR lv_message.
 
       lv_matnr = zzcl_common_utils=>conversion_matn1( iv_alpha = lc_mode_in iv_input = <lfs_data>-material ).
 
@@ -324,7 +324,7 @@ CLASS lhc_inageupload IMPLEMENTATION.
 
     lt_export = CORRESPONDING #( it_data ).
 
-    SELECT SINGLE *
+    SELECT SINGLE *                           "#EC CI_ALL_FIELDS_NEEDED
       FROM zzc_dtimp_conf
      WHERE object = 'ZDOWNLOAD_INAGE'
       INTO @DATA(ls_file_conf).
@@ -349,7 +349,7 @@ CLASS lhc_inageupload IMPLEMENTATION.
 
       TRY.
           DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
-        CATCH cx_uuid_error.
+        CATCH cx_uuid_error INTO DATA(e) ##NO_HANDLER.
           "handle exception
       ENDTRY.
 
@@ -369,7 +369,7 @@ CLASS lhc_inageupload IMPLEMENTATION.
       TRY.
           cl_system_uuid=>convert_uuid_x16_static( EXPORTING uuid = lv_uuid
                                                    IMPORTING uuid_c36 = rv_recorduuid  ).
-        CATCH cx_uuid_error.
+        CATCH cx_uuid_error INTO DATA(e1) ##NO_HANDLER.
           " handle exception
       ENDTRY.
     ENDIF.

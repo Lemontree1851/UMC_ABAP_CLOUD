@@ -193,7 +193,7 @@ CLASS lhc_zr_tmm_1011 IMPLEMENTATION.
         storage_location            TYPE lgort_d,
         batch                       TYPE charg_d,
         goods_movement_type         TYPE bwart,
-        goods_movement_ref_doc_type TYPE char1,
+        goods_movement_ref_doc_type TYPE c LENGTH 1,
       END OF ty_item_data,
 
 
@@ -207,7 +207,7 @@ CLASS lhc_zr_tmm_1011 IMPLEMENTATION.
         document_date                 TYPE string,
         posting_date                  TYPE string,
         material_document_header_text TYPE bktxt,
-        goods_movement_code           TYPE char2,
+        goods_movement_code           TYPE c LENGTH 2,
         to_materialdocumentitem       TYPE lty_matdoc_item,
 
       END OF lty_matdoc_header,
@@ -363,10 +363,10 @@ CLASS lhc_zr_tmm_1011 IMPLEMENTATION.
     TYPES:BEGIN OF lty_export,
             status                     TYPE bapi_mtype,
             message                    TYPE zze_zzkey,
-            documentdate               TYPE char10,
-            postingdate                TYPE char10,
+            documentdate               TYPE c LENGTH 10,
+            postingdate                TYPE c LENGTH 10,
             materialdocumentheadertext TYPE bktxt,
-            orderkey                   TYPE char15,
+            orderkey                   TYPE c LENGTH 15,
             quantityinentryunit        TYPE erfmg,
             batch                      TYPE charg_d,
             plant                      TYPE werks_d,
@@ -383,7 +383,7 @@ CLASS lhc_zr_tmm_1011 IMPLEMENTATION.
       <lfs_export>-postingdate   = |{ <lfs_export>-postingdate+0(4) }/{ <lfs_export>-postingdate+4(2) }/{ <lfs_export>-postingdate+6(2) }|.
     ENDLOOP.
 
-    SELECT SINGLE *
+    SELECT SINGLE uuidconf, object, templatecontent, startcolumn, startrow
       FROM zzc_dtimp_conf
      WHERE object = 'ZDOWNLOAD_PO'
       INTO @DATA(ls_file_conf).
@@ -410,6 +410,7 @@ CLASS lhc_zr_tmm_1011 IMPLEMENTATION.
           DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
         CATCH cx_uuid_error.
           "handle exception
+          RETURN.
       ENDTRY.
 
       GET TIME STAMP FIELD DATA(lv_timestamp).
@@ -432,6 +433,7 @@ CLASS lhc_zr_tmm_1011 IMPLEMENTATION.
                                                    IMPORTING uuid_c36 = rv_recorduuid  ).
         CATCH cx_uuid_error.
           " handle exception
+          RETURN.
       ENDTRY.
     ENDIF.
   ENDMETHOD.

@@ -635,6 +635,8 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                                       EXPORTING iv_alpha = 'OUT'
                                                 iv_input = cs_planorder-baseunit ).
       CATCH zzcx_custom_exception INTO lo_root_exc.
+        IF sy-subrc = 0.
+        ENDIF.
     ENDTRY.
     zzcl_common_utils=>request_api_v4( EXPORTING iv_path = |/api_plannedorder/srvd_a2x/sap/plannedorder/0001/PlannedOrderHeader/{ cs_planorder-plannedorder }|
                                                  iv_method      = if_web_http_client=>get
@@ -740,6 +742,8 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                                       EXPORTING iv_alpha = 'OUT'
                                                 iv_input = lv_unit ).
       CATCH zzcx_custom_exception INTO lo_root_exc.
+        IF sy-subrc = 0.
+        ENDIF.
     ENDTRY.
     ls_planorder_i-_total_quantity = cv_qty.
     ls_planorder_i-_plnd_order_planned_start_date = |{ cv_day+0(4) }-{ cv_day+4(2) }-{ cv_day+6(2) }|.

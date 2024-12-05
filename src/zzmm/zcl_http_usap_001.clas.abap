@@ -165,7 +165,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_USAP_001 IMPLEMENTATION.
+CLASS zcl_http_usap_001 IMPLEMENTATION.
 
 
   METHOD cancel.
@@ -506,6 +506,7 @@ CLASS ZCL_HTTP_USAP_001 IMPLEMENTATION.
                                 EXPORTING iv_alpha = 'IN'
                                           iv_input = ls_create-entryunit ).
             CATCH zzcx_custom_exception INTO lo_root_exc.
+              IF sy-subrc = 0. ENDIF.
           ENDTRY.
 
           DATA(lv_po) = |{ ls_create-purchaseorder ALPHA = IN }|.

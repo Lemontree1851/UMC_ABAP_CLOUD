@@ -25,32 +25,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_JOB_CHANGEPO IMPLEMENTATION.
-
-
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '1' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
-        " handle exception
-    ENDTRY.
-  ENDMETHOD.
+CLASS zcl_job_changepo IMPLEMENTATION.
 
 
   METHOD if_apj_dt_exec_object~get_parameters.
@@ -94,7 +69,7 @@ CLASS ZCL_JOB_CHANGEPO IMPLEMENTATION.
         MESSAGE s016(zmm_001) WITH ls_purchaseorder-purchaseorder INTO lv_msg.
         TRY.
             add_message_to_log( i_text = lv_msg i_type = 'S' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime ##NO_HANDLER.
         ENDTRY.
         COMMIT ENTITIES.
       ELSE.
@@ -105,14 +80,13 @@ CLASS ZCL_JOB_CHANGEPO IMPLEMENTATION.
           TRY.
               add_message_to_log( i_text = lv_msg i_type = 'E' ).
               add_message_to_log( i_text = conv #( lv_msgtext ) i_type = 'E' ).
-            CATCH cx_bali_runtime.
+            CATCH cx_bali_runtime ##NO_HANDLER.
           ENDTRY.
         ENDLOOP.
       ENDIF.
     ENDLOOP.
 
   ENDMETHOD.
-
 
   METHOD if_oo_adt_classrun~main.
     " for debugger
@@ -130,7 +104,6 @@ CLASS ZCL_JOB_CHANGEPO IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-
   METHOD init_application_log.
     TRY.
         mo_application_log = cl_bali_log=>create_with_header(
@@ -138,7 +111,31 @@ CLASS ZCL_JOB_CHANGEPO IMPLEMENTATION.
                                                                        subobject   = 'ZZ_LOG_MM015_SUB'
 *                                                                       external_id = CONV #( mv_uuid )
                                                                        ) ).
-      CATCH cx_bali_runtime.
+      CATCH cx_bali_runtime ##NO_HANDLER.
+        " handle exception
+    ENDTRY.
+  ENDMETHOD.
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime) ##NO_HANDLER.
         " handle exception
     ENDTRY.
   ENDMETHOD.

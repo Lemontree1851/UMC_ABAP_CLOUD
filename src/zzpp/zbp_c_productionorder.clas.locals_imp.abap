@@ -1,3 +1,13 @@
+CLASS lsc_zc_productionorder DEFINITION INHERITING FROM cl_abap_behavior_saver.
+  PROTECTED SECTION.
+    METHODS save REDEFINITION.
+ENDCLASS.
+
+CLASS lsc_zc_productionorder IMPLEMENTATION.
+  METHOD save.
+  ENDMETHOD.
+ENDCLASS.
+
 CLASS lhc_zc_productionorder DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
 
@@ -42,19 +52,19 @@ CLASS lhc_zc_productionorder DEFINITION INHERITING FROM cl_abap_behavior_handler
     METHODS check CHANGING cs_data TYPE lty_request.
 
 *    METHODS create FOR MODIFY
-*      IMPORTING entities FOR CREATE ProductionOrder.
+*      IMPORTING entities FOR CREATE productionorder.
 *
 *    METHODS update FOR MODIFY
 *      IMPORTING entities FOR UPDATE productionorder.
 *
 *    METHODS delete FOR MODIFY
-*      IMPORTING keys FOR DELETE ProductionOrder.
-*
-*    METHODS read FOR READ
-*      IMPORTING keys FOR READ productionorder RESULT result.
-*
-*    METHODS lock FOR LOCK
-*      IMPORTING keys FOR LOCK productionorder.
+*      IMPORTING keys FOR DELETE productionorder.
+
+    METHODS read FOR READ
+      IMPORTING keys FOR READ productionorder RESULT result.
+
+    METHODS lock FOR LOCK
+      IMPORTING keys FOR LOCK productionorder.
 
 ENDCLASS.
 
@@ -96,12 +106,12 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
 *
 *  METHOD delete.
 *  ENDMETHOD.
-*
-*  METHOD read.
-*  ENDMETHOD.
-*
-*  METHOD lock.
-*  ENDMETHOD.
+
+  METHOD read.
+  ENDMETHOD.
+
+  METHOD lock.
+  ENDMETHOD.
 
   METHOD release.
     DATA:
@@ -288,12 +298,12 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
   ENDMETHOD.
 ENDCLASS.
 
-CLASS lsc_zc_productionorder DEFINITION INHERITING FROM cl_abap_behavior_saver.
-  PROTECTED SECTION.
-    METHODS save_modified REDEFINITION.
-ENDCLASS.
-
-CLASS lsc_zc_productionorder IMPLEMENTATION.
-  METHOD save_modified.
-  ENDMETHOD.
-ENDCLASS.
+*CLASS lsc_zc_productionorder DEFINITION INHERITING FROM cl_abap_behavior_saver.
+*  PROTECTED SECTION.
+*    METHODS save_modified REDEFINITION.
+*ENDCLASS.
+*
+*CLASS lsc_zc_productionorder IMPLEMENTATION.
+*  METHOD save_modified.
+*  ENDMETHOD.
+*ENDCLASS.

@@ -295,7 +295,7 @@ CLASS lhc_paymethod IMPLEMENTATION.
 
     IF lr_companycode IS INITIAL OR lr_postdate IS INITIAL.
 
-      RAISE EXCEPTION TYPE zzcx_custom_exception.
+      "RAISE EXCEPTION TYPE zzcx_custom_exception.
 
     ENDIF.
 
@@ -310,7 +310,7 @@ CLASS lhc_paymethod IMPLEMENTATION.
         cashdiscount1dayofmonth,
         cashdiscount1additionalmonths
     FROM i_paymenttermsconditions
-    INTO TABLE @DATA(lt_paymentterms).
+    INTO TABLE @DATA(lt_paymentterms).                  "#EC CI_NOWHERE
     SORT lt_paymentterms BY paymentterms paymenttermsvaliditymonthday.
 
     SELECT
@@ -428,7 +428,7 @@ CLASS lhc_paymethod IMPLEMENTATION.
         cashdiscount1dayofmonth,
         cashdiscount1additionalmonths
     FROM i_paymenttermsconditions
-    INTO TABLE @DATA(lt_paymentterms).
+    INTO TABLE @DATA(lt_paymentterms)."#EC CI_NOWHERE
     SORT lt_paymentterms BY paymentterms paymenttermsvaliditymonthday.
 
     MESSAGE s022(zfico_001) INTO lv_check_succ .
@@ -450,7 +450,7 @@ CLASS lhc_paymethod IMPLEMENTATION.
     LOOP AT ct_data INTO DATA(cs_data) WHERE status = ''.
       TRY.
           DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
-        CATCH cx_uuid_error.
+        CATCH cx_uuid_error INTO DATA(e) ##NO_HANDLER.
           "handle exception
       ENDTRY.
       cs_data-supplier = |{ cs_data-supplier ALPHA = IN }| .
@@ -631,7 +631,7 @@ CLASS lhc_paymethod IMPLEMENTATION.
     cashdiscount1dayofmonth,
     cashdiscount1additionalmonths
 FROM i_paymenttermsconditions
-INTO TABLE @DATA(lt_paymentterms).
+INTO TABLE @DATA(lt_paymentterms)."#EC CI_NOWHERE
     SORT lt_paymentterms BY paymentterms paymenttermsvaliditymonthday.
 
 
@@ -745,7 +745,7 @@ INTO TABLE @DATA(lt_paymentterms).
       getdata( EXPORTING cs_run = cs_data IMPORTING ct_data = lt_data ).
       TRY.
           DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
-        CATCH cx_uuid_error.
+        CATCH cx_uuid_error INTO DATA(e) ##NO_HANDLER.
           "handle exception
       ENDTRY.
 
@@ -804,7 +804,7 @@ INTO TABLE @DATA(lt_paymentterms).
         cashdiscount1dayofmonth,
         cashdiscount1additionalmonths
     FROM i_paymenttermsconditions
-    INTO TABLE @DATA(lt_paymentterms).
+    INTO TABLE @DATA(lt_paymentterms)."#EC CI_NOWHERE
     SORT lt_paymentterms BY paymentterms paymenttermsvaliditymonthday.
 
     lt_export = CORRESPONDING #( ct_data ).
@@ -866,7 +866,7 @@ INTO TABLE @DATA(lt_paymentterms).
             lv_job_count         TYPE cl_apj_rt_api=>ty_jobcount.
       TRY.
           DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
-        CATCH cx_uuid_error.
+        CATCH cx_uuid_error INTO DATA(e) ##NO_HANDLER.
           "handle exception
       ENDTRY.
       GET TIME STAMP FIELD lv_timestamp.
@@ -901,8 +901,8 @@ INTO TABLE @DATA(lt_paymentterms).
               ev_jobname             = lv_job_name
               ev_jobcount            = lv_job_count ).
 
-        CATCH cx_apj_rt INTO DATA(lo_apj_rt).
-          RAISE EXCEPTION TYPE zzcx_custom_exception.
+        CATCH cx_apj_rt INTO DATA(lo_apj_rt) ##NO_HANDLER.
+          "RAISE EXCEPTION TYPE zzcx_custom_exception.
           "'lv_message = lo_apj_rt->get_text( ).
 
           "  APPEND VALUE #( uuidfile = <lfs_file>-uuidfile
@@ -910,8 +910,8 @@ INTO TABLE @DATA(lt_paymentterms).
           "                                                   text     = lo_apj_rt->bapimsg-message ) )
           "     TO reported-files.
 
-        CATCH cx_root INTO DATA(lo_root).
-          RAISE EXCEPTION TYPE zzcx_custom_exception.
+        CATCH cx_root INTO DATA(lo_root) ##NO_HANDLER.
+          "RAISE EXCEPTION TYPE zzcx_custom_exception.
           "lv_message = lo_root->get_text( ).
 
           "  APPEND VALUE #(  uuidfile = <lfs_file>-uuidfile
@@ -938,7 +938,7 @@ INTO TABLE @DATA(lt_paymentterms).
 
         TRY.
             modifyjournalentrytpsingle( EXPORTING cv_test = cv_test  CHANGING cs_run = cs_run  cs_data = cs_data ).
-          CATCH zzcx_custom_exception.
+          CATCH zzcx_custom_exception INTO DATA(e) ##NO_HANDLER.
             " handle exception
             " handle exception
         ENDTRY.
@@ -1009,14 +1009,14 @@ INTO TABLE @DATA(lt_paymentterms).
             io_data = ls_zzs_dtimp_tfi005
           IMPORTING
             eo_data = ls_zzs_dtimp_tfi005.
-      CATCH cx_root.
+      CATCH cx_root INTO DATA(e) ##NO_HANDLER.
         " handle exception
 
     ENDTRY.
 
     TRY.
         DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
-      CATCH cx_uuid_error.
+      CATCH cx_uuid_error INTO DATA(e1) ##NO_HANDLER.
         "handle exception
     ENDTRY.
     GET TIME STAMP FIELD lv_timestamp.
@@ -1100,7 +1100,7 @@ INTO TABLE @DATA(lt_paymentterms).
       ENDIF.
       TRY.
           DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
-        CATCH cx_uuid_error.
+        CATCH cx_uuid_error INTO DATA(e) ##NO_HANDLER.
           "handle exception
       ENDTRY.
       GET TIME STAMP FIELD lv_timestamp.
@@ -1182,8 +1182,8 @@ INTO TABLE @DATA(lt_paymentterms).
 *            accountingclerkfaxnumber    TYPE zr_paymethod_sum-accountingclerkfaxnumber,
 *            paymentmethod_a             TYPE zr_paymethod_sum-paymentmethod_a,
 
-            status                      TYPE zr_paymethod_sum-status,
-            message                     TYPE zr_paymethod_sum-message,
+            status  TYPE zr_paymethod_sum-status,
+            message TYPE zr_paymethod_sum-message,
 
 
 
@@ -1198,7 +1198,7 @@ INTO TABLE @DATA(lt_paymentterms).
     SELECT SINGLE *
       FROM zzc_dtimp_conf
      WHERE object = 'ZDOWNLOAD_PAYMENTMETHOD'
-      INTO @DATA(ls_file_conf).
+      INTO @DATA(ls_file_conf)."#EC CI_ALL_FIELDS_NEEDED
     IF sy-subrc = 0.
       " FILE_CONTENT must be populated with the complete file content of the .XLSX file
       " whose content shall be processed programmatically.
@@ -1220,7 +1220,7 @@ INTO TABLE @DATA(lt_paymentterms).
 
       TRY.
           DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
-        CATCH cx_uuid_error.
+        CATCH cx_uuid_error INTO DATA(e) ##NO_HANDLER.
           "handle exception
       ENDTRY.
 
@@ -1240,7 +1240,7 @@ INTO TABLE @DATA(lt_paymentterms).
       TRY.
           cl_system_uuid=>convert_uuid_x16_static( EXPORTING uuid = lv_uuid
                                                    IMPORTING uuid_c36 = rv_recorduuid  ).
-        CATCH cx_uuid_error.
+        CATCH cx_uuid_error INTO DATA(e1) ##NO_HANDLER.
           " handle exception
       ENDTRY.
     ENDIF.

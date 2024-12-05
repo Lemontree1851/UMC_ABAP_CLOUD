@@ -51,7 +51,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
     ENDTRY.
 
 * ZTBC_1001
-    SELECT *
+    SELECT *             "#EC CI_ALL_FIELDS_NEEDED
       FROM ztbc_1001
      WHERE zid = 'ZSD003'
         OR zid = 'ZSD004'
@@ -84,7 +84,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
               OR finishstatus = @space )
           INTO TABLE @DATA(lt_1003).
         IF sy-subrc = 0.
-          SELECT *
+          SELECT *               "#EC CI_ALL_FIELDS_NEEDED
           FROM ztsd_1012 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_1003
          WHERE salesorganization = @lt_1003-salesorganization
@@ -152,7 +152,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ENDIF.
 
         IF lt_1003 IS NOT INITIAL.
-          SELECT *
+          SELECT *                    "#EC CI_ALL_FIELDS_NEEDED
             FROM ztsd_1012
             FOR ALL ENTRIES IN @lt_1003
            WHERE salesorganization = @lt_1003-salesorganization

@@ -31,13 +31,13 @@ CLASS zcl_materialrequisition_prt IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
 
-    IF io_request->is_total_numb_of_rec_requested(  ) .
-      io_response->set_total_number_of_records( lines( lt_data ) ).
-    ENDIF.
-
     " Filtering
     zzcl_odata_utils=>filtering( EXPORTING io_filter = io_request->get_filter(  )
                                  CHANGING  ct_data   = lt_data ).
+
+    IF io_request->is_total_numb_of_rec_requested(  ) .
+      io_response->set_total_number_of_records( lines( lt_data ) ).
+    ENDIF.
 
     SORT lt_data BY itemno.
 

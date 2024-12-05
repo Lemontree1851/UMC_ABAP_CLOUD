@@ -48,5 +48,7 @@ define root view entity ZZC_DTIMP_FILES
   virtual  ApplicationLogUrl    : abap.string( 1000 ),
 
            _Configuration : redirected to ZZC_DTIMP_CONF,
+
+           @ObjectModel.filter.enabled: false
            _ApplicationLog
 }

@@ -86,7 +86,7 @@ CLASS lhc_bdglupload IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
 
-    SELECT a~glaccount,a~companycode,b~glaccountlongname
+    SELECT a~glaccount,a~companycode,b~glaccountlongname "#EC CI_FAE_LINES_ENSURED
     FROM i_glaccount WITH PRIVILEGED ACCESS AS a
     JOIN i_glaccounttext WITH PRIVILEGED ACCESS AS b
     ON a~chartofaccounts = b~chartofaccounts
@@ -98,8 +98,8 @@ CLASS lhc_bdglupload IMPLEMENTATION.
     INTO TABLE @DATA(lt_glaccount).
     SORT lt_glaccount BY glaccount companycode glaccountlongname.
 
-    SELECT * FROM ztfi_1002 FOR ALL ENTRIES IN @lt_gl
-    WHERE glaccount = @lt_gl-glaccount INTO TABLE @DATA(lt_ztfi_1002) .
+    SELECT * FROM ztfi_1002 FOR ALL ENTRIES IN @lt_gl "#EC CI_FAE_LINES_ENSURED
+    WHERE glaccount = @lt_gl-glaccount INTO TABLE @DATA(lt_ztfi_1002) . "#EC CI_ALL_FIELDS_NEEDED
     SORT lt_ztfi_1002 BY glaccount.
 
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
@@ -146,7 +146,7 @@ CLASS lhc_bdglupload IMPLEMENTATION.
           lv_msg     TYPE string.
     TRY.
         DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
-      CATCH cx_uuid_error.
+      CATCH cx_uuid_error INTO DATA(e) ##NO_HANDLER.
         "handle exception
     ENDTRY.
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_datas>) WHERE status = 'S'.
@@ -215,7 +215,7 @@ CLASS lhc_bdglupload IMPLEMENTATION.
     SELECT SINGLE *
       FROM zzc_dtimp_conf
      WHERE object = 'ZDOWNLOAD_BDGL'
-      INTO @DATA(ls_file_conf).
+      INTO @DATA(ls_file_conf).               "#EC CI_ALL_FIELDS_NEEDED
     IF sy-subrc = 0.
       " FILE_CONTENT must be populated with the complete file content of the .XLSX file
       " whose content shall be processed programmatically.
@@ -237,7 +237,7 @@ CLASS lhc_bdglupload IMPLEMENTATION.
 
       TRY.
           DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
-        CATCH cx_uuid_error.
+        CATCH cx_uuid_error INTO DATA(e) ##NO_HANDLER.
           "handle exception
       ENDTRY.
 
@@ -257,7 +257,7 @@ CLASS lhc_bdglupload IMPLEMENTATION.
       TRY.
           cl_system_uuid=>convert_uuid_x16_static( EXPORTING uuid = lv_uuid
                                                    IMPORTING uuid_c36 = rv_recorduuid  ).
-        CATCH cx_uuid_error.
+        CATCH cx_uuid_error INTO DATA(e1) ##NO_HANDLER.
           " handle exception
       ENDTRY.
     ENDIF.
@@ -276,7 +276,7 @@ CLASS lhc_bdglupload IMPLEMENTATION.
     DATA(lo_posix_engine) = xco_cp_regular_expression=>engine->posix(
       iv_ignore_case = abap_true
     ).
-    SELECT glaccount
+    SELECT glaccount                          "#EC CI_FAE_LINES_ENSURED
     FROM i_glaccount WITH PRIVILEGED ACCESS AS a
     FOR ALL ENTRIES IN @lt_result
     WHERE glaccount = @lt_result-glaccount

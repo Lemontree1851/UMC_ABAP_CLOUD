@@ -10,9 +10,9 @@ CLASS zcl_http_podata_001 DEFINITION
         pono         TYPE c    LENGTH 10,               "購買発注"
         dno          TYPE n    LENGTH 5,                "購買発注明細"
         seq          TYPE c    LENGTH 4,                "連続番号"
-        deliverydate TYPE c    LENGTH 10,               "納品日"
+        deliverydate TYPE c length 10    ,               "納品日"
 *        quantity     TYPE p    DECIMALS 3 LENGTH 13,    "納品数量"
-        quantity     TYPE c    LENGTH 16,               "納品数量"
+        quantity     TYPE  ztmm_1009-quantity,               "納品数量"
         delflag      TYPE c    LENGTH 1,                "削除フラグ（納期回答）"
         extnumber    TYPE c    LENGTH 35,               "参照
       END OF ty_inputs.
@@ -90,7 +90,8 @@ CLASS zcl_http_podata_001 DEFINITION
       lt_value    TYPE STANDARD TABLE OF if_web_http_request=>name_value_pairs,
       ls_value    TYPE if_web_http_request=>name_value_pairs.
 
-    DATA: lt_ztmm_1009 TYPE STANDARD TABLE OF ztmm_1009.   " 数据库表的内表
+    DATA: lt_ztmm_1009 TYPE STANDARD TABLE OF ztmm_1009,
+          lw_ztmm_1009 like LINE OF lt_ztmm_1009.   " 数据库表的内表
 
     DATA:
       base_url      TYPE string,
@@ -144,11 +145,15 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
           AND purchaseorderitem = @lt_req-dno
         INTO TABLE @DATA(lt_unit).
 
-      SELECT unitofmeasure, unitofmeasureisocode
-         FROM i_unitofmeasure WITH PRIVILEGED ACCESS
-         FOR ALL ENTRIES IN @lt_unit
-         WHERE unitofmeasure = @lt_unit-purchaseorderquantityunit
-         INTO TABLE @DATA(lt_unit1).
+      IF lt_unit IS NOT INITIAL.
+
+        SELECT unitofmeasure, unitofmeasureisocode
+           FROM i_unitofmeasure WITH PRIVILEGED ACCESS
+           FOR ALL ENTRIES IN @lt_unit
+           WHERE unitofmeasure = @lt_unit-purchaseorderquantityunit
+           INTO TABLE @DATA(lt_unit1).
+
+      ENDIF.
 
     ENDIF.
 
@@ -508,18 +513,26 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
         " 将接口数据逐行处理并构造数据库表的内表
         LOOP AT lt_req INTO DATA(ls_insert).
 
-          CONDENSE ls_insert-quantity.
+*          CONDENSE ls_insert-quantity.
+*          shift ls_insert-quantity  LEFT DELETING LEADING '0'.
 
-          " 构造数据表行
-          APPEND VALUE #(
-            client       = sy-mandt
-            pono         = ls_insert-pono
-            dno          = ls_insert-dno
-            seq          = ls_insert-seq
-            deliverydate = ls_insert-deliverydate
-            quantity     = ls_insert-quantity
-            extnumber    = ls_insert-extnumber
-          ) TO lt_ztmm_1009.
+          REPLACE ALL OCCURRENCES OF '-' IN ls_insert-deliverydate WITH ''.
+
+*          ls_insert-quantity = |{ ls_insert-quantity ALPHA = IN }| .
+
+          lw_ztmm_1009-pono                = ls_insert-pono         .
+          lw_ztmm_1009-dno                 = ls_insert-dno          .
+          lw_ztmm_1009-seq                 = ls_insert-seq          .
+          lw_ztmm_1009-deliverydate        = ls_insert-deliverydate .
+          lw_ztmm_1009-quantity            = ls_insert-quantity     .
+          lw_ztmm_1009-extnumber           = ls_insert-extnumber    .
+
+          INSERT  ztmm_1009 FROM @lw_ztmm_1009 .
+
+          IF sy-subrc = 0 .
+            COMMIT WORK.
+          ENDIF.
+
         ENDLOOP.
 
         " 将内表数据插入数据库表
@@ -528,7 +541,8 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
               INSERT ztmm_1009 FROM TABLE @lt_ztmm_1009.
               COMMIT WORK.
             CATCH cx_sy_open_sql_db INTO DATA(lx_sql_error).
-
+              IF sy-subrc = 0.
+              ENDIF.
           ENDTRY.
         ENDIF.
 

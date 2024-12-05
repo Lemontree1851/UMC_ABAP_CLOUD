@@ -408,7 +408,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
     ENDLOOP.
 
 * Rounding
-    SELECT product,
+    SELECT product,                           "#EC CI_FAE_LINES_ENSURED
            plant,
            lotsizeroundingquantity
       FROM i_productplantsupplyplanning
@@ -418,44 +418,47 @@ CLASS zcl_productionplan IMPLEMENTATION.
       INTO TABLE @DATA(lt_rounding).
 
 * 2.2 製造バージョン情報取得
-    SELECT plant,
-           material,
-           productionversion,
-           billofoperationstype,
-           billofoperationsgroup,
-           billofoperationsvariant,
-           productionline
-      FROM i_productionversion WITH PRIVILEGED ACCESS
-      FOR ALL ENTRIES IN @lt_bom
-     WHERE plant = @lt_bom-plant
-       AND material = @lt_bom-idnrk
-       AND productionversionislocked = @space
-      INTO TABLE @DATA(lt_prodver).
-
+    IF lt_bom IS NOT INITIAL.
+      SELECT plant,
+             material,
+             productionversion,
+             billofoperationstype,
+             billofoperationsgroup,
+             billofoperationsvariant,
+             productionline
+        FROM i_productionversion WITH PRIVILEGED ACCESS
+        FOR ALL ENTRIES IN @lt_bom
+       WHERE plant = @lt_bom-plant
+         AND material = @lt_bom-idnrk
+         AND productionversionislocked = @space
+        INTO TABLE @DATA(lt_prodver).
+    ENDIF.
 * 2.3 作業区ID取得
-    SELECT workcenterinternalid,
-           workcenter
-      FROM i_workcenter WITH PRIVILEGED ACCESS
-      FOR ALL ENTRIES IN @lt_prodver
-     WHERE workcenter = @lt_prodver-productionline
-      INTO TABLE @DATA(lt_workcenter).
+    IF lt_prodver IS NOT INITIAL.
+      SELECT workcenterinternalid,
+             workcenter
+        FROM i_workcenter
+        FOR ALL ENTRIES IN @lt_prodver
+       WHERE workcenter = @lt_prodver-productionline
+        INTO TABLE @DATA(lt_workcenter).
 
 * 2.4 作業手順情報取得
-    SELECT billofoperationstype,
-           billofoperationsgroup,
-           billofoperationsvariant,
-           workcenterinternalid,
-           standardworkquantity2,
-           standardworkquantityunit2
-      FROM i_mfgboooperationchangestate WITH PRIVILEGED ACCESS
-      FOR ALL ENTRIES IN @lt_prodver
-     WHERE billofoperationstype = @lt_prodver-billofoperationstype
-       AND billofoperationsgroup = @lt_prodver-billofoperationsgroup
-       AND billofoperationsvariant = @lt_prodver-billofoperationsvariant
-       AND isdeleted = @space
-       AND isimplicitlydeleted = @space
-      INTO TABLE @DATA(lt_operation).
 
+      SELECT billofoperationstype,
+             billofoperationsgroup,
+             billofoperationsvariant,
+             workcenterinternalid,
+             standardworkquantity2,
+             standardworkquantityunit2
+        FROM i_mfgboooperationchangestate
+        FOR ALL ENTRIES IN @lt_prodver
+       WHERE billofoperationstype = @lt_prodver-billofoperationstype
+         AND billofoperationsgroup = @lt_prodver-billofoperationsgroup
+         AND billofoperationsvariant = @lt_prodver-billofoperationsvariant
+         AND isdeleted = @space
+         AND isimplicitlydeleted = @space
+        INTO TABLE @DATA(lt_operation).
+    ENDIF.
 * 2.6 ~ 2.13
     "只有getitem单独读物料才能返回availableqty.
     LOOP AT lt_bom INTO ls_bom.

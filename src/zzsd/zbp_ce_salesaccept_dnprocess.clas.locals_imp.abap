@@ -63,7 +63,10 @@ CLASS lhc_dnprocess IMPLEMENTATION.
 
     "获取模板需要的客户数据
     SELECT
-      *
+      ZID,
+      ZVALUE1,
+      ZVALUE2,
+      ZVALUE3
     FROM ztbc_1001
     WHERE zid = 'ZSD001'
       OR zid = 'ZSD002'
@@ -363,10 +366,10 @@ CLASS lhc_dnprocess IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
 
-    SELECT
+    SELECT "#EC CI_NOWHERE
       unitofmeasure,
       unitofmeasure_e
-    FROM i_unitofmeasure
+    FROM i_unitofmeasure WITH PRIVILEGED ACCESS
     INTO TABLE @DATA(lt_unitofmeasure).
     SORT lt_unitofmeasure BY unitofmeasure_e.
 

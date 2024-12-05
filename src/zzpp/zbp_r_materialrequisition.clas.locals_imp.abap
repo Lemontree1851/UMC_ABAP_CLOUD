@@ -390,17 +390,33 @@ CLASS lhc_materialrequisition IMPLEMENTATION.
     DATA: lv_mode(1)        TYPE c,
           lv_message        TYPE string,
           lv_timestamp      TYPE tzntstmpl,
-          lv_requisition_no TYPE ztpp_1009-material_requisition_no.
+          lv_requisition_no TYPE ztpp_1009-material_requisition_no,
+          lv_timezone       TYPE tznzone.
 
     IF cs_data-header-material_requisition_no IS INITIAL.
       " Insert
       lv_mode = lc_mode_insert.
+
+      " UTC+8 UTC+9
+      SELECT SINGLE zvalue4
+        FROM zc_tbc1001
+       WHERE zid = @lc_config_zpp005
+         AND zvalue1 = @cs_data-header-plant
+        INTO @lv_timezone.
+      IF sy-subrc = 0.
+        lv_timestamp = cs_data-datetime.
+        CONVERT TIME STAMP lv_timestamp
+                TIME ZONE lv_timezone
+                INTO DATE DATA(lv_date) TIME DATA(lv_time).
+      ENDIF.
+
       " Generate Material Requisition No
       TRY.
           DATA(lv_nr_number) = zzcl_common_utils=>get_number_next(
                                       iv_object = COND #( WHEN cs_data-header-type = lc_application_type_im
                                                           THEN lc_nr_object_im
                                                           ELSE lc_nr_object_mr )
+                                      iv_datum  = lv_date
                                       iv_nrlen  = 4 ).
         CATCH zzcx_custom_exception INTO DATA(lx_custom_exception).
           " handle exception
@@ -726,8 +742,11 @@ CLASS lhc_materialrequisition IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD print.
-    DATA: ls_item    TYPE lty_item,
-          lv_message TYPE string.
+    DATA: ls_item      TYPE lty_item,
+          lv_timestamp TYPE timestamp,
+          lv_timezone  TYPE tznzone,
+          lv_filename  TYPE string,
+          lv_message   TYPE string.
 
     READ ENTITIES OF zr_materialrequisition IN LOCAL MODE
     ENTITY materialrequisition
@@ -737,6 +756,22 @@ CLASS lhc_materialrequisition IMPLEMENTATION.
 
     SORT lt_result BY materialrequisitionno.
     DELETE ADJACENT DUPLICATES FROM lt_result COMPARING materialrequisitionno.
+
+    " UTC+8 UTC+9
+    SELECT SINGLE zvalue4
+      FROM zc_tbc1001
+     WHERE zid = @lc_config_zpp005
+       AND zvalue1 = @cs_data-header-plant
+      INTO @lv_timezone.
+    IF sy-subrc = 0.
+      lv_timestamp = cs_data-datetime.
+      CONVERT TIME STAMP lv_timestamp
+              TIME ZONE lv_timezone
+              INTO DATE DATA(lv_date) TIME DATA(lv_time).
+    ELSE.
+      lv_date = cs_data-datetime+0(8).
+      lv_time = cs_data-datetime+8(6).
+    ENDIF.
 
     LOOP AT lt_result ASSIGNING FIELD-SYMBOL(<lfs_result>).
       " check delete status
@@ -749,13 +784,15 @@ CLASS lhc_materialrequisition IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      CLEAR: lv_message,ls_item.
+      CLEAR: lv_filename,lv_message,ls_item.
+      lv_filename = |{ <lfs_result>-materialrequisitionno }_{ lv_date }{ lv_time }.pdf|.
 
       MODIFY ENTITIES OF zzc_prt_record
       ENTITY record
       EXECUTE createprintrecord
       AUTO FILL CID WITH VALUE #( ( %param-templateid   = lc_template_id
-                                    %param-providedkeys = get_providedkeys( <lfs_result>-materialrequisitionno ) ) )
+                                    %param-providedkeys = get_providedkeys( <lfs_result>-materialrequisitionno )
+                                    %param-filename     = lv_filename ) )
       MAPPED FINAL(mapped)
       REPORTED FINAL(reported)
       FAILED FINAL(failed).
@@ -1380,7 +1417,6 @@ CLASS lhc_materialrequisition IMPLEMENTATION.
       FROM zc_tbc1001
      WHERE zid = @lc_config_zpp005
        AND zvalue1 = @ls_data-plant
-       AND zvalue2 = @sy-langu
       INTO @lv_timezone.
     IF sy-subrc = 0.
       lv_timestamp = iv_datetime.

@@ -38,9 +38,14 @@ define view entity ZC_ProductVH
   key Plant,
       _Description.ProductDescription as MaterialDescription,
       _Product.ProductType,
+
       @Semantics.amount.currencyCode: 'Currency'
-      _Valuation.StandardPrice,
-      _Valuation.PriceUnitQty,
+      //      _Valuation.StandardPrice,
+      //      _Valuation.PriceUnitQty,
+      cast( cast( _Valuation.StandardPrice as abap.dec( 20, 4 ) ) / _Valuation.PriceUnitQty
+      as abap.curr( 11, 2 ))          as StandardPrice,
+      '1'                             as PriceUnitQty,
+
       _Valuation.Currency,
       @UI.hidden: true
       _Valuation.ValuationArea,

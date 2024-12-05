@@ -117,13 +117,13 @@ union select from ZI_BI003_REPORT_005_BILLING
          CompanyCode,
          _Companycode.CompanyCodeName,
 
-         cast('0.00' as dmbtr)               as RecoveryNecessaryAmount,
+         cast('0.00' as abap.curr(13,2))     as RecoveryNecessaryAmount,
 
 
          _Companycode.Currency               as CompanyCurrency,
 
          cast('' as hkont)                   as GLAccount,
-         cast('' as abap.char(40))           as GLAccountName,
+         cast('' as abap.char(20))           as GLAccountName,
 
          salesorderdocument,
          salesorderdocumentitem,

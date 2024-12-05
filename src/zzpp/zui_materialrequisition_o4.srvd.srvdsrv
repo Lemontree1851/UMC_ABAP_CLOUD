@@ -11,4 +11,5 @@ define service ZUI_MATERIALREQUISITION_O4 {
   expose ZC_ProductVH;
   expose I_StorageLocationStdVH;
   expose ZC_TBC1001;
+  expose ZC_CustomerCompanyVH;
 }

@@ -16,7 +16,7 @@ define root view entity ZC_INV_AGING
               FiscalYearPeriod,
               Currency,
               ProductDescription,
-              ProductType,
+              cast( ProductType as producttype preserving type) as ProductType,
               ProductTypeName,
               ProfitCenter,
               @UI.hidden: true

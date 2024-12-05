@@ -10,19 +10,20 @@ CLASS lhc_zr_tfi_1012 DEFINITION INHERITING FROM cl_abap_behavior_handler.
             companycode                 TYPE bukrs,
             fiscalyear                  TYPE belnr_d,
             accountingdocument          TYPE belnr_d,
-            ledgergllineitem            TYPE      char3,
-            yy1_f_fins1z01_cob          TYPE      char10,
+            ledgergllineitem            TYPE c LENGTH 3,
+            yy1_f_fins1z01_cob          TYPE c LENGTH 10,
             yy1_f_fins1z02_cob(60)      TYPE      c,
-            yy1_f_fins2z01_cob          TYPE      char10,
+            yy1_f_fins2z01_cob          TYPE c LENGTH 10,
             yy1_f_fins2z02_cob(60)      TYPE      c,
             glaccount                   TYPE      hkont,
             glaccountname(60)           TYPE      c,
             documentitemtext(60)        TYPE      c,
-            taxcode                     TYPE      char5,
-            profitcenter                TYPE      char10,
-            costcenter                  TYPE      kostl,
+            taxcode(5)                  TYPE      c,
+            profitcenter                TYPE      string,
+            costcenter                  TYPE      string,
             exchangerate                TYPE      prctr,
-            financialaccounttype        TYPE      char1,
+
+            financialaccounttype        TYPE c LENGTH 1,
             customer                    TYPE      kunnr,
             customername(60)            TYPE      c,
             supplier                    TYPE      kunnr,
@@ -34,7 +35,7 @@ CLASS lhc_zr_tfi_1012 DEFINITION INHERITING FROM cl_abap_behavior_handler.
             amountintransactioncurrency TYPE      wrbtr,
 
             debitamountintranscrcy      TYPE      string,
-            creditamountintranscrcy     TYPE      string,
+            creditamountintranscrcy     TYPE     string,
 
             masterfixedasset            TYPE      anln1,
             fixedasset                  TYPE      anln2,
@@ -57,27 +58,27 @@ CLASS lhc_zr_tfi_1012 DEFINITION INHERITING FROM cl_abap_behavior_handler.
             creationtime                     TYPE    uzeit,
             accountingdocumentcreationdate   TYPE    bldat,
             lastchangedate                   TYPE    bldat,
-            ledgergroup                      TYPE    char4,
+            ledgergroup                      TYPE c LENGTH 4,
             fiscalperiod                     TYPE    monat,
             accountingdocumenttype           TYPE    blart,
-            accountingdocumenttypename       TYPE    char40,
-            accountingdocumentcategory       TYPE    char1,
-            companycodetext                  TYPE    char25,
+            accountingdocumenttypename       TYPE c LENGTH 40,
+            accountingdocumentcategory       TYPE c LENGTH 1,
+            companycodetext                  TYPE c LENGTH 25,
             transactioncurrency              TYPE    waers,
 
             debitamountintranscrcy           TYPE    string,
             creditamountintranscrcy          TYPE    string,
 
             parkedbyusername                 TYPE    string,
-            workitem                         TYPE    p LENGTH 12 DECIMALS 0,
-            createdbyusername                TYPE    char80,
+            workitem(12)                     TYPE    n,
+            createdbyusername                TYPE c LENGTH 80,
             accountingdoccreationdate_w      TYPE    string,
-            accountingdoccategory_w          TYPE    char1,
+            accountingdoccategory_w          TYPE c LENGTH 1,
             accountingdocumentstatusname(60) TYPE    c,
             wrkflwtskcreationutcdatetime     TYPE   string,
             reversedocumentfiscalyear        TYPE string,
             reversedocument                  TYPE belnr_d,
-            accountingdocumentitem           TYPE char3,
+            accountingdocumentitem           TYPE c LENGTH 3,
             assignmentreference(18)          TYPE      c,
             billofexchangeissuedate          TYPE      string,
             billofexchangedomiciletext(60)   TYPE      c,
@@ -110,43 +111,43 @@ CLASS lhc_zr_tfi_1012 DEFINITION INHERITING FROM cl_abap_behavior_handler.
             creationtime                     TYPE    uzeit,
             accountingdocumentcreationdate   TYPE    bldat,
             lastchangedate                   TYPE    bldat,
-            ledgergroup                      TYPE    char4,
+            ledgergroup                      TYPE c LENGTH 4,
             fiscalperiod                     TYPE    monat,
             accountingdocumenttype           TYPE    blart,
-            accountingdocumenttypename       TYPE    char20,
-            accountingdocumentcategory       TYPE    char1,
-            companycodetext                  TYPE    char25,
+            accountingdocumenttypename       TYPE c LENGTH 20,
+            accountingdocumentcategory       TYPE c LENGTH 1,
+            companycodetext                  TYPE c LENGTH 25,
             transactioncurrency              TYPE    waers,
             debitamountintranscrcy           TYPE    wrbtr,
             creditamountintranscrcy          TYPE    wrbtr,
             parkedbyusername                 TYPE    string,
-            workitem                         TYPE    p LENGTH 12 DECIMALS 0,
-            createdbyusername                TYPE    char80,
+            workitem(12)                     TYPE    n,
+            createdbyusername                TYPE c LENGTH 80,
             accountingdoccreationdate_w      TYPE    bldat,
-            accountingdoccategory_w          TYPE    char1,
+            accountingdoccategory_w          TYPE c LENGTH 1,
             accountingdocumentstatusname(60) TYPE    c,
             wrkflwtskcreationutcdatetime     TYPE    string,
-            reversedocumentfiscalyear        TYPE gjahr,
-            reversedocument                  TYPE belnr_d,
+            reversedocumentfiscalyear        TYPE    gjahr,
+            reversedocument                  TYPE    belnr_d,
             "ITEM
-            ledgergllineitem                 TYPE      char6,
-            yy1_f_fins1z01_cob               TYPE      char10,
+            ledgergllineitem                 TYPE c LENGTH 6,
+            yy1_f_fins1z01_cob               TYPE c LENGTH 10,
             yy1_f_fins1z02_cob(50)           TYPE      c,
-            yy1_f_fins2z01_cob               TYPE      char10,
+            yy1_f_fins2z01_cob               TYPE c LENGTH 10,
             yy1_f_fins2z02_cob(50)           TYPE      c,
             glaccount                        TYPE      hkont,
             glaccountname(50)                TYPE      c,
             documentitemtext(50)             TYPE      c,
-            taxcode                          TYPE      char5,
-            profitcenter                     TYPE      char10,
-            costcenter                       TYPE      kostl,
-            exchangerate                     TYPE      prctr,
-            financialaccounttype             TYPE      char1,
+            taxcode(50)                      TYPE      c,
+            profitcenter                     TYPE      string,
+            costcenter                       TYPE      string,
+            exchangerate                     TYPE      string,
+            financialaccounttype             TYPE c LENGTH 1,
             customer                         TYPE      kunnr,
             customername(50)                 TYPE      c,
             supplier                         TYPE      kunnr,
             suppliername(50)                 TYPE      c,
-            bp                               TYPE      kunnr,
+            bp(70)                           TYPE      c,
             bpname(50)                       TYPE      c,
             transactioncurrency_i            TYPE      waers,
             debitcreditcode                  TYPE      shkzg,
@@ -160,7 +161,7 @@ CLASS lhc_zr_tfi_1012 DEFINITION INHERITING FROM cl_abap_behavior_handler.
             amountincompanycodecurrency      TYPE      wrbtr,
             debitamountincocodecrcy          TYPE      wrbtr,
             creditamountincocodecrcy         TYPE      wrbtr,
-            accountingdocumentitem           TYPE      char6,
+            accountingdocumentitem           TYPE c LENGTH 6,
             assignmentreference(18)          TYPE      c,
             billofexchangeissuedate          TYPE      datum,
             billofexchangedomiciletext(60)   TYPE      c,
@@ -216,7 +217,7 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
           DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
           cl_system_uuid=>convert_uuid_x16_static( EXPORTING uuid = lv_uuid
                                                    IMPORTING uuid_c36 = DATA(lv_recorduuid)  ).
-        CATCH cx_uuid_error.
+        CATCH cx_uuid_error INTO DATA(e) ##NO_HANDLER.
           "handle exception
       ENDTRY.
       ls_record-pdfmimetype = 'application/pdf'.
@@ -243,7 +244,7 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
               iv_xml_data     = lv_xml
             IMPORTING
               ev_pdf          = ls_record-pdfcontent ).
-        CATCH cx_fp_ads_util INTO DATA(lo_ads_error).
+        CATCH cx_fp_ads_util INTO DATA(lo_ads_error) ##NO_HANDLER.
           "lv_has_error = abap_true.
           "lv_message = lo_ads_error->get_longtext(  ).
       ENDTRY.
@@ -281,12 +282,12 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
         accountingdocumentitem         TYPE string,
 
         parkedbyusername               TYPE string,
-        workitem                       TYPE string,
+        workitem(12)                   TYPE n,
         accountingdocumentcategory     TYPE string,
         createdbyusername              TYPE string,
         accountingdocumentcreationdate TYPE timestamp,
         accountingdocumentstatusname   TYPE string,
-        accountingdocument_d           TYPE sy-datum,
+        accountingdocument_d           TYPE d,
       END OF ty_results,
       tt_results TYPE STANDARD TABLE OF ty_results WITH DEFAULT KEY,
       BEGIN OF ty_d,
@@ -296,11 +297,11 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
         d TYPE ty_d,
       END OF ty_res_api,
       BEGIN OF ty_results1,
-        workflowinternalid           TYPE string,
+        workflowinternalid(12)       TYPE n,
 
         wrkflwtskcreationutcdatetime TYPE timestamp,
 
-        wrkflwtsk_d                  TYPE sy-datum,
+        wrkflwtsk_d                  TYPE d,
       END OF ty_results1,
       tt_results1 TYPE STANDARD TABLE OF ty_results1 WITH DEFAULT KEY,
       BEGIN OF ty_d1,
@@ -421,7 +422,9 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
         accountingdocumenttype,
         accountingdocumentcategory,
         reversedocument,
-        reversedocumentfiscalyear
+        reversedocumentfiscalyear,
+
+        absoluteexchangerate
     FROM i_journalentry
     WITH PRIVILEGED ACCESS
    WHERE companycode IN @lr_companycode
@@ -465,7 +468,7 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
             "   ( xco_cp_json=>transformation->underscore_to_camel_case ) ) )->write_to( REF #( ls_res_api1 ) ).
             /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
                    CHANGING  data = ls_res_api1 ).
-          CATCH cx_root INTO DATA(lx_root1).
+          CATCH cx_root INTO DATA(lx_root1) ##NO_HANDLER.
         ENDTRY.
       ENDIF.
 
@@ -570,7 +573,11 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
            yy1_f_fins1z01_cob,
            yy1_f_fins1z02_cob,
            yy1_f_fins2z01_cob,
-           yy1_f_fins2z02_cob
+           yy1_f_fins2z02_cob,
+
+           profitcenter,
+           costcenter,
+           documentitemtext
        FROM i_journalentryitem
        WITH PRIVILEGED ACCESS
        WHERE companycode IN @lr_companycode
@@ -579,6 +586,35 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
        AND sourceledger = '0L'
        AND ledger = '0L'
        INTO TABLE @DATA(lt_journalentryitem).
+
+      IF lt_journalentryitem IS NOT INITIAL.
+
+        SELECT
+        profitcenter,
+        profitcentername
+        FROM i_profitcentertext
+        WITH PRIVILEGED ACCESS
+        FOR ALL ENTRIES IN @lt_journalentryitem
+        WHERE profitcenter = @lt_journalentryitem-profitcenter
+        AND language = 'J'
+        "AND ControllingArea  = ????
+        "AND ValidityEndDate  = ????
+        INTO TABLE @DATA(lt_profitcentertext).
+        SORT lt_profitcentertext BY profitcenter.
+
+        SELECT
+         costcenter,
+         costcentername
+        FROM i_costcentertext
+        WITH PRIVILEGED ACCESS
+        FOR ALL ENTRIES IN @lt_journalentryitem
+        WHERE  costcenter = @lt_journalentryitem-costcenter
+        AND language = 'J'
+        "AND ControllingArea  = ????
+        "AND ValidityEndDate  = ????
+        INTO TABLE @DATA(lt_costcentertext).
+        SORT lt_costcentertext BY costcenter.
+      ENDIF.
 
       SELECT
          sourcecompanycode AS companycode,
@@ -642,6 +678,7 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
         "exchangerate                ,
         financialaccounttype
 
+
         FROM  i_operationalacctgdocitem
         WITH PRIVILEGED ACCESS
         WHERE companycode IN @lr_companycode
@@ -655,6 +692,7 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
           FROM i_glaccounttext WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_operationalacctgdocitem_i
           WHERE glaccount = @lt_operationalacctgdocitem_i-glaccount
+          AND chartofaccounts = 'YCOA'
           AND language = 'J'
           INTO TABLE @DATA(lt_glaccounttext).
           SORT lt_glaccounttext BY glaccount  glaccountlongname.
@@ -725,6 +763,7 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
             FROM i_glaccounttext WITH PRIVILEGED ACCESS
             FOR ALL ENTRIES IN @lt_glaccountlineitem
             WHERE glaccount = @lt_glaccountlineitem-glaccount
+             AND chartofaccounts = 'YCOA'
             AND language = 'J'
             APPENDING CORRESPONDING FIELDS OF TABLE @lt_glaccounttext.
           SORT lt_glaccounttext BY glaccount  glaccountlongname.
@@ -777,7 +816,6 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
         profitcenter  ,
         costcenter  ,
         financialaccounttype
-
         FROM i_parkedoplacctgdocitem
          WITH PRIVILEGED ACCESS
           WHERE sourcecompanycode IN @lr_companycode
@@ -793,6 +831,7 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
           FROM i_glaccounttext WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_parkedoplacctgdocitem_i
           WHERE glaccount = @lt_parkedoplacctgdocitem_i-glaccount
+           AND chartofaccounts = 'YCOA'
           AND language = 'J'
           APPENDING CORRESPONDING FIELDS OF TABLE @lt_glaccounttext.
           SORT lt_glaccounttext BY glaccount  glaccountlongname.
@@ -826,6 +865,32 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
           APPENDING CORRESPONDING FIELDS OF TABLE @lt_fixedasset.
           SORT lt_fixedasset BY fixedasset.
 
+          SELECT
+          profitcenter,
+          profitcentername
+          FROM i_profitcentertext
+          WITH PRIVILEGED ACCESS
+          FOR ALL ENTRIES IN @lt_parkedoplacctgdocitem_i
+          WHERE profitcenter = @lt_parkedoplacctgdocitem_i-profitcenter
+          AND language = 'J'
+          "AND ControllingArea  = ????
+          "AND ValidityEndDate  = ????
+          APPENDING TABLE @lt_profitcentertext.
+          SORT lt_profitcentertext BY profitcenter.
+
+          SELECT
+           costcenter,
+           costcentername
+          FROM i_costcentertext
+          WITH PRIVILEGED ACCESS
+          FOR ALL ENTRIES IN @lt_parkedoplacctgdocitem_i
+          WHERE  costcenter = @lt_parkedoplacctgdocitem_i-costcenter
+          AND language = 'J'
+          "AND ControllingArea  = ????
+          "AND ValidityEndDate  = ????
+          APPENDING TABLE @lt_costcentertext.
+          SORT lt_costcentertext BY costcenter.
+
         ENDIF.
 
 
@@ -833,8 +898,15 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
         *
         FROM i_user
         WITH PRIVILEGED ACCESS
-        INTO TABLE @DATA(lt_user).
+        INTO TABLE @DATA(lt_user).                      "#EC CI_NOWHERE
         SORT lt_user BY userid.
+
+        SELECT
+        *
+        FROM i_taxcodetext
+        WHERE language = @sy-langu
+        INTO TABLE @DATA(lt_taxtext) .                  "#EC CI_NOWHERE
+        SORT lt_taxtext BY taxcode.
 
         LOOP AT lt_journalentryitem INTO DATA(ls_journalentryitem).
           CLEAR ls_select.
@@ -842,6 +914,7 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
           ls_select-fiscalyear = ls_journalentryitem-fiscalyear.
           ls_select-accountingdocument = ls_journalentryitem-accountingdocument.
           ls_select-ledgergllineitem = ls_journalentryitem-ledgergllineitem.
+
 *****************************************************************
 *       HEAD MAPPING
 *****************************************************************
@@ -860,9 +933,11 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
             ls_select-fiscalperiod                          =      ls_journalentry-fiscalperiod                         .
             ls_select-accountingdocumenttype                =      ls_journalentry-accountingdocumenttype               .
             ls_select-accountingdocumentcategory            =      ls_journalentry-accountingdocumentcategory           .
-            ls_select-reversedocumentfiscalyear            = ls_journalentry-reversedocumentfiscalyear.
-            ls_select-reversedocument            = ls_journalentry-reversedocument.
-
+            ls_select-reversedocumentfiscalyear             = ls_journalentry-reversedocumentfiscalyear.
+            ls_select-reversedocument                       = ls_journalentry-reversedocument.
+            IF ls_journalentry-absoluteexchangerate IS NOT INITIAL .
+              ls_select-exchangerate                          = ls_journalentry-absoluteexchangerate.
+            ENDIF.
           ENDIF.
 
           READ TABLE ls_res_api-d-results INTO DATA(ls_result1)
@@ -950,6 +1025,7 @@ WITH KEY companycode = ls_select-companycode
                                      iv_alpha = 'OUT'
                                      iv_currency = ls_select-transactioncurrency
                                      iv_input = ls_select-creditamountintranscrcy ).
+
           "'会社コードテキスト'
           READ TABLE lt_companycode INTO DATA(ls_companycode) WITH KEY companycode = ls_select-companycode BINARY SEARCH.
           IF sy-subrc = 0.
@@ -959,6 +1035,12 @@ WITH KEY companycode = ls_select-companycode
           IF sy-subrc = 0.
             ls_select-accountingdocumenttypename = ls_accountingdocumenttypetext-accountingdocumenttypename."'会社コードテキスト'
           ENDIF.
+          IF ls_select-accountingdoccreationdate_w IS NOT INITIAL.
+            ls_select-accountingdoccreationdate_w = ls_select-accountingdoccreationdate_w+0(4) && '-' && ls_select-accountingdoccreationdate_w+4(2) && '-' && ls_select-accountingdoccreationdate_w+6(2).
+          ENDIF.
+          IF ls_select-wrkflwtskcreationutcdatetime IS NOT INITIAL.
+            ls_select-wrkflwtskcreationutcdatetime = ls_select-wrkflwtskcreationutcdatetime+0(4) && '-' && ls_select-wrkflwtskcreationutcdatetime+4(2) && '-' && ls_select-wrkflwtskcreationutcdatetime+6(2).
+          ENDIF.
 *****************************************************************
 *       ITEM MAPPING
 *****************************************************************
@@ -967,7 +1049,9 @@ WITH KEY companycode = ls_select-companycode
           ls_select-yy1_f_fins1z02_cob = ls_journalentryitem-yy1_f_fins1z02_cob.
           ls_select-yy1_f_fins2z01_cob = ls_journalentryitem-yy1_f_fins2z01_cob.
           ls_select-yy1_f_fins2z02_cob = ls_journalentryitem-yy1_f_fins2z02_cob.
-
+          ls_select-profitcenter                    = ls_journalentryitem-profitcenter                    .
+          ls_select-costcenter                      = ls_journalentryitem-costcenter  .
+          ls_select-documentitemtext  = ls_journalentryitem-documentitemtext  .
           READ TABLE lt_operationalacctgdocitem_i INTO DATA(ls_result2) WITH KEY
           companycode = ls_select-companycode
           fiscalyear  = ls_select-fiscalyear
@@ -980,8 +1064,8 @@ WITH KEY companycode = ls_select-companycode
             "ls_select-glaccountname                   = ls_result2-glaccountname                   .
             ls_select-documentitemtext                = ls_result2-documentitemtext                .
             ls_select-taxcode                         = ls_result2-taxcode                         .
-            ls_select-profitcenter                    = ls_result2-profitcenter                    .
-            ls_select-costcenter                      = ls_result2-costcenter                      .
+            "ls_select-profitcenter                    = ls_result2-profitcenter                    .
+            "ls_select-costcenter                      = ls_result2-costcenter                      .
             "ls_select-exchangerate                    = ls_result2-exchangerate                    .
             ls_select-financialaccounttype            = ls_result2-financialaccounttype  .
 
@@ -1004,9 +1088,14 @@ WITH KEY companycode = ls_select-companycode
               ls_select-companycodecurrency                   = ls_parkedoplacctgdocument_i-companycodecurrency                 .
               ls_select-amountincompanycodecurrency           = ls_parkedoplacctgdocument_i-amountincompanycodecurrency         .
               ls_select-documentitemtext                      = ls_parkedoplacctgdocument_i-documentitemtext                    .
-              ls_select-taxcode                               = ls_parkedoplacctgdocument_i-taxcode                             .
-              ls_select-profitcenter                          = ls_parkedoplacctgdocument_i-profitcenter                        .
-              ls_select-costcenter                            = ls_parkedoplacctgdocument_i-costcenter                          .
+              ls_select-taxcode                               = ls_parkedoplacctgdocument_i-taxcode.
+              IF ls_parkedoplacctgdocument_i-profitcenter IS NOT INITIAL.
+                ls_select-profitcenter                          = ls_parkedoplacctgdocument_i-profitcenter .
+              ENDIF.                             .
+              IF ls_parkedoplacctgdocument_i-costcenter  IS NOT INITIAL.
+                ls_select-costcenter                            = ls_parkedoplacctgdocument_i-costcenter  .
+              ENDIF.                      .
+              .
               "ls_select-absoluteexchangerate                  = ls_parkedoplacctgdocument-absoluteexchangerate                .
               ls_select-financialaccounttype                  = ls_parkedoplacctgdocument_i-financialaccounttype                .
               IF  ls_parkedoplacctgdocument_i-debitcreditcode = 'S'.
@@ -1084,8 +1173,8 @@ WITH KEY companycode = ls_select-companycode
             READ TABLE lt_glaccountlineitem INTO DATA(ls_glaccountlineitem1) WITH KEY
             companycode = ls_select-companycode
            fiscalyear  = ls_select-fiscalyear
-           accountingdocument = ls_select-accountingdocument
-           ledgergllineitem  = ls_select-ledgergllineitem BINARY SEARCH.
+           accountingdocument = ls_select-accountingdocument BINARY SEARCH.
+            "ledgergllineitem  = ls_select-ledgergllineitem BINARY SEARCH.
             IF sy-subrc = 0.
               ls_select-assignmentreference = ls_glaccountlineitem1-assignmentreference.
             ENDIF.
@@ -1100,6 +1189,7 @@ WITH KEY companycode = ls_select-companycode
 
             ENDIF.
           ENDIF.
+
           ls_select-debitamountintranscrcy_i = zzcl_common_utils=>conversion_amount(
                            iv_alpha = 'OUT'
                            iv_currency = ls_select-transactioncurrency_i
@@ -1108,6 +1198,15 @@ WITH KEY companycode = ls_select-companycode
                                      iv_alpha = 'OUT'
                                      iv_currency = ls_select-transactioncurrency_i
                                      iv_input = ls_select-creditamountintranscrcy_i ).
+
+          ls_select-debitamountincocodecrcy = zzcl_common_utils=>conversion_amount(
+                           iv_alpha = 'OUT'
+                           iv_currency = ls_select-companycodecurrency
+                           iv_input = ls_select-debitamountincocodecrcy ).
+          ls_select-creditamountincocodecrcy = zzcl_common_utils=>conversion_amount(
+                                     iv_alpha = 'OUT'
+                                     iv_currency = ls_select-companycodecurrency
+                                     iv_input = ls_select-creditamountincocodecrcy ).
 *****************************************************************
 *       Description
 *****************************************************************
@@ -1115,11 +1214,11 @@ WITH KEY companycode = ls_select-companycode
           IF sy-subrc = 0.
             ls_select-glaccountname = ls_glaccounttext-glaccountlongname .
           ENDIF.
-          READ TABLE lt_customer INTO DATA(ls_customer) WITH KEY customer = ls_select-customer BINARY SEARCH.
+          READ TABLE lt_customer INTO DATA(ls_customer) WITH KEY customer = ls_result2-customer BINARY SEARCH.
           IF sy-subrc = 0.
             ls_select-customername = ls_customer-customername .
           ENDIF.
-          READ TABLE lt_supplier INTO DATA(ls_supplier) WITH KEY supplier = ls_select-supplier BINARY SEARCH.
+          READ TABLE lt_supplier INTO DATA(ls_supplier) WITH KEY supplier = ls_result2-supplier BINARY SEARCH.
           IF sy-subrc = 0.
             ls_select-suppliername = ls_supplier-suppliername .
           ENDIF.
@@ -1130,7 +1229,14 @@ WITH KEY companycode = ls_select-companycode
           IF sy-subrc = 0.
             ls_select-fixedassetdescription = ls_fixedasset-fixedassetdescription.
           ENDIF.
-
+          READ TABLE lt_profitcentertext INTO DATA(ls_profitcentertext) WITH KEY profitcenter = ls_select-profitcenter BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_select-profitcenter = ls_select-profitcenter && ` ` && ls_profitcentertext-profitcentername .
+          ENDIF.
+          READ TABLE lt_costcentertext INTO DATA(ls_costcentertext) WITH KEY costcenter = ls_select-costcenter BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_select-costcenter = ls_select-costcenter && ` ` && ls_costcentertext-costcentername .
+          ENDIF.
           IF ls_select-financialaccounttype = 'D'.
             ls_select-bp = ls_result2-customer .
             ls_select-bpname = ls_select-customername .
@@ -1154,6 +1260,10 @@ WITH KEY companycode = ls_select-companycode
           READ TABLE lt_user INTO ls_user WITH KEY userid = sy-uname BINARY SEARCH.
           IF sy-subrc = 0.
             ls_select-print_user = sy-uname && ` `  && ls_user-userdescription.
+          ENDIF.
+          READ TABLE lt_taxtext INTO DATA(ls_taxtext) WITH KEY taxcode = ls_select-taxcode BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_select-taxcode = ls_select-taxcode && ` `  && ls_taxtext-taxcodename.
           ENDIF.
 
           APPEND ls_select TO lt_select.
@@ -1181,6 +1291,20 @@ WITH KEY companycode = ls_select-companycode
         DATA:lt_count TYPE STANDARD TABLE OF lty_count.
         DATA:ls_count TYPE lty_count.
         DATA:lv_total_page TYPE p LENGTH 10 DECIMALS 2 .
+        DATA:lv_date TYPE bldat.
+        DATA:lv_time TYPE uzeit.
+        DATA:lv_timestamp TYPE abp_creation_tstmpl .
+
+        "DATA(lv_time) = cl_abap_context_info=>get_system_time( ).
+        "DATA(lv_date) = cl_abap_context_info=>get_system_date( ).
+        GET TIME STAMP FIELD lv_timestamp.
+        TRY.
+            DATA(lv_timezone) = cl_abap_context_info=>get_user_time_zone( ).
+            "时间戳格式转换成日期格式
+            CONVERT TIME STAMP lv_timestamp TIME ZONE lv_timezone INTO DATE lv_date TIME lv_time .
+          CATCH cx_abap_context_info_error INTO DATA(e) ##NO_HANDLER.
+            "handle exception
+        ENDTRY.
         CONSTANTS:c_page TYPE i VALUE 7.
         lv_curr_page = 1.
 
@@ -1219,8 +1343,16 @@ WITH KEY companycode = ls_select-companycode
             IF ls_select-accountingdoccreationdate_w IS INITIAL.
               CLEAR ls_header-accountingdoccreationdate_w.
             ENDIF.
-            ls_header-currentdate = sy-datum+0(4) && '/' && sy-datum+4(2) && '/' && sy-datum+6(2).
-            ls_header-currenttime = sy-uzeit+0(2) && ':' && sy-uzeit+2(2) && ':' && sy-uzeit+4(2).
+            IF ls_select-debitamountintranscrcy < 0.
+              REPLACE ALL OCCURRENCES OF '-' IN  ls_header-debitamountintranscrcy WITH ''.
+              ls_header-debitamountintranscrcy = '-' && ls_header-debitamountintranscrcy.
+            ENDIF.
+            IF ls_select-creditamountintranscrcy < 0.
+              REPLACE ALL OCCURRENCES OF '-' IN  ls_header-creditamountintranscrcy WITH ''.
+              ls_header-creditamountintranscrcy = '-' && ls_header-creditamountintranscrcy.
+            ENDIF.
+            ls_header-currentdate = lv_date+0(4) && '-' && lv_date+4(2) && '-' && lv_date+6(2).
+            ls_header-currenttime = lv_time+0(2) && ':' && lv_time+2(2) && ':' && lv_time+4(2).
             ls_print-_header = ls_header.
             IF lv_page < c_page.
               DO c_page - lv_page TIMES.
@@ -1261,14 +1393,40 @@ WITH KEY companycode = ls_select-companycode
             CLEAR ls_item-debitamountincocodecrcy.
           ENDIF.
 
+          "负号提前
+          IF ls_select-debitamountintranscrcy_i < 0.
+            REPLACE ALL OCCURRENCES OF '-' IN  ls_item-debitamountintranscrcy WITH ''.
+            ls_item-debitamountintranscrcy = '-' && ls_item-debitamountintranscrcy.
+          ENDIF.
+          IF ls_select-creditamountintranscrcy_i < 0.
+            REPLACE ALL OCCURRENCES OF '-' IN  ls_item-creditamountintranscrcy WITH ''.
+            ls_item-creditamountintranscrcy = '-' && ls_item-creditamountintranscrcy.
+          ENDIF.
+          IF ls_select-creditamountincocodecrcy < 0.
+            REPLACE ALL OCCURRENCES OF '-' IN  ls_item-creditamountincocodecrcy WITH ''.
+            ls_item-creditamountincocodecrcy = '-' && ls_item-creditamountincocodecrcy.
+
+          ENDIF.
+          IF ls_select-debitamountincocodecrcy < 0.
+            REPLACE ALL OCCURRENCES OF '-' IN  ls_item-debitamountincocodecrcy WITH ''.
+            ls_item-debitamountincocodecrcy = '-' && ls_item-debitamountincocodecrcy.
+          ENDIF.
+
+
+
+
+
+
+
           CONDENSE :ls_item-glaccountname,ls_item-bpname,ls_item-yy1_f_fins1z02_cob,ls_item-yy1_f_fins2z02_cob,ls_item-fixedassetdescription.
           ls_item-glaccountname = |{ ls_item-glaccount ALPHA = OUT }|  && ls_item-glaccountname.
           ls_item-bpname = |{ ls_item-bp ALPHA = OUT }| && ls_item-bpname.
-          ls_item-yy1_f_fins1z02_cob = ls_item-yy1_f_fins1z01_cob && ls_item-yy1_f_fins1z02_cob.
-          ls_item-yy1_f_fins2z02_cob = ls_item-yy1_f_fins2z01_cob && ls_item-yy1_f_fins2z02_cob.
+          ls_item-yy1_f_fins1z02_cob = ls_item-yy1_f_fins1z01_cob && ` ` && ls_item-yy1_f_fins1z02_cob.
+          ls_item-yy1_f_fins2z02_cob = ls_item-yy1_f_fins2z01_cob && ` ` && ls_item-yy1_f_fins2z02_cob.
           IF ls_item-masterfixedasset IS NOT INITIAL.
             ls_item-fixedassetdescription = |{ ls_item-masterfixedasset ALPHA = OUT }|  && '-' && |{ ls_item-fixedasset ALPHA = OUT }| && ls_item-fixedassetdescription.
           ENDIF.
+
           ls_item-ledgergllineitem  = ls_select-ledgergllineitem+3(3) .
           APPEND ls_item TO lt_item.
           lv_page += 1.
@@ -1303,8 +1461,16 @@ WITH KEY companycode = ls_select-companycode
             IF ls_select-accountingdoccreationdate_w IS INITIAL.
               CLEAR ls_header-accountingdoccreationdate_w.
             ENDIF.
-            ls_header-currentdate = sy-datum+0(4) && '/' && sy-datum+4(2) && '/' && sy-datum+6(2).
-            ls_header-currenttime = sy-uzeit+0(2) && ':' && sy-uzeit+2(2) && ':' && sy-uzeit+4(2).
+            IF ls_select-debitamountintranscrcy < 0.
+              REPLACE ALL OCCURRENCES OF '-' IN  ls_header-debitamountintranscrcy WITH ''.
+              ls_header-debitamountintranscrcy = '-' && ls_header-debitamountintranscrcy.
+            ENDIF.
+            IF ls_select-creditamountintranscrcy < 0.
+              REPLACE ALL OCCURRENCES OF '-' IN  ls_header-creditamountintranscrcy WITH ''.
+              ls_header-creditamountintranscrcy = '-' && ls_header-creditamountintranscrcy.
+            ENDIF.
+            ls_header-currentdate = lv_date+0(4) && '-' && lv_date+4(2) && '-' && lv_date+6(2).
+            ls_header-currenttime = lv_time+0(2) && ':' && lv_time+2(2) && ':' && lv_time+4(2).
             ls_print-_header = ls_header.
             ls_print-_item   = lt_item.
 
@@ -1340,10 +1506,17 @@ WITH KEY companycode = ls_select-companycode
           IF ls_select-accountingdoccreationdate_w IS INITIAL.
             CLEAR ls_header-accountingdoccreationdate_w.
           ENDIF.
+          IF ls_select-debitamountintranscrcy < 0.
+            REPLACE ALL OCCURRENCES OF '-' IN  ls_header-debitamountintranscrcy WITH ''.
+            ls_header-debitamountintranscrcy = '-' && ls_header-debitamountintranscrcy.
+          ENDIF.
+          IF ls_select-creditamountintranscrcy < 0.
+            REPLACE ALL OCCURRENCES OF '-' IN  ls_header-creditamountintranscrcy WITH ''.
+            ls_header-creditamountintranscrcy = '-' && ls_header-creditamountintranscrcy.
+          ENDIF.
 
-
-          ls_header-currentdate = sy-datum+0(4) && '/' && sy-datum+4(2) && '/' && sy-datum+6(2).
-          ls_header-currenttime = sy-uzeit+0(2) && ':' && sy-uzeit+2(2) && ':' && sy-uzeit+4(2).
+          ls_header-currentdate = lv_date+0(4) && '-' && lv_date+4(2) && '-' && lv_date+6(2).
+          ls_header-currenttime = lv_time+0(2) && ':' && lv_time+2(2) && ':' && lv_time+4(2).
 
           ls_print-_header = ls_header.
           IF lv_page < c_page.

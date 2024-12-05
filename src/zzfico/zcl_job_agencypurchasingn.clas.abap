@@ -56,7 +56,9 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
         IF NOT zzcl_common_utils=>is_valid_date( lv_datum ).
           TRY.
               add_message_to_log( i_text = |パラメータ年度期間 { ls_parameters-low } 無効。| i_type = 'E' ).
-            CATCH cx_bali_runtime.
+            CATCH cx_bali_runtime INTO DATA(cx_erro).
+              DATA ls_msg TYPE scx_t100key.
+              DATA(lv_msge) = cx_erro->get_text( ).
           ENDTRY.
           RETURN.
         ENDIF.
@@ -280,7 +282,9 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
     IF lt_item IS INITIAL.
       TRY.
           add_message_to_log( i_text = 'No Data' ).
-        CATCH cx_bali_runtime.
+        CATCH cx_bali_runtime INTO DATA(cx_erra).
+          DATA ls_msga TYPE scx_t100key.
+          DATA(lv_msga) = cx_erra->get_text( ).
       ENDTRY.
       RETURN.
     ENDIF.
@@ -315,7 +319,9 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
       OR <lfs_item>-accountingdocument2 IS NOT INITIAL.
         TRY.
             add_message_to_log( i_text = '仕訳が既に生成されましたので、ご確認ください。' i_type = 'E' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime INTO DATA(cx_errb).
+            DATA ls_msgb TYPE scx_t100key.
+            DATA(lv_msgb) = cx_errb->get_text( ).
         ENDTRY.
         CONTINUE.
       ENDIF.
@@ -344,7 +350,9 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
         CATCH cx_uuid_error INTO DATA(lx_uuid_error).
           TRY.
               add_message_to_log( i_text = 'UUID 作成に失敗しました: ' && lx_uuid_error->get_text( ) i_type = 'E' ).
-            CATCH cx_bali_runtime.
+            CATCH cx_bali_runtime INTO DATA(cx_errc).
+              DATA ls_msgc TYPE scx_t100key.
+              DATA(lv_msgc) = cx_errc->get_text( ).
           ENDTRY.
           CONTINUE.
       ENDTRY.
@@ -419,19 +427,25 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
         CATCH cx_abap_context_info_error INTO DATA(lx_context_error).
           TRY.
               add_message_to_log( i_text = 'システムURLの取得に失敗しました: ' && lx_context_error->get_text( ) i_type = 'E' ).
-            CATCH cx_bali_runtime.
+            CATCH cx_bali_runtime INTO DATA(cx_errd).
+              DATA ls_msgd TYPE scx_t100key.
+              DATA(lv_msgd) = cx_errd->get_text( ).
           ENDTRY.
           CONTINUE.
         CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
           TRY.
               add_message_to_log( i_text = 'HTTP宛先の作成に失敗しました: ' && lx_http_dest_provider_error->get_text( ) i_type = 'E' ).
-            CATCH cx_bali_runtime.
+            CATCH cx_bali_runtime INTO DATA(cx_erre).
+              DATA ls_msge TYPE scx_t100key.
+              DATA(lv_msgee) = cx_erre->get_text( ).
           ENDTRY.
           CONTINUE.
         CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
           TRY.
               add_message_to_log( i_text = CONV #( lx_web_http_client_error->get_text( ) ) i_type = 'E' ).
-            CATCH cx_bali_runtime.
+            CATCH cx_bali_runtime INTO DATA(cx_errf).
+              DATA ls_msgf TYPE scx_t100key.
+              DATA(lv_msgf) = cx_errf->get_text( ).
           ENDTRY.
           CONTINUE.
       ENDTRY.
@@ -484,14 +498,18 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
           CLEAR <lfs_item>-accountingdocument1.
           TRY.
               add_message_to_log( i_text = CONV #( lv_string2 ) i_type = 'E' ).
-            CATCH cx_bali_runtime.
+            CATCH cx_bali_runtime INTO DATA(cx_errg).
+              DATA ls_msgg TYPE scx_t100key.
+              DATA(lv_msgg) = cx_errg->get_text( ).
           ENDTRY.
           lv_has_error = abap_true.
         ENDIF.
       ELSE.
         TRY.
             add_message_to_log( i_text = |{ ls_http_status-code } { ls_http_status-reason }| i_type = 'E' ).
-          CATCH cx_bali_runtime.
+          CATCH cx_bali_runtime INTO DATA(cx_errh).
+              DATA ls_msgh TYPE scx_t100key.
+              DATA(lv_msgh) = cx_errh->get_text( ).
         ENDTRY.
         lv_has_error = abap_true.
       ENDIF.
@@ -504,7 +522,9 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
           CATCH cx_uuid_error INTO lx_uuid_error.
             TRY.
                 add_message_to_log( i_text = 'UUID 作成に失敗しました: ' && lx_uuid_error->get_text( ) i_type = 'E' ).
-              CATCH cx_bali_runtime.
+              CATCH cx_bali_runtime INTO DATA(cx_erri).
+              DATA ls_msgi TYPE scx_t100key.
+              DATA(lv_msgi) = cx_erri->get_text( ).
             ENDTRY.
             CONTINUE.
         ENDTRY.
@@ -591,19 +611,22 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
           CATCH cx_abap_context_info_error INTO lx_context_error.
             TRY.
                 add_message_to_log( i_text = 'システムURLの取得に失敗しました: ' && lx_context_error->get_text( ) i_type = 'E' ).
-              CATCH cx_bali_runtime.
+              CATCH cx_bali_runtime INTO cx_errd.
+                lv_msgd = cx_errd->get_text( ).
             ENDTRY.
             CONTINUE.
           CATCH cx_http_dest_provider_error INTO lx_http_dest_provider_error.
             TRY.
                 add_message_to_log( i_text = 'HTTP宛先の作成に失敗しました: ' && lx_http_dest_provider_error->get_text( ) i_type = 'E' ).
-              CATCH cx_bali_runtime.
+              CATCH cx_bali_runtime INTO cx_errd.
+                lv_msgd = cx_errd->get_text( ).
             ENDTRY.
             CONTINUE.
           CATCH cx_web_http_client_error INTO lx_web_http_client_error.
             TRY.
                 add_message_to_log( i_text = CONV #( lx_web_http_client_error->get_text( ) ) i_type = 'E' ).
-              CATCH cx_bali_runtime.
+              CATCH cx_bali_runtime INTO cx_errd.
+                lv_msgd = cx_errd->get_text( ).
             ENDTRY.
             CONTINUE.
         ENDTRY.
@@ -655,20 +678,23 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
             MODIFY ztfi_1014 FROM @ls_ztfi_1014.
             TRY.
                 add_message_to_log( i_text = '処理が成功しました。' ).
-              CATCH cx_bali_runtime.
+              CATCH cx_bali_runtime INTO cx_errd.
+                lv_msgd = cx_errd->get_text( ).
             ENDTRY.
           ELSE.
             CLEAR <lfs_item>-accountingdocument2.
             TRY.
                 add_message_to_log( i_text = CONV #( lv_string2 ) i_type = 'E' ).
-              CATCH cx_bali_runtime.
+              CATCH cx_bali_runtime INTO cx_errd.
+                lv_msgd = cx_errd->get_text( ).
             ENDTRY.
             lv_has_error = abap_true.
           ENDIF.
         ELSE.
           TRY.
               add_message_to_log( i_text = |{ ls_http_status-code } { ls_http_status-reason }| i_type = 'E' ).
-            CATCH cx_bali_runtime.
+            CATCH cx_bali_runtime INTO cx_errd.
+                lv_msgd = cx_errd->get_text( ).
           ENDTRY.
           lv_has_error = abap_true.
         ENDIF.
@@ -734,7 +760,9 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
                                                                        subobject   = 'ZZ_LOG_FICO028_SUB'
 *                                                                       external_id = CONV #( mv_uuid )
                                                                        ) ).
-      CATCH cx_bali_runtime.
+      CATCH cx_bali_runtime INTO DATA(cx_erro).
+        DATA ls_msg TYPE scx_t100key.
+        DATA(lv_msge) = cx_erro->get_text( ).
         " handle exception
     ENDTRY.
   ENDMETHOD.
@@ -758,7 +786,9 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
         ELSE.
 *          mo_out->write( i_text ).
         ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
+      CATCH cx_bali_runtime INTO DATA(cx_erro).
+        DATA ls_msg TYPE scx_t100key.
+        DATA(lv_msge) = cx_erro->get_text( ).
         " handle exception
     ENDTRY.
   ENDMETHOD.

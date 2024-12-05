@@ -24,6 +24,7 @@ FUNCTION zzfm_dtimp_tfi005.
 
     TRY.
         DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
+        ##NO_HANDLER
       CATCH cx_uuid_error.
         "handle exception
     ENDTRY.

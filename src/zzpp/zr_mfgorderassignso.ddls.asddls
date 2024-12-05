@@ -30,7 +30,7 @@ define root view entity ZR_MFGORDERASSIGNSO
            else _AssignItem.sequence end                                      as Sequence,
       _MfgOrder.MRPController,
       _MfgOrder.ProductionSupervisor,
-      _MfgOrder.Material,
+      cast(_MfgOrder.Material as matnr preserving type)                       as Material,
       _MfgOrder.ProductionVersion,
       _MfgOrder.MfgOrderPlannedStartDate,
       @Semantics.quantity.unitOfMeasure: 'ProductionUnit'
@@ -43,7 +43,7 @@ define root view entity ZR_MFGORDERASSIGNSO
       _AssignItem.assign_qty                                                  as AssignQty,
 
       _SOItem.PurchaseOrderByCustomer,
-      _SOItem.Material                                                        as ItemMaterial,
+      cast(_SOItem.Material as matnr preserving type)                         as ItemMaterial,
       @Semantics.quantity.unitOfMeasure: 'ProductionUnit'
       cast( _SOItem.RequestedQuantityInBaseUnit as abap.quan( 15, 3 ) )       as RequestedQuantityInBaseUnit,
 
