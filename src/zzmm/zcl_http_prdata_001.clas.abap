@@ -65,10 +65,7 @@ private section.
 
 ENDCLASS.
 
-
-
 CLASS ZCL_HTTP_PRDATA_001 IMPLEMENTATION.
-
 
   METHOD if_http_service_extension~handle_request.
 
@@ -121,17 +118,24 @@ CLASS ZCL_HTTP_PRDATA_001 IMPLEMENTATION.
 
     INTO TABLE @DATA(lt_pr).
 
-    SELECT * FROM i_purchasinginforecordapi01 WITH PRIVILEGED ACCESS
-
+    SELECT supplier,
+           Material,
+           SupplierPhoneNumber,
+           SupplierMaterialNumber
+     FROM i_purchasinginforecordapi01 WITH PRIVILEGED ACCESS
         WHERE isdeleted <> 'X'
         into TABLE @data(lt_phno) .
+
+    if lt_phno is NOT INITIAL.
+        sort lt_phno by supplier material.
+    ENDIF.
 
 
     if lt_pr is not INITIAL.
 
         LOOP AT LT_PR INTO DATA(LW_PR).
 
-            READ TABLE lt_phno into data(lw_phno) with key supplier = lw_pr-FixedSupplier Material = lw_pr-Material.
+            READ TABLE lt_phno into data(lw_phno) with key supplier = lw_pr-FixedSupplier Material = lw_pr-Material BINARY SEARCH.
 
 
                 if sy-subrc = 0.

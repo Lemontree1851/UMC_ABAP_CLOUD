@@ -66,9 +66,9 @@ FUNCTION zzfm_dtimp_tpp1021.
                     orderplannedstartdate
                     orderplannedenddate
                     productionversion
-                    mrpcontroller
-                    wbselementinternalid
-                    profitcenter
+                    "mrpcontroller
+                    "wbselementinternalid
+                    "profitcenter
                     goodsrecipientname
                     unloadingpointname
                   )
@@ -82,9 +82,9 @@ FUNCTION zzfm_dtimp_tpp1021.
                     %data-orderplannedstartdate  = ls_data-basic_start_date
                     %data-orderplannedenddate    = ls_data-basic_end_date
                     %data-productionversion      = ls_data-prod_version
-                    %data-mrpcontroller          = ls_data-mrp_controller
-                    %data-wbselementinternalid   = ls_data-wbs_element
-                    %data-profitcenter           = ls_data-profit_center
+                    "%data-mrpcontroller          = ls_data-mrp_controller
+                    "%data-wbselementinternalid   = ls_data-wbs_element
+                    "%data-profitcenter           = ls_data-profit_center
                     %data-goodsrecipientname     = ls_data-goods_recipient
                     %data-unloadingpointname     = ls_data-unloading_point
                   )

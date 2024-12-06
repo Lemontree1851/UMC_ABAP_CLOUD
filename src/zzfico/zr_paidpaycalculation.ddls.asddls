@@ -19,7 +19,7 @@ define root custom entity ZR_PAIDPAYCALCULATION
       @UI                 : { lineItem: [ { position: 30 } ],
                                              selectionField: [ { position: 3 } ] }
   key Period              : monat; //会計期間
-      @UI                 : { lineItem: [ { position: 40 } ] }
+          @UI                 : { lineItem: [ { position: 40 } ] }
   key Customer            : kunnr; //得意先コード
       @UI                 : { lineItem: [ { position: 50 } ] }
   key Supplier            : lifnr; //仕入先コード
@@ -50,6 +50,7 @@ define root custom entity ZR_PAIDPAYCALCULATION
                                              selectionField: [ { position: 4 } ] }
   key Ledge               : abap.char(2);
       Ztype               : abap.char(1); //A:品番別; B:購買グルー合計
+  
       CustomerName        : abap.char(80); //得意先名称
       SupplierName        : abap.char(80); //仕入先名称
       ProfitCenterName    : ktext; //利益センタテキスト

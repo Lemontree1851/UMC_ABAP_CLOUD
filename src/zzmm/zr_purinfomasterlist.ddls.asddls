@@ -43,7 +43,7 @@ define root custom entity ZR_PURINFOMASTERLIST
       @Semantics.unitOfMeasure       : true
       PurgDocOrderQuantityUnit       : abap.unit(3);
       @Semantics.quantity.unitOfMeasure: 'BaseUnit'
-      ConditionScaleQuantity         : abap.quan(15);
+      ConditionScaleQuantity         : abap.quan(15,3);
       organizationbpname1_ja         : abap.char(40);
       organizationbpname1_en         : abap.char(40);
       PurchasingGroupName            : abap.char(18);
@@ -71,9 +71,8 @@ define root custom entity ZR_PURINFOMASTERLIST
       TaxCode                        : abap.char(2);
       MinimumPurchaseOrderQuantity   : abap.char(13);
       @Semantics.quantity.unitOfMeasure: 'BaseUnit'
-      MaximumOrderQuantity           : abap.quan(13);
-      @Semantics.quantity.unitOfMeasure: 'BaseUnit'
-      PricingDateControl             : abap.quan(13);
+      MaximumOrderQuantity           : abap.quan(13,3);
+      PricingDateControl             : abap.char(1);
       SupplierMaterialGroup          : abap.char(18);
       SupplierCertOriginCountry      : abap.char(3);
       SupplierCertOriginRegion       : abap.char(3);
@@ -92,5 +91,5 @@ define root custom entity ZR_PURINFOMASTERLIST
       ismarkedfordeletion            : abap.char(1);
       productsalesorg                : abap.char(4);
       zvalue2                        : abap.char(120);
-      Rate                           : abap.char(11);
+      Rate                           : abap.char(50);
 }

@@ -395,56 +395,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
           ENDIF.
         ENDLOOP.
         "组合字段必输校验
-        IF ( <record>-('MatId') IS INITIAL AND <record>-('SupplierMat') IS INITIAL AND <record>-('CompanyCode') <> '1400' ) OR
-          ( <record>-('CompanyCode') = '1400' AND <record>-('AccountType') IS INITIAL AND <record>-('MatId') IS INITIAL AND <record>-('SupplierMat') IS INITIAL ).
-          is_error = abap_true.
-          " 明细界面单条值处理时会用到此消息
-          add_reported(
-            EXPORTING
-              record    = <record>
-              target    = required-field
-              id        = 'ZMM_001'
-              number    = '035'
-              severity  = cl_abap_behv=>ms-error
-            CHANGING
-              reported  = repo ).
-          " excel批量导入时，通过action调用会用到此消息
-          MESSAGE e035(zmm_001) INTO lv_msg.
-          lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
-        ELSEIF <record>-('CompanyCode') = '1400' AND <record>-('AccountType') IS NOT INITIAL AND
-          <record>-('MatId') IS INITIAL AND <record>-('SupplierMat') IS INITIAL AND <record>-('MatDesc') IS INITIAL.
-          is_error = abap_true.
-          " 明细界面单条值处理时会用到此消息
-          add_reported(
-            EXPORTING
-              record    = <record>
-              target    = required-field
-              id        = 'ZMM_001'
-              number    = '036'
-              severity  = cl_abap_behv=>ms-error
-            CHANGING
-              reported  = repo ).
-          " excel批量导入时，通过action调用会用到此消息
-          MESSAGE e036(zmm_001) INTO lv_msg.
-          lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
-          " 根据客户物料和供应商查找SAP物料
-        ELSEIF <record>-('MatId') IS INITIAL AND <record>-('SupplierMat') IS NOT INITIAL.
-          DATA lv_suppliermat TYPE i_purchasinginforecordapi01-suppliermaterialnumber.
-          DATA lv_supplier TYPE lifnr.
-
-          lv_supplier = <record>-('Supplier').
-          lv_supplier = |{ lv_supplier ALPHA = IN }|.
-          lv_suppliermat = <record>-('SupplierMat').
-          SELECT
-            material,
-            supplier,
-            suppliermaterialnumber
-          FROM i_purchasinginforecordapi01 WITH PRIVILEGED ACCESS AS _purhcasinginforecord
-          WHERE suppliermaterialnumber = @lv_suppliermat
-            AND supplier = @lv_supplier
-            AND isdeleted = ''
-          INTO TABLE @DATA(lt_material).
-          IF lines( lt_material ) <> 1.
+        IF <record>-('CompanyCode') = '1400' OR <record>-('CompanyCode') = '1100'.
+          IF <record>-('AccountType') IS INITIAL AND <record>-('MatId') IS INITIAL AND <record>-('SupplierMat') IS INITIAL.
             is_error = abap_true.
             " 明细界面单条值处理时会用到此消息
             add_reported(
@@ -452,19 +404,68 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                 record    = <record>
                 target    = required-field
                 id        = 'ZMM_001'
-                number    = '034'
+                number    = '035'
                 severity  = cl_abap_behv=>ms-error
-                v1        = <record>-('SupplierMat')
-                v2        = <record>-('Supplier')
               CHANGING
                 reported  = repo ).
             " excel批量导入时，通过action调用会用到此消息
-            MESSAGE e034(zmm_001) WITH <record>-('SupplierMat') <record>-('Supplier') INTO lv_msg.
+            MESSAGE e035(zmm_001) INTO lv_msg.
             lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
-          ELSE.
-            READ TABLE lt_material INTO DATA(ls_material) INDEX 1.
-            IF sy-subrc = 0.
-              <record>-('MatId') = ls_material-material.
+          ELSEIF <record>-('AccountType') IS NOT INITIAL AND
+            <record>-('MatId') IS INITIAL AND <record>-('SupplierMat') IS INITIAL AND <record>-('MatDesc') IS INITIAL.
+            is_error = abap_true.
+            " 明细界面单条值处理时会用到此消息
+            add_reported(
+              EXPORTING
+                record    = <record>
+                target    = required-field
+                id        = 'ZMM_001'
+                number    = '036'
+                severity  = cl_abap_behv=>ms-error
+              CHANGING
+                reported  = repo ).
+            " excel批量导入时，通过action调用会用到此消息
+            MESSAGE e036(zmm_001) INTO lv_msg.
+            lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
+            " 根据客户物料和供应商查找SAP物料
+          ELSEIF <record>-('MatId') IS INITIAL AND <record>-('SupplierMat') IS NOT INITIAL.
+            DATA lv_suppliermat TYPE i_purchasinginforecordapi01-suppliermaterialnumber.
+            DATA lv_supplier TYPE lifnr.
+
+            lv_supplier = <record>-('Supplier').
+            lv_supplier = |{ lv_supplier ALPHA = IN }|.
+            lv_suppliermat = <record>-('SupplierMat').
+            SELECT
+              material,
+              supplier,
+              suppliermaterialnumber
+            FROM i_purchasinginforecordapi01 WITH PRIVILEGED ACCESS AS _purhcasinginforecord
+            WHERE suppliermaterialnumber = @lv_suppliermat
+              AND supplier = @lv_supplier
+              AND isdeleted = ''
+            INTO TABLE @DATA(lt_material).
+            IF lines( lt_material ) <> 1.
+              is_error = abap_true.
+              " 明细界面单条值处理时会用到此消息
+              add_reported(
+                EXPORTING
+                  record    = <record>
+                  target    = required-field
+                  id        = 'ZMM_001'
+                  number    = '034'
+                  severity  = cl_abap_behv=>ms-error
+                  v1        = <record>-('SupplierMat')
+                  v2        = <record>-('Supplier')
+                CHANGING
+                  reported  = repo ).
+              " excel批量导入时，通过action调用会用到此消息
+              MESSAGE e034(zmm_001) WITH <record>-('SupplierMat') <record>-('Supplier') INTO lv_msg.
+              lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
+            ELSE.
+              READ TABLE lt_material INTO DATA(ls_material) INDEX 1.
+              IF sy-subrc = 0.
+                <record>-('MatId') = ls_material-material.
+              ENDIF.
             ENDIF.
           ENDIF.
         ENDIF.

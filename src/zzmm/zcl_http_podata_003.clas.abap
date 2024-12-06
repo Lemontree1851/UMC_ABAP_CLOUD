@@ -367,8 +367,12 @@ DATA: lv_date       TYPE D,
               lw_result-plainlongtext = lw_note-PlainLongText .
               ENDIF.
 
-
-               DATA(lv_unit1) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lw_result-purchaseorderquantityunit ).
+                TRY.
+                  DATA(lv_unit1) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input =  lw_result-purchaseorderquantityunit ).
+                    ##NO_HANDLER
+                  CATCH zzcx_custom_exception.
+                    " handle exception
+                ENDTRY.
 
                  lw_result-purchaseorderquantityunit = lv_unit1.
 

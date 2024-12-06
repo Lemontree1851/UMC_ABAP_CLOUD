@@ -14,9 +14,7 @@ CLASS lhc_physicalinvupload DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS processlogic FOR MODIFY
       IMPORTING keys FOR ACTION physicalinvupload~processlogic RESULT result.
 
-    METHODS excute CHANGING ct_data TYPE lty_request_t
-                   RAISING
-                     zzcx_custom_exception.
+    METHODS excute CHANGING ct_data TYPE lty_request_t.
     METHODS get_message IMPORTING io_message    TYPE REF TO if_abap_behv_message
                         RETURNING VALUE(rv_msg) TYPE string.
 
@@ -42,9 +40,11 @@ CLASS lhc_physicalinvupload IMPLEMENTATION.
       CASE lv_event.
 
         WHEN 'EXCUTE'.
-          excute( CHANGING ct_data = lt_request ).
+
+          excute( CHANGING ct_data = lt_request ) .
 
         WHEN OTHERS.
+
       ENDCASE.
 
       DATA(lv_json) = /ui2/cl_json=>serialize( data = lt_request ).
@@ -216,8 +216,12 @@ types: BEGIN OF ty_response_C,
          UP TO 1 ROWS .
          ENDSELECT.
 
+        TRY.
         DATA(lv_unit1) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit ).
-
+            ##NO_HANDLER
+          CATCH zzcx_custom_exception.
+            " handle exception
+        ENDTRY.
          <ls_data>-UnitOfEntry = lv_unit1.
          clear: lv_unit1, LV_MATNRIN .
 

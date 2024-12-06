@@ -18,7 +18,7 @@ CLASS lhc_zr_tfi_1012 DEFINITION INHERITING FROM cl_abap_behavior_handler.
             glaccount                   TYPE      hkont,
             glaccountname(60)           TYPE      c,
             documentitemtext(60)        TYPE      c,
-            taxcode(5)                  TYPE      c,
+            taxcode(50)                 TYPE      c,
             profitcenter                TYPE      string,
             costcenter                  TYPE      string,
             exchangerate                TYPE      prctr,
@@ -123,7 +123,7 @@ CLASS lhc_zr_tfi_1012 DEFINITION INHERITING FROM cl_abap_behavior_handler.
             parkedbyusername                 TYPE    string,
             workitem(12)                     TYPE    n,
             createdbyusername                TYPE c LENGTH 80,
-            accountingdoccreationdate_w      TYPE    bldat,
+            accountingdoccreationdate_w      TYPE    string,
             accountingdoccategory_w          TYPE c LENGTH 1,
             accountingdocumentstatusname(60) TYPE    c,
             wrkflwtskcreationutcdatetime     TYPE    string,
@@ -163,9 +163,9 @@ CLASS lhc_zr_tfi_1012 DEFINITION INHERITING FROM cl_abap_behavior_handler.
             creditamountincocodecrcy         TYPE      wrbtr,
             accountingdocumentitem           TYPE c LENGTH 6,
             assignmentreference(18)          TYPE      c,
-            billofexchangeissuedate          TYPE      datum,
+            billofexchangeissuedate          TYPE      string,
             billofexchangedomiciletext(60)   TYPE      c,
-            duecalculationbasedate           TYPE      datum,
+            duecalculationbasedate           TYPE      string,
             print_user                       TYPE string,
           END OF ty_select.
 
@@ -904,7 +904,7 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
         SELECT
         *
         FROM i_taxcodetext
-        WHERE language = @sy-langu
+        WHERE language = 'J'
         INTO TABLE @DATA(lt_taxtext) .                  "#EC CI_NOWHERE
         SORT lt_taxtext BY taxcode.
 
@@ -1168,7 +1168,10 @@ WITH KEY companycode = ls_select-companycode
           BINARY SEARCH.
           IF sy-subrc = 0.
             ls_select-accountingdocumentitem = ls_billofexchange-accountingdocumentitem .
-            ls_select-billofexchangeissuedate = ls_billofexchange-billofexchangeissuedate .
+            "ls_select-billofexchangeissuedate = ls_billofexchange-billofexchangeissuedate .
+            IF ls_billofexchange-billofexchangeissuedate IS NOT INITIAL.
+              ls_select-billofexchangeissuedate = ls_billofexchange-billofexchangeissuedate+0(4) && '-' && ls_billofexchange-billofexchangeissuedate+4(2) && '-' && ls_billofexchange-billofexchangeissuedate+6(2).
+            ENDIF.
             ls_select-billofexchangedomiciletext = ls_billofexchange-billofexchangedomiciletext .
             READ TABLE lt_glaccountlineitem INTO DATA(ls_glaccountlineitem1) WITH KEY
             companycode = ls_select-companycode
@@ -1181,11 +1184,12 @@ WITH KEY companycode = ls_select-companycode
             READ TABLE lt_operationalacctgdocitem_i INTO ls_result2 WITH KEY
             companycode = ls_select-companycode
             fiscalyear  = ls_select-fiscalyear
-            accountingdocument = ls_select-accountingdocument
-            accountingdocumentitem  = ls_select-ledgergllineitem.
+            accountingdocument = ls_select-accountingdocument.
+            "accountingdocumentitem  = ls_select-ledgergllineitem.
 
-            IF sy-subrc = 0.
-              ls_select-duecalculationbasedate = ls_result2-duecalculationbasedate.
+            IF sy-subrc = 0 AND ls_result2-duecalculationbasedate IS NOT INITIAL.
+              "ls_select-duecalculationbasedate = ls_result2-duecalculationbasedate.
+              ls_select-duecalculationbasedate = ls_result2-duecalculationbasedate+0(4) && '-' && ls_result2-duecalculationbasedate+4(2) && '-' && ls_result2-duecalculationbasedate+6(2).
 
             ENDIF.
           ENDIF.
@@ -1210,6 +1214,12 @@ WITH KEY companycode = ls_select-companycode
 *****************************************************************
 *       Description
 *****************************************************************
+          IF ls_result2-customer IS INITIAL AND ls_select-customer IS NOT INITIAL.
+            ls_result2-customer = ls_select-customer.
+          ENDIF.
+          IF ls_result2-supplier IS INITIAL AND ls_select-supplier IS NOT INITIAL.
+            ls_result2-supplier = ls_select-supplier.
+          ENDIF.
           READ TABLE lt_glaccounttext INTO DATA(ls_glaccounttext) WITH KEY glaccount = ls_select-glaccount BINARY SEARCH.
           IF sy-subrc = 0.
             ls_select-glaccountname = ls_glaccounttext-glaccountlongname .
@@ -1290,6 +1300,7 @@ WITH KEY companycode = ls_select-companycode
         DATA:lv_curr_page TYPE i .
         DATA:lt_count TYPE STANDARD TABLE OF lty_count.
         DATA:ls_count TYPE lty_count.
+        DATA:ls_count_old TYPE lty_count.
         DATA:lv_total_page TYPE p LENGTH 10 DECIMALS 2 .
         DATA:lv_date TYPE bldat.
         DATA:lv_time TYPE uzeit.
@@ -1315,6 +1326,7 @@ WITH KEY companycode = ls_select-companycode
         ENDLOOP.
 
         LOOP AT lt_select INTO ls_select.
+          ls_count_old = ls_count.
           "GET TOTAL PAGES FOR EACH HEADER
           READ TABLE lt_count INTO ls_count WITH KEY companycode = ls_select-companycode
         fiscalyear = ls_select-fiscalyear
@@ -1323,11 +1335,15 @@ WITH KEY companycode = ls_select-companycode
           IF datakey IS NOT INITIAL AND datakey NE ls_select-companycode && ls_select-fiscalyear && ls_select-accountingdocument.
             ls_header-page_num = lv_curr_page.
             "ls_header-total_page_num =  ls_count-count / c_page + 1.
-            lv_total_page =  ls_count-count / c_page + 1.
+            lv_total_page =  ls_count_old-count / c_page + 1.
             ls_header-total_page_num = lv_total_page.
             IF ls_header-total_page_num > lv_total_page.
               ls_header-total_page_num  -= 1.
             ENDIF.
+            IF lv_total_page * c_page -  ls_count_old-count = c_page.
+              ls_header-total_page_num  -= 1.
+            ENDIF.
+
             IF ls_select-duecalculationbasedate IS INITIAL.
               CLEAR ls_header-duecalculationbasedate.
             ENDIF.
@@ -1428,6 +1444,9 @@ WITH KEY companycode = ls_select-companycode
           ENDIF.
 
           ls_item-ledgergllineitem  = ls_select-ledgergllineitem+3(3) .
+          IF strlen( ls_select-ledgergllineitem ) = 3.
+            ls_item-ledgergllineitem  = ls_select-ledgergllineitem.
+          ENDIF.
           APPEND ls_item TO lt_item.
           lv_page += 1.
           "HEAD EDIT
@@ -1444,6 +1463,9 @@ WITH KEY companycode = ls_select-companycode
             ls_header-total_page_num = lv_total_page.
             "ls_header-total_page_num =  ls_count-count / c_page + 1.
             IF ls_header-total_page_num > lv_total_page.
+              ls_header-total_page_num  -= 1.
+            ENDIF.
+            IF lv_total_page * c_page -  ls_count-count = c_page.
               ls_header-total_page_num  -= 1.
             ENDIF.
             IF ls_select-duecalculationbasedate IS INITIAL.
@@ -1488,6 +1510,9 @@ WITH KEY companycode = ls_select-companycode
           lv_total_page =  ls_count-count / c_page + 1.
           ls_header-total_page_num = lv_total_page.
           IF ls_header-total_page_num > lv_total_page.
+            ls_header-total_page_num  -= 1.
+          ENDIF.
+          IF lv_total_page * c_page -  ls_count-count = c_page.
             ls_header-total_page_num  -= 1.
           ENDIF.
           IF ls_select-duecalculationbasedate IS INITIAL.
@@ -1538,9 +1563,18 @@ WITH KEY companycode = ls_select-companycode
 
     ENDIF.
 
+    "删除空页
+    LOOP AT lt_print INTO ls_print.
+
+      READ TABLE ls_print-_item INTO DATA(ls_item_empty) INDEX 1.
+      IF sy-subrc = 0 AND ls_item_empty-accountingdocument IS INITIAL.
+        DELETE lt_print.
+        CONTINUE.
+      ENDIF.
+
+    ENDLOOP.
+
     ct_print = lt_print.
-
-
 
 
   ENDMETHOD.

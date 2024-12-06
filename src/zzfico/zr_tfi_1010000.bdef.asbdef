@@ -10,8 +10,6 @@ authorization master( global )
    Companycode,
    Fiscalyear,
    Period,
-   Customer,
-   Supplier,
    Product,
    Profitcenter,
    Purchasinggroup,
@@ -21,8 +19,6 @@ authorization master( global )
    Companycode,
    Fiscalyear,
    Period,
-   Customer,
-   Supplier,
    Product,
    Profitcenter,
    Purchasinggroup,
@@ -38,12 +34,13 @@ authorization master( global )
     Companycode = companycode;
     Fiscalyear = fiscalyear;
     Period = period;
-    Customer = customer;
-    Supplier = supplier;
     Product = product;
     Profitcenter = profitcenter;
     Purchasinggroup = purchasinggroup;
     Zeile = zeile;
+    Ledge = ledge;
+    Customer = customer;
+    Supplier = supplier;
     Customername = customername;
     Suppliername = suppliername;
     Profitcentername = profitcentername;

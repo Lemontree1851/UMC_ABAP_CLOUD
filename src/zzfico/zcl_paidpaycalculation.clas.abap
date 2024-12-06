@@ -16,6 +16,9 @@ CLASS zcl_paidpaycalculation IMPLEMENTATION.
     DATA:
       lt_output TYPE STANDARD TABLE OF zr_paidpaycalculation,
       ls_output TYPE zr_paidpaycalculation.
+    DATA:
+      lv_fiscalyearperiod TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
+      lv_poper            TYPE poper.
 
 * Get filter range
     TRY.
@@ -49,6 +52,17 @@ CLASS zcl_paidpaycalculation IMPLEMENTATION.
         "handle exception
         io_response->set_data( lt_output ).
     ENDTRY.
+
+* V3 会计期间转换
+    lv_poper = lv_monat.
+    lv_fiscalyearperiod = lv_gjahr && lv_poper.
+    SELECT SINGLE *
+      FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+     WHERE fiscalyearvariant = 'V3'
+       AND fiscalyearperiod = @lv_fiscalyearperiod
+      INTO @DATA(ls_v3).
+    lv_gjahr = ls_v3-FiscalPeriodStartDate+0(4).
+    lv_monat = ls_v3-FiscalPeriodStartDate+4(2).
 
     CASE lv_ztype.
       WHEN 'A'.    "品番別
@@ -178,9 +192,10 @@ CLASS zcl_paidpaycalculation IMPLEMENTATION.
         ENDIF.
     ENDCASE.
 
-    " Filtering
-    zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
-                                 CHANGING  ct_data     = lt_output ).
+    SORT lt_output BY companycode profitcenter customer supplier product purchasinggroup.
+*    " Filtering
+*    zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
+*                                 CHANGING  ct_data     = lt_output ).
 
     IF io_request->is_total_numb_of_rec_requested(  ) .
       io_response->set_total_number_of_records( lines( lt_output ) ).

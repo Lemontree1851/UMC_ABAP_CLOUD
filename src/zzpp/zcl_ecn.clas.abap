@@ -252,8 +252,11 @@ CLASS zcl_ecn IMPLEMENTATION.
       TRY.
           "Get and add filter
           DATA(lt_filter_cond) = io_request->get_filter( )->get_as_ranges( ).
-        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option).
+
+        CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option) ##NO_HANDLER.
+
       ENDTRY.
+
 
       LOOP AT lt_filter_cond INTO DATA(ls_filter_cond).
         LOOP AT ls_filter_cond-range INTO DATA(str_rec_l_range).
@@ -375,6 +378,10 @@ CLASS zcl_ecn IMPLEMENTATION.
 
        INTO TABLE @DATA(lt_bomusemrp).
 
+      IF lt_bomusemrp IS NOT INITIAL.
+
+        SORT lt_bomusemrp BY material plant.
+      ENDIF.
 
 
       LOOP AT lt_bomlink INTO DATA(ls_materialbomlink).
@@ -401,8 +408,10 @@ CLASS zcl_ecn IMPLEMENTATION.
       IF    lt_bomlist IS NOT INITIAL.
 
         SORT lt_bomlist BY material plant billofmaterialvariant billofmaterialcategory.
+        data(lt_bomlist_m) = lt_bomlist.
 
         DELETE ADJACENT DUPLICATES FROM lt_bomlist COMPARING material plant billofmaterialvariant billofmaterialcategory.
+        DELETE ADJACENT DUPLICATES FROM lt_bomlist_m COMPARING Material.
 
       ENDIF.
 
@@ -470,6 +479,11 @@ CLASS zcl_ecn IMPLEMENTATION.
 
       ENDIF.
 
+      if lt_ecn_api is NOT INITIAL.
+        SORT lt_ecn_api BY   changenumber.
+      ENDIF.
+
+
 * 2.1.3品目基本情報取得
 
       SELECT
@@ -477,7 +491,13 @@ CLASS zcl_ecn IMPLEMENTATION.
              netweight,
              weightunit
         FROM i_product WITH PRIVILEGED ACCESS
+        FOR ALL ENTRIES IN @lt_bomlist_m
+        WHERE Product = @lt_bomlist_m-material
         INTO TABLE @DATA(lt_product).
+
+        if lt_product is NOT INITIAL.
+            SORT lt_product BY PRODUCT.
+        ENDIF.
 
       LOOP  AT lt_bom_api ASSIGNING FIELD-SYMBOL(<fs_bomapi>).
 
@@ -485,7 +505,7 @@ CLASS zcl_ecn IMPLEMENTATION.
 
 
 
-        READ TABLE lt_ecn_api INTO DATA(lw_ecn) WITH KEY changenumber = <fs_bomapi>-engineeringchangedocument  .
+        READ TABLE lt_ecn_api INTO DATA(lw_ecn) WITH KEY changenumber = <fs_bomapi>-engineeringchangedocument  BINARY SEARCH .
 
         IF sy-subrc = 0.
 
@@ -509,7 +529,7 @@ CLASS zcl_ecn IMPLEMENTATION.
 
         MOVE-CORRESPONDING <fs_bomapi1> TO lw_basic.
 
-        READ TABLE lt_ecn_api INTO lw_ecn WITH KEY changenumber = <fs_bomapi1>-engineeringchangedocument  .
+        READ TABLE lt_ecn_api INTO lw_ecn WITH KEY changenumber = <fs_bomapi1>-engineeringchangedocument  BINARY SEARCH .
 
         IF sy-subrc = 0.
 
@@ -528,6 +548,10 @@ CLASS zcl_ecn IMPLEMENTATION.
         CLEAR :lw_basicall.
 
       ENDLOOP.
+
+      if lt_basicall IS NOT INITIAL.
+        SORT lt_basicall by  billofmaterial billofmaterialcategory  billofmaterialvariant billofmaterialitemnodenumber.
+      ENDIF.
 
 
 
@@ -579,7 +603,7 @@ CLASS zcl_ecn IMPLEMENTATION.
           READ TABLE lt_basicall INTO lw_basicall WITH KEY billofmaterial = lw_basicobj-billofmaterial
                                                  billofmaterialcategory = lw_basicobj-billofmaterialcategory
                                                  billofmaterialvariant = lw_basicobj-billofmaterialvariant
-                                                 billofmaterialitemnodenumber = lw_basicobj-inheritednodenumberforbomitem  .
+                                                 billofmaterialitemnodenumber = lw_basicobj-inheritednodenumberforbomitem  BINARY SEARCH .
           IF sy-subrc =  0 .
 
             MOVE-CORRESPONDING lw_basicall TO lw_basicdis.
@@ -715,7 +739,7 @@ CLASS zcl_ecn IMPLEMENTATION.
 
       loop at lt_data ASSIGNING FIELD-SYMBOL(<fs_data>).
 
-        READ TABLE lt_product INTO data(lw_product) WITH KEY product = <fs_data>-component.
+        READ TABLE lt_product INTO data(lw_product) WITH KEY product = <fs_data>-component  BINARY SEARCH .
 
             IF sy-subrc = 0.
 

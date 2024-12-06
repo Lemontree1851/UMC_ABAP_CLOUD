@@ -625,6 +625,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         CLEAR lt_receipt_tmp.
 
         SORT lt_materialdocumentitem BY plant material.
+        SORT lt_receipt_309 BY plant material postingdate DESCENDING.
 
         LOOP AT lt_receipt_309 INTO DATA(ls_receipt_309).
           READ TABLE lt_materialdocumentitem TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_309-issuingorreceivingplant
@@ -1435,6 +1436,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
       DELETE lt_receipt_tmp WHERE goodsmovementtype IS INITIAL
                               AND supplier IS INITIAL.
 
+      SORT lt_receipt_309new BY plant material postingdate.
+      SORT lt_receipt_vennew BY plant material postingdate.
       SORT lt_receipt BY plant material postingdate.
 
       LOOP AT lt_receipt_tmp INTO ls_receipt_tmp.
@@ -1617,7 +1620,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
       MODIFY ztfi_1019 FROM TABLE @lt_ztfi_1019_db.
     ENDIF.
 
-*    DELETE FROM ztfi_1019 WHERE fiscalyear = '2024' AND fiscalperiod = '006'.
+*    DELETE FROM ztfi_1019 WHERE fiscalyear = '2024' AND fiscalperiod = '008'.
 *                             and ( product = 'ZTEST_RAW001' OR product = 'ZTEST_RAW002' ).
   ENDMETHOD.
 ENDCLASS.
