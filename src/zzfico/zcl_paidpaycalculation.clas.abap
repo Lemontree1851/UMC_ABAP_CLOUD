@@ -192,7 +192,7 @@ CLASS zcl_paidpaycalculation IMPLEMENTATION.
         ENDIF.
     ENDCASE.
 
-    SORT lt_output BY companycode profitcenter customer supplier product purchasinggroup.
+    SORT lt_output BY companycode profitcenter product purchasinggroup customer supplier.
 *    " Filtering
 *    zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
 *                                 CHANGING  ct_data     = lt_output ).

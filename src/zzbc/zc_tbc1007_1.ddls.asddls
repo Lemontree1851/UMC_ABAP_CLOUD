@@ -9,18 +9,17 @@
 define view entity ZC_TBC1007_1
   as projection on ZR_TBC1007_1
 {
+
   key Uuid,
-      UserUuid,
-      RoleUuid,
+      @UI.lineItem: [{ position: 10 }]
+      @EndUserText.label: 'User Id'
+  key UserId,
+      RoleId,
       CreatedBy,
       CreatedAt,
       LastChangedBy,
       LastChangedAt,
       LocalLastChangedAt,
-
-      @UI.lineItem: [{ position: 10 }]
-      @EndUserText.label: 'User Id'
-      UserId,
 
       @UI.lineItem: [{ position: 20 }]
       @EndUserText.label: 'User Name'

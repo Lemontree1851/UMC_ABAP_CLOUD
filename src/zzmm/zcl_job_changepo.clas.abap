@@ -36,9 +36,8 @@ CLASS zcl_job_changepo IMPLEMENTATION.
     " 获取日志对象
     init_application_log( ).
 
-    SELECT
-      _item~purchaseorder,
-      _item~purchaseorderitem
+    SELECT DISTINCT
+      _item~purchaseorder
     FROM i_purchaseorderapi01 AS _head
     LEFT JOIN i_purchaseorderitemapi01 AS _item
       ON _head~purchaseorder = _item~purchaseorder

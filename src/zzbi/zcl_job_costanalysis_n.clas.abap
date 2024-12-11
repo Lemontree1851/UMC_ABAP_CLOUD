@@ -230,6 +230,10 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
         lv_next_start_c(19) TYPE c,
         lv_next_end_c(19)   TYPE c.
 
+      DATA:
+        lv_price1 TYPE p LENGTH 16 DECIMALS 3,
+        lv_price2 TYPE p LENGTH 16 DECIMALS 3.
+
       lv_yearmonth = mv_year && mv_month.
 
       lv_fiscalyear = mv_year.
@@ -602,6 +606,7 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
            basic~product AS material,             "部品
            basic~standardprice,       "標準原価
            basic~movingaverageprice,  "実際原価
+           basic~PriceUnitQty,
            basic~currency             "会社コード通貨
       FROM i_productvaluationbasic WITH PRIVILEGED ACCESS AS basic
       JOIN @lt_qms_t07_quotation_d AS t07
@@ -726,9 +731,31 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
         WITH KEY plant    = <lfs_qmst07>-plant
                  material = <lfs_qmst07>-material_number BINARY SEARCH.
       IF sy-subrc = 0.
-        ls_data-standardprice      = <lfs_basic>-standardprice.
-        ls_data-movingaverageprice = <lfs_basic>-movingaverageprice.
+          clear:lv_price1,lv_price2.
+          try.
 
+
+
+            lv_price1 = <lfs_basic>-standardprice / <lfs_basic>-PriceUnitQty.
+            lv_price2 = <lfs_basic>-movingaverageprice / <lfs_basic>-PriceUnitQty.
+
+            lv_price1 = zzcl_common_utils=>conversion_amount(
+                                          iv_alpha = 'OUT'
+                                          iv_currency = <lfs_basic>-currency
+                                          iv_input = lv_price1 ).
+            lv_price2 = zzcl_common_utils=>conversion_amount(
+                                          iv_alpha = 'OUT'
+                                          iv_currency = <lfs_basic>-currency
+                                          iv_input = lv_price2 ).
+
+            ls_data-standardprice       = lv_price1.
+            ls_data-movingaverageprice  = lv_price2.
+          CATCH cx_root  INTO DATA(xexc).
+            ls_data-standardprice       = lv_price1.
+            ls_data-movingaverageprice  = lv_price2.
+          ENDTRY.
+          ls_data-standardprice      = CONDENSE( ls_data-standardprice ).
+          ls_data-movingaverageprice = CONDENSE( ls_data-movingaverageprice ).
         IF <lfs_basic>-currency NE lv_currency.
           TRY.
               cl_exchange_rates=>convert_to_local_currency(
@@ -1023,29 +1050,29 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
   METHOD if_oo_adt_classrun~main.
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
 
-*    lt_parameters = VALUE #(
-**                              ( selname = 'P_Compan'
-**                               kind    = if_apj_dt_exec_object=>parameter
-**                               sign    = 'I'
-**                               option  = 'EQ'
-**                               low     = '1100' )
-*                               ( selname = 'P_Plant'
+    lt_parameters = VALUE #(
+*                              ( selname = 'P_Compan'
 *                               kind    = if_apj_dt_exec_object=>parameter
 *                               sign    = 'I'
 *                               option  = 'EQ'
 *                               low     = '1100' )
-*                               ( selname = 'P_Year'
-*                               kind    = if_apj_dt_exec_object=>parameter
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '2024' )
-*                               ( selname = 'P_Month'
-*                               kind    = if_apj_dt_exec_object=>parameter
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '07' )
-*
-*                               ).
+                               ( selname = 'P_Plant'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1100' )
+                               ( selname = 'P_Year'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '2024' )
+                               ( selname = 'P_Month'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '07' )
+
+                               ).
 
     TRY.
         if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).

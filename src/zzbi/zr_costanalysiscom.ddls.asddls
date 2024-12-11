@@ -10,7 +10,8 @@ define root custom entity ZR_COSTANALYSISCOM
   @Consumption.valueHelpDefinition: [ { entity: { element: 'Product', name: 'I_ProductStdVH' } } ]                                              
   key Product            : abap.char( 40 );                            
   key ProductDescription : abap.char( 40 );    
-  @Consumption.valueHelpDefinition: [ { entity: { element: 'Material', name: 'ZC_BOMMaterialVH' } } ]                                    
+//  @Consumption.valueHelpDefinition: [ { entity: { element: 'Material', name: 'ZC_BOMMaterialVH' } } ]     
+  @Consumption.valueHelpDefinition: [ { entity: { element: 'Product', name: 'I_ProductStdVH' } } ]                                 
   key Material           : abap.char( 40 );                             
       CompanycodeText    : abap.char( 40 );  
       PlantText          : abap.char( 40 );                             
@@ -25,11 +26,10 @@ define root custom entity ZR_COSTANALYSISCOM
       FinalPrice         : abap.curr(15,2);                            
       FinalPostingDate   : abap.char( 8 );                                       
       FinalSupplier      : abap.char( 10 );                                   
-      FixedSupplier      : abap.char( 40 );    
-      @Semantics : { amount : {currencyCode: 'Currency'} }                                     
-      StandardPrice      : abap.curr(15,2);   
-      @Semantics : { amount : {currencyCode: 'Currency'} }                          
-      MovingAveragePrice : abap.curr(15,2);                              
+      FixedSupplier      : abap.char( 40 );                                        
+      StandardPrice      : abap.char( 40 );                  
+      MovingAveragePrice : abap.char( 40 );   
+                                 
       Currency           : waerk;         
       BillingQuantity    : abap.char( 20 );                                   
       BillingQuantityUnit: abap.char( 2 );

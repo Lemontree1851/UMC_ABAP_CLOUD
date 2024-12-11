@@ -51,7 +51,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
     ENDTRY.
 
 * ZTBC_1001
-    SELECT *             "#EC CI_ALL_FIELDS_NEEDED
+    SELECT *                                  "#EC CI_ALL_FIELDS_NEEDED
       FROM ztbc_1001
      WHERE zid = 'ZSD003'
         OR zid = 'ZSD004'
@@ -84,7 +84,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
               OR finishstatus = @space )
           INTO TABLE @DATA(lt_1003).
         IF sy-subrc = 0.
-          SELECT *               "#EC CI_ALL_FIELDS_NEEDED
+          SELECT *                            "#EC CI_ALL_FIELDS_NEEDED
           FROM ztsd_1012 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_1003
          WHERE salesorganization = @lt_1003-salesorganization
@@ -152,7 +152,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ENDIF.
 
         IF lt_1003 IS NOT INITIAL.
-          SELECT *                    "#EC CI_ALL_FIELDS_NEEDED
+          SELECT *                            "#EC CI_ALL_FIELDS_NEEDED
             FROM ztsd_1012
             FOR ALL ENTRIES IN @lt_1003
            WHERE salesorganization = @lt_1003-salesorganization
@@ -180,7 +180,8 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         INNER JOIN i_salesdocumentitem WITH PRIVILEGED ACCESS AS b
           ON ( a~salesdocument = b~salesdocument )
         FOR ALL ENTRIES IN @lt_1003
-       WHERE a~purchaseorderbycustomer = @lt_1003-customerpo
+       WHERE a~soldtoparty IN @lr_kunnr
+         AND a~purchaseorderbycustomer = @lt_1003-customerpo
         INTO TABLE @DATA(lt_so).
 
       SELECT customer,
@@ -282,17 +283,21 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
                                                          iv_alpha = 'OUT'
                                                          iv_currency = ls_1003-currency
                                                          iv_input = ls_1003-acceptprice ).
+        CONDENSE ls_output-acceptprice NO-GAPS.
         "検収金額
         ls_output-accceptamount = zzcl_common_utils=>conversion_amount(
                                                          iv_alpha = 'OUT'
                                                          iv_currency = ls_1003-currency
                                                          iv_input = ls_1003-accceptamount ).
+        CONDENSE ls_output-accceptamount NO-GAPS.
         "検収税額
         ls_output-acccepttaxamount = ls_1003-accceptamount * ls_1003-taxrate.
+        CONDENSE ls_output-acccepttaxamount NO-GAPS.
         ls_output-acccepttaxamount = zzcl_common_utils=>conversion_amount(
                                                          iv_alpha = 'OUT'
                                                          iv_currency = ls_1003-currency
                                                          iv_input = ls_output-acccepttaxamount ).
+        CONDENSE ls_output-acccepttaxamount NO-GAPS.
         ls_output-currency = ls_1003-currency.        "検収通貨(受注通貨)
         ls_output-outsidedata = ls_1003-outsidedata.  "SAP外売上区分(フラグ)
       ENDIF.
@@ -310,21 +315,20 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
                                                          iv_alpha = 'OUT'
                                                          iv_currency = ls_1003-currency
                                                          iv_input = ls_billing-netamount ).
+        CONDENSE ls_output-netamount NO-GAPS.
         "請求税額
         ls_output-taxamount = zzcl_common_utils=>conversion_amount(
                                                          iv_alpha = 'OUT'
                                                          iv_currency = ls_1003-currency
                                                          iv_input = ls_billing-taxamount ).
-
+        CONDENSE ls_output-taxamount NO-GAPS.
         READ TABLE lt_prcd_elements INTO DATA(ls_prcd)
              WITH KEY billingdocument = ls_billing-billingdocument
                       billingdocumentitem = ls_billing-billingdocumentitem BINARY SEARCH.
         IF sy-subrc = 0.
           "請求単価
-          ls_output-conditionratevalue = zzcl_common_utils=>conversion_amount(
-                                                         iv_alpha = 'OUT'
-                                                         iv_currency = ls_1003-currency
-                                                         iv_input = ls_prcd-conditionratevalue ).
+          ls_output-conditionratevalue = ls_prcd-conditionratevalue.
+          CONDENSE ls_output-conditionratevalue NO-GAPS.
           ls_output-conditioncurrency = ls_prcd-conditioncurrency.   "単価通貨
           ls_output-conditionquantity = ls_prcd-conditionquantity.   "単価数量単位
         ENDIF.
@@ -337,39 +341,29 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ENDIF.
       ENDIF.
 
-      IF lv_layer = '1'.
-        READ TABLE lt_1012 INTO DATA(ls_1012)
-             WITH KEY salesdocument = ls_output-salesdocument
-                      salesdocumentitem = ls_output-salesdocumentitem
-                      billingdocument = ls_output-billingdocument BINARY SEARCH.
-        IF sy-subrc = 0.
-          ls_output-processstatus = ls_1012-processstatus.
-        ELSE.
-          IF ls_output-conditionquantity <> 0.
-            lv_netpr = ls_output-conditioncurrency / ls_output-conditionquantity.
-          ENDIF.
-          IF ls_output-acceptqty = ls_output-billingquantity
-         AND ls_output-acceptprice = lv_netpr
-         AND ls_output-accceptamount = ls_output-netamount
-         AND ls_output-acccepttaxamount = ls_output-taxamount.
-            ls_output-processstatus = '0'.
-          ELSE.
-            ls_output-processstatus = '2'.
-          ENDIF.
-        ENDIF.
+      READ TABLE lt_1012 INTO DATA(ls_1012)
+           WITH KEY salesdocument = ls_output-salesdocument
+                    salesdocumentitem = ls_output-salesdocumentitem
+                    billingdocument = ls_output-billingdocument BINARY SEARCH.
+      IF sy-subrc = 0.
+        ls_output-remarks = ls_1012-remarks.
+        ls_output-processstatus = ls_1012-processstatus.
+        ls_output-reasoncategory = ls_1012-reasoncategory.
+        ls_output-reason = ls_1012-reason.
       ELSE.
-        READ TABLE lt_1012 INTO ls_1012
-             WITH KEY salesdocument = ls_so-salesdocument
-                      salesdocumentitem = ls_so-salesdocumentitem
-                      billingdocument = ls_billing-billingdocument BINARY SEARCH.
-        IF sy-subrc = 0.
-          ls_output-remarks = ls_1012-remarks.
-          ls_output-processstatus = ls_1012-processstatus.
-          ls_output-reasoncategory = ls_1012-reasoncategory.
-          ls_output-reason = ls_1012-reason.
+        IF ls_output-conditionquantity <> 0.
+          lv_netpr = ls_output-conditionratevalue / ls_output-conditionquantity.
         ENDIF.
-
+        IF ls_output-acceptqty = ls_output-billingquantity
+       AND ls_output-acceptprice = lv_netpr
+       AND ls_output-accceptamount = ls_output-netamount
+       AND ls_output-acccepttaxamount = ls_output-taxamount.
+          ls_output-processstatus = '0'.
+        ELSE.
+          ls_output-processstatus = '2'.
+        ENDIF.
       ENDIF.
+
 
       "编辑表头描述
       READ TABLE lt_customer INTO DATA(ls_customer)

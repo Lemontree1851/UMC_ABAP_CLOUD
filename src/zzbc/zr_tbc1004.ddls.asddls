@@ -8,8 +8,7 @@ define root view entity ZR_TBC1004
   composition [0..*] of ZR_TBC1013 as _AssignSalesOrg
   composition [0..*] of ZR_TBC1007 as _AssignRole
 {
-  key user_uuid             as UserUuid,
-      user_id               as UserId,
+  key user_id               as UserId,
       mail                  as Mail,
       department            as Department,
       user_name             as UserName,

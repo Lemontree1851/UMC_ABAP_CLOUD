@@ -14,13 +14,22 @@ define behavior for ZC_TBC1005 alias Role
   use action Resume;
   use action Prepare;
 
-  use association _User;
+  use association _User { with draft; }
+  use association _AccessBtn { create; with draft; }
+}
+
+define behavior for ZC_TBC1016 alias AccessBtn
+{
+  use update;
+  use delete;
+
+  use association _Role { with draft; }
 }
 
 define behavior for ZC_TBC1007_1 alias User
 {
-//  use update;
-//  use delete;
+  //  use update;
+  //  use delete;
 
-  use association _Role;
+  use association _Role { with draft; }
 }

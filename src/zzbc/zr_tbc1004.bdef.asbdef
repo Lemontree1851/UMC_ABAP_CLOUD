@@ -13,7 +13,6 @@ authorization master ( instance )
   update;
   delete;
 
-  field ( readonly, numbering : managed ) UserUuid;
   field ( readonly )
   CreatedBy,
   CreatedAt,
@@ -24,7 +23,6 @@ authorization master ( instance )
   field ( mandatory : create, readonly : update ) UserId;
   field ( mandatory ) Mail;
 
-  validation validationUserId on save ##NOT_ASSIGNED_TO_DETACT { field UserId; create; }
   validation validationEmail on save ##NOT_ASSIGNED_TO_DETACT { field Mail; create; update; }
 
   draft action Edit;
@@ -40,7 +38,6 @@ authorization master ( instance )
 
   mapping for ztbc_1004
     {
-      UserUuid           = user_uuid;
       UserId             = user_id;
       Mail               = mail;
       Department         = department;
@@ -65,7 +62,7 @@ etag master LocalLastChangedAt
 
   field ( readonly, numbering : managed ) Uuid;
   field ( readonly )
-  UserUuid,
+  UserId,
   PlantName,
   CreatedBy,
   CreatedAt,
@@ -82,52 +79,8 @@ etag master LocalLastChangedAt
   mapping for ztbc_1006
     {
       Uuid               = uuid;
-      UserUuid           = user_uuid;
+      UserId             = user_id;
       Plant              = plant;
-      CreatedBy          = created_by;
-      CreatedAt          = created_at;
-      LastChangedBy      = last_changed_by;
-      LastChangedAt      = last_changed_at;
-      LocalLastChangedAt = local_last_changed_at;
-    }
-}
-
-define behavior for ZR_TBC1007 alias AssignRole
-persistent table ztbc_1007
-draft table ztbc_1007_d
-lock dependent by _User
-authorization dependent by _User
-etag master LocalLastChangedAt
-{
-  update;
-  delete;
-
-  field ( readonly, numbering : managed ) Uuid;
-  field ( readonly )
-  UserUuid,
-  RoleUuid,
-  RoleName,
-  FunctionId,
-  AccessId,
-  AccessName,
-  CreatedBy,
-  CreatedAt,
-  LastChangedBy,
-  LastChangedAt,
-  LocalLastChangedAt;
-
-  field ( mandatory ) RoleId;
-
-  validation validateRoleId on save ##NOT_ASSIGNED_TO_DETACT { field RoleId; create; update; }
-  determination setRoleUuid on save { field RoleId; }
-
-  association _User { with draft; }
-
-  mapping for ztbc_1007
-    {
-      Uuid               = uuid;
-      UserUuid           = user_uuid;
-      RoleUuid           = role_uuid;
       CreatedBy          = created_by;
       CreatedAt          = created_at;
       LastChangedBy      = last_changed_by;
@@ -148,7 +101,7 @@ etag master LocalLastChangedAt
 
   field ( readonly, numbering : managed ) Uuid;
   field ( readonly )
-  UserUuid,
+  UserId,
   CompanyCodeName,
   CreatedBy,
   CreatedAt,
@@ -165,7 +118,7 @@ etag master LocalLastChangedAt
   mapping for ztbc_1012
     {
       Uuid               = uuid;
-      UserUuid           = user_uuid;
+      UserId             = user_id;
       CompanyCode        = company_code;
       CreatedBy          = created_by;
       CreatedAt          = created_at;
@@ -187,7 +140,7 @@ etag master LocalLastChangedAt
 
   field ( readonly, numbering : managed ) Uuid;
   field ( readonly )
-  UserUuid,
+  UserId,
   SalesOrganizationName,
   CreatedBy,
   CreatedAt,
@@ -204,8 +157,45 @@ etag master LocalLastChangedAt
   mapping for ztbc_1013
     {
       Uuid               = uuid;
-      UserUuid           = user_uuid;
+      UserId             = user_id;
       SalesOrganization  = sales_organization;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}
+
+define behavior for ZR_TBC1007 alias AssignRole
+persistent table ztbc_1007
+draft table ztbc_1007_d
+lock dependent by _User
+authorization dependent by _User
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) Uuid;
+  field ( readonly )
+  UserId,
+  RoleName,
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field ( mandatory ) RoleId;
+
+  association _User { with draft; }
+
+  mapping for ztbc_1007
+    {
+      Uuid               = uuid;
+      UserId             = user_id;
+      RoleId             = role_id;
       CreatedBy          = created_by;
       CreatedAt          = created_at;
       LastChangedBy      = last_changed_by;

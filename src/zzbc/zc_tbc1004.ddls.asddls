@@ -5,8 +5,7 @@ define root view entity ZC_TBC1004
   provider contract transactional_query
   as projection on ZR_TBC1004
 {
-  key UserUuid,
-      UserId,
+  key UserId,
       Mail,
       Department,
       UserName,

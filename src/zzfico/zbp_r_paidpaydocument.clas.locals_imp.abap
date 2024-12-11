@@ -247,41 +247,40 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
       es_response_b TYPE ts_output_b.
 
     DATA:
-      lv_msg            TYPE string,
-      lv_text           TYPE string,
-      lv_url            TYPE string,
-      lv_username       TYPE string,
-      lv_pwd            TYPE string,
-      lv_period         TYPE monat,
-      lv_fiscal         TYPE c LENGTH 4,
-      lv_month          TYPE monat,
-      lv_nextmonth      TYPE budat,
-      lv_year           TYPE c LENGTH 4,
-      lv_lastyear       TYPE c LENGTH 4,
-      lv_from           TYPE budat,
-      lv_to             TYPE budat,
-      lv_postdate1      TYPE budat,
-      lv_postdate2      TYPE budat,
-      lc_header_content TYPE string VALUE 'content-type',
-      lc_content_type   TYPE string VALUE 'text/json'.
+      lv_msg              TYPE string,
+      lv_text             TYPE string,
+      lv_url              TYPE string,
+      lv_username         TYPE string,
+      lv_pwd              TYPE string,
+      lv_fiscalyearperiod TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
+      lv_poper            TYPE poper,
+      lv_postdate1        TYPE budat,
+      lv_postdate2        TYPE budat,
+      lc_header_content   TYPE string VALUE 'content-type',
+      lc_content_type     TYPE string VALUE 'text/json'.
 
 * Posting date
-    lv_period = cv_period - 3.
-    lv_fiscal = cv_fiscalyear.
-    IF lv_period <= 0.
-      lv_period = lv_period + 12.
-      lv_fiscal = lv_fiscal - 1.
+* V3 会计期间转换
+    lv_poper = cv_period.
+    lv_fiscalyearperiod = cv_fiscalyear && lv_poper.
+    SELECT SINGLE *
+      FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+     WHERE fiscalyearvariant = 'V3'
+       AND fiscalyearperiod = @lv_fiscalyearperiod
+      INTO @DATA(ls_v3).
+    IF sy-subrc = 0.
+      lv_postdate1 = ls_v3-fiscalperiodenddate.  "当月最后一天
     ENDIF.
-    IF lv_period = 12.
-      lv_year = lv_fiscal + 1.
-      lv_nextmonth = lv_year && '01' && '01'.
-    ELSE.
-      lv_month = lv_period + 1.
-      lv_nextmonth = lv_fiscal && lv_month && '01'.
-    ENDIF.
-    lv_postdate2 = lv_nextmonth.
-    lv_postdate1 = lv_postdate2 - 1.
 
+    lv_fiscalyearperiod = ls_v3-nextfiscalperiodfiscalyear && ls_v3-nextfiscalperiod.
+    SELECT SINGLE *
+      FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+     WHERE fiscalyearvariant = 'V3'
+       AND fiscalyearperiod = @lv_fiscalyearperiod
+      INTO @ls_v3.
+    IF sy-subrc = 0.
+      lv_postdate2 = ls_v3-fiscalperiodstartdate.
+    ENDIF.
 
     SELECT SINGLE zvalue2,
                   zvalue3
@@ -531,13 +530,15 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
       es_response_b TYPE ts_output_b.
 
     DATA:
-      lv_msg            TYPE string,
-      lv_text           TYPE string,
-      lv_url            TYPE string,
-      lv_username       TYPE string,
-      lv_pwd            TYPE string,
-      lc_header_content TYPE string VALUE 'content-type',
-      lc_content_type   TYPE string VALUE 'text/json'.
+      lv_msg              TYPE string,
+      lv_text             TYPE string,
+      lv_url              TYPE string,
+      lv_username         TYPE string,
+      lv_pwd              TYPE string,
+      lv_fiscalyearperiod TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
+      lv_poper            TYPE poper,
+      lc_header_content   TYPE string VALUE 'content-type',
+      lc_content_type     TYPE string VALUE 'text/json'.
 
     SELECT SINGLE zvalue2,
                   zvalue3

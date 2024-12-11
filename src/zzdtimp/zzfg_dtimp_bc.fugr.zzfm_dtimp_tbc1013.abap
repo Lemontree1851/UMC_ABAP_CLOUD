@@ -37,20 +37,20 @@ FUNCTION zzfm_dtimp_tbc1013.
     "Check update flag
     IF ls_data-updateflag IS INITIAL.
       MESSAGE e006(zbc_001) WITH TEXT-001 INTO <line>-('Message').
-      <line>-('Type')    = 'E'.
+      <line>-('Type') = 'E'.
       CONTINUE.
     ELSEIF ls_data-updateflag <> lc_updateflag_insert AND
            ls_data-updateflag <> lc_updateflag_update AND
            ls_data-updateflag <> lc_updateflag_delete.
       MESSAGE e008(zbc_001) WITH TEXT-001 ls_data-updateflag INTO <line>-('Message').
-      <line>-('Type')    = 'E'.
+      <line>-('Type') = 'E'.
       CONTINUE.
     ENDIF.
 
     "Check user id
     IF ls_data-user_id IS INITIAL.
       MESSAGE e006(zbc_001) WITH TEXT-002 INTO <line>-('Message').
-      <line>-('Type')    = 'E'.
+      <line>-('Type') = 'E'.
       CONTINUE.
     ENDIF.
 
@@ -60,37 +60,35 @@ FUNCTION zzfm_dtimp_tbc1013.
 
     IF ls_ztbc_1004 IS INITIAL.
       MESSAGE e007(zbc_001) WITH TEXT-002 ls_data-user_id INTO <line>-('Message').
-      <line>-('Type')    = 'E'.
+      <line>-('Type') = 'E'.
       CONTINUE.
     ENDIF.
 
     "Check role id
     IF ls_data-role_id IS INITIAL.
       MESSAGE e006(zbc_001) WITH TEXT-004 INTO <line>-('Message').
-      <line>-('Type')    = 'E'.
+      <line>-('Type') = 'E'.
       CONTINUE.
     ENDIF.
 
     SELECT SINGLE * FROM ztbc_1005 WHERE role_id = @ls_data-role_id INTO @ls_ztbc_1005. "#EC CI_ALL_FIELDS_NEEDED
     IF sy-subrc <> 0.
       MESSAGE e007(zbc_001) WITH TEXT-004 ls_data-role_id INTO <line>-('Message').
-      <line>-('Type')    = 'E'.
+      <line>-('Type') = 'E'.
       CONTINUE.
     ENDIF.
 
 *   Insert data
     IF ls_data-updateflag = lc_updateflag_insert.
-
-      SELECT COUNT( * ) FROM ztbc_1007 WHERE user_uuid = @ls_ztbc_1004-user_uuid
-                                         AND role_uuid = @ls_ztbc_1005-role_uuid.
+      SELECT COUNT( * ) FROM ztbc_1007 WHERE user_id = @ls_ztbc_1004-user_id
+                                         AND role_id = @ls_ztbc_1005-role_id.
       IF sy-subrc = 0.
         MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-013 INTO <line>-('Message').    "User role data already exist
-        <line>-('Type')    = 'E'.
+        <line>-('Type') = 'E'.
         CONTINUE.
       ENDIF.
 
-      CLEAR:
-        ls_ztbc_1007.
+      CLEAR: ls_ztbc_1007.
 
       TRY.
           ls_ztbc_1007-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
@@ -99,8 +97,8 @@ FUNCTION zzfm_dtimp_tbc1013.
           " handle exception
       ENDTRY.
 
-      ls_ztbc_1007-user_uuid  = ls_ztbc_1004-user_uuid.
-      ls_ztbc_1007-role_uuid  = ls_ztbc_1005-role_uuid.
+      ls_ztbc_1007-user_id  = ls_ztbc_1004-user_id.
+      ls_ztbc_1007-role_id  = ls_ztbc_1005-role_id.
 
       ls_ztbc_1007-created_by = sy-uname.
       GET TIME STAMP FIELD ls_ztbc_1007-created_at.
@@ -119,7 +117,6 @@ FUNCTION zzfm_dtimp_tbc1013.
         <line>-('Type') = 'E'.
         CONTINUE.
       ENDIF.
-
     ENDIF.
 
 *   Update data
@@ -131,28 +128,22 @@ FUNCTION zzfm_dtimp_tbc1013.
 
 *   Delete data
     IF ls_data-updateflag = lc_updateflag_delete.
-
-      DELETE FROM ztbc_1007 WHERE user_uuid = @ls_ztbc_1004-user_uuid
-                              AND role_uuid = @ls_ztbc_1005-role_uuid.
+      DELETE FROM ztbc_1007 WHERE user_id = @ls_ztbc_1004-user_id
+                              AND role_id = @ls_ztbc_1005-role_id.
       COMMIT WORK AND WAIT.
       <line>-('Type') = 'S'.
       <line>-('Message') = 'Success'.
-
     ENDIF.
-
   ENDLOOP.
 
+
   LOOP AT lt_data ASSIGNING FIELD-SYMBOL(<lfs_data>)
-    GROUP BY ( user_id = <lfs_data>-user_id ).
+                               GROUP BY ( user_id = <lfs_data>-user_id ).
 
-    SELECT SINGLE * FROM ztbc_1004 WHERE user_id = @<lfs_data>-user_id INTO @ls_ztbc_1004. "#EC CI_ALL_FIELDS_NEEDED
-
-    DELETE FROM ztbc_1007 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+    DELETE FROM ztbc_1007 WHERE user_id = @<lfs_data>-user_id.
 
     LOOP AT GROUP <lfs_data> INTO ls_data.
-
-      CLEAR:
-        ls_ztbc_1007.
+      CLEAR: ls_ztbc_1007.
 
       TRY.
           ls_ztbc_1007-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
@@ -161,10 +152,8 @@ FUNCTION zzfm_dtimp_tbc1013.
           " handle exception
       ENDTRY.
 
-      ls_ztbc_1007-user_uuid  = ls_ztbc_1004-user_uuid.
-
-      SELECT SINGLE * FROM ztbc_1005 WHERE role_id = @ls_data-role_id INTO @ls_ztbc_1005. "#EC CI_ALL_FIELDS_NEEDED
-      ls_ztbc_1007-role_uuid  = ls_ztbc_1005-role_uuid.
+      ls_ztbc_1007-user_id = ls_data-user_id.
+      ls_ztbc_1007-role_id = ls_data-role_id.
 
       ls_ztbc_1007-created_by = sy-uname.
       GET TIME STAMP FIELD ls_ztbc_1007-created_at.
@@ -186,9 +175,7 @@ FUNCTION zzfm_dtimp_tbc1013.
           <line>-('Type') = 'E'.
         ENDIF..
       ENDIF.
-
     ENDLOOP.
-
   ENDLOOP.
 
 ENDFUNCTION.

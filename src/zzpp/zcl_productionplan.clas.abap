@@ -408,17 +408,17 @@ CLASS zcl_productionplan IMPLEMENTATION.
     ENDLOOP.
 
 * Rounding
-    SELECT product,                           "#EC CI_FAE_LINES_ENSURED
-           plant,
-           lotsizeroundingquantity
-      FROM i_productplantsupplyplanning
-      FOR ALL ENTRIES IN @lt_bom
-     WHERE product = @lt_bom-idnrk
-       AND plant = @lt_bom-plant
-      INTO TABLE @DATA(lt_rounding).
+    IF lt_bom IS NOT INITIAL.
+      SELECT product,                         "#EC CI_FAE_LINES_ENSURED
+             plant,
+             lotsizeroundingquantity
+        FROM i_productplantsupplyplanning
+        FOR ALL ENTRIES IN @lt_bom
+       WHERE product = @lt_bom-idnrk
+         AND plant = @lt_bom-plant
+        INTO TABLE @DATA(lt_rounding).
 
 * 2.2 製造バージョン情報取得
-    IF lt_bom IS NOT INITIAL.
       SELECT plant,
              material,
              productionversion,
@@ -662,7 +662,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
          AND plannedorderisfirm = @space
         INTO TABLE @DATA(lt_unconfirmplan).
     ENDIF.
-* For compare color
+* 合计未确定和ATP的数量，用于比较颜色
     DATA(lt_un_tmp) = lt_unconfirmplan[].
     CLEAR: lt_unconfirmplan.
     DATA: ls_unconfirm LIKE LINE OF lt_unconfirmplan.
@@ -847,7 +847,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
         IF lv_value <> 0.
           lv_capacity = 3600 / lv_value.
           ls_matnr-capacity = lv_capacity.
-          CONDENSE ls_matnr-capacity.
+          CONDENSE ls_matnr-capacity NO-GAPS.
           CLEAR: lv_value, lv_capacity.
         ENDIF.
         "BalanceQty
@@ -873,7 +873,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
                     mrpplant = ls_bom-plant BINARY SEARCH.
       IF sy-subrc = 0.
         ls_matnr-historyso = ls_history-mrpelementopenquantity.
-        CONDENSE ls_matnr-historyso.
+        CONDENSE ls_matnr-historyso NO-GAPS.
       ENDIF.
       "FutureSO
       READ TABLE lt_future INTO ls_future
@@ -881,7 +881,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
                     mrpplant = ls_bom-plant BINARY SEARCH.
       IF sy-subrc = 0.
         ls_matnr-futureso = ls_future-mrpelementopenquantity.
-        CONDENSE ls_matnr-futureso.
+        CONDENSE ls_matnr-futureso NO-GAPS.
       ENDIF.
       "Delta
       READ TABLE lt_delta INTO ls_delta
@@ -1206,28 +1206,6 @@ CLASS zcl_productionplan IMPLEMENTATION.
               ENDIF.
             ENDIF.
 
-            lv_dayc = 'SUMMARYCOLOR'.
-            ASSIGN COMPONENT lv_dayc OF STRUCTURE <ls_tab> TO <l_field>.
-            IF sy-subrc = 0.
-              IF lv_atp_t = 0       "赤色
-             AND lv_qty_t <> 0.
-                <l_field> = 'R'.
-              ENDIF.
-
-              IF lv_atp_t > 0       "黄色
-             AND lv_atp_t < lv_qty_t.
-                <l_field> = 'Y'.
-              ENDIF.
-
-              IF lv_atp_t >= lv_qty_t. "緑色
-                <l_field> = 'G'.
-              ENDIF.
-
-              IF lv_atp_t = 0
-             AND lv_qty_t = 0.
-                <l_field> = space.
-              ENDIF.
-            ENDIF.
           ENDLOOP.
           CLEAR: lv_atp, lv_atp_t, lv_qty, lv_qty_t.
         WHEN 'Z'.   "Theory Stock

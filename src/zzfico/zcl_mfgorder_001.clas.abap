@@ -307,6 +307,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
 *         INTO TABLE @lt_component.
 *        SORT lt_component BY material.
 
+
         DATA:lv_isassembly TYPE c VALUE 'X'.
 
         "从会计科目表明细中提取主要材料和辅助材料的帐户和金额合计
@@ -323,21 +324,21 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
             ev_response    = DATA(lv_resbody_api3) ).
         TRY.
             "JSON->ABAP
-          "  xco_cp_json=>data->from_string( lv_resbody_api3 )->apply( VALUE #(
-          "      ( xco_cp_json=>transformation->underscore_to_camel_case ) ) )->write_to( REF #( ls_res_api3 ) ).
-                /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api3
-                   CHANGING  data = ls_res_api3 ).
+            "  xco_cp_json=>data->from_string( lv_resbody_api3 )->apply( VALUE #(
+            "      ( xco_cp_json=>transformation->underscore_to_camel_case ) ) )->write_to( REF #( ls_res_api3 ) ).
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api3
+               CHANGING  data = ls_res_api3 ).
             LOOP AT ls_res_api3-d-results INTO DATA(ls_result3).
 
               "IF  ls_result3-plant IN lr_plant.
-                CLEAR ls_component.
-                "ls_component-assembly = ls_result3-billofmaterialcomponent.
-                "ls_component-material = ls_result3-material.
-                ls_component-assembly = ls_result3-material.
-                ls_component-material = ls_result3-billofmaterialcomponent.
-                APPEND ls_component TO lt_component.
+              CLEAR ls_component.
+              "ls_component-assembly = ls_result3-billofmaterialcomponent.
+              "ls_component-material = ls_result3-material.
+              ls_component-assembly = ls_result3-material.
+              ls_component-material = ls_result3-billofmaterialcomponent.
+              APPEND ls_component TO lt_component.
 
-             " ENDIF.
+              " ENDIF.
             ENDLOOP.
             SORT lt_component BY material assembly.
             DELETE ADJACENT DUPLICATES FROM lt_component COMPARING material assembly.
@@ -377,7 +378,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
             manufacturingorder,
             product,
             mfgorderconfirmedyieldqty,
-            ProductionUnit,
+            productionunit,
             productionsupervisor
           FROM i_manufacturingorder
           WITH PRIVILEGED ACCESS
@@ -750,7 +751,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
           IF sy-subrc = 0.
             ls_mfgorder_001-mfgorderconfirmedyieldqty = ls_manufacturingorder1-mfgorderconfirmedyieldqty."'製品テキスト'
             ls_mfgorder_001-productionsupervisor = ls_manufacturingorder1-productionsupervisor."'製品テキスト'
-            ls_mfgorder_001-ProductionUnit = ls_manufacturingorder1-ProductionUnit.
+            ls_mfgorder_001-productionunit = ls_manufacturingorder1-productionunit.
 
           ENDIF.
           "ELSE.
@@ -781,11 +782,11 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
           IF sy-subrc = 0.
             "ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount. "'実際賃率'
             IF ls_actualcostrate-costratescalefactor IS NOT INITIAL.
-             " ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount / ls_actualcostrate-costratescalefactor  ."'実際賃率'
-             " ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount    ."'実際賃率'
+              " ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount / ls_actualcostrate-costratescalefactor  ."'実際賃率'
+              " ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount    ."'実際賃率'
 
               ls_mfgorder_001-costratescalefactor2 = ls_actualcostrate-costratescalefactor.
-              ls_mfgorder_001-Currency2 = ls_actualcostrate-Currency.
+              ls_mfgorder_001-currency2 = ls_actualcostrate-currency.
             ENDIF.
             "ls_mfgorder_001-actualcostrate = lv_curr.
 
@@ -816,7 +817,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
           IF sy-subrc = 0.
             IF ls_plancostrate-costratescalefactor IS NOT INITIAL.
               ls_mfgorder_001-plancostrate = ls_plancostrate-costratevarblamount / ls_plancostrate-costratescalefactor. "'計画賃率'
-              ls_mfgorder_001-Currency1  = ls_plancostrate-Currency.
+              ls_mfgorder_001-currency1  = ls_plancostrate-currency.
               ls_mfgorder_001-costratescalefactor1 = ls_plancostrate-costratescalefactor.
             ENDIF.
           ENDIF.

@@ -57,14 +57,14 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
     DATA:
       lv_netpr_jp(12) TYPE p DECIMALS 3,
       lv_netpr(12)    TYPE p DECIMALS 5,
-      lv_ebeln       TYPE ebeln,
-      lv_ebelp       TYPE ebelp,
-      lv_tabix       TYPE i,
-      lv_flg         TYPE c LENGTH 1,
-      lv_count       TYPE i,
-      lv_rate        TYPE i,
-      lv_diff1       TYPE i,
-      lv_diff2       TYPE i.
+      lv_ebeln        TYPE ebeln,
+      lv_ebelp        TYPE ebelp,
+      lv_tabix        TYPE i,
+      lv_flg          TYPE c LENGTH 1,
+      lv_count        TYPE i,
+      lv_rate         TYPE i,
+      lv_diff1        TYPE i,
+      lv_diff2        TYPE i.
 
     CONSTANTS:
       lc_zid(6)   TYPE c VALUE 'ZMM001',
@@ -166,7 +166,8 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
       IF lt_po IS NOT INITIAL.
 * Get Product
         SELECT product,
-               productmanufacturernumber
+               productmanufacturernumber,
+               yy1_customermaterial_prd
           FROM i_product
           FOR ALL ENTRIES IN @lt_po
          WHERE product = @lt_po-material
@@ -458,10 +459,11 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
           ls_output-taxcode = ls_po-taxcode.
 
           IF ls_po-documentcurrency = 'JPY'.
-            lv_netpr_jp = ls_po-netpriceamount / ls_po-netpricequantity.
+            lv_netpr_jp = ls_po-netpriceamount.
             lv_netpr_jp = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
                                                   iv_currency = ls_po-documentcurrency
                                                   iv_input = lv_netpr_jp ).
+            lv_netpr_jp = lv_netpr_jp / ls_po-netpricequantity.
             ls_output-netprice1 = lv_netpr_jp.  "発注単価
             ls_output-netprice2 = lv_netpr_jp.  "取引通貨単価
             lv_netpr_jp = lv_netpr_jp * ls_po-exchangerate.
@@ -481,7 +483,7 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
              WITH KEY product = ls_po-material BINARY SEARCH.
         IF sy-subrc = 0.
           ls_output-productmanufacturernumber = ls_product-productmanufacturernumber.
-*          ls_output-   "顧客品番
+          ls_output-customermaterial = ls_product-yy1_customermaterial_prd.  "顧客品番
         ENDIF.
 
         READ TABLE lt_purchasinggroup INTO DATA(ls_purchasinggroup)
@@ -645,14 +647,14 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
           ELSE.
             ls_output-netamount3 = |{ lv_netpr SIGN = LEFTPLUS }|.
           ENDIF.
-        ENDIF.
 
-        READ TABLE lt_bkpf INTO DATA(ls_bkpf)
+          READ TABLE lt_bkpf INTO DATA(ls_bkpf)
              WITH KEY companycode = ls_invoice-companycode
                       fiscalyear = ls_invoice-fiscalyear
                       originalreferencedocument = ls_invoice-supplierinvoicewthnfiscalyear BINARY SEARCH.
-        IF sy-subrc = 0.
-          ls_output-accountingdocument = ls_bkpf-accountingdocument.
+          IF sy-subrc = 0.
+            ls_output-accountingdocument = ls_bkpf-accountingdocument.
+          ENDIF.
         ENDIF.
 
         APPEND ls_output TO lt_output.
@@ -697,10 +699,12 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
           ls_output-taxcode = ls_po-taxcode.
 
           IF ls_po-documentcurrency = 'JPY'.
-            lv_netpr_jp = ls_po-netpriceamount / ls_po-netpricequantity.
+            lv_netpr_jp = ls_po-netpriceamount.
             lv_netpr_jp = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
                                                   iv_currency = ls_po-documentcurrency
                                                   iv_input = lv_netpr_jp ).
+
+            lv_netpr_jp = lv_netpr_jp / ls_po-netpricequantity.
             ls_output-netprice1 = lv_netpr_jp.  "発注単価
             ls_output-netprice2 = lv_netpr_jp.  "取引通貨単価
             lv_netpr_jp = lv_netpr_jp * ls_po-exchangerate.
@@ -720,7 +724,7 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
                WITH KEY product = ls_po-material BINARY SEARCH.
           IF sy-subrc = 0.
             ls_output-productmanufacturernumber = ls_product-productmanufacturernumber.
-*          ls_output-   "顧客品番
+            ls_output-customermaterial = ls_product-yy1_customermaterial_prd.
           ENDIF.
 
           READ TABLE lt_purchasinggroup INTO ls_purchasinggroup
@@ -747,6 +751,40 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
                         purchaseorderitem = ls_po-purchaseorderitem BINARY SEARCH.
           IF sy-subrc = 0.
             ls_output-deliverydate = ls_ekes-deliverydate.
+            ls_output-dlvqty = ls_ekes-confirmedquantity.
+          ELSE.
+            LOOP AT lt_ekes_tmp INTO ls_ekes_tmp1
+                                WHERE purchaseorder = ls_po-purchaseorder
+                                  AND purchaseorderitem = ls_po-purchaseorderitem
+                                  AND deliverydate <= ls_ekbe-documentdate.
+              lv_diff1 = ls_ekbe-postingdate - ls_ekes_tmp1-deliverydate.
+              EXIT.
+            ENDLOOP.
+
+            LOOP AT lt_ekes_tmp INTO ls_ekes_tmp2
+                                WHERE purchaseorder = ls_po-purchaseorder
+                                  AND purchaseorderitem = ls_po-purchaseorderitem
+                                  AND deliverydate >= ls_ekbe-documentdate.
+              lv_diff2 = ls_ekes_tmp1-deliverydate - ls_ekbe-postingdate.
+              EXIT.
+            ENDLOOP.
+
+            IF lv_diff1 <> 0
+           AND lv_diff2 <> 0.
+              IF lv_diff1 > lv_diff2.
+                ls_output-deliverydate = ls_ekes_tmp2-deliverydate.
+                ls_output-dlvqty = ls_ekes_tmp2-confirmedquantity.
+              ELSEIF lv_diff1 <= lv_diff2.
+                ls_output-deliverydate = ls_ekes_tmp1-deliverydate.
+                ls_output-dlvqty = ls_ekes_tmp1-confirmedquantity.
+              ENDIF.
+            ELSEIF lv_diff1 = 0.
+              ls_output-deliverydate = ls_ekes_tmp2-deliverydate.
+              ls_output-dlvqty = ls_ekes_tmp2-confirmedquantity.
+            ELSEIF lv_diff2 = 0.
+              ls_output-deliverydate = ls_ekes_tmp1-deliverydate.
+              ls_output-dlvqty = ls_ekes_tmp1-confirmedquantity.
+            ENDIF.
           ENDIF.
 
           READ TABLE lt_ekkn INTO ls_ekkn

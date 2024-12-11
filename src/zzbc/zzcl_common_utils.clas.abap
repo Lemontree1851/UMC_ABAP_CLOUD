@@ -42,7 +42,7 @@ CLASS zzcl_common_utils DEFINITION
              metadata TYPE ty_etag,
            END OF   ty_metadata,
            BEGIN OF ty_odata_res,
-             results TYPE TABLE OF ty_metadata WITH DEFAULT KEY,
+             results  TYPE TABLE OF ty_metadata WITH DEFAULT KEY,
              metadata TYPE ty_etag,
            END OF   ty_odata_res,
            BEGIN OF ty_odata_res_d,
@@ -282,12 +282,12 @@ CLASS zzcl_common_utils DEFINITION
       is_workingday IMPORTING iv_plant             TYPE werks_d
                               iv_date              TYPE datum
                     RETURNING VALUE(rv_workingday) TYPE abap_bool,
-      parse_error_v4
-        IMPORTING iv_response       TYPE string
-        RETURNING VALUE(rv_message) TYPE string,
-      parse_error_v2
-        IMPORTING iv_response       TYPE string
-        RETURNING VALUE(rv_message) TYPE string.
+
+      parse_error_v4 IMPORTING iv_response       TYPE string
+                     RETURNING VALUE(rv_message) TYPE string,
+
+      parse_error_v2 IMPORTING iv_response       TYPE string
+                     RETURNING VALUE(rv_message) TYPE string.
 
   PROTECTED SECTION.
   PRIVATE SECTION.

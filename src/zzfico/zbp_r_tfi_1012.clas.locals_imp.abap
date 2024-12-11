@@ -1,5 +1,12 @@
 CLASS lhc_zr_tfi_1012 DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
+    TYPES:BEGIN OF ty_gl,
+            companycode            TYPE bukrs,
+            fiscalyear             TYPE gjahr,
+            accountingdocument     TYPE belnr_d,
+            ledgergllineitem(6)    TYPE c,
+            accountingdocumentitem TYPE buzei,
+          END OF ty_gl.
     TYPES:BEGIN OF lty_request,
             companycode        TYPE bukrs,
             fiscalyear         TYPE gjahr,
@@ -167,6 +174,7 @@ CLASS lhc_zr_tfi_1012 DEFINITION INHERITING FROM cl_abap_behavior_handler.
             billofexchangedomiciletext(60)   TYPE      c,
             duecalculationbasedate           TYPE      string,
             print_user                       TYPE string,
+            accountingdocumentitem_sx(3)     TYPE c,
           END OF ty_select.
 
     METHODS:
@@ -194,6 +202,10 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
     DATA lv_timestamp TYPE tzntstmpl.
     DATA:lv_xml_xstring TYPE xstring.
     DATA:lt_print TYPE tt_prts.
+    DATA:lv_filename TYPE string.
+    DATA:lv_date TYPE bldat.
+    DATA:lv_time TYPE uzeit.
+
 
     GET TIME STAMP FIELD lv_timestamp.
 
@@ -203,6 +215,17 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
       FROM zzr_prt_template
      WHERE templateid = 'YY1_ACCOUNT_PRT'
       INTO @DATA(ls_template).
+
+
+
+    TRY.
+        DATA(lv_timezone) = cl_abap_context_info=>get_user_time_zone( ).
+        "时间戳格式转换成日期格式
+        CONVERT TIME STAMP lv_timestamp TIME ZONE lv_timezone INTO DATE lv_date TIME lv_time .
+      CATCH cx_abap_context_info_error INTO DATA(e2) ##NO_HANDLER.
+        "handle exception
+    ENDTRY.
+
 
     READ TABLE keys INTO DATA(key) INDEX 1.
     IF sy-subrc = 0.
@@ -220,8 +243,9 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
         CATCH cx_uuid_error INTO DATA(e) ##NO_HANDLER.
           "handle exception
       ENDTRY.
+      lv_filename = '仕訳印刷' && '-' && lv_date && '-' && lv_time .
       ls_record-pdfmimetype = 'application/pdf'.
-      ls_record-pdffilename = |{ lv_recorduuid }.pdf |.
+      ls_record-pdffilename = |{ lv_filename }.pdf |.
 
       ls_record-datamimetype = 'application/xml'.
       ls_record-datafilename = 'data.xml'.
@@ -313,6 +337,7 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
     DATA:lv_path     TYPE string.
     DATA:ls_res_api  TYPE ty_res_api.
     DATA:ls_res_api1 TYPE ty_res_api1.
+    DATA:lt_glaccountlineitem_sx TYPE STANDARD TABLE OF ty_gl.
     TYPES:
       BEGIN OF ty_results2,
         companycode                  TYPE bukrs,
@@ -379,7 +404,9 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
       lrs_accountingdocument LIKE LINE OF lr_accountingdocument,
       lr_fiscalyear          TYPE RANGE OF zc_accountingdoc-fiscalyear,
       lrs_fiscalyear         LIKE LINE OF lr_fiscalyear.
-
+    DATA:
+      lr_glaccount  TYPE RANGE OF hkont,
+      lrs_glaccount LIKE LINE OF lr_glaccount.
     CLEAR :lr_companycode,   lr_accountingdocument   ,lr_fiscalyear  .
     LOOP AT ct_request INTO DATA(ls_request).
       lrs_companycode-low    = ls_request-companycode.
@@ -424,7 +451,9 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
         reversedocument,
         reversedocumentfiscalyear,
 
-        absoluteexchangerate
+        absoluteexchangerate,
+        parkedbyuser,
+        parkingdate
     FROM i_journalentry
     WITH PRIVILEGED ACCESS
    WHERE companycode IN @lr_companycode
@@ -435,7 +464,7 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
 
     IF lt_journalentry IS NOT INITIAL.
 
-      lv_path = |/YY1_C_GLJRNLENTRYTOBEVERIF_CDS/YY1_C_GLJrnlEntryToBeVerif|.
+      lv_path = |/YY1_C_GLJRNLENTRYTOBEVERIF_CDS/YY1_C_GLJrnlEntryToBeVerif?sap-language=ja|.
       "Call API
       zzcl_common_utils=>request_api_v2(
         EXPORTING
@@ -770,21 +799,60 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
 
         ENDIF.
 
-        SELECT
-          companycode,
-          fiscalyear,
-          accountingdocument,
-          accountingdocumentitem,
-          billofexchangeissuedate,
-          billofexchangedomiciletext
-        FROM
-        i_billofexchange
-       WITH PRIVILEGED ACCESS
-          WHERE companycode IN @lr_companycode
-          AND accountingdocument IN @lr_accountingdocument
-          AND fiscalyear IN @lr_fiscalyear
-          INTO TABLE @DATA(lt_billofexchange).
-        SORT lt_billofexchange BY companycode fiscalyear accountingdocument accountingdocumentitem.
+        "获取手形科目
+        SELECT *                              "#EC CI_ALL_FIELDS_NEEDED
+          FROM ztbc_1001
+         WHERE zid = 'ZFI007'
+          INTO TABLE @DATA(lt_1001).
+        IF lt_1001 IS NOT INITIAL.
+
+          LOOP AT lt_1001 INTO DATA(ls_1001).
+            lrs_glaccount-sign = 'I'.
+            lrs_glaccount-option = 'EQ'.
+            lrs_glaccount-low = ls_1001-zvalue1.
+            APPEND lrs_glaccount TO lr_glaccount.
+          ENDLOOP.
+
+          "获取手形科目会计凭证项目
+          SELECT
+            companycode,
+            fiscalyear,
+            accountingdocument,
+            ledgergllineitem
+          FROM
+          i_glaccountlineitem
+          WITH PRIVILEGED ACCESS
+        WHERE companycode IN @lr_companycode
+            AND accountingdocument IN @lr_accountingdocument
+            AND fiscalyear IN @lr_fiscalyear
+            AND sourceledger = '0L'
+            AND ledger = '0L'
+            AND glaccount IN @lr_glaccount
+          INTO TABLE @lt_glaccountlineitem_sx.
+
+          LOOP AT lt_glaccountlineitem_sx INTO DATA(ls_glaccountlineitem_sx).
+            ls_glaccountlineitem_sx-accountingdocumentitem =  ls_glaccountlineitem_sx-ledgergllineitem+3(3).
+            MODIFY lt_glaccountlineitem_sx FROM ls_glaccountlineitem_sx TRANSPORTING accountingdocumentitem.
+          ENDLOOP.
+
+          SELECT
+            a~companycode,
+            a~fiscalyear,
+            a~accountingdocument,
+            a~accountingdocumentitem,
+            a~billofexchangeissuedate,
+            a~billofexchangedomiciletext
+          FROM
+          i_billofexchange  WITH PRIVILEGED ACCESS AS a
+         FOR ALL ENTRIES IN @lt_glaccountlineitem_sx
+         WHERE a~companycode = @lt_glaccountlineitem_sx-companycode
+         AND a~fiscalyear = @lt_glaccountlineitem_sx-fiscalyear
+         AND a~accountingdocument = @lt_glaccountlineitem_sx-accountingdocument
+         AND a~accountingdocumentitem = @lt_glaccountlineitem_sx-accountingdocumentitem
+         INTO TABLE @DATA(lt_billofexchange).
+          SORT lt_billofexchange BY companycode fiscalyear accountingdocument accountingdocumentitem.
+
+        ENDIF.
 
         SELECT
         accountingdocumentcategory,
@@ -938,29 +1006,79 @@ CLASS lhc_zr_tfi_1012 IMPLEMENTATION.
             IF ls_journalentry-absoluteexchangerate IS NOT INITIAL .
               ls_select-exchangerate                          = ls_journalentry-absoluteexchangerate.
             ENDIF.
-          ENDIF.
 
+            IF ls_select-accountingdocumentcategory = 'V'.
+              ls_select-parkedbyusername = ls_journalentry-accountingdoccreatedbyuser."申请人
+              IF ls_journalentry-accountingdocumentcreationdate IS NOT INITIAL.
+                ls_select-wrkflwtskcreationutcdatetime = ls_journalentry-accountingdocumentcreationdate."申請日付
+              ENDIF.
+              "blank 承認人
+              "blank 承認日付
+            ELSE.
+              ls_select-parkedbyusername = ls_journalentry-parkedbyuser."申请人
+              IF ls_journalentry-parkingdate IS NOT INITIAL.
+                ls_select-wrkflwtskcreationutcdatetime = ls_journalentry-parkingdate."申請日付
+              ENDIF.
+              ls_select-createdbyusername = ls_journalentry-accountingdoccreatedbyuser."承認人
+              IF ls_journalentry-accountingdocumentcreationdate IS NOT INITIAL.
+                ls_select-accountingdoccreationdate_w = ls_journalentry-accountingdocumentcreationdate."承認日付
+              ENDIF.
+            ENDIF.
+
+          ENDIF.
           READ TABLE ls_res_api-d-results INTO DATA(ls_result1)
           WITH KEY companycode = ls_select-companycode
                    fiscalyear = ls_select-fiscalyear
                    accountingdocument = ls_select-accountingdocument.
           IF sy-subrc = 0.
-            ls_select-parkedbyusername = ls_result1-parkedbyusername .
-            ls_select-workitem = ls_result1-workitem .
-            ls_select-accountingdoccategory_w  = ls_result1-accountingdocumentcategory  .
-            ls_select-createdbyusername = ls_result1-createdbyusername .
-            "ls_select-accountingdoccreationdate_w = ls_result1-accountingdocumentcreationdate .
-            ls_select-accountingdocumentstatusname = ls_result1-accountingdocumentstatusname .
-            ls_result1-accountingdocument_d = CONV string( ls_result1-accountingdocumentcreationdate DIV 1000000 ).
-            ls_select-accountingdoccreationdate_w = ls_result1-accountingdocument_d .
 
-            READ TABLE ls_res_api1-d-results INTO DATA(ls_result11)
-            WITH KEY workflowinternalid = ls_select-workitem .
-            IF sy-subrc = 0.
-              ls_result11-wrkflwtsk_d = CONV string( ls_result11-wrkflwtskcreationutcdatetime DIV 1000000 ).
-              ls_select-wrkflwtskcreationutcdatetime = ls_result11-wrkflwtsk_d.
-            ENDIF.
+            ls_select-accountingdocumentstatusname = ls_result1-accountingdocumentstatusname .
+          ELSE.
+
+            CASE  ls_select-accountingdocumentcategory.
+              WHEN 'V'.
+                ls_select-accountingdocumentstatusname = '未転記'.
+              WHEN 'W'.
+                ls_select-accountingdocumentstatusname = '未転記'.
+              WHEN 'Z'.
+                ls_select-accountingdocumentstatusname = '削除済'.
+              WHEN 'D'.
+                ls_select-accountingdocumentstatusname = '繰返伝票'.
+              WHEN 'M'.
+                ls_select-accountingdocumentstatusname = 'モデル伝票'.
+              WHEN 'P'.
+                ls_select-accountingdocumentstatusname = '予測伝票'.
+              WHEN 'S'.
+                ls_select-accountingdocumentstatusname = '備忘明細'.
+
+              WHEN OTHERS.
+                ls_select-accountingdocumentstatusname = '転記済'.
+
+            ENDCASE.
+
           ENDIF.
+
+*          READ TABLE ls_res_api-d-results INTO DATA(ls_result1)
+*          WITH KEY companycode = ls_select-companycode
+*                   fiscalyear = ls_select-fiscalyear
+*                   accountingdocument = ls_select-accountingdocument.
+*          IF sy-subrc = 0.
+*            ls_select-parkedbyusername = ls_result1-parkedbyusername .
+*            ls_select-workitem = ls_result1-workitem .
+*            ls_select-accountingdoccategory_w  = ls_result1-accountingdocumentcategory  .
+*            ls_select-createdbyusername = ls_result1-createdbyusername .
+*            "ls_select-accountingdoccreationdate_w = ls_result1-accountingdocumentcreationdate .
+*            ls_select-accountingdocumentstatusname = ls_result1-accountingdocumentstatusname .
+*            ls_result1-accountingdocument_d = CONV string( ls_result1-accountingdocumentcreationdate DIV 1000000 ).
+*            ls_select-accountingdoccreationdate_w = ls_result1-accountingdocument_d .
+*
+*            READ TABLE ls_res_api1-d-results INTO DATA(ls_result11)
+*            WITH KEY workflowinternalid = ls_select-workitem .
+*            IF sy-subrc = 0.
+*              ls_result11-wrkflwtsk_d = CONV string( ls_result11-wrkflwtskcreationutcdatetime DIV 1000000 ).
+*              ls_select-wrkflwtskcreationutcdatetime = ls_result11-wrkflwtsk_d.
+*            ENDIF.
+*          ENDIF.
           READ TABLE lt_sum1 INTO ls_sum
           WITH KEY companycode = ls_select-companycode
                    fiscalyear = ls_select-fiscalyear
@@ -1006,6 +1124,7 @@ WITH KEY companycode = ls_select-companycode
                debitcreditcode = 'H'.
             IF sy-subrc = 0.
               ls_select-creditamountintranscrcy = ls_sum-amountintransactioncurrency.
+              ls_select-transactioncurrency = ls_sum-transactioncurrency.
             ELSE.
               READ TABLE lt_sum3 INTO ls_sum
 WITH KEY companycode = ls_select-companycode
@@ -1076,6 +1195,8 @@ WITH KEY companycode = ls_select-companycode
             sourceaccountingdocument = ls_select-accountingdocument
             sourceaccountingdocumentitem  = ls_select-ledgergllineitem BINARY SEARCH.
             IF sy-subrc = 0.
+              ls_select-accountingdocumentstatusname = '未転記'.
+
               ls_select-glaccount                             = ls_parkedoplacctgdocument_i-glaccount                           .
               ls_select-customer                              = ls_parkedoplacctgdocument_i-customer                            .
               ls_select-supplier                              = ls_parkedoplacctgdocument_i-supplier
@@ -1104,7 +1225,7 @@ WITH KEY companycode = ls_select-companycode
                 ls_select-creditamountintranscrcy_i = ls_parkedoplacctgdocument_i-amountintransactioncurrency.
               ENDIF.
 
-              IF ls_select-transactioncurrency NE ls_select-companycodecurrency .
+              IF ls_select-transactioncurrency_i NE ls_select-companycodecurrency .
                 IF  ls_parkedoplacctgdocument_i-debitcreditcode = 'S'.
                   ls_select-debitamountincocodecrcy = ls_parkedoplacctgdocument_i-amountintransactioncurrency.
                 ELSE.
@@ -1115,8 +1236,8 @@ WITH KEY companycode = ls_select-companycode
                 CLEAR:
                 ls_select-companycodecurrency,
                 ls_select-debitamountincocodecrcy,
-                ls_select-creditamountincocodecrcy.
-
+                ls_select-creditamountincocodecrcy,
+                ls_select-exchangerate.
               ENDIF.
 
             ENDIF.
@@ -1145,7 +1266,8 @@ WITH KEY companycode = ls_select-companycode
               CLEAR:
               ls_select-companycodecurrency,
               ls_select-debitamountincocodecrcy,
-              ls_select-creditamountincocodecrcy.
+              ls_select-creditamountincocodecrcy,
+              ls_select-exchangerate.
 
             ELSE.
               READ TABLE lt_operationalacctgdocitem_i INTO ls_result2 WITH KEY
@@ -1161,34 +1283,34 @@ WITH KEY companycode = ls_select-companycode
 
           ENDIF.
 
+          "手形明细行
           READ TABLE lt_billofexchange INTO DATA(ls_billofexchange) WITH KEY
           companycode = ls_select-companycode
           fiscalyear  = ls_select-fiscalyear
           accountingdocument = ls_select-accountingdocument
           BINARY SEARCH.
           IF sy-subrc = 0.
-            ls_select-accountingdocumentitem = ls_billofexchange-accountingdocumentitem .
-            "ls_select-billofexchangeissuedate = ls_billofexchange-billofexchangeissuedate .
+            ls_select-accountingdocumentitem_sx = ls_billofexchange-accountingdocumentitem .
             IF ls_billofexchange-billofexchangeissuedate IS NOT INITIAL.
               ls_select-billofexchangeissuedate = ls_billofexchange-billofexchangeissuedate+0(4) && '-' && ls_billofexchange-billofexchangeissuedate+4(2) && '-' && ls_billofexchange-billofexchangeissuedate+6(2).
             ENDIF.
             ls_select-billofexchangedomiciletext = ls_billofexchange-billofexchangedomiciletext .
+            DATA:lv_docln(6) TYPE c.
+            lv_docln = '000' && ls_billofexchange-accountingdocumentitem .
             READ TABLE lt_glaccountlineitem INTO DATA(ls_glaccountlineitem1) WITH KEY
             companycode = ls_select-companycode
            fiscalyear  = ls_select-fiscalyear
-           accountingdocument = ls_select-accountingdocument BINARY SEARCH.
-            "ledgergllineitem  = ls_select-ledgergllineitem BINARY SEARCH.
+           accountingdocument = ls_select-accountingdocument
+           ledgergllineitem  = lv_docln BINARY SEARCH.
             IF sy-subrc = 0.
               ls_select-assignmentreference = ls_glaccountlineitem1-assignmentreference.
             ENDIF.
             READ TABLE lt_operationalacctgdocitem_i INTO ls_result2 WITH KEY
             companycode = ls_select-companycode
             fiscalyear  = ls_select-fiscalyear
-            accountingdocument = ls_select-accountingdocument.
-            "accountingdocumentitem  = ls_select-ledgergllineitem.
-
+            accountingdocument = ls_select-accountingdocument
+            accountingdocumentitem  = ls_billofexchange-accountingdocumentitem.
             IF sy-subrc = 0 AND ls_result2-duecalculationbasedate IS NOT INITIAL.
-              "ls_select-duecalculationbasedate = ls_result2-duecalculationbasedate.
               ls_select-duecalculationbasedate = ls_result2-duecalculationbasedate+0(4) && '-' && ls_result2-duecalculationbasedate+4(2) && '-' && ls_result2-duecalculationbasedate+6(2).
 
             ENDIF.
@@ -1367,6 +1489,9 @@ WITH KEY companycode = ls_select-companycode
               REPLACE ALL OCCURRENCES OF '-' IN  ls_header-creditamountintranscrcy WITH ''.
               ls_header-creditamountintranscrcy = '-' && ls_header-creditamountintranscrcy.
             ENDIF.
+            IF ls_select-accountingdocumentitem_sx IS NOT INITIAL.
+              ls_header-accountingdocumentitem = ls_select-accountingdocumentitem_sx.
+            ENDIF.
             ls_header-currentdate = lv_date+0(4) && '-' && lv_date+4(2) && '-' && lv_date+6(2).
             ls_header-currenttime = lv_time+0(2) && ':' && lv_time+2(2) && ':' && lv_time+4(2).
             ls_print-_header = ls_header.
@@ -1491,6 +1616,9 @@ WITH KEY companycode = ls_select-companycode
               REPLACE ALL OCCURRENCES OF '-' IN  ls_header-creditamountintranscrcy WITH ''.
               ls_header-creditamountintranscrcy = '-' && ls_header-creditamountintranscrcy.
             ENDIF.
+            IF ls_select-accountingdocumentitem_sx IS NOT INITIAL.
+              ls_header-accountingdocumentitem = ls_select-accountingdocumentitem_sx.
+            ENDIF.
             ls_header-currentdate = lv_date+0(4) && '-' && lv_date+4(2) && '-' && lv_date+6(2).
             ls_header-currenttime = lv_time+0(2) && ':' && lv_time+2(2) && ':' && lv_time+4(2).
             ls_print-_header = ls_header.
@@ -1539,7 +1667,9 @@ WITH KEY companycode = ls_select-companycode
             REPLACE ALL OCCURRENCES OF '-' IN  ls_header-creditamountintranscrcy WITH ''.
             ls_header-creditamountintranscrcy = '-' && ls_header-creditamountintranscrcy.
           ENDIF.
-
+          IF ls_select-accountingdocumentitem_sx IS NOT INITIAL.
+            ls_header-accountingdocumentitem = ls_select-accountingdocumentitem_sx.
+          ENDIF.
           ls_header-currentdate = lv_date+0(4) && '-' && lv_date+4(2) && '-' && lv_date+6(2).
           ls_header-currenttime = lv_time+0(2) && ':' && lv_time+2(2) && ':' && lv_time+4(2).
 

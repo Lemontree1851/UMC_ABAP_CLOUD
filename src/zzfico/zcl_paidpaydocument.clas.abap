@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
+CLASS zcl_paidpaydocument IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -37,7 +37,9 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
       lrs_plant LIKE LINE OF lr_plant.
 
     DATA:
-      lv_amount(9) TYPE p DECIMALS 2.
+      lv_amount(9)        TYPE p DECIMALS 2,
+      lv_fiscalyearperiod TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
+      lv_poper            TYPE poper.
 
 * Get filter range
     TRY.
@@ -67,6 +69,17 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
         "handle exception
         io_response->set_data( lt_output ).
     ENDTRY.
+
+* V3 会计期间转换
+    lv_poper = lv_monat.
+    lv_fiscalyearperiod = lv_gjahr && lv_poper.
+    SELECT SINGLE *
+      FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+     WHERE fiscalyearvariant = 'V3'
+       AND fiscalyearperiod = @lv_fiscalyearperiod
+      INTO @DATA(ls_v3).
+    lv_gjahr = ls_v3-FiscalPeriodStartDate+0(4).
+    lv_monat = ls_v3-FiscalPeriodStartDate+4(2).
 
     CASE lv_ztype.
       WHEN 'A'.          "売上/仕入純額処理

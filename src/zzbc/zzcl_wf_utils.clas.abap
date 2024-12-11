@@ -118,11 +118,11 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     WHERE uuid = @iv_uuid
     INTO @DATA(ls_ztmm_1006).                 "#EC CI_ALL_FIELDS_NEEDED
 
-    SELECT companycode
-     FROM zc_tbc1004 INNER JOIN zr_tbc1012
-    ON zc_tbc1004~useruuid = zr_tbc1012~useruuid
+    SELECT plant
+     FROM zc_tbc1004 INNER JOIN zc_tbc1006
+    ON zc_tbc1004~userid = zc_tbc1006~userid
     WHERE mail = @iv_email
-    AND companycode = @ls_ztmm_1006-company_code
+    AND plant = @ls_ztmm_1006-plant
     INTO TABLE @DATA(lt_zc_tbc1004).
 
     IF lt_zc_tbc1004 IS INITIAL.
@@ -207,17 +207,34 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
           AND   prno_sum        = @ls_ztmm_1006-pr_no
           INTO @DATA(ls_prworkflow_sum).
 
+          DATA:lv_curr TYPE p LENGTH 16 DECIMALS 2.
+          lv_curr    = ls_prworkflow_sum-amount_sum.
+          lv_curr = zzcl_common_utils=>conversion_amount(
+                                                 iv_alpha = 'OUT'
+                                                 iv_currency = ls_prworkflow_sum-currency
+                                                 iv_input = lv_curr ).
+
           TRY .
               SELECT SINGLE applicationid
               FROM zc_wf_approvalpath
              WHERE applydepart = @ls_ztmm_1006-apply_depart
                AND knttp       = @ls_ztmm_1006-account_type
                AND costcenter  = @ls_ztmm_1006-cost_center
-               AND amountfrom <= @ls_prworkflow_sum-amount_sum
-               AND amountto   >= @ls_prworkflow_sum-amount_sum
+               AND amountfrom <= @lv_curr
+               AND amountto   >= @lv_curr
               INTO @lv_applicationid.
+              "如果等于K 优先找能对应costcenter的 找不到 找costcenter为空的
+              IF sy-subrc <> 0 AND ls_ztmm_1006-account_type = 'K'.
+                SELECT SINGLE applicationid
+                FROM zc_wf_approvalpath
+               WHERE applydepart = @ls_ztmm_1006-apply_depart
+                 AND knttp       = @ls_ztmm_1006-account_type
+                 AND costcenter  = ''
+                 AND amountfrom <= @lv_curr
+                 AND amountto   >= @lv_curr
+                INTO @lv_applicationid.
+              ENDIF.
               ev_applicationid = lv_applicationid.
-
             CATCH cx_root INTO lx_root.
               " handle exception
               rv_error_text = lx_root->get_longtext(  ).
@@ -574,9 +591,11 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     ENDIF.
 
     lt_recipient = VALUE #( FOR item IN iv_users ( address = item-emailaddress ) ).
+
     "DATA: ls_recipient    TYPE LINE OF cl_bcs_mail_message=>tyt_recipient.
     "ls_recipient-address = ''.
     "APPEND  ls_recipient TO lt_recipient.
+
     SORT lt_recipient BY address.
     DELETE ADJACENT DUPLICATES FROM lt_recipient COMPARING address.
     DELETE lt_recipient WHERE address IS INITIAL.
@@ -591,21 +610,21 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     IF ls_ztbc_1001-zkey4 IS NOT INITIAL.
       REPLACE ALL OCCURRENCES OF '&1' IN ls_ztbc_1001-zvalue4  WITH ls_ztmm_1006-pr_by .
       REPLACE ALL OCCURRENCES OF '&2' IN ls_ztbc_1001-zvalue4  WITH ls_ztmm_1006-pr_no .
-      lv_main_content = lv_main_content && |<p style="line-height: 0.5">{ ls_ztbc_1001-zvalue4 }</p><div style="height: 5px;"></div>|.
+      lv_main_content = lv_main_content && |<p>{ ls_ztbc_1001-zvalue4 }</p><div></div>|.
     ENDIF.
     IF ls_ztbc_1001-zkey5 IS NOT INITIAL.
       REPLACE ALL OCCURRENCES OF '&1' IN ls_ztbc_1001-zvalue5  WITH ls_ztmm_1006-pr_by .
       REPLACE ALL OCCURRENCES OF '&2' IN ls_ztbc_1001-zvalue5  WITH ls_ztmm_1006-pr_no .
-      lv_main_content = lv_main_content && |<p style="line-height: 0.5">{ ls_ztbc_1001-zvalue5 }</p>|.
+      lv_main_content = lv_main_content && |<p>{ ls_ztbc_1001-zvalue5 }</p>|.
     ENDIF.
     IF ls_ztbc_1001-zkey6 IS NOT INITIAL.
       REPLACE ALL OCCURRENCES OF '&1' IN ls_ztbc_1001-zvalue6  WITH ls_ztmm_1006-pr_by .
       REPLACE ALL OCCURRENCES OF '&2' IN ls_ztbc_1001-zvalue6  WITH ls_ztmm_1006-pr_no .
-      lv_main_content = lv_main_content && |<p style="line-height: 0.5">{ ls_ztbc_1001-zvalue6 }</p>|.
+      lv_main_content = lv_main_content && |<p>{ ls_ztbc_1001-zvalue6 }</p>|.
     ENDIF.
     IF iv_remark IS NOT INITIAL.
       lv_main_content = lv_main_content && |<p>&nbsp;</p>|.
-      lv_main_content = lv_main_content && |<p style="line-height: 0.5">{ iv_remark }</p>|.
+      lv_main_content = lv_main_content && |<p>{ iv_remark }</p>|.
     ENDIF.
     IF ls_ztbc_1001-zkey7 IS NOT INITIAL.
       lv_main_content = lv_main_content && |<a href="{ ls_ztbc_1001-zvalue7 }">{ ls_ztbc_1001-zvalue7 }</a>|.

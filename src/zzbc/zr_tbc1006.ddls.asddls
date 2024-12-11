@@ -8,13 +8,13 @@
     dataClass: #MIXED
 }
 define view entity ZR_TBC1006
-  as select from    ztbc_1006 as _AssignPlant
-    left outer join I_Plant   as _Plant on _Plant.Plant = _AssignPlant.plant
+  as select from ztbc_1006 as _AssignPlant
+    inner join   I_Plant   as _Plant on _Plant.Plant = _AssignPlant.plant
 
-  association to parent ZR_TBC1004 as _User on $projection.UserUuid = _User.UserUuid
+  association to parent ZR_TBC1004 as _User on $projection.UserId = _User.UserId
 {
   key _AssignPlant.uuid                  as Uuid,
-      _AssignPlant.user_uuid             as UserUuid,
+  key _AssignPlant.user_id               as UserId,
       _AssignPlant.plant                 as Plant,
       @Semantics.user.createdBy: true
       _AssignPlant.created_by            as CreatedBy,

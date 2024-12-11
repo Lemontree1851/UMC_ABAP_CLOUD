@@ -5,7 +5,7 @@ define view entity ZC_TBC1013
   as projection on ZR_TBC1013
 {
   key Uuid,
-      UserUuid,
+  key UserId,
       SalesOrganization,
       SalesOrganizationName,
       CreatedBy,

@@ -1,0 +1,81 @@
+managed implementation in class zbp_r_tbc1014 unique;
+strict ( 2 );
+with draft;
+
+define behavior for ZR_TBC1014 alias Function
+persistent table ztbc_1014
+draft table ztbc_1014_d
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master ( instance )
+{
+  create;
+  update;
+  delete ( precheck );
+
+  field ( readonly )
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field ( mandatory : create, readonly : update ) FunctionId;
+
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+
+  association _AccessBtn { with draft; create; }
+
+  mapping for ztbc_1014
+    {
+      FunctionId         = function_id;
+      FunctionName       = function_name;
+      DesignFileId       = design_file_id;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}
+
+define behavior for ZR_TBC1015 alias AccessBtn
+persistent table ztbc_1015
+draft table ztbc_1015_d
+lock dependent by _Function
+authorization dependent by _Function
+etag master LocalLastChangedAt
+{
+  update ( precheck );
+  delete ( precheck );
+
+  field ( readonly, numbering : managed ) Uuid;
+  field ( readonly )
+  FunctionId,
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field ( mandatory ) AccessId;
+
+  association _Function { with draft; }
+
+  mapping for ztbc_1015
+    {
+      Uuid               = uuid;
+      FunctionId         = function_id;
+      AccessId           = access_id;
+      AccessName         = access_name;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}

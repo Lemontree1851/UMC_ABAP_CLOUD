@@ -21,9 +21,9 @@ define root custom entity ZR_SALESACCEPTANCE_RESULT
   key PeriodType             : abap.char(1);  //時期区分
   key AcceptPeriod           : abap.char(2);  //検収期間
   key SalesDocument          : vbeln_va;      //受注伝票番号
-  key SalesDocumentItem      : abap.char(5);      //受注明細番号
+  key SalesDocumentItem      : abap.char(6);      //受注明細番号
   key BillingDocument        : abap.char(10); //実績伝票番号
-      CustomerPO             : abap.char(35); //得意先PO番号
+  key CustomerPO             : abap.char(35); //得意先PO番号
       AcceptPeriodFrom       : abap.dats;     //検収期間From
       AcceptPeriodTo         : abap.dats;     //検収期間To
       SalesDocumentType      : auart; //受注伝票タイプ
@@ -33,7 +33,7 @@ define root custom entity ZR_SALESACCEPTANCE_RESULT
       PostingDate            : budat; //実績転記日
       AcceptDate             : abap.dats; //検収日付
       AcceptQty              : abap.char(20);//検収数
-      BillingQuantity        : menge_d; //出庫数
+      BillingQuantity        : abap.char(20); //出庫数
       AcceptPrice            : abap.char(20); //検収単価
       ConditionRateValue     : abap.char(20); //請求単価
       ConditionCurrency      : waers; //単価通貨

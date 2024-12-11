@@ -19,16 +19,18 @@ CLASS zcl_costanalysiscom IMPLEMENTATION.
     DATA:
       lr_companycode TYPE RANGE OF zr_costanalysiscom-companycode,
       lv_zyear       TYPE zr_costanalysiscom-zyear,
-      lv_zmonth      TYPE N LENGTH 2,
-      lr_product     TYPE RANGE OF zr_costanalysiscom-MATERIAL,
+      lv_zmonth      TYPE n LENGTH 2,
+      lr_product     TYPE RANGE OF zr_costanalysiscom-product,
+      lr_material    TYPE RANGE OF zr_costanalysiscom-material,
       lr_customer    TYPE RANGE OF zr_costanalysiscom-customer,
       ls_companycode LIKE LINE OF lr_companycode,
       ls_product     LIKE LINE OF lr_product,
+      ls_material    LIKE LINE OF lr_material,
       ls_customer    LIKE LINE OF lr_customer,
       lr_zyear       TYPE RANGE OF zr_costanalysiscom-zyear,
       ls_zyear       LIKE LINE OF lr_zyear,
-      lr_zmonth       TYPE RANGE OF zr_costanalysiscom-zmonth,
-      ls_zmonth       LIKE LINE OF lr_zmonth,
+      lr_zmonth      TYPE RANGE OF zr_costanalysiscom-zmonth,
+      ls_zmonth      LIKE LINE OF lr_zmonth,
       lv_kunnr       TYPE kunnr.
 
     TRY.
@@ -59,6 +61,12 @@ CLASS zcl_costanalysiscom IMPLEMENTATION.
                 ls_zmonth-low    = lv_zmonth.
                 APPEND ls_zmonth TO lr_zmonth.
               WHEN 'MATERIAL'.
+                CLEAR ls_material.
+                ls_material-sign   = 'I'.
+                ls_material-option = 'EQ'.
+                ls_material-low    = str_rec_l_range-low.
+                APPEND ls_material TO lr_material.
+              WHEN 'PRODUCT'.
                 CLEAR ls_product.
                 ls_product-sign   = 'I'.
                 ls_product-option = 'EQ'.
@@ -115,12 +123,13 @@ CLASS zcl_costanalysiscom IMPLEMENTATION.
            profitcenter,
            profitcentername
       FROM ztbi_1001
-     WHERE companycode in @lr_companycode
-       and zyear       in @lr_zyear
-       and zmonth      in @lr_zmonth
-       and product     in @lr_product
-       and customer    in @lr_customer
-      into CORRESPONDING FIELDS OF TABLE @lt_data.
+     WHERE companycode IN @lr_companycode
+       AND zyear       IN @lr_zyear
+       AND zmonth      IN @lr_zmonth
+       AND product     IN @lr_product
+       AND material    IN @lr_material
+       AND customer    IN @lr_customer
+      INTO CORRESPONDING FIELDS OF TABLE @lt_data.
 
     io_response->set_total_number_of_records( lines( lt_data ) ).
 

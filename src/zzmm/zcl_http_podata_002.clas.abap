@@ -567,7 +567,10 @@ public section.
         FiscalYearCurrentInvtryPeriod                      type c length   4     ,
         LeanWrhsManagementPickingArea                      type c length   3     ,
         IsActiveEntity                                     type c length   1     ,
-
+        KLABS                                              type I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit ,
+        KINSM                                              type I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit ,
+        INSME                                              type I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit ,
+        LABST                                              type I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit ,
       END OF TY_MARD,
 
       "NO.9 MRP 管理者
@@ -2773,8 +2776,43 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
         WHERE (lv_where)
         INTO TABLE @DATA(lt_mard).
 
+
+        if lt_mard is not INITIAL.
+
+            data(lt_mard2) = lt_mard.
+
+            sort lt_mard2 by product plant StorageLocation.
+
+            DELETE ADJACENT DUPLICATES FROM lt_mard2 COMPARING product plant StorageLocation.
+
+            SELECT Material,
+                    Plant,
+                    StorageLocation,
+                    InventoryStockType,
+                    InventorySpecialStockType,
+                    MatlWrhsStkQtyInMatlBaseUnit
+
+            FROM I_MaterialStock_2 WITH PRIVILEGED ACCESS
+            for ALL ENTRIES IN @lt_mard2
+            WHERE Material = @lt_mard2-product
+              and Plant = @lt_mard2-plant
+              and StorageLocation = @lt_mard2-StorageLocation
+*            GROUP BY Material, Plant, StorageLocation, InventoryStockType, InventorySpecialStockType
+            into TABLE @data(lt_stock).
+
+        endif.
+
+
+        data:
+            lv_KLABS TYPE I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit,
+            lv_KINSM TYPE I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit,
+            lv_INSME TYPE I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit,
+            lv_LABST TYPE I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit.
+
+
         IF lt_mard IS NOT INITIAL.
           LOOP  AT lt_mard INTO DATA(ls_mard).
+
           lv_count = lv_count + 1.
             es_mard-product                            = ls_mard-product                              .
             es_mard-plant                              = ls_mard-plant                                .
@@ -2798,7 +2836,52 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_mard-leanwrhsmanagementpickingarea      = ls_mard-leanwrhsmanagementpickingarea        .
             es_mard-isactiveentity                     = ls_mard-isactiveentity                       .
 
+
+
+            loop at lt_stock into data(lw_stock) where  material = ls_mard-product
+                                                   and plant = ls_mard-plant
+                                                   and storagelocation = ls_mard-storagelocation.
+
+                case lw_stock-InventoryStockType.
+
+                when '01'.
+
+                    if lw_stock-InventorySpecialStockType = 'K'.
+
+                    lv_klabs = lv_klabs + lw_stock-MatlWrhsStkQtyInMatlBaseUnit.
+
+                    ELSEIF lw_stock-InventorySpecialStockType = ''.
+
+                    lv_LABST = lv_LABST + lw_stock-MatlWrhsStkQtyInMatlBaseUnit.
+                    ENDIF.
+
+                when '02'.
+
+                    if lw_stock-InventorySpecialStockType = 'K'.
+
+                        lv_KINSM = lv_KINSM + lw_stock-MatlWrhsStkQtyInMatlBaseUnit.
+
+                    elseif lw_stock-InventorySpecialStockType = ''.
+
+                        lv_INSME = lv_INSME + lw_stock-MatlWrhsStkQtyInMatlBaseUnit.
+
+                    endif.
+
+                when OTHERS.
+
+                ENDCASE.
+
+            endloop.
+
+            es_mard-klabs = lv_klabs.
+            es_mard-LABST = lv_LABST.
+            es_mard-KINSM = lv_KINSM.
+            es_mard-INSME = lv_INSME.
+
+            clear: lv_klabs, lv_LABST , lv_KINSM , lv_INSME.
+
             CONDENSE es_mard-product                                                        .
+
             CONDENSE es_mard-plant                                                          .
             CONDENSE es_mard-storagelocation                                                .
             CONDENSE es_mard-warehousestoragebin                                            .

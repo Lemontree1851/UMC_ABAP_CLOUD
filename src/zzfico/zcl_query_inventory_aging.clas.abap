@@ -785,7 +785,9 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
       CLEAR ls_data.
     ENDLOOP.
 
-    io_response->set_total_number_of_records( lines( lt_data ) ).
+    IF io_request->is_total_numb_of_rec_requested(  ) .
+      io_response->set_total_number_of_records( lines( lt_data ) ).
+    ENDIF.
 
     "Sort
     IF io_request->get_sort_elements( ) IS NOT INITIAL.

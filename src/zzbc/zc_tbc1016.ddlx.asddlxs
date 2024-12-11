@@ -1,0 +1,43 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Access Button',
+    typeNamePlural: 'Access Button'
+  }
+}
+annotate view ZC_TBC1016 with
+{
+  @UI.hidden: true
+  Uuid;
+  @UI.hidden: true
+  RoleId;
+
+  @UI.lineItem: [{ position: 10, cssDefault.width: '20rem' }]
+  @Consumption.valueHelpDefinition: [{ entity: {name: 'ZC_TBC1015_VH' , element: 'AccessId' },
+               additionalBinding: [{ localElement: 'AccessName', element: 'AccessName', usage: #RESULT },
+                                   { localElement: 'FunctionId', element: 'FunctionId', usage: #RESULT },
+                                   { localElement: 'DesignFileId', element: 'DesignFileId', usage: #RESULT },
+                                   { localElement: 'FunctionName', element: 'FunctionName', usage: #RESULT }]
+  }]
+  @EndUserText.label: 'Access Id'
+  AccessId;
+
+  @UI.lineItem: [{ position: 20, cssDefault.width: '10rem' }]
+  @EndUserText.label: 'Access Name'
+  AccessName;
+
+  @UI.lineItem: [{ position: 30, cssDefault.width: '15rem' }]
+  @EndUserText.label: 'Application Id'
+  FunctionId;
+
+  @UI.lineItem: [{ position: 50 }]
+  @EndUserText.label: 'Design File Id'
+  DesignFileId;
+
+  @UI.lineItem: [{ position: 60, cssDefault.width: '15rem' }]
+  @EndUserText.label: 'Application Name'
+  FunctionName;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

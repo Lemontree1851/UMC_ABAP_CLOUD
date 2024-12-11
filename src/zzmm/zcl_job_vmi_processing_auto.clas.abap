@@ -54,7 +54,7 @@ CLASS zcl_job_vmi_processing_auto IMPLEMENTATION.
 *    COMMIT WORK AND WAIT.
 *update ztmm_1010 set plant = '1400',customer = 'H10001' ,storagelocation = 'H1U3' WHERE CUSTOMER = '0001000122'.
 *COMMIT WORK AND WAIT.
-
+*    DELETE FROM ztmm_1010 WHERE uuid IS NOT INITIAL.
     TRY.
         zcl_vmi_processing_auto=>execute(
       IMPORTING

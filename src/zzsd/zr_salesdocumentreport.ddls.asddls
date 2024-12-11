@@ -9,39 +9,36 @@
 
 define root custom entity ZR_SALESDOCUMENTREPORT
 {
-      @UI                            : { lineItem: [ { position: 10 } ],
-                                          selectionField: [ { position: 10 } ] }
+      @Consumption.valueHelpDefinition:[{entity:{ name: 'I_SalesOrganization', element: 'SalesOrganization'} }]
   key SalesOrganization              : abap.char(4);
-      @UI                            : { lineItem: [ { position: 20 } ],
-                                          selectionField: [ { position: 20 } ] }
+      @Consumption.valueHelpDefinition:[{entity:{ name: 'ZC_CustomerSalesAreaVH', element: 'Customer'} }]
   key Customer                       : abap.char(10);
-      @UI                            : { lineItem: [ { position: 30 } ],
-                                          selectionField: [ { position: 30 } ] }
-  key YearDate                       : abap.char(6);
-      @UI                            : { lineItem: [ { position: 40 } ],
-                                          selectionField: [ { position: 40 } ] }
+  key ProfitCenter                   : abap.char(10);
+  key SalesOffice                    : abap.char(4);
+  key SalesGroup                     : abap.char(3);
+      @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'Product', name: 'I_ProductStdVH'}}]  }
   key Product                        : abap.char(40);
-      @UI                            : { lineItem: [ { position: 50 } ],
-                                          selectionField: [ { position: 50 } ] }
+  key CreatedByUser                  : abap.char(50);
+      @UI                            : {
+        selectionField               : [ { position: 60 } ]
+      }
   key plantype                       : abap.char(10);
-      CustomerName                   : abap.numc(80);
-      ProfitCenter                   : abap.char(10);
+  key YearDate                       : abap.char(6);
+
+      CustomerName                   : abap.char(80);
       PlantName                      : abap.char(30);
-      SalesOffice                    : abap.char(4);
-      SalesGroup                     : abap.char(3);
-      CreatedByUser                  : abap.char(12);
       MatlAccountAssignmentGroup     : abap.char(2);
       ProductGroup                   : abap.char(9);
       ProductName                    : abap.char(40);
-      ConditionRateValue             : abap.char(10);
-      MaterialCost2000               : abap.char(10);
-      Manufacturingcost              : abap.char(10);
-      SalesAmount                    : abap.char(20);
-      ContributionProfit             : abap.char(20);
-      GrossProfit                    : abap.char(20);
-      ContributionProfitTotal        : abap.char(20);
-      GrossProfitTotal               : abap.char(20);
-      salesplanamountindspcrcy       : abap.char(20);
+      ConditionRateValue             : abap.char(10); //没用 等会删
+      MaterialCost2000               : abap.char(10); //5
+      Manufacturingcost              : abap.char(10); //6
+      SalesAmount                    : abap.char(20); //没用 等会删
+      ContributionProfit             : abap.char(20); //貢献利益(単価) buyaole shan
+      GrossProfit                    : abap.char(20); //売上総利益(単価)buyaole shan
+      ContributionProfitTotal        : abap.char(20); //没用 等会删
+      GrossProfitTotal               : abap.char(20); //没用 等会删
+      salesplanamountindspcrcy       : abap.char(20); //没用 等会删
       CustomerAccountAssignmentGroup : abap.char(14);
       FirstSalesSpecProductGroup     : abap.char(3);
       SecondSalesSpecProductGroup    : abap.char(3);
@@ -49,84 +46,36 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       AccountDetnProductGroup        : abap.char(3);
 
       SplitRange                     : char13;
- 
+       @Consumption.valueHelpDefinition:[{entity:{ name: 'I_CurrencyStdVH', element: 'Currency'} }]
+      ConditionCurrency              : abap.cuky;
 
-      Unit                           : meins;
- 
-      @Semantics.quantity.unitOfMeasure: 'Unit'
-      ConditionRateValue_n           : menge_d;
-      @Semantics.quantity.unitOfMeasure: 'Unit'
-      salesplanamountindspcrcy_n     : menge_d;
-      @Semantics.quantity.unitOfMeasure: 'Unit'
-      SalesAmount_n                  : menge_d;
-      @Semantics.quantity.unitOfMeasure: 'Unit'
-      ContributionProfitTotal_n      : menge_d;
-      @Semantics.quantity.unitOfMeasure: 'Unit'
-      GrossProfitTotal_n             : menge_d;
+      ConditionRateValueUnit         : waers;
+      SalesPlanUnit                  : meins;
+      DisplayCurrency1               : waers;
+      DisplayCurrency2               : waers;
+      DisplayCurrency3               : waers;
+      currency                       : abap.cuky;
+      currency1                      : abap.cuky;
 
-      ConditionRateValue01           : abap.char(10);
-      ConditionRateValue02           : abap.char(10);
-      ConditionRateValue03           : abap.char(10);
-      ConditionRateValue04           : abap.char(10);
-      ConditionRateValue05           : abap.char(10);
-      ConditionRateValue06           : abap.char(10);
-      ConditionRateValue07           : abap.char(10);
-      ConditionRateValue08           : abap.char(10);
-      ConditionRateValue09           : abap.char(10);
-      ConditionRateValue10           : abap.char(10);
-      ConditionRateValue11           : abap.char(10);
-      ConditionRateValue12           : abap.char(10);
+      @Semantics.amount.currencyCode : 'currency'
+      materialcost2000_n             : abap.curr(15,2); //材料费
+      @Semantics.amount.currencyCode : 'currency'
+      materialcost2000per_n          : abap.curr(15,2); //材料费单价
+      @Semantics.amount.currencyCode : 'currency1'
+      Manufacturingcost_n            : abap.curr(20,2); //6
+      @Semantics.amount.currencyCode : 'currency1'
+      Manufacturingcostper_n         : abap.curr(20,2); //6
 
-      salesplanamountindspcrcy01     : abap.char(20);
-      salesplanamountindspcrcy02     : abap.char(20);
-      salesplanamountindspcrcy03     : abap.char(20);
-      salesplanamountindspcrcy04     : abap.char(20);
-      salesplanamountindspcrcy05     : abap.char(20);
-      salesplanamountindspcrcy06     : abap.char(20);
-      salesplanamountindspcrcy07     : abap.char(20);
-      salesplanamountindspcrcy08     : abap.char(20);
-      salesplanamountindspcrcy09     : abap.char(20);
-      salesplanamountindspcrcy10     : abap.char(20);
-      salesplanamountindspcrcy11     : abap.char(20);
-      salesplanamountindspcrcy12     : abap.char(20);
+      @Semantics.amount.currencyCode : 'ConditionRateValueUnit'
+      ConditionRateValue_n           : abap.curr(11,2); //单价
+      @Semantics.quantity.unitOfMeasure: 'SalesPlanUnit'
+      salesplanamountindspcrcy_n     : abap.quan(15,3); //QTY  SalesPlanQuantity
+      @Semantics.amount.currencyCode : 'DisplayCurrency1'
+      SalesAmount_n                  : abap.curr(20,2); //销售额
+      @Semantics.amount.currencyCode : 'DisplayCurrency2'
+      ContributionProfitTotal_n      : abap.curr(20,2); //贡献利润
+      @Semantics.amount.currencyCode : 'DisplayCurrency3'
+      GrossProfitTotal_n             : abap.curr(20,2); //销售总利润
 
-      SalesAmount01                  : abap.char(20);
-      SalesAmount02                  : abap.char(20);
-      SalesAmount03                  : abap.char(20);
-      SalesAmount04                  : abap.char(20);
-      SalesAmount05                  : abap.char(20);
-      SalesAmount06                  : abap.char(20);
-      SalesAmount07                  : abap.char(20);
-      SalesAmount08                  : abap.char(20);
-      SalesAmount09                  : abap.char(20);
-      SalesAmount10                  : abap.char(20);
-      SalesAmount11                  : abap.char(20);
-      SalesAmount12                  : abap.char(20);
-
-      ContributionProfitTotal01      : abap.char(20);
-      ContributionProfitTotal02      : abap.char(20);
-      ContributionProfitTotal03      : abap.char(20);
-      ContributionProfitTotal04      : abap.char(20);
-      ContributionProfitTotal05      : abap.char(20);
-      ContributionProfitTotal06      : abap.char(20);
-      ContributionProfitTotal07      : abap.char(20);
-      ContributionProfitTotal08      : abap.char(20);
-      ContributionProfitTotal09      : abap.char(20);
-      ContributionProfitTotal10      : abap.char(20);
-      ContributionProfitTotal11      : abap.char(20);
-      ContributionProfitTotal12      : abap.char(20);
-
-      GrossProfitTotal01             : abap.char(20);
-      GrossProfitTotal02             : abap.char(20);
-      GrossProfitTotal03             : abap.char(20);
-      GrossProfitTotal04             : abap.char(20);
-      GrossProfitTotal05             : abap.char(20);
-      GrossProfitTotal06             : abap.char(20);
-      GrossProfitTotal07             : abap.char(20);
-      GrossProfitTotal08             : abap.char(20);
-      GrossProfitTotal09             : abap.char(20);
-      GrossProfitTotal10             : abap.char(20);
-      GrossProfitTotal11             : abap.char(20);
-      GrossProfitTotal12             : abap.char(20);
 
 }

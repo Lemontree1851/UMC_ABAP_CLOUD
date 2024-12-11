@@ -25,9 +25,7 @@ define root view entity ZR_COMPONENTCOST
   finalpostingdate,
   finalsupplier,
   fixedsupplier,
-  @Semantics.amount.currencyCode : 'currency'
   standardprice,
-  @Semantics.amount.currencyCode : 'currency'
   movingaverageprice,
   currency,
   billingquantity,

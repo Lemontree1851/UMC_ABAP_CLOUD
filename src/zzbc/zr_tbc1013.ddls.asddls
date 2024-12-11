@@ -8,14 +8,14 @@
     dataClass: #MIXED
 }
 define view entity ZR_TBC1013
-  as select from    ztbc_1013               as _AssignSalesOrg
-    left outer join I_SalesOrganizationText as _SalesOrgText on  _SalesOrgText.SalesOrganization = _AssignSalesOrg.sales_organization
-                                                             and _SalesOrgText.Language          = $session.system_language
+  as select from ztbc_1013               as _AssignSalesOrg
+    inner join   I_SalesOrganizationText as _SalesOrgText on  _SalesOrgText.SalesOrganization = _AssignSalesOrg.sales_organization
+                                                          and _SalesOrgText.Language          = $session.system_language
 
-  association to parent ZR_TBC1004 as _User on $projection.UserUuid = _User.UserUuid
+  association to parent ZR_TBC1004 as _User on $projection.UserId = _User.UserId
 {
   key _AssignSalesOrg.uuid                  as Uuid,
-      _AssignSalesOrg.user_uuid             as UserUuid,
+  key _AssignSalesOrg.user_id               as UserId,
       _AssignSalesOrg.sales_organization    as SalesOrganization,
       @Semantics.user.createdBy: true
       _AssignSalesOrg.created_by            as CreatedBy,

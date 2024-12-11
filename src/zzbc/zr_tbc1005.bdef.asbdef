@@ -11,9 +11,8 @@ authorization master ( instance )
 {
   create;
   update;
-  delete;
+  delete ( precheck );
 
-  field ( readonly, numbering : managed ) RoleUuid;
   field ( readonly )
   CreatedBy,
   CreatedAt,
@@ -23,24 +22,62 @@ authorization master ( instance )
 
   field ( mandatory : create, readonly : update ) RoleId;
 
-  validation validationRoleId on save { field RoleId; create; }
-
   draft action Edit;
   draft action Activate optimized;
   draft action Discard;
   draft action Resume;
   draft determine action Prepare;
 
-  association _User{ with draft; create; }
+  association _User { with draft; create; }
+  association _AccessBtn { with draft; create; }
 
   mapping for ztbc_1005
     {
-      RoleUuid           = role_uuid;
       RoleId             = role_id;
       RoleName           = role_name;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
+    }
+}
+
+define behavior for ZR_TBC1016 alias AccessBtn
+persistent table ztbc_1016
+draft table ztbc_1016_d
+lock dependent by _Role
+authorization dependent by _Role
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) Uuid;
+  field ( readonly )
+  RoleId,
+  FunctionId,
+  AccessName,
+  DesignFileId,
+  FunctionName,
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field ( mandatory ) AccessId;
+
+  determination setFunctionId on save { field AccessId; }
+
+  association _Role { with draft; }
+
+  mapping for ztbc_1016
+    {
+      Uuid               = uuid;
+      RoleId             = role_id;
       FunctionId         = function_id;
       AccessId           = access_id;
-      AccessName         = access_name;
       CreatedBy          = created_by;
       CreatedAt          = created_at;
       LastChangedBy      = last_changed_by;
@@ -58,8 +95,7 @@ with unmanaged save
   update;
   delete;
 
-  field ( readonly, numbering : managed ) Uuid;
-  field ( readonly ) RoleUuid;
+  field ( readonly ) RoleId;
 
-  association _Role{ with draft; }
+  association _Role { with draft; }
 }

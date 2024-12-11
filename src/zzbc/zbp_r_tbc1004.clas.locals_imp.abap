@@ -3,8 +3,6 @@ CLASS lhc_user DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
       IMPORTING keys REQUEST requested_authorizations FOR user RESULT result.
-    METHODS validationuserid FOR VALIDATE ON SAVE
-      IMPORTING keys FOR user~validationuserid.
     METHODS validationemail FOR VALIDATE ON SAVE
       IMPORTING keys FOR user~validationemail.
 
@@ -13,40 +11,6 @@ ENDCLASS.
 CLASS lhc_user IMPLEMENTATION.
 
   METHOD get_instance_authorizations.
-  ENDMETHOD.
-
-  METHOD validationuserid.
-    READ ENTITIES OF zr_tbc1004 IN LOCAL MODE
-    ENTITY user
-    FIELDS ( userid ) WITH CORRESPONDING #( keys )
-    RESULT DATA(lt_result).
-
-    IF lt_result IS NOT INITIAL.
-      SELECT userid
-        FROM zc_tbc1004
-        INTO TABLE @DATA(lt_user).                      "#EC CI_NOWHERE
-      SORT lt_user BY userid.
-
-      LOOP AT lt_result INTO DATA(ls_result).
-        IF ls_result-userid IS INITIAL.
-          MESSAGE e006(zbc_001) WITH TEXT-001 INTO DATA(lv_message).
-        ELSE.
-          READ TABLE lt_user TRANSPORTING NO FIELDS WITH KEY userid = ls_result-userid BINARY SEARCH.
-          IF sy-subrc = 0.
-            MESSAGE e009(zbc_001) WITH TEXT-001 ls_result-userid INTO lv_message.
-          ENDIF.
-        ENDIF.
-
-        IF lv_message IS NOT INITIAL.
-          APPEND VALUE #( %tky = ls_result-%tky ) TO failed-user.
-          APPEND VALUE #( %tky            = ls_result-%tky
-                          %state_area     = 'VALIDATE_USERID'
-                          %element-userid = if_abap_behv=>mk-on
-                          %msg            = new_message_with_text( severity = if_abap_behv_message=>severity-error
-                                                                   text     = lv_message ) ) TO reported-user.
-        ENDIF.
-      ENDLOOP.
-    ENDIF.
   ENDMETHOD.
 
   METHOD validationemail.
@@ -124,96 +88,7 @@ CLASS lhc_assignplant IMPLEMENTATION.
                           %element-plant = if_abap_behv=>mk-on
                           %msg           = new_message_with_text( severity = if_abap_behv_message=>severity-error
                                                                   text     = lv_message )
-                          %path          = VALUE #( user-%key-useruuid = ls_result-useruuid ) ) TO reported-assignplant.
-        ENDIF.
-      ENDLOOP.
-    ENDIF.
-  ENDMETHOD.
-
-ENDCLASS.
-
-CLASS lhc_assignrole DEFINITION INHERITING FROM cl_abap_behavior_handler.
-
-  PRIVATE SECTION.
-
-    METHODS validateroleid FOR VALIDATE ON SAVE
-      IMPORTING keys FOR assignrole~validateroleid.
-    METHODS setroleuuid FOR DETERMINE ON SAVE
-      IMPORTING keys FOR assignrole~setroleuuid.
-
-ENDCLASS.
-
-CLASS lhc_assignrole IMPLEMENTATION.
-
-  METHOD validateroleid.
-*    READ ENTITIES OF zr_tbc1004 IN LOCAL MODE
-*    ENTITY assignrole
-*    FIELDS ( roleid ) WITH CORRESPONDING #( keys )
-*    RESULT DATA(lt_result).
-*
-*    IF lt_result IS NOT INITIAL.
-*      SELECT *
-*        FROM zc_tbc1005
-*         FOR ALL ENTRIES IN @lt_result
-*       WHERE roleid = @lt_result-roleid
-*        INTO TABLE @DATA(lt_role).
-*      SORT lt_role BY roleid.
-*
-*      SELECT *
-*       FROM zc_tbc1007
-*        FOR ALL ENTRIES IN @lt_result
-*      WHERE useruuid = @lt_result-useruuid
-*       INTO TABLE @DATA(lt_assign_role).
-*
-*      LOOP AT lt_result INTO DATA(ls_result).
-*        IF ls_result-roleid IS INITIAL.
-*          MESSAGE e006(zbc_001) WITH TEXT-004 INTO DATA(lv_message).
-*        ELSE.
-*          READ TABLE lt_role TRANSPORTING NO FIELDS WITH KEY roleid = ls_result-roleid BINARY SEARCH.
-*          IF sy-subrc <> 0.
-*            MESSAGE e008(zbc_001) WITH TEXT-004 ls_result-roleid INTO lv_message.
-*          ELSEIF line_exists( lt_assign_role[ roleid = ls_result-roleid ] ).
-*            MESSAGE e009(zbc_001) WITH TEXT-004 ls_result-roleid INTO lv_message.
-*          ENDIF.
-*        ENDIF.
-*
-*        IF lv_message IS NOT INITIAL.
-*          APPEND VALUE #( %tky = ls_result-%tky ) TO failed-assignrole.
-*          APPEND VALUE #( %tky            = ls_result-%tky
-*                          %state_area     = 'VALIDATE_ROLE'
-*                          %element-roleid = if_abap_behv=>mk-on
-*                          %msg            = new_message_with_text( severity = if_abap_behv_message=>severity-error
-*                                                                   text     = lv_message )
-*                          %path           = VALUE #( user-%key-useruuid = ls_result-useruuid ) ) TO reported-assignrole.
-*        ENDIF.
-*      ENDLOOP.
-*    ENDIF.
-  ENDMETHOD.
-
-  METHOD setroleuuid.
-    READ ENTITIES OF zr_tbc1004 IN LOCAL MODE
-    ENTITY assignrole
-    ALL FIELDS WITH CORRESPONDING #( keys )
-    RESULT DATA(lt_result).
-
-    IF lt_result IS NOT INITIAL.
-      SELECT *
-        FROM zc_tbc1005
-         FOR ALL ENTRIES IN @lt_result
-       WHERE roleid = @lt_result-roleid
-        INTO TABLE @DATA(lt_role).            "#EC CI_ALL_FIELDS_NEEDED
-      SORT lt_role BY roleid.
-
-      LOOP AT lt_result INTO DATA(ls_result).
-        READ TABLE lt_role INTO DATA(ls_role) WITH KEY roleid = ls_result-roleid BINARY SEARCH.
-        IF sy-subrc = 0.
-          MODIFY ENTITIES OF zr_tbc1004 IN LOCAL MODE
-          ENTITY assignrole
-          UPDATE FIELDS ( roleuuid ) WITH VALUE #( ( %tky     = ls_result-%tky
-                                                     roleuuid = ls_role-roleuuid ) )
-          REPORTED DATA(modifyreported).
-
-          reported = CORRESPONDING #( DEEP modifyreported ).
+                          %path          = VALUE #( user-%key-userid = ls_result-userid ) ) TO reported-assignplant.
         ENDIF.
       ENDLOOP.
     ENDIF.
@@ -263,7 +138,7 @@ CLASS lhc_assigncompany IMPLEMENTATION.
                           %element-companycode = if_abap_behv=>mk-on
                           %msg           = new_message_with_text( severity = if_abap_behv_message=>severity-error
                                                                   text     = lv_message )
-                          %path          = VALUE #( user-%key-useruuid = ls_result-useruuid ) ) TO reported-assigncompany.
+                          %path          = VALUE #( user-%key-userid = ls_result-userid ) ) TO reported-assigncompany.
         ENDIF.
       ENDLOOP.
     ENDIF.
@@ -313,7 +188,7 @@ CLASS lhc_assignsalesorg IMPLEMENTATION.
                           %element-salesorganization = if_abap_behv=>mk-on
                           %msg           = new_message_with_text( severity = if_abap_behv_message=>severity-error
                                                                   text     = lv_message )
-                          %path          = VALUE #( user-%key-useruuid = ls_result-useruuid ) ) TO reported-assignsalesorg.
+                          %path          = VALUE #( user-%key-userid = ls_result-userid ) ) TO reported-assignsalesorg.
         ENDIF.
       ENDLOOP.
     ENDIF.

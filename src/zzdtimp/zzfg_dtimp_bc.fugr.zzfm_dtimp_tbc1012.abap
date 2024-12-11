@@ -26,49 +26,47 @@ FUNCTION zzfm_dtimp_tbc1012.
   LOOP AT eo_data->* ASSIGNING FIELD-SYMBOL(<line>).
 
     CLEAR ls_data.
-    ls_data-updateflag  = <line>-('updateflag').
-    ls_data-role_id     = <line>-('role_id').
-    ls_data-function_id = <line>-('function_id').
-    ls_data-access_id   = <line>-('access_id').
-    ls_data-access_name = <line>-('access_name').
+    ls_data-updateflag = <line>-('updateflag').
+    ls_data-role_id    = <line>-('role_id').
+    ls_data-role_name  = <line>-('role_name').
     CLEAR: <line>-('Message'), <line>-('Type').
 
     "Check update flag
     IF ls_data-updateflag IS INITIAL.
       MESSAGE e006(zbc_001) WITH TEXT-001 INTO <line>-('Message').
-      <line>-('Type')    = 'E'.
+      <line>-('Type') = 'E'.
       CONTINUE.
     ELSEIF ls_data-updateflag <> lc_updateflag_insert AND
            ls_data-updateflag <> lc_updateflag_update AND
            ls_data-updateflag <> lc_updateflag_delete.
       MESSAGE e008(zbc_001) WITH TEXT-001 ls_data-updateflag INTO <line>-('Message').
-      <line>-('Type')    = 'E'.
+      <line>-('Type') = 'E'.
       CONTINUE.
     ENDIF.
 
     IF ls_data-role_id IS INITIAL.
       MESSAGE e006(zbc_001) WITH TEXT-004 INTO <line>-('Message').
-      <line>-('Type')    = 'E'.
+      <line>-('Type') = 'E'.
       CONTINUE.
     ENDIF.
-
-    IF ls_data-function_id IS INITIAL.
-      MESSAGE e006(zbc_001) WITH TEXT-006 INTO <line>-('Message').
-      <line>-('Type')    = 'E'.
-      CONTINUE.
-    ENDIF.
-
-    IF ls_data-access_id IS INITIAL.
-      MESSAGE e006(zbc_001) WITH TEXT-007 INTO <line>-('Message').
-      <line>-('Type')    = 'E'.
-      CONTINUE.
-    ENDIF.
-
-    IF ls_data-access_name IS INITIAL.
-      MESSAGE e006(zbc_001) WITH TEXT-008 INTO <line>-('Message').
-      <line>-('Type')    = 'E'.
-      CONTINUE.
-    ENDIF.
+*
+*    IF ls_data-function_id IS INITIAL.
+*      MESSAGE e006(zbc_001) WITH TEXT-006 INTO <line>-('Message').
+*      <line>-('Type') = 'E'.
+*      CONTINUE.
+*    ENDIF.
+*
+*    IF ls_data-access_id IS INITIAL.
+*      MESSAGE e006(zbc_001) WITH TEXT-007 INTO <line>-('Message').
+*      <line>-('Type') = 'E'.
+*      CONTINUE.
+*    ENDIF.
+*
+*    IF ls_data-access_name IS INITIAL.
+*      MESSAGE e006(zbc_001) WITH TEXT-008 INTO <line>-('Message').
+*      <line>-('Type') = 'E'.
+*      CONTINUE.
+*    ENDIF.
 
 *   Insert data
     IF ls_data-updateflag = lc_updateflag_insert.
@@ -76,24 +74,13 @@ FUNCTION zzfm_dtimp_tbc1012.
       SELECT COUNT( * ) FROM ztbc_1005 WHERE role_id = @ls_data-role_id.
       IF sy-subrc = 0.
         MESSAGE e009(zbc_001) WITH TEXT-013 space INTO <line>-('Message').
-        <line>-('Type')    = 'E'.
+        <line>-('Type') = 'E'.
         CONTINUE.
       ENDIF.
 
-      CLEAR:
-        ls_ztbc_1005.
-
-      TRY.
-          ls_ztbc_1005-role_uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-          ##NO_HANDLER
-        CATCH cx_uuid_error.
-          " handle exception
-      ENDTRY.
-
-      ls_ztbc_1005-role_id     = ls_data-role_id.
-      ls_ztbc_1005-function_id = ls_data-function_id.
-      ls_ztbc_1005-access_id   = ls_data-access_id.
-      ls_ztbc_1005-access_name = ls_data-access_name.
+      CLEAR: ls_ztbc_1005.
+      ls_ztbc_1005-role_id   = ls_data-role_id.
+      ls_ztbc_1005-role_name = ls_data-role_name.
 
       ls_ztbc_1005-created_by  = sy-uname.
       GET TIME STAMP FIELD ls_ztbc_1005-created_at.
@@ -125,10 +112,8 @@ FUNCTION zzfm_dtimp_tbc1012.
         CONTINUE.
       ENDIF.
 
-      ls_ztbc_1005-role_id     = ls_data-role_id.
-      ls_ztbc_1005-function_id = ls_data-function_id.
-      ls_ztbc_1005-access_id   = ls_data-access_id.
-      ls_ztbc_1005-access_name = ls_data-access_name.
+      ls_ztbc_1005-role_id   = ls_data-role_id.
+      ls_ztbc_1005-role_name = ls_data-role_name.
 
       ls_ztbc_1005-last_changed_by = sy-uname.
       GET TIME STAMP FIELD ls_ztbc_1005-last_changed_at.
@@ -150,20 +135,13 @@ FUNCTION zzfm_dtimp_tbc1012.
 
 *   Delete data
     IF ls_data-updateflag = lc_updateflag_delete.
-
-      SELECT SINGLE * FROM ztbc_1005 WHERE role_id = @ls_data-role_id INTO @ls_ztbc_1005.
-      IF sy-subrc = 0.
-        DELETE FROM ztbc_1007 WHERE role_uuid = @ls_ztbc_1005-role_uuid.
-      ENDIF.
-
+      DELETE FROM ztbc_1007 WHERE role_id = @ls_data-role_id.
       DELETE FROM ztbc_1005 WHERE role_id = @ls_data-role_id.
 
       COMMIT WORK AND WAIT.
       <line>-('Type') = 'S'.
       <line>-('Message') = 'Success'.
-
     ENDIF.
-
   ENDLOOP.
 
 ENDFUNCTION.

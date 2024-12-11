@@ -151,8 +151,12 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       ls_1012-billingdocument = ls_accept-billingdocument.
       ls_1012-customerpo = ls_accept-customerpo.
       ls_1012-salesdocumenttype = ls_accept-salesdocumenttype.
+      REPLACE ALL OCCURRENCES OF '/' IN ls_accept-acceptperiodfromtext WITH space.
+      CONDENSE ls_accept-acceptperiodfromtext NO-GAPS.
       ls_1012-acceptperiodfrom = ls_accept-acceptperiodfromtext.
-      ls_1012-acceptperiodto = ls_accept-acceptperiodto.
+      REPLACE ALL OCCURRENCES OF '/' IN ls_accept-acceptperiodtotext WITH space.
+      CONDENSE ls_accept-acceptperiodtotext NO-GAPS.
+      ls_1012-acceptperiodto = ls_accept-acceptperiodtotext.
       ls_1012-product = ls_accept-product.
       ls_1012-salesdocumentitemtext = ls_accept-salesdocumentitemtext.
       ls_1012-postingdate = ls_accept-postingdate.
@@ -190,24 +194,10 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       ls_1012-exchangeratedate = ls_accept-exchangeratedate.
       ls_1012-outsidedata = ls_accept-outsidedata.
       ls_1012-remarks = ls_accept-remarks.
-      READ TABLE lt_1001 INTO DATA(ls_1001)
-           WITH KEY zid = 'ZSD008'
-                    zvalue2 = ls_accept-processstatus.
-      IF sy-subrc = 0.
-        ls_1012-processstatus = ls_1001-zvalue1.
-      ENDIF.
-      READ TABLE lt_1001 INTO ls_1001
-           WITH KEY zid = 'ZSD009'
-                    zvalue2 = ls_accept-reasoncategory.
-      IF sy-subrc = 0.
-        ls_1012-reasoncategory = ls_1001-zvalue1.
-      ENDIF.
-      READ TABLE lt_1001 INTO ls_1001
-           WITH KEY zid = 'ZSD010'
-                    zvalue2 = ls_accept-reasoncategory.
-      IF sy-subrc = 0.
-        ls_1012-reason = ls_1001-zvalue1.
-      ENDIF.
+      ls_1012-processstatus = ls_accept-processstatus.
+      ls_1012-reasoncategory = ls_accept-reasoncategory.
+      ls_1012-reason = ls_accept-reasoncategory.
+
       APPEND ls_1012 TO lt_1012.
       CLEAR: ls_1012.
     ENDLOOP.

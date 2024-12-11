@@ -146,6 +146,24 @@
      <MSGNR>022</MSGNR>
      <TEXT>対象データは処理権限を持っていません。チェックしてください。</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>023</MSGNR>
+     <TEXT>Role &amp;1 is already used by user &amp;2.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>024</MSGNR>
+     <TEXT>Access Id &amp;1 is already used by role &amp;2.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>025</MSGNR>
+     <TEXT>Application &amp;1 is already used by role &amp;2.</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

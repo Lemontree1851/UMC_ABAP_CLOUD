@@ -92,16 +92,10 @@ FUNCTION zzfm_dtimp_tbc1011.
           CONTINUE.
         ENDIF.
 
-        TRY.
-            ls_ztbc_1004-user_uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-            ##NO_HANDLER
-          CATCH cx_uuid_error.
-            " handle exception
-        ENDTRY.
-
         ls_ztbc_1004-user_id    = ls_data-user_id.
         ls_ztbc_1004-mail       = ls_data-mail.
         ls_ztbc_1004-department = ls_data-department .
+        ls_ztbc_1004-user_name  = ls_data-user_id.
 
         ls_ztbc_1004-created_by = sy-uname.
         GET TIME STAMP FIELD ls_ztbc_1004-created_at.
@@ -127,7 +121,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Insert plant data
       IF ls_data-plant IS NOT INITIAL.
 
-        SELECT COUNT( * ) FROM ztbc_1006 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+        SELECT COUNT( * ) FROM ztbc_1006 WHERE user_id = @ls_ztbc_1004-user_id.
         IF sy-subrc = 0.
           MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-009 INTO <line>-('Message').    "User plant data already exist
           <line>-('Type')    = 'E'.
@@ -138,7 +132,7 @@ FUNCTION zzfm_dtimp_tbc1011.
           ls_ztbc_1006,
           lt_ztbc_1006.
 
-        ls_ztbc_1006-user_uuid = ls_ztbc_1004-user_uuid.
+        ls_ztbc_1006-user_id = ls_ztbc_1004-user_id.
         ls_ztbc_1006-created_by = sy-uname.
         GET TIME STAMP FIELD ls_ztbc_1006-created_at.
         ls_ztbc_1006-last_changed_by = sy-uname.
@@ -175,7 +169,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Insert company data
       IF ls_data-company_code IS NOT INITIAL.
 
-        SELECT COUNT( * ) FROM ztbc_1012 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+        SELECT COUNT( * ) FROM ztbc_1012 WHERE user_id = @ls_ztbc_1004-user_id.
         IF sy-subrc = 0.
           MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-010 INTO <line>-('Message').    "User company data already exist
           <line>-('Type')    = 'E'.
@@ -186,7 +180,7 @@ FUNCTION zzfm_dtimp_tbc1011.
           ls_ztbc_1012,
           lt_ztbc_1012.
 
-        ls_ztbc_1012-user_uuid = ls_ztbc_1004-user_uuid.
+        ls_ztbc_1012-user_id = ls_ztbc_1004-user_id.
         ls_ztbc_1012-created_by = sy-uname.
         GET TIME STAMP FIELD ls_ztbc_1012-created_at.
         ls_ztbc_1012-last_changed_by = sy-uname.
@@ -223,7 +217,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Insert sales organization data
       IF ls_data-sales_organization IS NOT INITIAL.
 
-        SELECT COUNT( * ) FROM ztbc_1013 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+        SELECT COUNT( * ) FROM ztbc_1013 WHERE user_id = @ls_ztbc_1004-user_id.
         IF sy-subrc = 0.
           MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-011 INTO <line>-('Message').    "User sales organization data already exist
           <line>-('Type')    = 'E'.
@@ -234,7 +228,7 @@ FUNCTION zzfm_dtimp_tbc1011.
           ls_ztbc_1013,
           lt_ztbc_1013.
 
-        ls_ztbc_1013-user_uuid = ls_ztbc_1004-user_uuid.
+        ls_ztbc_1013-user_id = ls_ztbc_1004-user_id.
         ls_ztbc_1013-created_by = sy-uname.
         GET TIME STAMP FIELD ls_ztbc_1013-created_at.
         ls_ztbc_1013-last_changed_by = sy-uname.
@@ -317,7 +311,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Update plant data
       IF ls_data-plant IS NOT INITIAL.
 
-        DELETE FROM ztbc_1006 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+        DELETE FROM ztbc_1006 WHERE user_id = @ls_ztbc_1004-user_id.
 
         IF ls_data-plant <> 'D'.
 
@@ -325,7 +319,7 @@ FUNCTION zzfm_dtimp_tbc1011.
             ls_ztbc_1006,
             lt_ztbc_1006.
 
-          ls_ztbc_1006-user_uuid = ls_ztbc_1004-user_uuid.
+          ls_ztbc_1006-user_id = ls_ztbc_1004-user_id.
           ls_ztbc_1006-created_by = sy-uname.
           GET TIME STAMP FIELD ls_ztbc_1006-created_at.
           ls_ztbc_1006-last_changed_by = sy-uname.
@@ -368,7 +362,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Update company data
       IF ls_data-company_code IS NOT INITIAL.
 
-        DELETE FROM ztbc_1012 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+        DELETE FROM ztbc_1012 WHERE user_id = @ls_ztbc_1004-user_id.
 
         IF ls_data-company_code <> 'D'.
 
@@ -376,7 +370,7 @@ FUNCTION zzfm_dtimp_tbc1011.
             ls_ztbc_1012,
             lt_ztbc_1012.
 
-          ls_ztbc_1012-user_uuid = ls_ztbc_1004-user_uuid.
+          ls_ztbc_1012-user_id = ls_ztbc_1004-user_id.
           ls_ztbc_1012-created_by = sy-uname.
           GET TIME STAMP FIELD ls_ztbc_1012-created_at.
           ls_ztbc_1012-last_changed_by = sy-uname.
@@ -419,7 +413,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Update sales organization data
       IF ls_data-sales_organization IS NOT INITIAL.
 
-        DELETE FROM ztbc_1013 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+        DELETE FROM ztbc_1013 WHERE user_id = @ls_ztbc_1004-user_id.
 
         IF ls_data-sales_organization <> 'D'.
 
@@ -427,7 +421,7 @@ FUNCTION zzfm_dtimp_tbc1011.
             ls_ztbc_1013,
             lt_ztbc_1013.
 
-          ls_ztbc_1013-user_uuid = ls_ztbc_1004-user_uuid.
+          ls_ztbc_1013-user_id = ls_ztbc_1004-user_id.
           ls_ztbc_1013-created_by = sy-uname.
           GET TIME STAMP FIELD ls_ztbc_1013-created_at.
           ls_ztbc_1013-last_changed_by = sy-uname.
@@ -479,19 +473,19 @@ FUNCTION zzfm_dtimp_tbc1011.
     IF ls_data-updateflag = lc_updateflag_delete.
 
       "Delete user data
-      DELETE FROM ztbc_1004 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+      DELETE FROM ztbc_1004 WHERE user_id = @ls_ztbc_1004-user_id.
 
       "Delete plant data
-      DELETE FROM ztbc_1006 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+      DELETE FROM ztbc_1006 WHERE user_id = @ls_ztbc_1004-user_id.
 
       "Delete role data
-      DELETE FROM ztbc_1007 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+      DELETE FROM ztbc_1007 WHERE user_id = @ls_ztbc_1004-user_id.
 
       "Delete company data
-      DELETE FROM ztbc_1012 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+      DELETE FROM ztbc_1012 WHERE user_id = @ls_ztbc_1004-user_id.
 
       "Delete sales organization data
-      DELETE FROM ztbc_1013 WHERE user_uuid = @ls_ztbc_1004-user_uuid.
+      DELETE FROM ztbc_1013 WHERE user_id = @ls_ztbc_1004-user_id.
 
       COMMIT WORK AND WAIT.
       <line>-('Type') = 'S'.

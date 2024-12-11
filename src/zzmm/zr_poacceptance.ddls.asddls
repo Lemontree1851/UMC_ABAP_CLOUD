@@ -143,7 +143,11 @@ define root custom entity ZR_POACCEPTANCE
       SupplierMaterialNumber         : abap.char(35);
 
       //顧客品番
-
+      @UI                            : { lineItem: [ { position: 140 } ] }
+      @EndUserText.label             : '{@i18n>CustomerMaterial}'
+      @Consumption.filter.hidden: true
+      CustomerMaterial               : abap.char(40);
+      
       //メーカー品番
       @UI                            : { lineItem: [ { position: 150 } ] }
       @EndUserText.label             : '{@i18n>ProductManufacturerNumber}'

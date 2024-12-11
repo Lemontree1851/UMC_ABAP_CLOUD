@@ -7,11 +7,10 @@
 }
 annotate view ZC_TBC1006 with
 {
-
   @UI.hidden: true
   Uuid;
   @UI.hidden: true
-  UserUuid;
+  UserId;
 
   @UI.lineItem: [{ position: 10, cssDefault.width: '10rem' }]
   @Consumption.valueHelpDefinition: [{ entity: {name: 'I_Plant' , element: 'Plant' },

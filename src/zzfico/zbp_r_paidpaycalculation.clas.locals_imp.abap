@@ -618,10 +618,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
            AND costestimatevaliditystartdate = @lv_maxdate
            AND costestimatestatus = 'FR'
           INTO TABLE @DATA(lt_costbom).
-* get lasted date value
-        SORT lt_costbom BY product plant
-                           costestimatevaliditystartdate DESCENDING.
-        DELETE ADJACENT DUPLICATES FROM lt_costbom COMPARING product plant costestimatevaliditystartdate.
       ENDIF.
       IF lt_costbom IS NOT INITIAL.
         SELECT  billofmaterialcategory,
@@ -694,19 +690,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
             CONTINUE.
           ENDIF.
         ENDLOOP.
-*        LOOP AT lt_expode INTO ls_expode.
-*          ls_bom-parent01 = ls_expode-material.
-*          ls_bom-plant = ls_expode-plant.
-*
-*          READ TABLE lt_up INTO ls_up
-*               WITH KEY billofmaterial = ls_expode-billofmaterial
-*                        billofmaterialvariant = ls_expode-billofmaterialvariant BINARY SEARCH.
-*          IF sy-subrc = 0.
-*            ls_bom-raw = ls_up-billofmaterialcomponent.
-*          ENDIF.
-*          APPEND ls_bom TO lt_bom.
-*          CLEAR: ls_bom.
-*        ENDLOOP.
 
       ELSE.
 * Expand bom from second to last layer to the first layer
@@ -734,25 +717,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
             CLEAR: ls_bom.
           ENDIF.
         ENDLOOP.
-*        LOOP AT lt_expode INTO ls_expode.
-*          READ TABLE lt_up INTO ls_up
-*               WITH KEY billofmaterial = ls_expode-billofmaterial
-*                        billofmaterialvariant = ls_expode-billofmaterialvariant BINARY SEARCH.
-*          IF sy-subrc = 0.
-*            READ TABLE lt_bom_tmp INTO ls_bom
-*                 WITH KEY plant = ls_expode-plant
-*                          (lv_field_son) = ls_up-billofmaterialcomponent BINARY SEARCH.
-*            IF sy-subrc = 0.
-*              DATA(lv_tabix) = sy-tabix.
-*              ASSIGN COMPONENT lv_field OF STRUCTURE ls_bom TO <fs>.
-*              <fs> = ls_expode-material.
-*              APPEND ls_bom TO lt_bom.
-*              DELETE lt_bom_tmp INDEX lv_tabix.
-*              CONTINUE.
-*            ENDIF.
-*            CLEAR: ls_bom.
-*          ENDIF.
-*        ENDLOOP.
+
       ENDIF.
       "临时存放找不到上层物料的bom
       IF lt_bom_tmp IS NOT INITIAL.

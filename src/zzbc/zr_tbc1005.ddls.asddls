@@ -3,14 +3,11 @@
 define root view entity ZR_TBC1005
   as select from ztbc_1005
 
-  composition [1..*] of ZR_TBC1007_1 as _User
+  composition [0..*] of ZR_TBC1007_1 as _User
+  composition [0..*] of ZR_TBC1016   as _AccessBtn
 {
-  key role_uuid             as RoleUuid,
-      role_id               as RoleId,
+  key role_id               as RoleId,
       role_name             as RoleName,
-      function_id           as FunctionId,
-      access_id             as AccessId,
-      access_name           as AccessName,
       @Semantics.user.createdBy: true
       created_by            as CreatedBy,
       @Semantics.systemDateTime.createdAt: true
@@ -22,5 +19,6 @@ define root view entity ZR_TBC1005
       @Semantics.systemDateTime.localInstanceLastChangedAt: true
       local_last_changed_at as LocalLastChangedAt,
 
-      _User
+      _User,
+      _AccessBtn
 }
