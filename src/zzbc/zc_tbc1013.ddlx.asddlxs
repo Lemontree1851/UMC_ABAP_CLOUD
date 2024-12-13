@@ -10,7 +10,7 @@ annotate view ZC_TBC1013 with
   @UI.hidden: true
   Uuid;
   @UI.hidden: true
-  UserId;
+  Mail;
 
   @UI.lineItem: [{ position: 10, cssDefault.width: '10rem' }]
   @Consumption.valueHelpDefinition: [{ entity: {name: 'ZC_SalesOrganization_VH' , element: 'SalesOrganization' },

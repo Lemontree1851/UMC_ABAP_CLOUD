@@ -8,10 +8,10 @@ define root view entity ZR_TBC1004
   composition [0..*] of ZR_TBC1013 as _AssignSalesOrg
   composition [0..*] of ZR_TBC1007 as _AssignRole
 {
-  key user_id               as UserId,
-      mail                  as Mail,
-      department            as Department,
+  key mail                  as Mail,
+      user_id               as UserId,
       user_name             as UserName,
+      department            as Department,
       @Semantics.user.createdBy: true
       created_by            as CreatedBy,
       @Semantics.systemDateTime.createdAt: true

@@ -11,10 +11,10 @@ define view entity ZR_TBC1012
   as select from ztbc_1012     as _AssignCompany
     inner join   I_CompanyCode as _CompanyCode on _CompanyCode.CompanyCode = _AssignCompany.company_code
 
-  association to parent ZR_TBC1004 as _User on $projection.UserId = _User.UserId
+  association to parent ZR_TBC1004 as _User on $projection.Mail = _User.Mail
 {
   key _AssignCompany.uuid                  as Uuid,
-  key _AssignCompany.user_id               as UserId,
+  key _AssignCompany.mail                  as Mail,
       _AssignCompany.company_code          as CompanyCode,
       @Semantics.user.createdBy: true
       _AssignCompany.created_by            as CreatedBy,

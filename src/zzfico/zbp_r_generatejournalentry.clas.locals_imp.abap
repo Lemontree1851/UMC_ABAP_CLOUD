@@ -67,15 +67,11 @@ CLASS lhc_zr_generatejournalentry IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD post.
-
-    DATA: ls_ztfi_1018 TYPE ztfi_1018,
-          lt_ztfi_1018 TYPE STANDARD TABLE OF ztfi_1018.
-
     DATA: ls_request TYPE zbp_r_generatejournalentry=>ty_request.
 
-    DATA: lt_entry  TYPE TABLE FOR ACTION IMPORT i_journalentrytp~post,
-          ls_entry  LIKE LINE OF lt_entry,
-          ls_glitem LIKE LINE OF ls_entry-%param-_glitems,
+    DATA: lt_entry   TYPE TABLE FOR ACTION IMPORT i_journalentrytp~post,
+          ls_entry   LIKE LINE OF lt_entry,
+          ls_glitem  LIKE LINE OF ls_entry-%param-_glitems,
           ls_apitems LIKE LINE OF ls_entry-%param-_apitems,
           ls_aritems LIKE LINE OF ls_entry-%param-_aritems.
 
@@ -118,16 +114,14 @@ CLASS lhc_zr_generatejournalentry IMPLEMENTATION.
       ENDLOOP.
 
       LOOP AT ls_request-apitems INTO DATA(ls_apitem).
-        ls_apitems =
-          VALUE #( glaccountlineitem = ls_apitem-glaccountlineitem
-                   supplier          = ls_apitem-supplier ).
+        ls_apitems = VALUE #( glaccountlineitem = ls_apitem-glaccountlineitem
+                              supplier          = ls_apitem-supplier ).
         APPEND ls_apitems TO ls_entry-%param-_apitems.
       ENDLOOP.
 
       LOOP AT ls_request-aritems INTO DATA(ls_aritem).
-        ls_aritems =
-          VALUE #( glaccountlineitem = ls_aritem-glaccountlineitem
-                        paymentterms = ls_aritem-paymentterms ).
+        ls_aritems = VALUE #( glaccountlineitem = ls_aritem-glaccountlineitem
+                              paymentterms = ls_aritem-paymentterms ).
         APPEND ls_aritems TO ls_entry-%param-_aritems.
       ENDLOOP.
 
@@ -135,71 +129,23 @@ CLASS lhc_zr_generatejournalentry IMPLEMENTATION.
     ENDLOOP.
 
     IF lt_entry IS NOT INITIAL.
-*      CLear lt_entry.
-
-      try.
-          MODIFY ENTITIES OF i_journalentrytp PRIVILEGED
-          ENTITY journalentry
-          EXECUTE post FROM lt_entry
-          MAPPED FINAL(ls_post_mapped)
-          FAILED FINAL(ls_post_failed)
-          REPORTED FINAL(ls_post_reported).
+      MODIFY ENTITIES OF i_journalentrytp PRIVILEGED
+      ENTITY journalentry
+      EXECUTE post FROM lt_entry
+      MAPPED FINAL(ls_post_mapped)
+      FAILED FINAL(ls_post_failed)
+      REPORTED FINAL(ls_post_reported).
 
       IF ls_post_failed IS NOT INITIAL.
         LOOP AT ls_post_reported-journalentry INTO DATA(ls_report).
 
-          CLEAR ls_ztfi_1018.
-          ls_ztfi_1018-uuid1     = ls_report-%cid.
-          ls_ztfi_1018-msgid     = ls_report-%msg->if_t100_message~t100key-msgid.
-          ls_ztfi_1018-msgno     = ls_report-%msg->if_t100_message~t100key-msgno.
-          ls_ztfi_1018-msgty     = ls_report-%msg->if_t100_dyn_msg~msgty.
-          ls_ztfi_1018-msgv1     = ls_report-%msg->if_t100_dyn_msg~msgv1.
-          ls_ztfi_1018-msgv2     = ls_report-%msg->if_t100_dyn_msg~msgv2.
-          ls_ztfi_1018-msgv3     = ls_report-%msg->if_t100_dyn_msg~msgv3.
-          ls_ztfi_1018-msgv4     = ls_report-%msg->if_t100_dyn_msg~msgv4.
-          MESSAGE ID ls_ztfi_1018-msgid
-                TYPE ls_ztfi_1018-msgty
-              NUMBER ls_ztfi_1018-msgno
-                WITH ls_ztfi_1018-msgv1
-                     ls_ztfi_1018-msgv2
-                     ls_ztfi_1018-msgv3
-                     ls_ztfi_1018-msgv4
-                INTO ls_ztfi_1018-message.
-          MODIFY ztfi_1018 FROM @ls_ztfi_1018.
-
-*          CLEAR:
-*            ls_report.
-*            ls_report-%msg.
-*           ls_report-%msg->if_t100_message~t100key-msgid,
-*           ls_report-%msg->if_t100_message~t100key-msgno,
-*           ls_report-%msg->if_t100_dyn_msg~msgty,
-*           ls_report-%msg->if_t100_dyn_msg~msgv1,
-*           ls_report-%msg->if_t100_dyn_msg~msgv2,
-*           ls_report-%msg->if_t100_dyn_msg~msgv3,
-*           ls_report-%msg->if_t100_dyn_msg~msgv4.
-*          APPEND VALUE #( uuid = ls_report-%cid
-*                          %create = if_abap_behv=>mk-on
-*                          %is_draft = if_abap_behv=>mk-on
-*                          %msg = ls_report-%msg ) TO reported-zr_generatejournalentry.
-*                           ) TO reported-zr_generatejournalentry.
-
-
-
-
-
-          EXIT.
-
+        ENDLOOP.
+      ELSE.
+        LOOP AT ls_post_mapped-journalentry INTO DATA(ls_je_mapped).
+          APPEND VALUE #( cid = ls_je_mapped-%cid
+                          pid = ls_je_mapped-%pid ) TO zbp_r_generatejournalentry=>gt_temp_key.
         ENDLOOP.
       ENDIF.
-*
-      LOOP AT ls_post_mapped-journalentry INTO DATA(ls_je_mapped).
-        APPEND VALUE #( cid = ls_je_mapped-%cid
-                        pid = ls_je_mapped-%pid ) TO zbp_r_generatejournalentry=>gt_temp_key.
-      ENDLOOP.
-      CATCH cx_root into data(lv_rootmessage).
-        CLEAR ls_ztfi_1018.
-
-      ENDTRY.
     ENDIF.
   ENDMETHOD.
 

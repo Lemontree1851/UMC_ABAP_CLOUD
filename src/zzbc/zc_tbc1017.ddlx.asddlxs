@@ -5,20 +5,12 @@
     typeNamePlural: 'Access Button'
   }
 }
-annotate view ZC_TBC1016 with
+annotate view ZC_TBC1017 with
 {
-  @UI.hidden: true
-  Uuid;
   @UI.hidden: true
   RoleId;
 
   @UI.lineItem: [{ position: 10, cssDefault.width: '20rem' }]
-  @Consumption.valueHelpDefinition: [{ entity: {name: 'ZC_TBC1015_VH' , element: 'AccessId' },
-               additionalBinding: [{ localElement: 'AccessName', element: 'AccessName', usage: #RESULT },
-                                   { localElement: 'FunctionId', element: 'FunctionId', usage: #RESULT },
-                                   { localElement: 'DesignFileId', element: 'DesignFileId', usage: #RESULT },
-                                   { localElement: 'FunctionName', element: 'FunctionName', usage: #RESULT }]
-  }]
   @EndUserText.label: 'Access Id'
   AccessId;
 

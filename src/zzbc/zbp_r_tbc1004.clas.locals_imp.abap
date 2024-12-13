@@ -5,12 +5,35 @@ CLASS lhc_user DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys REQUEST requested_authorizations FOR user RESULT result.
     METHODS validationemail FOR VALIDATE ON SAVE
       IMPORTING keys FOR user~validationemail.
+    METHODS precheck_delete FOR PRECHECK
+      IMPORTING keys FOR DELETE user.
+    METHODS validationuserid FOR VALIDATE ON SAVE
+      IMPORTING keys FOR user~validationuserid.
 
 ENDCLASS.
 
 CLASS lhc_user IMPLEMENTATION.
 
   METHOD get_instance_authorizations.
+  ENDMETHOD.
+
+  METHOD validationuserid.
+    READ ENTITIES OF zr_tbc1004 IN LOCAL MODE
+    ENTITY user
+    FIELDS ( userid ) WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result).
+
+    LOOP AT lt_result ASSIGNING FIELD-SYMBOL(<lfs_result>).
+      IF <lfs_result>-userid IS INITIAL.
+        APPEND VALUE #( %tky = <lfs_result>-%tky ) TO failed-user.
+        APPEND VALUE #( %tky = <lfs_result>-%tky
+                        %element-userid = if_abap_behv=>mk-on
+                        %msg = new_message( id       = 'ZBC_001'
+                                            number   = 006
+                                            severity = if_abap_behv_message=>severity-error
+                                            v1       = TEXT-001 ) ) TO reported-user.
+      ENDIF.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD validationemail.
@@ -44,6 +67,82 @@ CLASS lhc_user IMPLEMENTATION.
     ENDLOOP.
   ENDMETHOD.
 
+  METHOD precheck_delete.
+    DATA: lv_has_assign TYPE abap_boolean.
+
+    READ ENTITIES OF zr_tbc1004 IN LOCAL MODE
+    ENTITY user
+    FIELDS ( mail userid ) WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_user).
+
+    IF lt_user IS NOT INITIAL.
+      SELECT uuid,
+             mail
+        FROM zr_tbc1006
+         FOR ALL ENTRIES IN @lt_user
+       WHERE mail = @lt_user-mail
+        INTO TABLE @DATA(lt_assign_plant).
+      SORT lt_assign_plant BY mail.
+
+      SELECT uuid,
+             mail
+        FROM zr_tbc1007
+         FOR ALL ENTRIES IN @lt_user
+       WHERE mail = @lt_user-mail
+        INTO TABLE @DATA(lt_assign_role).
+      SORT lt_assign_role BY mail.
+
+      SELECT uuid,
+             mail
+        FROM zr_tbc1012
+         FOR ALL ENTRIES IN @lt_user
+       WHERE mail = @lt_user-mail
+        INTO TABLE @DATA(lt_assign_company).
+      SORT lt_assign_company BY mail.
+
+      SELECT uuid,
+             mail
+        FROM zr_tbc1013
+         FOR ALL ENTRIES IN @lt_user
+       WHERE mail = @lt_user-mail
+        INTO TABLE @DATA(lt_assign_salesorg).
+      SORT lt_assign_salesorg BY mail.
+    ENDIF.
+
+    LOOP AT lt_user ASSIGNING FIELD-SYMBOL(<lfs_user>).
+      CLEAR lv_has_assign.
+
+      READ TABLE lt_assign_plant TRANSPORTING NO FIELDS WITH KEY mail = <lfs_user>-mail BINARY SEARCH.
+      IF sy-subrc = 0.
+        lv_has_assign = abap_true.
+      ENDIF.
+
+      READ TABLE lt_assign_company TRANSPORTING NO FIELDS WITH KEY mail = <lfs_user>-mail BINARY SEARCH.
+      IF sy-subrc = 0.
+        lv_has_assign = abap_true.
+      ENDIF.
+
+      READ TABLE lt_assign_salesorg TRANSPORTING NO FIELDS WITH KEY mail = <lfs_user>-mail BINARY SEARCH.
+      IF sy-subrc = 0.
+        lv_has_assign = abap_true.
+      ENDIF.
+
+      READ TABLE lt_assign_role TRANSPORTING NO FIELDS WITH KEY mail = <lfs_user>-mail BINARY SEARCH.
+      IF sy-subrc = 0.
+        lv_has_assign = abap_true.
+      ENDIF.
+
+      IF lv_has_assign = abap_true.
+        APPEND VALUE #( %tky = <lfs_user>-%tky ) TO failed-user.
+        APPEND VALUE #( %tky = <lfs_user>-%tky
+                        %msg = new_message( id       = 'ZBC_001'
+                                            number   = 026
+                                            severity = if_abap_behv_message=>severity-error
+                                            v1       = <lfs_user>-userid ) ) TO reported-user.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
 ENDCLASS.
 
 CLASS lhc_assignplant DEFINITION INHERITING FROM cl_abap_behavior_handler.
@@ -58,12 +157,31 @@ ENDCLASS.
 CLASS lhc_assignplant IMPLEMENTATION.
 
   METHOD validateplant.
+    DATA: lv_message TYPE string.
+
     READ ENTITIES OF zr_tbc1004 IN LOCAL MODE
     ENTITY assignplant
-    FIELDS ( plant ) WITH CORRESPONDING #( keys )
+    FIELDS ( mail plant ) WITH CORRESPONDING #( keys )
     RESULT DATA(lt_result).
 
     IF lt_result IS NOT INITIAL.
+      ##ITAB_DB_SELECT
+      SELECT plant,
+             COUNT(*) AS count
+        FROM @lt_result AS a
+       GROUP BY plant
+        INTO TABLE @DATA(lt_plant_count).
+      SORT lt_plant_count BY plant.
+
+      SELECT uuid,
+             mail,
+             plant
+        FROM zr_tbc1006
+         FOR ALL ENTRIES IN @lt_result
+       WHERE mail = @lt_result-mail
+        INTO TABLE @DATA(lt_db_data).
+      SORT lt_db_data BY plant.
+
       SELECT plant
         FROM i_plant WITH PRIVILEGED ACCESS
          FOR ALL ENTRIES IN @lt_result
@@ -72,12 +190,27 @@ CLASS lhc_assignplant IMPLEMENTATION.
       SORT lt_plant BY plant.
 
       LOOP AT lt_result INTO DATA(ls_result).
+        CLEAR lv_message.
+
         IF ls_result-plant IS INITIAL.
-          MESSAGE e006(zbc_001) WITH TEXT-003 INTO DATA(lv_message).
+          MESSAGE e006(zbc_001) WITH TEXT-003 INTO lv_message.
         ELSE.
           READ TABLE lt_plant TRANSPORTING NO FIELDS WITH KEY plant = ls_result-plant BINARY SEARCH.
           IF sy-subrc <> 0.
             MESSAGE e008(zbc_001) WITH TEXT-003 ls_result-plant INTO lv_message.
+          ENDIF.
+
+          READ TABLE lt_plant_count INTO DATA(ls_plant_count) WITH KEY plant = ls_result-plant BINARY SEARCH.
+          IF sy-subrc = 0.
+            IF ls_plant_count-count > 1.
+              MESSAGE e009(zbc_001) WITH TEXT-003 ls_result-plant INTO lv_message.
+            ELSE.
+              READ TABLE lt_db_data TRANSPORTING NO FIELDS WITH KEY mail  = ls_result-mail
+                                                                    plant = ls_result-plant BINARY SEARCH.
+              IF sy-subrc = 0.
+                MESSAGE e009(zbc_001) WITH TEXT-003 ls_result-plant INTO lv_message.
+              ENDIF.
+            ENDIF.
           ENDIF.
         ENDIF.
 
@@ -88,7 +221,7 @@ CLASS lhc_assignplant IMPLEMENTATION.
                           %element-plant = if_abap_behv=>mk-on
                           %msg           = new_message_with_text( severity = if_abap_behv_message=>severity-error
                                                                   text     = lv_message )
-                          %path          = VALUE #( user-%key-userid = ls_result-userid ) ) TO reported-assignplant.
+                          %path          = VALUE #( user-%key-mail = ls_result-mail ) ) TO reported-assignplant.
         ENDIF.
       ENDLOOP.
     ENDIF.
@@ -108,12 +241,31 @@ ENDCLASS.
 CLASS lhc_assigncompany IMPLEMENTATION.
 
   METHOD validatecompanycode.
+    DATA: lv_message TYPE string.
+
     READ ENTITIES OF zr_tbc1004 IN LOCAL MODE
     ENTITY assigncompany
-    FIELDS ( companycode ) WITH CORRESPONDING #( keys )
+    FIELDS ( mail companycode ) WITH CORRESPONDING #( keys )
     RESULT DATA(lt_result).
 
     IF lt_result IS NOT INITIAL.
+      ##ITAB_DB_SELECT
+      SELECT companycode,
+             COUNT(*) AS count
+        FROM @lt_result AS a
+       GROUP BY companycode
+        INTO TABLE @DATA(lt_companycode_count).
+      SORT lt_companycode_count BY companycode.
+
+      SELECT uuid,
+             mail,
+             companycode
+        FROM zr_tbc1012
+         FOR ALL ENTRIES IN @lt_result
+       WHERE mail = @lt_result-mail
+        INTO TABLE @DATA(lt_db_data).
+      SORT lt_db_data BY companycode.
+
       SELECT companycode
         FROM i_companycode WITH PRIVILEGED ACCESS
          FOR ALL ENTRIES IN @lt_result
@@ -122,12 +274,27 @@ CLASS lhc_assigncompany IMPLEMENTATION.
       SORT lt_companycode BY companycode.
 
       LOOP AT lt_result INTO DATA(ls_result).
+        CLEAR lv_message.
+
         IF ls_result-companycode IS INITIAL.
-          MESSAGE e006(zbc_001) WITH TEXT-005 INTO DATA(lv_message).
+          MESSAGE e006(zbc_001) WITH TEXT-005 INTO lv_message.
         ELSE.
           READ TABLE lt_companycode TRANSPORTING NO FIELDS WITH KEY companycode = ls_result-companycode BINARY SEARCH.
           IF sy-subrc <> 0.
             MESSAGE e008(zbc_001) WITH TEXT-005 ls_result-companycode INTO lv_message.
+          ENDIF.
+
+          READ TABLE lt_companycode_count INTO DATA(ls_companycode_count) WITH KEY companycode = ls_result-companycode BINARY SEARCH.
+          IF sy-subrc = 0.
+            IF ls_companycode_count-count > 1.
+              MESSAGE e009(zbc_001) WITH TEXT-005 ls_result-companycode INTO lv_message.
+            ELSE.
+              READ TABLE lt_db_data TRANSPORTING NO FIELDS WITH KEY mail = ls_result-mail
+                                                                    companycode = ls_result-companycode BINARY SEARCH.
+              IF sy-subrc = 0.
+                MESSAGE e009(zbc_001) WITH TEXT-005 ls_result-companycode INTO lv_message.
+              ENDIF.
+            ENDIF.
           ENDIF.
         ENDIF.
 
@@ -138,7 +305,7 @@ CLASS lhc_assigncompany IMPLEMENTATION.
                           %element-companycode = if_abap_behv=>mk-on
                           %msg           = new_message_with_text( severity = if_abap_behv_message=>severity-error
                                                                   text     = lv_message )
-                          %path          = VALUE #( user-%key-userid = ls_result-userid ) ) TO reported-assigncompany.
+                          %path          = VALUE #( user-%key-mail = ls_result-mail ) ) TO reported-assigncompany.
         ENDIF.
       ENDLOOP.
     ENDIF.
@@ -158,12 +325,31 @@ ENDCLASS.
 CLASS lhc_assignsalesorg IMPLEMENTATION.
 
   METHOD validatesalesorg.
+    DATA: lv_message TYPE string.
+
     READ ENTITIES OF zr_tbc1004 IN LOCAL MODE
     ENTITY assignsalesorg
-    FIELDS ( salesorganization ) WITH CORRESPONDING #( keys )
+    FIELDS ( mail salesorganization ) WITH CORRESPONDING #( keys )
     RESULT DATA(lt_result).
 
     IF lt_result IS NOT INITIAL.
+      ##ITAB_DB_SELECT
+      SELECT salesorganization,
+             COUNT(*) AS count
+        FROM @lt_result AS a
+       GROUP BY salesorganization
+        INTO TABLE @DATA(lt_salesorg_count).
+      SORT lt_salesorg_count BY salesorganization.
+
+      SELECT uuid,
+             mail,
+             salesorganization
+        FROM zr_tbc1013
+         FOR ALL ENTRIES IN @lt_result
+       WHERE mail = @lt_result-mail
+        INTO TABLE @DATA(lt_db_data).
+      SORT lt_db_data BY salesorganization.
+
       SELECT salesorganization
         FROM i_salesorganization WITH PRIVILEGED ACCESS
          FOR ALL ENTRIES IN @lt_result
@@ -172,12 +358,27 @@ CLASS lhc_assignsalesorg IMPLEMENTATION.
       SORT lt_salesorganization BY salesorganization.
 
       LOOP AT lt_result INTO DATA(ls_result).
+        CLEAR lv_message.
+
         IF ls_result-salesorganization IS INITIAL.
-          MESSAGE e006(zbc_001) WITH TEXT-006 INTO DATA(lv_message).
+          MESSAGE e006(zbc_001) WITH TEXT-006 INTO lv_message.
         ELSE.
           READ TABLE lt_salesorganization TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result-salesorganization BINARY SEARCH.
           IF sy-subrc <> 0.
             MESSAGE e008(zbc_001) WITH TEXT-006 ls_result-salesorganization INTO lv_message.
+          ENDIF.
+
+          READ TABLE lt_salesorg_count INTO DATA(ls_salesorg_count) WITH KEY salesorganization = ls_result-salesorganization BINARY SEARCH.
+          IF sy-subrc = 0.
+            IF ls_salesorg_count-count > 1.
+              MESSAGE e009(zbc_001) WITH TEXT-006 ls_result-salesorganization INTO lv_message.
+            ELSE.
+              READ TABLE lt_db_data TRANSPORTING NO FIELDS WITH KEY mail = ls_result-mail
+                                                                    salesorganization = ls_result-salesorganization BINARY SEARCH.
+              IF sy-subrc = 0.
+                MESSAGE e009(zbc_001) WITH TEXT-006 ls_result-salesorganization INTO lv_message.
+              ENDIF.
+            ENDIF.
           ENDIF.
         ENDIF.
 
@@ -188,7 +389,91 @@ CLASS lhc_assignsalesorg IMPLEMENTATION.
                           %element-salesorganization = if_abap_behv=>mk-on
                           %msg           = new_message_with_text( severity = if_abap_behv_message=>severity-error
                                                                   text     = lv_message )
-                          %path          = VALUE #( user-%key-userid = ls_result-userid ) ) TO reported-assignsalesorg.
+                          %path          = VALUE #( user-%key-mail = ls_result-mail ) ) TO reported-assignsalesorg.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+  ENDMETHOD.
+
+ENDCLASS.
+
+CLASS lhc_assignrole DEFINITION INHERITING FROM cl_abap_behavior_handler.
+
+  PRIVATE SECTION.
+
+    METHODS validateroleid FOR VALIDATE ON SAVE
+      IMPORTING keys FOR assignrole~validateroleid.
+
+ENDCLASS.
+
+CLASS lhc_assignrole IMPLEMENTATION.
+
+  METHOD validateroleid.
+    DATA: lv_message TYPE string.
+
+    READ ENTITIES OF zr_tbc1004 IN LOCAL MODE
+    ENTITY assignrole
+    FIELDS ( mail roleid ) WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result).
+
+    IF lt_result IS NOT INITIAL.
+      ##ITAB_DB_SELECT
+      SELECT roleid,
+             COUNT(*) AS count
+        FROM @lt_result AS a
+       GROUP BY roleid
+        INTO TABLE @DATA(lt_role_count).
+      SORT lt_role_count BY roleid.
+
+      SELECT uuid,
+             mail,
+             roleid
+        FROM zr_tbc1007
+         FOR ALL ENTRIES IN @lt_result
+       WHERE mail = @lt_result-mail
+        INTO TABLE @DATA(lt_db_data).
+      SORT lt_db_data BY roleid.
+
+      SELECT roleid
+        FROM zr_tbc1005
+         FOR ALL ENTRIES IN @lt_result
+       WHERE roleid = @lt_result-roleid
+        INTO TABLE @DATA(lt_role).
+      SORT lt_role BY roleid.
+
+      LOOP AT lt_result INTO DATA(ls_result).
+        CLEAR lv_message.
+
+        IF ls_result-roleid IS INITIAL.
+          MESSAGE e006(zbc_001) WITH TEXT-004 INTO lv_message.
+        ELSE.
+          READ TABLE lt_role TRANSPORTING NO FIELDS WITH KEY roleid = ls_result-roleid BINARY SEARCH.
+          IF sy-subrc <> 0.
+            MESSAGE e008(zbc_001) WITH TEXT-004 ls_result-roleid INTO lv_message.
+          ENDIF.
+
+          READ TABLE lt_role_count INTO DATA(ls_role_count) WITH KEY roleid = ls_result-roleid BINARY SEARCH.
+          IF sy-subrc = 0.
+            IF ls_role_count-count > 1.
+              MESSAGE e009(zbc_001) WITH TEXT-004 ls_result-roleid INTO lv_message.
+            ELSE.
+              READ TABLE lt_db_data TRANSPORTING NO FIELDS WITH KEY mail   = ls_result-mail
+                                                                    roleid = ls_result-roleid BINARY SEARCH.
+              IF sy-subrc = 0.
+                MESSAGE e009(zbc_001) WITH TEXT-004 ls_result-roleid INTO lv_message.
+              ENDIF.
+            ENDIF.
+          ENDIF.
+        ENDIF.
+
+        IF lv_message IS NOT INITIAL.
+          APPEND VALUE #( %tky = ls_result-%tky ) TO failed-assignrole.
+          APPEND VALUE #( %tky            = ls_result-%tky
+                          %state_area     = 'VALIDATE_ROLE'
+                          %element-roleid = if_abap_behv=>mk-on
+                          %msg            = new_message_with_text( severity = if_abap_behv_message=>severity-error
+                                                                   text     = lv_message )
+                          %path           = VALUE #( user-%key-mail = ls_result-mail ) ) TO reported-assignrole.
         ENDIF.
       ENDLOOP.
     ENDIF.

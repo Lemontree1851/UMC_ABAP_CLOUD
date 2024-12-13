@@ -11,10 +11,11 @@ define view entity ZR_TBC1007
   as select from ztbc_1007 as _AssignRole
     inner join   ztbc_1005 on ztbc_1005.role_id = _AssignRole.role_id
 
-  association to parent ZR_TBC1004 as _User on $projection.UserId = _User.UserId
+  association        to parent ZR_TBC1004 as _User              on $projection.Mail = _User.Mail
+  association [0..*] to ZR_TBC1017        as _UserRoleAccessBtn on $projection.RoleId = _UserRoleAccessBtn.RoleId
 {
   key _AssignRole.uuid                  as Uuid,
-  key _AssignRole.user_id               as UserId,
+  key _AssignRole.mail                  as Mail,
       _AssignRole.role_id               as RoleId,
       @Semantics.user.createdBy: true
       _AssignRole.created_by            as CreatedBy,
@@ -29,5 +30,6 @@ define view entity ZR_TBC1007
 
       ztbc_1005.role_name               as RoleName,
 
-      _User
+      _User,
+      _UserRoleAccessBtn
 }

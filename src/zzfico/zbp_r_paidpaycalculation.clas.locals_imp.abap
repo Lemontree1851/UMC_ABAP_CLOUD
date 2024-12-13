@@ -269,8 +269,8 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     SELECT *
       FROM ztfi_1010
      WHERE companycode = @cv_bukrs
-       AND fiscalyear = @ls_v3-FiscalPeriodStartDate+0(4)
-       AND period = @ls_v3-FiscalPeriodStartDate+4(2)
+       AND fiscalyear = @ls_v3-fiscalperiodstartdate+0(4)
+       AND period = @ls_v3-fiscalperiodstartdate+4(2)
       INTO TABLE @DATA(lt_del).
     IF lt_del IS NOT INITIAL.
       DELETE ztfi_1010 FROM TABLE @lt_del.
@@ -620,7 +620,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
           INTO TABLE @DATA(lt_costbom).
       ENDIF.
       IF lt_costbom IS NOT INITIAL.
-        SELECT  billofmaterialcategory,
+        SELECT  billofmaterialcategory,            "#EC CI_NO_TRANSFORM
                 billofmaterial,
                 billofmaterialvariant,
                 billofmaterialitemnodenumber,
@@ -1530,7 +1530,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       "当期有償支給品の仕入れ金額期首
       "該当得意先の総売上高beginning
       "会社レベルの総売上高begin
-      READ TABLE lt_ztfi_1009 INTO DATA(ls_1009)
+      READ TABLE lt_ztfi_1009 INTO DATA(ls_1009)         "#EC CI_SORTED
            WITH KEY businesspartner = ls_1010-customer
                     profitcenter = ls_1010-profitcenter
                     purchasinggroup = ls_1010-purchasinggroup BINARY SEARCH..
@@ -1702,14 +1702,15 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
 * V3 会计期间转换
     lv_poper = cv_monat.
     lv_fiscalyearperiod = cv_gjahr && lv_poper.
-    SELECT SINGLE *
-      FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
-     WHERE fiscalyearvariant = 'V3'
-       AND fiscalyearperiod = @lv_fiscalyearperiod
-      INTO @DATA(ls_v3).
-    lv_year = ls_v3-FiscalPeriodStartDate+0(4).
-    lv_monat = ls_v3-FiscalPeriodStartDate+4(2).
-
+    IF lv_fiscalyearperiod IS NOT INITIAL.  "#EC CI_ALL_FIELDS_NEEDED
+      SELECT SINGLE *           "#EC CI_ALL_FIELDS_NEEDED
+        FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+       WHERE fiscalyearvariant = 'V3'
+         AND fiscalyearperiod = @lv_fiscalyearperiod
+        INTO @DATA(ls_v3).
+      lv_year = ls_v3-fiscalperiodstartdate+0(4).
+      lv_monat = ls_v3-fiscalperiodstartdate+4(2).
+    ENDIF.
 * Delete
     SELECT *                                  "#EC CI_ALL_FIELDS_NEEDED
       FROM ztfi_1011

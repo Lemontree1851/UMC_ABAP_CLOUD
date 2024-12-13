@@ -11,10 +11,10 @@ define view entity ZR_TBC1006
   as select from ztbc_1006 as _AssignPlant
     inner join   I_Plant   as _Plant on _Plant.Plant = _AssignPlant.plant
 
-  association to parent ZR_TBC1004 as _User on $projection.UserId = _User.UserId
+  association to parent ZR_TBC1004 as _User on $projection.Mail = _User.Mail
 {
   key _AssignPlant.uuid                  as Uuid,
-  key _AssignPlant.user_id               as UserId,
+  key _AssignPlant.mail                  as Mail,
       _AssignPlant.plant                 as Plant,
       @Semantics.user.createdBy: true
       _AssignPlant.created_by            as CreatedBy,

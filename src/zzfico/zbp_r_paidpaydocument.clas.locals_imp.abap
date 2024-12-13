@@ -273,7 +273,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
     ENDIF.
 
     lv_fiscalyearperiod = ls_v3-nextfiscalperiodfiscalyear && ls_v3-nextfiscalperiod.
-    SELECT SINGLE *
+    SELECT SINGLE *                           "#EC CI_ALL_FIELDS_NEEDED
       FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
      WHERE fiscalyearvariant = 'V3'
        AND fiscalyearperiod = @lv_fiscalyearperiod

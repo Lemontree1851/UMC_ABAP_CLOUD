@@ -164,6 +164,30 @@
      <MSGNR>025</MSGNR>
      <TEXT>Application &amp;1 is already used by role &amp;2.</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>026</MSGNR>
+     <TEXT>Please delete the assignment information for user &amp;1.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>027</MSGNR>
+     <TEXT>No authority for plant &amp;1.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>028</MSGNR>
+     <TEXT>No authority for company &amp;1.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>029</MSGNR>
+     <TEXT>No authority for sales org. &amp;1.</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

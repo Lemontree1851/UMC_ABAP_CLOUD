@@ -25,7 +25,10 @@ define view entity ZI_BI003_OLD_MATERIAL
       POITEM.DocumentCurrency,
 
       @Semantics.amount.currencyCode: 'DocumentCurrency'
-      POITEM.NetPriceAmount,
+      case when POITEM.NetPriceQuantity <> 0 then
+        cast( cast( POITEM.NetPriceAmount as abap.dec(11,3) ) / POITEM.NetPriceQuantity  as dmbtr )
+      else POITEM.NetPriceAmount
+      end as NetPriceAmount,
 
       ProductText.ProductName
 }

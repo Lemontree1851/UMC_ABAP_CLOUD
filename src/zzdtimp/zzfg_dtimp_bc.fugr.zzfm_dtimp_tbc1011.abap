@@ -32,7 +32,15 @@ FUNCTION zzfm_dtimp_tbc1011.
     lt_ztbc_1013 TYPE TABLE OF ztbc_1013,   "User Sales Organization information
     lt_plant     TYPE TABLE OF ty_plant,
     lt_company   TYPE TABLE OF ty_company,
-    lt_salesorg  TYPE TABLE OF ty_salesorg.
+    lt_salesorg  TYPE TABLE OF ty_salesorg,
+    lv_regular_expression TYPE string VALUE '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    lv_flag      TYPE STRING.
+
+    " Example for a POSIX regular expression engine (More configuration options are available
+    " as optional parameters of the method POSIX).
+    DATA(lo_posix_engine) = xco_cp_regular_expression=>engine->posix(
+      iv_ignore_case = abap_true
+    ).
 
   CONSTANTS:
     lc_updateflag_insert TYPE string VALUE 'I',
@@ -55,6 +63,7 @@ FUNCTION zzfm_dtimp_tbc1011.
     ls_data-company_code       = <line>-('company_code').
     ls_data-sales_organization = <line>-('sales_organization').
     CLEAR: <line>-('Message'), <line>-('Type').
+    CONDENSE ls_data-mail NO-GAPS.
 
     "Check update flag
     IF ls_data-updateflag IS INITIAL.
@@ -69,16 +78,24 @@ FUNCTION zzfm_dtimp_tbc1011.
       CONTINUE.
     ENDIF.
 
-    "Check user id
-    IF ls_data-user_id IS INITIAL.
-      MESSAGE e006(zbc_001) WITH TEXT-002 INTO <line>-('Message').
+    "Check mail
+    IF ls_data-mail IS INITIAL.
+      MESSAGE e006(zbc_001) WITH TEXT-003 INTO <line>-('Message').
+      <line>-('Type')    = 'E'.
+      CONTINUE.
+    ENDIF.
+
+    DATA(lv_match) = xco_cp=>string( ls_data-mail )->matches( iv_regular_expression = lv_regular_expression
+                                                              io_engine             = lo_posix_engine ).
+    IF lv_match IS INITIAL.
+      MESSAGE e008(zbc_001) WITH TEXT-003 ls_data-mail INTO <line>-('Message').
       <line>-('Type')    = 'E'.
       CONTINUE.
     ENDIF.
 
     "Obtain data of user information
     CLEAR ls_ztbc_1004.
-    SELECT SINGLE * FROM ztbc_1004 WHERE user_id = @ls_data-user_id INTO @ls_ztbc_1004.
+    SELECT SINGLE * FROM ztbc_1004 WHERE mail = @ls_data-mail INTO @ls_ztbc_1004.
 
 *   Insert data
     IF ls_data-updateflag = lc_updateflag_insert.
@@ -86,8 +103,9 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Insert user data
       IF ls_ztbc_1004 IS INITIAL.
 
-        IF ls_data-mail IS INITIAL.
-          MESSAGE e006(zbc_001) WITH TEXT-003 INTO <line>-('Message').
+        "Check user id
+        IF ls_data-user_id IS INITIAL.
+          MESSAGE e006(zbc_001) WITH TEXT-002 INTO <line>-('Message').
           <line>-('Type')    = 'E'.
           CONTINUE.
         ENDIF.
@@ -99,7 +117,6 @@ FUNCTION zzfm_dtimp_tbc1011.
 
         ls_ztbc_1004-created_by = sy-uname.
         GET TIME STAMP FIELD ls_ztbc_1004-created_at.
-
         ls_ztbc_1004-last_changed_by = sy-uname.
         GET TIME STAMP FIELD ls_ztbc_1004-last_changed_at.
         GET TIME STAMP FIELD ls_ztbc_1004-local_last_changed_at.
@@ -121,7 +138,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Insert plant data
       IF ls_data-plant IS NOT INITIAL.
 
-        SELECT COUNT( * ) FROM ztbc_1006 WHERE user_id = @ls_ztbc_1004-user_id.
+        SELECT COUNT( * ) FROM ztbc_1006 WHERE mail = @ls_ztbc_1004-mail .
         IF sy-subrc = 0.
           MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-009 INTO <line>-('Message').    "User plant data already exist
           <line>-('Type')    = 'E'.
@@ -132,7 +149,7 @@ FUNCTION zzfm_dtimp_tbc1011.
           ls_ztbc_1006,
           lt_ztbc_1006.
 
-        ls_ztbc_1006-user_id = ls_ztbc_1004-user_id.
+        ls_ztbc_1006-mail       = ls_ztbc_1004-mail.
         ls_ztbc_1006-created_by = sy-uname.
         GET TIME STAMP FIELD ls_ztbc_1006-created_at.
         ls_ztbc_1006-last_changed_by = sy-uname.
@@ -141,7 +158,18 @@ FUNCTION zzfm_dtimp_tbc1011.
 
         CLEAR lt_plant.
         SPLIT ls_data-plant AT lc_splitflag INTO TABLE lt_plant.
+
+        CLEAR lv_flag.
         LOOP AT lt_plant INTO DATA(ls_plant).
+
+          SELECT COUNT( * ) FROM i_Plant WHERE Plant = @ls_plant-plant.
+          IF sy-subrc <> 0.  "&1 &2 is invalid.
+            MESSAGE e008(zbc_001) WITH TEXT-016 ls_plant-plant INTO <line>-('Message').
+            <line>-('Type')    = 'E'.
+            lv_flag = 'X'.
+            EXIT.
+          ENDIF.
+
           TRY.
               ls_ztbc_1006-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
               ##NO_HANDLER
@@ -151,6 +179,9 @@ FUNCTION zzfm_dtimp_tbc1011.
           ls_ztbc_1006-plant = ls_plant-plant.
           APPEND ls_ztbc_1006 TO lt_ztbc_1006.
         ENDLOOP.
+        IF lv_flag = 'X'.
+          CONTINUE.
+        ENDIF.
 
         MODIFY ztbc_1006 FROM TABLE @lt_ztbc_1006.
         IF sy-subrc = 0.
@@ -169,7 +200,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Insert company data
       IF ls_data-company_code IS NOT INITIAL.
 
-        SELECT COUNT( * ) FROM ztbc_1012 WHERE user_id = @ls_ztbc_1004-user_id.
+        SELECT COUNT( * ) FROM ztbc_1012 WHERE mail = @ls_ztbc_1004-mail.
         IF sy-subrc = 0.
           MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-010 INTO <line>-('Message').    "User company data already exist
           <line>-('Type')    = 'E'.
@@ -180,7 +211,7 @@ FUNCTION zzfm_dtimp_tbc1011.
           ls_ztbc_1012,
           lt_ztbc_1012.
 
-        ls_ztbc_1012-user_id = ls_ztbc_1004-user_id.
+        ls_ztbc_1012-mail = ls_ztbc_1004-mail.
         ls_ztbc_1012-created_by = sy-uname.
         GET TIME STAMP FIELD ls_ztbc_1012-created_at.
         ls_ztbc_1012-last_changed_by = sy-uname.
@@ -189,7 +220,18 @@ FUNCTION zzfm_dtimp_tbc1011.
 
         CLEAR lt_company.
         SPLIT ls_data-company_code AT lc_splitflag INTO TABLE lt_company.
+
+        CLEAR lv_flag.
         LOOP AT lt_company INTO DATA(ls_company).
+
+          SELECT COUNT( * ) FROM i_CompanyCode WHERE CompanyCode = @ls_company-company.
+          IF sy-subrc <> 0.  "&1 &2 is invalid.
+            MESSAGE e008(zbc_001) WITH TEXT-017 ls_company-company INTO <line>-('Message').
+            <line>-('Type')    = 'E'.
+            lv_flag = 'X'.
+            EXIT.
+          ENDIF.
+
           TRY.
               ls_ztbc_1012-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
               ##NO_HANDLER
@@ -199,6 +241,9 @@ FUNCTION zzfm_dtimp_tbc1011.
           ls_ztbc_1012-company_code = ls_company-company.
           APPEND ls_ztbc_1012 TO lt_ztbc_1012.
         ENDLOOP.
+        IF lv_flag = 'X'.
+          CONTINUE.
+        ENDIF.
 
         MODIFY ztbc_1012 FROM TABLE @lt_ztbc_1012.
         IF sy-subrc = 0.
@@ -217,7 +262,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Insert sales organization data
       IF ls_data-sales_organization IS NOT INITIAL.
 
-        SELECT COUNT( * ) FROM ztbc_1013 WHERE user_id = @ls_ztbc_1004-user_id.
+        SELECT COUNT( * ) FROM ztbc_1013 WHERE mail = @ls_ztbc_1004-mail.
         IF sy-subrc = 0.
           MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-011 INTO <line>-('Message').    "User sales organization data already exist
           <line>-('Type')    = 'E'.
@@ -228,7 +273,7 @@ FUNCTION zzfm_dtimp_tbc1011.
           ls_ztbc_1013,
           lt_ztbc_1013.
 
-        ls_ztbc_1013-user_id = ls_ztbc_1004-user_id.
+        ls_ztbc_1013-mail = ls_ztbc_1004-mail.
         ls_ztbc_1013-created_by = sy-uname.
         GET TIME STAMP FIELD ls_ztbc_1013-created_at.
         ls_ztbc_1013-last_changed_by = sy-uname.
@@ -237,7 +282,18 @@ FUNCTION zzfm_dtimp_tbc1011.
 
         CLEAR lt_salesorg.
         SPLIT ls_data-sales_organization AT lc_splitflag INTO TABLE lt_salesorg.
+
+        CLEAR lv_flag.
         LOOP AT lt_salesorg INTO DATA(ls_salesorg).
+
+          SELECT COUNT( * ) FROM i_SalesOrganization WHERE SalesOrganization = @ls_salesorg-salesorg.
+          IF sy-subrc <> 0.  "&1 &2 is invalid.
+            MESSAGE e008(zbc_001) WITH TEXT-018 ls_salesorg-salesorg INTO <line>-('Message').
+            <line>-('Type')    = 'E'.
+            lv_flag = 'X'.
+            EXIT.
+          ENDIF.
+
           TRY.
               ls_ztbc_1013-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
               ##NO_HANDLER
@@ -247,6 +303,9 @@ FUNCTION zzfm_dtimp_tbc1011.
           ls_ztbc_1013-sales_organization = ls_salesorg-salesorg.
           APPEND ls_ztbc_1013 TO lt_ztbc_1013.
         ENDLOOP.
+        IF lv_flag = 'X'.
+          CONTINUE.
+        ENDIF.
 
         MODIFY ztbc_1013 FROM TABLE @lt_ztbc_1013.
         IF sy-subrc = 0.
@@ -280,10 +339,10 @@ FUNCTION zzfm_dtimp_tbc1011.
         CONTINUE.
       ENDIF.
 
-      IF ls_data-mail IS NOT INITIAL OR ls_data-department IS NOT INITIAL.
+      IF ls_data-user_id IS NOT INITIAL OR ls_data-department IS NOT INITIAL.
 
-        IF ls_data-mail IS NOT INITIAL.
-          ls_ztbc_1004-mail = ls_data-mail.
+        IF ls_data-user_id IS NOT INITIAL.
+          ls_ztbc_1004-user_id = ls_data-user_id.
         ENDIF.
 
         IF ls_data-department IS NOT INITIAL.
@@ -311,7 +370,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Update plant data
       IF ls_data-plant IS NOT INITIAL.
 
-        DELETE FROM ztbc_1006 WHERE user_id = @ls_ztbc_1004-user_id.
+        DELETE FROM ztbc_1006 WHERE mail = @ls_ztbc_1004-mail.
 
         IF ls_data-plant <> 'D'.
 
@@ -319,7 +378,7 @@ FUNCTION zzfm_dtimp_tbc1011.
             ls_ztbc_1006,
             lt_ztbc_1006.
 
-          ls_ztbc_1006-user_id = ls_ztbc_1004-user_id.
+          ls_ztbc_1006-mail = ls_ztbc_1004-mail.
           ls_ztbc_1006-created_by = sy-uname.
           GET TIME STAMP FIELD ls_ztbc_1006-created_at.
           ls_ztbc_1006-last_changed_by = sy-uname.
@@ -328,7 +387,18 @@ FUNCTION zzfm_dtimp_tbc1011.
 
           CLEAR lt_plant.
           SPLIT ls_data-plant AT lc_splitflag INTO TABLE lt_plant.
+
+          CLEAR lv_flag.
           LOOP AT lt_plant INTO ls_plant.
+
+            SELECT COUNT( * ) FROM i_Plant WHERE Plant = @ls_plant-plant.
+            IF sy-subrc <> 0.  "&1 &2 is invalid.
+              MESSAGE e008(zbc_001) WITH TEXT-016 ls_plant-plant INTO <line>-('Message').
+              <line>-('Type')    = 'E'.
+              lv_flag = 'X'.
+              EXIT.
+            ENDIF.
+
             TRY.
                 ls_ztbc_1006-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
                 ##NO_HANDLER
@@ -338,6 +408,9 @@ FUNCTION zzfm_dtimp_tbc1011.
             ls_ztbc_1006-plant = ls_plant-plant.
             APPEND ls_ztbc_1006 TO lt_ztbc_1006.
           ENDLOOP.
+          IF lv_flag = 'X'.
+            CONTINUE.
+          ENDIF.
 
           MODIFY ztbc_1006 FROM TABLE @lt_ztbc_1006.
           IF sy-subrc = 0.
@@ -362,7 +435,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Update company data
       IF ls_data-company_code IS NOT INITIAL.
 
-        DELETE FROM ztbc_1012 WHERE user_id = @ls_ztbc_1004-user_id.
+        DELETE FROM ztbc_1012 WHERE mail = @ls_ztbc_1004-mail.
 
         IF ls_data-company_code <> 'D'.
 
@@ -370,7 +443,7 @@ FUNCTION zzfm_dtimp_tbc1011.
             ls_ztbc_1012,
             lt_ztbc_1012.
 
-          ls_ztbc_1012-user_id = ls_ztbc_1004-user_id.
+          ls_ztbc_1012-mail = ls_ztbc_1004-mail.
           ls_ztbc_1012-created_by = sy-uname.
           GET TIME STAMP FIELD ls_ztbc_1012-created_at.
           ls_ztbc_1012-last_changed_by = sy-uname.
@@ -379,7 +452,18 @@ FUNCTION zzfm_dtimp_tbc1011.
 
           CLEAR lt_company.
           SPLIT ls_data-company_code AT lc_splitflag INTO TABLE lt_company.
+
+          CLEAR lv_flag.
           LOOP AT lt_company INTO ls_company.
+
+            SELECT COUNT( * ) FROM i_CompanyCode WHERE CompanyCode = @ls_company-company.
+            IF sy-subrc <> 0.  "&1 &2 is invalid.
+              MESSAGE e008(zbc_001) WITH TEXT-017 ls_company-company INTO <line>-('Message').
+              <line>-('Type')    = 'E'.
+              lv_flag = 'X'.
+              EXIT.
+            ENDIF.
+
             TRY.
                 ls_ztbc_1012-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
                 ##NO_HANDLER
@@ -389,6 +473,9 @@ FUNCTION zzfm_dtimp_tbc1011.
             ls_ztbc_1012-company_code = ls_company-company.
             APPEND ls_ztbc_1012 TO lt_ztbc_1012.
           ENDLOOP.
+          IF lv_flag = 'X'.
+            CONTINUE.
+          ENDIF.
 
           MODIFY ztbc_1012 FROM TABLE @lt_ztbc_1012.
           IF sy-subrc = 0.
@@ -413,7 +500,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Update sales organization data
       IF ls_data-sales_organization IS NOT INITIAL.
 
-        DELETE FROM ztbc_1013 WHERE user_id = @ls_ztbc_1004-user_id.
+        DELETE FROM ztbc_1013 WHERE mail = @ls_ztbc_1004-mail.
 
         IF ls_data-sales_organization <> 'D'.
 
@@ -421,7 +508,7 @@ FUNCTION zzfm_dtimp_tbc1011.
             ls_ztbc_1013,
             lt_ztbc_1013.
 
-          ls_ztbc_1013-user_id = ls_ztbc_1004-user_id.
+          ls_ztbc_1013-mail = ls_ztbc_1004-mail.
           ls_ztbc_1013-created_by = sy-uname.
           GET TIME STAMP FIELD ls_ztbc_1013-created_at.
           ls_ztbc_1013-last_changed_by = sy-uname.
@@ -430,7 +517,18 @@ FUNCTION zzfm_dtimp_tbc1011.
 
           CLEAR lt_salesorg.
           SPLIT ls_data-sales_organization AT lc_splitflag INTO TABLE lt_salesorg.
+
+          CLEAR lv_flag.
           LOOP AT lt_salesorg INTO ls_salesorg.
+
+            SELECT COUNT( * ) FROM i_SalesOrganization WHERE SalesOrganization = @ls_salesorg-salesorg.
+            IF sy-subrc <> 0.  "&1 &2 is invalid.
+              MESSAGE e008(zbc_001) WITH TEXT-018 ls_salesorg-salesorg INTO <line>-('Message').
+              <line>-('Type')    = 'E'.
+              lv_flag = 'X'.
+              EXIT.
+            ENDIF.
+
             TRY.
                 ls_ztbc_1013-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
                 ##NO_HANDLER
@@ -440,6 +538,9 @@ FUNCTION zzfm_dtimp_tbc1011.
             ls_ztbc_1013-sales_organization = ls_salesorg-salesorg.
             APPEND ls_ztbc_1013 TO lt_ztbc_1013.
           ENDLOOP.
+          IF lv_flag = 'X'.
+            CONTINUE.
+          ENDIF.
 
           MODIFY ztbc_1013 FROM TABLE @lt_ztbc_1013.
           IF sy-subrc = 0.
@@ -473,19 +574,19 @@ FUNCTION zzfm_dtimp_tbc1011.
     IF ls_data-updateflag = lc_updateflag_delete.
 
       "Delete user data
-      DELETE FROM ztbc_1004 WHERE user_id = @ls_ztbc_1004-user_id.
+      DELETE FROM ztbc_1004 WHERE mail = @ls_ztbc_1004-mail.
 
       "Delete plant data
-      DELETE FROM ztbc_1006 WHERE user_id = @ls_ztbc_1004-user_id.
+      DELETE FROM ztbc_1006 WHERE mail = @ls_ztbc_1004-mail.
 
       "Delete role data
-      DELETE FROM ztbc_1007 WHERE user_id = @ls_ztbc_1004-user_id.
+      DELETE FROM ztbc_1007 WHERE mail = @ls_ztbc_1004-mail.
 
       "Delete company data
-      DELETE FROM ztbc_1012 WHERE user_id = @ls_ztbc_1004-user_id.
+      DELETE FROM ztbc_1012 WHERE mail = @ls_ztbc_1004-mail.
 
       "Delete sales organization data
-      DELETE FROM ztbc_1013 WHERE user_id = @ls_ztbc_1004-user_id.
+      DELETE FROM ztbc_1013 WHERE mail = @ls_ztbc_1004-mail.
 
       COMMIT WORK AND WAIT.
       <line>-('Type') = 'S'.

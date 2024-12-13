@@ -105,7 +105,7 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       ls_1012    TYPE ztsd_1012,
       ls_request TYPE lty_request.
 
-    SELECT *                    "#EC CI_ALL_FIELDS_NEEDED
+    SELECT *                                  "#EC CI_ALL_FIELDS_NEEDED
       FROM ztbc_1001
      WHERE zid = 'ZSD008'
         OR zid = 'ZSD009'
@@ -119,7 +119,7 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       <lfs_accept>-product = |{ <lfs_accept>-product ALPHA = IN }|.
     ENDLOOP.
 
-    SELECT *                 "#EC CI_ALL_FIELDS_NEEDED
+    SELECT *                                  "#EC CI_ALL_FIELDS_NEEDED
       FROM ztsd_1012
       FOR ALL ENTRIES IN @ct_accept
      WHERE customer = @ct_accept-customer
@@ -194,10 +194,32 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       ls_1012-exchangeratedate = ls_accept-exchangeratedate.
       ls_1012-outsidedata = ls_accept-outsidedata.
       ls_1012-remarks = ls_accept-remarks.
-      ls_1012-processstatus = ls_accept-processstatus.
-      ls_1012-reasoncategory = ls_accept-reasoncategory.
-      ls_1012-reason = ls_accept-reasoncategory.
+      READ TABLE lt_1001 INTO DATA(ls_1001)
+                 WITH KEY zid = 'ZSD008'
+                          zvalue2 = ls_accept-processstatus.
+      IF sy-subrc = 0.
+        ls_1012-processstatus = ls_1001-zvalue1.
+      ELSE.
+        ls_1012-processstatus = ls_accept-processstatus.
+      ENDIF.
 
+      READ TABLE lt_1001 INTO ls_1001
+                 WITH KEY zid = 'ZSD009'
+                          zvalue2 = ls_accept-reasoncategory.
+      IF sy-subrc = 0.
+        ls_1012-reasoncategory = ls_1001-zvalue1.
+      ELSE.
+        ls_1012-reasoncategory = ls_accept-reasoncategory.
+      ENDIF.
+
+      READ TABLE lt_1001 INTO ls_1001
+                 WITH KEY zid = 'ZSD010'
+                          zvalue2 = ls_accept-reason.
+      IF sy-subrc = 0.
+        ls_1012-reason = ls_1001-zvalue1.
+      ELSE.
+        ls_1012-reason = ls_accept-reason.
+      ENDIF.
       APPEND ls_1012 TO lt_1012.
       CLEAR: ls_1012.
     ENDLOOP.

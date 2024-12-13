@@ -428,7 +428,7 @@ CLASS lhc_paymethod IMPLEMENTATION.
         cashdiscount1dayofmonth,
         cashdiscount1additionalmonths
     FROM i_paymenttermsconditions
-    INTO TABLE @DATA(lt_paymentterms)."#EC CI_NOWHERE
+    INTO TABLE @DATA(lt_paymentterms).                  "#EC CI_NOWHERE
     SORT lt_paymentterms BY paymentterms paymenttermsvaliditymonthday.
 
     MESSAGE s022(zfico_001) INTO lv_check_succ .
@@ -631,7 +631,7 @@ CLASS lhc_paymethod IMPLEMENTATION.
     cashdiscount1dayofmonth,
     cashdiscount1additionalmonths
 FROM i_paymenttermsconditions
-INTO TABLE @DATA(lt_paymentterms)."#EC CI_NOWHERE
+INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
     SORT lt_paymentterms BY paymentterms paymenttermsvaliditymonthday.
 
 
@@ -804,7 +804,7 @@ INTO TABLE @DATA(lt_paymentterms)."#EC CI_NOWHERE
         cashdiscount1dayofmonth,
         cashdiscount1additionalmonths
     FROM i_paymenttermsconditions
-    INTO TABLE @DATA(lt_paymentterms)."#EC CI_NOWHERE
+    INTO TABLE @DATA(lt_paymentterms).                  "#EC CI_NOWHERE
     SORT lt_paymentterms BY paymentterms paymenttermsvaliditymonthday.
 
     lt_export = CORRESPONDING #( ct_data ).
@@ -1052,7 +1052,7 @@ INTO TABLE @DATA(lt_paymentterms)."#EC CI_NOWHERE
     DATA: lv_message TYPE string,
           lv_msg     TYPE string.
     DATA lv_timestamp TYPE tzntstmpl.
-
+    DATA lv_bpbankaccountinternalid(3) TYPE c.
 
     CLEAR lv_message.
     DATA: lt_je  TYPE TABLE FOR ACTION IMPORT i_journalentrytp~change.
@@ -1062,9 +1062,24 @@ INTO TABLE @DATA(lt_paymentterms)."#EC CI_NOWHERE
     DATA ls_aparitem LIKE LINE OF lt_aparitem.
     DATA ls_aparitem_control LIKE ls_aparitem-%control.
     ls_aparitem_control-paymentterms = if_abap_behv=>mk-on.
+
     IF cs_data-paymentmethod_a NE 'A'.
       ls_aparitem_control-bpbankaccountinternalid = if_abap_behv=>mk-on.
+      CLEAR lv_bpbankaccountinternalid.
+    ELSE.
+      DATA:lv_supplier TYPE kunnr.
+      lv_supplier = |{ cs_data-supplier ALPHA = IN }|.
+      SELECT SINGLE businesspartner
+      FROM i_businesspartnerbank
+      WHERE businesspartner = @lv_supplier
+      AND bankidentification = '000A'
+      INTO @DATA(ls_businesspartnerbank).
+      IF sy-subrc = 0.
+        ls_aparitem_control-bpbankaccountinternalid = if_abap_behv=>mk-on.
+        lv_bpbankaccountinternalid = '000A'.
+      ENDIF.
     ENDIF.
+
 * Test Data
     <je>-accountingdocument = cs_data-accountingdocument.
     <je>-fiscalyear = cs_data-fiscalyear.
@@ -1073,7 +1088,7 @@ INTO TABLE @DATA(lt_paymentterms)."#EC CI_NOWHERE
      _aparitems = VALUE #( (
      glaccountlineitem = cs_data-accountingdocumentitem
      paymentterms = cs_run-accountingclerkphonenumber
-     bpbankaccountinternalid = ''
+     bpbankaccountinternalid = lv_bpbankaccountinternalid
      %control = ls_aparitem_control )
      )
      ) .
@@ -1198,7 +1213,7 @@ INTO TABLE @DATA(lt_paymentterms)."#EC CI_NOWHERE
     SELECT SINGLE *
       FROM zzc_dtimp_conf
      WHERE object = 'ZDOWNLOAD_PAYMENTMETHOD'
-      INTO @DATA(ls_file_conf)."#EC CI_ALL_FIELDS_NEEDED
+      INTO @DATA(ls_file_conf).               "#EC CI_ALL_FIELDS_NEEDED
     IF sy-subrc = 0.
       " FILE_CONTENT must be populated with the complete file content of the .XLSX file
       " whose content shall be processed programmatically.

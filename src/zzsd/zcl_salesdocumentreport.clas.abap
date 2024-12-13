@@ -133,6 +133,32 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
              d TYPE ty_d,
            END OF ty_res_api.
     DATA:ls_res_api TYPE ty_res_api.
+    TYPES:
+      BEGIN OF ty_results1,
+        costestimate(12) TYPE n,
+        material         TYPE string,
+        plant            TYPE string,
+        companycode      TYPE string,
+        valuationarea    TYPE string,
+      END OF ty_results1,
+      tt_results1 TYPE STANDARD TABLE OF ty_results1 WITH DEFAULT KEY,
+      BEGIN OF ty_d1,
+        results TYPE tt_results1,
+      END OF ty_d1,
+      BEGIN OF ty_res_api1,
+        d TYPE ty_d1,
+      END OF ty_res_api1.
+    TYPES:
+      BEGIN OF ty_productcost,
+        material                   TYPE matnr,
+        plant                      TYPE werks_d,
+        ztype(10)                   TYPE c,
+        controllingareacurrency    TYPE i_productcostestimateitem-controllingareacurrency,
+        totalamountinctrlgareacrcy TYPE i_productcostestimateitem-totalamountinctrlgareacrcy,
+      END OF ty_productcost.
+    DATA:lt_productcost TYPE STANDARD TABLE OF ty_productcost.
+    DATA:ls_productcost TYPE ty_productcost.
+    DATA:ls_res_api1  TYPE ty_res_api1.
     DATA:lv_path    TYPE string.
     DATA:lt_collect TYPE STANDARD TABLE OF ty_collect.
     DATA:ls_collect TYPE ty_collect.
@@ -162,6 +188,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
             CLEAR ls_salesorganization.
           WHEN 'CUSTOMER'.
             MOVE-CORRESPONDING str_rec_l_range TO ls_customer.
+
+            ls_customer-LOW = |{ ls_customer-LOW ALPHA = IN }|.
             APPEND ls_customer TO lr_customer.
             CLEAR ls_customer.
           WHEN 'PRODUCT'.
@@ -201,6 +229,29 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
     DATA: lt_months TYPE TABLE OF ty_month,
           ls_months TYPE ty_month,
           lv_datum  TYPE d.
+    DATA:lv_local_date TYPE bldat.
+    DATA:lv_local_time TYPE uzeit.
+    DATA: lv_local_begda TYPE d,
+          lv_local_endda TYPE d.
+    DATA:lv_local_begda_s(10) TYPE c.
+    DATA:lv_local_endda_s(10) TYPE c.
+    DATA:lv_timestamp TYPE abp_creation_tstmpl .
+    GET TIME STAMP FIELD lv_timestamp.
+    TRY.
+        "获取执行报表的用户的local时间的月
+        DATA(lv_timezone) = cl_abap_context_info=>get_user_time_zone( ).
+        "时间戳格式转换成日期格式
+        CONVERT TIME STAMP lv_timestamp TIME ZONE lv_timezone INTO DATE lv_local_date TIME lv_local_time .
+        lv_local_begda = lv_local_date+0(6) && '01'.
+        lv_local_endda = lv_local_date+0(6) && '01'.
+        "lv_local_begda = zzcl_common_utils=>calc_date_add( date = lv_begda month = 3 ).
+        "lv_local_endda = zzcl_common_utils=>calc_date_add( date = lv_endda month = 3 ).
+        lv_local_endda = zzcl_common_utils=>get_enddate_of_month( lv_local_endda ).
+
+        lv_local_begda_s = lv_local_begda+0(4) && '-' && lv_local_begda+4(2) && '-' && lv_local_begda+6(2).
+      CATCH cx_abap_context_info_error INTO DATA(e) ##NO_HANDLER.
+        "handle exception
+    ENDTRY.
 
     DATA(lv_typeab) = lv_ztype1 && '%'.
 
@@ -444,23 +495,6 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       INTO TABLE @DATA(lt_plant).
       SORT lt_plant BY plant.
 
-      "取材料费
-      SELECT
-        product,
-        customer,
-        fiscalyear,
-        period,
-        materialcost2000,
-        currency
-      FROM ztfi_1010 WITH PRIVILEGED ACCESS
-      FOR ALL ENTRIES IN @lt_result
-      WHERE product      = @lt_result-product
-        AND customer     = @lt_result-soldtoparty
-        AND profitcenter = @lt_result-profitcenter
-        AND fiscalyear BETWEEN @lv_splitstart(4) AND @lv_splitend(4)
-      INTO TABLE @DATA(lt_ztfi_1010).
-      SORT lt_ztfi_1010 BY product customer fiscalyear DESCENDING period DESCENDING.
-
       "取客户帐户设置组
       SELECT
         customer,
@@ -603,119 +637,209 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       ENDDO.
     ENDIF.
 
+    "获取加工费
     IF lt_result IS NOT INITIAL.
 
-      "BOM 展开
-      DATA: lt_bomlist_tmp TYPE STANDARD TABLE OF zcl_explodebom=>ty_bomlist,
-            lt_bomlist     TYPE STANDARD TABLE OF zcl_explodebom=>ty_bomlist,
-            ls_bomlist_tmp TYPE zcl_explodebom=>ty_bomlist.
-      SELECT a~billofmaterial,
-             a~material,
-             a~plant,
-             a~billofmaterialvariantusage,
-             a~billofmaterialvariant,
-             b~mrpresponsible,
-             a~billofmaterialcategory
-      FROM i_materialbomlink WITH PRIVILEGED ACCESS AS a
-      LEFT JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS b
-      ON   b~product = a~material
-      AND  b~plant = a~plant
-      FOR ALL ENTRIES IN @lt_result
-      WHERE a~material = @lt_result-product
-        AND a~plant = @lt_result-salesorganization
-        AND a~billofmaterialvariantusage = '1'
-        "AND a~billofmaterialvariant IN @lr_variant
-        "AND b~mrpresponsible IN @lr_mrpresponsible
-       INTO TABLE @DATA(lt_bomlink).
-      "物料工厂维度下多个的话 暂时取第一个
-      SORT lt_bomlink BY plant material billofmaterialvariant.
-      DELETE ADJACENT DUPLICATES FROM lt_bomlink COMPARING plant material.
+      lv_path = |/YY1_PRODUCTCOSTESTIMATED_CDS/YY1_ProductCostEstimateD?$filter=CostingDate%20eq%20datetime'{ lv_local_begda_s }T00:00:00'|.
+      "Call API
+      zzcl_common_utils=>request_api_v2(
+        EXPORTING
+          iv_path        = lv_path
+          iv_method      = if_web_http_client=>get
+          iv_format      = 'json'
+        IMPORTING
+          ev_status_code = DATA(lv_stat_code1)
+          ev_response    = DATA(lv_resbody_api1) ).
+      TRY.
+          /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
+                  CHANGING  data = ls_res_api1 ).
 
+        CATCH cx_root INTO DATA(lx_root4) ##NO_HANDLER.
+      ENDTRY.
 
-      LOOP AT lt_bomlink INTO DATA(ls_materialbomlink).
-        "Explode BOM
-        zcl_explodebom=>get_data(
-          EXPORTING
-            iv_explosiontype               = '4'
-            iv_plant                       = ls_materialbomlink-plant
-            iv_material                    = ls_materialbomlink-material
-            iv_billofmaterialcategory      = ls_materialbomlink-billofmaterialcategory
-*            iv_billofmaterialvariant       = lv_variant
-            iv_bomexplosionapplication     = 'PP01'
-            iv_bomexplosiondate            = sy-datum
-            iv_headermaterial              = ls_materialbomlink-material
-            iv_headerbillofmaterialvariant = ls_materialbomlink-billofmaterialvariant
-            iv_requiredquantity            = '1'
-          CHANGING
-            ct_bomlist                     = lt_bomlist_tmp ).
+      "只保留符合条件的成本估算
+      LOOP AT ls_res_api1-d-results INTO DATA(ls_result_p1).
+        READ TABLE lt_result TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result_p1-plant
+                                                             product           = ls_result_p1-material.
+        IF sy-subrc <> 0.
+          DELETE ls_res_api1-d-results.
+          CONTINUE.
+        ENDIF.
+      ENDLOOP.
 
-        ls_bomlist_tmp-headermaterial =  ls_materialbomlink-material.
-        MODIFY lt_bomlist_tmp FROM ls_bomlist_tmp TRANSPORTING headermaterial WHERE headermaterial IS NOT INITIAL.
-        APPEND LINES OF lt_bomlist_tmp TO lt_bomlist.
-        CLEAR lt_bomlist_tmp.
+      SORT ls_res_api1-d-results BY costestimate.
+
+      IF ls_res_api1-d-results IS NOT INITIAL.
+        "取成本估算号码 取全部主键 防止去重
+        SELECT
+         costingreferenceobject,
+         costestimate,
+         costingtype,
+         costingdate,
+         costingversion,
+         valuationvariant,
+         costisenteredmanually,
+         costingitem,
+
+         costcomponent,
+         controllingareacurrency,
+         totalamountinctrlgareacrcy
+        FROM i_productcostestimateitem WITH PRIVILEGED ACCESS "#EC CI_FAE_LINES_ENSURED
+        FOR ALL ENTRIES IN @ls_res_api1-d-results
+       WHERE costestimate = @ls_res_api1-d-results-costestimate
+        INTO TABLE  @DATA(lt_productcostestimateitem).
+        SORT lt_productcostestimateitem BY costestimate costcomponent.
+
+      ENDIF.
+      LOOP AT lt_productcostestimateitem INTO DATA(ls_productcostestimateitem).
+
+        READ TABLE ls_res_api1-d-results INTO ls_result_p1 WITH KEY costestimate = ls_productcostestimateitem-costestimate BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_productcost-material = ls_result_p1-material.
+          ls_productcost-plant = ls_result_p1-plant .
+          ls_productcost-controllingareacurrency  = ls_productcostestimateitem-controllingareacurrency  .
+          ls_productcost-totalamountinctrlgareacrcy = ls_productcostestimateitem-totalamountinctrlgareacrcy .
+
+          IF ls_productcostestimateitem-costcomponent = '101'
+          OR ls_productcostestimateitem-costcomponent = '102'
+          OR ls_productcostestimateitem-costcomponent = '103' .
+            "加工费
+            ls_productcost-ztype = 'PROCESS'.
+
+          ELSEIF ls_productcostestimateitem-costcomponent = '201'
+              OR ls_productcostestimateitem-costcomponent = '202'
+              OR ls_productcostestimateitem-costcomponent = '203'
+              OR ls_productcostestimateitem-costcomponent = '204'
+              OR ls_productcostestimateitem-costcomponent = '205'
+              OR ls_productcostestimateitem-costcomponent = '206'
+              OR ls_productcostestimateitem-costcomponent = '207'
+              OR ls_productcostestimateitem-costcomponent = '208'
+              OR ls_productcostestimateitem-costcomponent = '209'.
+
+          ENDIF.
+          "材料费
+          ls_productcost-ztype = 'RAW'.
+        ENDIF.
+        COLLECT ls_productcost INTO lt_productcost.
 
       ENDLOOP.
 
-      "
-      IF lt_bomlist IS NOT INITIAL.
-        SELECT product,
-             valuationarea,
-             valuationtype,
-             valuationclass,
-             prodcostestnumber
-        FROM i_productvaluationbasic WITH PRIVILEGED ACCESS
-        FOR ALL ENTRIES IN @lt_result
-       WHERE product = @lt_result-product
-         AND valuationarea IN @lr_salesorganization
-         INTO TABLE @DATA(lt_prodcostno).
-        SORT lt_prodcostno BY product valuationclass.
-
-        SELECT costingreferenceobject,
-              costestimate,
-              costingtype,
-              costingdate,
-              costingversion,
-              valuationvariant,
-              costisenteredmanually,
-              costestimatevaliditystartdate,
-              costinglotsize
-         FROM i_productcostestimate WITH PRIVILEGED ACCESS
-         FOR ALL ENTRIES IN @lt_prodcostno
-         WHERE costestimate = @lt_prodcostno-prodcostestnumber
-        AND costestimatevaliditystartdate >= @lv_begda
-        AND costestimatevaliditystartdate <= @lv_endda
-          AND costestimatestatus = 'FR'
-         INTO TABLE @DATA(lt_lotsize).
-        SORT lt_lotsize BY costestimate costestimatevaliditystartdate DESCENDING.
+      SORT lt_productcost BY material plant ztype.
 
 
-        SELECT costingreferenceobject,
-               costestimate,
-               costingtype,
-               costingdate,
-               costingversion,
-               valuationvariant,
-               costisenteredmanually,
-               costingitem,
-               plant,
-               product,
-               baseunit,
-               quantityinbaseunit,
-               transfercostestimate,
-               transfercostingdate,
-               companycodecurrency,
-               totalamountincocodecrcy
-          FROM i_productcostestimateitem WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_prodcostno
-         WHERE costestimate = @lt_prodcostno-prodcostestnumber
-           AND costingdate >= @lv_begda
-           AND costingdate <= @lv_endda
-           AND ( costingitemcategory = 'M'
-              OR costingitemcategory = 'I' )
-          INTO TABLE @DATA(lt_costitem).
-        SORT lt_costitem BY product plant costingdate DESCENDING.
-
-      ENDIF.
+*
+*
+*      "BOM 展开
+*      DATA: lt_bomlist_tmp TYPE STANDARD TABLE OF zcl_explodebom=>ty_bomlist,
+*            lt_bomlist     TYPE STANDARD TABLE OF zcl_explodebom=>ty_bomlist,
+*            ls_bomlist_tmp TYPE zcl_explodebom=>ty_bomlist.
+*      SELECT a~billofmaterial,
+*             a~material,
+*             a~plant,
+*             a~billofmaterialvariantusage,
+*             a~billofmaterialvariant,
+*             b~mrpresponsible,
+*             a~billofmaterialcategory
+*      FROM i_materialbomlink WITH PRIVILEGED ACCESS AS a
+*      LEFT JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS b
+*      ON   b~product = a~material
+*      AND  b~plant = a~plant
+*      FOR ALL ENTRIES IN @lt_result
+*      WHERE a~material = @lt_result-product
+*        AND a~plant = @lt_result-salesorganization
+*        AND a~billofmaterialvariantusage = '1'
+*        "AND a~billofmaterialvariant IN @lr_variant
+*        "AND b~mrpresponsible IN @lr_mrpresponsible
+*       INTO TABLE @DATA(lt_bomlink).
+*      "物料工厂维度下多个的话 暂时取第一个
+*      SORT lt_bomlink BY plant material billofmaterialvariant.
+*      DELETE ADJACENT DUPLICATES FROM lt_bomlink COMPARING plant material.
+*
+*
+*      LOOP AT lt_bomlink INTO DATA(ls_materialbomlink).
+*        "Explode BOM
+*        zcl_explodebom=>get_data(
+*          EXPORTING
+*            iv_explosiontype               = '4'
+*            iv_plant                       = ls_materialbomlink-plant
+*            iv_material                    = ls_materialbomlink-material
+*            iv_billofmaterialcategory      = ls_materialbomlink-billofmaterialcategory
+**            iv_billofmaterialvariant       = lv_variant
+*            iv_bomexplosionapplication     = 'PP01'
+*            iv_bomexplosiondate            = sy-datum
+*            iv_headermaterial              = ls_materialbomlink-material
+*            iv_headerbillofmaterialvariant = ls_materialbomlink-billofmaterialvariant
+*            iv_requiredquantity            = '1'
+*          CHANGING
+*            ct_bomlist                     = lt_bomlist_tmp ).
+*
+*        ls_bomlist_tmp-headermaterial =  ls_materialbomlink-material.
+*        MODIFY lt_bomlist_tmp FROM ls_bomlist_tmp TRANSPORTING headermaterial WHERE headermaterial IS NOT INITIAL.
+*        APPEND LINES OF lt_bomlist_tmp TO lt_bomlist.
+*        CLEAR lt_bomlist_tmp.
+*
+*      ENDLOOP.
+*
+*      "
+*      IF lt_bomlist IS NOT INITIAL.
+*        SELECT product,
+*             valuationarea,
+*             valuationtype,
+*             valuationclass,
+*             prodcostestnumber
+*        FROM i_productvaluationbasic WITH PRIVILEGED ACCESS
+*        FOR ALL ENTRIES IN @lt_result
+*       WHERE product = @lt_result-product
+*         AND valuationarea IN @lr_salesorganization
+*         INTO TABLE @DATA(lt_prodcostno).
+*        SORT lt_prodcostno BY product valuationclass.
+*
+*        SELECT costingreferenceobject,
+*              costestimate,
+*              costingtype,
+*              costingdate,
+*              costingversion,
+*              valuationvariant,
+*              costisenteredmanually,
+*              costestimatevaliditystartdate,
+*              costinglotsize
+*         FROM i_productcostestimate WITH PRIVILEGED ACCESS "#EC CI_FAE_LINES_ENSURED
+*         FOR ALL ENTRIES IN @lt_prodcostno
+*         WHERE costestimate = @lt_prodcostno-prodcostestnumber
+*        AND costestimatevaliditystartdate >= @lv_begda
+*        AND costestimatevaliditystartdate <= @lv_endda
+*          AND costestimatestatus = 'FR'
+*         INTO TABLE @DATA(lt_lotsize).
+*        SORT lt_lotsize BY costestimate costestimatevaliditystartdate DESCENDING.
+*
+*
+*        SELECT costingreferenceobject,
+*               costestimate,
+*               costingtype,
+*               costingdate,
+*               costingversion,
+*               valuationvariant,
+*               costisenteredmanually,
+*               costingitem,
+*               plant,
+*               product,
+*               baseunit,
+*               quantityinbaseunit,
+*               transfercostestimate,
+*               transfercostingdate,
+*               companycodecurrency,
+*               totalamountincocodecrcy
+*          FROM i_productcostestimateitem WITH PRIVILEGED ACCESS "#EC CI_FAE_LINES_ENSURED
+*          FOR ALL ENTRIES IN @lt_prodcostno
+*         WHERE costestimate = @lt_prodcostno-prodcostestnumber
+*           AND costingdate >= @lv_begda
+*           AND costingdate <= @lv_endda
+*           AND ( costingitemcategory = 'M'
+*              OR costingitemcategory = 'I' )
+*          INTO TABLE @DATA(lt_costitem).
+*        SORT lt_costitem BY product plant costingdate DESCENDING.
+*
+*      ENDIF.
 
 
     ENDIF.
@@ -794,60 +918,63 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
           ls_output-productname = ls_producttext-productname.
         ENDIF.
 
-        READ TABLE lt_ztfi_1010 INTO DATA(ls_ztfi_1010) WITH KEY product    = ls_result-product
-                                                                 customer   = ls_result-soldtoparty.
-        IF sy-subrc = 0.
-          ls_output-materialcost2000 = ls_ztfi_1010-materialcost2000.
-        ENDIF.
-
-        READ TABLE lt_ztfi_1010 INTO ls_ztfi_1010 WITH KEY product    = ls_result-product
-                                                           customer   = ls_result-soldtoparty
-                                                           fiscalyear = ls_months-month(4)
-                                                           period     = ls_months-month+4(2).
-        IF sy-subrc = 0.
-          ls_output-materialcost2000_n = ls_ztfi_1010-materialcost2000.
-          ls_output-currency           = ls_ztfi_1010-currency.
-        ENDIF.
-
         READ TABLE lt_customersalesarea INTO DATA(ls_customersalesarea) WITH KEY customer = ls_result-soldtoparty BINARY SEARCH.
         IF sy-subrc = 0.
           ls_output-customeraccountassignmentgroup = ls_customersalesarea-customeraccountassignmentgroup.
         ENDIF.
 
 
-        DATA:lv_mcost TYPE zr_salesdocumentreport-manufacturingcost_n.
-        CLEAR lv_mcost .
+*        DATA:lv_mcost TYPE zr_salesdocumentreport-manufacturingcost_n.
+*        CLEAR lv_mcost .
+*
+*        LOOP AT lt_bomlist INTO DATA(ls_bomlist) WHERE headermaterial = ls_result-product.
+*
+*          READ TABLE lt_prodcostno INTO DATA(ls_prodcostno) WITH KEY product = ls_bomlist-billofmaterialcomponent valuationarea = ls_result-salesorganization BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            "寻找对应期间的有效数据
+*            LOOP AT lt_lotsize INTO DATA(ls_lotsize) WHERE costestimate = ls_prodcostno-prodcostestnumber
+*            AND costestimatevaliditystartdate >= lv_begda_m AND costestimatevaliditystartdate <= lv_endda_m.
+*              EXIT.
+*            ENDLOOP.
+*            IF sy-subrc <> 0.
+*              CLEAR ls_lotsize.
+*            ENDIF.
+*            LOOP AT lt_costitem INTO DATA(ls_costitem) WHERE product = ls_bomlist-billofmaterialcomponent AND plant = ls_result-salesorganization
+*            AND costingdate >= lv_begda_m AND costingdate <= lv_endda_m.
+*              EXIT.
+*            ENDLOOP.
+*            IF sy-subrc <> 0.
+*              CLEAR ls_costitem.
+*            ENDIF.
+*
+*            IF ls_lotsize IS NOT INITIAL AND ls_costitem IS NOT INITIAL.
+*              lv_peinh = ls_costitem-quantityinbaseunit / ls_lotsize-costinglotsize.
+*              ls_output-manufacturingcost_n += ls_costitem-totalamountincocodecrcy / ls_lotsize-costinglotsize * lv_peinh.
+*              ls_output-currency1 = ls_costitem-companycodecurrency.
+*
+*              "CostingItemCategory=M类型"
+*            ENDIF.
+*          ENDIF.
+*
+*        ENDLOOP.
 
-        LOOP AT lt_bomlist INTO DATA(ls_bomlist) WHERE headermaterial = ls_result-product.
+        "加工费
+        READ TABLE lt_productcost INTO ls_productcost WITH KEY material          = ls_result-product
+                                                               plant             = ls_result-salesorganization
+                                                               ztype             = 'PROCESS' BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_output-manufacturingcost_n = ls_productcost-totalamountinctrlgareacrcy.
+          ls_output-currency1           = ls_productcost-controllingareacurrency.
+        ENDIF.
+        "材料费
+        READ TABLE lt_productcost INTO ls_productcost WITH KEY material          = ls_result-product
+                                                               plant             = ls_result-salesorganization
+                                                               ztype             = 'RAW' BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_output-materialcost2000_n = ls_productcost-totalamountinctrlgareacrcy.
+          ls_output-currency           = ls_productcost-controllingareacurrency.
+        ENDIF.
 
-          READ TABLE lt_prodcostno INTO DATA(ls_prodcostno) WITH KEY product = ls_bomlist-billofmaterialcomponent valuationarea = ls_result-salesorganization BINARY SEARCH.
-          IF sy-subrc = 0.
-            "寻找对应期间的有效数据
-            LOOP AT lt_lotsize INTO DATA(ls_lotsize) WHERE costestimate = ls_prodcostno-prodcostestnumber
-            AND costestimatevaliditystartdate >= lv_begda_m AND costestimatevaliditystartdate <= lv_endda_m.
-              EXIT.
-            ENDLOOP.
-            IF sy-subrc <> 0.
-              CLEAR ls_lotsize.
-            ENDIF.
-            LOOP AT lt_costitem INTO DATA(ls_costitem) WHERE product = ls_bomlist-billofmaterialcomponent AND plant = ls_result-salesorganization
-            AND costingdate >= lv_begda_m AND costingdate <= lv_endda_m.
-              EXIT.
-            ENDLOOP.
-            IF sy-subrc <> 0.
-              CLEAR ls_costitem.
-            ENDIF.
-
-            IF ls_lotsize IS NOT INITIAL AND ls_costitem IS NOT INITIAL.
-              lv_peinh = ls_costitem-quantityinbaseunit / ls_lotsize-costinglotsize.
-              ls_output-manufacturingcost_n += ls_costitem-totalamountincocodecrcy / ls_lotsize-costinglotsize * lv_peinh.
-              ls_output-currency1 = ls_costitem-companycodecurrency.
-
-              "CostingItemCategory=M类型"
-            ENDIF.
-          ENDIF.
-
-        ENDLOOP.
 
         READ TABLE lt_result1 INTO DATA(ls_result1) WITH KEY salesorganization   = ls_result-salesorganization
                                                              salesoffice         = ls_result-salesoffice
@@ -1066,6 +1193,13 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
           ENDIF.
         ENDIF.
 
+        "贡献利润(单价):单价 - 材料费
+        ls_output-materialcost2000per_n = ls_output-conditionratevalue_n - ls_output-materialcost2000_n.
+
+        "销售总利润(单价)：单价 - 材料费 - 加工费
+        ls_output-manufacturingcostper_n = ls_output-conditionratevalue_n - ls_output-materialcost2000_n - ls_output-manufacturingcost_n.
+
+
         READ TABLE lt_result0 INTO DATA(ls_result0) WITH KEY salesorganization   = ls_result-salesorganization
                                                              salesoffice         = ls_result-salesoffice
                                                              salesgroup          = ls_result-salesgroup
@@ -1076,24 +1210,26 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
                                                              profitcenter        = ls_result-profitcenter
                                                              salesplanperiodname = ls_result-salesplanperiodname.
         IF sy-subrc = 0.
+
+          "QTY
           ls_output-salesplanamountindspcrcy_n = ls_result0-salesplanquantity.
           ls_output-salesplanunit              = ls_result0-salesplanunit.
 
-          IF ls_output-salesplanamountindspcrcy_n IS NOT INITIAL.
-            ls_output-materialcost2000per_n = ls_output-materialcost2000_n / ls_output-salesplanamountindspcrcy_n.
-            ls_output-manufacturingcostper_n = ls_output-manufacturingcost_n / ls_output-salesplanamountindspcrcy_n.
-          ENDIF.
-
+          "销售额
           ls_output-salesamount_n    = ls_result0-salesplanquantity * ls_output-conditionratevalue_n.
           ls_output-displaycurrency1 = ls_output-conditionratevalueunit.
 
-          ls_output-contributionprofittotal_n = ls_output-materialcost2000per_n."
+          "贡献利润
+          ls_output-contributionprofittotal_n = ls_result0-salesplanquantity * ls_output-materialcost2000per_n."
           ls_output-displaycurrency2          = ls_output-currency.
 
-          ls_output-grossprofittotal_n = ls_output-manufacturingcostper_n.
+          "销售总利润
+          ls_output-grossprofittotal_n = ls_result0-salesplanquantity * ls_output-manufacturingcostper_n.
           ls_output-displaycurrency2   = ls_output-currency1.
 
         ENDIF.
+
+
         "数据再处理！！！ 防止影响上面mapping
         ls_output-customer = |{ ls_output-customer ALPHA = OUT }|.
 
@@ -1136,7 +1272,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
         plantype = ls_output-plantype yeardate = lv_yeardatetemp1.
         IF sy-subrc <> 0.
           CLEAR :ls_output-conditionratevalue_n,ls_output-salesplanamountindspcrcy_n,
-          ls_output-salesamount_n,ls_output-contributionprofittotal_n,ls_output-grossprofittotal_n.
+          ls_output-salesamount_n,ls_output-contributionprofittotal_n,ls_output-grossprofittotal_n,
+          ls_output-materialcost2000per_n,ls_output-Manufacturingcostper_n .
           ls_output-yeardate = lv_yeardatetemp1.
           APPEND ls_output TO lt_output.
         ENDIF.
@@ -1560,8 +1697,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 *    ls_output-conditionratevalue_n = 12.
 *    ls_output-salesplanamountindspcrcy_n = 124.
 *    ls_output-salesamount_n  = 1234.
-*    ls_output-contributionprofittotal_n = 0.
-*    ls_output-grossprofittotal_n = 0.
+*    ls_output-materialcost2000_n = 555555.
+*    ls_output-manufacturingcost_n = 8888888.
 *    APPEND ls_output TO lt_output.
 *
 *
@@ -1643,7 +1780,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 *    ENDIF.
 *
 *    SORT lt_output BY salesorganization customer profitcenter salesoffice salesgroup product createdbyuser plantype yeardate.
-
+*
 
 *********************
 

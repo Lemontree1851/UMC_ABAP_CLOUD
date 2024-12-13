@@ -43,7 +43,14 @@ define view entity ZI_BI003_REPORT_002_PO
       poitem.OrderQuantity,
 
       @Semantics.amount.currencyCode: 'DocumentCurrency'
-      poitem.NetPriceAmount,
+      //      poitem.NetPriceAmount,
+      //
+      //      poitem.NetPriceQuantity,
+
+      case when poitem.NetPriceQuantity <> 0
+      then cast( cast( poitem.NetPriceAmount as abap.dec( 11, 2 ) ) / poitem.NetPriceQuantity as dmbtr )
+      else poitem.NetPriceAmount
+      end                               as NetPriceAmount,
 
       poitem.CompanyCode,
       poitem.Material,

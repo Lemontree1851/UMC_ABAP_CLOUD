@@ -81,6 +81,7 @@ CLASS lhc_role IMPLEMENTATION.
              userid,
              roleid
         FROM zr_tbc1007
+        JOIN zr_tbc1004 ON zr_tbc1004~mail = zr_tbc1007~mail
          FOR ALL ENTRIES IN @lt_role
        WHERE roleid = @lt_role-roleid
         INTO TABLE @DATA(lt_assign).

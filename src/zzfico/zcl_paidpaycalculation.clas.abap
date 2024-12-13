@@ -56,7 +56,7 @@ CLASS zcl_paidpaycalculation IMPLEMENTATION.
 * V3 会计期间转换
     lv_poper = lv_monat.
     lv_fiscalyearperiod = lv_gjahr && lv_poper.
-    SELECT SINGLE *
+    SELECT SINGLE *      "#EC CI_ALL_FIELDS_NEEDED
       FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
      WHERE fiscalyearvariant = 'V3'
        AND fiscalyearperiod = @lv_fiscalyearperiod

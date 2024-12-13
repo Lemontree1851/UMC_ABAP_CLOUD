@@ -11,9 +11,9 @@ define view entity ZC_TBC1007_1
 {
 
   key Uuid,
-      @UI.lineItem: [{ position: 10 }]
-      @EndUserText.label: 'User Id'
-  key UserId,
+      @UI.lineItem: [{ position: 30 }]
+      @EndUserText.label: 'Mail'
+  key Mail,
       RoleId,
       CreatedBy,
       CreatedAt,
@@ -21,13 +21,13 @@ define view entity ZC_TBC1007_1
       LastChangedAt,
       LocalLastChangedAt,
 
+      @UI.lineItem: [{ position: 10 }]
+      @EndUserText.label: 'User Id'
+      UserId,
+
       @UI.lineItem: [{ position: 20 }]
       @EndUserText.label: 'User Name'
       UserName,
-
-      @UI.lineItem: [{ position: 30 }]
-      @EndUserText.label: 'Mail'
-      Mail,
 
       @UI.lineItem: [{ position: 40 }]
       @EndUserText.label: 'Department'

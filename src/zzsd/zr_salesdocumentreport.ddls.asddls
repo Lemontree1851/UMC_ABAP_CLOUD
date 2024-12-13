@@ -31,8 +31,8 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       ProductGroup                   : abap.char(9);
       ProductName                    : abap.char(40);
       ConditionRateValue             : abap.char(10); //没用 等会删
-      MaterialCost2000               : abap.char(10); //5
-      Manufacturingcost              : abap.char(10); //6
+      MaterialCost2000               : abap.char(10); //5 buyaole shan
+      Manufacturingcost              : abap.char(10); //6 buyaole shan
       SalesAmount                    : abap.char(20); //没用 等会删
       ContributionProfit             : abap.char(20); //貢献利益(単価) buyaole shan
       GrossProfit                    : abap.char(20); //売上総利益(単価)buyaole shan
@@ -60,11 +60,11 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       @Semantics.amount.currencyCode : 'currency'
       materialcost2000_n             : abap.curr(15,2); //材料费
       @Semantics.amount.currencyCode : 'currency'
-      materialcost2000per_n          : abap.curr(15,2); //材料费单价
+      materialcost2000per_n          : abap.curr(15,2); //贡献利润(单价):单价 - 材料费
       @Semantics.amount.currencyCode : 'currency1'
       Manufacturingcost_n            : abap.curr(20,2); //6
       @Semantics.amount.currencyCode : 'currency1'
-      Manufacturingcostper_n         : abap.curr(20,2); //6
+      Manufacturingcostper_n         : abap.curr(20,2); //销售总利润(单价)：单价 - 材料费 - 加工费
 
       @Semantics.amount.currencyCode : 'ConditionRateValueUnit'
       ConditionRateValue_n           : abap.curr(11,2); //单价

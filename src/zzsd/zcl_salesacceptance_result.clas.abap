@@ -218,6 +218,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         FROM i_salesdocumenttypetext WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_so
        WHERE salesdocumenttype = @lt_so-salesdocumenttype
+         AND language = @sy-langu
         INTO TABLE @DATA(lt_auart).
     ENDIF.
 
@@ -265,6 +266,11 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       ls_output-salesdocument = ls_so-salesdocument.
       ls_output-salesdocumentitem = ls_so-salesdocumentitem.
       ls_output-salesdocumenttype = ls_so-salesdocumenttype.
+      READ TABLE lt_auart INTO DATA(ls_auart)
+                 WITH KEY salesdocumenttype = ls_so-salesdocumenttype BINARY SEARCH.
+      IF sy-subrc = 0.
+        ls_output-salesdocumenttypetext = ls_auart-salesdocumenttypename.
+      ENDIF.
       ls_output-product = ls_so-product.
       ls_output-salesdocumentitemtext = ls_so-salesdocumentitemtext.
       READ TABLE lt_1003 INTO DATA(ls_1003)
@@ -341,29 +347,65 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ENDIF.
       ENDIF.
 
-      READ TABLE lt_1012 INTO DATA(ls_1012)
-           WITH KEY salesdocument = ls_output-salesdocument
-                    salesdocumentitem = ls_output-salesdocumentitem
-                    billingdocument = ls_output-billingdocument BINARY SEARCH.
-      IF sy-subrc = 0.
-        ls_output-remarks = ls_1012-remarks.
-        ls_output-processstatus = ls_1012-processstatus.
-        ls_output-reasoncategory = ls_1012-reasoncategory.
-        ls_output-reason = ls_1012-reason.
-      ELSE.
-        IF ls_output-conditionquantity <> 0.
-          lv_netpr = ls_output-conditionratevalue / ls_output-conditionquantity.
-        ENDIF.
-        IF ls_output-acceptqty = ls_output-billingquantity
-       AND ls_output-acceptprice = lv_netpr
-       AND ls_output-accceptamount = ls_output-netamount
-       AND ls_output-acccepttaxamount = ls_output-taxamount.
-          ls_output-processstatus = '0'.
+      IF lv_layer = 1.
+        READ TABLE lt_1012 INTO DATA(ls_1012)
+             WITH KEY salesdocument = ls_output-salesdocument
+                      salesdocumentitem = ls_output-salesdocumentitem
+                      billingdocument = ls_output-billingdocument BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_output-remarks = ls_1012-remarks.
+          ls_output-processstatus = ls_1012-processstatus.
+          ls_output-reasoncategory = ls_1012-reasoncategory.
+          ls_output-reason = ls_1012-reason.
         ELSE.
-          ls_output-processstatus = '2'.
+          IF ls_output-conditionquantity <> 0.
+            lv_netpr = ls_output-conditionratevalue / ls_output-conditionquantity.
+          ENDIF.
+          IF ls_output-acceptqty = ls_output-billingquantity
+         AND ls_output-acceptprice = lv_netpr
+         AND ls_output-accceptamount = ls_output-netamount
+         AND ls_output-acccepttaxamount = ls_output-taxamount.
+            ls_output-processstatus = '0'.
+          ELSE.
+            ls_output-processstatus = '2'.
+          ENDIF.
+        ENDIF.
+      ELSE.
+        "Code转描述
+        READ TABLE lt_1012 INTO ls_1012
+             WITH KEY salesdocument = ls_output-salesdocument
+                      salesdocumentitem = ls_output-salesdocumentitem
+                      billingdocument = ls_output-billingdocument BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_output-remarks = ls_1012-remarks.
+          READ TABLE lt_1001 INTO DATA(ls_1001)
+               WITH KEY zid = 'ZSD008'
+                        zvalue1 = ls_1012-processstatus.
+          IF sy-subrc = 0.
+            ls_output-processstatus = ls_1001-zvalue2.
+          ELSE.
+            ls_output-processstatus = ls_1012-processstatus.
+          ENDIF.
+
+          READ TABLE lt_1001 INTO ls_1001
+               WITH KEY zid = 'ZSD009'
+                        zvalue1 = ls_1012-reasoncategory.
+          IF sy-subrc = 0.
+            ls_output-reasoncategory = ls_1001-zvalue2.
+          ELSE.
+            ls_output-reasoncategory = ls_1012-reasoncategory.
+          ENDIF.
+
+          READ TABLE lt_1001 INTO ls_1001
+               WITH KEY zid = 'ZSD010'
+                        zvalue1 = ls_1012-reason.
+          IF sy-subrc = 0.
+            ls_output-reason = ls_1001-zvalue2.
+          ELSE.
+            ls_output-reason = ls_1012-reason.
+          ENDIF.
         ENDIF.
       ENDIF.
-
 
       "编辑表头描述
       READ TABLE lt_customer INTO DATA(ls_customer)
@@ -372,7 +414,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ls_output-customername = |{ ls_output-customer ALPHA = OUT }|.
         ls_output-customername = ls_output-customername && ` ` && ls_customer-customername.
       ENDIF.
-      READ TABLE lt_1001 INTO DATA(ls_1001)
+      READ TABLE lt_1001 INTO ls_1001
            WITH KEY zid = 'ZSD003'
                     zvalue1 = lv_periodtype.
       IF sy-subrc = 0.
@@ -400,23 +442,15 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
                         REFERENCE INTO DATA(member).
         LOOP AT GROUP member INTO DATA(ls_mem).
           IF lv_first = 'X'.
-            READ TABLE lt_1001 INTO ls_1001
-                 WITH KEY zid = 'ZSD008'
-                          zvalue1 = ls_mem-processstatus.
-            IF sy-subrc = 0.
-              ls_output-customerpo = ls_1001-zvalue2.
-              APPEND ls_output TO lt_output.
-            ELSE.
-              DATA(lv_flg) = 'X'.
-            ENDIF.
+            ls_output-customerpo = ls_mem-processstatus.
+            APPEND ls_output TO lt_output.
+            CLEAR: ls_output.
           ENDIF.
           CLEAR: lv_first.
-          IF lv_flg IS INITIAL.
-            APPEND ls_mem TO lt_output.
-          ENDIF.
+          APPEND ls_mem TO lt_output.
+
         ENDLOOP.
         lv_first = 'X'.
-        CLEAR: lv_flg.
       ENDLOOP.
     ENDIF.
 

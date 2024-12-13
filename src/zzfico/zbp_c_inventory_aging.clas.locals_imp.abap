@@ -137,6 +137,11 @@ CLASS lhc_inventoryaging DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS recalculate CHANGING cs_data TYPE lty_request.
 
+    METHODS read FOR READ
+      IMPORTING keys FOR READ inventoryaging RESULT result.
+
+    METHODS lock FOR LOCK
+      IMPORTING keys FOR LOCK inventoryaging.
 ENDCLASS.
 
 CLASS lhc_inventoryaging IMPLEMENTATION.
@@ -1623,14 +1628,20 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
 *    DELETE FROM ztfi_1019 WHERE fiscalyear = '2024' AND fiscalperiod = '008'.
 *                             and ( product = 'ZTEST_RAW001' OR product = 'ZTEST_RAW002' ).
   ENDMETHOD.
-ENDCLASS.
 
-CLASS lsc_zc_inventory_aging DEFINITION INHERITING FROM cl_abap_behavior_saver.
-  PROTECTED SECTION.
-    METHODS save_modified REDEFINITION.
-ENDCLASS.
+  METHOD read.
+  ENDMETHOD.
 
-CLASS lsc_zc_inventory_aging IMPLEMENTATION.
-  METHOD save_modified.
+  METHOD lock.
   ENDMETHOD.
 ENDCLASS.
+
+*CLASS lsc_zc_inventory_aging DEFINITION INHERITING FROM cl_abap_behavior_saver.
+*  PROTECTED SECTION.
+*    METHODS save_modified REDEFINITION.
+*ENDCLASS.
+*
+*CLASS lsc_zc_inventory_aging IMPLEMENTATION.
+*  METHOD save_modified.
+*  ENDMETHOD.
+*ENDCLASS.

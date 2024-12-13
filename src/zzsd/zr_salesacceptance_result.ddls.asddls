@@ -24,6 +24,7 @@ define root custom entity ZR_SALESACCEPTANCE_RESULT
   key SalesDocumentItem      : abap.char(6);      //受注明細番号
   key BillingDocument        : abap.char(10); //実績伝票番号
   key CustomerPO             : abap.char(35); //得意先PO番号
+  key ProcessStatus          : abap.char(20); //処理ステータス
       AcceptPeriodFrom       : abap.dats;     //検収期間From
       AcceptPeriodTo         : abap.dats;     //検収期間To
       SalesDocumentType      : auart; //受注伝票タイプ
@@ -47,7 +48,6 @@ define root custom entity ZR_SALESACCEPTANCE_RESULT
       ExchangeRateDate       : abap.dats; //為替日付
       OutsideData            : abap.char(1); //SAP外売上区分
       Remarks                : abap.char(100); //備考
-      ProcessStatus          : abap.char(20); //処理ステータス
       ReasonCategory         : abap.char(20); //要因区分
       Reason                 : abap.char(20); //差異要因
       CustomerName           : abap.char(80); //Customer Name

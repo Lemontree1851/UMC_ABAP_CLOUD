@@ -12,10 +12,10 @@ define view entity ZR_TBC1013
     inner join   I_SalesOrganizationText as _SalesOrgText on  _SalesOrgText.SalesOrganization = _AssignSalesOrg.sales_organization
                                                           and _SalesOrgText.Language          = $session.system_language
 
-  association to parent ZR_TBC1004 as _User on $projection.UserId = _User.UserId
+  association to parent ZR_TBC1004 as _User on $projection.Mail = _User.Mail
 {
   key _AssignSalesOrg.uuid                  as Uuid,
-  key _AssignSalesOrg.user_id               as UserId,
+  key _AssignSalesOrg.mail                  as Mail,
       _AssignSalesOrg.sales_organization    as SalesOrganization,
       @Semantics.user.createdBy: true
       _AssignSalesOrg.created_by            as CreatedBy,

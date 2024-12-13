@@ -11,7 +11,7 @@ authorization master ( instance )
 {
   create;
   update;
-  delete;
+  delete ( precheck );
 
   field ( readonly )
   CreatedBy,
@@ -20,10 +20,11 @@ authorization master ( instance )
   LastChangedAt,
   LocalLastChangedAt;
 
-  field ( mandatory : create, readonly : update ) UserId;
-  field ( mandatory ) Mail;
+  field ( mandatory : create, readonly : update ) Mail;
+  field ( mandatory ) UserId;
 
-  validation validationEmail on save ##NOT_ASSIGNED_TO_DETACT { field Mail; create; update; }
+  validation validationUserId on save ##NOT_ASSIGNED_TO_DETACT { field UserId; create; update; }
+  validation validationEmail on save ##NOT_ASSIGNED_TO_DETACT { field Mail; create; }
 
   draft action Edit;
   draft action Activate optimized;
@@ -38,10 +39,10 @@ authorization master ( instance )
 
   mapping for ztbc_1004
     {
-      UserId             = user_id;
       Mail               = mail;
-      Department         = department;
+      UserId             = user_id;
       UserName           = user_name;
+      Department         = department;
       CreatedBy          = created_by;
       CreatedAt          = created_at;
       LastChangedBy      = last_changed_by;
@@ -62,7 +63,7 @@ etag master LocalLastChangedAt
 
   field ( readonly, numbering : managed ) Uuid;
   field ( readonly )
-  UserId,
+  Mail,
   PlantName,
   CreatedBy,
   CreatedAt,
@@ -79,7 +80,7 @@ etag master LocalLastChangedAt
   mapping for ztbc_1006
     {
       Uuid               = uuid;
-      UserId             = user_id;
+      Mail               = mail;
       Plant              = plant;
       CreatedBy          = created_by;
       CreatedAt          = created_at;
@@ -101,7 +102,7 @@ etag master LocalLastChangedAt
 
   field ( readonly, numbering : managed ) Uuid;
   field ( readonly )
-  UserId,
+  Mail,
   CompanyCodeName,
   CreatedBy,
   CreatedAt,
@@ -118,7 +119,7 @@ etag master LocalLastChangedAt
   mapping for ztbc_1012
     {
       Uuid               = uuid;
-      UserId             = user_id;
+      Mail               = mail;
       CompanyCode        = company_code;
       CreatedBy          = created_by;
       CreatedAt          = created_at;
@@ -140,7 +141,7 @@ etag master LocalLastChangedAt
 
   field ( readonly, numbering : managed ) Uuid;
   field ( readonly )
-  UserId,
+  Mail,
   SalesOrganizationName,
   CreatedBy,
   CreatedAt,
@@ -157,7 +158,7 @@ etag master LocalLastChangedAt
   mapping for ztbc_1013
     {
       Uuid               = uuid;
-      UserId             = user_id;
+      Mail               = mail;
       SalesOrganization  = sales_organization;
       CreatedBy          = created_by;
       CreatedAt          = created_at;
@@ -179,7 +180,7 @@ etag master LocalLastChangedAt
 
   field ( readonly, numbering : managed ) Uuid;
   field ( readonly )
-  UserId,
+  Mail,
   RoleName,
   CreatedBy,
   CreatedAt,
@@ -189,12 +190,14 @@ etag master LocalLastChangedAt
 
   field ( mandatory ) RoleId;
 
+  validation validateRoleId on save ##NOT_ASSIGNED_TO_DETACT { field RoleId; create; update; }
+
   association _User { with draft; }
 
   mapping for ztbc_1007
     {
       Uuid               = uuid;
-      UserId             = user_id;
+      Mail               = mail;
       RoleId             = role_id;
       CreatedBy          = created_by;
       CreatedAt          = created_at;

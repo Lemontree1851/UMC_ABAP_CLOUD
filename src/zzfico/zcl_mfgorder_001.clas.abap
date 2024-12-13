@@ -153,18 +153,18 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
 *****************************************************************
 *       Sort
 *****************************************************************
-      IF lt_sort IS NOT INITIAL.
-        CLEAR lv_orderby_string.
-        LOOP AT lt_sort INTO DATA(ls_sort).
-          IF ls_sort-descending = abap_true.
-            CONCATENATE lv_orderby_string ls_sort-element_name 'DESCENDING' INTO lv_orderby_string SEPARATED BY space.
-          ELSE.
-            CONCATENATE lv_orderby_string ls_sort-element_name 'ASCENDING' INTO lv_orderby_string SEPARATED BY space.
-          ENDIF.
-        ENDLOOP.
-      ELSE.
-        lv_orderby_string = 'PRODUCT'.
-      ENDIF.
+*      IF lt_sort IS NOT INITIAL.
+*        CLEAR lv_orderby_string.
+*        LOOP AT lt_sort INTO DATA(ls_sort).
+*          IF ls_sort-descending = abap_true.
+*            CONCATENATE lv_orderby_string ls_sort-element_name 'DESCENDING' INTO lv_orderby_string SEPARATED BY space.
+*          ELSE.
+*            CONCATENATE lv_orderby_string ls_sort-element_name 'ASCENDING' INTO lv_orderby_string SEPARATED BY space.
+*          ENDIF.
+*        ENDLOOP.
+*      ELSE.
+*        lv_orderby_string = 'PRODUCT'.
+*      ENDIF.
 
 *****************************************************************
 *       Filter
@@ -843,28 +843,72 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
       ENDIF.
 
       " Filtering
-      "zzcl_odata_utils=>filtering( EXPORTING io_filter = io_request->get_filter(  )
-      "                              CHANGING  ct_data   = lt_mfgorder_001 ).
-      IF io_request->is_total_numb_of_rec_requested(  ) .
+*      zzcl_odata_utils=>filtering( EXPORTING io_filter = io_request->get_filter(  )
+*                                    CHANGING  ct_data   = lt_mfgorder_001 ).
+*      IF io_request->is_total_numb_of_rec_requested(  ) .
+*        io_response->set_total_number_of_records( lines( lt_mfgorder_001 ) ).
+*      ENDIF.
+*
+*      "Sort
+*      zzcl_odata_utils=>orderby( EXPORTING it_order = io_request->get_sort_elements( )
+*                                 CHANGING  ct_data  = lt_mfgorder_001 ).
+*
+*      " Paging
+*      zzcl_odata_utils=>paging( EXPORTING io_paging = io_request->get_paging(  )
+*                               CHANGING  ct_data   = lt_mfgorder_001 ).
+*
+*
+*
+*      io_response->set_data( lt_mfgorder_001 ).
+
+
+
+
+     SORT lt_mfgorder_001 by YearMonth companycode plant product  BusinessPartner ProfitCenter CostCenter  orderid ActivityType .
+
+
+     SORT lt_mfgorder_001 by orderid  YearMonth Companycode Plant Product producedproduct BusinessPartner ProfitCenter CostCenter ActivityType   .
+
+     LOOP AT lt_mfgorder_001 INTO data(ls_sef).
+      if sy-tabix  > 10 .
+
+      DELETE lt_mfgorder_001.
+      endif.
+     ENDLOOP.
+
+      "排序
+      zzcl_odata_utils=>orderby(
+                          EXPORTING
+                            it_order = io_request->get_sort_elements( )
+                          CHANGING
+                            ct_data = lt_mfgorder_001 ).
+
+      "过滤
+      zzcl_odata_utils=>filtering(
+                          EXPORTING
+                            io_filter = io_request->get_filter( )
+                            it_excluded = VALUE #( ( fieldname = 'CALENDARMONTH' ) )
+                          CHANGING
+                            ct_data = lt_mfgorder_001 ).
+
+      IF io_request->is_total_numb_of_rec_requested( ).
         io_response->set_total_number_of_records( lines( lt_mfgorder_001 ) ).
       ENDIF.
+      IF io_request->is_data_requested( ).
+        zzcl_odata_utils=>paging(
+          EXPORTING
+            io_paging = io_request->get_paging( )
+          CHANGING
+            ct_data = lt_mfgorder_001
+        ).
+        io_response->set_data( lt_mfgorder_001 ).
+      ENDIF.
 
-      "Sort
-      zzcl_odata_utils=>orderby( EXPORTING it_order = io_request->get_sort_elements( )
-                                 CHANGING  ct_data  = lt_mfgorder_001 ).
-
-      " Paging
-      zzcl_odata_utils=>paging( EXPORTING io_paging = io_request->get_paging(  )
-                               CHANGING  ct_data   = lt_mfgorder_001 ).
-
-
-
-      io_response->set_data( lt_mfgorder_001 ).
     ELSE.
 
       IF io_request->is_total_numb_of_rec_requested(  ) .
-        io_response->set_total_number_of_records( 1 ).
-      ENDIF.
+         io_response->set_total_number_of_records( 1 ).
+       ENDIF.
 
     ENDIF.
   ENDMETHOD.

@@ -108,6 +108,8 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
           ENDCASE.
         ENDLOOP.
       CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option).
+        IF sy-subrc = 0.
+        ENDIF.
     ENDTRY.
 
     " 获取系统当前日期

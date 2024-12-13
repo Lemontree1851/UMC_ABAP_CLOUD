@@ -2,26 +2,57 @@
 @UI: {
   headerInfo: {
     typeName: 'Role',
-    typeNamePlural: 'Role'
+    typeNamePlural: 'Role',
+    title: { type: #STANDARD , value: 'RoleId'},
+    description: { type: #STANDARD , value: 'RoleName'}
   }
 }
 annotate view ZC_TBC1007 with
 {
+
+  @UI.facet: [
+      {
+        label: 'General Information',
+        id: 'GeneralInfo',
+        purpose: #STANDARD,
+        position: 10 ,
+        type: #IDENTIFICATION_REFERENCE
+      },
+      {
+        id: 'idLineItemAccessBtn' ,
+        type : #LINEITEM_REFERENCE ,
+        label : 'Access Button' ,
+        position: 20 ,
+        targetElement: '_UserRoleAccessBtn'
+      }
+  ]
+
   @UI.hidden: true
   Uuid;
   @UI.hidden: true
-  UserId;
+  Mail;
 
   @UI.lineItem: [{ position: 10, cssDefault.width: '10rem' }]
   @Consumption.valueHelpDefinition: [{ entity: {name: 'ZC_TBC1005' , element: 'RoleId' },
                additionalBinding: [{ localElement: 'RoleName', element: 'RoleName', usage: #RESULT }]
   }]
+  @UI.identification: [ { position: 10 } ]
   @EndUserText.label: 'Role Id'
   RoleId;
 
   @UI.lineItem: [{ position: 15 }]
+  @UI.identification: [ { position: 20 } ]
   @EndUserText.label: 'Role Name'
   RoleName;
+
+  @UI.identification: [ { position: 30 } ]
+  CreatedBy;
+  @UI.identification: [ { position: 40 } ]
+  CreatedAt;
+  @UI.identification: [ { position: 50 } ]
+  LastChangedBy;
+  @UI.identification: [ { position: 60 } ]
+  LastChangedAt;
 
   @UI.hidden: true
   LocalLastChangedAt;

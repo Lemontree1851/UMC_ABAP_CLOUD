@@ -23,7 +23,7 @@ define view entity ZC_PaymentMethodVH
       @Search.fuzzinessThreshold: 0.8
       @Search.ranking: #HIGH
       @UI.lineItem: [{importance: #HIGH, position: 10}]
-      key Country,
       key PaymentMethod,
-      PaymentMethodName
+      PaymentMethodName,
+      Country
 }

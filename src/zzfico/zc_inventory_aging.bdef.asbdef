@@ -1,4 +1,4 @@
-managed implementation in class zbp_c_inventory_aging unique;
+unmanaged implementation in class zbp_c_inventory_aging unique;
 strict;
 
 define behavior for ZC_INVENTORY_AGING alias InventoryAging
@@ -6,7 +6,7 @@ define behavior for ZC_INVENTORY_AGING alias InventoryAging
 lock master
 authorization master ( instance )
 //etag master <field_name>
-with unmanaged save
+//with unmanaged save
 {
 //  create;
 //  update;

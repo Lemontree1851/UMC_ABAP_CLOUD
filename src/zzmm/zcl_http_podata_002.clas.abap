@@ -546,27 +546,27 @@ public section.
 
       "N0.8 製品保管場所
       BEGIN OF TY_MARD,
-        Product                                            type c length   40    ,
+        Material                                            type c length   40    ,
         Plant                                              type c length   4     ,
         StorageLocation                                    type c length   4     ,
-        WarehouseStorageBin                                type c length   10    ,
-        MaintenanceStatus                                  type c length   15    ,
-        IsMarkedForDeletion                                type c length   1     ,
-        PhysicalInventoryBlockInd                          type c length   1     ,
-        CreationDate                                       type c length   8     ,
-        DateOfLastPostedCntUnRstrcdStk                     type c length   8     ,
-        InventoryCorrectionFactor                          type c length   16    ,
-        InvtryRestrictedUseStockInd                        type c length   3     ,
-        InvtryCurrentYearStockInd                          type c length   3     ,
-        InvtryQualInspCurrentYrStkInd                      type c length   3     ,
-        InventoryBlockStockInd                             type c length   3     ,
-        InvtryRestStockPrevPeriodInd                       type c length   3     ,
-        InventoryStockPrevPeriod                           type c length   3     ,
-        InvtryStockQltyInspPrevPeriod                      type c length   3     ,
-        HasInvtryBlockStockPrevPeriod                      type c length   3     ,
-        FiscalYearCurrentInvtryPeriod                      type c length   4     ,
-        LeanWrhsManagementPickingArea                      type c length   3     ,
-        IsActiveEntity                                     type c length   1     ,
+*        WarehouseStorageBin                                type c length   10    ,
+*        MaintenanceStatus                                  type c length   15    ,
+*        IsMarkedForDeletion                                type c length   1     ,
+*        PhysicalInventoryBlockInd                          type c length   1     ,
+*        CreationDate                                       type c length   8     ,
+*        DateOfLastPostedCntUnRstrcdStk                     type c length   8     ,
+*        InventoryCorrectionFactor                          type c length   16    ,
+*        InvtryRestrictedUseStockInd                        type c length   3     ,
+*        InvtryCurrentYearStockInd                          type c length   3     ,
+*        InvtryQualInspCurrentYrStkInd                      type c length   3     ,
+*        InventoryBlockStockInd                             type c length   3     ,
+*        InvtryRestStockPrevPeriodInd                       type c length   3     ,
+*        InventoryStockPrevPeriod                           type c length   3     ,
+*        InvtryStockQltyInspPrevPeriod                      type c length   3     ,
+*        HasInvtryBlockStockPrevPeriod                      type c length   3     ,
+*        FiscalYearCurrentInvtryPeriod                      type c length   4     ,
+*        LeanWrhsManagementPickingArea                      type c length   3     ,
+*        IsActiveEntity                                     type c length   1     ,
         KLABS                                              type I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit ,
         KINSM                                              type I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit ,
         INSME                                              type I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit ,
@@ -1188,102 +1188,290 @@ public section.
 
       "N0.17 指図内作業.
       begin of ty_afvc,
-      " I_ManufacturingOrderOperation 使用select 从 _SuperiorOperation里面取值
-        OrderInternalID                    type c length               10   ,
-        OrderOperationInternalID           type c length               8    ,
-        Sequence                           type c length               6    ,
-        Operation                          type c length               4    ,
-        Operation_2                        type c length               4    ,
-        StandardTextInternalID             type c length               7    ,
-        OperationText                      type c length               40   ,
-        OperationSecondText                type c length               40   ,
-        Language                           type c length               1    ,
-        OperationHasLongText               type c length               1    ,
-        BillOfOperationsSequence           type c length               6    ,
-        BillOfOperationsType               type c length               1    ,
-        BillOfOperationsGroup              type c length               8    ,
-        BillOfOperationsVariant            type c length               2    ,
-        BOOOperationInternalID             type c length               8    ,
-        BillOfOperationsVersion            type c length               4    ,
-        SuperiorOperationInternalID        type c length               8    ,
-        OperationControlProfile            type c length               4    ,
-        WorkCenterInternalID               type c length               8    ,
-        WorkCenterTypeCode                 type c length               1    ,
-        WorkCenterTypeCode_2               type c length               2    ,
-        Plant                              type c length               4    ,
-        FactoryCalendar                    type c length               2    ,
-        ObjectInternalID                   type c length              22   ,
-        CapacityRequirement                type c length              12   ,
-        CapacityRequirementItem            type c length              8    ,
-        NumberOfCapacities                 type c length              3    ,
-        UsageCode                          type c length              5    ,
-        Assembly                           type c length              40   ,
-        ProjectInternalID                  type c length              8    ,
-        OperationConfirmation              type c length              10   ,
-        NumberOfOperationConfirmations     type c length              8    ,
-        ChangeNumber                       type c length              12   ,
-        OperationPersonResponsible         type c length              8    ,
-        Equipment                          type c length              18   ,
-        FunctionalLocation                 type c length              30   ,
-        FunctionalLocation_2               type c length              30   ,
-        OperationPurgInfoRecdSearchTxt     type c length              10   ,
-        ExtProcgOperationHasSubcontrg      type c length              1    ,
-        PurgInfoRecdDataIsFixed            type c length              1    ,
-        PurchasingInfoRecord               type c length              10   ,
-        PurchasingInfoRecordCategory       type c length              1    ,
-        PurchasingOrganization             type c length              4    ,
-        PurchasingGroup                    type c length              3    ,
-        PurchaseRequisition                type c length              10   ,
-        PurchaseRequisitionItem            type c length              5    ,
-        PurchasingDocument                 type c length             10  ,
-        PurchasingDocumentItem             type c length             5   ,
-        MaterialGroup                      type c length             9   ,
-        GoodsRecipientName                 type c length             12  ,
-        UnloadingPointName                 type c length             25  ,
-        CompanyCode                        type c length             4   ,
-        BusinessArea                       type c length             4   ,
-        ProfitCenter                       type c length             10  ,
-        CostElement                        type c length             10  ,
-        CostingVariant                     type c length             4   ,
-        CostEstimate                       type c length             12  ,
-        CostingSheet                       type c length             6   ,
-        RequestingCostCenter               type c length             10  ,
-        OperationCalculationControl        type c length             1   ,
-        OperationCostingRelevancyType      type c length             1   ,
-        NtwkAccountAssignmentCode          type c length             1   ,
-        ActyIsTakenAcctForProjSmmry        type c length             1   ,
-        ControllingObjectCurrency          type c length             5   ,
-        ControllingObjectClass             type c length             2   ,
-        TaxJurisdiction                    type c length             15  ,
-        FunctionalArea                     type c length             16  ,
-        CostCtrActivityType                type c length             6   ,
-        Currency                           type c length             5   ,
-        PlannedActivityCost                type c length             11  ,
-        OperationSetupGroupCategory        type c length             10  ,
-        OperationSetupGroup                type c length             10  ,
-        OperationSetupType                 type c length             2   ,
-        OperationOverlappingIsRequired     type c length             1   ,
-        OperationOverlappingIsPossible     type c length             1   ,
-        OperationsIsAlwaysOverlapping      type c length             1   ,
-        OperationSplitIsRequired           type c length             1   ,
-        MaximumNumberOfSplits              type c length             3   ,
-        LeadTimeReductionStrategy          type c length             2   ,
-        OverheadCode                       type c length             6   ,
-        MfgOrderOperationIsPhase           type c length             1   ,
-        OrderIntBillOfOpItemOfPhase        type c length             8   ,
-        OperationImportance                type c length             1   ,
-        ActualNumberOfSplits               type c length             3   ,
-        OperationIsToBeDeleted             type c length             1   ,
-        NetworkActivityPriority            type c length             2   ,
-        OperationScrapPercent              type c length             5   ,
-        OperationSystemCondition           type c length             1   ,
-        OperationWorkPercent               type c length             3   ,
-        MaintOperationExecStageCode        type c length             10  ,
-        MaintOrdOpProcessPhaseCode         type c length             2   ,
-        MaintOrdOpProcessSubPhaseCode      type c length             4   ,
-        SetupOpActyNtwkInstance            type c length             10  ,
-        ProduceOpActyNtwkInstance          type c length             10  ,
-        TeardownOpActyNtwkInstance         type c length             10  ,
+        MfgOrderInternalID                 type c length 10  ,
+        OrderOperationInternalID           type c length 8   ,
+        ManufacturingOrder                 type c length 12  ,
+        ManufacturingOrderSequence         type c length 6   ,
+        ManufacturingOrderOperation        type c length 4   ,
+        ManufacturingOrderOperation_2      type c length 4   ,
+        ManufacturingOrderSubOperation     type c length 4   ,
+        ManufacturingOrdSubOperation_2     type c length 4   ,
+        MfgOrderOperationOrSubOp           type c length 4   ,
+        MfgOrderOperationOrSubOp_2         type c length 4   ,
+        MfgOrderOperationIsPhase           type c length 1   ,
+        OrderIntBillOfOpItemOfPhase        type c length 8   ,
+        MfgOrderPhaseSuperiorOperation     type c length 4   ,
+        SuperiorOperation_2                type c length 4   ,
+        ManufacturingOrderCategory         type c length 2   ,
+        ManufacturingOrderType             type c length 4   ,
+        ProductionSupervisor               type c length 3   ,
+        MRPController                      type c length 3   ,
+        ResponsiblePlannerGroup            type c length 3   ,
+        ProductConfiguration               type c length 18  ,
+        InspectionLot                      type c length 12  ,
+        ManufacturingOrderImportance       type c length 1   ,
+        MfgOrderOperationText              type c length 40  ,
+        OperationStandardTextCode          type c length 7   ,
+        OperationHasLongText               type c length 1   ,
+        Language                           type c length 1   ,
+        OperationIsToBeDeleted             type c length 1   ,
+        NumberOfCapacities                 type c length 3   ,
+        NumberOfConfirmationSlips          type c length 3   ,
+        OperationImportance                type c length 1   ,
+        SuperiorOperationInternalID        type c length 8   ,
+        Plant                              type c length 4   ,
+        WorkCenterInternalID               type c length 8   ,
+        WorkCenterTypeCode                 type c length 1   ,
+
+        WorkCenterTypeCode_2               type c length 2   ,
+        OperationControlProfile            type c length 4   ,
+        ControlRecipeDestination           type c length 2   ,
+        OperationConfirmation              type c length 10  ,
+        NumberOfOperationConfirmations     type c length 8   ,
+        FactoryCalendar                    type c length 2   ,
+        CapacityRequirement                type c length 12  ,
+        CapacityRequirementItem            type c length 8   ,
+        ChangeNumber                       type c length 12  ,
+        ObjectInternalID                   type c length 22  ,
+        OperationTrackingNumber            type c length 10  ,
+        BillOfOperationsType               type c length 1   ,
+        BillOfOperationsGroup              type c length 8   ,
+        BillOfOperationsVariant            type c length 2   ,
+        BillOfOperationsSequence           type c length 6   ,
+        BOOOperationInternalID             type c length 8   ,
+        BillOfOperationsVersion            type c length 4   ,
+        BillOfMaterialCategory             type c length 1   ,
+        BillOfMaterialInternalID           type c length 8   ,
+        BillOfMaterialInternalID_2         type c length 8   ,
+        BillOfMaterialItemNodeNumber       type c length 8   ,
+        BOMItemNodeCount                   type c length 8   ,
+        ExtProcgOperationHasSubcontrg      type c length 1   ,
+        PurchasingOrganization             type c length 4   ,
+        PurchasingGroup                    type c length 3   ,
+        PurchaseRequisition                type c length 10  ,
+        PurchaseRequisitionItem            type c length 5   ,
+        PurchaseOrder                      type c length 10  ,
+        PurchaseOrderItem                  type c length 5   ,
+        PurchasingInfoRecord               type c length 10  ,
+        PurgInfoRecdDataIsFixed            type c length 1  ,
+        PurchasingInfoRecordCategory       type c length 1  ,
+        Supplier                           type c length 10 ,
+        GoodsRecipientName                 type c length 12 ,
+        UnloadingPointName                 type c length 25 ,
+        MaterialGroup                      type c length 9  ,
+        OpExternalProcessingCurrency       type c length 5  ,
+        OpExternalProcessingPrice          type c length 11 ,
+        NumberOfOperationPriceUnits        type c length 5  ,
+        CompanyCode                        type c length 4  ,
+        BusinessArea                       type c length 4  ,
+        ControllingArea                    type c length 4  ,
+
+        ProfitCenter                       type c length 10 ,
+        RequestingCostCenter               type c length 10 ,
+        CostElement                        type c length 10 ,
+        CostingVariant                     type c length 4  ,
+        CostingSheet                       type c length 6 ,
+        CostEstimate                       type c length 12,
+        ControllingObjectCurrency          type c length 5 ,
+        ControllingObjectClass             type c length 2 ,
+        FunctionalArea                     type c length 16,
+        TaxJurisdiction                    type c length 15,
+        EmployeeWageType                   type c length 4 ,
+        EmployeeWageGroup                  type c length 3 ,
+        EmployeeSuitability                type c length 2 ,
+        NumberOfTimeTickets                type c length 3 ,
+        Personnel                          type c length 8 ,
+        NumberOfEmployees                  type c length 5 ,
+        OperationSetupGroupCategory        type c length 10,
+        OperationSetupGroup                type c length 10,
+        OperationSetupType                 type c length 2 ,
+        OperationOverlappingIsRequired     type c length 1 ,
+        OperationOverlappingIsPossible     type c length 1 ,
+        OperationsIsAlwaysOverlapping      type c length 1 ,
+        OperationSplitIsRequired           type c length 1 ,
+        MaximumNumberOfSplits              type c length 3 ,
+        LeadTimeReductionStrategy          type c length 2 ,
+        OpSchedldReductionLevel            type c length 1 ,
+        OpErlstSchedldExecStrtDte          type c length 8 ,
+        OpErlstSchedldExecStrtTme          type c length 6 ,
+        OpErlstSchedldProcgStrtDte         type c length 8 ,
+        OpErlstSchedldProcgStrtTme         type c length 6 ,
+        OpErlstSchedldTrdwnStrtDte         type c length 8 ,
+        OpErlstSchedldTrdwnStrtTme         type c length 6 ,
+        OpErlstSchedldExecEndDte           type c length 8 ,
+        OpErlstSchedldExecEndTme           type c length 6 ,
+        OpLtstSchedldExecStrtDte           type c length 8 ,
+        OpLtstSchedldExecStrtTme           type c length 6 ,
+        OpLtstSchedldProcgStrtDte          type c length 8 ,
+        OpLtstSchedldProcgStrtTme          type c length 6 ,
+        OpLtstSchedldTrdwnStrtDte          type c length 8 ,
+
+        OpLtstSchedldTrdwnStrtTme         type c length 6 ,
+        OpLtstSchedldExecEndDte           type c length 8 ,
+        OpLtstSchedldExecEndTme           type c length 6 ,
+        SchedldFcstdEarliestStartDate     type c length 8 ,
+        SchedldFcstdEarliestStartTime     type c length 6 ,
+        SchedldFcstdEarliestEndDate       type c length 8 ,
+        SchedldFcstdEarliestEndTime       type c length 6 ,
+        LatestSchedldFcstdStartDate       type c length 8 ,
+        SchedldFcstdLatestStartTime       type c length 6 ,
+        LatestSchedldFcstdEndDate         type c length 8 ,
+        SchedldFcstdLatestEndTime         type c length 6 ,
+        OperationConfirmedStartDate       type c length 8 ,
+        OperationConfirmedEndDate         type c length 8 ,
+        OpActualExecutionStartDate        type c length 8 ,
+        OpActualExecutionStartTime        type c length 6 ,
+        OpActualSetupEndDate              type c length 8 ,
+        OpActualSetupEndTime              type c length 6 ,
+        OpActualProcessingStartDate       type c length 8 ,
+        OpActualProcessingStartTime       type c length 6 ,
+        OpActualProcessingEndDate         type c length 8 ,
+        OpActualProcessingEndTime         type c length 6 ,
+        OpActualTeardownStartDate         type c length 8 ,
+        OpActualTeardownStartTme          type c length 6 ,
+        OpActualExecutionEndDate          type c length 8 ,
+        OpActualExecutionEndTime          type c length 6 ,
+        ActualForecastEndDate             type c length 8 ,
+        ActualForecastEndTime             type c length 6 ,
+        EarliestScheduledWaitStartDate    type c length 8 ,
+        EarliestScheduledWaitStartTime    type c length 6 ,
+        EarliestScheduledWaitEndDate      type c length 8 ,
+        EarliestScheduledWaitEndTime      type c length 6 ,
+        LatestScheduledWaitStartDate      type c length 8 ,
+        LatestScheduledWaitStartTime      type c length 6 ,
+        LatestScheduledWaitEndDate        type c length 8 ,
+        LatestScheduledWaitEndTime        type c length 6 ,
+        BreakDurationUnit                 type c length 3 ,
+        PlannedBreakDuration              type c length 9 ,
+        ConfirmedBreakDuration            type c length 9 ,
+        OverlapMinimumDurationUnit        type c length 3 ,
+        OverlapMinimumDuration            type c length 9 ,
+        MaximumWaitDurationUnit           type c length 3 ,
+        MaximumWaitDuration               type c length 9 ,
+        MinimumWaitDurationUnit           type c length 3 ,
+        MinimumWaitDuration               type c length 9 ,
+        StandardMoveDurationUnit          type c length 3 ,
+        StandardMoveDuration              type c length 9 ,
+        StandardQueueDurationUnit         type c length 3 ,
+
+        StandardQueueDuration              type c length 9 ,
+        MinimumQueueDurationUnit           type c length 3 ,
+        MinimumQueueDuration               type c length 9 ,
+        MinimumMoveDurationUnit            type c length 3 ,
+        MinimumMoveDuration                type c length 9 ,
+        OperationStandardDuration          type c length 5 ,
+        OperationStandardDurationUnit      type c length 3 ,
+        MinimumDuration                    type c length 5 ,
+        MinimumDurationUnit                type c length 3 ,
+        MinimumProcessingDuration          type c length 9 ,
+        MinimumProcessingDurationUnit      type c length 3 ,
+        ScheduledMoveDuration              type c length 16 ,
+        ScheduledMoveDurationUnit          type c length 3 ,
+        ScheduledQueueDuration             type c length 16 ,
+        ScheduledQueueDurationUnit         type c length 3 ,
+        ScheduledWaitDuration              type c length 16 ,
+        ScheduledWaitDurationUnit          type c length 3 ,
+        PlannedDeliveryDuration            type c length 3 ,
+        OpPlannedSetupDurn                 type c length 16 ,
+        OpPlannedSetupDurnUnit             type c length 3 ,
+        OpPlannedProcessingDurn            type c length 16 ,
+        OpPlannedProcessingDurnUnit        type c length 3 ,
+        OpPlannedTeardownDurn              type c length 16 ,
+        OpPlannedTeardownDurnUnit          type c length 3 ,
+        ActualForecastDuration             type c length 5 ,
+        ActualForecastDurationUnit         type c length 3 ,
+        ForecastProcessingDuration         type c length 16 ,
+        ForecastProcessingDurationUnit     type c length 3 ,
+        StartDateOffsetReferenceCode       type c length 2 ,
+        StartDateOffsetDurationUnit        type c length 3  ,
+        StartDateOffsetDuration            type c length 5  ,
+        EndDateOffsetReferenceCode         type c length 2  ,
+        EndDateOffsetDurationUnit          type c length 3  ,
+        EndDateOffsetDuration              type c length 5  ,
+        StandardWorkFormulaParamGroup      type c length 4  ,
+        OperationUnit                      type c length 3  ,
+        OpQtyToBaseQtyDnmntr               type c length 5  ,
+        OpQtyToBaseQtyNmrtr                type c length 5  ,
+        OperationScrapPercent              type c length 5  ,
+        OperationReferenceQuantity         type c length 13 ,
+        OpPlannedTotalQuantity             type c length 13 ,
+        OpPlannedScrapQuantity             type c length 13 ,
+        OpPlannedYieldQuantity             type c length 14 ,
+        OpTotalConfirmedYieldQty           type c length 13 ,
+
+        OpTotalConfirmedScrapQty           type c length 13 ,
+        OperationConfirmedReworkQty        type c length 13 ,
+        ProductionUnit                     type c length 3  ,
+        OpTotConfdYieldQtyInOrdQtyUnit     type c length 13 ,
+        OpWorkQuantityUnit1                type c length 3  ,
+        OpConfirmedWorkQuantity1           type c length 13 ,
+        NoFurtherOpWorkQuantity1IsExpd     type c length 1  ,
+        OpWorkQuantityUnit2                type c length 3  ,
+        OpConfirmedWorkQuantity2           type c length 13 ,
+        NoFurtherOpWorkQuantity2IsExpd     type c length 1  ,
+        OpWorkQuantityUnit3                type c length 3  ,
+        OpConfirmedWorkQuantity3           type c length 13 ,
+        NoFurtherOpWorkQuantity3IsExpd     type c length 1  ,
+        OpWorkQuantityUnit4                type c length 3  ,
+        OpConfirmedWorkQuantity4           type c length 13 ,
+        NoFurtherOpWorkQuantity4IsExpd     type c length 1  ,
+        OpWorkQuantityUnit5                type c length 3  ,
+        OpConfirmedWorkQuantity5           type c length 13 ,
+        NoFurtherOpWorkQuantity5IsExpd     type c length 1  ,
+        OpWorkQuantityUnit6                type c length 3  ,
+        OpConfirmedWorkQuantity6           type c length 13 ,
+        NoFurtherOpWorkQuantity6IsExpd     type c length 1  ,
+        WorkCenterStandardWorkQtyUnit1     type c length 3  ,
+        WorkCenterStandardWorkQty1         type c length 9  ,
+        CostCtrActivityType1               type c length 6  ,
+        WorkCenterStandardWorkQtyUnit2     type c length 3  ,
+        WorkCenterStandardWorkQty2         type c length 9  ,
+        CostCtrActivityType2               type c length 6  ,
+        WorkCenterStandardWorkQtyUnit3     type c length 3  ,
+        WorkCenterStandardWorkQty3         type c length 9  ,
+        CostCtrActivityType3               type c length 6  ,
+        WorkCenterStandardWorkQtyUnit4     type c length 3  ,
+        WorkCenterStandardWorkQty4         type c length 9  ,
+        CostCtrActivityType4               type c length 6  ,
+        WorkCenterStandardWorkQtyUnit5     type c length 3  ,
+        WorkCenterStandardWorkQty5         type c length 9  ,
+        CostCtrActivityType5               type c length 6  ,
+        WorkCenterStandardWorkQtyUnit6     type c length 3  ,
+        WorkCenterStandardWorkQty6         type c length 9  ,
+        CostCtrActivityType6               type c length 6  ,
+        ForecastWorkQuantity1              type c length 9  ,
+        ForecastWorkQuantity2              type c length 9  ,
+        ForecastWorkQuantity3              type c length 9  ,
+        ForecastWorkQuantity4              type c length 9  ,
+        ForecastWorkQuantity5              type c length 9  ,
+        ForecastWorkQuantity6              type c length 9  ,
+
+        BusinessProcess                    type c length 12 ,
+        BusinessProcessEntryUnit           type c length 3  ,
+        BusinessProcessConfirmedQty        type c length 13 ,
+        NoFurtherBusinessProcQtyIsExpd     type c length 1  ,
+        BusinessProcRemainingQtyUnit       type c length 3  ,
+        BusinessProcessRemainingQty        type c length 13 ,
+        SetupOpActyNtwkInstance            type c length 10 ,
+        ProduceOpActyNtwkInstance          type c length 10 ,
+        TeardownOpActyNtwkInstance         type c length 10 ,
+        FreeDefinedTableFieldSemantic      type c length 7  ,
+        FreeDefinedAttribute01             type c length 20 ,
+        FreeDefinedAttribute02             type c length 20 ,
+        FreeDefinedAttribute03             type c length 10 ,
+        FreeDefinedAttribute04             type c length 10 ,
+        FreeDefinedQuantity1Unit           type c length 3  ,
+        FreeDefinedQuantity1               type c length 13 ,
+        FreeDefinedQuantity2Unit           type c length 3  ,
+        FreeDefinedQuantity2               type c length 13 ,
+        FreeDefinedAmount1Currency         type c length 5  ,
+        FreeDefinedAmount1                 type c length 13 ,
+        FreeDefinedAmount2Currency         type c length 5  ,
+        FreeDefinedAmount2                 type c length 13 ,
+        FreeDefinedDate1                   type c length 8  ,
+        FreeDefinedDate2                   type c length 8  ,
+        FreeDefinedIndicator1              type c length 1  ,
+        FreeDefinedIndicator2              type c length 1  ,
 
       end of ty_afvc,
 
@@ -1868,9 +2056,9 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_ekpo-itemisrejectedbysupplier               =      ls_ekpo-itemisrejectedbysupplier         .
             es_ekpo-purgdocpricedate                       =      ls_ekpo-purgdocpricedate                 .
             es_ekpo-purgdocreleaseorderquantity            =      ls_ekpo-purgdocreleaseorderquantity      .
-            es_ekpo-earmarkedfunds                         =      ls_ekpo-earmarkedfunds                   .
+*            es_ekpo-earmarkedfunds                         =      ls_ekpo-earmarkedfunds                   .
             es_ekpo-earmarkedfundsdocument                 =      ls_ekpo-earmarkedfundsdocument           .
-            es_ekpo-earmarkedfundsitem                     =      ls_ekpo-earmarkedfundsitem               .
+*            es_ekpo-earmarkedfundsitem                     =      ls_ekpo-earmarkedfundsitem               .
             es_ekpo-earmarkedfundsdocumentitem             =      ls_ekpo-earmarkedfundsdocumentitem       .
             es_ekpo-partnerreportedbusinessarea            =      ls_ekpo-partnerreportedbusinessarea      .
             es_ekpo-inventoryspecialstocktype              =      ls_ekpo-inventoryspecialstocktype        .
@@ -2329,7 +2517,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_ekkn-functionalarea                   = ls_ekkn-functionalarea.
             es_ekkn-goodsrecipientname               = ls_ekkn-goodsrecipientname.
             es_ekkn-isfinallyinvoiced                = ls_ekkn-isfinallyinvoiced.
-            es_ekkn-realestateobject                 = ls_ekkn-realestateobject.
+*            es_ekkn-realestateobject                 = ls_ekkn-realestateobject.
             es_ekkn-reinternalfinnumber              = ls_ekkn-reinternalfinnumber.
             es_ekkn-networkactivityinternalid        = ls_ekkn-networkactivityinternalid.
             es_ekkn-partneraccountnumber             = ls_ekkn-partneraccountnumber.
@@ -2345,7 +2533,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_ekkn-grantid                          = ls_ekkn-grantid.
             es_ekkn-budgetperiod                     = ls_ekkn-budgetperiod.
             es_ekkn-earmarkedfundsdocument           = ls_ekkn-earmarkedfundsdocument.
-            es_ekkn-earmarkedfundsitem               = ls_ekkn-earmarkedfundsitem.
+*            es_ekkn-earmarkedfundsitem               = ls_ekkn-earmarkedfundsitem.
             es_ekkn-earmarkedfundsdocumentitem       = ls_ekkn-earmarkedfundsdocumentitem.
             es_ekkn-servicedocumenttype              = ls_ekkn-servicedocumenttype.
             es_ekkn-servicedocument                  = ls_ekkn-servicedocument.
@@ -2772,136 +2960,100 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
         ENDIF.
 
       WHEN 'MARD'  OR 'mard' .
-        SELECT * FROM i_productstoragelocationbasic WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_mard).
 
 
-        if lt_mard is not INITIAL.
+DATA:
+      lv_error_message TYPE string,                   " 错误信息
+      lv_sql_statement TYPE string,                   " SQL 语句
+      lt_mardbase type STANDARD TABLE OF ty_mard.
 
-            data(lt_mard2) = lt_mard.
+        try.
+             SELECT     Material,
+                        Plant,
+                        StorageLocation,
+                        InventoryStockType,
+                        InventorySpecialStockType,
+                        sum( MatlWrhsStkQtyInMatlBaseUnit ) as unit
 
-            sort lt_mard2 by product plant StorageLocation.
+             FROM I_MaterialStock_2 WITH PRIVILEGED ACCESS
+             WHERE (lv_where)
+             GROUP BY Material, Plant, StorageLocation, InventoryStockType, InventorySpecialStockType
+             into table @data(lt_mard).
 
-            DELETE ADJACENT DUPLICATES FROM lt_mard2 COMPARING product plant StorageLocation.
-
-            SELECT Material,
-                    Plant,
-                    StorageLocation,
-                    InventoryStockType,
-                    InventorySpecialStockType,
-                    MatlWrhsStkQtyInMatlBaseUnit
-
-            FROM I_MaterialStock_2 WITH PRIVILEGED ACCESS
-            for ALL ENTRIES IN @lt_mard2
-            WHERE Material = @lt_mard2-product
-              and Plant = @lt_mard2-plant
-              and StorageLocation = @lt_mard2-StorageLocation
-*            GROUP BY Material, Plant, StorageLocation, InventoryStockType, InventorySpecialStockType
-            into TABLE @data(lt_stock).
-
-        endif.
+         catch cx_sy_dynamic_osql_error into data(lo_sql_error).
 
 
-        data:
-            lv_KLABS TYPE I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit,
-            lv_KINSM TYPE I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit,
-            lv_INSME TYPE I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit,
-            lv_LABST TYPE I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit.
+            lv_error = 'X'.
 
 
-        IF lt_mard IS NOT INITIAL.
-          LOOP  AT lt_mard INTO DATA(ls_mard).
+            lv_error_message = lo_sql_error->get_text( ).    " 获取错误描述
+
+         ENDTRY.
+
+
+
+         if lt_mard is not INITIAL.
+
+             data(lt_mard1) = lt_mard .
+
+             SORT lt_mard1 by Material Plant StorageLocation.
+             DELETE ADJACENT DUPLICATES FROM lt_mard1 COMPARING Material Plant StorageLocation.
+
+             move-CORRESPONDING lt_mard1 to lt_mardbase.
+
+             loop at lt_mardbase ASSIGNING FIELD-SYMBOL(<fs_mardbase>).
+
+                  loop at lt_mard into data(lw_mard) where material = <fs_mardbase>-material
+                                                     and   plant = <fs_mardbase>-plant
+                                                     and   storagelocation = <fs_mardbase>-storagelocation.
+
+                    case lw_mard-InventoryStockType.
+*
+                    when '01'.
+
+                        if lw_mard-InventorySpecialStockType = 'K'.
+
+                        <fs_mardbase>-klabs = lw_mard-unit.
+
+                        ELSEIF lw_mard-InventorySpecialStockType = ''.
+
+                         <fs_mardbase>-LABST = lw_mard-unit..
+                        ENDIF.
+
+                    when '02'.
+
+                        if lw_mard-InventorySpecialStockType = 'K'.
+
+                             <fs_mardbase>-KINSM = lw_mard-Unit.
+
+                        elseif lw_mard-InventorySpecialStockType = ''.
+
+                             <fs_mardbase>-INSME = lw_mard-Unit.
+
+                        endif.
+
+                    when OTHERS.
+
+                    ENDCASE.
+                  ENDLOOP.
+
+             ENDLOOP.
+
+         ENDIF.
+
+
+        IF lt_mardbase IS NOT INITIAL.
+          LOOP  AT lt_mardbase INTO DATA(ls_mard1).
 
           lv_count = lv_count + 1.
-            es_mard-product                            = ls_mard-product                              .
-            es_mard-plant                              = ls_mard-plant                                .
-            es_mard-storagelocation                    = ls_mard-storagelocation                      .
-            es_mard-warehousestoragebin                = ls_mard-warehousestoragebin                  .
-            es_mard-maintenancestatus                  = ls_mard-maintenancestatus                    .
-            es_mard-ismarkedfordeletion                = ls_mard-ismarkedfordeletion                  .
-            es_mard-physicalinventoryblockind          = ls_mard-physicalinventoryblockind            .
-            es_mard-creationdate                       = ls_mard-creationdate                         .
-            es_mard-dateoflastpostedcntunrstrcdstk     = ls_mard-dateoflastpostedcntunrstrcdstk       .
-            es_mard-inventorycorrectionfactor          = ls_mard-inventorycorrectionfactor            .
-            es_mard-invtryrestrictedusestockind        = ls_mard-invtryrestrictedusestockind          .
-            es_mard-invtrycurrentyearstockind          = ls_mard-invtrycurrentyearstockind            .
-            es_mard-invtryqualinspcurrentyrstkind      = ls_mard-invtryqualinspcurrentyrstkind        .
-            es_mard-inventoryblockstockind             = ls_mard-inventoryblockstockind               .
-            es_mard-invtryreststockprevperiodind       = ls_mard-invtryreststockprevperiodind         .
-            es_mard-inventorystockprevperiod           = ls_mard-inventorystockprevperiod             .
-            es_mard-invtrystockqltyinspprevperiod      = ls_mard-invtrystockqltyinspprevperiod        .
-            es_mard-hasinvtryblockstockprevperiod      = ls_mard-hasinvtryblockstockprevperiod        .
-            es_mard-fiscalyearcurrentinvtryperiod      = ls_mard-fiscalyearcurrentinvtryperiod        .
-            es_mard-leanwrhsmanagementpickingarea      = ls_mard-leanwrhsmanagementpickingarea        .
-            es_mard-isactiveentity                     = ls_mard-isactiveentity                       .
+            es_mard-material                           = ls_mard1-material                              .
+            es_mard-plant                              = ls_mard1-plant                                .
+            es_mard-storagelocation                    = ls_mard1-storagelocation                      .
+            es_mard-klabs                              = ls_mard1-klabs.
+            es_mard-LABST                              = ls_mard1-LABST.
+            es_mard-KINSM                              = ls_mard1-KINSM.
+            es_mard-INSME                              = ls_mard1-INSME.
 
-
-
-            loop at lt_stock into data(lw_stock) where  material = ls_mard-product
-                                                   and plant = ls_mard-plant
-                                                   and storagelocation = ls_mard-storagelocation.
-
-                case lw_stock-InventoryStockType.
-
-                when '01'.
-
-                    if lw_stock-InventorySpecialStockType = 'K'.
-
-                    lv_klabs = lv_klabs + lw_stock-MatlWrhsStkQtyInMatlBaseUnit.
-
-                    ELSEIF lw_stock-InventorySpecialStockType = ''.
-
-                    lv_LABST = lv_LABST + lw_stock-MatlWrhsStkQtyInMatlBaseUnit.
-                    ENDIF.
-
-                when '02'.
-
-                    if lw_stock-InventorySpecialStockType = 'K'.
-
-                        lv_KINSM = lv_KINSM + lw_stock-MatlWrhsStkQtyInMatlBaseUnit.
-
-                    elseif lw_stock-InventorySpecialStockType = ''.
-
-                        lv_INSME = lv_INSME + lw_stock-MatlWrhsStkQtyInMatlBaseUnit.
-
-                    endif.
-
-                when OTHERS.
-
-                ENDCASE.
-
-            endloop.
-
-            es_mard-klabs = lv_klabs.
-            es_mard-LABST = lv_LABST.
-            es_mard-KINSM = lv_KINSM.
-            es_mard-INSME = lv_INSME.
-
-            clear: lv_klabs, lv_LABST , lv_KINSM , lv_INSME.
-
-            CONDENSE es_mard-product                                                        .
-
-            CONDENSE es_mard-plant                                                          .
-            CONDENSE es_mard-storagelocation                                                .
-            CONDENSE es_mard-warehousestoragebin                                            .
-            CONDENSE es_mard-maintenancestatus                                              .
-            CONDENSE es_mard-ismarkedfordeletion                                            .
-            CONDENSE es_mard-physicalinventoryblockind                                      .
-            CONDENSE es_mard-creationdate                                                   .
-            CONDENSE es_mard-dateoflastpostedcntunrstrcdstk                                 .
-            CONDENSE es_mard-inventorycorrectionfactor                                      .
-            CONDENSE es_mard-invtryrestrictedusestockind                                    .
-            CONDENSE es_mard-invtrycurrentyearstockind                                      .
-            CONDENSE es_mard-invtryqualinspcurrentyrstkind                                  .
-            CONDENSE es_mard-inventoryblockstockind                                         .
-            CONDENSE es_mard-invtryreststockprevperiodind                                   .
-            CONDENSE es_mard-inventorystockprevperiod                                       .
-            CONDENSE es_mard-invtrystockqltyinspprevperiod                                  .
-            CONDENSE es_mard-hasinvtryblockstockprevperiod                                  .
-            CONDENSE es_mard-fiscalyearcurrentinvtryperiod                                  .
-            CONDENSE es_mard-leanwrhsmanagementpickingarea                                  .
-            CONDENSE es_mard-isactiveentity                                                 .
 
             APPEND es_mard TO es_response_mard-items.
 
@@ -2918,7 +3070,13 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         ELSE.
           lv_error = 'X'.
+
+          if lv_error_message is NOT INITIAL.
+          lv_text = lv_error_message.
+          else.
           lv_text = 'There is no data in table'.
+          ENDIF.
+
         ENDIF.
 
       WHEN 'T024D' OR 'T024D'.
@@ -3322,7 +3480,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_afko-iscompletelydelivered                = ls_afko-iscompletelydelivered              .
             es_afko-mfgorderhasmultipleitems             = ls_afko-mfgorderhasmultipleitems           .
             es_afko-mfgorderispartofcollvorder           = ls_afko-mfgorderispartofcollvorder         .
-            es_afko-mfgorderhierarchylevel               = ls_afko-mfgorderhierarchylevel             .
+*            es_afko-mfgorderhierarchylevel               = ls_afko-mfgorderhierarchylevel             .
             es_afko-mfgorderhierarchylevelvalue          = ls_afko-mfgorderhierarchylevelvalue        .
             es_afko-mfgorderhierarchypathvalue           = ls_afko-mfgorderhierarchypathvalue         .
             es_afko-orderisnotcostedautomatically        = ls_afko-orderisnotcostedautomatically      .
@@ -3359,7 +3517,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_afko-productionversion                    = ls_afko-productionversion                  .
             es_afko-salesorder                           = ls_afko-salesorder                         .
             es_afko-salesorderitem                       = ls_afko-salesorderitem                     .
-            es_afko-wbselementinternalid                 = ls_afko-wbselementinternalid               .
+*            es_afko-wbselementinternalid                 = ls_afko-wbselementinternalid               .
             es_afko-wbselementinternalid_2               = ls_afko-wbselementinternalid_2             .
             es_afko-reservation                          = ls_afko-reservation                        .
             es_afko-settlementreservation                = ls_afko-settlementreservation              .
@@ -3369,7 +3527,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_afko-capacityrequirement                  = ls_afko-capacityrequirement                .
             es_afko-inspectionlot                        = ls_afko-inspectionlot                      .
             es_afko-changenumber                         = ls_afko-changenumber                       .
-            es_afko-materialrevisionlevel                = ls_afko-materialrevisionlevel              .
+*            es_afko-materialrevisionlevel                = ls_afko-materialrevisionlevel              .
             es_afko-materialrevisionlevel_2              = ls_afko-materialrevisionlevel_2            .
             es_afko-basicschedulingtype                  = ls_afko-basicschedulingtype                .
             es_afko-forecastschedulingtype               = ls_afko-forecastschedulingtype             .
@@ -3383,7 +3541,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_afko-mfgordersplitstatus                  = ls_afko-mfgordersplitstatus                .
             es_afko-billofoperationsmaterial             = ls_afko-billofoperationsmaterial           .
             es_afko-billofoperationstype                 = ls_afko-billofoperationstype               .
-            es_afko-billofoperations                     = ls_afko-billofoperations                   .
+*            es_afko-billofoperations                     = ls_afko-billofoperations                   .
             es_afko-billofoperationsgroup                = ls_afko-billofoperationsgroup              .
             es_afko-billofoperationsvariant              = ls_afko-billofoperationsvariant            .
             es_afko-boointernalversioncounter            = ls_afko-boointernalversioncounter          .
@@ -3393,7 +3551,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_afko-booexplosiondate                     = ls_afko-booexplosiondate                   .
             es_afko-boovaliditystartdate                 = ls_afko-boovaliditystartdate               .
             es_afko-billofmaterialcategory               = ls_afko-billofmaterialcategory             .
-            es_afko-billofmaterial                       = ls_afko-billofmaterial                     .
+*            es_afko-billofmaterial                       = ls_afko-billofmaterial                     .
             es_afko-billofmaterialinternalid             = ls_afko-billofmaterialinternalid           .
             es_afko-billofmaterialvariant                = ls_afko-billofmaterialvariant              .
             es_afko-billofmaterialvariantusage           = ls_afko-billofmaterialvariantusage         .
@@ -3414,7 +3572,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_afko-plannedcostscostingvariant           = ls_afko-plannedcostscostingvariant         .
             es_afko-controllingobjectclass               = ls_afko-controllingobjectclass             .
             es_afko-functionalarea                       = ls_afko-functionalarea                     .
-            es_afko-orderiseventbasedposting             = ls_afko-orderiseventbasedposting           .
+*            es_afko-orderiseventbasedposting             = ls_afko-orderiseventbasedposting           .
             es_afko-eventbasedpostingmethod              = ls_afko-eventbasedpostingmethod            .
             es_afko-eventbasedprocessingkey              = ls_afko-eventbasedprocessingkey            .
             es_afko-schedulingfloatprofile               = ls_afko-schedulingfloatprofile             .
@@ -3436,7 +3594,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_afko-mfgorderactualstarttime              = ls_afko-mfgorderactualstarttime            .
             es_afko-mfgorderconfirmedenddate             = ls_afko-mfgorderconfirmedenddate           .
             es_afko-mfgorderconfirmedendtime             = ls_afko-mfgorderconfirmedendtime           .
-            es_afko-mfgorderactualenddate                = ls_afko-mfgorderactualenddate              .
+*            es_afko-mfgorderactualenddate                = ls_afko-mfgorderactualenddate              .
             es_afko-mfgorderactualreleasedate            = ls_afko-mfgorderactualreleasedate          .
             es_afko-mfgordertotalcommitmentdate          = ls_afko-mfgordertotalcommitmentdate        .
             es_afko-mfgorderactualcompletiondate         = ls_afko-mfgorderactualcompletiondate       .
@@ -3647,7 +3805,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_afpo-salesorder                        = ls_afpo-salesorder                       .
             es_afpo-salesorderitem                    = ls_afpo-salesorderitem                   .
             es_afpo-salesorderscheduleline            = ls_afpo-salesorderscheduleline           .
-            es_afpo-wbselementinternalid              = ls_afpo-wbselementinternalid             .
+*            es_afpo-wbselementinternalid              = ls_afpo-wbselementinternalid             .
             es_afpo-wbselementinternalid_2            = ls_afpo-wbselementinternalid_2           .
             es_afpo-quotaarrangement                  = ls_afpo-quotaarrangement                 .
             es_afpo-quotaarrangementitem              = ls_afpo-quotaarrangementitem             .
@@ -4001,7 +4159,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_resb-manufacturingorder                 = ls_resb-manufacturingorder                .
             es_resb-manufacturingordersequence         = ls_resb-manufacturingordersequence        .
             es_resb-mfgordersequencecategory           = ls_resb-mfgordersequencecategory          .
-            es_resb-manufacturingorderoperation        = ls_resb-manufacturingorderoperation       .
+*            es_resb-manufacturingorderoperation        = ls_resb-manufacturingorderoperation       .
             es_resb-manufacturingorderoperation_2      = ls_resb-manufacturingorderoperation_2     .
             es_resb-productionplant                    = ls_resb-productionplant                   .
             es_resb-orderinternalbillofoperations      = ls_resb-orderinternalbillofoperations     .
@@ -4031,17 +4189,17 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_resb-requirementtype                    = ls_resb-requirementtype                   .
             es_resb-salesorder                         = ls_resb-salesorder                        .
             es_resb-salesorderitem                     = ls_resb-salesorderitem                    .
-            es_resb-wbselementinternalid               = ls_resb-wbselementinternalid              .
+*            es_resb-wbselementinternalid               = ls_resb-wbselementinternalid              .
             es_resb-wbselementinternalid_2             = ls_resb-wbselementinternalid_2            .
             es_resb-productconfiguration               = ls_resb-productconfiguration              .
             es_resb-changenumber                       = ls_resb-changenumber                      .
             es_resb-materialrevisionlevel              = ls_resb-materialrevisionlevel             .
             es_resb-effectivityparametervariant        = ls_resb-effectivityparametervariant       .
-            es_resb-sortfield                          = ls_resb-sortfield                         .
+*            es_resb-sortfield                          = ls_resb-sortfield                         .
             es_resb-materialcomponentsorttext          = ls_resb-materialcomponentsorttext         .
             es_resb-objectinternalid                   = ls_resb-objectinternalid                  .
             es_resb-billofmaterialcategory             = ls_resb-billofmaterialcategory            .
-            es_resb-billofmaterialinternalid           = ls_resb-billofmaterialinternalid          .
+*            es_resb-billofmaterialinternalid           = ls_resb-billofmaterialinternalid          .
             es_resb-billofmaterialinternalid_2         = ls_resb-billofmaterialinternalid_2        .
             es_resb-billofmaterialvariantusage         = ls_resb-billofmaterialvariantusage        .
             es_resb-billofmaterialvariant              = ls_resb-billofmaterialvariant             .
@@ -4051,7 +4209,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_resb-bomiteminternalchangecount         = ls_resb-bomiteminternalchangecount        .
             es_resb-inheritedbomitemnode               = ls_resb-inheritedbomitemnode              .
             es_resb-bomitemcategory                    = ls_resb-bomitemcategory                   .
-            es_resb-billofmaterialitemnumber           = ls_resb-billofmaterialitemnumber          .
+*            es_resb-billofmaterialitemnumber           = ls_resb-billofmaterialitemnumber          .
             es_resb-billofmaterialitemnumber_2         = ls_resb-billofmaterialitemnumber_2        .
             es_resb-bomitemdescription                 = ls_resb-bomitemdescription                .
             es_resb-bomitemtext2                       = ls_resb-bomitemtext2                      .
@@ -4096,11 +4254,11 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_resb-functionalarea                     = ls_resb-functionalarea                    .
             es_resb-controllingarea                    = ls_resb-controllingarea                   .
             es_resb-accountassignmentcategory          = ls_resb-accountassignmentcategory         .
-            es_resb-commitmentitem                     = ls_resb-commitmentitem                    .
+*            es_resb-commitmentitem                     = ls_resb-commitmentitem                    .
             es_resb-commitmentitemshortid              = ls_resb-commitmentitemshortid             .
             es_resb-fundscenter                        = ls_resb-fundscenter                       .
             es_resb-materialcompisvariablesized        = ls_resb-materialcompisvariablesized       .
-            es_resb-numberofvariablesizecomponents     = ls_resb-numberofvariablesizecomponents    .
+*            es_resb-numberofvariablesizecomponents     = ls_resb-numberofvariablesizecomponents    .
             es_resb-variablesizeitemunit               = ls_resb-variablesizeitemunit              .
             es_resb-variablesizeitemquantity           = ls_resb-variablesizeitemquantity          .
             es_resb-variablesizecomponentunit          = ls_resb-variablesizecomponentunit         .
@@ -4127,7 +4285,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             es_resb-matlcompisfollowupmaterial         = ls_resb-matlcompisfollowupmaterial        .
             es_resb-followupgroup                      = ls_resb-followupgroup                     .
             es_resb-followupmaterial                   = ls_resb-followupmaterial                  .
-            es_resb-followupmaterialisnotactive        = ls_resb-followupmaterialisnotactive       .
+*            es_resb-followupmaterialisnotactive        = ls_resb-followupmaterialisnotactive       .
             es_resb-followupmaterialisactive           = ls_resb-followupmaterialisactive          .
             es_resb-discontinuationmasterresvnitem     = ls_resb-discontinuationmasterresvnitem    .
             es_resb-materialprovisiontype              = ls_resb-materialprovisiontype             .
@@ -4336,300 +4494,588 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
         ENDIF.
 
       WHEN 'AFVC'  OR 'afvc' .
-        SELECT
-            \_superioroperation-orderinternalid                    ,
-            \_superioroperation-orderoperationinternalid           ,
-            \_superioroperation-sequence                           ,
-            \_superioroperation-operation                          ,
-            \_superioroperation-operation_2                        ,
-            \_superioroperation-standardtextinternalid             ,
-            \_superioroperation-operationtext                      ,
-            \_superioroperation-operationsecondtext                ,
-            \_superioroperation-language                           ,
-            \_superioroperation-operationhaslongtext               ,
-            \_superioroperation-billofoperationssequence           ,
-            \_superioroperation-billofoperationstype               ,
-            \_superioroperation-billofoperationsgroup              ,
-            \_superioroperation-billofoperationsvariant            ,
-            \_superioroperation-boooperationinternalid             ,
-            \_superioroperation-billofoperationsversion            ,
-            \_superioroperation-superioroperationinternalid        ,
-            \_superioroperation-operationcontrolprofile            ,
-            \_superioroperation-workcenterinternalid               ,
-            \_superioroperation-workcentertypecode                 ,
-            \_superioroperation-workcentertypecode_2               ,
-            \_superioroperation-plant                              ,
-            \_superioroperation-factorycalendar                    ,
-            \_superioroperation-objectinternalid                   ,
-            \_superioroperation-capacityrequirement                ,
-            \_superioroperation-capacityrequirementitem            ,
-            \_superioroperation-numberofcapacities                 ,
-            \_superioroperation-usagecode                          ,
-            \_superioroperation-assembly                           ,
-            \_superioroperation-projectinternalid                  ,
-            \_superioroperation-operationconfirmation              ,
-            \_superioroperation-numberofoperationconfirmations     ,
-            \_superioroperation-changenumber                       ,
-            \_superioroperation-operationpersonresponsible         ,
-            \_superioroperation-equipment                          ,
-            \_superioroperation-functionallocation                 ,
-            \_superioroperation-functionallocation_2               ,
-            \_superioroperation-operationpurginforecdsearchtxt     ,
-            \_superioroperation-extprocgoperationhassubcontrg      ,
-            \_superioroperation-purginforecddataisfixed            ,
-            \_superioroperation-purchasinginforecord               ,
-            \_superioroperation-purchasinginforecordcategory       ,
-            \_superioroperation-purchasingorganization             ,
-            \_superioroperation-purchasinggroup                    ,
-            \_superioroperation-purchaserequisition                ,
-            \_superioroperation-purchaserequisitionitem            ,
-            \_superioroperation-purchasingdocument                 ,
-            \_superioroperation-purchasingdocumentitem             ,
-            \_superioroperation-materialgroup                      ,
-            \_superioroperation-goodsrecipientname                 ,
-            \_superioroperation-unloadingpointname                 ,
-            \_superioroperation-companycode                        ,
-            \_superioroperation-businessarea                       ,
-            \_superioroperation-profitcenter                       ,
-            \_superioroperation-costelement                        ,
-            \_superioroperation-costingvariant                     ,
-            \_superioroperation-costestimate                       ,
-            \_superioroperation-costingsheet                       ,
-            \_superioroperation-requestingcostcenter               ,
-            \_superioroperation-operationcalculationcontrol        ,
-            \_superioroperation-operationcostingrelevancytype      ,
-            \_superioroperation-ntwkaccountassignmentcode          ,
-            \_superioroperation-actyistakenacctforprojsmmry        ,
-            \_superioroperation-controllingobjectcurrency          ,
-            \_superioroperation-controllingobjectclass             ,
-            \_superioroperation-taxjurisdiction                    ,
-            \_superioroperation-functionalarea                     ,
-            \_superioroperation-costctractivitytype                ,
-            \_superioroperation-currency                           ,
-            \_superioroperation-plannedactivitycost                ,
-            \_superioroperation-operationsetupgroupcategory        ,
-            \_superioroperation-operationsetupgroup                ,
-            \_superioroperation-operationsetuptype                 ,
-            \_superioroperation-operationoverlappingisrequired     ,
-            \_superioroperation-operationoverlappingispossible     ,
-            \_superioroperation-operationsisalwaysoverlapping      ,
-            \_superioroperation-operationsplitisrequired           ,
-            \_superioroperation-maximumnumberofsplits              ,
-            \_superioroperation-leadtimereductionstrategy          ,
-            \_superioroperation-overheadcode                       ,
-            \_superioroperation-mfgorderoperationisphase           ,
-            \_superioroperation-orderintbillofopitemofphase        ,
-            \_superioroperation-operationimportance                ,
-            \_superioroperation-actualnumberofsplits               ,
-            \_superioroperation-operationistobedeleted             ,
-            \_superioroperation-networkactivitypriority            ,
-            \_superioroperation-operationscrappercent              ,
-            \_superioroperation-operationsystemcondition           ,
-            \_superioroperation-operationworkpercent               ,
-            \_superioroperation-maintoperationexecstagecode        ,
-            \_superioroperation-maintordopprocessphasecode         ,
-            \_superioroperation-maintordopprocesssubphasecode      ,
-            \_superioroperation-setupopactyntwkinstance            ,
-            \_superioroperation-produceopactyntwkinstance          ,
-            \_superioroperation-teardownopactyntwkinstance
-        FROM i_manufacturingorderoperation WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
+*
+      SELECT *
+        from i_manufacturingorderoperation WITH PRIVILEGED ACCESS
+       WHERE (lv_where)
         INTO TABLE @DATA(lt_afvc).
 
         IF lt_afvc IS NOT INITIAL.
-          LOOP  AT lt_afvc INTO DATA(ls_afvc).
-          lv_count = lv_count + 1.
-            es_afvc-orderinternalid                     = ls_afvc-orderinternalid                    .
-            es_afvc-orderoperationinternalid            = ls_afvc-orderoperationinternalid           .
-            es_afvc-sequence                            = ls_afvc-sequence                           .
-            es_afvc-operation                           = ls_afvc-operation                          .
-            es_afvc-operation_2                         = ls_afvc-operation_2                        .
-            es_afvc-standardtextinternalid              = ls_afvc-standardtextinternalid             .
-            es_afvc-operationtext                       = ls_afvc-operationtext                      .
-            es_afvc-operationsecondtext                 = ls_afvc-operationsecondtext                .
-            es_afvc-language                            = ls_afvc-language                           .
-            es_afvc-operationhaslongtext                = ls_afvc-operationhaslongtext               .
-            es_afvc-billofoperationssequence            = ls_afvc-billofoperationssequence           .
-            es_afvc-billofoperationstype                = ls_afvc-billofoperationstype               .
-            es_afvc-billofoperationsgroup               = ls_afvc-billofoperationsgroup              .
-            es_afvc-billofoperationsvariant             = ls_afvc-billofoperationsvariant            .
-            es_afvc-boooperationinternalid              = ls_afvc-boooperationinternalid             .
-            es_afvc-billofoperationsversion             = ls_afvc-billofoperationsversion            .
-            es_afvc-superioroperationinternalid         = ls_afvc-superioroperationinternalid        .
-            es_afvc-operationcontrolprofile             = ls_afvc-operationcontrolprofile            .
-            es_afvc-workcenterinternalid                = ls_afvc-workcenterinternalid               .
-            es_afvc-workcentertypecode                  = ls_afvc-workcentertypecode                 .
-            es_afvc-workcentertypecode_2                = ls_afvc-workcentertypecode_2               .
-            es_afvc-plant                               = ls_afvc-plant                              .
-            es_afvc-factorycalendar                     = ls_afvc-factorycalendar                    .
-            es_afvc-objectinternalid                    = ls_afvc-objectinternalid                   .
-            es_afvc-capacityrequirement                 = ls_afvc-capacityrequirement                .
-            es_afvc-capacityrequirementitem             = ls_afvc-capacityrequirementitem            .
-            es_afvc-numberofcapacities                  = ls_afvc-numberofcapacities                 .
-            es_afvc-usagecode                           = ls_afvc-usagecode                          .
-            es_afvc-assembly                            = ls_afvc-assembly                           .
-            es_afvc-projectinternalid                   = ls_afvc-projectinternalid                  .
-            es_afvc-operationconfirmation               = ls_afvc-operationconfirmation              .
-            es_afvc-numberofoperationconfirmations      = ls_afvc-numberofoperationconfirmations     .
-            es_afvc-changenumber                        = ls_afvc-changenumber                       .
-            es_afvc-operationpersonresponsible          = ls_afvc-operationpersonresponsible         .
-            es_afvc-equipment                           = ls_afvc-equipment                          .
-            es_afvc-functionallocation                  = ls_afvc-functionallocation                 .
-            es_afvc-functionallocation_2                = ls_afvc-functionallocation_2               .
-            es_afvc-operationpurginforecdsearchtxt      = ls_afvc-operationpurginforecdsearchtxt     .
-            es_afvc-extprocgoperationhassubcontrg       = ls_afvc-extprocgoperationhassubcontrg      .
-            es_afvc-purginforecddataisfixed             = ls_afvc-purginforecddataisfixed            .
-            es_afvc-purchasinginforecord                = ls_afvc-purchasinginforecord               .
-            es_afvc-purchasinginforecordcategory        = ls_afvc-purchasinginforecordcategory       .
-            es_afvc-purchasingorganization              = ls_afvc-purchasingorganization             .
-            es_afvc-purchasinggroup                     = ls_afvc-purchasinggroup                    .
-            es_afvc-purchaserequisition                 = ls_afvc-purchaserequisition                .
-            es_afvc-purchaserequisitionitem             = ls_afvc-purchaserequisitionitem            .
-            es_afvc-purchasingdocument                  = ls_afvc-purchasingdocument                 .
-            es_afvc-purchasingdocumentitem              = ls_afvc-purchasingdocumentitem             .
-            es_afvc-materialgroup                       = ls_afvc-materialgroup                      .
-            es_afvc-goodsrecipientname                  = ls_afvc-goodsrecipientname                 .
-            es_afvc-unloadingpointname                  = ls_afvc-unloadingpointname                 .
-            es_afvc-companycode                         = ls_afvc-companycode                        .
-            es_afvc-businessarea                        = ls_afvc-businessarea                       .
-            es_afvc-profitcenter                        = ls_afvc-profitcenter                       .
-            es_afvc-costelement                         = ls_afvc-costelement                        .
-            es_afvc-costingvariant                      = ls_afvc-costingvariant                     .
-            es_afvc-costestimate                        = ls_afvc-costestimate                       .
-            es_afvc-costingsheet                        = ls_afvc-costingsheet                       .
-            es_afvc-requestingcostcenter                = ls_afvc-requestingcostcenter               .
-            es_afvc-operationcalculationcontrol         = ls_afvc-operationcalculationcontrol        .
-            es_afvc-operationcostingrelevancytype       = ls_afvc-operationcostingrelevancytype      .
-            es_afvc-ntwkaccountassignmentcode           = ls_afvc-ntwkaccountassignmentcode          .
-            es_afvc-actyistakenacctforprojsmmry         = ls_afvc-actyistakenacctforprojsmmry        .
-            es_afvc-controllingobjectcurrency           = ls_afvc-controllingobjectcurrency          .
-            es_afvc-controllingobjectclass              = ls_afvc-controllingobjectclass             .
-            es_afvc-taxjurisdiction                     = ls_afvc-taxjurisdiction                    .
-            es_afvc-functionalarea                      = ls_afvc-functionalarea                     .
-            es_afvc-costctractivitytype                 = ls_afvc-costctractivitytype                .
-            es_afvc-currency                            = ls_afvc-currency                           .
-            es_afvc-plannedactivitycost                 = ls_afvc-plannedactivitycost                .
-            es_afvc-operationsetupgroupcategory         = ls_afvc-operationsetupgroupcategory        .
-            es_afvc-operationsetupgroup                 = ls_afvc-operationsetupgroup                .
-            es_afvc-operationsetuptype                  = ls_afvc-operationsetuptype                 .
-            es_afvc-operationoverlappingisrequired      = ls_afvc-operationoverlappingisrequired     .
-            es_afvc-operationoverlappingispossible      = ls_afvc-operationoverlappingispossible     .
-            es_afvc-operationsisalwaysoverlapping       = ls_afvc-operationsisalwaysoverlapping      .
-            es_afvc-operationsplitisrequired            = ls_afvc-operationsplitisrequired           .
-            es_afvc-maximumnumberofsplits               = ls_afvc-maximumnumberofsplits              .
-            es_afvc-leadtimereductionstrategy           = ls_afvc-leadtimereductionstrategy          .
-            es_afvc-overheadcode                        = ls_afvc-overheadcode                       .
-            es_afvc-mfgorderoperationisphase            = ls_afvc-mfgorderoperationisphase           .
-            es_afvc-orderintbillofopitemofphase         = ls_afvc-orderintbillofopitemofphase        .
-            es_afvc-operationimportance                 = ls_afvc-operationimportance                .
-            es_afvc-actualnumberofsplits                = ls_afvc-actualnumberofsplits               .
-            es_afvc-operationistobedeleted              = ls_afvc-operationistobedeleted             .
-            es_afvc-networkactivitypriority             = ls_afvc-networkactivitypriority            .
-            es_afvc-operationscrappercent               = ls_afvc-operationscrappercent              .
-            es_afvc-operationsystemcondition            = ls_afvc-operationsystemcondition           .
-            es_afvc-operationworkpercent                = ls_afvc-operationworkpercent               .
-            es_afvc-maintoperationexecstagecode         = ls_afvc-maintoperationexecstagecode        .
-            es_afvc-maintordopprocessphasecode          = ls_afvc-maintordopprocessphasecode         .
-            es_afvc-maintordopprocesssubphasecode       = ls_afvc-maintordopprocesssubphasecode      .
-            es_afvc-setupopactyntwkinstance             = ls_afvc-setupopactyntwkinstance            .
-            es_afvc-produceopactyntwkinstance           = ls_afvc-produceopactyntwkinstance          .
-            es_afvc-teardownopactyntwkinstance          = ls_afvc-teardownopactyntwkinstance         .
 
-            CONDENSE es_afvc-orderinternalid                    .
-            CONDENSE es_afvc-orderoperationinternalid           .
-            CONDENSE es_afvc-sequence                           .
-            CONDENSE es_afvc-operation                          .
-            CONDENSE es_afvc-operation_2                        .
-            CONDENSE es_afvc-standardtextinternalid             .
-            CONDENSE es_afvc-operationtext                      .
-            CONDENSE es_afvc-operationsecondtext                .
-            CONDENSE es_afvc-language                           .
-            CONDENSE es_afvc-operationhaslongtext               .
-            CONDENSE es_afvc-billofoperationssequence           .
-            CONDENSE es_afvc-billofoperationstype               .
-            CONDENSE es_afvc-billofoperationsgroup              .
-            CONDENSE es_afvc-billofoperationsvariant            .
-            CONDENSE es_afvc-boooperationinternalid             .
-            CONDENSE es_afvc-billofoperationsversion            .
-            CONDENSE es_afvc-superioroperationinternalid        .
-            CONDENSE es_afvc-operationcontrolprofile            .
-            CONDENSE es_afvc-workcenterinternalid               .
-            CONDENSE es_afvc-workcentertypecode                 .
-            CONDENSE es_afvc-workcentertypecode_2               .
-            CONDENSE es_afvc-plant                              .
-            CONDENSE es_afvc-factorycalendar                    .
-            CONDENSE es_afvc-objectinternalid                   .
-            CONDENSE es_afvc-capacityrequirement                .
-            CONDENSE es_afvc-capacityrequirementitem            .
-            CONDENSE es_afvc-numberofcapacities                 .
-            CONDENSE es_afvc-usagecode                          .
-            CONDENSE es_afvc-assembly                           .
-            CONDENSE es_afvc-projectinternalid                  .
-            CONDENSE es_afvc-operationconfirmation              .
-            CONDENSE es_afvc-numberofoperationconfirmations     .
-            CONDENSE es_afvc-changenumber                       .
-            CONDENSE es_afvc-operationpersonresponsible         .
-            CONDENSE es_afvc-equipment                          .
-            CONDENSE es_afvc-functionallocation                 .
-            CONDENSE es_afvc-functionallocation_2               .
-            CONDENSE es_afvc-operationpurginforecdsearchtxt     .
-            CONDENSE es_afvc-extprocgoperationhassubcontrg      .
-            CONDENSE es_afvc-purginforecddataisfixed            .
-            CONDENSE es_afvc-purchasinginforecord               .
-            CONDENSE es_afvc-purchasinginforecordcategory       .
-            CONDENSE es_afvc-purchasingorganization             .
-            CONDENSE es_afvc-purchasinggroup                    .
-            CONDENSE es_afvc-purchaserequisition                .
-            CONDENSE es_afvc-purchaserequisitionitem            .
-            CONDENSE es_afvc-purchasingdocument                 .
-            CONDENSE es_afvc-purchasingdocumentitem             .
-            CONDENSE es_afvc-materialgroup                      .
-            CONDENSE es_afvc-goodsrecipientname                 .
-            CONDENSE es_afvc-unloadingpointname                 .
-            CONDENSE es_afvc-companycode                        .
-            CONDENSE es_afvc-businessarea                       .
-            CONDENSE es_afvc-profitcenter                       .
-            CONDENSE es_afvc-costelement                        .
-            CONDENSE es_afvc-costingvariant                     .
-            CONDENSE es_afvc-costestimate                       .
-            CONDENSE es_afvc-costingsheet                       .
-            CONDENSE es_afvc-requestingcostcenter               .
-            CONDENSE es_afvc-operationcalculationcontrol        .
-            CONDENSE es_afvc-operationcostingrelevancytype      .
-            CONDENSE es_afvc-ntwkaccountassignmentcode          .
-            CONDENSE es_afvc-actyistakenacctforprojsmmry        .
-            CONDENSE es_afvc-controllingobjectcurrency          .
-            CONDENSE es_afvc-controllingobjectclass             .
-            CONDENSE es_afvc-taxjurisdiction                    .
-            CONDENSE es_afvc-functionalarea                     .
-            CONDENSE es_afvc-costctractivitytype                .
-            CONDENSE es_afvc-currency                           .
-            CONDENSE es_afvc-plannedactivitycost                .
-            CONDENSE es_afvc-operationsetupgroupcategory        .
-            CONDENSE es_afvc-operationsetupgroup                .
-            CONDENSE es_afvc-operationsetuptype                 .
-            CONDENSE es_afvc-operationoverlappingisrequired     .
-            CONDENSE es_afvc-operationoverlappingispossible     .
-            CONDENSE es_afvc-operationsisalwaysoverlapping      .
-            CONDENSE es_afvc-operationsplitisrequired           .
-            CONDENSE es_afvc-maximumnumberofsplits              .
-            CONDENSE es_afvc-leadtimereductionstrategy          .
-            CONDENSE es_afvc-overheadcode                       .
-            CONDENSE es_afvc-mfgorderoperationisphase           .
-            CONDENSE es_afvc-orderintbillofopitemofphase        .
-            CONDENSE es_afvc-operationimportance                .
-            CONDENSE es_afvc-actualnumberofsplits               .
-            CONDENSE es_afvc-operationistobedeleted             .
-            CONDENSE es_afvc-networkactivitypriority            .
-            CONDENSE es_afvc-operationscrappercent              .
-            CONDENSE es_afvc-operationsystemcondition           .
-            CONDENSE es_afvc-operationworkpercent               .
-            CONDENSE es_afvc-maintoperationexecstagecode        .
-            CONDENSE es_afvc-maintordopprocessphasecode         .
-            CONDENSE es_afvc-maintordopprocesssubphasecode      .
-            CONDENSE es_afvc-setupopactyntwkinstance            .
-            CONDENSE es_afvc-produceopactyntwkinstance          .
-            CONDENSE es_afvc-teardownopactyntwkinstance         .
+          LOOP  AT lt_afvc INTO DATA(ls_afvc).
+             lv_count = lv_count + 1.
+
+        es_afvc-MfgOrderInternalID                 =    ls_afvc-MfgOrderInternalID             .
+        es_afvc-OrderOperationInternalID           =    ls_afvc-OrderOperationInternalID       .
+        es_afvc-ManufacturingOrder                 =    ls_afvc-ManufacturingOrder             .
+        es_afvc-ManufacturingOrderSequence         =    ls_afvc-ManufacturingOrderSequence     .
+*        es_afvc-ManufacturingOrderOperation        =    ls_afvc-ManufacturingOrderOperation    .
+        es_afvc-ManufacturingOrderOperation_2      =    ls_afvc-ManufacturingOrderOperation_2  .
+*        es_afvc-ManufacturingOrderSubOperation     =    ls_afvc-ManufacturingOrderSubOperation .
+        es_afvc-ManufacturingOrdSubOperation_2     =    ls_afvc-ManufacturingOrdSubOperation_2 .
+*        es_afvc-MfgOrderOperationOrSubOp           =    ls_afvc-MfgOrderOperationOrSubOp       .
+        es_afvc-MfgOrderOperationOrSubOp_2         =    ls_afvc-MfgOrderOperationOrSubOp_2     .
+        es_afvc-MfgOrderOperationIsPhase           =    ls_afvc-MfgOrderOperationIsPhase       .
+        es_afvc-OrderIntBillOfOpItemOfPhase        =    ls_afvc-OrderIntBillOfOpItemOfPhase    .
+*        es_afvc-MfgOrderPhaseSuperiorOperation     =    ls_afvc-MfgOrderPhaseSuperiorOperation .
+        es_afvc-SuperiorOperation_2                =    ls_afvc-SuperiorOperation_2            .
+        es_afvc-ManufacturingOrderCategory         =    ls_afvc-ManufacturingOrderCategory     .
+        es_afvc-ManufacturingOrderType             =    ls_afvc-ManufacturingOrderType         .
+        es_afvc-ProductionSupervisor               =    ls_afvc-ProductionSupervisor           .
+        es_afvc-MRPController                      =    ls_afvc-MRPController                  .
+        es_afvc-ResponsiblePlannerGroup            =    ls_afvc-ResponsiblePlannerGroup        .
+        es_afvc-ProductConfiguration               =    ls_afvc-ProductConfiguration           .
+        es_afvc-InspectionLot                      =    ls_afvc-InspectionLot                  .
+        es_afvc-ManufacturingOrderImportance       =    ls_afvc-ManufacturingOrderImportance   .
+        es_afvc-MfgOrderOperationText              =    ls_afvc-MfgOrderOperationText          .
+        es_afvc-OperationStandardTextCode          =    ls_afvc-OperationStandardTextCode      .
+        es_afvc-OperationHasLongText               =    ls_afvc-OperationHasLongText           .
+        es_afvc-Language                           =    ls_afvc-Language                       .
+        es_afvc-OperationIsToBeDeleted             =    ls_afvc-OperationIsToBeDeleted         .
+        es_afvc-NumberOfCapacities                 =    ls_afvc-NumberOfCapacities             .
+        es_afvc-NumberOfConfirmationSlips          =    ls_afvc-NumberOfConfirmationSlips      .
+        es_afvc-OperationImportance                =    ls_afvc-OperationImportance            .
+        es_afvc-SuperiorOperationInternalID        =    ls_afvc-SuperiorOperationInternalID    .
+        es_afvc-Plant                              =    ls_afvc-Plant                          .
+        es_afvc-WorkCenterInternalID               =    ls_afvc-WorkCenterInternalID           .
+*        es_afvc-WorkCenterTypeCode                 =    ls_afvc-WorkCenterTypeCode             .
+
+        es_afvc-WorkCenterTypeCode_2               =  ls_afvc-WorkCenterTypeCode_2               .
+        es_afvc-OperationControlProfile            =  ls_afvc-OperationControlProfile            .
+        es_afvc-ControlRecipeDestination           =  ls_afvc-ControlRecipeDestination           .
+        es_afvc-OperationConfirmation              =  ls_afvc-OperationConfirmation              .
+        es_afvc-NumberOfOperationConfirmations     =  ls_afvc-NumberOfOperationConfirmations     .
+        es_afvc-FactoryCalendar                    =  ls_afvc-FactoryCalendar                    .
+        es_afvc-CapacityRequirement                =  ls_afvc-CapacityRequirement                .
+        es_afvc-CapacityRequirementItem            =  ls_afvc-CapacityRequirementItem            .
+        es_afvc-ChangeNumber                       =  ls_afvc-ChangeNumber                       .
+        es_afvc-ObjectInternalID                   =  ls_afvc-ObjectInternalID                   .
+        es_afvc-OperationTrackingNumber            =  ls_afvc-OperationTrackingNumber            .
+        es_afvc-BillOfOperationsType               =  ls_afvc-BillOfOperationsType               .
+        es_afvc-BillOfOperationsGroup              =  ls_afvc-BillOfOperationsGroup              .
+        es_afvc-BillOfOperationsVariant            =  ls_afvc-BillOfOperationsVariant            .
+        es_afvc-BillOfOperationsSequence           =  ls_afvc-BillOfOperationsSequence           .
+        es_afvc-BOOOperationInternalID             =  ls_afvc-BOOOperationInternalID             .
+        es_afvc-BillOfOperationsVersion            =  ls_afvc-BillOfOperationsVersion            .
+        es_afvc-BillOfMaterialCategory             =  ls_afvc-BillOfMaterialCategory             .
+*        es_afvc-BillOfMaterialInternalID           =  ls_afvc-BillOfMaterialInternalID           .
+        es_afvc-BillOfMaterialInternalID_2         =  ls_afvc-BillOfMaterialInternalID_2         .
+        es_afvc-BillOfMaterialItemNodeNumber       =  ls_afvc-BillOfMaterialItemNodeNumber       .
+        es_afvc-BOMItemNodeCount                   =  ls_afvc-BOMItemNodeCount                   .
+        es_afvc-ExtProcgOperationHasSubcontrg      =  ls_afvc-ExtProcgOperationHasSubcontrg      .
+        es_afvc-PurchasingOrganization             =  ls_afvc-PurchasingOrganization             .
+        es_afvc-PurchasingGroup                    =  ls_afvc-PurchasingGroup                    .
+        es_afvc-PurchaseRequisition                =  ls_afvc-PurchaseRequisition                .
+        es_afvc-PurchaseRequisitionItem            =  ls_afvc-PurchaseRequisitionItem            .
+        es_afvc-PurchaseOrder                      =  ls_afvc-PurchaseOrder                      .
+        es_afvc-PurchaseOrderItem                  =  ls_afvc-PurchaseOrderItem                  .
+        es_afvc-PurchasingInfoRecord               =  ls_afvc-PurchasingInfoRecord               .
+        es_afvc-PurgInfoRecdDataIsFixed            =  ls_afvc-PurgInfoRecdDataIsFixed            .
+        es_afvc-PurchasingInfoRecordCategory       =  ls_afvc-PurchasingInfoRecordCategory       .
+        es_afvc-Supplier                           =  ls_afvc-Supplier                           .
+        es_afvc-GoodsRecipientName                 =  ls_afvc-GoodsRecipientName                 .
+        es_afvc-UnloadingPointName                 =  ls_afvc-UnloadingPointName                 .
+        es_afvc-MaterialGroup                      =  ls_afvc-MaterialGroup                      .
+        es_afvc-OpExternalProcessingCurrency       =  ls_afvc-OpExternalProcessingCurrency       .
+        es_afvc-OpExternalProcessingPrice          =  ls_afvc-OpExternalProcessingPrice          .
+        es_afvc-NumberOfOperationPriceUnits        =  ls_afvc-NumberOfOperationPriceUnits        .
+        es_afvc-CompanyCode                        =  ls_afvc-CompanyCode                        .
+        es_afvc-BusinessArea                       =  ls_afvc-BusinessArea                       .
+        es_afvc-ControllingArea                    =  ls_afvc-ControllingArea                    .
+
+        es_afvc-ProfitCenter                       =  ls_afvc-ProfitCenter                    .
+        es_afvc-RequestingCostCenter               =  ls_afvc-RequestingCostCenter            .
+        es_afvc-CostElement                        =  ls_afvc-CostElement                     .
+        es_afvc-CostingVariant                     =  ls_afvc-CostingVariant                  .
+        es_afvc-CostingSheet                       =  ls_afvc-CostingSheet                    .
+        es_afvc-CostEstimate                       =  ls_afvc-CostEstimate                    .
+        es_afvc-ControllingObjectCurrency          =  ls_afvc-ControllingObjectCurrency       .
+        es_afvc-ControllingObjectClass             =  ls_afvc-ControllingObjectClass          .
+        es_afvc-FunctionalArea                     =  ls_afvc-FunctionalArea                  .
+        es_afvc-TaxJurisdiction                    =  ls_afvc-TaxJurisdiction                 .
+        es_afvc-EmployeeWageType                   =  ls_afvc-EmployeeWageType                .
+        es_afvc-EmployeeWageGroup                  =  ls_afvc-EmployeeWageGroup               .
+        es_afvc-EmployeeSuitability                =  ls_afvc-EmployeeSuitability             .
+        es_afvc-NumberOfTimeTickets                =  ls_afvc-NumberOfTimeTickets             .
+        es_afvc-Personnel                          =  ls_afvc-Personnel                       .
+        es_afvc-NumberOfEmployees                  =  ls_afvc-NumberOfEmployees               .
+        es_afvc-OperationSetupGroupCategory        =  ls_afvc-OperationSetupGroupCategory     .
+        es_afvc-OperationSetupGroup                =  ls_afvc-OperationSetupGroup             .
+        es_afvc-OperationSetupType                 =  ls_afvc-OperationSetupType              .
+        es_afvc-OperationOverlappingIsRequired     =  ls_afvc-OperationOverlappingIsRequired  .
+        es_afvc-OperationOverlappingIsPossible     =  ls_afvc-OperationOverlappingIsPossible  .
+        es_afvc-OperationsIsAlwaysOverlapping      =  ls_afvc-OperationsIsAlwaysOverlapping   .
+        es_afvc-OperationSplitIsRequired           =  ls_afvc-OperationSplitIsRequired        .
+        es_afvc-MaximumNumberOfSplits              =  ls_afvc-MaximumNumberOfSplits           .
+        es_afvc-LeadTimeReductionStrategy          =  ls_afvc-LeadTimeReductionStrategy       .
+        es_afvc-OpSchedldReductionLevel            =  ls_afvc-OpSchedldReductionLevel         .
+        es_afvc-OpErlstSchedldExecStrtDte          =  ls_afvc-OpErlstSchedldExecStrtDte       .
+        es_afvc-OpErlstSchedldExecStrtTme          =  ls_afvc-OpErlstSchedldExecStrtTme       .
+        es_afvc-OpErlstSchedldProcgStrtDte         =  ls_afvc-OpErlstSchedldProcgStrtDte      .
+        es_afvc-OpErlstSchedldProcgStrtTme         =  ls_afvc-OpErlstSchedldProcgStrtTme      .
+        es_afvc-OpErlstSchedldTrdwnStrtDte         =  ls_afvc-OpErlstSchedldTrdwnStrtDte      .
+        es_afvc-OpErlstSchedldTrdwnStrtTme         =  ls_afvc-OpErlstSchedldTrdwnStrtTme      .
+        es_afvc-OpErlstSchedldExecEndDte           =  ls_afvc-OpErlstSchedldExecEndDte        .
+        es_afvc-OpErlstSchedldExecEndTme           =  ls_afvc-OpErlstSchedldExecEndTme        .
+        es_afvc-OpLtstSchedldExecStrtDte           =  ls_afvc-OpLtstSchedldExecStrtDte        .
+        es_afvc-OpLtstSchedldExecStrtTme           =  ls_afvc-OpLtstSchedldExecStrtTme        .
+        es_afvc-OpLtstSchedldProcgStrtDte          =  ls_afvc-OpLtstSchedldProcgStrtDte       .
+        es_afvc-OpLtstSchedldProcgStrtTme          =  ls_afvc-OpLtstSchedldProcgStrtTme       .
+        es_afvc-OpLtstSchedldTrdwnStrtDte          =  ls_afvc-OpLtstSchedldTrdwnStrtDte       .
+
+        es_afvc-OpLtstSchedldTrdwnStrtTme          =   ls_afvc-OpLtstSchedldTrdwnStrtTme       .
+        es_afvc-OpLtstSchedldExecEndDte            =   ls_afvc-OpLtstSchedldExecEndDte         .
+        es_afvc-OpLtstSchedldExecEndTme            =   ls_afvc-OpLtstSchedldExecEndTme         .
+        es_afvc-SchedldFcstdEarliestStartDate      =   ls_afvc-SchedldFcstdEarliestStartDate   .
+        es_afvc-SchedldFcstdEarliestStartTime      =   ls_afvc-SchedldFcstdEarliestStartTime   .
+        es_afvc-SchedldFcstdEarliestEndDate        =   ls_afvc-SchedldFcstdEarliestEndDate     .
+        es_afvc-SchedldFcstdEarliestEndTime        =   ls_afvc-SchedldFcstdEarliestEndTime     .
+        es_afvc-LatestSchedldFcstdStartDate        =   ls_afvc-LatestSchedldFcstdStartDate     .
+        es_afvc-SchedldFcstdLatestStartTime        =   ls_afvc-SchedldFcstdLatestStartTime     .
+        es_afvc-LatestSchedldFcstdEndDate          =   ls_afvc-LatestSchedldFcstdEndDate       .
+        es_afvc-SchedldFcstdLatestEndTime          =   ls_afvc-SchedldFcstdLatestEndTime       .
+        es_afvc-OperationConfirmedStartDate        =   ls_afvc-OperationConfirmedStartDate     .
+        es_afvc-OperationConfirmedEndDate          =   ls_afvc-OperationConfirmedEndDate       .
+        es_afvc-OpActualExecutionStartDate         =   ls_afvc-OpActualExecutionStartDate      .
+        es_afvc-OpActualExecutionStartTime         =   ls_afvc-OpActualExecutionStartTime      .
+        es_afvc-OpActualSetupEndDate               =   ls_afvc-OpActualSetupEndDate            .
+        es_afvc-OpActualSetupEndTime               =   ls_afvc-OpActualSetupEndTime            .
+        es_afvc-OpActualProcessingStartDate        =   ls_afvc-OpActualProcessingStartDate     .
+        es_afvc-OpActualProcessingStartTime        =   ls_afvc-OpActualProcessingStartTime     .
+        es_afvc-OpActualProcessingEndDate          =   ls_afvc-OpActualProcessingEndDate       .
+        es_afvc-OpActualProcessingEndTime          =   ls_afvc-OpActualProcessingEndTime       .
+        es_afvc-OpActualTeardownStartDate          =   ls_afvc-OpActualTeardownStartDate       .
+        es_afvc-OpActualTeardownStartTme           =   ls_afvc-OpActualTeardownStartTme        .
+        es_afvc-OpActualExecutionEndDate           =   ls_afvc-OpActualExecutionEndDate        .
+        es_afvc-OpActualExecutionEndTime           =   ls_afvc-OpActualExecutionEndTime        .
+        es_afvc-ActualForecastEndDate              =   ls_afvc-ActualForecastEndDate           .
+        es_afvc-ActualForecastEndTime              =   ls_afvc-ActualForecastEndTime           .
+        es_afvc-EarliestScheduledWaitStartDate     =   ls_afvc-EarliestScheduledWaitStartDate  .
+        es_afvc-EarliestScheduledWaitStartTime     =   ls_afvc-EarliestScheduledWaitStartTime  .
+        es_afvc-EarliestScheduledWaitEndDate       =   ls_afvc-EarliestScheduledWaitEndDate    .
+        es_afvc-EarliestScheduledWaitEndTime       =   ls_afvc-EarliestScheduledWaitEndTime    .
+        es_afvc-LatestScheduledWaitStartDate       =   ls_afvc-LatestScheduledWaitStartDate    .
+        es_afvc-LatestScheduledWaitStartTime       =   ls_afvc-LatestScheduledWaitStartTime    .
+        es_afvc-LatestScheduledWaitEndDate         =   ls_afvc-LatestScheduledWaitEndDate      .
+        es_afvc-LatestScheduledWaitEndTime         =   ls_afvc-LatestScheduledWaitEndTime      .
+        es_afvc-BreakDurationUnit                  =   ls_afvc-BreakDurationUnit               .
+        es_afvc-PlannedBreakDuration               =   ls_afvc-PlannedBreakDuration            .
+        es_afvc-ConfirmedBreakDuration             =   ls_afvc-ConfirmedBreakDuration          .
+        es_afvc-OverlapMinimumDurationUnit         =   ls_afvc-OverlapMinimumDurationUnit      .
+        es_afvc-OverlapMinimumDuration             =   ls_afvc-OverlapMinimumDuration          .
+        es_afvc-MaximumWaitDurationUnit            =   ls_afvc-MaximumWaitDurationUnit         .
+        es_afvc-MaximumWaitDuration                =   ls_afvc-MaximumWaitDuration             .
+        es_afvc-MinimumWaitDurationUnit            =   ls_afvc-MinimumWaitDurationUnit         .
+        es_afvc-MinimumWaitDuration                =   ls_afvc-MinimumWaitDuration             .
+        es_afvc-StandardMoveDurationUnit           =   ls_afvc-StandardMoveDurationUnit        .
+        es_afvc-StandardMoveDuration               =   ls_afvc-StandardMoveDuration            .
+        es_afvc-StandardQueueDurationUnit          =   ls_afvc-StandardQueueDurationUnit       .
+
+
+        es_afvc-StandardQueueDuration              = ls_afvc-StandardQueueDuration             .
+        es_afvc-MinimumQueueDurationUnit           = ls_afvc-MinimumQueueDurationUnit          .
+        es_afvc-MinimumQueueDuration               = ls_afvc-MinimumQueueDuration              .
+        es_afvc-MinimumMoveDurationUnit            = ls_afvc-MinimumMoveDurationUnit           .
+        es_afvc-MinimumMoveDuration                = ls_afvc-MinimumMoveDuration               .
+        es_afvc-OperationStandardDuration          = ls_afvc-OperationStandardDuration         .
+        es_afvc-OperationStandardDurationUnit      = ls_afvc-OperationStandardDurationUnit     .
+        es_afvc-MinimumDuration                    = ls_afvc-MinimumDuration                   .
+        es_afvc-MinimumDurationUnit                = ls_afvc-MinimumDurationUnit               .
+        es_afvc-MinimumProcessingDuration          = ls_afvc-MinimumProcessingDuration         .
+        es_afvc-MinimumProcessingDurationUnit      = ls_afvc-MinimumProcessingDurationUnit     .
+        es_afvc-ScheduledMoveDuration              = ls_afvc-ScheduledMoveDuration             .
+        es_afvc-ScheduledMoveDurationUnit          = ls_afvc-ScheduledMoveDurationUnit         .
+        es_afvc-ScheduledQueueDuration             = ls_afvc-ScheduledQueueDuration            .
+        es_afvc-ScheduledQueueDurationUnit         = ls_afvc-ScheduledQueueDurationUnit        .
+        es_afvc-ScheduledWaitDuration              = ls_afvc-ScheduledWaitDuration             .
+        es_afvc-ScheduledWaitDurationUnit          = ls_afvc-ScheduledWaitDurationUnit         .
+        es_afvc-PlannedDeliveryDuration            = ls_afvc-PlannedDeliveryDuration           .
+        es_afvc-OpPlannedSetupDurn                 = ls_afvc-OpPlannedSetupDurn                .
+        es_afvc-OpPlannedSetupDurnUnit             = ls_afvc-OpPlannedSetupDurnUnit            .
+        es_afvc-OpPlannedProcessingDurn            = ls_afvc-OpPlannedProcessingDurn           .
+        es_afvc-OpPlannedProcessingDurnUnit        = ls_afvc-OpPlannedProcessingDurnUnit       .
+        es_afvc-OpPlannedTeardownDurn              = ls_afvc-OpPlannedTeardownDurn             .
+        es_afvc-OpPlannedTeardownDurnUnit          = ls_afvc-OpPlannedTeardownDurnUnit         .
+        es_afvc-ActualForecastDuration             = ls_afvc-ActualForecastDuration            .
+        es_afvc-ActualForecastDurationUnit         = ls_afvc-ActualForecastDurationUnit        .
+        es_afvc-ForecastProcessingDuration         = ls_afvc-ForecastProcessingDuration        .
+        es_afvc-ForecastProcessingDurationUnit     = ls_afvc-ForecastProcessingDurationUnit    .
+        es_afvc-StartDateOffsetReferenceCode       = ls_afvc-StartDateOffsetReferenceCode      .
+        es_afvc-StartDateOffsetDurationUnit        = ls_afvc-StartDateOffsetDurationUnit       .
+        es_afvc-StartDateOffsetDuration            = ls_afvc-StartDateOffsetDuration           .
+        es_afvc-EndDateOffsetReferenceCode         = ls_afvc-EndDateOffsetReferenceCode        .
+        es_afvc-EndDateOffsetDurationUnit          = ls_afvc-EndDateOffsetDurationUnit         .
+        es_afvc-EndDateOffsetDuration              = ls_afvc-EndDateOffsetDuration             .
+        es_afvc-StandardWorkFormulaParamGroup      = ls_afvc-StandardWorkFormulaParamGroup     .
+        es_afvc-OperationUnit                      = ls_afvc-OperationUnit                     .
+        es_afvc-OpQtyToBaseQtyDnmntr               = ls_afvc-OpQtyToBaseQtyDnmntr              .
+        es_afvc-OpQtyToBaseQtyNmrtr                = ls_afvc-OpQtyToBaseQtyNmrtr               .
+        es_afvc-OperationScrapPercent              = ls_afvc-OperationScrapPercent             .
+        es_afvc-OperationReferenceQuantity         = ls_afvc-OperationReferenceQuantity        .
+        es_afvc-OpPlannedTotalQuantity             = ls_afvc-OpPlannedTotalQuantity            .
+        es_afvc-OpPlannedScrapQuantity             = ls_afvc-OpPlannedScrapQuantity            .
+        es_afvc-OpPlannedYieldQuantity             = ls_afvc-OpPlannedYieldQuantity            .
+        es_afvc-OpTotalConfirmedYieldQty           = ls_afvc-OpTotalConfirmedYieldQty          .
+
+
+        es_afvc-OpTotalConfirmedScrapQty           =  ls_afvc-OpTotalConfirmedScrapQty              .
+        es_afvc-OperationConfirmedReworkQty        =  ls_afvc-OperationConfirmedReworkQty           .
+        es_afvc-ProductionUnit                     =  ls_afvc-ProductionUnit                        .
+        es_afvc-OpTotConfdYieldQtyInOrdQtyUnit     =  ls_afvc-OpTotConfdYieldQtyInOrdQtyUnit        .
+        es_afvc-OpWorkQuantityUnit1                =  ls_afvc-OpWorkQuantityUnit1                   .
+        es_afvc-OpConfirmedWorkQuantity1           =  ls_afvc-OpConfirmedWorkQuantity1              .
+        es_afvc-NoFurtherOpWorkQuantity1IsExpd     =  ls_afvc-NoFurtherOpWorkQuantity1IsExpd        .
+        es_afvc-OpWorkQuantityUnit2                =  ls_afvc-OpWorkQuantityUnit2                   .
+        es_afvc-OpConfirmedWorkQuantity2           =  ls_afvc-OpConfirmedWorkQuantity2              .
+        es_afvc-NoFurtherOpWorkQuantity2IsExpd     =  ls_afvc-NoFurtherOpWorkQuantity2IsExpd        .
+        es_afvc-OpWorkQuantityUnit3                =  ls_afvc-OpWorkQuantityUnit3                   .
+        es_afvc-OpConfirmedWorkQuantity3           =  ls_afvc-OpConfirmedWorkQuantity3              .
+        es_afvc-NoFurtherOpWorkQuantity3IsExpd     =  ls_afvc-NoFurtherOpWorkQuantity3IsExpd        .
+        es_afvc-OpWorkQuantityUnit4                =  ls_afvc-OpWorkQuantityUnit4                   .
+        es_afvc-OpConfirmedWorkQuantity4           =  ls_afvc-OpConfirmedWorkQuantity4              .
+        es_afvc-NoFurtherOpWorkQuantity4IsExpd     =  ls_afvc-NoFurtherOpWorkQuantity4IsExpd        .
+        es_afvc-OpWorkQuantityUnit5                =  ls_afvc-OpWorkQuantityUnit5                   .
+        es_afvc-OpConfirmedWorkQuantity5           =  ls_afvc-OpConfirmedWorkQuantity5              .
+        es_afvc-NoFurtherOpWorkQuantity5IsExpd     =  ls_afvc-NoFurtherOpWorkQuantity5IsExpd        .
+        es_afvc-OpWorkQuantityUnit6                =  ls_afvc-OpWorkQuantityUnit6                   .
+        es_afvc-OpConfirmedWorkQuantity6           =  ls_afvc-OpConfirmedWorkQuantity6              .
+        es_afvc-NoFurtherOpWorkQuantity6IsExpd     =  ls_afvc-NoFurtherOpWorkQuantity6IsExpd        .
+        es_afvc-WorkCenterStandardWorkQtyUnit1     =  ls_afvc-WorkCenterStandardWorkQtyUnit1        .
+        es_afvc-WorkCenterStandardWorkQty1         =  ls_afvc-WorkCenterStandardWorkQty1            .
+        es_afvc-CostCtrActivityType1               =  ls_afvc-CostCtrActivityType1                  .
+        es_afvc-WorkCenterStandardWorkQtyUnit2     =  ls_afvc-WorkCenterStandardWorkQtyUnit2        .
+        es_afvc-WorkCenterStandardWorkQty2         =  ls_afvc-WorkCenterStandardWorkQty2            .
+        es_afvc-CostCtrActivityType2               =  ls_afvc-CostCtrActivityType2                  .
+        es_afvc-WorkCenterStandardWorkQtyUnit3     =  ls_afvc-WorkCenterStandardWorkQtyUnit3        .
+        es_afvc-WorkCenterStandardWorkQty3         =  ls_afvc-WorkCenterStandardWorkQty3            .
+        es_afvc-CostCtrActivityType3               =  ls_afvc-CostCtrActivityType3                  .
+        es_afvc-WorkCenterStandardWorkQtyUnit4     =  ls_afvc-WorkCenterStandardWorkQtyUnit4        .
+        es_afvc-WorkCenterStandardWorkQty4         =  ls_afvc-WorkCenterStandardWorkQty4            .
+        es_afvc-CostCtrActivityType4               =  ls_afvc-CostCtrActivityType4                  .
+        es_afvc-WorkCenterStandardWorkQtyUnit5     =  ls_afvc-WorkCenterStandardWorkQtyUnit5        .
+        es_afvc-WorkCenterStandardWorkQty5         =  ls_afvc-WorkCenterStandardWorkQty5            .
+        es_afvc-CostCtrActivityType5               =  ls_afvc-CostCtrActivityType5                  .
+        es_afvc-WorkCenterStandardWorkQtyUnit6     =  ls_afvc-WorkCenterStandardWorkQtyUnit6        .
+        es_afvc-WorkCenterStandardWorkQty6         =  ls_afvc-WorkCenterStandardWorkQty6            .
+        es_afvc-CostCtrActivityType6               =  ls_afvc-CostCtrActivityType6                  .
+        es_afvc-ForecastWorkQuantity1              =  ls_afvc-ForecastWorkQuantity1                 .
+        es_afvc-ForecastWorkQuantity2              =  ls_afvc-ForecastWorkQuantity2                 .
+        es_afvc-ForecastWorkQuantity3              =  ls_afvc-ForecastWorkQuantity3                 .
+        es_afvc-ForecastWorkQuantity4              =  ls_afvc-ForecastWorkQuantity4                 .
+        es_afvc-ForecastWorkQuantity5              =  ls_afvc-ForecastWorkQuantity5                 .
+        es_afvc-ForecastWorkQuantity6              =  ls_afvc-ForecastWorkQuantity6                 .
+        es_afvc-BusinessProcess                    =  ls_afvc-BusinessProcess                       .
+        es_afvc-BusinessProcessEntryUnit           =  ls_afvc-BusinessProcessEntryUnit              .
+        es_afvc-BusinessProcessConfirmedQty        =  ls_afvc-BusinessProcessConfirmedQty           .
+        es_afvc-NoFurtherBusinessProcQtyIsExpd     =  ls_afvc-NoFurtherBusinessProcQtyIsExpd        .
+        es_afvc-BusinessProcRemainingQtyUnit       =  ls_afvc-BusinessProcRemainingQtyUnit          .
+        es_afvc-BusinessProcessRemainingQty        =  ls_afvc-BusinessProcessRemainingQty           .
+        es_afvc-SetupOpActyNtwkInstance            =  ls_afvc-SetupOpActyNtwkInstance               .
+        es_afvc-ProduceOpActyNtwkInstance          =  ls_afvc-ProduceOpActyNtwkInstance             .
+        es_afvc-TeardownOpActyNtwkInstance         =  ls_afvc-TeardownOpActyNtwkInstance            .
+        es_afvc-FreeDefinedTableFieldSemantic      =  ls_afvc-FreeDefinedTableFieldSemantic         .
+        es_afvc-FreeDefinedAttribute01             =  ls_afvc-FreeDefinedAttribute01                .
+        es_afvc-FreeDefinedAttribute02             =  ls_afvc-FreeDefinedAttribute02                .
+        es_afvc-FreeDefinedAttribute03             =  ls_afvc-FreeDefinedAttribute03                .
+        es_afvc-FreeDefinedAttribute04             =  ls_afvc-FreeDefinedAttribute04                .
+        es_afvc-FreeDefinedQuantity1Unit           =  ls_afvc-FreeDefinedQuantity1Unit              .
+        es_afvc-FreeDefinedQuantity1               =  ls_afvc-FreeDefinedQuantity1                  .
+        es_afvc-FreeDefinedQuantity2Unit           =  ls_afvc-FreeDefinedQuantity2Unit              .
+        es_afvc-FreeDefinedQuantity2               =  ls_afvc-FreeDefinedQuantity2                  .
+        es_afvc-FreeDefinedAmount1Currency         =  ls_afvc-FreeDefinedAmount1Currency            .
+        es_afvc-FreeDefinedAmount1                 =  ls_afvc-FreeDefinedAmount1                    .
+        es_afvc-FreeDefinedAmount2Currency         =  ls_afvc-FreeDefinedAmount2Currency            .
+        es_afvc-FreeDefinedAmount2                 =  ls_afvc-FreeDefinedAmount2                    .
+        es_afvc-FreeDefinedDate1                   =  ls_afvc-FreeDefinedDate1                      .
+        es_afvc-FreeDefinedDate2                   =  ls_afvc-FreeDefinedDate2                      .
+        es_afvc-FreeDefinedIndicator1              =  ls_afvc-FreeDefinedIndicator1                 .
+        es_afvc-FreeDefinedIndicator2              =  ls_afvc-FreeDefinedIndicator2                 .
+
+        condense es_afvc-MfgOrderInternalID                .
+        condense es_afvc-OrderOperationInternalID          .
+        condense es_afvc-ManufacturingOrder                .
+        condense es_afvc-ManufacturingOrderSequence        .
+        condense es_afvc-ManufacturingOrderOperation       .
+        condense es_afvc-ManufacturingOrderOperation_2     .
+        condense es_afvc-ManufacturingOrderSubOperation    .
+        condense es_afvc-ManufacturingOrdSubOperation_2    .
+        condense es_afvc-MfgOrderOperationOrSubOp          .
+        condense es_afvc-MfgOrderOperationOrSubOp_2        .
+        condense es_afvc-MfgOrderOperationIsPhase          .
+        condense es_afvc-OrderIntBillOfOpItemOfPhase       .
+        condense es_afvc-MfgOrderPhaseSuperiorOperation    .
+        condense es_afvc-SuperiorOperation_2               .
+        condense es_afvc-ManufacturingOrderCategory        .
+        condense es_afvc-ManufacturingOrderType            .
+        condense es_afvc-ProductionSupervisor              .
+        condense es_afvc-MRPController                     .
+        condense es_afvc-ResponsiblePlannerGroup           .
+        condense es_afvc-ProductConfiguration              .
+        condense es_afvc-InspectionLot                     .
+        condense es_afvc-ManufacturingOrderImportance      .
+        condense es_afvc-MfgOrderOperationText             .
+        condense es_afvc-OperationStandardTextCode         .
+        condense es_afvc-OperationHasLongText              .
+        condense es_afvc-Language                          .
+        condense es_afvc-OperationIsToBeDeleted            .
+        condense es_afvc-NumberOfCapacities                .
+        condense es_afvc-NumberOfConfirmationSlips         .
+        condense es_afvc-OperationImportance               .
+        condense es_afvc-SuperiorOperationInternalID       .
+        condense es_afvc-Plant                             .
+        condense es_afvc-WorkCenterInternalID              .
+        condense es_afvc-WorkCenterTypeCode                .
+
+        condense es_afvc-WorkCenterTypeCode_2              .
+        condense es_afvc-OperationControlProfile           .
+        condense es_afvc-ControlRecipeDestination          .
+        condense es_afvc-OperationConfirmation             .
+        condense es_afvc-NumberOfOperationConfirmations    .
+        condense es_afvc-FactoryCalendar                   .
+        condense es_afvc-CapacityRequirement               .
+        condense es_afvc-CapacityRequirementItem           .
+        condense es_afvc-ChangeNumber                      .
+        condense es_afvc-ObjectInternalID                  .
+        condense es_afvc-OperationTrackingNumber           .
+        condense es_afvc-BillOfOperationsType              .
+        condense es_afvc-BillOfOperationsGroup             .
+        condense es_afvc-BillOfOperationsVariant           .
+        condense es_afvc-BillOfOperationsSequence          .
+        condense es_afvc-BOOOperationInternalID            .
+        condense es_afvc-BillOfOperationsVersion           .
+        condense es_afvc-BillOfMaterialCategory            .
+        condense es_afvc-BillOfMaterialInternalID          .
+        condense es_afvc-BillOfMaterialInternalID_2        .
+        condense es_afvc-BillOfMaterialItemNodeNumber      .
+        condense es_afvc-BOMItemNodeCount                  .
+        condense es_afvc-ExtProcgOperationHasSubcontrg     .
+        condense es_afvc-PurchasingOrganization            .
+        condense es_afvc-PurchasingGroup                   .
+        condense es_afvc-PurchaseRequisition               .
+        condense es_afvc-PurchaseRequisitionItem           .
+        condense es_afvc-PurchaseOrder                     .
+        condense es_afvc-PurchaseOrderItem                 .
+        condense es_afvc-PurchasingInfoRecord              .
+        condense es_afvc-PurgInfoRecdDataIsFixed           .
+        condense es_afvc-PurchasingInfoRecordCategory      .
+        condense es_afvc-Supplier                          .
+        condense es_afvc-GoodsRecipientName                .
+        condense es_afvc-UnloadingPointName                .
+        condense es_afvc-MaterialGroup                     .
+        condense es_afvc-OpExternalProcessingCurrency      .
+        condense es_afvc-OpExternalProcessingPrice         .
+        condense es_afvc-NumberOfOperationPriceUnits       .
+        condense es_afvc-CompanyCode                       .
+        condense es_afvc-BusinessArea                      .
+        condense es_afvc-ControllingArea                   .
+
+        condense es_afvc-ProfitCenter                       .
+        condense es_afvc-RequestingCostCenter               .
+        condense es_afvc-CostElement                        .
+        condense es_afvc-CostingVariant                     .
+        condense es_afvc-CostingSheet                       .
+        condense es_afvc-CostEstimate                       .
+        condense es_afvc-ControllingObjectCurrency          .
+        condense es_afvc-ControllingObjectClass             .
+        condense es_afvc-FunctionalArea                     .
+        condense es_afvc-TaxJurisdiction                    .
+        condense es_afvc-EmployeeWageType                   .
+        condense es_afvc-EmployeeWageGroup                  .
+        condense es_afvc-EmployeeSuitability                .
+        condense es_afvc-NumberOfTimeTickets                .
+        condense es_afvc-Personnel                          .
+        condense es_afvc-NumberOfEmployees                  .
+        condense es_afvc-OperationSetupGroupCategory        .
+        condense es_afvc-OperationSetupGroup                .
+        condense es_afvc-OperationSetupType                 .
+        condense es_afvc-OperationOverlappingIsRequired     .
+        condense es_afvc-OperationOverlappingIsPossible     .
+        condense es_afvc-OperationsIsAlwaysOverlapping      .
+        condense es_afvc-OperationSplitIsRequired           .
+        condense es_afvc-MaximumNumberOfSplits              .
+        condense es_afvc-LeadTimeReductionStrategy          .
+        condense es_afvc-OpSchedldReductionLevel            .
+        condense es_afvc-OpErlstSchedldExecStrtDte          .
+        condense es_afvc-OpErlstSchedldExecStrtTme          .
+        condense es_afvc-OpErlstSchedldProcgStrtDte         .
+        condense es_afvc-OpErlstSchedldProcgStrtTme         .
+        condense es_afvc-OpErlstSchedldTrdwnStrtDte         .
+        condense es_afvc-OpErlstSchedldTrdwnStrtTme         .
+        condense es_afvc-OpErlstSchedldExecEndDte           .
+        condense es_afvc-OpErlstSchedldExecEndTme           .
+        condense es_afvc-OpLtstSchedldExecStrtDte           .
+        condense es_afvc-OpLtstSchedldExecStrtTme           .
+        condense es_afvc-OpLtstSchedldProcgStrtDte          .
+        condense es_afvc-OpLtstSchedldProcgStrtTme          .
+        condense es_afvc-OpLtstSchedldTrdwnStrtDte           .
+
+        condense es_afvc-OpLtstSchedldTrdwnStrtTme          .
+        condense es_afvc-OpLtstSchedldExecEndDte            .
+        condense es_afvc-OpLtstSchedldExecEndTme            .
+        condense es_afvc-SchedldFcstdEarliestStartDate      .
+        condense es_afvc-SchedldFcstdEarliestStartTime      .
+        condense es_afvc-SchedldFcstdEarliestEndDate        .
+        condense es_afvc-SchedldFcstdEarliestEndTime        .
+        condense es_afvc-LatestSchedldFcstdStartDate        .
+        condense es_afvc-SchedldFcstdLatestStartTime        .
+        condense es_afvc-LatestSchedldFcstdEndDate          .
+        condense es_afvc-SchedldFcstdLatestEndTime          .
+        condense es_afvc-OperationConfirmedStartDate        .
+        condense es_afvc-OperationConfirmedEndDate          .
+        condense es_afvc-OpActualExecutionStartDate         .
+        condense es_afvc-OpActualExecutionStartTime         .
+        condense es_afvc-OpActualSetupEndDate               .
+        condense es_afvc-OpActualSetupEndTime               .
+        condense es_afvc-OpActualProcessingStartDate        .
+        condense es_afvc-OpActualProcessingStartTime        .
+        condense es_afvc-OpActualProcessingEndDate          .
+        condense es_afvc-OpActualProcessingEndTime          .
+        condense es_afvc-OpActualTeardownStartDate          .
+        condense es_afvc-OpActualTeardownStartTme           .
+        condense es_afvc-OpActualExecutionEndDate           .
+        condense es_afvc-OpActualExecutionEndTime           .
+        condense es_afvc-ActualForecastEndDate              .
+        condense es_afvc-ActualForecastEndTime              .
+        condense es_afvc-EarliestScheduledWaitStartDate     .
+        condense es_afvc-EarliestScheduledWaitStartTime     .
+        condense es_afvc-EarliestScheduledWaitEndDate       .
+        condense es_afvc-EarliestScheduledWaitEndTime       .
+        condense es_afvc-LatestScheduledWaitStartDate       .
+        condense es_afvc-LatestScheduledWaitStartTime       .
+        condense es_afvc-LatestScheduledWaitEndDate         .
+        condense es_afvc-LatestScheduledWaitEndTime         .
+        condense es_afvc-BreakDurationUnit                  .
+        condense es_afvc-PlannedBreakDuration               .
+        condense es_afvc-ConfirmedBreakDuration             .
+        condense es_afvc-OverlapMinimumDurationUnit         .
+        condense es_afvc-OverlapMinimumDuration             .
+        condense es_afvc-MaximumWaitDurationUnit            .
+        condense es_afvc-MaximumWaitDuration                .
+        condense es_afvc-MinimumWaitDurationUnit            .
+        condense es_afvc-MinimumWaitDuration                .
+        condense es_afvc-StandardMoveDurationUnit           .
+        condense es_afvc-StandardMoveDuration               .
+        condense es_afvc-StandardQueueDurationUnit          .
+
+
+        condense es_afvc-StandardQueueDuration              .
+        condense es_afvc-MinimumQueueDurationUnit           .
+        condense es_afvc-MinimumQueueDuration               .
+        condense es_afvc-MinimumMoveDurationUnit            .
+        condense es_afvc-MinimumMoveDuration                .
+        condense es_afvc-OperationStandardDuration          .
+        condense es_afvc-OperationStandardDurationUnit      .
+        condense es_afvc-MinimumDuration                    .
+        condense es_afvc-MinimumDurationUnit                .
+        condense es_afvc-MinimumProcessingDuration          .
+        condense es_afvc-MinimumProcessingDurationUnit      .
+        condense es_afvc-ScheduledMoveDuration              .
+        condense es_afvc-ScheduledMoveDurationUnit          .
+        condense es_afvc-ScheduledQueueDuration             .
+        condense es_afvc-ScheduledQueueDurationUnit         .
+        condense es_afvc-ScheduledWaitDuration              .
+        condense es_afvc-ScheduledWaitDurationUnit          .
+        condense es_afvc-PlannedDeliveryDuration            .
+        condense es_afvc-OpPlannedSetupDurn                 .
+        condense es_afvc-OpPlannedSetupDurnUnit             .
+        condense es_afvc-OpPlannedProcessingDurn            .
+        condense es_afvc-OpPlannedProcessingDurnUnit        .
+        condense es_afvc-OpPlannedTeardownDurn              .
+        condense es_afvc-OpPlannedTeardownDurnUnit          .
+        condense es_afvc-ActualForecastDuration             .
+        condense es_afvc-ActualForecastDurationUnit         .
+        condense es_afvc-ForecastProcessingDuration         .
+        condense es_afvc-ForecastProcessingDurationUnit     .
+        condense es_afvc-StartDateOffsetReferenceCode       .
+        condense es_afvc-StartDateOffsetDurationUnit        .
+        condense es_afvc-StartDateOffsetDuration            .
+        condense es_afvc-EndDateOffsetReferenceCode         .
+        condense es_afvc-EndDateOffsetDurationUnit          .
+        condense es_afvc-EndDateOffsetDuration              .
+        condense es_afvc-StandardWorkFormulaParamGroup      .
+        condense es_afvc-OperationUnit                      .
+        condense es_afvc-OpQtyToBaseQtyDnmntr               .
+        condense es_afvc-OpQtyToBaseQtyNmrtr                .
+        condense es_afvc-OperationScrapPercent              .
+        condense es_afvc-OperationReferenceQuantity         .
+        condense es_afvc-OpPlannedTotalQuantity             .
+        condense es_afvc-OpPlannedScrapQuantity             .
+        condense es_afvc-OpPlannedYieldQuantity             .
+        condense es_afvc-OpTotalConfirmedYieldQty           .
+
+
+        condense es_afvc-OpTotalConfirmedScrapQty            .
+        condense es_afvc-OperationConfirmedReworkQty         .
+        condense es_afvc-ProductionUnit                      .
+        condense es_afvc-OpTotConfdYieldQtyInOrdQtyUnit      .
+        condense es_afvc-OpWorkQuantityUnit1                 .
+        condense es_afvc-OpConfirmedWorkQuantity1            .
+        condense es_afvc-NoFurtherOpWorkQuantity1IsExpd      .
+        condense es_afvc-OpWorkQuantityUnit2                 .
+        condense es_afvc-OpConfirmedWorkQuantity2            .
+        condense es_afvc-NoFurtherOpWorkQuantity2IsExpd      .
+        condense es_afvc-OpWorkQuantityUnit3                 .
+        condense es_afvc-OpConfirmedWorkQuantity3            .
+        condense es_afvc-NoFurtherOpWorkQuantity3IsExpd      .
+        condense es_afvc-OpWorkQuantityUnit4                 .
+        condense es_afvc-OpConfirmedWorkQuantity4            .
+        condense es_afvc-NoFurtherOpWorkQuantity4IsExpd      .
+        condense es_afvc-OpWorkQuantityUnit5                 .
+        condense es_afvc-OpConfirmedWorkQuantity5            .
+        condense es_afvc-NoFurtherOpWorkQuantity5IsExpd      .
+        condense es_afvc-OpWorkQuantityUnit6                 .
+        condense es_afvc-OpConfirmedWorkQuantity6            .
+        condense es_afvc-NoFurtherOpWorkQuantity6IsExpd      .
+        condense es_afvc-WorkCenterStandardWorkQtyUnit1      .
+        condense es_afvc-WorkCenterStandardWorkQty1          .
+        condense es_afvc-CostCtrActivityType1                .
+        condense es_afvc-WorkCenterStandardWorkQtyUnit2      .
+        condense es_afvc-WorkCenterStandardWorkQty2          .
+        condense es_afvc-CostCtrActivityType2                .
+        condense es_afvc-WorkCenterStandardWorkQtyUnit3      .
+        condense es_afvc-WorkCenterStandardWorkQty3          .
+        condense es_afvc-CostCtrActivityType3                .
+        condense es_afvc-WorkCenterStandardWorkQtyUnit4      .
+        condense es_afvc-WorkCenterStandardWorkQty4          .
+        condense es_afvc-CostCtrActivityType4                .
+        condense es_afvc-WorkCenterStandardWorkQtyUnit5      .
+        condense es_afvc-WorkCenterStandardWorkQty5          .
+        condense es_afvc-CostCtrActivityType5                .
+        condense es_afvc-WorkCenterStandardWorkQtyUnit6      .
+        condense es_afvc-WorkCenterStandardWorkQty6          .
+        condense es_afvc-CostCtrActivityType6                .
+        condense es_afvc-ForecastWorkQuantity1               .
+        condense es_afvc-ForecastWorkQuantity2               .
+        condense es_afvc-ForecastWorkQuantity3               .
+        condense es_afvc-ForecastWorkQuantity4               .
+        condense es_afvc-ForecastWorkQuantity5               .
+        condense es_afvc-ForecastWorkQuantity6               .
+        condense es_afvc-BusinessProcess                     .
+        condense es_afvc-BusinessProcessEntryUnit            .
+        condense es_afvc-BusinessProcessConfirmedQty        .
+        condense es_afvc-NoFurtherBusinessProcQtyIsExpd     .
+        condense es_afvc-BusinessProcRemainingQtyUnit       .
+        condense es_afvc-BusinessProcessRemainingQty        .
+        condense es_afvc-SetupOpActyNtwkInstance            .
+        condense es_afvc-ProduceOpActyNtwkInstance          .
+        condense es_afvc-TeardownOpActyNtwkInstance         .
+        condense es_afvc-FreeDefinedTableFieldSemantic      .
+        condense es_afvc-FreeDefinedAttribute01             .
+        condense es_afvc-FreeDefinedAttribute02             .
+        condense es_afvc-FreeDefinedAttribute03             .
+        condense es_afvc-FreeDefinedAttribute04             .
+        condense es_afvc-FreeDefinedQuantity1Unit           .
+        condense es_afvc-FreeDefinedQuantity1               .
+        condense es_afvc-FreeDefinedQuantity2Unit           .
+        condense es_afvc-FreeDefinedQuantity2               .
+        condense es_afvc-FreeDefinedAmount1Currency         .
+        condense es_afvc-FreeDefinedAmount1                 .
+        condense es_afvc-FreeDefinedAmount2Currency         .
+        condense es_afvc-FreeDefinedAmount2                 .
+        condense es_afvc-FreeDefinedDate1                   .
+        condense es_afvc-FreeDefinedDate2                   .
+        condense es_afvc-FreeDefinedIndicator1              .
+        condense es_afvc-FreeDefinedIndicator2              .
 
             APPEND es_afvc TO es_response_afvc-items.
 
