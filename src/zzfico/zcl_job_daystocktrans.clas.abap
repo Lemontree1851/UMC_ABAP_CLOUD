@@ -71,7 +71,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_job_daystocktrans IMPLEMENTATION.
+CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
 
 
   METHOD add_message_to_log.

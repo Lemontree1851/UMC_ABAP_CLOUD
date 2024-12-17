@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_mfgorder_001 IMPLEMENTATION.
+CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -864,17 +864,12 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
 
 
 
-     SORT lt_mfgorder_001 by YearMonth companycode plant product  BusinessPartner ProfitCenter CostCenter  orderid ActivityType .
+     SORT lt_mfgorder_001 by YearMonth companycode plant product  BusinessPartner ProfitCenter CostCenter  ActivityType  orderid.
+     DELETE ADJACENT DUPLICATES FROM lt_mfgorder_001 COMPARING YearMonth companycode plant product  BusinessPartner ProfitCenter CostCenter  ActivityType  orderid.
 
 
      SORT lt_mfgorder_001 by orderid  YearMonth Companycode Plant Product producedproduct BusinessPartner ProfitCenter CostCenter ActivityType   .
 
-     LOOP AT lt_mfgorder_001 INTO data(ls_sef).
-      if sy-tabix  > 10 .
-
-      DELETE lt_mfgorder_001.
-      endif.
-     ENDLOOP.
 
       "排序
       zzcl_odata_utils=>orderby(

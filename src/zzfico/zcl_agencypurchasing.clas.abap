@@ -10,7 +10,10 @@ CLASS zcl_agencypurchasing DEFINITION
 ENDCLASS.
 
 
-CLASS zcl_agencypurchasing IMPLEMENTATION.
+
+CLASS ZCL_AGENCYPURCHASING IMPLEMENTATION.
+
+
   METHOD if_rap_query_provider~select.
     DATA: lt_data    TYPE STANDARD TABLE OF zc_agencypurchasing,
           lt_sumdata TYPE STANDARD TABLE OF zc_agencypurchasing.
@@ -372,5 +375,4 @@ CLASS zcl_agencypurchasing IMPLEMENTATION.
     io_response->set_data( lt_sumdata ).
 
   ENDMETHOD.
-
 ENDCLASS.

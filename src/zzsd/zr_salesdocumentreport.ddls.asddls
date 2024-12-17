@@ -40,13 +40,13 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       GrossProfitTotal               : abap.char(20); //没用 等会删
       salesplanamountindspcrcy       : abap.char(20); //没用 等会删
       CustomerAccountAssignmentGroup : abap.char(14);
-      FirstSalesSpecProductGroup     : abap.char(3);
-      SecondSalesSpecProductGroup    : abap.char(3);
-      ThirdSalesSpecProductGroup     : abap.char(3);
+      FirstSalesSpecProductGroup     : abap.char(30);
+      SecondSalesSpecProductGroup    : abap.char(30);
+      ThirdSalesSpecProductGroup     : abap.char(30);
       AccountDetnProductGroup        : abap.char(3);
 
       SplitRange                     : char13;
-       @Consumption.valueHelpDefinition:[{entity:{ name: 'I_CurrencyStdVH', element: 'Currency'} }]
+      @Consumption.valueHelpDefinition:[{entity:{ name: 'I_CurrencyStdVH', element: 'Currency'} }]
       ConditionCurrency              : abap.cuky;
 
       ConditionRateValueUnit         : waers;
@@ -56,6 +56,16 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       DisplayCurrency3               : waers;
       currency                       : abap.cuky;
       currency1                      : abap.cuky;
+
+      GLAccount1                     : hkont;
+      GLAccount2                     : hkont;
+      GLAccount3                     : hkont;
+      GLAccountName1                 : abap.char(30);
+      GLAccountName2                 : abap.char(30);
+      GLAccountName3                 : abap.char(30);
+      
+      SalesPlanUnit_c                : abap.char(10);
+      CompanyCode :bukrs;
 
       @Semantics.amount.currencyCode : 'currency'
       materialcost2000_n             : abap.curr(15,2); //材料费

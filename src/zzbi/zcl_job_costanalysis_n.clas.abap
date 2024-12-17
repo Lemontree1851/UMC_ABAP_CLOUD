@@ -107,7 +107,62 @@ ENDCLASS.
 
 
 
-CLASS zcl_job_costanalysis_n IMPLEMENTATION.
+CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
+
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime INTO  DATA(cx_erro).
+        DATA ls_msg TYPE scx_t100key.
+        DATA(lv_msg) = cx_erro->get_text( ).
+    ENDTRY.
+  ENDMETHOD.
+
+
+  METHOD if_apj_dt_exec_object~get_parameters.
+    " Return the supported selection parameters here
+    et_parameter_def = VALUE #( ( selname        = 'P_Plant'
+                                  kind           = if_apj_dt_exec_object=>select_option
+                                  datatype       = 'char'
+                                  length         = 4
+                                  param_text     = 'プラント'
+                                  changeable_ind = abap_true
+                                  mandatory_ind  = abap_true )
+                                ( selname        = 'P_Year'
+                                  kind           = if_apj_dt_exec_object=>parameter
+                                  datatype       = 'char'
+                                  length         = 4
+                                  param_text     = '会計年度'
+                                  changeable_ind = abap_true )
+                                ( selname        = 'P_Month'
+                                  kind           = if_apj_dt_exec_object=>parameter
+                                  datatype       = 'char'
+                                  length         = 2
+                                  param_text     = '会計期間'
+                                  changeable_ind = abap_true ) ).
+
+    " Return the default parameters values here
+    " et_parameter_val
+  ENDMETHOD.
+
+
   METHOD if_apj_rt_exec_object~execute.
 
     DATA:
@@ -1021,31 +1076,6 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
 
   ENDMETHOD.
 
-  METHOD if_apj_dt_exec_object~get_parameters.
-    " Return the supported selection parameters here
-    et_parameter_def = VALUE #( ( selname        = 'P_Plant'
-                                  kind           = if_apj_dt_exec_object=>select_option
-                                  datatype       = 'char'
-                                  length         = 4
-                                  param_text     = 'プラント'
-                                  changeable_ind = abap_true
-                                  mandatory_ind  = abap_true )
-                                ( selname        = 'P_Year'
-                                  kind           = if_apj_dt_exec_object=>parameter
-                                  datatype       = 'char'
-                                  length         = 4
-                                  param_text     = '会計年度'
-                                  changeable_ind = abap_true )
-                                ( selname        = 'P_Month'
-                                  kind           = if_apj_dt_exec_object=>parameter
-                                  datatype       = 'char'
-                                  length         = 2
-                                  param_text     = '会計期間'
-                                  changeable_ind = abap_true ) ).
-
-    " Return the default parameters values here
-    " et_parameter_val
-  ENDMETHOD.
 
   METHOD if_oo_adt_classrun~main.
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
@@ -1083,30 +1113,6 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '1' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-      CATCH cx_bali_runtime INTO  DATA(cx_erro).
-        DATA ls_msg TYPE scx_t100key.
-        DATA(lv_msg) = cx_erro->get_text( ).
-    ENDTRY.
-  ENDMETHOD.
 
   METHOD init_application_log.
     TRY.
@@ -1120,5 +1126,4 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
         DATA(lv_msg) = cx_erro->get_text( ).
     ENDTRY.
   ENDMETHOD.
-
 ENDCLASS.

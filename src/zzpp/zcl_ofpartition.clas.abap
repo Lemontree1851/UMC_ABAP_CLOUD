@@ -25,7 +25,46 @@ ENDCLASS.
 
 
 
-CLASS zcl_ofpartition IMPLEMENTATION.
+CLASS ZCL_OFPARTITION IMPLEMENTATION.
+
+
+  METHOD get_process_date_range.
+    "获取要处理的PIR数据范围
+    "从执行当月初起往后24个月月末
+    date_range-startdate = cl_abap_context_info=>get_system_date( ).
+    date_range-startdate = date_range-startdate(6) && '01'.
+    date_range-enddate = zzcl_common_utils=>calc_date_add( date = date_range-startdate month = 24 ).
+    date_range-enddate = zzcl_common_utils=>get_enddate_of_month( iv_date = date_range-enddate ).
+  ENDMETHOD.
+
+
+  METHOD get_splitqty.
+    DATA:
+      base_distribution      TYPE i,    "基础分配量
+      remaining_qty          TYPE i,    "剩余数量
+      full_rounds            TYPE i,    "完整轮次的分配
+      remaining_after_rounds TYPE i,    "剩余轮次后的数量
+      qty_for_n              TYPE i.    "最终分配给第N个日期的数量
+
+    "计算基础分配量
+    base_distribution = ( y DIV ( x * z ) ) * z.
+    remaining_qty = y MOD ( x * z ).
+
+    "给N个日期分配基础量的数量
+    qty_for_n = base_distribution.
+
+    "计算完整分配轮次
+    full_rounds = remaining_qty DIV z.
+    remaining_after_rounds = remaining_qty MOD z.
+
+    "判断剩余数量的分配
+    IF n <= full_rounds.
+      qty_for_n = qty_for_n + z.
+    ELSEIF n = full_rounds + 1.
+      qty_for_n = qty_for_n + remaining_after_rounds.
+    ENDIF.
+    qty = qty_for_n.
+  ENDMETHOD.
 
 
   METHOD if_rap_query_provider~select.
@@ -458,41 +497,4 @@ CLASS zcl_ofpartition IMPLEMENTATION.
 
     ENDCASE.
   ENDMETHOD.
-
-  METHOD get_splitqty.
-    DATA:
-      base_distribution      TYPE i,    "基础分配量
-      remaining_qty          TYPE i,    "剩余数量
-      full_rounds            TYPE i,    "完整轮次的分配
-      remaining_after_rounds TYPE i,    "剩余轮次后的数量
-      qty_for_n              TYPE i.    "最终分配给第N个日期的数量
-
-    "计算基础分配量
-    base_distribution = ( y DIV ( x * z ) ) * z.
-    remaining_qty = y MOD ( x * z ).
-
-    "给N个日期分配基础量的数量
-    qty_for_n = base_distribution.
-
-    "计算完整分配轮次
-    full_rounds = remaining_qty DIV z.
-    remaining_after_rounds = remaining_qty MOD z.
-
-    "判断剩余数量的分配
-    IF n <= full_rounds.
-      qty_for_n = qty_for_n + z.
-    ELSEIF n = full_rounds + 1.
-      qty_for_n = qty_for_n + remaining_after_rounds.
-    ENDIF.
-    qty = qty_for_n.
-  ENDMETHOD.
-  METHOD get_process_date_range.
-    "获取要处理的PIR数据范围
-    "从执行当月初起往后24个月月末
-    date_range-startdate = cl_abap_context_info=>get_system_date( ).
-    date_range-startdate = date_range-startdate(6) && '01'.
-    date_range-enddate = zzcl_common_utils=>calc_date_add( date = date_range-startdate month = 24 ).
-    date_range-enddate = zzcl_common_utils=>get_enddate_of_month( iv_date = date_range-enddate ).
-  ENDMETHOD.
-
 ENDCLASS.

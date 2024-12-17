@@ -9,7 +9,11 @@ CLASS zcl_ecn DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_ecn IMPLEMENTATION.
+
+
+CLASS ZCL_ECN IMPLEMENTATION.
+
+
   METHOD if_rap_query_provider~select.
     TYPES:
       BEGIN OF ty_changemaster_ent,

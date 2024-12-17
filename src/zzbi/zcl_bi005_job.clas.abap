@@ -87,48 +87,32 @@ ENDCLASS.
 
 
 
-CLASS zcl_bi005_job IMPLEMENTATION.
+CLASS ZCL_BI005_JOB IMPLEMENTATION.
 
-  METHOD if_oo_adt_classrun~main.
-    DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
-*    lt_parameters = VALUE #( ( selname = 'P_BUKRS'
-*                               kind    = if_apj_dt_exec_object=>select_option
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '1100' )
-*                               ( selname = 'P_BUKRS'
-*                               kind    = if_apj_dt_exec_object=>select_option
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '1400' )
-*                               ( selname = 'P_PLANT'
-*                               kind    = if_apj_dt_exec_object=>select_option
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '1100' )
-*                               ( selname = 'P_PLANT'
-*                               kind    = if_apj_dt_exec_object=>select_option
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '1400' )
-*                               ( selname = 'P_GJAHR'
-*                               kind    = if_apj_dt_exec_object=>parameter
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '2024' )
-*                               ( selname = 'P_POPER'
-*                               kind    = if_apj_dt_exec_object=>parameter
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '009' ) ).
+
+  METHOD add_message_to_log.
     TRY.
-        if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
 
-        if_apj_rt_exec_object~execute( lt_parameters ).
-      CATCH cx_root INTO DATA(lo_root).
-        out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime ##NO_HANDLER.
     ENDTRY.
   ENDMETHOD.
+
 
   METHOD if_apj_dt_exec_object~get_parameters.
     " Return the supported selection parameters here
@@ -165,6 +149,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                                   mandatory_ind  = abap_true ) ).
 
   ENDMETHOD.
+
 
   METHOD if_apj_rt_exec_object~execute.
 
@@ -876,6 +861,49 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
 
+
+  METHOD if_oo_adt_classrun~main.
+    DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
+*    lt_parameters = VALUE #( ( selname = 'P_BUKRS'
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1100' )
+*                               ( selname = 'P_BUKRS'
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1400' )
+*                               ( selname = 'P_PLANT'
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1100' )
+*                               ( selname = 'P_PLANT'
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1400' )
+*                               ( selname = 'P_GJAHR'
+*                               kind    = if_apj_dt_exec_object=>parameter
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '2024' )
+*                               ( selname = 'P_POPER'
+*                               kind    = if_apj_dt_exec_object=>parameter
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '009' ) ).
+    TRY.
+        if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
+
+        if_apj_rt_exec_object~execute( lt_parameters ).
+      CATCH cx_root INTO DATA(lo_root).
+        out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
+    ENDTRY.
+  ENDMETHOD.
+
+
   METHOD init_application_log.
     TRY.
         mo_application_log = cl_bali_log=>create_with_header(
@@ -885,28 +913,4 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       CATCH cx_bali_runtime ##NO_HANDLER.
     ENDTRY.
   ENDMETHOD.
-
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '1' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-      CATCH cx_bali_runtime ##NO_HANDLER.
-    ENDTRY.
-  ENDMETHOD.
-
 ENDCLASS.

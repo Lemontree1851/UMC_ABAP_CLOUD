@@ -116,6 +116,18 @@
      <ENTRY>SalesOrganization</ENTRY>
      <LENGTH>50</LENGTH>
     </item>
+    <item>
+     <ID>I</ID>
+     <KEY>019</KEY>
+     <ENTRY>Purchasing Organization Data</ENTRY>
+     <LENGTH>50</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
+     <KEY>020</KEY>
+     <ENTRY>PurchasingOrganization</ENTRY>
+     <LENGTH>50</LENGTH>
+    </item>
    </TPOOL>
   </asx:values>
  </asx:abap>

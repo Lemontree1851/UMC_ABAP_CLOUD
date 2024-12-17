@@ -4,8 +4,9 @@ define service ZUI_PERMISSION_ACCESS_O4 {
   expose ZC_TBC1006   as AssignPlant;
   expose ZC_TBC1012   as AssignCompany;
   expose ZC_TBC1013   as AssignSalesOrg;
+  expose ZC_TBC1017   as AssignPurchOrg;
   expose ZC_TBC1007   as AssignRole;
-  expose ZC_TBC1017   as UserRoleAccessBtn;
+  expose ZC_TBC1016_1 as UserRoleAccessBtn;
   expose ZC_TBC1007_1;
   expose ZC_TBC1005   as Role;
   expose ZC_TBC1014   as Functions;

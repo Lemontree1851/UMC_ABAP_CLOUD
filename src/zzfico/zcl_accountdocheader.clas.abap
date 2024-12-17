@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_accountdocheader IMPLEMENTATION.
+CLASS ZCL_ACCOUNTDOCHEADER IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

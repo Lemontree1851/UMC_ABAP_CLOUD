@@ -1,19 +1,19 @@
-@EndUserText.label: 'Permission Access Role <-> Access Btn Table'
+@EndUserText.label: 'Permission Access User <-> PurchOrgTable'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
-define root view entity ZC_TBC1017
-  provider contract transactional_query
+define view entity ZC_TBC1017
   as projection on ZR_TBC1017
 {
-  key RoleId,
-  key AccessId,
-      FunctionId,
+  key Uuid,
+  key Mail,
+      PurchasingOrganization,
+      PurchasingOrganizationName,
       CreatedBy,
       CreatedAt,
       LastChangedBy,
       LastChangedAt,
       LocalLastChangedAt,
-      AccessName,
-      DesignFileId,
-      FunctionName
+
+      /* Associations */
+      _User : redirected to parent ZC_TBC1004
 }

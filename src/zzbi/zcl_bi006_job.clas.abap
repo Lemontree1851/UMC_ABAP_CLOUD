@@ -19,7 +19,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_bi006_job IMPLEMENTATION.
+CLASS ZCL_BI006_JOB IMPLEMENTATION.
 
 
   METHOD if_apj_dt_exec_object~get_parameters.

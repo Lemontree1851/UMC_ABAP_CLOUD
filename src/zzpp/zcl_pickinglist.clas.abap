@@ -12,7 +12,8 @@ ENDCLASS.
 
 
 
-CLASS zcl_pickinglist IMPLEMENTATION.
+CLASS ZCL_PICKINGLIST IMPLEMENTATION.
+
 
   METHOD if_sadl_exit_calc_element_read~calculate.
     TYPES: BEGIN OF lty_detail.
@@ -185,7 +186,7 @@ CLASS zcl_pickinglist IMPLEMENTATION.
     ct_calculated_data = CORRESPONDING #( lt_original_data ).
   ENDMETHOD.
 
+
   METHOD if_sadl_exit_calc_element_read~get_calculation_info.
   ENDMETHOD.
-
 ENDCLASS.

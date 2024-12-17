@@ -60,7 +60,20 @@ ENDCLASS.
 
 
 
-CLASS zcl_bi007_data IMPLEMENTATION.
+CLASS ZCL_BI007_DATA IMPLEMENTATION.
+
+
+  METHOD constructor.
+    mr_companycode = ir_companycode.
+    mr_fiscalyear = ir_fiscalyear.
+    mr_fiscalperiod = ir_fiscalperiod.
+    mr_forcastyear = ir_forcastyear.
+    mr_forcastperiod = ir_forcastperiod.
+    mr_plant = ir_plant.
+    mr_product = ir_product.
+    mr_customer = ir_customer.
+  ENDMETHOD.
+
 
   METHOD get_data.
     "Step 1. Get ztfi_1019 Data
@@ -340,16 +353,4 @@ CLASS zcl_bi007_data IMPLEMENTATION.
 
 
   ENDMETHOD.
-
-  METHOD constructor.
-    mr_companycode = ir_companycode.
-    mr_fiscalyear = ir_fiscalyear.
-    mr_fiscalperiod = ir_fiscalperiod.
-    mr_forcastyear = ir_forcastyear.
-    mr_forcastperiod = ir_forcastperiod.
-    mr_plant = ir_plant.
-    mr_product = ir_product.
-    mr_customer = ir_customer.
-  ENDMETHOD.
-
 ENDCLASS.

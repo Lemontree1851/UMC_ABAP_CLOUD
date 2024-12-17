@@ -92,7 +92,9 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_usap_002 IMPLEMENTATION.
+CLASS ZCL_HTTP_USAP_002 IMPLEMENTATION.
+
+
   METHOD if_http_service_extension~handle_request.
     DATA:
       ls_outbound TYPE ts_outbound,

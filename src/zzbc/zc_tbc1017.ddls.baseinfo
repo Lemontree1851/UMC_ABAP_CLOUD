@@ -6,9 +6,14 @@
 "ZR_TBC1017"
 ],
 "ASSOCIATED":
-[],
+[
+"ZC_TBC1004",
+"ZR_TBC1004"
+],
 "BASE":
-[],
+[
+"ZR_TBC1017"
+],
 "ANNO_REF":
 [],
 "SCALAR_FUNCTION":

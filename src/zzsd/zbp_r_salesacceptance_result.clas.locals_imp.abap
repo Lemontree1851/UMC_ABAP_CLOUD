@@ -119,13 +119,15 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       <lfs_accept>-product = |{ <lfs_accept>-product ALPHA = IN }|.
     ENDLOOP.
 
-    SELECT *                                  "#EC CI_ALL_FIELDS_NEEDED
-      FROM ztsd_1012
-      FOR ALL ENTRIES IN @ct_accept
-     WHERE customer = @ct_accept-customer
-       AND salesdocument = @ct_accept-salesdocument
-       AND billingdocument = @ct_accept-billingdocument
-      INTO TABLE @DATA(lt_table).
+    IF ct_accept IS NOT INITIAL.
+      SELECT *                                "#EC CI_ALL_FIELDS_NEEDED
+        FROM ztsd_1012
+        FOR ALL ENTRIES IN @ct_accept
+       WHERE periodtype = @cv_periodtype
+         AND acceptperiod = @ct_accept-acceptperiod
+         AND salesdocument = @ct_accept-salesdocument
+        INTO TABLE @DATA(lt_table).
+    ENDIF.
 
     SELECT salesdocument,
            salesorganization,
@@ -136,6 +138,7 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       INTO TABLE @DATA(lt_so).
 
     SORT lt_so BY salesdocument.
+    SORT lt_table BY salesdocument salesdocumentitem.
     LOOP AT ct_accept INTO DATA(ls_accept).
       READ TABLE lt_so INTO DATA(ls_so)
            WITH KEY salesdocument = ls_accept-salesdocument BINARY SEARCH.
@@ -145,18 +148,14 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       ENDIF.
 
       ls_1012-periodtype = cv_periodtype.
-      ls_1012-acceptperiod = cv_acceptperiod.
+      ls_1012-acceptperiod = ls_accept-acceptperiod.
       ls_1012-salesdocument = ls_accept-salesdocument.
       ls_1012-salesdocumentitem = ls_accept-salesdocumentitem.
       ls_1012-billingdocument = ls_accept-billingdocument.
       ls_1012-customerpo = ls_accept-customerpo.
       ls_1012-salesdocumenttype = ls_accept-salesdocumenttype.
-      REPLACE ALL OCCURRENCES OF '/' IN ls_accept-acceptperiodfromtext WITH space.
-      CONDENSE ls_accept-acceptperiodfromtext NO-GAPS.
-      ls_1012-acceptperiodfrom = ls_accept-acceptperiodfromtext.
-      REPLACE ALL OCCURRENCES OF '/' IN ls_accept-acceptperiodtotext WITH space.
-      CONDENSE ls_accept-acceptperiodtotext NO-GAPS.
-      ls_1012-acceptperiodto = ls_accept-acceptperiodtotext.
+      ls_1012-acceptperiodfrom = ls_accept-acceptperiodfrom.
+      ls_1012-acceptperiodto = ls_accept-acceptperiodto.
       ls_1012-product = ls_accept-product.
       ls_1012-salesdocumentitemtext = ls_accept-salesdocumentitemtext.
       ls_1012-postingdate = ls_accept-postingdate.
@@ -203,6 +202,17 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
         ls_1012-processstatus = ls_accept-processstatus.
       ENDIF.
 
+      "保留，同时更新old_status
+      READ TABLE lt_table INTO DATA(ls_table)
+           WITH KEY salesdocument = ls_accept-salesdocument
+                    salesdocumentitem = ls_accept-salesdocumentitem BINARY SEARCH.
+      IF sy-subrc = 0.
+        ls_1012-old_status = ls_table-old_status.
+      ELSE.
+        IF ls_1012-processstatus = '4'.
+          ls_1012-old_status = '4'.
+        ENDIF.
+      ENDIF.
       READ TABLE lt_1001 INTO ls_1001
                  WITH KEY zid = 'ZSD009'
                           zvalue2 = ls_accept-reasoncategory.
@@ -241,7 +251,7 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       ls_request TYPE lty_request.
 
 * Ckeck if proccessstatus = 2
-    READ TABLE ct_accept WITH KEY processstatus = space TRANSPORTING NO FIELDS.
+    READ TABLE ct_accept WITH KEY processstatus = '処理待ち' TRANSPORTING NO FIELDS.
     IF sy-subrc = 0.
       ls_request-status = 'E'.
       ls_request-message = TEXT-003.
@@ -260,7 +270,7 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       FROM ztsd_1003
       FOR ALL ENTRIES IN @ct_accept
      WHERE periodtype = @cv_periodtype
-       AND acceptperiod = @cv_acceptperiod
+       AND acceptperiod = @ct_accept-acceptperiod
        AND customerpo = @ct_accept-customerpo
       INTO TABLE @DATA(lt_table).
 
@@ -305,6 +315,10 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
         ls_request-message = TEXT-002.
         APPEND ls_request TO ct_data.
       ENDIF.
+    ELSE.
+      ls_request-status = 'S'.
+      ls_request-message = TEXT-002.
+      APPEND ls_request TO ct_data.
     ENDIF.
   ENDMETHOD.
 

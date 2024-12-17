@@ -36,7 +36,7 @@ ENDCLASS.
 
 
 
-CLASS zzcl_dtimp_process IMPLEMENTATION.
+CLASS ZZCL_DTIMP_PROCESS IMPLEMENTATION.
 
 
   METHOD add_message_to_log.

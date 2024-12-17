@@ -18,7 +18,10 @@ FUNCTION zzfm_dtimp_tbc1011.
     END OF ty_company,
     BEGIN OF ty_salesorg,
       salesorg TYPE vkorg,
-    END OF ty_salesorg.
+    END OF ty_salesorg,
+    BEGIN OF ty_purchorg,
+      purchorg TYPE ekorg,
+    END OF ty_purchorg.
 
   DATA:
     ls_data      TYPE zzs_dtimp_tbc1011,
@@ -30,9 +33,12 @@ FUNCTION zzfm_dtimp_tbc1011.
     lt_ztbc_1012 TYPE TABLE OF ztbc_1012,   "User Company information
     ls_ztbc_1013 TYPE ztbc_1013,            "User Sales Organization information
     lt_ztbc_1013 TYPE TABLE OF ztbc_1013,   "User Sales Organization information
+    ls_ztbc_1017 TYPE ztbc_1017,            "User Purchasing Organization information
+    lt_ztbc_1017 TYPE TABLE OF ztbc_1017,   "User Purchasing Organization information
     lt_plant     TYPE TABLE OF ty_plant,
     lt_company   TYPE TABLE OF ty_company,
     lt_salesorg  TYPE TABLE OF ty_salesorg,
+    lt_purchorg  TYPE TABLE OF ty_purchorg,
     lv_regular_expression TYPE string VALUE '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
     lv_flag      TYPE STRING.
 
@@ -55,13 +61,14 @@ FUNCTION zzfm_dtimp_tbc1011.
   LOOP AT eo_data->* ASSIGNING FIELD-SYMBOL(<line>).
 
     CLEAR ls_data.
-    ls_data-updateflag         = <line>-('updateflag').
-    ls_data-user_id            = <line>-('user_id').
-    ls_data-mail               = <line>-('mail').
-    ls_data-department         = <line>-('department').
-    ls_data-plant              = <line>-('plant').
-    ls_data-company_code       = <line>-('company_code').
-    ls_data-sales_organization = <line>-('sales_organization').
+    ls_data-updateflag              = <line>-('updateflag').
+    ls_data-user_id                 = <line>-('user_id').
+    ls_data-mail                    = <line>-('mail').
+    ls_data-department              = <line>-('department').
+    ls_data-plant                   = <line>-('plant').
+    ls_data-company_code            = <line>-('company_code').
+    ls_data-sales_organization      = <line>-('sales_organization').
+    ls_data-purchasing_organization = <line>-('purchasing_organization').
     CLEAR: <line>-('Message'), <line>-('Type').
     CONDENSE ls_data-mail NO-GAPS.
 
@@ -95,7 +102,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 
     "Obtain data of user information
     CLEAR ls_ztbc_1004.
-    SELECT SINGLE * FROM ztbc_1004 WHERE mail = @ls_data-mail INTO @ls_ztbc_1004.
+    SELECT SINGLE * FROM ztbc_1004 WHERE mail = @ls_data-mail INTO @ls_ztbc_1004.  "#EC CI_ALL_FIELDS_NEEDED
 
 *   Insert data
     IF ls_data-updateflag = lc_updateflag_insert.
@@ -308,6 +315,68 @@ FUNCTION zzfm_dtimp_tbc1011.
         ENDIF.
 
         MODIFY ztbc_1013 FROM TABLE @lt_ztbc_1013.
+        IF sy-subrc = 0.
+          COMMIT WORK AND WAIT.
+          <line>-('Type') = 'S'.
+          <line>-('Message') = 'Success'.
+        ELSE.
+          ROLLBACK WORK.
+          MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+          <line>-('Type') = 'E'.
+          CONTINUE.
+        ENDIF.
+
+      ENDIF.
+
+*     Insert Purchasing Organization data
+      IF ls_data-purchasing_organization IS NOT INITIAL.
+
+        SELECT COUNT( * ) FROM ztbc_1017 WHERE mail = @ls_ztbc_1004-mail.
+        IF sy-subrc = 0.
+          MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-019 INTO <line>-('Message').    "User purchasing organization data already exist
+          <line>-('Type')    = 'E'.
+          CONTINUE.
+        ENDIF.
+
+        CLEAR:
+          ls_ztbc_1017,
+          lt_ztbc_1017.
+
+        ls_ztbc_1017-mail = ls_ztbc_1004-mail.
+        ls_ztbc_1017-created_by = sy-uname.
+        GET TIME STAMP FIELD ls_ztbc_1017-created_at.
+        ls_ztbc_1017-last_changed_by = sy-uname.
+        GET TIME STAMP FIELD ls_ztbc_1017-last_changed_at.
+        GET TIME STAMP FIELD ls_ztbc_1017-local_last_changed_at.
+
+        CLEAR lt_purchorg.
+        SPLIT ls_data-purchasing_organization AT lc_splitflag INTO TABLE lt_purchorg.
+
+        CLEAR lv_flag.
+        LOOP AT lt_purchorg INTO DATA(ls_purchorg).
+
+          SELECT COUNT( * ) FROM i_purchasingorganization WHERE PurchasingOrganization = @ls_purchorg-purchorg.
+          IF sy-subrc <> 0.  "&1 &2 is invalid.
+            MESSAGE e008(zbc_001) WITH TEXT-020 ls_purchorg-purchorg INTO <line>-('Message').
+            <line>-('Type')    = 'E'.
+            lv_flag = 'X'.
+            EXIT.
+          ENDIF.
+
+          TRY.
+              ls_ztbc_1017-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+              ##NO_HANDLER
+            CATCH cx_uuid_error.
+              " handle exception
+          ENDTRY.
+          ls_ztbc_1017-purchasing_organization = ls_purchorg-purchorg.
+          APPEND ls_ztbc_1017 TO lt_ztbc_1017.
+        ENDLOOP.
+        IF lv_flag = 'X'.
+          CONTINUE.
+        ENDIF.
+
+        MODIFY ztbc_1017 FROM TABLE @lt_ztbc_1017.
         IF sy-subrc = 0.
           COMMIT WORK AND WAIT.
           <line>-('Type') = 'S'.
@@ -562,6 +631,71 @@ FUNCTION zzfm_dtimp_tbc1011.
 
       ENDIF.
 
+*     Update purchasing organization data
+      IF ls_data-purchasing_organization IS NOT INITIAL.
+
+        DELETE FROM ztbc_1017 WHERE mail = @ls_ztbc_1004-mail.
+
+        IF ls_data-purchasing_organization <> 'D'.
+
+          CLEAR:
+            ls_ztbc_1017,
+            lt_ztbc_1017.
+
+          ls_ztbc_1017-mail = ls_ztbc_1004-mail.
+          ls_ztbc_1017-created_by = sy-uname.
+          GET TIME STAMP FIELD ls_ztbc_1017-created_at.
+          ls_ztbc_1017-last_changed_by = sy-uname.
+          GET TIME STAMP FIELD ls_ztbc_1017-last_changed_at.
+          GET TIME STAMP FIELD ls_ztbc_1017-local_last_changed_at.
+
+          CLEAR lt_purchorg.
+          SPLIT ls_data-purchasing_organization AT lc_splitflag INTO TABLE lt_purchorg.
+
+          CLEAR lv_flag.
+          LOOP AT lt_purchorg INTO ls_purchorg.
+
+            SELECT COUNT( * ) FROM i_purchasingorganization WHERE PurchasingOrganization = @ls_purchorg-purchorg.
+            IF sy-subrc <> 0.  "&1 &2 is invalid.
+              MESSAGE e008(zbc_001) WITH TEXT-020 ls_purchorg-purchorg INTO <line>-('Message').
+              <line>-('Type')    = 'E'.
+              lv_flag = 'X'.
+              EXIT.
+            ENDIF.
+
+            TRY.
+                ls_ztbc_1017-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+                ##NO_HANDLER
+              CATCH cx_uuid_error.
+                " handle exception
+            ENDTRY.
+            ls_ztbc_1017-purchasing_organization = ls_purchorg-purchorg.
+            APPEND ls_ztbc_1017 TO lt_ztbc_1017.
+          ENDLOOP.
+          IF lv_flag = 'X'.
+            CONTINUE.
+          ENDIF.
+
+          MODIFY ztbc_1017 FROM TABLE @lt_ztbc_1017.
+          IF sy-subrc = 0.
+            COMMIT WORK AND WAIT.
+            <line>-('Type') = 'S'.
+            <line>-('Message') = 'Success'.
+          ELSE.
+            ROLLBACK WORK.
+            MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+            <line>-('Type') = 'E'.
+            CONTINUE.
+          ENDIF.
+
+        ELSE.
+          COMMIT WORK AND WAIT.
+          <line>-('Type') = 'S'.
+          <line>-('Message') = 'Success'.
+        ENDIF.
+
+      ENDIF.
+
       IF <line>-('Type') IS INITIAL.
         <line>-('Message') = 'Success'.
         <line>-('Type')    = 'S'.
@@ -587,6 +721,9 @@ FUNCTION zzfm_dtimp_tbc1011.
 
       "Delete sales organization data
       DELETE FROM ztbc_1013 WHERE mail = @ls_ztbc_1004-mail.
+
+      "Delete purchasing organization data
+      DELETE FROM ztbc_1017 WHERE mail = @ls_ztbc_1004-mail.
 
       COMMIT WORK AND WAIT.
       <line>-('Type') = 'S'.

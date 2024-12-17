@@ -183,7 +183,7 @@ CLASS ZCL_JOB_BPBANK IMPLEMENTATION.
 
 
     IF lv_stat_code IS INITIAL AND  lv_stat_code2 IS INITIAL.
-      lv_msg = '未发生变更'.
+      lv_msg = 'アドオンテーブル変更無し'.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'S' ).
         CATCH cx_bali_runtime INTO DATA(e4) ##NO_HANDLER.

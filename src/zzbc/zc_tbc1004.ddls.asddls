@@ -19,5 +19,6 @@ define root view entity ZC_TBC1004
       _AssignPlant    : redirected to composition child ZC_TBC1006,
       _AssignCompany  : redirected to composition child ZC_TBC1012,
       _AssignSalesOrg : redirected to composition child ZC_TBC1013,
+      _AssignPurchOrg : redirected to composition child ZC_TBC1017,
       _AssignRole     : redirected to composition child ZC_TBC1007
 }

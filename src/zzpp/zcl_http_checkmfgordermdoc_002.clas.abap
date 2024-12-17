@@ -9,7 +9,11 @@ CLASS zcl_http_checkmfgordermdoc_002 DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_http_checkmfgordermdoc_002 IMPLEMENTATION.
+
+
+CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
+
+
   METHOD if_http_service_extension~handle_request.
     TYPES:
       BEGIN OF ty_req,

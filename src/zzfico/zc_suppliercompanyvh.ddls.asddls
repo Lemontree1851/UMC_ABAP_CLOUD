@@ -19,11 +19,23 @@
 define view entity ZC_SupplierCompanyVH
   as select distinct from I_SupplierCompany                                           
 {
-      @Search.defaultSearchElement: true
-      @Search.fuzzinessThreshold: 0.8
-      @Search.ranking: #HIGH
-      @UI.lineItem: [{importance: #HIGH, position: 10}]
+      @ObjectModel.text.element: ['SupplierCompanyName']
+      @Search: {
+           defaultSearchElement: true,
+           ranking: #HIGH,
+           fuzzinessThreshold: 0.8
+          }
+      @UI.textArrangement: #TEXT_LAST
   key Supplier as SupplierCompany,
+       @UI.textArrangement: #TEXT_LAST
+      @Search: {
+           defaultSearchElement: true,
+           ranking: #MEDIUM,
+           fuzzinessThreshold: 0.8
+          }
   key CompanyCode,
+  @Semantics.text: true
+  @Search: { defaultSearchElement: true, ranking: #LOW }
+  @Search.fuzzinessThreshold: 0.8  
   _Supplier.SupplierName as SupplierCompanyName
 }

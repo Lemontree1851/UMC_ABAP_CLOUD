@@ -107,6 +107,14 @@ CLASS lhc_user IMPLEMENTATION.
        WHERE mail = @lt_user-mail
         INTO TABLE @DATA(lt_assign_salesorg).
       SORT lt_assign_salesorg BY mail.
+
+      SELECT uuid,
+             mail
+        FROM zr_tbc1017
+         FOR ALL ENTRIES IN @lt_user
+       WHERE mail = @lt_user-mail
+        INTO TABLE @DATA(lt_assign_purchorg).
+      SORT lt_assign_purchorg BY mail.
     ENDIF.
 
     LOOP AT lt_user ASSIGNING FIELD-SYMBOL(<lfs_user>).
@@ -123,6 +131,11 @@ CLASS lhc_user IMPLEMENTATION.
       ENDIF.
 
       READ TABLE lt_assign_salesorg TRANSPORTING NO FIELDS WITH KEY mail = <lfs_user>-mail BINARY SEARCH.
+      IF sy-subrc = 0.
+        lv_has_assign = abap_true.
+      ENDIF.
+
+      READ TABLE lt_assign_purchorg TRANSPORTING NO FIELDS WITH KEY mail = <lfs_user>-mail BINARY SEARCH.
       IF sy-subrc = 0.
         lv_has_assign = abap_true.
       ENDIF.
@@ -390,6 +403,90 @@ CLASS lhc_assignsalesorg IMPLEMENTATION.
                           %msg           = new_message_with_text( severity = if_abap_behv_message=>severity-error
                                                                   text     = lv_message )
                           %path          = VALUE #( user-%key-mail = ls_result-mail ) ) TO reported-assignsalesorg.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+  ENDMETHOD.
+
+ENDCLASS.
+
+CLASS lhc_assignpurchorg DEFINITION INHERITING FROM cl_abap_behavior_handler.
+
+  PRIVATE SECTION.
+
+    METHODS validatepurchorg FOR VALIDATE ON SAVE
+      IMPORTING keys FOR assignpurchorg~validatepurchorg.
+
+ENDCLASS.
+
+CLASS lhc_assignpurchorg IMPLEMENTATION.
+
+  METHOD validatepurchorg.
+    DATA: lv_message TYPE string.
+
+    READ ENTITIES OF zr_tbc1004 IN LOCAL MODE
+    ENTITY assignpurchorg
+    FIELDS ( mail purchasingorganization ) WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result).
+
+    IF lt_result IS NOT INITIAL.
+      ##ITAB_DB_SELECT
+      SELECT purchasingorganization,
+             COUNT(*) AS count
+        FROM @lt_result AS a
+       GROUP BY purchasingorganization
+        INTO TABLE @DATA(lt_purchorg_count).
+      SORT lt_purchorg_count BY purchasingorganization.
+
+      SELECT uuid,
+             mail,
+             purchasingorganization
+        FROM zr_tbc1017
+         FOR ALL ENTRIES IN @lt_result
+       WHERE mail = @lt_result-mail
+        INTO TABLE @DATA(lt_db_data).
+      SORT lt_db_data BY purchasingorganization.
+
+      SELECT purchasingorganization
+        FROM i_purchasingorganization WITH PRIVILEGED ACCESS
+         FOR ALL ENTRIES IN @lt_result
+       WHERE purchasingorganization = @lt_result-purchasingorganization
+        INTO TABLE @DATA(lt_purchasingorganization).
+      SORT lt_purchasingorganization BY purchasingorganization.
+
+      LOOP AT lt_result INTO DATA(ls_result).
+        CLEAR lv_message.
+
+        IF ls_result-purchasingorganization IS INITIAL.
+          MESSAGE e006(zbc_001) WITH TEXT-007 INTO lv_message.
+        ELSE.
+          READ TABLE lt_purchasingorganization TRANSPORTING NO FIELDS WITH KEY purchasingorganization = ls_result-purchasingorganization BINARY SEARCH.
+          IF sy-subrc <> 0.
+            MESSAGE e008(zbc_001) WITH TEXT-007 ls_result-purchasingorganization INTO lv_message.
+          ENDIF.
+
+          READ TABLE lt_purchorg_count INTO DATA(ls_purchorg_count) WITH KEY purchasingorganization = ls_result-purchasingorganization BINARY SEARCH.
+          IF sy-subrc = 0.
+            IF ls_purchorg_count-count > 1.
+              MESSAGE e009(zbc_001) WITH TEXT-007 ls_result-purchasingorganization INTO lv_message.
+            ELSE.
+              READ TABLE lt_db_data TRANSPORTING NO FIELDS WITH KEY mail = ls_result-mail
+                                                                    purchasingorganization = ls_result-purchasingorganization BINARY SEARCH.
+              IF sy-subrc = 0.
+                MESSAGE e009(zbc_001) WITH TEXT-007 ls_result-purchasingorganization INTO lv_message.
+              ENDIF.
+            ENDIF.
+          ENDIF.
+        ENDIF.
+
+        IF lv_message IS NOT INITIAL.
+          APPEND VALUE #( %tky = ls_result-%tky ) TO failed-assignpurchorg.
+          APPEND VALUE #( %tky           = ls_result-%tky
+                          %state_area    = 'VALIDATE_PURCHORG'
+                          %element-purchasingorganization = if_abap_behv=>mk-on
+                          %msg           = new_message_with_text( severity = if_abap_behv_message=>severity-error
+                                                                  text     = lv_message )
+                          %path          = VALUE #( user-%key-mail = ls_result-mail ) ) TO reported-assignpurchorg.
         ENDIF.
       ENDLOOP.
     ENDIF.

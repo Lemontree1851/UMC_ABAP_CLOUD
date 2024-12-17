@@ -96,7 +96,8 @@ PROTECTED SECTION.
 ENDCLASS.
 
 
-CLASS zcl_http_purchase_001 IMPLEMENTATION.
+
+CLASS ZCL_HTTP_PURCHASE_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.

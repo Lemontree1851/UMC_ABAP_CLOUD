@@ -9,11 +9,7 @@ CLASS zcl_http_mfgorder_002 DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_HTTP_MFGORDER_002 IMPLEMENTATION.
-
-
+CLASS zcl_http_mfgorder_002 IMPLEMENTATION.
   METHOD if_http_service_extension~handle_request.
     TYPES:
       BEGIN OF ty_req,
@@ -32,6 +28,7 @@ CLASS ZCL_HTTP_MFGORDER_002 IMPLEMENTATION.
         _last_change_date             TYPE string,"ztpp_1015-last_changed_date,
         _last_change_time             TYPE string,"ztpp_1015-last_changed_time,
         _deleted_flag                 TYPE ztpp_1015-delete_flag,
+        _plant                        TYPE ztpp_1015-plant,
       END OF ty_data,
       tt_data TYPE STANDARD TABLE OF ty_data WITH DEFAULT KEY,
 
@@ -75,6 +72,7 @@ CLASS ZCL_HTTP_MFGORDER_002 IMPLEMENTATION.
                a~delete_flag,
                a~last_changed_date,
                a~last_changed_time,
+               a~plant,
                b~manufacturing_order,
                c~product,
                c~mfgorderplannedtotalqty,
@@ -124,6 +122,7 @@ CLASS ZCL_HTTP_MFGORDER_002 IMPLEMENTATION.
       ls_data-_last_change_date             = ls_ztpp_1015-last_changed_date.
       ls_data-_last_change_time             = ls_ztpp_1015-last_changed_time.
       ls_data-_deleted_flag                 = ls_ztpp_1015-delete_flag.
+      ls_data-_plant                        = ls_ztpp_1015-plant.
       APPEND ls_data TO ls_res-_data.
       CLEAR ls_data.
     ENDLOOP.

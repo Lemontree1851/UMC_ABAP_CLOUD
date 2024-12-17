@@ -221,12 +221,20 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
 
 
 * AcceptDate
-      IF <lfs_data>-acceptdate < lv_from
-      OR <lfs_data>-acceptdate > lv_to.
-        MESSAGE s004(zsd_001) WITH <lfs_data>-row TEXT-012 <lfs_data>-acceptdate INTO lv_msg.
-        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
+      IF <lfs_data>-acceptperiodfrom IS NOT INITIAL
+     AND <lfs_data>-acceptperiodto IS NOT INITIAL.
+        IF <lfs_data>-acceptdate < <lfs_data>-acceptperiodfrom
+        OR <lfs_data>-acceptdate > <lfs_data>-acceptperiodto.
+          MESSAGE s004(zsd_001) WITH <lfs_data>-row TEXT-012 <lfs_data>-acceptdate INTO lv_msg.
+          lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
+        ENDIF.
+      ELSE.
+        IF <lfs_data>-acceptdate < lv_from
+        OR <lfs_data>-acceptdate > lv_to.
+          MESSAGE s004(zsd_001) WITH <lfs_data>-row TEXT-012 <lfs_data>-acceptdate INTO lv_msg.
+          lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
+        ENDIF.
       ENDIF.
-
 * Edit output
       IF lv_message IS NOT INITIAL.
         <lfs_data>-status = 'E'.
@@ -317,8 +325,16 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
         ls_ztsd_1003-acceptperiod = <lfs_data>-acceptperiod.
         ls_ztsd_1003-customerpo = <lfs_data>-customerpo.
         ls_ztsd_1003-itemno = <lfs_data>-itemno.
-        ls_ztsd_1003-acceptperiodfrom = lv_from.
-        ls_ztsd_1003-acceptperiodto = lv_to.
+        IF <lfs_data>-acceptperiodfrom IS NOT INITIAL.
+          ls_ztsd_1003-acceptperiodfrom = <lfs_data>-acceptperiodfrom.
+        ELSE.
+          ls_ztsd_1003-acceptperiodfrom = lv_from.
+        ENDIF.
+        IF <lfs_data>-acceptperiodto IS NOT INITIAL.
+          ls_ztsd_1003-acceptperiodto = <lfs_data>-acceptperiodto.
+        ELSE.
+          ls_ztsd_1003-acceptperiodto = lv_to.
+        ENDIF.
         IF <lfs_data>-umcproductcode IS NOT INITIAL.
           ls_ztsd_1003-umcproductcode = <lfs_data>-umcproductcode.
         ELSE.
@@ -475,8 +491,16 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       ls_ztsd_1003-acceptperiod = <lfs_data>-acceptperiod.
       ls_ztsd_1003-customerpo = <lfs_data>-customerpo.
       ls_ztsd_1003-itemno = <lfs_data>-itemno.
-      ls_ztsd_1003-acceptperiodfrom = lv_from.
-      ls_ztsd_1003-acceptperiodto = lv_to.
+      IF <lfs_data>-acceptperiodfrom IS NOT INITIAL.
+        ls_ztsd_1003-acceptperiodfrom = <lfs_data>-acceptperiodfrom.
+      ELSE.
+        ls_ztsd_1003-acceptperiodfrom = lv_from.
+      ENDIF.
+      IF <lfs_data>-acceptperiodto IS NOT INITIAL.
+        ls_ztsd_1003-acceptperiodto = <lfs_data>-acceptperiodto.
+      ELSE.
+        ls_ztsd_1003-acceptperiodto = lv_to.
+      ENDIF.
       IF <lfs_data>-umcproductcode IS NOT INITIAL.
         ls_ztsd_1003-umcproductcode = <lfs_data>-umcproductcode.
       ELSE.
@@ -630,7 +654,7 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
 
       <lfs_data>-customer = |{ <lfs_data>-customer ALPHA = IN }|.
     ENDLOOP.
-    SELECT *               "#EC CI_ALL_FIELDS_NEEDED
+    SELECT *                                  "#EC CI_ALL_FIELDS_NEEDED
       FROM ztsd_1003
       FOR ALL ENTRIES IN @ct_data
      WHERE salesorganization = @ct_data-salesorganization
@@ -690,8 +714,16 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       ls_ztsd_1003-acceptperiod = <lfs_data>-acceptperiod.
       ls_ztsd_1003-customerpo = <lfs_data>-customerpo.
       ls_ztsd_1003-itemno = <lfs_data>-itemno.
-      ls_ztsd_1003-acceptperiodfrom = lv_from.
-      ls_ztsd_1003-acceptperiodto = lv_to.
+      IF <lfs_data>-acceptperiodfrom IS NOT INITIAL.
+        ls_ztsd_1003-acceptperiodfrom = <lfs_data>-acceptperiodfrom.
+      ELSE.
+        ls_ztsd_1003-acceptperiodfrom = lv_from.
+      ENDIF.
+      IF <lfs_data>-acceptperiodto IS NOT INITIAL.
+        ls_ztsd_1003-acceptperiodto = <lfs_data>-acceptperiodto.
+      ELSE.
+        ls_ztsd_1003-acceptperiodto = lv_to.
+      ENDIF.
       IF <lfs_data>-umcproductcode IS NOT INITIAL.
         ls_ztsd_1003-umcproductcode = <lfs_data>-umcproductcode.
       ELSE.

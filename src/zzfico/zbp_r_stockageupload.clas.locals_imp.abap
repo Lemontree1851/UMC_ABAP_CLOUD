@@ -126,6 +126,13 @@ CLASS lhc_stageupload IMPLEMENTATION.
       MODIFY ct_data FROM ls_data_t TRANSPORTING material.
     ENDLOOP.
 
+    SELECT product AS material                "#EC CI_FAE_LINES_ENSURED
+    FROM i_product WITH PRIVILEGED ACCESS
+    FOR ALL ENTRIES IN @lt_matnr
+    WHERE product = @lt_matnr-material
+    INTO TABLE @DATA(lt_productbasic).
+    SORT lt_productbasic BY material.
+
     SELECT plant, product AS material         "#EC CI_FAE_LINES_ENSURED
     FROM i_productplantbasic WITH PRIVILEGED ACCESS
     FOR ALL ENTRIES IN @lt_matnr
@@ -253,30 +260,42 @@ calendaryear = <lfs_data>-calendaryear calendarmonth = <lfs_data>-calendarmonth 
           MESSAGE s039(zfico_001) INTO lv_msg WITH <lfs_data>-companycode.
           lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
         ENDIF.
+        READ TABLE lt_ledgercompanycodecrcyrole INTO DATA(ls_ledgercompanycodecrcyrole1) WITH KEY valuationarea = <lfs_data>-companycode
+         ledger = <lfs_data>-ledger.
+        IF sy-subrc <> 0.
+          MESSAGE s037(zfico_001) INTO lv_msg WITH <lfs_data>-ledger.
+          lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
+        ENDIF.
       ENDIF.
 
-      IF <lfs_data>-plant IS NOT INITIAL.
+      IF <lfs_data>-plant IS NOT INITIAL AND <lfs_data>-inventorytype NE 'B'.
         READ TABLE lt_plant INTO DATA(ls_plant) WITH KEY plant = <lfs_data>-plant BINARY SEARCH.
         IF sy-subrc <> 0.
           MESSAGE s007(zfico_001) INTO lv_msg WITH <lfs_data>-plant.
           lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
         ELSE.
 
-          READ TABLE lt_ledgercompanycodecrcyrole INTO DATA(ls_ledgercompanycodecrcyrole) WITH KEY valuationarea = ls_plant-valuationarea
-          ledger = <lfs_data>-ledger.
-          IF sy-subrc <> 0.
-            MESSAGE s037(zfico_001) INTO lv_msg WITH <lfs_data>-ledger.
-            lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
-          ENDIF.
+*          READ TABLE lt_ledgercompanycodecrcyrole INTO DATA(ls_ledgercompanycodecrcyrole) WITH KEY valuationarea = ls_plant-valuationarea
+*          ledger = <lfs_data>-ledger.
+*          IF sy-subrc <> 0.
+*            MESSAGE s037(zfico_001) INTO lv_msg WITH <lfs_data>-ledger.
+*            lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
+*          ENDIF.
         ENDIF.
       ENDIF.
-
-      READ TABLE lt_productplantbasic TRANSPORTING NO FIELDS WITH KEY plant = <lfs_data>-plant material = <lfs_data>-material BINARY SEARCH.
-      IF sy-subrc <> 0.
-        MESSAGE s008(zfico_001) INTO lv_msg WITH |{ <lfs_data>-material ALPHA = OUT }| <lfs_data>-plant.
-        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
+      IF <lfs_data>-inventorytype NE 'B'.
+        READ TABLE lt_productplantbasic TRANSPORTING NO FIELDS WITH KEY plant = <lfs_data>-plant material = <lfs_data>-material BINARY SEARCH.
+        IF sy-subrc <> 0.
+          MESSAGE s008(zfico_001) INTO lv_msg WITH |{ <lfs_data>-material ALPHA = OUT }| <lfs_data>-plant.
+          lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
+        ENDIF.
+      ELSE.
+        READ TABLE lt_productbasic TRANSPORTING NO FIELDS WITH KEY material = <lfs_data>-material BINARY SEARCH.
+        IF sy-subrc <> 0.
+          MESSAGE s044(zfico_001) INTO lv_msg WITH |{ <lfs_data>-material ALPHA = OUT }|.
+          lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
+        ENDIF.
       ENDIF.
-
 
 
       IF lv_message IS NOT INITIAL.

@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zzcl_dtimp_get_status IMPLEMENTATION.
+CLASS ZZCL_DTIMP_GET_STATUS IMPLEMENTATION.
 
 
   METHOD if_sadl_exit_calc_element_read~calculate.

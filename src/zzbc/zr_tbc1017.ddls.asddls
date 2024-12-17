@@ -1,34 +1,33 @@
 @AbapCatalog.viewEnhancementCategory: [#NONE]
 @AccessControl.authorizationCheck: #NOT_REQUIRED
-@EndUserText.label: 'Permission Access Role <-> Access Btn Table'
+@EndUserText.label: 'Permission Access User <-> PurchOrgTable'
 @Metadata.ignorePropagatedAnnotations: true
 @ObjectModel.usageType:{
     serviceQuality: #X,
     sizeCategory: #S,
     dataClass: #MIXED
 }
-define root view entity ZR_TBC1017
-  as select from ztbc_1016 as _AccessBtn
-    inner join   ztbc_1014              on ztbc_1014.function_id = _AccessBtn.function_id
-    inner join   ztbc_1015 as _Function on  _Function.function_id = _AccessBtn.function_id
-                                        and _Function.access_id   = _AccessBtn.access_id
+define view entity ZR_TBC1017
+  as select from ztbc_1017                as _AssignPurchOrg
+    inner join   I_PurchasingOrganization as _PurchasingOrganization on _PurchasingOrganization.PurchasingOrganization = _AssignPurchOrg.purchasing_organization
+
+  association to parent ZR_TBC1004 as _User on $projection.Mail = _User.Mail
 {
-  key _AccessBtn.role_id               as RoleId,
-  key _AccessBtn.access_id             as AccessId,
-      _AccessBtn.function_id           as FunctionId,
+  key _AssignPurchOrg.uuid                    as Uuid,
+  key _AssignPurchOrg.mail                    as Mail,
+      _AssignPurchOrg.purchasing_organization as PurchasingOrganization,
       @Semantics.user.createdBy: true
-      _AccessBtn.created_by            as CreatedBy,
+      _AssignPurchOrg.created_by              as CreatedBy,
       @Semantics.systemDateTime.createdAt: true
-      _AccessBtn.created_at            as CreatedAt,
+      _AssignPurchOrg.created_at              as CreatedAt,
       @Semantics.user.lastChangedBy: true
-      _AccessBtn.last_changed_by       as LastChangedBy,
+      _AssignPurchOrg.last_changed_by         as LastChangedBy,
       @Semantics.systemDateTime.lastChangedAt: true
-      _AccessBtn.last_changed_at       as LastChangedAt,
+      _AssignPurchOrg.last_changed_at         as LastChangedAt,
       @Semantics.systemDateTime.localInstanceLastChangedAt: true
-      _AccessBtn.local_last_changed_at as LocalLastChangedAt,
+      _AssignPurchOrg.local_last_changed_at   as LocalLastChangedAt,
 
-      _Function.access_name            as AccessName,
+      _PurchasingOrganization.PurchasingOrganizationName,
 
-      ztbc_1014.design_file_id         as DesignFileId,
-      ztbc_1014.function_name          as FunctionName
+      _User
 }

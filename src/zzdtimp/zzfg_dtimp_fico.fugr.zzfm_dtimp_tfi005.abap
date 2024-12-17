@@ -60,6 +60,14 @@ FUNCTION zzfm_dtimp_tfi005.
     ls_run-paymentmethod                       = ls_data-paymentmethod                .
     ls_run-paymentterms                        = ls_data-paymentterms                 .
 
+    ls_run-amountincompanycodecurrency = zzcl_common_utils=>conversion_amount(
+                                        iv_alpha = 'IN'
+                                        iv_currency = ls_run-companycodecurrency
+                                        iv_input = ls_run-amountincompanycodecurrency ).
+    ls_data-amountincompanycodecurrency = zzcl_common_utils=>conversion_amount(
+                                        iv_alpha = 'IN'
+                                        iv_currency = ls_data-companycodecurrency
+                                        iv_input = ls_data-amountincompanycodecurrency ).
     "check logic
     "IF ls_data-zid IS INITIAL.
     "  MESSAGE s006(zbc_001) WITH TEXT-001 INTO <line>-('Message').
@@ -73,7 +81,7 @@ FUNCTION zzfm_dtimp_tfi005.
 
       DATA: lv_msg     TYPE string.
       DATA lv_timestamp TYPE tzntstmpl.
-
+      DATA lv_bpbankaccountinternalid(4) TYPE c.
 
       CLEAR lv_message.
       DATA: lt_je  TYPE TABLE FOR ACTION IMPORT i_journalentrytp~change.
@@ -85,8 +93,23 @@ FUNCTION zzfm_dtimp_tfi005.
       DATA ls_aparitem LIKE LINE OF lt_aparitem.
       DATA ls_aparitem_control LIKE ls_aparitem-%control.
       ls_aparitem_control-paymentterms = if_abap_behv=>mk-on.
+
       IF ls_data-paymentmethod_a NE 'A'.
         ls_aparitem_control-bpbankaccountinternalid = if_abap_behv=>mk-on.
+        CLEAR lv_bpbankaccountinternalid.
+      ELSE.
+        DATA:lv_supplier TYPE kunnr.
+        lv_supplier = |{ ls_data-supplier ALPHA = IN }|.
+        SELECT SINGLE businesspartner
+        FROM i_businesspartnerbank
+        WITH PRIVILEGED ACCESS
+        WHERE businesspartner = @lv_supplier
+        AND bankidentification = '000A'
+        INTO @DATA(ls_businesspartnerbank).
+        IF sy-subrc = 0.
+          ls_aparitem_control-bpbankaccountinternalid = if_abap_behv=>mk-on.
+          lv_bpbankaccountinternalid = '000A'.
+        ENDIF.
       ENDIF.
 
 * Test Data
@@ -97,7 +120,7 @@ FUNCTION zzfm_dtimp_tfi005.
        _aparitems = VALUE #( (
        glaccountlineitem = ls_data-accountingdocumentitem
        paymentterms = ls_data-accountingclerkphonenumber
-       bpbankaccountinternalid = ''
+       bpbankaccountinternalid = lv_bpbankaccountinternalid
        %control = ls_aparitem_control )
        )
        ) .
@@ -170,8 +193,9 @@ FUNCTION zzfm_dtimp_tfi005.
     ENDIF.
     <line>-('Type') = ls_data-status.
     <line>-('Message') = ls_data-message.
-    ls_run-message =  |{ <line>-('Message') }{ '/' }{ ls_run-message }|.
-
+    IF ls_data-status NE 'S'.
+      ls_run-message =  |{ <line>-('Message') }{ '/' }{ ls_run-message }|.
+    ENDIF.
   ENDLOOP.
   IF sy-subrc = 0 .
 

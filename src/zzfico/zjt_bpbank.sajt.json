@@ -1,7 +1,7 @@
 {
   "formatVersion": "1",
   "header": {
-    "description": "Bp Bank",
+    "description": "サプライヤ銀行詳細ID更新（000A対象）",
     "originalLanguage": "en",
     "abapLanguageVersion": "cloudDevelopment"
   },

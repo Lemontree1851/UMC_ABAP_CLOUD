@@ -12,7 +12,7 @@ define view entity ZR_TBC1007
     inner join   ztbc_1005 on ztbc_1005.role_id = _AssignRole.role_id
 
   association        to parent ZR_TBC1004 as _User              on $projection.Mail = _User.Mail
-  association [0..*] to ZR_TBC1017        as _UserRoleAccessBtn on $projection.RoleId = _UserRoleAccessBtn.RoleId
+  association [0..*] to ZR_TBC1016_1      as _UserRoleAccessBtn on $projection.RoleId = _UserRoleAccessBtn.RoleId
 {
   key _AssignRole.uuid                  as Uuid,
   key _AssignRole.mail                  as Mail,

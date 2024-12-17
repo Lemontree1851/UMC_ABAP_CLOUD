@@ -17,7 +17,11 @@ CLASS zcl_vmi_processing_auto DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_vmi_processing_auto IMPLEMENTATION.
+
+
+CLASS ZCL_VMI_PROCESSING_AUTO IMPLEMENTATION.
+
+
   METHOD execute.
 
     TYPES:

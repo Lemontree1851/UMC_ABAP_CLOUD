@@ -35,7 +35,11 @@ CLASS zcl_get_inv_aging DEFINITION
       lc_option_eq             TYPE c LENGTH 2 VALUE 'EQ'.
 ENDCLASS.
 
-CLASS zcl_get_inv_aging IMPLEMENTATION.
+
+
+CLASS ZCL_GET_INV_AGING IMPLEMENTATION.
+
+
   METHOD if_sadl_exit_calc_element_read~calculate.
     DATA:
       lt_original_data               TYPE STANDARD TABLE OF zc_inv_aging WITH DEFAULT KEY,
@@ -228,8 +232,8 @@ CLASS zcl_get_inv_aging IMPLEMENTATION.
     ct_calculated_data = CORRESPONDING #( lt_original_data ).
   ENDMETHOD.
 
+
   METHOD if_sadl_exit_calc_element_read~get_calculation_info.
 
   ENDMETHOD.
-
 ENDCLASS.

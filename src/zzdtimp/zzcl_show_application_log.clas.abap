@@ -12,7 +12,8 @@ ENDCLASS.
 
 
 
-CLASS zzcl_show_application_log IMPLEMENTATION.
+CLASS ZZCL_SHOW_APPLICATION_LOG IMPLEMENTATION.
+
 
   METHOD if_rap_query_provider~select.
 
@@ -89,5 +90,4 @@ CLASS zzcl_show_application_log IMPLEMENTATION.
     ENDIF.
 
   ENDMETHOD.
-
 ENDCLASS.

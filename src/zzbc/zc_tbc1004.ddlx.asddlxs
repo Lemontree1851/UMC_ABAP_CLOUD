@@ -40,10 +40,17 @@ annotate view ZC_TBC1004 with
         targetElement: '_AssignSalesOrg'
       },
       {
+        id: 'idLineItemPurchOrg' ,
+        type : #LINEITEM_REFERENCE ,
+        label : 'Assign Purchasing Organization' ,
+        position: 50 ,
+        targetElement: '_AssignPurchOrg'
+      },
+      {
         id: 'idLineItemRole' ,
         type : #LINEITEM_REFERENCE ,
         label : 'Assign Role' ,
-        position: 50 ,
+        position: 60 ,
         targetElement: '_AssignRole'
       }
   ]

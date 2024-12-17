@@ -44,7 +44,6 @@ CLASS lhc_paymethod DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING cs_run  TYPE ty_zr_paymethod_sum OPTIONAL
       EXPORTING ct_data TYPE lty_zr_paymethod.
     METHODS check  CHANGING ct_data TYPE lty_zr_paymethod_sum.
-    METHODS check1  CHANGING ct_data TYPE lty_zr_paymethod_sum.
     METHODS execute  CHANGING ct_data TYPE lty_zr_paymethod_sum.
     METHODS export IMPORTING ct_data              TYPE lty_zr_paymethod_sum
                    RETURNING VALUE(rv_recorduuid) TYPE sysuuid_c36.
@@ -64,11 +63,6 @@ CLASS lhc_paymethod DEFINITION INHERITING FROM cl_abap_behavior_handler.
                                                  cs_data TYPE zr_paymethod
                                        RAISING   zzcx_custom_exception.
 
-    METHODS modifyjournalentrytpsingle1 IMPORTING cv_test TYPE c
-                                                  cv_uuid TYPE sysuuid_x16 OPTIONAL
-                                        CHANGING  cs_run  TYPE ty_zr_paymethod_sum
-                                                  cs_data TYPE zr_paymethod
-                                        RAISING   zzcx_custom_exception.
     METHODS get_message IMPORTING io_message    TYPE REF TO if_abap_behv_message
                         RETURNING VALUE(rv_msg) TYPE string.
     METHODS execute1  CHANGING ct_data TYPE lty_zr_paymethod_sum
@@ -146,8 +140,6 @@ CLASS lhc_paymethod IMPLEMENTATION.
       ENDTRY.
 
 
-
-
     ENDIF.
 
   ENDMETHOD.
@@ -181,11 +173,7 @@ CLASS lhc_paymethod IMPLEMENTATION.
               DATA(lv_e) = le_rrr->get_longtext( ).
           ENDTRY.
         WHEN 'EXCUTE'.
-          "execute( CHANGING ct_data = lt_request ).
 
-          " APPEND VALUE #( %cid = key-%cid ) TO failed-paymethod.
-          "APPEND VALUE #( %cid = key-%cid
-          "                %msg = new_message_with_text( text = 'Error' ) ) TO reported-paymethod.
           TRY.
               execute( CHANGING ct_data = lt_request ).
             CATCH zzcx_custom_exception.
@@ -212,8 +200,9 @@ CLASS lhc_paymethod IMPLEMENTATION.
       DATA(lv_json) = /ui2/cl_json=>serialize( data = lt_request ).
       IF lv_event = 'EXPORT' .
         APPEND VALUE #( %cid   = key-%cid
-                        %param = VALUE #( event = lv_event
-                                      zzkey = lv_json ) ) TO result.
+                       %param = VALUE #( event = lv_event
+                                         zzkey = lv_json
+                                         recorduuid = lv_recorduuid ) ) TO result.
       ELSE.
         APPEND VALUE #( %cid   = key-%cid
                         %param = VALUE #( event = lv_event
@@ -275,15 +264,6 @@ CLASS lhc_paymethod IMPLEMENTATION.
       INTO CORRESPONDING FIELDS OF TABLE @ct_data.
     ENDIF.
 
-*    LOOP AT ct_data INTO DATA(cs_data).
-*      cs_data-amountincompanycodecurrency = zzcl_common_utils=>conversion_amount(
-*                                      iv_alpha = 'OUT'
-*                                      iv_currency = cs_data-companycodecurrency
-*                                      iv_input = cs_data-amountincompanycodecurrency ).
-*      MODIFY ct_data FROM cs_data TRANSPORTING amountincompanycodecurrency.
-*    ENDLOOP.
-
-
   ENDMETHOD.
   METHOD search.
 
@@ -291,14 +271,6 @@ CLASS lhc_paymethod IMPLEMENTATION.
     DATA:lt_sum TYPE lty_zr_paymethod_sum.
     DATA:lv_month(10) TYPE c.
     DATA:lt_data TYPE lty_zr_paymethod.
-
-
-    IF lr_companycode IS INITIAL OR lr_postdate IS INITIAL.
-
-      "RAISE EXCEPTION TYPE zzcx_custom_exception.
-
-    ENDIF.
-
 
     getdata( IMPORTING ct_data = lt_data ).
 
@@ -376,29 +348,7 @@ CLASS lhc_paymethod IMPLEMENTATION.
           lv_d = ls_paymentterms-cashdiscount1dayofmonth.
         ENDIF.
         <fs_sum>-conditiondate = lv_next_start+0(6) &&  lv_d.
-*        lv_month  = <fs_sum>-lastdate+4(2).
-*        lv_month += ls_paymentterms-bslndtecalcaddlmnths.
-*        lv_month += ls_paymentterms-cashdiscount1additionalmonths.
-*
-*        DATA:lv_num TYPE i.
-*        DATA:lv_rest TYPE i.
-*        DATA:lv_y TYPE i.
-*        DATA:lv_d(2) TYPE c.
-*        DATA:lv_m TYPE i.
-*        lv_num =  lv_month / 12.
-*        lv_rest = lv_month - 12 * lv_num.
-*        lv_y = <fs_sum>-lastdate+0(4) + lv_num.
-*        lv_m = lv_rest + 1.
-*        IF ls_paymentterms-cashdiscount1dayofmonth < 10.
-*          lv_d = '0' && ls_paymentterms-cashdiscount1dayofmonth.
-*        ELSE.
-*          lv_d = ls_paymentterms-cashdiscount1dayofmonth.
-*        ENDIF.
-*        IF lv_m < 10.
-*          <fs_sum>-conditiondate = lv_y && '0' && lv_m && lv_d.
-*        ELSE.
-*          <fs_sum>-conditiondate = lv_y && lv_m && lv_d.
-*        ENDIF.
+
       ENDIF.
       <fs_sum>-supplier = |{ <fs_sum>-supplier ALPHA = OUT }| .
 
@@ -480,9 +430,14 @@ CLASS lhc_paymethod IMPLEMENTATION.
 
       CLEAR cs_data-message.
       modifyjournalentrytp( EXPORTING cv_test = '' cv_uuid = lv_uuid CHANGING cs_run = cs_data  ct_data = lt_data ).
-      LOOP AT lt_data INTO DATA(ls_data).
+      "只拼接非成功消息
+      LOOP AT lt_data INTO DATA(ls_data) WHERE status NE 'S'.
         cs_data-message =  |{ cs_data-message }{ '/' }{ ls_data-message }|.
       ENDLOOP.
+      if sy-subrc <> 0.
+      "如果全对
+      MESSAGE s043(zfico_001) INTO cs_data-message .
+      ENDIF.
       READ TABLE lt_data TRANSPORTING NO FIELDS WITH KEY status = 'E'.
       IF sy-subrc = 0.
         cs_data-status  = 'E'.
@@ -593,15 +548,6 @@ CLASS lhc_paymethod IMPLEMENTATION.
             MESSAGE s026(zfico_001) WITH ls_data-fiscalyear ls_data-companycode ls_data-accountingdocument INTO lv_msg .
             lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
 
-            " COMMIT ENTITIES BEGIN
-            "RESPONSE OF i_journalentrytp
-            "FAILED DATA(lt_commit_failed)
-            "REPORTED DATA(lt_commit_reported).
-            " COMMIT ENTITIES END.
-            "登録成功しました。
-            " MESSAGE s080(zpp_001) WITH 'BOM' INTO lv_message.
-            " cs_data-status  = 'S'.
-            " cs_data-message = lv_message.
           ENDIF.
 
         ENDIF.
@@ -618,6 +564,7 @@ CLASS lhc_paymethod IMPLEMENTATION.
     ENDLOOP.
 
   ENDMETHOD.
+
   METHOD check.
     DATA:lt_data TYPE lty_zr_paymethod.
     DATA lv_timestamp TYPE tzntstmpl.
@@ -659,66 +606,7 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
     ENDLOOP.
 
   ENDMETHOD.
-  METHOD check1.
-    DATA:lt_data TYPE lty_zr_paymethod.
-    DATA lv_timestamp TYPE tzntstmpl.
-    DATA:ls_zzs_dtimp_tbc1001 TYPE zzs_dtimp_tfi005.
-    DATA:lt_zzs_dtimp_tbc1001 TYPE STANDARD TABLE OF zzs_dtimp_tfi005.
-    DATA:lt_job_exp TYPE STANDARD TABLE OF zzs_dtimp_tfi005.
-    DATA:lv_func_name TYPE zze_functionname.
-    DATA:lv_struc_name TYPE zze_structurename.
-    DATA:lv_message TYPE string.
-    DATA: lt_ptab TYPE abap_func_parmbind_tab,
-          lo_data TYPE REF TO data ##NEEDED.
-    DATA:mo_table           TYPE REF TO data.
-    DATA(lv_has_error) = abap_false.
-    lv_func_name = 'ZZFM_DTIMP_TFI005'.
-    lv_struc_name = 'ZZS_DTIMP_TFI005'.
-    LOOP AT ct_data INTO DATA(cs_data).
-      CLEAR lv_message.
 
-      cs_data-supplier = |{ cs_data-supplier ALPHA = IN }| .
-      getdata( EXPORTING cs_run = cs_data IMPORTING ct_data = lt_data ).
-      LOOP AT lt_data INTO DATA(ls_data).
-        CLEAR ls_zzs_dtimp_tbc1001.
-        MOVE-CORRESPONDING ls_data TO ls_zzs_dtimp_tbc1001.
-        ls_zzs_dtimp_tbc1001-accountingclerkphonenumber  = cs_data-accountingclerkphonenumber.
-        APPEND ls_zzs_dtimp_tbc1001 TO lt_zzs_dtimp_tbc1001.
-      ENDLOOP.
-      CREATE DATA mo_table TYPE TABLE OF (lv_struc_name).
-      mo_table->* = lt_zzs_dtimp_tbc1001.
-
-      lt_ptab = VALUE #( ( name  = 'IO_DATA'
-                     kind  = abap_func_exporting
-                     value = REF #( mo_table ) )
-                   ( name  = 'IV_STRUC'
-                     kind  = abap_func_exporting
-                     value = REF #( lv_struc_name ) )
-                   ( name  = 'IO_JOB'
-                     kind  = abap_func_exporting
-                     value = REF #( 'X' ) )
-                   ( name  = 'EO_DATA'
-                     kind  = abap_func_importing
-                     value = REF #( lo_data ) ) ).
-      TRY.
-          CALL FUNCTION lv_func_name PARAMETER-TABLE lt_ptab.
-        CATCH cx_root INTO DATA(le_root).
-          lv_message = le_root->get_longtext( ).
-          " handle exception
-          lv_has_error = abap_true.
-      ENDTRY.
-      IF lv_message IS INITIAL.
-        lt_job_exp = lo_data->*.
-        LOOP AT lt_job_exp INTO DATA(ls_job_exp).
-          cs_data-message =  |{ cs_data-message }{ '/' }{ ls_job_exp-message }|.
-        ENDLOOP.
-      ELSE.
-        cs_data-message = lv_message.
-      ENDIF.
-      MODIFY ct_data FROM cs_data TRANSPORTING status message.
-    ENDLOOP.
-
-  ENDMETHOD.
   METHOD job.
     DATA:lt_data TYPE lty_zr_paymethod.
     DATA:lv_file_uuid TYPE sysuuid_x16.
@@ -749,7 +637,6 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
           "handle exception
       ENDTRY.
 
-
       LOOP AT lt_data INTO DATA(ls_data).
         ls_data-accountingclerkphonenumber = cs_data-accountingclerkphonenumber.
         ls_data-uuid = lv_uuid.
@@ -758,10 +645,7 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
 
       jobschd( CHANGING cs_run = cs_data  ct_data = lt_data file_uuid = lv_file_uuid ).
 
-      "LOOP AT lt_data INTO ls_data.
-
-      "ENDLOOP.
-      cs_data-message =  'Job' && lv_file_uuid && 'scheduled'.
+      cs_data-message =  'Job' && ` ` && lv_file_uuid && ` ` &&  'scheduled'.
       MODIFY ct_data FROM cs_data TRANSPORTING status message.
     ENDLOOP.
 
@@ -793,9 +677,10 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
 
     DATA lt_export TYPE lty_export_t.
     DATA lv_timestamp TYPE tzntstmpl.
-    DATA: lv_message TYPE string.
+    DATA:lv_message TYPE string.
     DATA:lv_month(10) TYPE c.
-
+    DATA:lv_date TYPE bldat.
+    DATA:lv_time TYPE uzeit.
     SELECT
         paymentterms,
         paymenttermsvaliditymonthday,"????
@@ -833,7 +718,11 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
         ls_export-conditiondate = lv_next_start+0(6) &&  lv_d.
 
       ENDIF.
-      MODIFY  lt_export FROM  ls_export TRANSPORTING conditiondate paymentmethod_a.
+      ls_export-amountincompanycodecurrency = zzcl_common_utils=>conversion_amount(
+                                    iv_alpha = 'OUT'
+                                    iv_currency = ls_export-companycodecurrency
+                                    iv_input = ls_export-amountincompanycodecurrency ).
+      MODIFY  lt_export FROM  ls_export TRANSPORTING conditiondate paymentmethod_a amountincompanycodecurrency.
 
     ENDLOOP.
 
@@ -871,10 +760,18 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
       ENDTRY.
       GET TIME STAMP FIELD lv_timestamp.
 
+      TRY.
+          DATA(lv_timezone) = cl_abap_context_info=>get_user_time_zone( ).
+          "时间戳格式转换成日期格式
+          CONVERT TIME STAMP lv_timestamp TIME ZONE lv_timezone INTO DATE lv_date TIME lv_time .
+        CATCH cx_abap_context_info_error INTO DATA(e11) ##NO_HANDLER.
+          "handle exception
+      ENDTRY.
+
       INSERT INTO zzt_dtimp_files VALUES @( VALUE #( uuid_file = lv_uuid
                                                     uuid_conf     = ls_file_conf-uuidconf
                                                     file_mime_type   = |application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|
-                                                    file_name   = |ChangeList.xlsx|
+                                                    file_name   = |FICO-015支払方法変更_{ lv_date }_{ lv_time }|
                                                     file_content    = lv_file
                                                     job_name  = lv_job_name
                                                     job_count = lv_job_count
@@ -900,27 +797,20 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
             IMPORTING
               ev_jobname             = lv_job_name
               ev_jobcount            = lv_job_count ).
-
+          INSERT INTO zzt_dtimp_start VALUES @( VALUE #( uuid_file       = lv_uuid
+                                                         created_by      = sy-uname
+                                                         created_at      = lv_timestamp
+                                                         last_changed_by = sy-uname
+                                                         last_changed_at = lv_timestamp
+                                                         local_last_changed_at = lv_timestamp ) ).
         CATCH cx_apj_rt INTO DATA(lo_apj_rt) ##NO_HANDLER.
-          "RAISE EXCEPTION TYPE zzcx_custom_exception.
-          "'lv_message = lo_apj_rt->get_text( ).
 
-          "  APPEND VALUE #( uuidfile = <lfs_file>-uuidfile
-          "                 %msg     = new_message_with_text( severity = if_abap_behv_message=>severity-error
-          "                                                   text     = lo_apj_rt->bapimsg-message ) )
-          "     TO reported-files.
 
         CATCH cx_root INTO DATA(lo_root) ##NO_HANDLER.
-          "RAISE EXCEPTION TYPE zzcx_custom_exception.
-          "lv_message = lo_root->get_text( ).
 
-          "  APPEND VALUE #(  uuidfile = <lfs_file>-uuidfile
-          "                   %msg     = new_message_with_text( severity = if_abap_behv_message=>severity-error
-          "                                                     text     = |Exception: { lo_root->get_text(  ) }| ) )
-          "      TO reported-files.
       ENDTRY.
 
-      file_uuid = lv_uuid.
+      file_uuid = lv_job_name.
 
     ENDIF.
   ENDMETHOD.
@@ -929,130 +819,29 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
     DATA:lv_msg TYPE string.
     LOOP AT ct_data INTO DATA(cs_data).
 
-      IF cs_run-accountingclerkphonenumber = cs_data-paymentterms .
-        CLEAR lv_msg.
-        MESSAGE s025(zfico_001) WITH cs_data-fiscalyear cs_data-companycode cs_data-accountingdocument INTO lv_msg .
-        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
-        cs_data-message = lv_message.
-      ELSE.
+*      IF cs_run-accountingclerkphonenumber = cs_data-paymentterms .
+*        CLEAR lv_msg.
+*        MESSAGE s025(zfico_001) WITH cs_data-fiscalyear cs_data-companycode cs_data-accountingdocument INTO lv_msg .
+*        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+*        cs_data-message = lv_message.
+*      ELSE.
 
-        TRY.
-            modifyjournalentrytpsingle( EXPORTING cv_test = cv_test  CHANGING cs_run = cs_run  cs_data = cs_data ).
-          CATCH zzcx_custom_exception INTO DATA(e) ##NO_HANDLER.
-            " handle exception
-            " handle exception
-        ENDTRY.
-      ENDIF.
+      TRY.
+          modifyjournalentrytpsingle( EXPORTING cv_test = cv_test  CHANGING cs_run = cs_run  cs_data = cs_data ).
+        CATCH zzcx_custom_exception INTO DATA(e) ##NO_HANDLER.
+
+      ENDTRY.
+*      ENDIF.
       MODIFY ct_data FROM cs_data TRANSPORTING status message.
     ENDLOOP.
 
   ENDMETHOD.
-  METHOD modifyjournalentrytpsingle1.
-    DATA: lv_message TYPE string,
-          lv_msg     TYPE string.
-    DATA lv_timestamp TYPE tzntstmpl.
 
-
-    CLEAR lv_message.
-*    DATA: lt_je  TYPE TABLE FOR ACTION IMPORT i_journalentrytp~change.
-*    APPEND INITIAL LINE TO lt_je ASSIGNING FIELD-SYMBOL(<je>).
-** APAR Item Control
-*    DATA lt_aparitem LIKE <je>-%param-_aparitems.
-*    DATA ls_aparitem LIKE LINE OF lt_aparitem.
-*    DATA ls_aparitem_control LIKE ls_aparitem-%control.
-*    ls_aparitem_control-paymentterms = if_abap_behv=>mk-on.
-*    IF cs_data-paymentmethod_a NE 'A'.
-*      ls_aparitem_control-bpbankaccountinternalid = if_abap_behv=>mk-on.
-*    ENDIF.
-** Test Data
-*    <je>-accountingdocument = cs_data-accountingdocument.
-*    <je>-fiscalyear = cs_data-fiscalyear.
-*    <je>-companycode = cs_data-companycode.
-*    <je>-%param = VALUE #(
-*     _aparitems = VALUE #( (
-*     glaccountlineitem = cs_data-accountingdocumentitem
-*     paymentterms = cs_run-accountingclerkphonenumber
-*     bpbankaccountinternalid = ''
-*     %control = ls_aparitem_control )
-*     )
-*     ) .
-*    MODIFY ENTITIES OF i_journalentrytp
-*     ENTITY journalentry
-*     EXECUTE change FROM lt_je
-*     FAILED DATA(ls_failed)
-*     REPORTED DATA(ls_reported)
-*     MAPPED DATA(ls_mapped).
-*
-*    IF ls_failed IS NOT INITIAL.
-*      LOOP AT ls_reported-journalentry INTO DATA(ls_reported_journalentry).
-*        CLEAR lv_msg.
-*        lv_msg = get_message( ls_reported_journalentry-%msg ).
-*        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
-*      ENDLOOP.
-*      cs_data-status  = 'E'.
-*      cs_data-message = lv_message.
-*      "RAISE EXCEPTION TYPE zzcx_custom_exception.
-*    ELSE.
-*      MESSAGE s026(zfico_001) WITH cs_data-fiscalyear cs_data-companycode cs_data-accountingdocument INTO lv_message .
-*      cs_data-status  = 'S'.
-*      cs_data-message = lv_message.
-*    ENDIF.
-
-    DATA:ls_zzs_dtimp_tfi005 TYPE zzs_dtimp_tfi005.
-    MOVE-CORRESPONDING  cs_data TO ls_zzs_dtimp_tfi005.
-    ls_zzs_dtimp_tfi005-accountingclerkphonenumber = cs_run-accountingclerkphonenumber.
-
-    TRY.
-
-        CALL FUNCTION 'ZZFM_PAYMENTMETHOD'
-          EXPORTING
-            io_data = ls_zzs_dtimp_tfi005
-          IMPORTING
-            eo_data = ls_zzs_dtimp_tfi005.
-      CATCH cx_root INTO DATA(e) ##NO_HANDLER.
-        " handle exception
-
-    ENDTRY.
-
-    TRY.
-        DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
-      CATCH cx_uuid_error INTO DATA(e1) ##NO_HANDLER.
-        "handle exception
-    ENDTRY.
-    GET TIME STAMP FIELD lv_timestamp.
-    INSERT INTO ztfi_1005 VALUES  @( VALUE #(
-                                          uuid                        = lv_uuid
-                                          accountingdocument          = cs_data-accountingdocument
-                                          fiscalyear                  = cs_data-fiscalyear
-                                          accountingdocumentitem      = cs_data-accountingdocumentitem
-                                          postingdate                 = cs_data-postingdate
-                                          amountincompanycodecurrency = cs_data-amountincompanycodecurrency
-                                          companycodecurrency         = cs_data-companycodecurrency
-                                          accountingclerkphonenumber  = cs_data-accountingclerkphonenumber
-                                          accountingclerkfaxnumber    = cs_data-accountingclerkfaxnumber
-                                          paymentmethod_a             = cs_run-paymentmethod_a
-                                          conditiondate1 = cs_run-conditiondate
-                                          companycode                 = cs_data-companycode
-                                          supplier                    = cs_data-supplier
-                                          lastdate                    = cs_data-lastdate
-                                          netduedate                  = cs_data-netduedate
-                                          paymentmethod               = cs_data-paymentmethod
-                                          paymentterms                = cs_data-paymentterms
-                                          status                      = cs_data-status
-                                          message                     = cs_data-message
-
-                                          created_by         = sy-uname
-                                          created_at         = lv_timestamp
-                                          last_changed_by    = sy-uname
-                                          last_changed_at    = lv_timestamp
-                                          local_last_changed_at = lv_timestamp ) ).
-
-  ENDMETHOD.
   METHOD modifyjournalentrytpsingle.
     DATA: lv_message TYPE string,
           lv_msg     TYPE string.
     DATA lv_timestamp TYPE tzntstmpl.
-    DATA lv_bpbankaccountinternalid(3) TYPE c.
+    DATA lv_bpbankaccountinternalid(4) TYPE c.
 
     CLEAR lv_message.
     DATA: lt_je  TYPE TABLE FOR ACTION IMPORT i_journalentrytp~change.
@@ -1063,7 +852,7 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
     DATA ls_aparitem_control LIKE ls_aparitem-%control.
     ls_aparitem_control-paymentterms = if_abap_behv=>mk-on.
 
-    IF cs_data-paymentmethod_a NE 'A'.
+    IF cs_run-paymentmethod_a NE 'A'.
       ls_aparitem_control-bpbankaccountinternalid = if_abap_behv=>mk-on.
       CLEAR lv_bpbankaccountinternalid.
     ELSE.
@@ -1071,6 +860,7 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
       lv_supplier = |{ cs_data-supplier ALPHA = IN }|.
       SELECT SINGLE businesspartner
       FROM i_businesspartnerbank
+      WITH PRIVILEGED ACCESS
       WHERE businesspartner = @lv_supplier
       AND bankidentification = '000A'
       INTO @DATA(ls_businesspartnerbank).
@@ -1080,7 +870,6 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
       ENDIF.
     ENDIF.
 
-* Test Data
     <je>-accountingdocument = cs_data-accountingdocument.
     <je>-fiscalyear = cs_data-fiscalyear.
     <je>-companycode = cs_data-companycode.
@@ -1107,7 +896,34 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
         ENDLOOP.
         cs_data-status  = 'E'.
         cs_data-message = lv_message.
-        "RAISE EXCEPTION TYPE zzcx_custom_exception.
+
+        "如果失败了 一定要再改回去 因为这里不能commit 后面的标准代码会强制try again
+        CLEAR lv_bpbankaccountinternalid.
+        SELECT SINGLE bpbankaccountinternalid
+         FROM i_operationalacctgdocitem
+        WHERE companycode = @cs_data-companycode
+          AND fiscalyear = @cs_data-fiscalyear
+          AND accountingdocument = @cs_data-accountingdocument
+          AND accountingdocumentitem = @cs_data-accountingdocumentitem
+        INTO @lv_bpbankaccountinternalid.
+
+        "改回去
+        <je>-%param = VALUE #(
+         _aparitems = VALUE #( (
+         glaccountlineitem = cs_data-accountingdocumentitem
+         paymentterms      = cs_run-paymentterms
+         bpbankaccountinternalid = lv_bpbankaccountinternalid
+         %control                = ls_aparitem_control )
+         )
+         ) .
+
+        MODIFY ENTITIES OF i_journalentrytp
+        ENTITY journalentry
+        EXECUTE change FROM lt_je
+        FAILED DATA(ls_failed1)
+        REPORTED DATA(ls_reported1)
+        MAPPED DATA(ls_mapped1).
+
       ELSE.
         MESSAGE s026(zfico_001) WITH cs_data-fiscalyear cs_data-companycode cs_data-accountingdocument INTO lv_message .
         cs_data-status  = 'S'.
@@ -1147,26 +963,6 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
                                             local_last_changed_at = lv_timestamp ) ).
     ELSE.
 
-      IF ls_failed IS NOT INITIAL.
-        "ROLLBACK ENTITIES.
-        LOOP AT ls_reported-journalentry INTO ls_reported_journalentry.
-          CLEAR lv_msg.
-          lv_msg = get_message( ls_reported_journalentry-%msg ).
-          lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
-        ENDLOOP.
-        cs_data-status  = 'E'.
-        cs_data-message = lv_message.
-        cs_data-status  = 'S'.
-        cs_data-message = '校验成功'.
-        "RAISE EXCEPTION TYPE zzcx_custom_exception.
-
-      ELSE.
-        cs_data-status  = 'S'.
-        cs_data-message = '校验成功'.
-
-        RAISE EXCEPTION TYPE zzcx_custom_exception.
-
-      ENDIF.
     ENDIF.
 
 
@@ -1183,31 +979,31 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
 
   METHOD export.
     TYPES:BEGIN OF lty_export,
+            status                      TYPE zr_paymethod_sum-status,
+            message                     TYPE zr_paymethod_sum-message,
 
-*            companycode(4)                 TYPE c,
-*            lastdate                    TYPE zr_paymethod_sum-lastdate,
-*            supplier                    TYPE zr_paymethod_sum-supplier,
-*            organizationbpname1e(30) TYPE c,
-*            netduedate                  TYPE zr_paymethod_sum-netduedate,
-*            paymentmethod               TYPE zr_paymethod_sum-paymentmethod,
-*            paymentterms                TYPE zr_paymethod_sum-paymentterms,
-*            amountincompanycodecurrency TYPE zr_paymethod_sum-amountincompanycodecurrency,
-*            companycodecurrency         TYPE zr_paymethod_sum-companycodecurrency,
-*            accountingclerkphonenumber  TYPE zr_paymethod_sum-accountingclerkphonenumber,
-*            accountingclerkfaxnumber    TYPE zr_paymethod_sum-accountingclerkfaxnumber,
-*            paymentmethod_a             TYPE zr_paymethod_sum-paymentmethod_a,
-
-            status  TYPE zr_paymethod_sum-status,
-            message TYPE zr_paymethod_sum-message,
-
-
+            companycode(4)              TYPE c,
+            supplier                    TYPE zr_paymethod_sum-supplier,
+            organizationbpname1(30)     TYPE c,
+            amountincompanycodecurrency TYPE zr_paymethod_sum-amountincompanycodecurrency,
+            companycodecurrency         TYPE zr_paymethod_sum-companycodecurrency,
+            counts                      TYPE i,
+            lastdate                    TYPE zr_paymethod_sum-lastdate,
+            netduedate                  TYPE zr_paymethod_sum-netduedate,
+            paymentmethod               TYPE zr_paymethod_sum-paymentmethod,
+            paymentterms                TYPE zr_paymethod_sum-paymentterms,
+            conditiondate               TYPE  zr_paymethod-postingdate,
+            paymentmethod_a             TYPE zr_paymethod_sum-paymentmethod_a,
+            accountingclerkphonenumber  TYPE zr_paymethod_sum-accountingclerkphonenumber,
+            accountingclerkfaxnumber    TYPE zr_paymethod_sum-accountingclerkfaxnumber,
 
           END OF lty_export,
           lty_export_t TYPE TABLE OF lty_export.
 
     DATA lt_export TYPE lty_export_t.
     DATA lv_timestamp TYPE tzntstmpl.
-
+    DATA:lv_date TYPE bldat.
+    DATA:lv_time TYPE uzeit.
     lt_export = CORRESPONDING #( ct_data ).
 
     SELECT SINGLE *
@@ -1241,10 +1037,18 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
 
       GET TIME STAMP FIELD lv_timestamp.
 
+      TRY.
+          DATA(lv_timezone) = cl_abap_context_info=>get_user_time_zone( ).
+          "时间戳格式转换成日期格式
+          CONVERT TIME STAMP lv_timestamp TIME ZONE lv_timezone INTO DATE lv_date TIME lv_time .
+        CATCH cx_abap_context_info_error INTO DATA(e11) ##NO_HANDLER.
+          "handle exception
+      ENDTRY.
+
       INSERT INTO zzt_prt_record VALUES @( VALUE #( record_uuid     = lv_uuid
-                                                    provided_keys   = |FICO-015支払方法変更_{ lv_timestamp }|
+                                                    provided_keys   = |FICO-015支払方法変更_{ lv_date }_{ lv_time }|
                                                     pdf_mime_type   = |application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|
-                                                    pdf_file_name   = |Export.xlsx|
+                                                    pdf_file_name   = |FICO-015支払方法変更_{ lv_date }_{ lv_time }.xlsx|
                                                     pdf_content     = lv_file
                                                     created_by      = sy-uname
                                                     created_at      = lv_timestamp

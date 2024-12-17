@@ -31,69 +31,8 @@ ENDCLASS.
 
 
 
-CLASS zcl_bi007_report IMPLEMENTATION.
-  METHOD if_rap_query_provider~select.
-    DATA:
-      lr_companycode  TYPE ty_t_companycode,
-      lr_product      TYPE ty_t_product,
-      lr_customer     TYPE ty_t_customer,
-      lr_fiscalyear   TYPE ty_t_fiscalyear,
-      lr_fiscalperiod TYPE ty_t_fiscalperiod,
-      lr_forcastyear   TYPE ty_t_fiscalyear,
-      lr_forcastperiod TYPE ty_t_fiscalperiod,
-      lr_plant        TYPE ty_t_plant,
+CLASS ZCL_BI007_REPORT IMPLEMENTATION.
 
-      lt_data         TYPE STANDARD TABLE OF zi_bi007_report WITH DEFAULT KEY.
-
-    "Step 1 Extract Filter
-    TRY.
-        extract_filter( EXPORTING io_request = io_request
-                        IMPORTING er_companycode = lr_companycode
-                                  er_fiscalyear = lr_fiscalyear
-                                  er_fiscalperiod = lr_fiscalperiod
-                                  er_forcastyear = lr_forcastyear
-                                  er_forcastperiod = lr_forcastperiod
-                                  er_plant = lr_plant
-                                  er_product = lr_product
-                                  er_customer = lr_customer
-                      ).
-      CATCH cx_rap_query_filter_no_range.
-        io_response->set_data( lt_data ).
-        RETURN.
-    ENDTRY.
-
-    "Step 2. Get Data
-    DATA(lo_data_handler) = NEW zcl_bi007_data( ir_companycode = lr_companycode
-                                                ir_fiscalyear = lr_fiscalyear
-                                                ir_fiscalperiod = lr_fiscalperiod
-                                                ir_forcastyear = lr_forcastyear
-                                                ir_forcastperiod = lr_forcastperiod
-                                                ir_plant = lr_plant
-                                                ir_product = lr_product
-                                                ir_customer = lr_customer
-                                              ).
-
-    lo_data_handler->get_data( IMPORTING et_data = lt_data ).
-
-    "Step 3. Sorting, Paging
-    io_response->set_total_number_of_records( lines( lt_data ) ).
-
-    IF io_request->get_sort_elements( ) IS NOT INITIAL.
-      zzcl_odata_utils=>orderby(
-        EXPORTING
-          it_order = io_request->get_sort_elements( )
-        CHANGING
-          ct_data  = lt_data ).
-    ENDIF.
-
-    zzcl_odata_utils=>paging(
-      EXPORTING
-        io_paging = io_request->get_paging( )
-      CHANGING
-        ct_data   = lt_data ).
-
-    io_response->set_data( lt_data ).
-  ENDMETHOD.
 
   METHOD extract_filter.
     DATA: ls_companycode  TYPE LINE OF ty_t_companycode,
@@ -171,5 +110,69 @@ CLASS zcl_bi007_report IMPLEMENTATION.
         ENDCASE.
       ENDLOOP.
     ENDLOOP.
+  ENDMETHOD.
+
+
+  METHOD if_rap_query_provider~select.
+    DATA:
+      lr_companycode  TYPE ty_t_companycode,
+      lr_product      TYPE ty_t_product,
+      lr_customer     TYPE ty_t_customer,
+      lr_fiscalyear   TYPE ty_t_fiscalyear,
+      lr_fiscalperiod TYPE ty_t_fiscalperiod,
+      lr_forcastyear   TYPE ty_t_fiscalyear,
+      lr_forcastperiod TYPE ty_t_fiscalperiod,
+      lr_plant        TYPE ty_t_plant,
+
+      lt_data         TYPE STANDARD TABLE OF zi_bi007_report WITH DEFAULT KEY.
+
+    "Step 1 Extract Filter
+    TRY.
+        extract_filter( EXPORTING io_request = io_request
+                        IMPORTING er_companycode = lr_companycode
+                                  er_fiscalyear = lr_fiscalyear
+                                  er_fiscalperiod = lr_fiscalperiod
+                                  er_forcastyear = lr_forcastyear
+                                  er_forcastperiod = lr_forcastperiod
+                                  er_plant = lr_plant
+                                  er_product = lr_product
+                                  er_customer = lr_customer
+                      ).
+      CATCH cx_rap_query_filter_no_range.
+        io_response->set_data( lt_data ).
+        RETURN.
+    ENDTRY.
+
+    "Step 2. Get Data
+    DATA(lo_data_handler) = NEW zcl_bi007_data( ir_companycode = lr_companycode
+                                                ir_fiscalyear = lr_fiscalyear
+                                                ir_fiscalperiod = lr_fiscalperiod
+                                                ir_forcastyear = lr_forcastyear
+                                                ir_forcastperiod = lr_forcastperiod
+                                                ir_plant = lr_plant
+                                                ir_product = lr_product
+                                                ir_customer = lr_customer
+                                              ).
+
+    lo_data_handler->get_data( IMPORTING et_data = lt_data ).
+
+    "Step 3. Sorting, Paging
+    io_response->set_total_number_of_records( lines( lt_data ) ).
+
+    IF io_request->get_sort_elements( ) IS NOT INITIAL.
+      zzcl_odata_utils=>orderby(
+        EXPORTING
+          it_order = io_request->get_sort_elements( )
+        CHANGING
+          ct_data  = lt_data ).
+    ENDIF.
+
+    zzcl_odata_utils=>paging(
+      EXPORTING
+        io_paging = io_request->get_paging( )
+      CHANGING
+        ct_data   = lt_data ).
+
+    io_response->set_data( lt_data ).
   ENDMETHOD.
 ENDCLASS.

@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_material_001 IMPLEMENTATION.
+CLASS ZCL_HTTP_MATERIAL_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.

@@ -9,7 +9,11 @@ CLASS zcl_costanalysisprocess DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_costanalysisprocess IMPLEMENTATION.
+
+
+CLASS ZCL_COSTANALYSISPROCESS IMPLEMENTATION.
+
+
   METHOD if_rap_query_provider~select.
 
     DATA:
@@ -139,5 +143,4 @@ CLASS zcl_costanalysisprocess IMPLEMENTATION.
 
     io_response->set_data( lt_data ).
   ENDMETHOD.
-
 ENDCLASS.

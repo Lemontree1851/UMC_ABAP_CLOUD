@@ -11,7 +11,9 @@ CLASS zcl_mfgorderinfo DEFINITION
 ENDCLASS.
 
 
-CLASS zcl_mfgorderinfo IMPLEMENTATION.
+
+CLASS ZCL_MFGORDERINFO IMPLEMENTATION.
+
 
   METHOD if_sadl_exit_calc_element_read~calculate.
     TYPES: BEGIN OF ty_status,
@@ -189,7 +191,7 @@ CLASS zcl_mfgorderinfo IMPLEMENTATION.
     ct_calculated_data = CORRESPONDING #( lt_original_data ).
   ENDMETHOD.
 
+
   METHOD if_sadl_exit_calc_element_read~get_calculation_info.
   ENDMETHOD.
-
 ENDCLASS.

@@ -16,5 +16,5 @@ define view entity ZC_TBC1007
 
       /* Associations */
       _User              : redirected to parent ZC_TBC1004,
-      _UserRoleAccessBtn : redirected to ZC_TBC1017
+      _UserRoleAccessBtn : redirected to ZC_TBC1016_1
 }

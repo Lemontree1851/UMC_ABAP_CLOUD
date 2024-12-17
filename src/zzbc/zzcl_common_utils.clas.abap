@@ -296,7 +296,7 @@ ENDCLASS.
 
 
 
-CLASS zzcl_common_utils IMPLEMENTATION.
+CLASS ZZCL_COMMON_UTILS IMPLEMENTATION.
 
 
   METHOD calc_date_add.
@@ -471,6 +471,55 @@ CLASS zzcl_common_utils IMPLEMENTATION.
   ENDMETHOD.
 
 
+  METHOD get_access_token.
+    TRY.
+        DATA(lo_http_destination) = cl_http_destination_provider=>create_by_url( iv_token_url ).
+        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_http_destination ).
+        DATA(lo_request) = lo_http_client->get_http_request( ).
+
+        DATA(lv_post_data) = |grant_type=client_credentials&client_id={ iv_client_id }&client_secret={ iv_client_secret }|.
+
+        lo_request->set_header_field( i_name = 'Content-type' i_value = 'application/x-www-form-urlencoded' ).
+
+        lo_request->set_text( lv_post_data ).
+
+        DATA(lo_response) = lo_http_client->execute( if_web_http_client=>post ).
+
+        ev_status_code = lo_response->get_status( )-code.
+        ev_response = lo_response->get_text(  ).
+
+        /ui2/cl_json=>deserialize( EXPORTING json = ev_response
+                                             pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+                                   CHANGING  data = es_response ).
+
+      CATCH cx_web_http_client_error cx_http_dest_provider_error INTO DATA(lx_http_exception).
+        ev_status_code = 500.
+        ev_response = lx_http_exception->get_text( ).
+    ENDTRY.
+  ENDMETHOD.                                             "#EC CI_VALPAR
+
+
+  METHOD get_all_fields.
+    DATA: ref_table_des TYPE REF TO cl_abap_structdescr,
+          lt_comp       TYPE cl_abap_structdescr=>component_table.
+
+    ref_table_des ?= cl_abap_typedescr=>describe_by_name( is_table ).
+    lt_comp  = ref_table_des->get_components( ).
+
+    APPEND LINES OF VALUE cl_abap_structdescr=>component_table(
+           FOR is_type IN it_type ( name = is_type-name
+                                    type = set_datadescr( is_type-types ) ) ) TO lt_comp.
+
+    DATA(lo_new_type) = cl_abap_structdescr=>create( lt_comp ).
+    DATA(lo_new_tab) = cl_abap_tabledescr=>create(
+                        p_line_type  = lo_new_type
+                        p_table_kind = cl_abap_tabledescr=>tablekind_std
+                        p_unique     = abap_false ).
+
+    CREATE DATA rv_value TYPE HANDLE lo_new_tab.
+  ENDMETHOD.                                             "#EC CI_VALPAR
+
+
   METHOD get_api_etag.
     DATA: ls_odata_result TYPE ty_odata_res_d.
 
@@ -571,6 +620,50 @@ CLASS zzcl_common_utils IMPLEMENTATION.
       ENDIF.
     ENDIF.
   ENDMETHOD.
+
+
+  METHOD get_externalsystems_cdata.
+
+    IF iv_authtype = 'OAuth2.0'.
+      get_access_token( EXPORTING iv_token_url     = iv_token_url
+                                  iv_client_id     = iv_client_id
+                                  iv_client_secret = iv_client_secret
+                        IMPORTING ev_status_code   = ev_status_code
+                                  ev_response      = ev_response
+                                  es_response      = DATA(ls_response) ).
+      IF ls_response IS INITIAL.
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+    TRY.
+        DATA(lo_http_destination) = cl_http_destination_provider=>create_by_url( iv_odata_url ).
+        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_http_destination ).
+        DATA(lo_request) = lo_http_client->get_http_request( ).
+
+        CASE iv_authtype.
+          WHEN 'OAuth2.0'.
+            lo_request->set_header_field( i_name = 'Authorization' i_value = |{ ls_response-token_type } { ls_response-access_token }| ).
+          WHEN 'Basic'.
+            lo_request->set_authorization_basic( i_username = iv_client_id i_password = iv_client_secret ).
+        ENDCASE.
+
+        lo_request->set_header_field( i_name = 'Accept' i_value = 'application/json' ).
+
+        IF iv_odata_filter IS NOT INITIAL.
+          lo_request->set_form_field( i_name = '$filter' i_value = iv_odata_filter ).
+        ENDIF.
+
+        DATA(lo_response) = lo_http_client->execute( if_web_http_client=>get ).
+
+        ev_status_code = lo_response->get_status( )-code.
+        ev_response = lo_response->get_text(  ).
+
+      CATCH cx_web_http_client_error cx_http_dest_provider_error INTO DATA(lx_http_exception).
+        ev_status_code = 500.
+        ev_response = lx_http_exception->get_text( ).
+    ENDTRY.
+  ENDMETHOD.                                             "#EC CI_VALPAR
 
 
   METHOD get_fiscal_year_period.
@@ -707,78 +800,6 @@ CLASS zzcl_common_utils IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD get_access_token.
-    TRY.
-        DATA(lo_http_destination) = cl_http_destination_provider=>create_by_url( iv_token_url ).
-        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_http_destination ).
-        DATA(lo_request) = lo_http_client->get_http_request( ).
-
-        DATA(lv_post_data) = |grant_type=client_credentials&client_id={ iv_client_id }&client_secret={ iv_client_secret }|.
-
-        lo_request->set_header_field( i_name = 'Content-type' i_value = 'application/x-www-form-urlencoded' ).
-
-        lo_request->set_text( lv_post_data ).
-
-        DATA(lo_response) = lo_http_client->execute( if_web_http_client=>post ).
-
-        ev_status_code = lo_response->get_status( )-code.
-        ev_response = lo_response->get_text(  ).
-
-        /ui2/cl_json=>deserialize( EXPORTING json = ev_response
-                                             pretty_name = /ui2/cl_json=>pretty_mode-camel_case
-                                   CHANGING  data = es_response ).
-
-      CATCH cx_web_http_client_error cx_http_dest_provider_error INTO DATA(lx_http_exception).
-        ev_status_code = 500.
-        ev_response = lx_http_exception->get_text( ).
-    ENDTRY.
-  ENDMETHOD.                                             "#EC CI_VALPAR
-
-
-  METHOD get_externalsystems_cdata.
-
-    IF iv_authtype = 'OAuth2.0'.
-      get_access_token( EXPORTING iv_token_url     = iv_token_url
-                                  iv_client_id     = iv_client_id
-                                  iv_client_secret = iv_client_secret
-                        IMPORTING ev_status_code   = ev_status_code
-                                  ev_response      = ev_response
-                                  es_response      = DATA(ls_response) ).
-      IF ls_response IS INITIAL.
-        RETURN.
-      ENDIF.
-    ENDIF.
-
-    TRY.
-        DATA(lo_http_destination) = cl_http_destination_provider=>create_by_url( iv_odata_url ).
-        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_http_destination ).
-        DATA(lo_request) = lo_http_client->get_http_request( ).
-
-        CASE iv_authtype.
-          WHEN 'OAuth2.0'.
-            lo_request->set_header_field( i_name = 'Authorization' i_value = |{ ls_response-token_type } { ls_response-access_token }| ).
-          WHEN 'Basic'.
-            lo_request->set_authorization_basic( i_username = iv_client_id i_password = iv_client_secret ).
-        ENDCASE.
-
-        lo_request->set_header_field( i_name = 'Accept' i_value = 'application/json' ).
-
-        IF iv_odata_filter IS NOT INITIAL.
-          lo_request->set_form_field( i_name = '$filter' i_value = iv_odata_filter ).
-        ENDIF.
-
-        DATA(lo_response) = lo_http_client->execute( if_web_http_client=>get ).
-
-        ev_status_code = lo_response->get_status( )-code.
-        ev_response = lo_response->get_text(  ).
-
-      CATCH cx_web_http_client_error cx_http_dest_provider_error INTO DATA(lx_http_exception).
-        ev_status_code = 500.
-        ev_response = lx_http_exception->get_text( ).
-    ENDTRY.
-  ENDMETHOD.                                             "#EC CI_VALPAR
-
-
   METHOD get_workingday.
     DATA lv_date TYPE datum.
 
@@ -882,11 +903,92 @@ CLASS zzcl_common_utils IMPLEMENTATION.
   ENDMETHOD.
 
 
+  METHOD is_workingday.
+    rv_workingday = abap_false.
+    SELECT SINGLE factorycalendarid
+      FROM i_factorycalendarbasic WITH PRIVILEGED ACCESS AS a
+      JOIN i_plant AS b ON b~factorycalendar = a~factorycalendarlegacyid
+     WHERE b~plant = @iv_plant
+      INTO @DATA(lv_factorycalendar_id).
+    IF sy-subrc = 0.
+      TRY.
+          DATA(lo_fcal_run) = cl_fhc_calendar_runtime=>create_factorycalendar_runtime( iv_factorycalendar_id = lv_factorycalendar_id ).
+          rv_workingday = lo_fcal_run->is_date_workingday( iv_date = iv_date ).
+        CATCH cx_fhc_runtime INTO DATA(lx_err).
+          "handle exception
+          DATA(lv_text) = lx_err->get_text( ).
+      ENDTRY.
+    ENDIF.
+  ENDMETHOD.
+
+
   METHOD merge_message.
     IF iv_message1 IS INITIAL.
       rv_result = iv_message2.
     ELSE.
       rv_result = |{ iv_message1 }{ iv_symbol }{ iv_message2 }|.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD parse_error_v2.
+    DATA ls_error TYPE ty_error_v2.
+    /ui2/cl_json=>deserialize( EXPORTING json = iv_response
+                               CHANGING  data = ls_error ).
+    IF ls_error-error-message-value IS NOT INITIAL.
+      IF ls_error-error-innererror-errordetails IS NOT INITIAL.
+        LOOP AT ls_error-error-innererror-errordetails INTO DATA(ls_detail).
+          "内表中的消息会有多个，可以排除code:/IWCOR/CX_OD_BAD_REQUEST/  CX_SXML_PARSE_ERROR 对用户判断错误起不到作用
+          IF ls_detail-code CS '/IWCOR/CX_OD_BAD_REQUEST' OR
+            ls_detail-code CS 'CX_SXML_PARSE_ERROR'.
+            CONTINUE.
+          ENDIF.
+          IF ls_detail-message IS NOT INITIAL.
+            rv_message = |{ rv_message }{ ls_detail-message };|.
+          ENDIF.
+        ENDLOOP.
+      ENDIF.
+      IF rv_message IS INITIAL.
+        rv_message = ls_error-error-message-value.
+      ENDIF.
+    ELSEIF ls_error-error-code IS NOT INITIAL.
+      SPLIT ls_error-error-code AT '/' INTO TABLE DATA(lt_msg).
+      IF lines( lt_msg ) = 2.
+        DATA(lv_msg_class) = lt_msg[ 1 ].
+        DATA(lv_msg_number) = lt_msg[ 2 ].
+        MESSAGE ID lv_msg_class TYPE 'S' NUMBER lv_msg_number INTO rv_message.
+      ENDIF.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD parse_error_v4.
+    DATA ls_error TYPE ty_error_v4.
+    /ui2/cl_json=>deserialize( EXPORTING json = iv_response
+                               CHANGING  data = ls_error ).
+    IF ls_error-error-message IS NOT INITIAL.
+      IF ls_error-error-details IS NOT INITIAL.
+        LOOP AT ls_error-error-details INTO DATA(ls_detail).
+          "内表中的消息会有多个，可以排除code:/IWCOR/CX_OD_BAD_REQUEST/  CX_SXML_PARSE_ERROR 对用户判断错误起不到作用
+          IF ls_detail-code CS '/IWCOR/CX_OD_BAD_REQUEST' OR
+            ls_detail-code CS 'CX_SXML_PARSE_ERROR'.
+            CONTINUE.
+          ENDIF.
+          IF ls_detail-message IS NOT INITIAL.
+            rv_message = |{ rv_message }{ ls_detail-message };|.
+          ENDIF.
+        ENDLOOP.
+      ENDIF.
+      IF rv_message IS INITIAL.
+        rv_message = ls_error-error-message.
+      ENDIF.
+    ELSEIF ls_error-error-code IS NOT INITIAL.
+      SPLIT ls_error-error-code AT '/' INTO TABLE DATA(lt_msg).
+      IF lines( lt_msg ) = 2.
+        DATA(lv_msg_class) = lt_msg[ 1 ].
+        DATA(lv_msg_number) = lt_msg[ 2 ].
+        MESSAGE ID lv_msg_class TYPE 'S' NUMBER lv_msg_number INTO rv_message.
+      ENDIF.
     ENDIF.
   ENDMETHOD.
 
@@ -1106,6 +1208,12 @@ CLASS zzcl_common_utils IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
+
+  METHOD set_datadescr.
+    rv_descr ?= cl_abap_elemdescr=>describe_by_name( iv_types ).
+  ENDMETHOD.                                             "#EC CI_VALPAR
+
+
   METHOD unit_conversion_simple.
     DATA(lo_unit) = cl_uom_conversion=>create( ).
     lo_unit->unit_conversion_simple( EXPORTING  input                = input
@@ -1121,107 +1229,5 @@ CLASS zzcl_common_utils IMPLEMENTATION.
                                                 units_missing        = 06
                                                 unit_in_not_found    = 07
                                                 unit_out_not_found   = 08 ).
-  ENDMETHOD.
-
-  METHOD get_all_fields.
-    DATA: ref_table_des TYPE REF TO cl_abap_structdescr,
-          lt_comp       TYPE cl_abap_structdescr=>component_table.
-
-    ref_table_des ?= cl_abap_typedescr=>describe_by_name( is_table ).
-    lt_comp  = ref_table_des->get_components( ).
-
-    APPEND LINES OF VALUE cl_abap_structdescr=>component_table(
-           FOR is_type IN it_type ( name = is_type-name
-                                    type = set_datadescr( is_type-types ) ) ) TO lt_comp.
-
-    DATA(lo_new_type) = cl_abap_structdescr=>create( lt_comp ).
-    DATA(lo_new_tab) = cl_abap_tabledescr=>create(
-                        p_line_type  = lo_new_type
-                        p_table_kind = cl_abap_tabledescr=>tablekind_std
-                        p_unique     = abap_false ).
-
-    CREATE DATA rv_value TYPE HANDLE lo_new_tab.
-  ENDMETHOD.                                             "#EC CI_VALPAR
-
-  METHOD set_datadescr.
-    rv_descr ?= cl_abap_elemdescr=>describe_by_name( iv_types ).
-  ENDMETHOD.                                             "#EC CI_VALPAR
-
-  METHOD is_workingday.
-    rv_workingday = abap_false.
-    SELECT SINGLE factorycalendarid
-      FROM i_factorycalendarbasic WITH PRIVILEGED ACCESS AS a
-      JOIN i_plant AS b ON b~factorycalendar = a~factorycalendarlegacyid
-     WHERE b~plant = @iv_plant
-      INTO @DATA(lv_factorycalendar_id).
-    IF sy-subrc = 0.
-      TRY.
-          DATA(lo_fcal_run) = cl_fhc_calendar_runtime=>create_factorycalendar_runtime( iv_factorycalendar_id = lv_factorycalendar_id ).
-          rv_workingday = lo_fcal_run->is_date_workingday( iv_date = iv_date ).
-        CATCH cx_fhc_runtime INTO DATA(lx_err).
-          "handle exception
-          DATA(lv_text) = lx_err->get_text( ).
-      ENDTRY.
-    ENDIF.
-  ENDMETHOD.
-
-  METHOD parse_error_v4.
-    DATA ls_error TYPE ty_error_v4.
-    /ui2/cl_json=>deserialize( EXPORTING json = iv_response
-                               CHANGING  data = ls_error ).
-    IF ls_error-error-message IS NOT INITIAL.
-      IF ls_error-error-details IS NOT INITIAL.
-        LOOP AT ls_error-error-details INTO DATA(ls_detail).
-          "内表中的消息会有多个，可以排除code:/IWCOR/CX_OD_BAD_REQUEST/  CX_SXML_PARSE_ERROR 对用户判断错误起不到作用
-          IF ls_detail-code CS '/IWCOR/CX_OD_BAD_REQUEST' OR
-            ls_detail-code CS 'CX_SXML_PARSE_ERROR'.
-            CONTINUE.
-          ENDIF.
-          IF ls_detail-message IS NOT INITIAL.
-            rv_message = |{ rv_message }{ ls_detail-message };|.
-          ENDIF.
-        ENDLOOP.
-      ENDIF.
-      IF rv_message IS INITIAL.
-        rv_message = ls_error-error-message.
-      ENDIF.
-    ELSEIF ls_error-error-code IS NOT INITIAL.
-      SPLIT ls_error-error-code AT '/' INTO TABLE DATA(lt_msg).
-      IF lines( lt_msg ) = 2.
-        DATA(lv_msg_class) = lt_msg[ 1 ].
-        DATA(lv_msg_number) = lt_msg[ 2 ].
-        MESSAGE ID lv_msg_class TYPE 'S' NUMBER lv_msg_number INTO rv_message.
-      ENDIF.
-    ENDIF.
-  ENDMETHOD.
-
-  METHOD parse_error_v2.
-    DATA ls_error TYPE ty_error_v2.
-    /ui2/cl_json=>deserialize( EXPORTING json = iv_response
-                               CHANGING  data = ls_error ).
-    IF ls_error-error-message-value IS NOT INITIAL.
-      IF ls_error-error-innererror-errordetails IS NOT INITIAL.
-        LOOP AT ls_error-error-innererror-errordetails INTO DATA(ls_detail).
-          "内表中的消息会有多个，可以排除code:/IWCOR/CX_OD_BAD_REQUEST/  CX_SXML_PARSE_ERROR 对用户判断错误起不到作用
-          IF ls_detail-code CS '/IWCOR/CX_OD_BAD_REQUEST' OR
-            ls_detail-code CS 'CX_SXML_PARSE_ERROR'.
-            CONTINUE.
-          ENDIF.
-          IF ls_detail-message IS NOT INITIAL.
-            rv_message = |{ rv_message }{ ls_detail-message };|.
-          ENDIF.
-        ENDLOOP.
-      ENDIF.
-      IF rv_message IS INITIAL.
-        rv_message = ls_error-error-message-value.
-      ENDIF.
-    ELSEIF ls_error-error-code IS NOT INITIAL.
-      SPLIT ls_error-error-code AT '/' INTO TABLE DATA(lt_msg).
-      IF lines( lt_msg ) = 2.
-        DATA(lv_msg_class) = lt_msg[ 1 ].
-        DATA(lv_msg_number) = lt_msg[ 2 ].
-        MESSAGE ID lv_msg_class TYPE 'S' NUMBER lv_msg_number INTO rv_message.
-      ENDIF.
-    ENDIF.
   ENDMETHOD.
 ENDCLASS.

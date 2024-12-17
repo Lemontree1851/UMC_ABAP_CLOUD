@@ -266,6 +266,18 @@
      <MSGNR>042</MSGNR>
      <TEXT>カテゴリの値はAかBしかありません</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZFICO_001</ARBGB>
+     <MSGNR>043</MSGNR>
+     <TEXT>仕訳が変更完了しました。</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZFICO_001</ARBGB>
+     <MSGNR>044</MSGNR>
+     <TEXT>品目&amp;1が存在しない  。</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

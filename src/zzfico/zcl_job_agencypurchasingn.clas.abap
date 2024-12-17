@@ -24,7 +24,60 @@ CLASS zcl_job_agencypurchasingn DEFINITION
 ENDCLASS.
 
 
+
 CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
+
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime INTO DATA(cx_erro).
+        DATA ls_msg TYPE scx_t100key.
+        DATA(lv_msge) = cx_erro->get_text( ).
+        " handle exception
+    ENDTRY.
+  ENDMETHOD.
+
+
+  METHOD if_apj_dt_exec_object~get_parameters.
+
+    et_parameter_def = VALUE #( ( selname        = 'P_ZPOSTI'
+                                  kind           = if_apj_dt_exec_object=>select_option
+                                  datatype       = 'char'
+                                  length         = 6
+                                  param_text     = '年度期間'
+                                  changeable_ind = abap_true )
+                                  ( selname        = 'P_COM'
+                                  kind           = if_apj_dt_exec_object=>select_option
+                                  datatype       = 'char'
+                                  length         = 4
+                                  param_text     = '転記先会社コード'
+                                  changeable_ind = abap_true )
+                                  ( selname        = 'P_COM2'
+                                  kind           = if_apj_dt_exec_object=>select_option
+                                  datatype       = 'char'
+                                  length         = 4
+                                  param_text     = '決済対象会社コード'
+                                  changeable_ind = abap_true ) ).
+  ENDMETHOD.
+
+
   METHOD if_apj_rt_exec_object~execute.
     DATA: lr_companycode  TYPE RANGE OF zc_agencypurchasing-companycode,
           lr_companycode2 TYPE RANGE OF zc_agencypurchasing-companycode2,
@@ -289,10 +342,6 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    DATA(lt_items) = lt_item.
-    SORT lt_items BY companycode companycode2.
-    DELETE ADJACENT DUPLICATES FROM lt_items COMPARING companycode companycode2.
-
     SELECT *
       FROM zc_tbc1001
      WHERE zid = 'ZFI002'
@@ -301,9 +350,9 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
 
     SELECT *
       FROM i_suppliercompany
-       FOR ALL ENTRIES IN @lt_items
-     WHERE companycode = @lt_items-companycode
-        OR companycode = @lt_items-companycode2
+       FOR ALL ENTRIES IN @lt_item
+     WHERE companycode = @lt_item-companycode
+        OR companycode = @lt_item-companycode2
       INTO TABLE @DATA(lt_suppliercompany).   "#EC CI_ALL_FIELDS_NEEDED
     SORT lt_suppliercompany BY supplier companycode.
 
@@ -313,7 +362,71 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
        AND zvalue1 = 'SELF'
       INTO ( @lv_username, @lv_password ).
 
+    SELECT *
+      FROM ztfi_1014
+       FOR ALL ENTRIES IN @lt_item
+     WHERE ztfi_1014~postingdate = @lt_item-postingdate
+       AND ztfi_1014~companycode = @lt_item-companycode
+       AND ztfi_1014~companycode2 = @lt_item-companycode2
+       AND ztfi_1014~companycodecurrency = @lt_item-companycodecurrency
+       AND ztfi_1014~taxcode = @lt_item-taxcode
+      INTO TABLE @DATA(lt_fi1014).
+
+    IF lt_fi1014 IS NOT INITIAL.
+      SORT lt_fi1014 BY postingdate companycode companycode2 companycodecurrency taxcode.
+
+      SELECT companycode,
+             fiscalyear,
+             accountingdocument
+        FROM i_journalentryitem WITH PRIVILEGED ACCESS
+         FOR ALL ENTRIES IN @lt_fi1014
+       WHERE companycode = @lt_fi1014-companycode
+         AND accountingdocument = @lt_fi1014-accountingdocument1
+         AND fiscalyear = @lt_fi1014-fiscalyear1
+         AND ledger = '0L'
+         AND isreversed = ''
+        INTO TABLE @DATA(lt_document1).
+      SORT lt_document1 BY fiscalyear companycode accountingdocument.
+
+      SELECT companycode,
+             fiscalyear,
+             accountingdocument
+        FROM i_journalentryitem WITH PRIVILEGED ACCESS
+         FOR ALL ENTRIES IN @lt_fi1014
+       WHERE companycode = @lt_fi1014-companycode2
+         AND accountingdocument = @lt_fi1014-accountingdocument2
+         AND fiscalyear = @lt_fi1014-fiscalyear2
+         AND ledger = '0L'
+         AND isreversed = ''
+        INTO TABLE @DATA(lt_document2).
+      SORT lt_document2 BY fiscalyear companycode accountingdocument.
+    ENDIF.
+
     LOOP AT lt_item ASSIGNING FIELD-SYMBOL(<lfs_item>).
+
+      READ TABLE lt_fi1014 INTO DATA(ls_fi1014) WITH KEY postingdate = <lfs_item>-postingdate
+                                                         companycode = <lfs_item>-companycode
+                                                         companycode2 = <lfs_item>-companycode2
+                                                         companycodecurrency = <lfs_item>-companycodecurrency
+                                                         taxcode = <lfs_item>-taxcode
+                                                         BINARY SEARCH.
+      IF sy-subrc = 0.
+        READ TABLE lt_document1 TRANSPORTING NO FIELDS WITH KEY fiscalyear = <lfs_item>-postingdate+0(4)
+                                                                companycode = <lfs_item>-companycode
+                                                                accountingdocument = ls_fi1014-accountingdocument1
+                                                                BINARY SEARCH.
+        IF sy-subrc = 0.
+          <lfs_item>-accountingdocument1 = ls_fi1014-accountingdocument1.
+        ENDIF.
+
+        READ TABLE lt_document2 TRANSPORTING NO FIELDS WITH KEY fiscalyear = <lfs_item>-postingdate+0(4)
+                                                                companycode = <lfs_item>-companycode2
+                                                                accountingdocument = ls_fi1014-accountingdocument2
+                                                                BINARY SEARCH.
+        IF sy-subrc = 0.
+          <lfs_item>-accountingdocument2 = ls_fi1014-accountingdocument2.
+        ENDIF.
+      ENDIF.
 
       IF <lfs_item>-accountingdocument1 IS NOT INITIAL
       OR <lfs_item>-accountingdocument2 IS NOT INITIAL.
@@ -508,8 +621,8 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
         TRY.
             add_message_to_log( i_text = |{ ls_http_status-code } { ls_http_status-reason }| i_type = 'E' ).
           CATCH cx_bali_runtime INTO DATA(cx_errh).
-              DATA ls_msgh TYPE scx_t100key.
-              DATA(lv_msgh) = cx_errh->get_text( ).
+            DATA ls_msgh TYPE scx_t100key.
+            DATA(lv_msgh) = cx_errh->get_text( ).
         ENDTRY.
         lv_has_error = abap_true.
       ENDIF.
@@ -523,8 +636,8 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
             TRY.
                 add_message_to_log( i_text = 'UUID 作成に失敗しました: ' && lx_uuid_error->get_text( ) i_type = 'E' ).
               CATCH cx_bali_runtime INTO DATA(cx_erri).
-              DATA ls_msgi TYPE scx_t100key.
-              DATA(lv_msgi) = cx_erri->get_text( ).
+                DATA ls_msgi TYPE scx_t100key.
+                DATA(lv_msgi) = cx_erri->get_text( ).
             ENDTRY.
             CONTINUE.
         ENDTRY.
@@ -694,7 +807,7 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
           TRY.
               add_message_to_log( i_text = |{ ls_http_status-code } { ls_http_status-reason }| i_type = 'E' ).
             CATCH cx_bali_runtime INTO cx_errd.
-                lv_msgd = cx_errd->get_text( ).
+              lv_msgd = cx_errd->get_text( ).
           ENDTRY.
           lv_has_error = abap_true.
         ENDIF.
@@ -703,27 +816,6 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
 
   ENDMETHOD.
 
-  METHOD if_apj_dt_exec_object~get_parameters.
-
-    et_parameter_def = VALUE #( ( selname        = 'P_ZPOSTI'
-                                  kind           = if_apj_dt_exec_object=>select_option
-                                  datatype       = 'char'
-                                  length         = 6
-                                  param_text     = '年度期間'
-                                  changeable_ind = abap_true )
-                                  ( selname        = 'P_COM'
-                                  kind           = if_apj_dt_exec_object=>select_option
-                                  datatype       = 'char'
-                                  length         = 4
-                                  param_text     = '転記先会社コード'
-                                  changeable_ind = abap_true )
-                                  ( selname        = 'P_COM2'
-                                  kind           = if_apj_dt_exec_object=>select_option
-                                  datatype       = 'char'
-                                  length         = 4
-                                  param_text     = '決済対象会社コード'
-                                  changeable_ind = abap_true ) ).
-  ENDMETHOD.
 
   METHOD if_oo_adt_classrun~main.
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
@@ -766,31 +858,4 @@ CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
         " handle exception
     ENDTRY.
   ENDMETHOD.
-
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '1' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-      CATCH cx_bali_runtime INTO DATA(cx_erro).
-        DATA ls_msg TYPE scx_t100key.
-        DATA(lv_msge) = cx_erro->get_text( ).
-        " handle exception
-    ENDTRY.
-  ENDMETHOD.
-
 ENDCLASS.

@@ -7,11 +7,11 @@
      INTERFACES if_sadl_exit_calc_element_read.
    PROTECTED SECTION.
    PRIVATE SECTION.
- ENDCLASS.
+ENDCLASS.
 
 
 
- CLASS zcl_attachment IMPLEMENTATION.
+CLASS ZCL_ATTACHMENT IMPLEMENTATION.
 
 
    METHOD if_sadl_exit_calc_element_read~calculate.
@@ -83,4 +83,4 @@
        ENDCASE.
      ENDLOOP.
    ENDMETHOD.
- ENDCLASS.
+ENDCLASS.

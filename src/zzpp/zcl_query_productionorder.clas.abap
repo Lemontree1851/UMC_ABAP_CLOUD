@@ -9,7 +9,11 @@ CLASS zcl_query_productionorder DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_query_productionorder IMPLEMENTATION.
+
+
+CLASS ZCL_QUERY_PRODUCTIONORDER IMPLEMENTATION.
+
+
   METHOD if_rap_query_provider~select.
 
     DATA:

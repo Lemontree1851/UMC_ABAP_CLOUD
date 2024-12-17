@@ -120,8 +120,8 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
 
     SELECT plant
      FROM zc_tbc1004 INNER JOIN zc_tbc1006
-    ON zc_tbc1004~userid = zc_tbc1006~userid
-    WHERE mail = @iv_email
+    ON zc_tbc1004~mail = zc_tbc1006~mail
+    WHERE zc_tbc1004~mail = @iv_email
     AND plant = @ls_ztmm_1006-plant
     INTO TABLE @DATA(lt_zc_tbc1004).
 
@@ -723,8 +723,6 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
       CATCH cx_uuid_error.
         "handle exception
     ENDTRY.
-
-
 
 
 *&--发起人提交

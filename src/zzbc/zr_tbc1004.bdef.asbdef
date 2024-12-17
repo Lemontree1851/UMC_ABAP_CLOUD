@@ -35,6 +35,7 @@ authorization master ( instance )
   association _AssignPlant { create; with draft; }
   association _AssignCompany { create; with draft; }
   association _AssignSalesOrg { create; with draft; }
+  association _AssignPurchOrg { create; with draft; }
   association _AssignRole { create; with draft; }
 
   mapping for ztbc_1004
@@ -165,6 +166,45 @@ etag master LocalLastChangedAt
       LastChangedBy      = last_changed_by;
       LastChangedAt      = last_changed_at;
       LocalLastChangedAt = local_last_changed_at;
+    }
+}
+
+define behavior for ZR_TBC1017 alias AssignPurchOrg
+persistent table ztbc_1017
+draft table ztbc_1017_d
+lock dependent by _User
+authorization dependent by _User
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) Uuid;
+  field ( readonly )
+  Mail,
+  PurchasingOrganizationName,
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field ( mandatory ) PurchasingOrganization;
+
+  validation validatePurchOrg on save ##NOT_ASSIGNED_TO_DETACT { field PurchasingOrganization; create; update; }
+
+  association _User { with draft; }
+
+  mapping for ztbc_1017
+    {
+      Uuid                   = uuid;
+      Mail                   = mail;
+      PurchasingOrganization = purchasing_organization;
+      CreatedBy              = created_by;
+      CreatedAt              = created_at;
+      LastChangedBy          = last_changed_by;
+      LastChangedAt          = last_changed_at;
+      LocalLastChangedAt     = local_last_changed_at;
     }
 }
 

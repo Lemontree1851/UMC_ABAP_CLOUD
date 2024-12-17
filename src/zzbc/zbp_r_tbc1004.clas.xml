@@ -50,6 +50,12 @@
      <ENTRY>Sales Organization</ENTRY>
      <LENGTH>50</LENGTH>
     </item>
+    <item>
+     <ID>I</ID>
+     <KEY>007</KEY>
+     <ENTRY>Purchasing Organization</ENTRY>
+     <LENGTH>50</LENGTH>
+    </item>
    </TPOOL>
    <I18N_TPOOL>
     <item>
@@ -89,6 +95,12 @@
        <ID>I</ID>
        <KEY>006</KEY>
        <ENTRY>販売組織</ENTRY>
+       <LENGTH>50</LENGTH>
+      </item>
+      <item>
+       <ID>I</ID>
+       <KEY>007</KEY>
+       <ENTRY>購買組織</ENTRY>
        <LENGTH>50</LENGTH>
       </item>
      </TEXTPOOL>

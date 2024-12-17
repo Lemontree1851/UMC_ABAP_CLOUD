@@ -44,7 +44,7 @@ ENDCLASS.
 
 
 
-CLASS zzcl_odata_utils IMPLEMENTATION.
+CLASS ZZCL_ODATA_UTILS IMPLEMENTATION.
 
 
   METHOD filtering.
@@ -134,6 +134,4 @@ CLASS zzcl_odata_utils IMPLEMENTATION.
 
     ct_data = <fs_result>.
   ENDMETHOD.
-
-
 ENDCLASS.

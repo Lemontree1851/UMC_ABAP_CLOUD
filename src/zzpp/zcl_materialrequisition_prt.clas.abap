@@ -11,7 +11,9 @@ CLASS zcl_materialrequisition_prt DEFINITION
 ENDCLASS.
 
 
-CLASS zcl_materialrequisition_prt IMPLEMENTATION.
+
+CLASS ZCL_MATERIALREQUISITION_PRT IMPLEMENTATION.
+
 
   METHOD if_rap_query_provider~select.
     DATA lt_data TYPE TABLE OF zr_materialrequisition_prt_i.
@@ -43,5 +45,4 @@ CLASS zcl_materialrequisition_prt IMPLEMENTATION.
 
     io_response->set_data( lt_data ).
   ENDMETHOD.
-
 ENDCLASS.

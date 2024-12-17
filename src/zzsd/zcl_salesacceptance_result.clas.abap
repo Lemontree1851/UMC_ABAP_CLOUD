@@ -18,10 +18,12 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       ls_output TYPE zr_salesacceptance_result.
 
     DATA:
-      lv_from     TYPE budat,
-      lv_year     TYPE c LENGTH 4,
-      lv_month    TYPE monat,
-      lv_netpr(8) TYPE p DECIMALS 2.
+      lv_year      TYPE c LENGTH 4,
+      lv_month     TYPE monat,
+      lv_nextmonth TYPE budat,
+      lv_from      TYPE budat,
+      lv_to        TYPE budat,
+      lv_netpr(8)  TYPE p DECIMALS 2.
 
 * Get filter range
     TRY.
@@ -60,17 +62,51 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         OR zid = 'ZSD010'
       INTO TABLE @DATA(lt_1001).
 
-    lv_year = xco_cp=>sy->date( )->year.
     CASE lv_periodtype.
       WHEN 'A'.  "1日~月末
+        lv_year = xco_cp=>sy->date( )->year.
         lv_from = lv_year && lv_acceptperiod && '01'.
+        IF lv_acceptperiod = 12.
+          lv_year = lv_year + 1.
+          lv_nextmonth = lv_year && '01' && '01'.
+        ELSE.
+          lv_month = lv_acceptperiod + 1.
+          lv_nextmonth = lv_year && lv_month && '01'.
+        ENDIF.
+        lv_to = lv_nextmonth - 1.
       WHEN 'B'.  "16日~次月15日
+        lv_year = xco_cp=>sy->date( )->year.
         lv_from = lv_year && lv_acceptperiod && '16'.
+        IF lv_acceptperiod = 12.
+          lv_year = lv_year + 1.
+          lv_month = '01'.
+        ELSE.
+          lv_month = lv_acceptperiod + 1.
+        ENDIF.
+        lv_to = lv_year && lv_month && '15'.
       WHEN 'C'.  "21日~次月20日
+        lv_year = xco_cp=>sy->date( )->year.
         lv_from = lv_year && lv_acceptperiod && '21'.
+        IF lv_acceptperiod = 12.
+          lv_year = lv_year + 1.
+          lv_month = '01'.
+        ELSE.
+          lv_month = lv_acceptperiod + 1.
+        ENDIF.
+        lv_to = lv_year && lv_month && '20'.
+
       WHEN 'D'.  "26日~次月25日
+        lv_year = xco_cp=>sy->date( )->year.
         lv_from = lv_year && lv_acceptperiod && '26'.
+        IF lv_acceptperiod = 12.
+          lv_year = lv_year + 1.
+          lv_month = '01'.
+        ELSE.
+          lv_month = lv_acceptperiod + 1.
+        ENDIF.
+        lv_to = lv_year && lv_month && '25'.
     ENDCASE.
+
     CASE lv_layer.
       WHEN '1'.   "第一个页面
 *A 指定される期間の検収データと実績データを抽出
@@ -106,15 +142,30 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         IF sy-subrc = 0.
           SELECT *
           FROM ztsd_1012 WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_1003
-         WHERE salesorganization = @lt_1003-salesorganization
-           AND customer = @lt_1003-customer
-           AND periodtype = @lt_1003-periodtype
-           AND acceptperiod = @lt_1003-acceptperiod
-           AND customerpo = @lt_1003-customerpo
+          FOR ALL ENTRIES IN @lt_1003_t
+         WHERE salesorganization = @lt_1003_t-salesorganization
+           AND customer = @lt_1003_t-customer
+           AND periodtype = @lt_1003_t-periodtype
+           AND acceptperiod = @lt_1003_t-acceptperiod
+           AND customerpo = @lt_1003_t-customerpo
            AND processstatus = '4'
           INTO TABLE @DATA(lt_1012_t).
         ENDIF.
+
+        SORT lt_1012_t BY salesorganization customer periodtype acceptperiod customerpo.
+        LOOP AT lt_1003_t INTO DATA(ls_1003_t).
+          READ TABLE lt_1012_t TRANSPORTING NO FIELDS
+               WITH KEY salesorganization = ls_1003_t-salesorganization
+                        customer = ls_1003_t-customer
+                        periodtype = ls_1003_t-periodtype
+                        acceptperiod = ls_1003_t-acceptperiod
+                        customerpo = ls_1003_t-customerpo BINARY SEARCH.
+          IF sy-subrc <> 0.
+            DELETE lt_1003_t.
+            CONTINUE.
+          ENDIF.
+        ENDLOOP.
+
 
         IF lt_1003_t IS NOT INITIAL.
           APPEND LINES OF lt_1003_t TO lt_1003.
@@ -137,6 +188,17 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
            AND ( finishstatus = '0'
               OR finishstatus = @space )
           INTO TABLE @lt_1003.
+        IF sy-subrc = 0.
+          SELECT *                            "#EC CI_ALL_FIELDS_NEEDED
+            FROM ztsd_1012 WITH PRIVILEGED ACCESS
+             FOR ALL ENTRIES IN @lt_1003
+           WHERE salesorganization = @lt_1003-salesorganization
+             AND customer = @lt_1003-customer
+             AND periodtype = @lt_1003-periodtype
+             AND acceptperiod = @lt_1003-acceptperiod
+             AND customerpo = @lt_1003-customerpo
+            INTO TABLE @lt_1012.
+        ENDIF.
 
         SELECT *
           FROM ztsd_1003 WITH PRIVILEGED ACCESS
@@ -148,22 +210,39 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
           INTO TABLE @lt_1003_t.
 
         IF lt_1003_t IS NOT INITIAL.
+          SELECT *                            "#EC CI_ALL_FIELDS_NEEDED
+            FROM ztsd_1012
+            FOR ALL ENTRIES IN @lt_1003_t
+           WHERE salesorganization = @lt_1003_t-salesorganization
+             AND customer = @lt_1003_t-customer
+             AND periodtype = @lt_1003_t-periodtype
+             AND acceptperiod = @lt_1003_t-acceptperiod
+             AND customerpo = @lt_1003_t-customerpo
+             AND old_status = '4'
+            INTO TABLE @lt_1012_t.
+        ENDIF.
+
+        SORT lt_1012_t BY salesorganization customer periodtype acceptperiod customerpo.
+        LOOP AT lt_1003_t INTO ls_1003_t.
+          READ TABLE lt_1012_t TRANSPORTING NO FIELDS
+               WITH KEY salesorganization = ls_1003_t-salesorganization
+                        customer = ls_1003_t-customer
+                        periodtype = ls_1003_t-periodtype
+                        acceptperiod = ls_1003_t-acceptperiod
+                        customerpo = ls_1003_t-customerpo BINARY SEARCH.
+          IF sy-subrc <> 0.
+            DELETE lt_1003_t.
+            CONTINUE.
+          ENDIF.
+        ENDLOOP.
+
+        IF lt_1003_t IS NOT INITIAL.
           APPEND LINES OF lt_1003_t TO lt_1003.
         ENDIF.
 
-        IF lt_1003 IS NOT INITIAL.
-          SELECT *                            "#EC CI_ALL_FIELDS_NEEDED
-            FROM ztsd_1012
-            FOR ALL ENTRIES IN @lt_1003
-           WHERE salesorganization = @lt_1003-salesorganization
-             AND customer = @lt_1003-customer
-             AND periodtype = @lt_1003-periodtype
-             AND acceptperiod = @lt_1003-acceptperiod
-             AND customerpo = @lt_1003-customerpo
-            INTO TABLE @lt_1012.
+        IF lt_1012_t IS NOT INITIAL.
+          APPEND LINES OF lt_1012_t TO lt_1012.
         ENDIF.
-
-
     ENDCASE.
 
 * Customer Name
@@ -426,8 +505,8 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       IF sy-subrc = 0.
         ls_output-acceptperiodtext = lv_acceptperiod && ` ` && ls_1001-zvalue2.
       ENDIF.
-      ls_output-acceptperiodfromtext = |{ ls_output-acceptperiodfrom+0(4) }/{ ls_output-acceptperiodfrom+4(2) }/{ ls_output-acceptperiodfrom+6(2) }|.
-      ls_output-acceptperiodtotext = |{ ls_output-acceptperiodto+0(4) }/{ ls_output-acceptperiodto+4(2) }/{ ls_output-acceptperiodto+6(2) }|.
+      ls_output-acceptperiodfromtext = |{ lv_from+0(4) }/{ lv_from+4(2) }/{ lv_from+6(2) }|.
+      ls_output-acceptperiodtotext = |{ lv_to+0(4) }/{ lv_to+4(2) }/{ lv_to+6(2) }|.
       APPEND ls_output TO lt_output.
       CLEAR: ls_output.
     ENDLOOP.

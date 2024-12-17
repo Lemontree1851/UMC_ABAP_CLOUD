@@ -1,34 +1,27 @@
 @Metadata.layer: #CORE
 @UI: {
   headerInfo: {
-    typeName: 'Access Button',
-    typeNamePlural: 'Access Button'
+    typeName: 'Purchasing Organization',
+    typeNamePlural: 'Purchasing Organization'
   }
 }
 annotate view ZC_TBC1017 with
 {
   @UI.hidden: true
-  RoleId;
+  Uuid;
+  @UI.hidden: true
+  Mail;
 
-  @UI.lineItem: [{ position: 10, cssDefault.width: '20rem' }]
-  @EndUserText.label: 'Access Id'
-  AccessId;
+  @UI.lineItem: [{ position: 10, cssDefault.width: '10rem' }]
+  @Consumption.valueHelpDefinition: [{ entity: {name: 'I_PurchasingOrganization' , element: 'PurchasingOrganization' },
+               additionalBinding: [{ localElement: 'PurchasingOrganizationName', element: 'PurchasingOrganizationName', usage: #RESULT }]
+  }]
+  @EndUserText.label: 'Purchasing Organization'
+  PurchasingOrganization;
 
-  @UI.lineItem: [{ position: 20, cssDefault.width: '15rem' }]
-  @EndUserText.label: 'Access Name'
-  AccessName;
-
-  @UI.lineItem: [{ position: 30, cssDefault.width: '15rem' }]
-  @EndUserText.label: 'Application Id'
-  FunctionId;
-
-  @UI.lineItem: [{ position: 50 }]
-  @EndUserText.label: 'Design File Id'
-  DesignFileId;
-
-  @UI.lineItem: [{ position: 60, cssDefault.width: '25rem' }]
-  @EndUserText.label: 'Application Name'
-  FunctionName;
+  @UI.lineItem: [{ position: 20, cssDefault.width: '20rem' }]
+  @EndUserText.label: 'Purch. Org. Name'
+  PurchasingOrganizationName;
 
   @UI.hidden: true
   LocalLastChangedAt;

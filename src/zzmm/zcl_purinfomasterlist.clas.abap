@@ -13,6 +13,7 @@ ENDCLASS.
 
 CLASS zcl_purinfomasterlist IMPLEMENTATION.
 
+
   METHOD if_rap_query_provider~select.
     TYPES: BEGIN OF ty_record,
              conditionrecord              TYPE i_purgprcgconditionrecord-conditionrecord,
@@ -70,10 +71,6 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
               ENDLOOP.
             WHEN 'SUPPLIER'.
               DATA(lr_supplier) = ls_filter_cond-range.
-              LOOP AT lr_supplier ASSIGNING FIELD-SYMBOL(<lr_supplier>).
-                <lr_supplier>-low  = |{ <lr_supplier>-low  ALPHA = IN }|.
-                <lr_supplier>-high = |{ <lr_supplier>-high ALPHA = IN }|.
-              ENDLOOP.
             WHEN 'SUPPLIERMATERIALNUMBER'.
               DATA(lr_suppliermaterialnumber) = ls_filter_cond-range.
             WHEN 'PURCHASINGGROUP'.

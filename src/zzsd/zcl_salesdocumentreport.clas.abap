@@ -140,6 +140,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
         plant            TYPE string,
         companycode      TYPE string,
         valuationarea    TYPE string,
+        costingdate_d    TYPE d,
+        costingdate      TYPE timestamp,
       END OF ty_results1,
       tt_results1 TYPE STANDARD TABLE OF ty_results1 WITH DEFAULT KEY,
       BEGIN OF ty_d1,
@@ -152,7 +154,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       BEGIN OF ty_productcost,
         material                   TYPE matnr,
         plant                      TYPE werks_d,
-        ztype(10)                   TYPE c,
+        ztype(10)                  TYPE c,
         controllingareacurrency    TYPE i_productcostestimateitem-controllingareacurrency,
         totalamountinctrlgareacrcy TYPE i_productcostestimateitem-totalamountinctrlgareacrcy,
       END OF ty_productcost.
@@ -189,7 +191,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
           WHEN 'CUSTOMER'.
             MOVE-CORRESPONDING str_rec_l_range TO ls_customer.
 
-            ls_customer-LOW = |{ ls_customer-LOW ALPHA = IN }|.
+            ls_customer-low = |{ ls_customer-low ALPHA = IN }|.
             APPEND ls_customer TO lr_customer.
             CLEAR ls_customer.
           WHEN 'PRODUCT'.
@@ -324,7 +326,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       profitcenter,
       salesplanperiodname,
       salesplanquantity,
-      salesplanunit
+      salesplanunit,
+      salesplanperiodname AS username
     FROM i_slsperformanceplanactualcube(
       p_exchangeratetype = 0,
       p_displaycurrency  = 'JPY',
@@ -350,7 +353,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       salesplanperiodname,
       salesplanamountindspcrcy,
       displaycurrency,
-      salesplanunit
+      salesplanunit,
+      salesplanperiodname AS username
     FROM i_slsperformanceplanactualcube(
       p_exchangeratetype = 0,
       p_displaycurrency  = 'JPY',
@@ -376,7 +380,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       salesplanperiodname,
       salesplanamountindspcrcy,
       displaycurrency,
-      salesplanunit
+      salesplanunit,
+      salesplanperiodname AS username
     FROM i_slsperformanceplanactualcube(
       p_exchangeratetype = 0,
       p_displaycurrency  = 'JPY',
@@ -402,7 +407,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       salesplanperiodname,
       salesplanamountindspcrcy,
       displaycurrency,
-      salesplanunit
+      salesplanunit,
+      salesplanperiodname AS username
     FROM i_slsperformanceplanactualcube(
       p_exchangeratetype = 0,
       p_displaycurrency  = 'JPY',
@@ -417,6 +423,24 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 
     "需要取0 1 2 3开头版本最大的值
     IF lt_result0 IS NOT INITIAL OR lt_result1 IS NOT INITIAL OR lt_result2 IS NOT INITIAL OR lt_result3 IS NOT INITIAL.
+      "0 1 2 3的创建人不一样 要分别匹配
+      READ TABLE lt_result0 INTO DATA(ls_result0_temp0) INDEX 1.
+      ls_result0_temp0-username = ls_version0-createdbyuser.
+      MODIFY lt_result0 FROM ls_result0_temp0 TRANSPORTING username WHERE salesplanperiodname IS NOT INITIAL.
+
+      READ TABLE lt_result1 INTO DATA(ls_result1_temp) INDEX 1.
+      ls_result1_temp-username = ls_version1-createdbyuser.
+      MODIFY lt_result1 FROM ls_result1_temp TRANSPORTING username WHERE salesplanperiodname IS NOT INITIAL.
+
+      READ TABLE lt_result2 INTO DATA(ls_result2_temp) INDEX 1.
+      ls_result2_temp-username = ls_version2-createdbyuser.
+      MODIFY lt_result2 FROM ls_result2_temp TRANSPORTING username WHERE salesplanperiodname IS NOT INITIAL.
+
+      READ TABLE lt_result3 INTO DATA(ls_result3_temp) INDEX 1.
+      ls_result3_temp-username = ls_version3-createdbyuser.
+      MODIFY lt_result3 FROM ls_result3_temp TRANSPORTING username WHERE salesplanperiodname IS NOT INITIAL.
+
+
       DATA(lt_result) = lt_result0.
       MOVE-CORRESPONDING lt_result1 TO lt_result KEEPING TARGET LINES.
       MOVE-CORRESPONDING lt_result2 TO lt_result KEEPING TARGET LINES.
@@ -474,6 +498,28 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       INTO TABLE @DATA(lt_psdmaag).
       SORT lt_psdmaag BY product.
 
+      IF lt_psdmaag IS NOT INITIAL.
+
+        SELECT salesspcfcproductgroup1,salesspcfcproductgroup1name
+            FROM i_salesspcfcproductgroup1text
+        WHERE language = 'J'
+         INTO TABLE @DATA(lt_group1text).
+        SORT lt_group1text BY  salesspcfcproductgroup1.
+
+        SELECT salesspcfcproductgroup2,salesspcfcproductgroup2name
+          FROM i_salesspcfcproductgroup2text
+        WHERE language = 'J'
+         INTO TABLE @DATA(lt_group2text).
+        SORT lt_group2text BY  salesspcfcproductgroup2.
+
+        SELECT salesspcfcproductgroup3,salesspcfcproductgroup3name
+          FROM i_salesspcfcproductgroup3text
+        WHERE language = 'J'
+         INTO TABLE @DATA(lt_group3text).
+        SORT lt_group3text BY  salesspcfcproductgroup3.
+
+      ENDIF.
+
       "取品名
       SELECT
         product,
@@ -487,7 +533,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       "取工厂名称
       SELECT
         plant,
-        plantname
+        plantname,
+        valuationarea
       FROM i_plant WITH PRIVILEGED ACCESS
       FOR ALL ENTRIES IN @lt_result
       WHERE plant = @lt_result-salesorganization
@@ -509,13 +556,14 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
     ENDIF.
 
     "取账号名称
-    SELECT SINGLE
-      userdescription
+    SELECT
+      userid,userdescription
     FROM i_user
     WITH PRIVILEGED ACCESS
-    WHERE userid = @ls_version-createdbyuser
-    INTO @DATA(lv_userdescription).
-
+    FOR ALL ENTRIES IN @lt_planversion
+    WHERE userid = @lt_planversion-createdbyuser
+    INTO TABLE @DATA(lt_userdescription).
+    SORT lt_userdescription BY userid.
 
     "取单价
     lv_begda = lv_splitstart && '01'.
@@ -567,6 +615,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
     ENDIF.
 
     SORT lt_slsprcgconditionrecord BY conditionrecord.
+
 
     "Obtain 305 condition table
     lv_path = |/API_SLSPRICINGCONDITIONRECORD_SRV/A_SlsPrcgCndnRecdValidity?$filter=ConditionType%20eq%20'{ lc_ppr0 }'%20or%20ConditionType%20eq%20'{ lc_zzr0 }'%20or%20ConditionType%20eq%20'{ lc_zyr0 }'|.
@@ -640,7 +689,9 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
     "获取加工费
     IF lt_result IS NOT INITIAL.
 
-      lv_path = |/YY1_PRODUCTCOSTESTIMATED_CDS/YY1_ProductCostEstimateD?$filter=CostingDate%20eq%20datetime'{ lv_local_begda_s }T00:00:00'|.
+      lv_path = |/YY1_PRODUCTCOSTESTIMATED_CDS/YY1_ProductCostEstimateD|.
+      "lv_path = |/YY1_PRODUCTCOSTESTIMATED_CDS/YY1_ProductCostEstimateD?$filter=CostingDate%20eq%20datetime'{ lv_local_begda_s }T00:00:00'|.
+
       "Call API
       zzcl_common_utils=>request_api_v2(
         EXPORTING
@@ -665,7 +716,16 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
           DELETE ls_res_api1-d-results.
           CONTINUE.
         ENDIF.
+        "时间戳格式转换成日期格式
+        ls_result_p1-costingdate_d = CONV string( ls_result_p1-costingdate DIV 1000000 ).
+        MODIFY ls_res_api1-d-results  FROM ls_result_p1 TRANSPORTING costingdate_d .
+
       ENDLOOP.
+
+      "保留日期最大的
+      SORT ls_res_api1-d-results BY plant material costingdate DESCENDING.
+      DELETE ADJACENT DUPLICATES FROM ls_res_api1-d-results COMPARING plant material .
+
 
       SORT ls_res_api1-d-results BY costestimate.
 
@@ -683,7 +743,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 
          costcomponent,
          controllingareacurrency,
-         totalamountinctrlgareacrcy
+         totalamountinctrlgareacrcy,
+         costingpriceunitqty
         FROM i_productcostestimateitem WITH PRIVILEGED ACCESS "#EC CI_FAE_LINES_ENSURED
         FOR ALL ENTRIES IN @ls_res_api1-d-results
        WHERE costestimate = @ls_res_api1-d-results-costestimate
@@ -698,7 +759,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
           ls_productcost-material = ls_result_p1-material.
           ls_productcost-plant = ls_result_p1-plant .
           ls_productcost-controllingareacurrency  = ls_productcostestimateitem-controllingareacurrency  .
-          ls_productcost-totalamountinctrlgareacrcy = ls_productcostestimateitem-totalamountinctrlgareacrcy .
+          ls_productcost-totalamountinctrlgareacrcy = ls_productcostestimateitem-totalamountinctrlgareacrcy / ls_productcostestimateitem-costingpriceunitqty .
 
           IF ls_productcostestimateitem-costcomponent = '101'
           OR ls_productcostestimateitem-costcomponent = '102'
@@ -715,10 +776,13 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
               OR ls_productcostestimateitem-costcomponent = '207'
               OR ls_productcostestimateitem-costcomponent = '208'
               OR ls_productcostestimateitem-costcomponent = '209'.
+            "材料费
+            ls_productcost-ztype = 'RAW'.
+          ELSE.
 
+            ls_productcost-ztype = ''.
           ENDIF.
-          "材料费
-          ls_productcost-ztype = 'RAW'.
+
         ENDIF.
         COLLECT ls_productcost INTO lt_productcost.
 
@@ -726,6 +790,12 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 
       SORT lt_productcost BY material plant ztype.
 
+      SELECT
+        *
+      FROM ztbc_1001 WITH PRIVILEGED ACCESS
+      WHERE zid   = 'ZSD017'
+        AND zkey1 = 'GL_ACCOUNT'
+      INTO TABLE @DATA(lt_ztbc_1001).
 
 *
 *
@@ -875,11 +945,17 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
         READ TABLE lt_plant INTO DATA(ls_plant) WITH KEY plant = ls_result-salesorganization BINARY SEARCH.
         IF sy-subrc = 0.
           ls_output-plantname = ls_plant-plantname.
+          ls_output-companycode = ls_plant-valuationarea.
         ENDIF.
 
         ls_output-salesoffice = ls_result-salesoffice.
 
-        ls_output-createdbyuser = lv_userdescription.
+
+        READ TABLE lt_userdescription INTO DATA(ls_userdescription) WITH KEY userid = ls_result-username .
+        if sy-subrc = 0.
+                ls_output-createdbyuser = ls_userdescription-UserDescription.
+        ENDIF.
+
 
         ls_output-salesgroup = ls_result-salesgroup.
 
@@ -906,7 +982,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
             WHEN '05' OR '06'.
               ls_output-matlaccountassignmentgroup = '開発'.
             WHEN OTHERS.
-              ls_output-matlaccountassignmentgroup = '未定義'.
+              "ls_output-matlaccountassignmentgroup = '未定義'.
           ENDCASE.
         ENDIF.
 
@@ -1065,6 +1141,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
                                            iv_currency = ls_tiered-conditionscaleamountcurrency
                                            iv_input = ls_tiered-conditionscaleamount ).
                 ls_output-conditionratevalue_n   = ls_output-conditionratevalue_n / ls_tiered-conditionquantity.
+                ls_output-displaycurrency1 = ls_305-conditionratevalueunit.
                 "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
                 EXIT.
               ENDLOOP.
@@ -1077,6 +1154,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
                            iv_currency = ls_305-conditionratevalueunit
                            iv_input = ls_305-conditionratevalue ).
               ls_output-conditionratevalue_n   = ls_output-conditionratevalue_n / ls_305-conditionquantity.
+              ls_output-displaycurrency1 = ls_305-conditionratevalueunit.
             ENDIF.
             "之前排序过 有效起止日期被包含在对象月中且日期最大的那条
             EXIT.
@@ -1119,6 +1197,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
                                            iv_currency = ls_tiered-conditionscaleamountcurrency
                                            iv_input = ls_tiered-conditionscaleamount ).
                 ls_output-conditionratevalue_n   = ls_output-conditionratevalue_n / ls_tiered-conditionquantity.
+                ls_output-displaycurrency1 = ls_305-conditionratevalueunit.
                 "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
                 EXIT.
               ENDLOOP.
@@ -1132,6 +1211,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
                            iv_currency = ls_305-conditionratevalueunit
                            iv_input = ls_305-conditionratevalue ).
               ls_output-conditionratevalue_n   = ls_output-conditionratevalue_n / ls_305-conditionquantity.
+              ls_output-displaycurrency1 = ls_305-conditionratevalueunit.
             ENDIF.
             "之前排序过 有效起止日期被包含在对象月中且日期最大的那条
             EXIT.
@@ -1173,6 +1253,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
                                              iv_currency = ls_tiered-conditionscaleamountcurrency
                                              iv_input = ls_tiered-conditionscaleamount ).
                   ls_output-conditionratevalue_n   = ls_output-conditionratevalue_n / ls_tiered-conditionquantity.
+                  ls_output-displaycurrency1 = ls_305-conditionratevalueunit.
                   "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
                   EXIT.
                 ENDLOOP.
@@ -1186,6 +1267,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
                              iv_currency = ls_305-conditionratevalueunit
                              iv_input = ls_305-conditionratevalue ).
                 ls_output-conditionratevalue_n   = ls_output-conditionratevalue_n / ls_305-conditionquantity.
+
+                ls_output-displaycurrency1 = ls_305-conditionratevalueunit.
               ENDIF.
               "之前排序过 有效起止日期被包含在对象月中且日期最大的那条
               EXIT.
@@ -1249,6 +1332,33 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
           ls_output-salesgroup = ls_customersalesarea-salesgroup.
         ENDIF.
 
+        READ TABLE lt_group1text INTO DATA(ls_group1text) WITH KEY salesspcfcproductgroup1 = ls_output-firstsalesspecproductgroup BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_output-firstsalesspecproductgroup = ls_output-firstsalesspecproductgroup && '('  && ls_group1text-salesspcfcproductgroup1name  && ')' .
+        ENDIF.
+        READ TABLE lt_group2text INTO DATA(ls_group2text) WITH KEY salesspcfcproductgroup2 = ls_output-secondsalesspecproductgroup BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_output-secondsalesspecproductgroup = ls_output-secondsalesspecproductgroup && '('  && ls_group2text-salesspcfcproductgroup2name  && ')' .
+        ENDIF.
+        READ TABLE lt_group3text INTO DATA(ls_group3text) WITH KEY salesspcfcproductgroup3 = ls_output-thirdsalesspecproductgroup BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_output-thirdsalesspecproductgroup = ls_output-thirdsalesspecproductgroup && '('  && ls_group3text-salesspcfcproductgroup3name  && ')' .
+        ENDIF.
+
+        LOOP AT lt_ztbc_1001 INTO DATA(ls_ztbc_1001).
+          CASE ls_ztbc_1001-zseq.
+            WHEN '00000001'.
+              ls_output-glaccount1     = ls_ztbc_1001-zvalue1.
+              ls_output-glaccountname1 = ls_ztbc_1001-zvalue2.
+            WHEN '00000002'.
+              ls_output-glaccount2     = ls_ztbc_1001-zvalue1.
+              ls_output-glaccountname2 = ls_ztbc_1001-zvalue2.
+            WHEN '00000003'.
+              ls_output-glaccount3     = ls_ztbc_1001-zvalue1.
+              ls_output-glaccountname3 = ls_ztbc_1001-zvalue2.
+          ENDCASE.
+        ENDLOOP.
+
         APPEND ls_output TO lt_output.
         CLEAR ls_output.
       ENDLOOP.
@@ -1273,7 +1383,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
         IF sy-subrc <> 0.
           CLEAR :ls_output-conditionratevalue_n,ls_output-salesplanamountindspcrcy_n,
           ls_output-salesamount_n,ls_output-contributionprofittotal_n,ls_output-grossprofittotal_n,
-          ls_output-materialcost2000per_n,ls_output-Manufacturingcostper_n .
+          ls_output-materialcost2000per_n,ls_output-manufacturingcostper_n .
           ls_output-yeardate = lv_yeardatetemp1.
           APPEND ls_output TO lt_output.
         ENDIF.
@@ -1686,8 +1796,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 *************************************************************
 **     test 数据集
 *************************************************************
-*    "DATA:
-*   "  ls_output            TYPE  zr_salesdocumentreport.
+    "DATA:
+    "  ls_output            TYPE  zr_salesdocumentreport.
 *
 *    CLEAR ls_output.
 *    ls_output-salesorganization = '11'.
@@ -1699,6 +1809,11 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 *    ls_output-salesamount_n  = 1234.
 *    ls_output-materialcost2000_n = 555555.
 *    ls_output-manufacturingcost_n = 8888888.
+*    ls_output-FirstSalesSpecProductGroup = '1'.
+*    ls_output-SecondSalesSpecProductGroup = '2'.
+*    ls_output-ThirdSalesSpecProductGroup = '3'.
+*    ls_output-Companycode = '1222'.
+*    ls_output-FirstSalesSpecProductGroup = '1222(DDDD)'.
 *    APPEND ls_output TO lt_output.
 *
 *
@@ -1745,42 +1860,42 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 *    ls_output-grossprofittotal_n = 7.
 *    ls_output-materialcost2000per_n = 92929.
 *    APPEND ls_output TO lt_output.
-*
-*
-*    "重要非常重要 非常非常重要！！！
-*    "请给第一key的 添加yeardate 最多列 无值用0填充
-*    "或者干脆就所有行 无值0
-*
-*    SORT lt_output BY salesorganization customer profitcenter salesoffice salesgroup product createdbyuser plantype yeardate.
-*
-*    READ TABLE lt_output INTO ls_output INDEX 1.
-*    IF sy-subrc = 0.
-*
-*      DO 50 TIMES.
-*        "DATA:lv_yeardatetemp11 TYPE bldat.
-*        "DATA:lv_yeardatetemp12(6) TYPE c.
-*        lv_index = sy-index  - 1.
-*        lv_yeardatetemp =  zzcl_common_utils=>calc_date_add( date = lv_splitstart && '01' month = lv_index ).
-*        lv_yeardatetemp1 = lv_yeardatetemp+0(6).
-*
-*        READ TABLE lt_output TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_output-salesorganization customer = ls_output-customer product = ls_output-product
-*        plantype = ls_output-plantype yeardate = lv_yeardatetemp1.
-*        IF sy-subrc <> 0.
-*          CLEAR :ls_output-conditionratevalue_n,ls_output-salesplanamountindspcrcy_n,
-*          ls_output-salesamount_n,ls_output-contributionprofittotal_n,ls_output-grossprofittotal_n.
-*          ls_output-yeardate = lv_yeardatetemp1.
-*          APPEND ls_output TO lt_output.
-*        ENDIF.
-*        IF lv_yeardatetemp1 = lv_splitend.
-*          EXIT.
-*        ENDIF.
-*      ENDDO.
-*      DELETE lt_output WHERE yeardate < lv_splitstart OR yeardate > lv_splitend.
-*
-*    ENDIF.
-*
-*    SORT lt_output BY salesorganization customer profitcenter salesoffice salesgroup product createdbyuser plantype yeardate.
-*
+
+
+    "重要非常重要 非常非常重要！！！
+    "请给第一key的 添加yeardate 最多列 无值用0填充
+    "或者干脆就所有行 无值0
+
+    SORT lt_output BY salesorganization customer profitcenter salesoffice salesgroup product createdbyuser plantype yeardate.
+
+    READ TABLE lt_output INTO ls_output INDEX 1.
+    IF sy-subrc = 0.
+
+      DO 50 TIMES.
+        "DATA:lv_yeardatetemp11 TYPE bldat.
+        "DATA:lv_yeardatetemp12(6) TYPE c.
+        lv_index = sy-index  - 1.
+        lv_yeardatetemp =  zzcl_common_utils=>calc_date_add( date = lv_splitstart && '01' month = lv_index ).
+        lv_yeardatetemp1 = lv_yeardatetemp+0(6).
+
+        READ TABLE lt_output TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_output-salesorganization customer = ls_output-customer product = ls_output-product
+        plantype = ls_output-plantype yeardate = lv_yeardatetemp1.
+        IF sy-subrc <> 0.
+          CLEAR :ls_output-conditionratevalue_n,ls_output-salesplanamountindspcrcy_n,
+          ls_output-salesamount_n,ls_output-contributionprofittotal_n,ls_output-grossprofittotal_n.
+          ls_output-yeardate = lv_yeardatetemp1.
+          APPEND ls_output TO lt_output.
+        ENDIF.
+        IF lv_yeardatetemp1 = lv_splitend.
+          EXIT.
+        ENDIF.
+      ENDDO.
+      DELETE lt_output WHERE yeardate < lv_splitstart OR yeardate > lv_splitend.
+
+    ENDIF.
+
+    SORT lt_output BY salesorganization customer profitcenter salesoffice salesgroup product createdbyuser plantype yeardate.
+
 
 *********************
 

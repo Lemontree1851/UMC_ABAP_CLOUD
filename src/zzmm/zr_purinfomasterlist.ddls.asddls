@@ -10,20 +10,20 @@ define root custom entity ZR_PURINFOMASTERLIST
 {
   key uuid                           : sysuuid_x16;
       @Consumption.valueHelpDefinition:[{ entity: { name: 'I_PurchasingInfoRecordApi01', element: 'PurchasingInfoRecord' } }]
-  key purchasinginforecord           : abap.char(10);
+  key purchasinginforecord           : infnr;
       @Consumption.valueHelpDefinition:[{ entity: { name: 'I_Plant', element: 'Plant' } }]
-  key plant                          : abap.char(4);
+  key plant                          : werks_d;
       @Consumption.valueHelpDefinition:[{ entity: { name: 'I_PurchasingOrganization', element: 'PurchasingOrganization' } }]
   key purchasingorganization         : ekorg;
       @Consumption.valueHelpDefinition:[{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
-  key material                       : abap.char(40);
+  key material                       : matnr;
   key suppliermaterialnumber         : abap.char(35);
       @Consumption.valueHelpDefinition:[{ entity: { name: 'I_Supplier', element: 'Supplier' } }]
-  key Supplier                       : abap.char(10);
+  key Supplier                       : lifnr;
       @Consumption.valueHelpDefinition:[{ entity: { name: 'I_PurchasingGroup', element: 'PurchasingGroup' } }]
   key PurchasingGroup                : ekgrp;
-  key ManufacturerNumber             : abap.char(10);
-  key ProductManufacturerNumber      : abap.char(40);
+  key ManufacturerNumber             : mfrnr;
+  key ProductManufacturerNumber      : mfrpn;
   key latestoffer                    : abap.char(1);
   key SupplierIsFixed                : abap.char(1);
   key IncotermsClassification        : abap.char(3);
@@ -31,8 +31,8 @@ define root custom entity ZR_PURINFOMASTERLIST
   key condition_validity_end_date    : abap.dats;
       Ztype1                         : abap.char(1);
       Ztype2                         : abap.char(1);
-      ProductName                    : abap.char(40);
-      ProductGroup                   : abap.char(9);
+      ProductName                    : maktx;
+      ProductGroup                   : matkl;
       @Semantics.amount.currencyCode : 'Currency_plnt'
       NetPriceAmount                 : abap.curr(13,2);
       @Semantics.currencyCode        : true
@@ -54,7 +54,7 @@ define root custom entity ZR_PURINFOMASTERLIST
       @Consumption.filter.selectionType: #INTERVAL
       CreationDate_2                 : abap.dats;
       OwnInventoryManagedProduct     : abap.char(40);
-      ProductOID                     : abap.char(40);
+      ProductOID                     : matnr;
       BaseUnit                       : abap.unit(3);
       OrganizationBPName1            : abap.char(40);
       standardpurchaseorderquantity  : abap.dec(15,3);
