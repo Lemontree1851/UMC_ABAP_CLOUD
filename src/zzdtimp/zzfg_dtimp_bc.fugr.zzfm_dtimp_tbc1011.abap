@@ -202,6 +202,12 @@ FUNCTION zzfm_dtimp_tbc1011.
           CONTINUE.
         ENDIF.
 
+      ELSE.
+
+        MESSAGE e006(zbc_001) WITH TEXT-016 INTO <line>-('Message').
+        <line>-('Type')    = 'E'.
+        CONTINUE.
+
       ENDIF.
 
 *     Insert company data
@@ -263,6 +269,12 @@ FUNCTION zzfm_dtimp_tbc1011.
           <line>-('Type') = 'E'.
           CONTINUE.
         ENDIF.
+
+      ELSE.
+
+        MESSAGE e006(zbc_001) WITH TEXT-017 INTO <line>-('Message').
+        <line>-('Type')    = 'E'.
+        CONTINUE.
 
       ENDIF.
 

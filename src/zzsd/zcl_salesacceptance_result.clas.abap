@@ -345,6 +345,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       ls_output-salesdocument = ls_so-salesdocument.
       ls_output-salesdocumentitem = ls_so-salesdocumentitem.
       ls_output-salesdocumenttype = ls_so-salesdocumenttype.
+      ls_output-layer = lv_layer.
       READ TABLE lt_auart INTO DATA(ls_auart)
                  WITH KEY salesdocumenttype = ls_so-salesdocumenttype BINARY SEARCH.
       IF sy-subrc = 0.
@@ -533,9 +534,9 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       ENDLOOP.
     ENDIF.
 
-*    " Filtering
-*    zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
-*                                 CHANGING  ct_data     = lt_output ).
+    " Filtering
+    zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
+                                 CHANGING  ct_data     = lt_output ).
 
     IF io_request->is_total_numb_of_rec_requested(  ) .
       io_response->set_total_number_of_records( lines( lt_output ) ).

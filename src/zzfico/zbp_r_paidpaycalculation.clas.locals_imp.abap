@@ -203,6 +203,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       lv_nextmonth        TYPE budat,
       lv_from             TYPE budat,
       lv_to               TYPE budat,
+      lv_budat            TYPE budat,
       lv_i                TYPE i,
       lv_j                TYPE i,
       lv_num_parent       TYPE n LENGTH 2,
@@ -210,7 +211,8 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       lv_num              TYPE n LENGTH 2,
       lv_index            TYPE i,
       lv_peinh(7)         TYPE p DECIMALS 3,
-      lv_length           TYPE i.
+      lv_length           TYPE i,
+      lv_zeile            TYPE i.
 
     FIELD-SYMBOLS: <fs> TYPE any.
 
@@ -264,6 +266,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
      WHERE fiscalyearvariant = 'V3'
        AND fiscalyearperiod = @lv_fiscalyearperiod
       INTO @DATA(ls_v3).
+    lv_budat = cv_gjahr && '01' && '01'.
 
 * Delete DB
     SELECT *
@@ -557,14 +560,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     ENDIF.
 
 * 3.01-3.08 BOM番号
-    "パラメータ画面入力した会計年度と会計期間に一番近い過去日付
-    SELECT SINGLE MAX( costestimatevaliditystartdate )
-      FROM i_productcostestimate WITH PRIVILEGED ACCESS
-     WHERE plant IN @lr_plant
-       AND costingvariant = 'PYC1'
-       AND costestimatestatus = 'FR'
-      INTO @DATA(lv_maxdate).
-
     DATA(lt_product_tmp) = lt_product[].
     DO.
 * find the upper bom code
@@ -615,9 +610,12 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
          WHERE product = @lt_expode-material
            AND plant IN @lr_plant
            AND costingvariant = 'PYC1'
-           AND costestimatevaliditystartdate = @lv_maxdate
+           AND costestimatevaliditystartdate <= @ls_v3-fiscalperiodenddate
            AND costestimatestatus = 'FR'
           INTO TABLE @DATA(lt_costbom).
+        SORT lt_costbom BY product
+                           costestimatevaliditystartdate DESCENDING.
+        DELETE ADJACENT DUPLICATES FROM lt_costbom COMPARING product.
       ENDIF.
       IF lt_costbom IS NOT INITIAL.
         SELECT  billofmaterialcategory,            "#EC CI_NO_TRANSFORM
@@ -848,59 +846,50 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     ENDIF.
     IF lt_prodcostno IS NOT INITIAL.
 * 3.15上位品番の原価計算ロットサイズ
-      SELECT SINGLE MAX( costestimatevaliditystartdate )
+      SELECT costingreferenceobject,
+             costestimate,
+             costingtype,
+             costingdate,
+             costingversion,
+             valuationvariant,
+             costisenteredmanually,
+             costestimatevaliditystartdate,
+             costinglotsize
         FROM i_productcostestimate WITH PRIVILEGED ACCESS
-       WHERE plant IN @lr_plant
+        FOR ALL ENTRIES IN @lt_prodcostno
+       WHERE costestimate = @lt_prodcostno-prodcostestnumber
+         AND costestimatevaliditystartdate <= @ls_v3-fiscalperiodenddate
          AND costestimatestatus = 'FR'
-        INTO @lv_maxdate.
-      IF lv_maxdate IS NOT INITIAL.
-        SELECT costingreferenceobject,
-               costestimate,
-               costingtype,
-               costingdate,
-               costingversion,
-               valuationvariant,
-               costisenteredmanually,
-               costestimatevaliditystartdate,
-               costinglotsize
-          FROM i_productcostestimate WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_prodcostno
-         WHERE costestimate = @lt_prodcostno-prodcostestnumber
-           AND costestimatevaliditystartdate = @lv_maxdate
-           AND costestimatestatus = 'FR'
-          INTO TABLE @DATA(lt_lotsize).
-      ENDIF.
+        INTO TABLE @DATA(lt_lotsize).
+      SORT lt_lotsize BY costestimate
+                         costestimatevaliditystartdate DESCENDING.
+      DELETE ADJACENT DUPLICATES FROM lt_lotsize COMPARING costestimate.
 * 3.16 上位品番の標準原価-材料費を取得
-      SELECT SINGLE MAX( costingdate )
+      SELECT costingreferenceobject,
+             costestimate,
+             costingtype,
+             costingdate,
+             costingversion,
+             valuationvariant,
+             costisenteredmanually,
+             costingitem,
+             plant,
+             product,
+             totalpriceincompanycodecrcy,
+             baseunit,
+             quantityinbaseunit,
+             transfercostestimate,
+             transfercostingdate
         FROM i_productcostestimateitem WITH PRIVILEGED ACCESS
-       WHERE plant IN @lr_plant
-         AND  ( costingitemcategory = 'M'
-             OR costingitemcategory = 'I' )
-         INTO @lv_maxdate.
-      IF lv_maxdate IS NOT INITIAL.
-        SELECT costingreferenceobject,
-               costestimate,
-               costingtype,
-               costingdate,
-               costingversion,
-               valuationvariant,
-               costisenteredmanually,
-               costingitem,
-               plant,
-               product,
-               totalpriceincompanycodecrcy,
-               baseunit,
-               quantityinbaseunit,
-               transfercostestimate,
-               transfercostingdate
-          FROM i_productcostestimateitem WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_prodcostno
-         WHERE costestimate = @lt_prodcostno-prodcostestnumber
-           AND costingdate = @lv_maxdate
-           AND ( costingitemcategory = 'M'
-              OR costingitemcategory = 'I' )
-          INTO TABLE @DATA(lt_costitem).
-      ENDIF.
+        FOR ALL ENTRIES IN @lt_prodcostno
+       WHERE costestimate = @lt_prodcostno-prodcostestnumber
+         AND costingdate <= @ls_v3-fiscalperiodenddate
+         AND ( costingitemcategory = 'M'
+            OR costingitemcategory = 'I' )
+        INTO TABLE @DATA(lt_costitem).
+      SORT lt_costitem BY product
+                          costingdate DESCENDING.
+      DELETE ADJACENT DUPLICATES FROM lt_costitem COMPARING product.
 
     ENDIF.
 * 4.01会計仕訳から有償支給得意先の会計伝票(Customer from 2.04)
@@ -922,38 +911,31 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
        WHERE sourceledger = @cv_ledge
          AND companycode = @cv_bukrs
          AND ledger = @cv_ledge
-         AND isreversal = @space
-         AND isreversed = @space
          AND glaccount LIKE @lc_hkont
          AND customer = @lt_kunnr-customer
-         AND ( postingdate >= @ls_v3-fiscalyearstartdate
+         AND ( postingdate >= @lv_budat
            AND postingdate <= @ls_v3-fiscalperiodenddate )
         INTO TABLE @DATA(lt_bseg).
     ENDIF.
 * 4.03会計仕訳から会社レベルの総売上高取得する(GLAccount=4*)
-    IF lt_prctr IS NOT INITIAL.
-      SELECT sourceledger,
-             companycode,
-             fiscalyear,
-             accountingdocument,
-             ledgergllineitem,
-             ledger,
-             glaccount,
-             companycodecurrency,
-             amountincompanycodecurrency
-        FROM i_journalentryitem WITH PRIVILEGED ACCESS
-        FOR ALL ENTRIES IN @lt_prctr
-       WHERE sourceledger = @cv_ledge
-         AND companycode = @cv_bukrs
-         AND ledger = @cv_ledge
-         AND isreversal = @space
-         AND isreversed = @space
-         AND glaccount LIKE @lc_hkont
-         AND profitcenter = @lt_prctr-profitcenter
-         AND ( postingdate >= @ls_v3-fiscalyearstartdate
-           AND postingdate <= @ls_v3-fiscalperiodenddate )
-        INTO TABLE @DATA(lt_bseg_bukrs).
-    ENDIF.
+
+    SELECT sourceledger,
+           companycode,
+           fiscalyear,
+           accountingdocument,
+           ledgergllineitem,
+           ledger,
+           glaccount,
+           companycodecurrency,
+           amountincompanycodecurrency
+      FROM i_journalentryitem WITH PRIVILEGED ACCESS
+     WHERE sourceledger = @cv_ledge
+       AND companycode = @cv_bukrs
+       AND ledger = @cv_ledge
+       AND glaccount LIKE @lc_hkont
+       AND ( postingdate >= @lv_budat
+         AND postingdate <= @ls_v3-fiscalperiodenddate )
+      INTO TABLE @DATA(lt_bseg_bukrs).
 * edit purchasing group
     LOOP AT lt_mrp INTO ls_mrp.
       READ TABLE lt_ekgrp INTO DATA(ls_ekgrp)
@@ -1434,7 +1416,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       ENDLOOP.
       ls_kunnramt-profitcenter = <lfs_customer>-profitcenter.
       ls_kunnramt-customer = <lfs_customer>-customer.
-      ls_kunnramt-amt = lv_amt.
+      ls_kunnramt-amt = abs( lv_amt ).
       APPEND ls_kunnramt TO lt_kunnramt.
       CLEAR: ls_kunnramt, lv_amt.
     ENDLOOP.
@@ -1442,6 +1424,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     LOOP AT lt_bseg_bukrs INTO DATA(ls_bseg_bukrs).
       lv_amt_bukrs = lv_amt_bukrs + ls_bseg_bukrs-amountincompanycodecurrency.
     ENDLOOP.
+    lv_amt_bukrs = abs( lv_amt_bukrs ).
 
 * 品番別table
     SORT lt_mrp BY product plant.
@@ -1469,9 +1452,9 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       ls_1010-companycode = cv_bukrs.
       ls_1010-currency = lv_waers.
       "会計年度
-      ls_1010-fiscalyear = ls_v3-fiscalperiodstartdate+0(4).
+      ls_1010-fiscalyear = cv_gjahr.
       "会計期間
-      ls_1010-period = ls_v3-fiscalperiodstartdate+4(2).
+      ls_1010-period = cv_monat.
       ls_1010-yearmonth = ls_1010-fiscalyear && ls_1010-period.
       ls_1010-ledge = cv_ledge.
       "得意先コード/仕入先コード
@@ -1651,15 +1634,17 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         ls_1010-cost10 = ls_bom-cost10.            "当期末標準原価-材料費
         ls_1010-valuationquantity10 = ls_bom-qty10. "評価数量
 
-        ls_1010-zeile = ls_1010-zeile + 1.
+        lv_zeile = lv_zeile + 1.
+        ls_1010-zeile = lv_zeile.
         APPEND ls_1010 TO lt_1010.
       ENDLOOP.
       "Without bom
       IF sy-subrc <> 0.
-        ls_1010-zeile = ls_1010-zeile + 1.
+        lv_zeile = lv_zeile + 1.
+        ls_1010-zeile = lv_zeile.
         APPEND ls_1010 TO lt_1010.
       ENDIF.
-      CLEAR: ls_1010, ls_mrp, ls_bp, ls_kunnr, ls_lifnr,
+      CLEAR: lv_zeile, ls_1010, ls_mrp, ls_bp, ls_kunnr, ls_lifnr,
              ls_makt, ls_bom,ls_bklas, ls_purgroup, ls_prctr,
              ls_prctrname, ls_begin, ls_1008, ls_tmp,
              ls_invtotalamt, ls_matnrcost, ls_chgamt_ekgrp, ls_chgamt_matnr.
@@ -1669,7 +1654,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
 * Insert DB
 
     IF lt_1010 IS NOT INITIAL.
-      INSERT ztfi_1010 FROM TABLE @lt_1010.
+      MODIFY ztfi_1010 FROM TABLE @lt_1010.
       IF sy-subrc = 0.
         ls_request-status = 'S'.
         ls_request-message = TEXT-002.
@@ -1702,8 +1687,8 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
 * V3 会计期间转换
     lv_poper = cv_monat.
     lv_fiscalyearperiod = cv_gjahr && lv_poper.
-    IF lv_fiscalyearperiod IS NOT INITIAL.  "#EC CI_ALL_FIELDS_NEEDED
-      SELECT SINGLE *           "#EC CI_ALL_FIELDS_NEEDED
+    IF lv_fiscalyearperiod IS NOT INITIAL.    "#EC CI_ALL_FIELDS_NEEDED
+      SELECT SINGLE *                         "#EC CI_ALL_FIELDS_NEEDED
         FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
        WHERE fiscalyearvariant = 'V3'
          AND fiscalyearperiod = @lv_fiscalyearperiod
@@ -1715,8 +1700,8 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     SELECT *                                  "#EC CI_ALL_FIELDS_NEEDED
       FROM ztfi_1011
      WHERE companycode = @cv_bukrs
-       AND fiscalyear = @lv_year
-       AND period = @lv_monat
+       AND fiscalyear = @cv_gjahr
+       AND period = @cv_monat
        AND ledge = @cv_ledge
       INTO TABLE @DATA(lt_del).
     IF lt_del IS NOT INITIAL.
@@ -1732,8 +1717,8 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     SELECT *                                  "#EC CI_ALL_FIELDS_NEEDED
       FROM ztfi_1010
      WHERE companycode = @cv_bukrs
-       AND fiscalyear = @lv_year
-       AND period = @lv_monat
+       AND fiscalyear = @cv_gjahr
+       AND period = @cv_monat
        AND ledge = @cv_ledge
       INTO TABLE @DATA(lt_1010).
 
@@ -1827,8 +1812,8 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       ENDIF.
 
       ls_1011-companycode = <lfs_member>-companycode.
-      ls_1011-fiscalyear = lv_year.
-      ls_1011-period = lv_monat.
+      ls_1011-fiscalyear = cv_gjahr.
+      ls_1011-period = cv_monat.
       ls_1011-yearmonth = lv_year && lv_monat.
       ls_1011-customer = <lfs_member>-customer.
       ls_1011-supplier = <lfs_member>-supplier.

@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
+CLASS zcl_paidpaydocument IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -71,17 +71,17 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
     ENDTRY.
 
 * V3 会计期间转换
-    lv_poper = lv_monat.
-    lv_fiscalyearperiod = lv_gjahr && lv_poper.
-    IF lv_fiscalyearperiod IS NOT INITIAL.
-      SELECT SINGLE *          "#EC CI_ALL_FIELDS_NEEDED
-        FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
-       WHERE fiscalyearvariant = 'V3'
-         AND fiscalyearperiod = @lv_fiscalyearperiod
-        INTO @DATA(ls_v3).
-      lv_gjahr = ls_v3-fiscalperiodstartdate+0(4).
-      lv_monat = ls_v3-fiscalperiodstartdate+4(2).
-    ENDIF.
+*    lv_poper = lv_monat.
+*    lv_fiscalyearperiod = lv_gjahr && lv_poper.
+*    IF lv_fiscalyearperiod IS NOT INITIAL.
+*      SELECT SINGLE *          "#EC CI_ALL_FIELDS_NEEDED
+*        FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+*       WHERE fiscalyearvariant = 'V3'
+*         AND fiscalyearperiod = @lv_fiscalyearperiod
+*        INTO @DATA(ls_v3).
+*      lv_gjahr = ls_v3-fiscalperiodstartdate+0(4).
+*      lv_monat = ls_v3-fiscalperiodstartdate+4(2).
+*    ENDIF.
     CASE lv_ztype.
       WHEN 'A'.          "売上/仕入純額処理
         SELECT *

@@ -51,16 +51,21 @@ CLASS zcl_bom_where_used DEFINITION
                          iv_billofmaterialcomponent TYPE matnr
                          iv_getusagelistroot        TYPE abap_boolean OPTIONAL
                          is_usagelist_curr          TYPE ty_usagelist OPTIONAL
-               EXPORTING et_usagelist               TYPE tt_usagelist.
+               EXPORTING et_usagelist               TYPE tt_usagelist,
+
+      "! Get data of usage list of component
+      "! iv_getusagelistroot: abap_true->get root bills of material of component（highest level material）
+      "!                      abap_false->get bills of material of component（high level material）
+      get_data_boi IMPORTING iv_plant                   TYPE werks_d
+                             iv_billofmaterialcomponent TYPE matnr
+                             iv_getusagelistroot        TYPE abap_boolean OPTIONAL
+                             is_usagelist_curr          TYPE ty_usagelist OPTIONAL
+                   EXPORTING et_usagelist               TYPE tt_usagelist.
   PROTECTED SECTION.
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_BOM_WHERE_USED IMPLEMENTATION.
-
-
+CLASS zcl_bom_where_used IMPLEMENTATION.
   METHOD get_data.
 
     DATA:
@@ -158,4 +163,81 @@ CLASS ZCL_BOM_WHERE_USED IMPLEMENTATION.
     ENDIF.
 
   ENDMETHOD.
+
+  METHOD get_data_boi.
+
+    DATA:
+      lt_usagelist      TYPE STANDARD TABLE OF ty_usagelist,
+      lt_results        TYPE STANDARD TABLE OF ty_usagelist,
+      ls_usagelist      TYPE ty_usagelist,
+      ls_usagelist_curr TYPE ty_usagelist,
+      ls_results        TYPE ty_usagelist.
+
+    CONSTANTS:
+      lc_validityenddate_99991231 TYPE d VALUE '99991231'.
+
+    "Get where used material
+    READ ENTITIES OF i_billofmaterialtp_2
+    ENTITY billofmaterial
+    EXECUTE getwhereusedmaterial
+    FROM VALUE #( (
+    %param-billofmaterialcomponent = iv_billofmaterialcomponent
+    %param-headervalidityenddate = lc_validityenddate_99991231
+*    %param-headervaliditystartdate = '19000101'
+    %param-plant = iv_plant
+    ) )
+    RESULT DATA(lt_result_boi)
+    FAILED DATA(ls_failed)
+    REPORTED DATA(ls_reported).
+
+    IF lt_result_boi IS NOT INITIAL.
+      LOOP AT lt_result_boi INTO DATA(ls_result_boi).
+        ls_results-plant                        = ls_result_boi-%param-plant.
+        ls_results-billofmaterialcomponent      = ls_result_boi-%param-billofmaterialcomponent.
+        ls_results-material                     = ls_result_boi-%param-material.
+        ls_results-validitystartdate            = ls_result_boi-%param-validitystartdate.
+        ls_results-billofmaterialitemnumber     = ls_result_boi-%param-billofmaterialitemnumber.
+        ls_results-billofmaterialitemquantity   = ls_result_boi-%param-billofmaterialitemquantity.
+        ls_results-billofmaterialitemunit       = ls_result_boi-%param-billofmaterialitemunit.
+        ls_results-billofmaterialvariant        = ls_result_boi-%param-billofmaterialvariant.
+        ls_results-billofmaterial               = ls_result_boi-%param-billofmaterial.
+        ls_results-billofmaterialitemnodenumber = ls_result_boi-%param-billofmaterialitemnodenumber.
+        ls_results-billofmaterialcategory       = ls_result_boi-%param-billofmaterialcategory.
+        APPEND ls_results TO lt_results.
+        CLEAR ls_results.
+      ENDLOOP.
+    ENDIF.
+
+*   Read bills of material for a component in high level
+    IF iv_getusagelistroot = abap_false.
+      APPEND LINES OF lt_results TO et_usagelist.
+*   Read bills of material for a component in root level
+    ELSE.
+      IF lt_results IS NOT INITIAL.
+        LOOP AT lt_results INTO ls_results.
+          "保留当前组件的high level数据（如果没有更高的high level数据，则输出为root level数据）
+          ls_usagelist_curr = ls_results.
+
+          zcl_bom_where_used=>get_data_boi(
+            EXPORTING
+              iv_plant                   = ls_results-plant
+              iv_billofmaterialcomponent = ls_results-material
+              iv_getusagelistroot        = abap_true
+              is_usagelist_curr          = ls_usagelist_curr
+            IMPORTING
+              et_usagelist               = lt_usagelist ).
+
+          APPEND LINES OF lt_usagelist TO et_usagelist.
+          CLEAR lt_usagelist.
+        ENDLOOP.
+      ELSE.
+        "传入的high level数据
+        IF is_usagelist_curr IS NOT INITIAL.
+          APPEND is_usagelist_curr TO et_usagelist.
+        ENDIF.
+      ENDIF.
+    ENDIF.
+
+  ENDMETHOD.
+
 ENDCLASS.

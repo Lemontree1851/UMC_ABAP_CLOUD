@@ -17,13 +17,14 @@ define root custom entity ZC_INVENTORY_AGING
       ChargeableSupplyFlag : abap.char(5);
       ProfitCenter         : prctr;
       ProfitCenterLongName : abap.char(40);
-      BusinessPartner      : abap.char(10);
+      BusinessPartner      : kunnr;
       BusinessPartnerName  : abap.char(70);
       @Semantics.quantity.unitOfMeasure: 'BaseUnit'
       ValuationQuantity    : menge_d;
       BaseUnit             : meins;
       @Semantics.amount.currencyCode : 'Currency'
       ActualCost           : abap.dec( 15, 2 );
+      MaterialPriceUnitQty : peinh;
       @Semantics.amount.currencyCode : 'Currency'
       InventoryAmount      : abap.dec( 15, 2 );
       @Semantics.amount.currencyCode : 'Currency'

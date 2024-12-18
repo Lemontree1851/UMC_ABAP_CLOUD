@@ -264,6 +264,7 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       <lfs_accept>-salesdocument = |{ <lfs_accept>-salesdocument ALPHA = IN }|.
       <lfs_accept>-billingdocument = |{ <lfs_accept>-billingdocument ALPHA = IN }|.
       <lfs_accept>-product = |{ <lfs_accept>-product ALPHA = IN }|.
+      <lfs_accept>-periodtype = cv_periodtype.
     ENDLOOP.
 
     SELECT *
@@ -293,13 +294,13 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
 
-    DELETE ct_accept WHERE processstatus = '4'.
+    DELETE ct_accept WHERE processstatus = '保留'.
     SORT ct_accept BY salesorganization customer periodtype acceptperiod customerpo.
     LOOP AT lt_table INTO ls_1003.
       READ TABLE ct_accept INTO DATA(ls_accept)
            WITH KEY salesorganization = ls_1003-salesorganization
                     customer = ls_1003-customer
-                    periodtype = ls_1003-periodtype
+                    periodtype = cv_periodtype
                     acceptperiod = ls_1003-acceptperiod
                     customerpo = ls_1003-customerpo.
       IF sy-subrc = 0.

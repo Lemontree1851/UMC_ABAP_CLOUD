@@ -8,57 +8,24 @@ CLASS zcl_query_inventory_aging DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
-
+CLASS zcl_query_inventory_aging IMPLEMENTATION.
 
   METHOD if_rap_query_provider~select.
 
-    TYPES:
-      BEGIN OF ty_inventoryamtbyfsclperd,
-        costestimate                TYPE i_inventoryamtbyfsclperd-costestimate,
-        material                    TYPE i_inventoryamtbyfsclperd-material,
-        valuationarea               TYPE i_inventoryamtbyfsclperd-valuationarea,
-        valuationquantity           TYPE i_inventoryamtbyfsclperd-valuationquantity,
-        amountincompanycodecurrency TYPE i_inventoryamtbyfsclperd-amountincompanycodecurrency,
-      END OF ty_inventoryamtbyfsclperd,
-
-      BEGIN OF ty_finalproductinfo,
-        product  TYPE matnr,
-        plant    TYPE werks_d,
-        material TYPE matnr,
-      END OF ty_finalproductinfo.
-
     DATA:
-      lt_data                       TYPE STANDARD TABLE OF zc_inventory_aging,
-      lt_inventoryamtbyfsclperd     TYPE STANDARD TABLE OF ty_inventoryamtbyfsclperd,
-      lt_inventoryamtbyfsclperd_sum TYPE STANDARD TABLE OF ty_inventoryamtbyfsclperd,
-      lt_finalproductinfo           TYPE STANDARD TABLE OF ty_finalproductinfo,
-      lt_usagelist                  TYPE STANDARD TABLE OF zcl_bom_where_used=>ty_usagelist,
-      lr_searchterm2                TYPE RANGE OF i_businesspartner-searchterm2,
-      ls_data                       TYPE zc_inventory_aging,
-      ls_finalproductinfo           TYPE ty_finalproductinfo,
-      lv_companycode                TYPE zc_inventory_aging-companycode,
-      lv_fiscalyear                 TYPE zc_inventory_aging-fiscalyear,
-      lv_fiscalperiod               TYPE zc_inventory_aging-fiscalperiod,
-      lv_ledger                     TYPE zc_inventory_aging-ledger,
-      lv_valuationunitprice         TYPE zc_inventory_aging-valuationunitprice,
-      lv_searchterm2                TYPE i_businesspartner-searchterm2,
-      lv_fiscalyearperiod           TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
-      lv_totalamount                TYPE zc_inventory_aging-inventoryamount,
-      lv_age                        TYPE ztfi_1019-age,
-      lv_actualprice                TYPE p DECIMALS 6,
-      lv_fiscalperiodstartdate      TYPE d,
-      lv_fiscalperiodenddate        TYPE d.
+      lt_data         TYPE STANDARD TABLE OF zc_inventory_aging,
+      lr_searchterm2  TYPE RANGE OF i_businesspartner-searchterm2,
+      ls_data         TYPE zc_inventory_aging,
+      lv_companycode  TYPE zc_inventory_aging-companycode,
+      lv_fiscalyear   TYPE zc_inventory_aging-fiscalyear,
+      lv_fiscalperiod TYPE zc_inventory_aging-fiscalperiod,
+      lv_ledger       TYPE zc_inventory_aging-ledger,
+      lv_searchterm2  TYPE i_businesspartner-searchterm2,
+      lv_totalamount  TYPE zc_inventory_aging-inventoryamount,
+      lv_age          TYPE ztfi_1019-age,
+      lv_actualprice  TYPE p DECIMALS 6.
 
     CONSTANTS:
-      BEGIN OF lsc_producttype,
-        zroh TYPE string VALUE 'ZROH',
-        zhlb TYPE string VALUE 'ZHLB',
-        zfrt TYPE string VALUE 'ZFRT',
-      END OF lsc_producttype,
-
       BEGIN OF lsc_age,
         a001 TYPE ztfi_1019-age VALUE '001',
         a002 TYPE ztfi_1019-age VALUE '002',
@@ -98,18 +65,10 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
         a036 TYPE ztfi_1019-age VALUE '036',
       END OF lsc_age,
 
-      lc_alpha_out               TYPE string VALUE 'OUT',
-      lc_fiyearvariant_v3        TYPE string VALUE 'V3',
-      lc_invspecialstocktype_t   TYPE string VALUE 'T',
-      lc_invspecialstocktype_e   TYPE string VALUE 'E',
-      lc_currencyrole_10         TYPE string VALUE '10',
-      lc_purhistorycategory_q    TYPE string VALUE 'Q',
-      lc_billingdocumenttype_f2  TYPE string VALUE 'F2',
-      lc_billingdocumenttype_iv2 TYPE string VALUE 'IV2',
-      lc_chargeablesupplyflag_y  TYPE string VALUE 'Y',
-      lc_chargeablesupplyflag_n  TYPE string VALUE 'N',
-      lc_sign_i                  TYPE c LENGTH 1 VALUE 'I',
-      lc_option_eq               TYPE c LENGTH 2 VALUE 'EQ'.
+      lc_chargeablesupplyflag_y TYPE string VALUE 'Y',
+      lc_chargeablesupplyflag_n TYPE string VALUE 'N',
+      lc_sign_i                 TYPE c LENGTH 1 VALUE 'I',
+      lc_option_eq              TYPE c LENGTH 2 VALUE 'EQ'.
 
     TRY.
         "Get and add filter
@@ -134,101 +93,75 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
     ENDLOOP.
 
     "Obtain data of history inventory aging
-    SELECT plant,
-           product,
-           age,
-           qty
+    SELECT *
       FROM ztfi_1019
      WHERE ledger = @lv_ledger
        AND companycode = @lv_companycode
        AND fiscalyear = @lv_fiscalyear
        AND fiscalperiod = @lv_fiscalperiod
-       AND ledger = @lv_ledger
       INTO TABLE @DATA(lt_ztfi_1019).
-
-    "Obtain data of product
-    SELECT a~valuationarea,
-           b~currency,
-           c~product,
-           c~baseunit,
-           c~profitcenter,
-           c~mrpresponsible,
-           d~producttype,
-           e~producttypename,
-           f~productdescription,
-           g~mrpcontrollername
-      FROM i_productvaluationareavh WITH PRIVILEGED ACCESS AS a
-     INNER JOIN i_companycode WITH PRIVILEGED ACCESS AS b
-        ON b~companycode = a~companycode
-     INNER JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS c
-        ON c~plant = a~valuationarea
-     INNER JOIN i_product WITH PRIVILEGED ACCESS AS d
-        ON d~product = c~product
-      LEFT OUTER JOIN i_producttypetext_2 WITH PRIVILEGED ACCESS AS e
-        ON e~producttype = d~producttype
-       AND e~language = @sy-langu
-      LEFT OUTER JOIN i_productdescription WITH PRIVILEGED ACCESS AS f
-        ON f~product = c~product
-       AND f~language = @sy-langu
-      LEFT OUTER JOIN i_mrpcontrollervh WITH PRIVILEGED ACCESS AS g
-        ON g~plant = a~valuationarea
-       AND g~mrpcontroller = c~mrpresponsible
-     WHERE a~companycode = @lv_companycode
-      INTO TABLE @DATA(lt_productplantbasic).
     IF sy-subrc = 0.
-      "Obtain data of inventory amount for fiscal period
-      SELECT costestimate,
-             material,
-             valuationarea,
-             valuationquantity,
-             amountincompanycodecurrency
-        FROM i_inventoryamtbyfsclperd( p_fiscalperiod = @lv_fiscalperiod, p_fiscalyear = @lv_fiscalyear ) WITH PRIVILEGED ACCESS
-         FOR ALL ENTRIES IN @lt_productplantbasic
-       WHERE valuationarea = @lt_productplantbasic-valuationarea
-         AND material = @lt_productplantbasic-product
-         AND companycode = @lv_companycode
-         AND ledger = @lv_ledger
-         AND invtryvalnspecialstocktype <> @lc_invspecialstocktype_t
-         AND invtryvalnspecialstocktype <> @lc_invspecialstocktype_e
-         AND valuationquantity <> 0
-         AND amountincompanycodecurrency <> 0
-        INTO TABLE @lt_inventoryamtbyfsclperd.
+      "Obtain data of product description
+      SELECT product,
+             productdescription
+        FROM i_productdescription
+         FOR ALL ENTRIES IN @lt_ztfi_1019
+       WHERE product = @lt_ztfi_1019-product
+         AND language = @sy-langu
+        INTO TABLE @DATA(lt_productdescription).
 
-      LOOP AT lt_inventoryamtbyfsclperd INTO DATA(ls_inventoryamtbyfsclperd).
-        CLEAR ls_inventoryamtbyfsclperd-costestimate.
-        COLLECT ls_inventoryamtbyfsclperd INTO lt_inventoryamtbyfsclperd_sum.
-      ENDLOOP.
+      DATA(lt_ztfi_1019_tmp) = lt_ztfi_1019.
+      SORT lt_ztfi_1019_tmp BY producttype.
+      DELETE ADJACENT DUPLICATES FROM lt_ztfi_1019_tmp
+                            COMPARING producttype.
 
-      CLEAR lt_inventoryamtbyfsclperd.
+      "Obtain data of product type text
+      SELECT producttype,
+             producttypename
+        FROM i_producttypetext_2
+         FOR ALL ENTRIES IN @lt_ztfi_1019_tmp
+       WHERE producttype = @lt_ztfi_1019_tmp-producttype
+         AND language = @sy-langu
+        INTO TABLE @DATA(lt_producttypetext).
 
-      DATA lt_productplantbasic_tmp LIKE lt_productplantbasic.
+      lt_ztfi_1019_tmp = lt_ztfi_1019.
+      SORT lt_ztfi_1019_tmp BY profitcenter.
+      DELETE ADJACENT DUPLICATES FROM lt_ztfi_1019_tmp
+                            COMPARING profitcenter.
 
-      SORT lt_inventoryamtbyfsclperd_sum BY valuationarea material.
+      "Obtain data of profit center text
+      SELECT profitcenter,
+             profitcentername,
+             profitcenterlongname
+        FROM i_profitcentertext WITH PRIVILEGED ACCESS
+         FOR ALL ENTRIES IN @lt_ztfi_1019_tmp
+       WHERE profitcenter = @lt_ztfi_1019_tmp-profitcenter
+         AND language = @sy-langu
+        INTO TABLE @DATA(lt_profitcentertext).
 
-      LOOP AT lt_productplantbasic INTO DATA(ls_productplantbasic).
-        CLEAR ls_inventoryamtbyfsclperd.
+      lt_ztfi_1019_tmp = lt_ztfi_1019.
+      SORT lt_ztfi_1019_tmp BY plant mrpresponsible.
+      DELETE ADJACENT DUPLICATES FROM lt_ztfi_1019_tmp
+                            COMPARING plant mrpresponsible.
 
-        "Read data of inventory amount for fiscal period
-        READ TABLE lt_inventoryamtbyfsclperd_sum INTO ls_inventoryamtbyfsclperd WITH KEY valuationarea = ls_productplantbasic-valuationarea
-                                                                                         material = ls_productplantbasic-product
-                                                                                BINARY SEARCH.
-        IF ls_inventoryamtbyfsclperd-valuationquantity <> 0.
-          APPEND ls_productplantbasic TO lt_productplantbasic_tmp.
-          APPEND ls_inventoryamtbyfsclperd TO lt_inventoryamtbyfsclperd.
-        ENDIF.
-      ENDLOOP.
+      "Obtain data of MRP controller name
+      SELECT plant,
+             mrpcontroller,
+             mrpcontrollername
+        FROM i_mrpcontrollervh
+         FOR ALL ENTRIES IN @lt_ztfi_1019_tmp
+       WHERE plant = @lt_ztfi_1019_tmp-plant
+         AND mrpcontroller = @lt_ztfi_1019_tmp-mrpresponsible
+        INTO TABLE @DATA(lt_mrpcontrollervh).
 
-      lt_productplantbasic = lt_productplantbasic_tmp.
-    ENDIF.
-
-    IF lt_productplantbasic IS NOT INITIAL.
-      LOOP AT lt_productplantbasic INTO ls_productplantbasic.
-        IF ls_productplantbasic-mrpresponsible IS NOT INITIAL.
-          DATA(lv_length) = strlen( ls_productplantbasic-mrpresponsible ).
+      LOOP AT lt_ztfi_1019_tmp INTO DATA(ls_ztfi_1019_tmp).
+        IF ls_ztfi_1019_tmp-mrpresponsible IS NOT INITIAL.
+          DATA(lv_length) = strlen( ls_ztfi_1019_tmp-mrpresponsible ).
           DATA(lv_offset) = lv_length - 2.
 
           IF lv_offset >= 0.
-            lr_searchterm2 = VALUE #( BASE lr_searchterm2 sign = lc_sign_i option = lc_option_eq ( low = ls_productplantbasic-mrpresponsible+lv_offset(2) ) ).
+            lr_searchterm2 = VALUE #( BASE lr_searchterm2 sign = lc_sign_i option = lc_option_eq
+                                                        ( low = ls_ztfi_1019_tmp-mrpresponsible+lv_offset(2) ) ).
           ENDIF.
         ENDIF.
       ENDLOOP.
@@ -243,230 +176,95 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
           INTO TABLE @DATA(lt_businesspartner).
       ENDIF.
 
-      "Obtain data of profit center text
-      SELECT profitcenter,
-             profitcentername,
-             profitcenterlongname
-        FROM i_profitcentertext WITH PRIVILEGED ACCESS
-         FOR ALL ENTRIES IN @lt_productplantbasic
-       WHERE profitcenter = @lt_productplantbasic-profitcenter
-         AND language = @sy-langu
-        INTO TABLE @DATA(lt_profitcentertext).
+      SORT lt_ztfi_1019 BY plant product age.
 
-      lv_fiscalyearperiod = lv_fiscalyear && lv_fiscalperiod.
+      DATA(lt_ztfi_1019_header) = lt_ztfi_1019.
+      DELETE ADJACENT DUPLICATES FROM lt_ztfi_1019_header
+                            COMPARING plant product.
 
-      "Obtain data of fiscal year period for fiscal year variant
-      SELECT SINGLE
-             fiscalperiodstartdate,
-             fiscalperiodenddate
-        FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
-       WHERE fiscalyearvariant = @lc_fiyearvariant_v3
-         AND fiscalyearperiod = @lv_fiscalyearperiod
-        INTO (@lv_fiscalperiodstartdate,@lv_fiscalperiodenddate).
-
-      "Obtain data of inventory price by key date
-      SELECT material,
-             valuationarea,
-             actualprice
-        FROM i_inventorypricebykeydate( p_calendardate = @lv_fiscalperiodenddate )  WITH PRIVILEGED ACCESS
-         FOR ALL ENTRIES IN @lt_productplantbasic
-       WHERE material = @lt_productplantbasic-product
-         AND valuationarea = @lt_productplantbasic-valuationarea
-         AND currencyrole = @lc_currencyrole_10
-         AND ledger = @lv_ledger
-         AND inventoryspecialstocktype <> @lc_invspecialstocktype_t
-        INTO TABLE @DATA(lt_inventorypricebykeydate).
-
-      DATA(lt_productplantbasic_zroh) = lt_productplantbasic.
-      DELETE lt_productplantbasic_zroh WHERE producttype <> lsc_producttype-zroh.
-
-      IF lt_productplantbasic_zroh IS NOT INITIAL.
-        "Obtain data of supplier invoice
-        SELECT a~purchaseorder,
-               a~purchaseorderitem,
-               a~accountassignmentnumber,
-               a~purchasinghistorydocumenttype,
-               a~purchasinghistorydocumentyear,
-               a~purchasinghistorydocument,
-               a~purchasinghistorydocumentitem,
-               a~referencedocumentfiscalyear,
-               a~referencedocument,
-               a~plant,
-               a~material
-          FROM c_purchaseorderhistorydex WITH PRIVILEGED ACCESS AS a
-         INNER JOIN c_supplierinvoicedex WITH PRIVILEGED ACCESS AS b
-            ON b~supplierinvoice = a~purchasinghistorydocument
-           FOR ALL ENTRIES IN @lt_productplantbasic_zroh
-         WHERE a~plant = @lt_productplantbasic_zroh-valuationarea
-           AND a~material = @lt_productplantbasic_zroh-product
-           AND b~companycode = @lv_companycode
-           AND a~purchasinghistorycategory = @lc_purhistorycategory_q
-           AND a~postingdate <= @lv_fiscalperiodenddate
-           AND a~purordamountincompanycodecrcy <> 0
-           AND b~fiscalyear = @lv_fiscalperiodstartdate+0(4)
-           AND b~reversedocument = @space
-           AND b~postingdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
-          INTO TABLE @DATA(lt_purchaseorderhistorydex_tmp).
-        IF sy-subrc = 0.
-          SORT lt_purchaseorderhistorydex_tmp BY plant material purchasinghistorydocument DESCENDING .
-          DELETE ADJACENT DUPLICATES FROM lt_purchaseorderhistorydex_tmp COMPARING plant material.
-
-          "Obtain data of supplier invoice
-          SELECT purchaseorder,
-                 purchaseorderitem,
-                 accountassignmentnumber,
-                 purchasinghistorydocumenttype,
-                 purchasinghistorydocumentyear,
-                 purchasinghistorydocument,
-                 purchasinghistorydocumentitem,
-                 referencedocumentfiscalyear,
-                 referencedocument,
-                 purordamountincompanycodecrcy,
-                 quantityinbaseunit,
-                 plant,
-                 material
-            FROM c_purchaseorderhistorydex WITH PRIVILEGED ACCESS
-             FOR ALL ENTRIES IN @lt_purchaseorderhistorydex_tmp
-           WHERE purchasinghistorydocumentyear = @lt_purchaseorderhistorydex_tmp-referencedocumentfiscalyear
-             AND purchasinghistorydocument = @lt_purchaseorderhistorydex_tmp-referencedocument
-             AND plant = @lt_purchaseorderhistorydex_tmp-plant
-             AND material = @lt_purchaseorderhistorydex_tmp-material
-            INTO TABLE @DATA(lt_purchaseorderhistorydex).
-        ENDIF.
-      ENDIF.
-
-      DATA(lt_productplantbasic_zhlb) = lt_productplantbasic.
-      DELETE lt_productplantbasic_zhlb WHERE producttype <> lsc_producttype-zhlb.
-
-      LOOP AT lt_productplantbasic_zhlb INTO DATA(ls_productplantbasic_zhlb).
-        "Obtain data of root level material of component(high level material)
-        zcl_bom_where_used=>get_data(
-          EXPORTING
-            iv_plant                   = ls_productplantbasic_zhlb-valuationarea
-            iv_billofmaterialcomponent = ls_productplantbasic_zhlb-product
-            iv_getusagelistroot        = abap_true
-          IMPORTING
-            et_usagelist               = lt_usagelist ).
-
-        IF lt_usagelist IS NOT INITIAL.
-          LOOP AT lt_usagelist INTO DATA(ls_usagelist).
-            ls_finalproductinfo-product  = ls_productplantbasic_zhlb-product.
-            ls_finalproductinfo-plant    = ls_productplantbasic_zhlb-valuationarea.
-            ls_finalproductinfo-material = ls_usagelist-material.
-            COLLECT ls_finalproductinfo INTO lt_finalproductinfo.
-            CLEAR ls_finalproductinfo.
-          ENDLOOP.
-*         high level material没有更高的high level material，则high level material为root level material，即final product
-        ELSE.
-          ls_finalproductinfo-product  = ls_productplantbasic_zhlb-product.
-          ls_finalproductinfo-plant    = ls_productplantbasic_zhlb-valuationarea.
-          ls_finalproductinfo-material = ls_productplantbasic_zhlb-product.
-          COLLECT ls_finalproductinfo INTO lt_finalproductinfo.
-          CLEAR ls_finalproductinfo.
-        ENDIF.
-
-        CLEAR lt_usagelist.
-      ENDLOOP.
-
-      DATA(lt_productplantbasic_zfrt) = lt_productplantbasic.
-      DELETE lt_productplantbasic_zfrt WHERE producttype <> lsc_producttype-zfrt.
-
-      IF lt_productplantbasic_zfrt IS NOT INITIAL.
-        "Obtain data of billing document item
-        SELECT a~billingdocument,
-               a~billingdocumentitem,
-               a~product,
-               a~plant,
-               a~creationdate,
-               a~creationtime,
-               a~billingquantity,
-               a~netamount
-          FROM i_billingdocumentitem WITH PRIVILEGED ACCESS AS a
-         INNER JOIN i_billingdocumentbasic WITH PRIVILEGED ACCESS AS b
-            ON b~billingdocument = a~billingdocument
-           FOR ALL ENTRIES IN @lt_productplantbasic_zfrt
-         WHERE a~product = @lt_productplantbasic_zfrt-product
-           AND a~plant = @lt_productplantbasic_zfrt-valuationarea
-           AND a~companycode = @lv_companycode
-           AND a~billingdocumentdate <= @lv_fiscalperiodenddate
-           AND b~billingdocumentiscancelled = @abap_false
-           AND b~cancelledbillingdocument = @space
-           AND b~billingdocumenttype IN (@lc_billingdocumenttype_f2,@lc_billingdocumenttype_iv2)
-           AND b~billingdocumentdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
-          INTO TABLE @DATA(lt_billingdocumentitem).
-
-        SORT lt_billingdocumentitem BY product plant creationdate DESCENDING creationtime DESCENDING.
-        DELETE ADJACENT DUPLICATES FROM lt_billingdocumentitem COMPARING product plant.
-      ENDIF.
-
-      IF lt_finalproductinfo IS NOT INITIAL.
-        "Obtain data of billing document item
-        SELECT a~billingdocument,
-               a~billingdocumentitem,
-               a~product,
-               a~plant,
-               a~billingquantity,
-               a~netamount
-          FROM i_billingdocumentitem WITH PRIVILEGED ACCESS AS a
-         INNER JOIN i_billingdocumentbasic WITH PRIVILEGED ACCESS AS b
-            ON b~billingdocument = a~billingdocument
-           FOR ALL ENTRIES IN @lt_finalproductinfo
-         WHERE a~product = @lt_finalproductinfo-material
-           AND a~plant = @lt_finalproductinfo-plant
-           AND a~companycode = @lv_companycode
-           AND b~billingdocumentiscancelled = @abap_false
-           AND b~cancelledbillingdocument = @space
-           AND b~billingdocumenttype IN (@lc_billingdocumenttype_f2,@lc_billingdocumenttype_iv2)
-           AND b~billingdocumentdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
-          INTO TABLE @DATA(lt_billingdocumentitem_final).
-      ENDIF.
+      DELETE lt_ztfi_1019 WHERE qty = 0.
     ENDIF.
 
-    SORT lt_productplantbasic BY valuationarea product.
-    SORT lt_businesspartner BY searchterm2.
+    SORT lt_productdescription BY product.
+    SORT lt_producttypetext BY producttype.
     SORT lt_profitcentertext BY profitcenter.
-    SORT lt_inventorypricebykeydate BY material valuationarea.
-    SORT lt_purchaseorderhistorydex BY plant material.
-    SORT lt_finalproductinfo BY product plant.
-    SORT lt_billingdocumentitem_final BY product plant.
-    SORT lt_ztfi_1019 BY plant product age.
+    SORT lt_mrpcontrollervh BY plant mrpcontroller.
+    SORT lt_businesspartner BY searchterm2.
 
-    LOOP AT lt_productplantbasic INTO ls_productplantbasic.
-      ls_data-companycode        = lv_companycode.
-      ls_data-fiscalyear         = lv_fiscalyear.
-      ls_data-fiscalperiod       = lv_fiscalperiod.
-      ls_data-currency           = ls_productplantbasic-currency.
-      ls_data-plant              = ls_productplantbasic-valuationarea.
-      ls_data-product            = ls_productplantbasic-product.
-      ls_data-productdescription = ls_productplantbasic-productdescription.
-      ls_data-producttype        = ls_productplantbasic-producttype.
-      ls_data-producttypename    = ls_productplantbasic-producttypename.
-      ls_data-mrpresponsible     = ls_productplantbasic-mrpresponsible.
-      ls_data-mrpcontrollername  = ls_productplantbasic-mrpcontrollername.
-      ls_data-profitcenter       = ls_productplantbasic-profitcenter.
-      ls_data-baseunit           = ls_productplantbasic-baseunit.
+    LOOP AT lt_ztfi_1019_header INTO DATA(ls_ztfi_1019_header).
+      ls_data-companycode          = ls_ztfi_1019_header-companycode.
+      ls_data-plant                = ls_ztfi_1019_header-plant.
+      ls_data-fiscalyear           = ls_ztfi_1019_header-fiscalyear.
+      ls_data-fiscalperiod         = ls_ztfi_1019_header-fiscalperiod.
+      ls_data-product              = ls_ztfi_1019_header-product.
+      ls_data-producttype          = ls_ztfi_1019_header-producttype.
+      ls_data-mrpresponsible       = ls_ztfi_1019_header-mrpresponsible.
+      ls_data-profitcenter         = ls_ztfi_1019_header-profitcenter.
+      ls_data-valuationquantity    = ls_ztfi_1019_header-valuationquantity.
+      ls_data-baseunit             = ls_ztfi_1019_header-baseunit.
+      ls_data-actualcost           = ls_ztfi_1019_header-actualcost.
+      ls_data-inventoryamount      = ls_ztfi_1019_header-inventoryamount.
+      ls_data-materialpriceunitqty = ls_ztfi_1019_header-materialpriceunitqty.
+      ls_data-valuationunitprice   = ls_ztfi_1019_header-valuationunitprice.
+      ls_data-valuationamount      = ls_ztfi_1019_header-valuationamount.
+      ls_data-valuationafteramount = ls_ztfi_1019_header-valuationafteramount.
+      ls_data-valuationloss        = ls_ztfi_1019_header-valuationloss.
+      ls_data-currency             = ls_ztfi_1019_header-currency.
 
-*        IF ls_productplantbasic-product+5(1) = 'D'.
-*          ls_data-chargeablesupplyflag = 'Y'.
-*        ELSE.
-*          ls_data-chargeablesupplyflag = 'N'.
-*        ENDIF.
+      "Read data of product description
+      READ TABLE lt_productdescription INTO DATA(ls_productdescription) WITH KEY product = ls_ztfi_1019_header-product
+                                                                  BINARY SEARCH.
+      IF sy-subrc = 0.
+        ls_data-productdescription = ls_productdescription-productdescription.
+      ENDIF.
 
-      lv_length = strlen( ls_productplantbasic-product ).
+      "Read data of product type text
+      READ TABLE lt_producttypetext INTO DATA(ls_producttypetext) WITH KEY producttype = ls_ztfi_1019_header-producttype
+                                                                  BINARY SEARCH.
+      IF sy-subrc = 0.
+        ls_data-producttypename = ls_producttypetext-producttypename.
+      ENDIF.
+
+      "Read data of profit center text
+      READ TABLE lt_profitcentertext INTO DATA(ls_profitcentertext) WITH KEY profitcenter = ls_ztfi_1019_header-profitcenter
+                                                                    BINARY SEARCH.
+      IF sy-subrc = 0.
+        IF ls_profitcentertext-profitcenterlongname IS NOT INITIAL.
+          ls_data-profitcenterlongname = ls_profitcentertext-profitcenterlongname.
+        ELSE.
+          ls_data-profitcenterlongname = ls_profitcentertext-profitcentername.
+        ENDIF.
+      ENDIF.
+
+      "Read data of MRP controller name
+      READ TABLE lt_mrpcontrollervh INTO DATA(ls_mrpcontrollervh) WITH KEY plant = ls_ztfi_1019_header-plant
+                                                                           mrpcontroller = ls_ztfi_1019_header-mrpresponsible
+                                                                  BINARY SEARCH.
+      IF sy-subrc = 0.
+        ls_data-mrpcontrollername = ls_mrpcontrollervh-mrpcontrollername.
+      ENDIF.
+
+*      IF ls_ztfi_1019_header-product+5(1) = 'D'.
+*        ls_data-chargeablesupplyflag = 'Y'.
+*      ELSE.
+*        ls_data-chargeablesupplyflag = 'N'.
+*      ENDIF.
+
+      lv_length = strlen( ls_ztfi_1019_header-product ).
       lv_offset = lv_length - 1.
 
-      IF lv_offset >= 0 AND ls_productplantbasic-product+lv_offset(1) = '2'.
+      IF lv_offset >= 0 AND ls_ztfi_1019_header-product+lv_offset(1) = '2'.
         ls_data-chargeablesupplyflag = lc_chargeablesupplyflag_y.
       ELSE.
         ls_data-chargeablesupplyflag = lc_chargeablesupplyflag_n.
       ENDIF.
 
-      IF ls_productplantbasic-mrpresponsible IS NOT INITIAL.
-        lv_length = strlen( ls_productplantbasic-mrpresponsible ).
+      IF ls_ztfi_1019_header-mrpresponsible IS NOT INITIAL.
+        lv_length = strlen( ls_ztfi_1019_header-mrpresponsible ).
         lv_offset = lv_length - 2.
 
         IF lv_offset >= 0.
-          lv_searchterm2 = ls_productplantbasic-mrpresponsible+lv_offset(2).
+          lv_searchterm2 = ls_ztfi_1019_header-mrpresponsible+lv_offset(2).
 
           "Read data of business partner
           READ TABLE lt_businesspartner INTO DATA(ls_businesspartner) WITH KEY searchterm2 = lv_searchterm2
@@ -478,107 +276,16 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
         ENDIF.
       ENDIF.
 
-      "Read data of profit center text
-      READ TABLE lt_profitcentertext INTO DATA(ls_profitcentertext) WITH KEY profitcenter = ls_productplantbasic-profitcenter
-                                                                    BINARY SEARCH.
-      IF sy-subrc = 0.
-        IF ls_profitcentertext-profitcenterlongname IS NOT INITIAL.
-          ls_data-profitcenterlongname = ls_profitcentertext-profitcenterlongname.
-        ELSE.
-          ls_data-profitcenterlongname = ls_profitcentertext-profitcentername.
-        ENDIF.
-      ENDIF.
-
-      "Read data of inventory amount for fiscal period
-      READ TABLE lt_inventoryamtbyfsclperd_sum INTO ls_inventoryamtbyfsclperd WITH KEY valuationarea = ls_productplantbasic-valuationarea
-                                                                                       material = ls_productplantbasic-product
-                                                                              BINARY SEARCH.
-      IF sy-subrc = 0.
-        ls_data-valuationquantity = ls_inventoryamtbyfsclperd-valuationquantity.
-        ls_data-inventoryamount   = ls_inventoryamtbyfsclperd-amountincompanycodecurrency.
-      ENDIF.
-
-      "Read data of product valuation
-      READ TABLE lt_inventorypricebykeydate INTO DATA(ls_inventorypricebykeydate) WITH KEY material = ls_productplantbasic-product
-                                                                                           valuationarea = ls_productplantbasic-valuationarea
-                                                                                  BINARY SEARCH.
-      IF sy-subrc = 0.
-        ls_data-actualcost = ls_inventorypricebykeydate-actualprice.
-      ENDIF.
-
-      "Read data of supplier invoice
-      READ TABLE lt_purchaseorderhistorydex INTO DATA(ls_purchaseorderhistorydex) WITH KEY plant = ls_productplantbasic-valuationarea
-                                                                                           material = ls_productplantbasic-product
-                                                                                  BINARY SEARCH.
-      IF sy-subrc = 0.
-        IF ls_purchaseorderhistorydex-quantityinbaseunit <> 0.
-          ls_data-valuationunitprice = ls_purchaseorderhistorydex-purordamountincompanycodecrcy / ls_purchaseorderhistorydex-quantityinbaseunit.
-          ls_data-valuationamount    = ls_purchaseorderhistorydex-purordamountincompanycodecrcy / ls_purchaseorderhistorydex-quantityinbaseunit
-                                     * ls_data-valuationquantity.
-        ENDIF.
-      ENDIF.
-
-      "Read data of billing document item
-      READ TABLE lt_billingdocumentitem INTO DATA(ls_billingdocumentitem) WITH KEY product = ls_productplantbasic-product
-                                                                                   plant = ls_productplantbasic-valuationarea
-                                                                          BINARY SEARCH.
-      IF sy-subrc = 0.
-        IF ls_billingdocumentitem-billingquantity <> 0.
-          ls_data-valuationunitprice = ls_billingdocumentitem-netamount / ls_billingdocumentitem-billingquantity.
-          ls_data-valuationamount    = ls_billingdocumentitem-netamount / ls_billingdocumentitem-billingquantity
-                                     * ls_data-valuationquantity.
-        ENDIF.
-      ENDIF.
-
-      "Read data of root product
-      READ TABLE lt_finalproductinfo INTO ls_finalproductinfo WITH KEY product = ls_productplantbasic-product
-                                                                       plant = ls_productplantbasic-valuationarea
-                                                              BINARY SEARCH.
-      IF sy-subrc = 0.
-        "Read data of billing document item
-        READ TABLE lt_billingdocumentitem_final TRANSPORTING NO FIELDS WITH KEY product = ls_productplantbasic-product
-                                                                                plant = ls_productplantbasic-valuationarea
-                                                                            BINARY SEARCH.
-        IF sy-subrc = 0.
-          LOOP AT lt_billingdocumentitem_final INTO DATA(ls_billingdocumentitem_final) FROM sy-tabix.
-            IF ls_billingdocumentitem_final-product <> ls_productplantbasic-product
-            OR ls_billingdocumentitem_final-plant <> ls_productplantbasic-valuationarea.
-              EXIT.
-            ENDIF.
-
-            IF ls_billingdocumentitem_final-billingquantity <> 0.
-              lv_valuationunitprice = ls_billingdocumentitem_final-netamount / ls_billingdocumentitem_final-billingquantity.
-            ENDIF.
-
-            "Get the smallest unit price
-            IF ls_data-valuationunitprice = 0.
-              ls_data-valuationunitprice = lv_valuationunitprice.
-            ELSE.
-              IF ls_data-valuationunitprice > lv_valuationunitprice.
-                ls_data-valuationunitprice = lv_valuationunitprice.
-              ENDIF.
-            ENDIF.
-          ENDLOOP.
-
-          ls_data-valuationamount = ls_data-valuationunitprice * ls_data-valuationquantity.
-        ENDIF.
-      ENDIF.
-
-      IF ls_data-inventoryamount - ls_data-valuationamount > 0.
-        ls_data-valuationafteramount = ls_data-inventoryamount - ls_data-valuationamount.
-        ls_data-valuationloss        = ls_data-inventoryamount - ls_data-valuationamount.
-      ENDIF.
-
       "计算月底实际价格（用于调整尾差）
       lv_actualprice = ls_data-inventoryamount / ls_data-valuationquantity.
 
-      READ TABLE lt_ztfi_1019 TRANSPORTING NO FIELDS WITH KEY plant = ls_productplantbasic-valuationarea
-                                                              product = ls_productplantbasic-product
+      READ TABLE lt_ztfi_1019 TRANSPORTING NO FIELDS WITH KEY plant = ls_ztfi_1019_header-plant
+                                                              product = ls_ztfi_1019_header-product
                                                      BINARY SEARCH.
       IF sy-subrc = 0.
         LOOP AT lt_ztfi_1019 INTO DATA(ls_ztfi_1019) FROM sy-tabix.
-          IF ls_ztfi_1019-plant <> ls_productplantbasic-valuationarea
-          OR ls_ztfi_1019-product <> ls_productplantbasic-product.
+          IF ls_ztfi_1019-plant <> ls_ztfi_1019_header-plant
+          OR ls_ztfi_1019-product <> ls_ztfi_1019_header-product.
             EXIT.
           ENDIF.
 
@@ -810,4 +517,5 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
 
     io_response->set_data( lt_data ).
   ENDMETHOD.
+
 ENDCLASS.

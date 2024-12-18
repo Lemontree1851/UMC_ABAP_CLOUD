@@ -1,0 +1,7 @@
+@EndUserText.label: 'Purchase Order API'
+define service ZAPI_PurchaseOrderAPI_O4 {
+  expose ZC_PurchaseOrderAPI;
+  expose ZC_PurchaseOrderItemAPI;
+  expose ZC_PurOrdScheduleLineAPI;
+  expose ZC_POSubcontractingCompAPI;
+}

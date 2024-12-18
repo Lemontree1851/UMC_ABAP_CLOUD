@@ -9,11 +9,7 @@ CLASS zcl_podataanalysis DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
-
-
+CLASS zcl_podataanalysis IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
 
     TYPES:
@@ -973,7 +969,24 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
                                                                   purchaseorderitem = lw_data-purchaseorderitem
                                                                   BINARY SEARCH.
         IF sy-subrc = 0 .
-          lw_data-plainlongtext1 = ls_longtext1-plainlongtext.
+
+        "change by wz 20241218 只取前后都有空格的  ' # '
+          if ls_longtext1-plainlongtext is NOT INITIAL.
+
+              FIND ALL OCCURRENCES OF ' # ' IN ls_longtext1-plainlongtext MATCH OFFSET data(lv_pos).
+
+              if lv_pos is not INITIAL.
+
+                lv_pos = lv_pos + 3.
+
+              ENDIF.
+
+              lw_data-plainlongtext1 = ls_longtext1-plainlongtext+lv_pos.
+
+              clear lv_pos.
+
+          ENDIF.
+
         ENDIF.
 
         " 输出时的内外部转换
@@ -1016,4 +1029,5 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
     ENDIF.
 
   ENDMETHOD.
+
 ENDCLASS.

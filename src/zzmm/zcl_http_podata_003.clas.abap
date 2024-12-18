@@ -57,6 +57,7 @@ CLASS zcl_http_podata_003 DEFINITION
 
       BEGIN OF ty_response,
         purchaseorder                  TYPE c LENGTH  10,
+        purchaseorderitem              TYPE c LENGTH  5,
         supplier                       TYPE c LENGTH  10,
         companycode                    type c length  4,
         purchasingdocumentdeletioncode TYPE c LENGTH  1,
@@ -64,7 +65,6 @@ CLASS zcl_http_podata_003 DEFINITION
         creationdate                   TYPE c LENGTH  8,
         createdbyuser                  TYPE c LENGTH  12,
         lastchangedatetime             TYPE c LENGTH  21,
-        purchaseorderitem              TYPE c LENGTH  5,
         documentcurrency               TYPE c LENGTH  5,
         material                       TYPE c LENGTH  18,
         TaxCode                        TYPE c Length  12,
@@ -120,10 +120,7 @@ CLASS zcl_http_podata_003 DEFINITION
 
 ENDCLASS.
 
-
-
-CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
-
+CLASS zcl_http_podata_003 IMPLEMENTATION.
 
   METHOD if_http_service_extension~handle_request.
 
@@ -499,6 +496,9 @@ DATA: lv_date       TYPE D,
       ls_response-RequisitionerName                  = lw_result-RequisitionerName.
       ls_response-CorrespncInternalReference = lw_result-CorrespncInternalReference.
 
+      "change by wz 20241218 顾问教育归来 要求 去除po的前导零
+      ls_response-purchaseorder  = |{ ls_response-purchaseorder  ALPHA = OUT }|.
+
       CONDENSE ls_response-purchaseorder                  .
 
       CONDENSE ls_response-supplier                       .
@@ -541,6 +541,8 @@ DATA: lv_date       TYPE D,
         lw_confirmation-MRPRelevantQuantity                         =  lw_confadd-MRPRelevantQuantity            .
         lw_confirmation-SupplierConfirmationExtNumber               =  lw_confadd-SupplierConfirmationExtNumber  .
 
+        lw_confirmation-PurchaseOrder = |{ lw_confirmation-PurchaseOrder ALPHA = OUT }|.
+
         CONDENSE  lw_confirmation-PurchaseOrder                 .
         CONDENSE  lw_confirmation-PurchaseOrderItem             .
         CONDENSE  lw_confirmation-SequentialNmbrOfSuplrConf     .
@@ -553,10 +555,14 @@ DATA: lv_date       TYPE D,
         clear lw_confirmation.
       ENDLOOP.
 
+      SORT ls_response-_confirmation by purchaseorder purchaseorderitem.
+
       APPEND ls_response TO es_response-items.
       clear ls_response.
 
     ENDLOOP.
+
+    sort es_response-items by purchaseorder purchaseorderitem.
 
     IF lt_result IS INITIAL.
       lv_text = 'error'.

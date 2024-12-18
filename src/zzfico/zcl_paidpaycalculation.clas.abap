@@ -11,9 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
-
-
+CLASS zcl_paidpaycalculation IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
     DATA:
       lt_output TYPE STANDARD TABLE OF zr_paidpaycalculation,
@@ -56,15 +54,15 @@ CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
     ENDTRY.
 
 * V3 会计期间转换
-    lv_poper = lv_monat.
-    lv_fiscalyearperiod = lv_gjahr && lv_poper.
-    SELECT SINGLE *      "#EC CI_ALL_FIELDS_NEEDED
-      FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
-     WHERE fiscalyearvariant = 'V3'
-       AND fiscalyearperiod = @lv_fiscalyearperiod
-      INTO @DATA(ls_v3).
-    lv_gjahr = ls_v3-FiscalPeriodStartDate+0(4).
-    lv_monat = ls_v3-FiscalPeriodStartDate+4(2).
+*    lv_poper = lv_monat.
+*    lv_fiscalyearperiod = lv_gjahr && lv_poper.
+*    SELECT SINGLE *      "#EC CI_ALL_FIELDS_NEEDED
+*      FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+*     WHERE fiscalyearvariant = 'V3'
+*       AND fiscalyearperiod = @lv_fiscalyearperiod
+*      INTO @DATA(ls_v3).
+*    lv_gjahr = ls_v3-FiscalPeriodStartDate+0(4).
+*    lv_monat = ls_v3-FiscalPeriodStartDate+4(2).
 
     CASE lv_ztype.
       WHEN 'A'.    "品番別
@@ -174,8 +172,8 @@ CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
             ls_output-customername = ls_1011-customername.   "得意先名称
             ls_output-suppliername = ls_1011-suppliername.   "仕入先名称
             ls_output-profitcentername = ls_1011-profitcentername.  "利益センタテキスト
-            ls_output-purgrpamount = ls_1011-purgrpamount. "当期購買グループ別仕入金額
-            ls_output-chargeableamount = ls_1011-chargeableamount. "当期有償支給品仕入金額
+            ls_output-purgrptot = ls_1011-purgrpamount. "当期購買グループ別仕入金額
+            ls_output-chargeabletot = ls_1011-chargeableamount. "当期有償支給品仕入金額
             ls_output-chargeablerate = ls_1011-chargeablerate.  "当期仕入率
             ls_output-previousstockamount = ls_1011-previousstocktotal. "在庫金額（前期末）
             ls_output-currentstockamount = ls_1011-currentstockpaid. "在庫金額（当期末）-有償支給品
@@ -214,4 +212,5 @@ CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
     io_response->set_data( lt_output ).
 
   ENDMETHOD.
+
 ENDCLASS.
