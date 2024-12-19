@@ -31,7 +31,7 @@ CLASS lhc_accessbtn IMPLEMENTATION.
       SORT lt_assign BY accessid.
     ENDIF.
 
-    LOOP AT entities ASSIGNING FIELD-SYMBOL(<lfs_entity>).
+    LOOP AT entities ASSIGNING FIELD-SYMBOL(<lfs_entity>) WHERE accessid IS NOT INITIAL.
       READ TABLE lt_dbdata INTO DATA(ls_dbdata) WITH KEY uuid = <lfs_entity>-uuid BINARY SEARCH.
       IF sy-subrc = 0 AND ls_dbdata-accessid <> <lfs_entity>-accessid.
         READ TABLE lt_assign INTO DATA(ls_assign) WITH KEY accessid = ls_dbdata-accessid BINARY SEARCH.

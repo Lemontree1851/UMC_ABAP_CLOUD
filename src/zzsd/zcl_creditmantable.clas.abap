@@ -9,11 +9,7 @@ CLASS zcl_creditmantable DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
-
-
+CLASS zcl_creditmantable IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
 
     DATA:
@@ -129,13 +125,14 @@ CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
           SELECT
             salesd~SalesDocument,
             salesd~SalesDocumentItem,
-            salesd~SoldToParty AS customer,
+            salesd~payerparty AS customer,
             salesd~salesorganization,
             salesd~salesdocumentdate AS zdate,
             salesd~netamount                "売上金額-予
           FROM i_salesdocumentitem         WITH PRIVILEGED ACCESS AS salesd
            FOR ALL ENTRIES IN @lt_customer_n
-         WHERE salesd~SoldToParty               = @lt_customer_n-customer
+*         WHERE salesd~SoldToParty               = @lt_customer_n-customer
+         WHERE salesd~payerparty               = @lt_customer_n-customer
            AND salesd~salesorganization        = @lt_customer_n-salesorganization
           INTO TABLE @DATA(lt_salesd).
 
@@ -946,4 +943,5 @@ CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
     io_response->set_data( lt_data ).
 
   ENDMETHOD.
+
 ENDCLASS.

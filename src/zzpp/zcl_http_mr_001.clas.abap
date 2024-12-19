@@ -11,12 +11,13 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_MR_001 IMPLEMENTATION.
+CLASS zcl_http_mr_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
     TYPES:
       BEGIN OF ty_req,
+        plant      TYPE string,
         time_stamp TYPE string,
       END OF ty_req,
 
@@ -70,11 +71,13 @@ CLASS ZCL_HTTP_MR_001 IMPLEMENTATION.
     DATA:
       lo_root_exc  TYPE REF TO cx_root,
       lr_type      TYPE RANGE OF ztpp_1009-type,
-      lt_mr        TYPE  tt_material_requisition,
+      lr_plant     TYPE RANGE OF werks_d,
+      lt_mr        TYPE tt_material_requisition,
       ls_req       TYPE ty_req,
       ls_res       TYPE ty_res,
       ls_mr        TYPE ty_material_requisition,
       ls_mritems   TYPE ty_mritems,
+      lv_plant     TYPE werks_d,
       lv_timestamp TYPE timestamp.
 
     CONSTANTS:
@@ -94,6 +97,7 @@ CLASS ZCL_HTTP_MR_001 IMPLEMENTATION.
     xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
         ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
 
+    lv_plant     = ls_req-plant.
     lv_timestamp = ls_req-time_stamp.
 
     TRY.
@@ -115,6 +119,9 @@ CLASS ZCL_HTTP_MR_001 IMPLEMENTATION.
            AND zvalue3 = @abap_true
           INTO TABLE @lr_type.
 
+        IF lv_plant IS NOT INITIAL.
+          lr_plant = VALUE #( sign = lc_sign_i option = lc_opt_eq ( low = lv_plant ) ).
+        ENDIF.
 
         IF lr_type IS NOT INITIAL.
           "Obtain data of material_requisition
@@ -132,11 +139,14 @@ CLASS ZCL_HTTP_MR_001 IMPLEMENTATION.
                  last_changed_by_user,
                  delete_flag
             FROM ztpp_1009
-           WHERE type IN @lr_type
+           WHERE plant IN @lr_plant
+             AND type IN @lr_type
              AND line_warehouse_status <> @abap_true
              AND concat( last_changed_date,last_changed_time ) >= @lv_timestamp
              AND material_requisition_no NOT IN ( SELECT material_requisition_no FROM ztpp_1009
-                                                   WHERE concat( created_date,created_time ) > @lv_timestamp
+                                                   WHERE plant IN @lr_plant
+                                                     AND type IN @lr_type
+                                                     AND concat( created_date,created_time ) > @lv_timestamp
                                                      AND ( m_r_status <> @abap_true OR delete_flag = @abap_true ) )
             INTO TABLE @DATA(lt_ztpp_1009).
           IF sy-subrc = 0.

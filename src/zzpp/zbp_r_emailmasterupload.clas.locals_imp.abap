@@ -2,9 +2,9 @@ CLASS lhc_zr_emailmasterupload DEFINITION INHERITING FROM cl_abap_behavior_handl
   PRIVATE SECTION.
     METHODS:
       get_global_authorizations FOR GLOBAL AUTHORIZATION
-        IMPORTING
-        REQUEST requested_authorizations FOR zremailmasterupload
-        RESULT result,
+        IMPORTING REQUEST requested_authorizations FOR zremailmasterupload RESULT result,
+      get_instance_authorizations FOR INSTANCE AUTHORIZATION
+        IMPORTING keys REQUEST requested_authorizations FOR zremailmasterupload RESULT result,
       validationfields FOR VALIDATE ON SAVE
         IMPORTING keys FOR zremailmasterupload~validationfields.
 ENDCLASS.
@@ -12,6 +12,46 @@ ENDCLASS.
 CLASS lhc_zr_emailmasterupload IMPLEMENTATION.
 
   METHOD get_global_authorizations.
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_access) = zzcl_common_utils=>get_access_by_user( lv_user_email ).
+
+    IF requested_authorizations-%create = if_abap_behv=>mk-on.
+      FIND 'zemailmasterupload-Create' IN lv_access.
+      IF sy-subrc = 0.
+        result-%create = if_abap_behv=>auth-allowed.
+      ELSE.
+        result-%create = if_abap_behv=>auth-unauthorized.
+        APPEND VALUE #( %msg    = new_message( id       = 'ZBC_001'
+                                               number   = 031
+                                               severity = if_abap_behv_message=>severity-error )
+                        %global = if_abap_behv=>mk-on ) TO reported-zremailmasterupload.
+      ENDIF.
+    ENDIF.
+
+    IF requested_authorizations-%update      = if_abap_behv=>mk-on
+    OR requested_authorizations-%action-edit = if_abap_behv=>mk-on.
+      FIND `zemailmasterupload-Edit` IN lv_access.
+      IF sy-subrc = 0.
+        result-%update = if_abap_behv=>auth-allowed.
+        result-%action-edit = if_abap_behv=>auth-allowed.
+      ELSE.
+        result-%update = if_abap_behv=>auth-unauthorized.
+        result-%action-edit = if_abap_behv=>auth-unauthorized.
+      ENDIF.
+    ENDIF.
+
+    IF requested_authorizations-%delete = if_abap_behv=>mk-on.
+      FIND `zemailmasterupload-Delete` IN lv_access.
+      IF sy-subrc = 0.
+        result-%delete = if_abap_behv=>auth-allowed.
+      ELSE.
+        result-%delete = if_abap_behv=>auth-unauthorized.
+      ENDIF.
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD get_instance_authorizations.
   ENDMETHOD.
 
   METHOD validationfields.

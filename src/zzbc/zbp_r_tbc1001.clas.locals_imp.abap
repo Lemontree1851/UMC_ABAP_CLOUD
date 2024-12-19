@@ -41,17 +41,17 @@ CLASS lhc_commonconfig IMPLEMENTATION.
     DATA(lv_text2) = |1、修改<Remark>字段值为：DEL2024，再次点击删除|.
     DATA(lv_text3) = |2、请联系技术人员：许鑫磊|.
 
-    LOOP AT lt_result INTO DATA(ls_result).
-      IF ls_result-zremark <> 'DEL2024'.
-        INSERT VALUE #( %tky = ls_result-%tky ) INTO TABLE failed-commonconfig.
-        INSERT VALUE #( %tky = ls_result-%tky
-                        %msg = new_message_with_text( text = lv_text3 ) ) INTO TABLE reported-commonconfig.
-        INSERT VALUE #( %tky = ls_result-%tky
-                        %msg = new_message_with_text( text = lv_text2 ) ) INTO TABLE reported-commonconfig.
-        INSERT VALUE #( %tky = ls_result-%tky
-                        %msg = new_message_with_text( text = lv_text1 ) ) INTO TABLE reported-commonconfig.
-      ENDIF.
-    ENDLOOP.
+*    LOOP AT lt_result INTO DATA(ls_result).
+*      IF ls_result-zremark <> 'DEL2024'.
+*        INSERT VALUE #( %tky = ls_result-%tky ) INTO TABLE failed-commonconfig.
+*        INSERT VALUE #( %tky = ls_result-%tky
+*                        %msg = new_message_with_text( text = lv_text3 ) ) INTO TABLE reported-commonconfig.
+*        INSERT VALUE #( %tky = ls_result-%tky
+*                        %msg = new_message_with_text( text = lv_text2 ) ) INTO TABLE reported-commonconfig.
+*        INSERT VALUE #( %tky = ls_result-%tky
+*                        %msg = new_message_with_text( text = lv_text1 ) ) INTO TABLE reported-commonconfig.
+*      ENDIF.
+*    ENDLOOP.
   ENDMETHOD.
 
 ENDCLASS.

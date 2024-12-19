@@ -26,7 +26,10 @@ CLASS zcl_http_podata_004 DEFINITION
         lastchangedbyuser           TYPE c LENGTH 12,   "更新者"
         supplierinvoicetaxcounter   TYPE c LENGTH 6,    "請求書明細
         taxcode                     TYPE c LENGTH 2,    "税コード
-        taxamount                   TYPE c LENGTH 13,   "消費税額
+"=======begin change by wz 20241219==========================================================================
+*        taxamount                   TYPE i_supplierinvoicetaxapi01-taxamount,   "消費税額
+        taxamount                   TYPE string,   "消費税額
+"=======end change by wz 20241219============================================================================
         totalamount                 TYPE c LENGTH 13,
         unitprice                   TYPE c LENGTH 13,
         supplierinvoiceitem         TYPE c LENGTH 6,    "請求書明細"
@@ -35,7 +38,12 @@ CLASS zcl_http_podata_004 DEFINITION
         debitcreditcode             TYPE c LENGTH 1,    "借方/貸方フラグ"
         purchaseorderitemmaterial   TYPE c LENGTH 40,   "品目"
         documentcurrency            TYPE c LENGTH 5,    "通貨"
-        supplierinvoiceitemamount   TYPE c LENGTH 13,   "金額"
+
+"=======begin change by wz 20241219==========================================================================
+*        supplierinvoiceitemamount   TYPE i_suplrinvcitempurordrefapi01-supplierinvoiceitemamount,   "金額"
+        supplierinvoiceitemamount   TYPE string,   "金額"
+"=======end change by wz 20241219============================================================================
+
         quantityinpurchaseorderunit TYPE c LENGTH 13,   "数量"
         purchaseorderquantityunit   TYPE c LENGTH 3,    "発注単位"
         costcenter                  TYPE c LENGTH 10,   "原価センタ"
@@ -111,9 +119,7 @@ PROTECTED SECTION.
 
     DATA:lv_rate TYPE p DECIMALS 2.
 
-ENDCLASS.
-
-
+  ENDCLASS.
 
 CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
@@ -452,7 +458,10 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ls_response-lastchangedbyuser                    = lw_result1-lastchangedbyuser.
         ls_response-supplierinvoicetaxcounter            = lw_result1-debitcreditcode.
         ls_response-taxcode                              = lw_result1-taxcode.
-        ls_response-taxamount                            = lw_result1-debitcreditcode.
+        "change by wz 20241219 wxy bug fix
+*        ls_response-taxamount                            = lw_result1-debitcreditcode.
+        "change by wz 20241219 wxy bug fix
+
         IF lw_result1-supplierinvoiceitem IS INITIAL OR lw_result1-supplierinvoiceitem = '000000' AND lw_result1-documentheadertext = '仮払消費税調整'.
           ls_response-supplierinvoiceitem = '1'.
         ELSE.
@@ -495,11 +504,25 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
             lv_unit_price_jpy1 = round( val = lv_netpriceamount dec = 3 ).
             ls_response-unitprice = lv_unit_price_jpy1.
 
+            "change by wz 20241219
             " 舍弃小数部分，取整
-            CONDENSE lw_result1-taxamount.
-            lv_taxamount1 = lw_result1-taxamount * 100.
-            lv_taxamount_jpy1 = floor( lv_taxamount1 ).
-            ls_response-taxamount = lv_taxamount_jpy1.
+*            CONDENSE lw_result1-taxamount.
+            "change by wz 20241219
+
+
+
+            "taxamount 日元时舍去小数部分，取整数。=====================
+
+            lv_taxamount1 = lw_result1-taxamount * 100.       "日元扩大一百倍
+            ls_response-taxamount = TRUNC( lv_taxamount1 ).
+
+*            lv_taxamount_jpy1 = floor( lv_taxamount1 ).
+*            ls_response-taxamount = lv_taxamount_jpy1.
+
+
+            "taxamount 日元时舍去小数部分，取整数。=====================
+
+
             ls_response-supplierinvoiceitemamount = lw_result1-supplierinvoiceitemamount * 100.
             ls_response-totalamount  = lw_result1-totalamount * 100.
             ls_response-invoicegrossamount  = lw_result1-invoicegrossamount * 100.
@@ -555,14 +578,18 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         CONDENSE ls_response-lastchangedbyuser.
         CONDENSE ls_response-supplierinvoicetaxcounter.
         CONDENSE ls_response-taxcode.
-        CONDENSE ls_response-taxamount.
+"=======change by wz 20241219==================================
+*        CONDENSE ls_response-taxamount.
+"=======end by wz 20241219==================================
         CONDENSE ls_response-supplierinvoiceitem.
         CONDENSE ls_response-purchaseorder.
         CONDENSE ls_response-purchaseorderitem.
         CONDENSE ls_response-debitcreditcode.
         CONDENSE ls_response-purchaseorderitemmaterial.
         CONDENSE ls_response-documentcurrency.
-        CONDENSE ls_response-supplierinvoiceitemamount.
+"=======change by wz 20241219==================================
+*       CONDENSE ls_response-supplierinvoiceitemamount.
+"=======end change by wz 20241219==================================
         CONDENSE ls_response-quantityinpurchaseorderunit.
         CONDENSE ls_response-purchaseorderquantityunit.
         CONDENSE ls_response-costcenter.
@@ -575,7 +602,9 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         CONDENSE ls_response-companycode.
         CONDENSE ls_response-purchasinggroupname.
 *        CONDENSE ls_response-accountingdocument.
-        CONDENSE ls_response-taxamount.
+"=======change by wz 20241219==================================
+*        CONDENSE ls_response-taxamount.
+"=======end by wz 20241219==================================
         CONDENSE ls_response-totalamount.
         CONDENSE ls_response-unitprice.
         CONDENSE ls_response-taxrate.
@@ -908,9 +937,17 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ls_response-invoicegrossamount                   = lw_result-invoicegrossamount.
         ls_response-createdbyuser                        = lw_result-createdbyuser.
         ls_response-lastchangedbyuser                    = lw_result-lastchangedbyuser.
-        ls_response-supplierinvoicetaxcounter            = lw_result-debitcreditcode.
+
+        "change by wz 20241219
+        ls_response-supplierinvoicetaxcounter            = lw_result-supplierinvoicetaxcounter.
+        "change by wz 20241219
+
         ls_response-taxcode                              = lw_result-taxcode.
-        ls_response-taxamount                            = lw_result-debitcreditcode.
+
+        "change by wz 20241219
+*        ls_response-taxamount                            = lw_result-debitcreditcode.
+        "change by wz 20241219
+
         IF lw_result-supplierinvoiceitem IS INITIAL OR lw_result-supplierinvoiceitem = '000000' AND lw_result-documentheadertext = '仮払消費税調整'.
           ls_response-supplierinvoiceitem = '1'.
         ELSE.
@@ -945,11 +982,12 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ls_response-sendflag                             = '1'.
         ls_response-taxamountheader                      = lw_result-taxamountheader.
 
-        DATA lv_taxamount2        TYPE p LENGTH 10 DECIMALS 2.
-        DATA lv_totalamount2      TYPE p LENGTH 10 DECIMALS 2.
-        DATA lv_netpriceamount2   TYPE p LENGTH 10 DECIMALS 5.
-        DATA lv_unit_price_jpy2   TYPE p LENGTH 10 DECIMALS 3.
-        DATA lv_taxamount_jpy2    TYPE p LENGTH 10 DECIMALS 5.
+        DATA lv_taxamount2        TYPE p LENGTH 15 DECIMALS 2.
+        DATA lv_totalamount2      TYPE p LENGTH 15 DECIMALS 2.
+        DATA lv_netpriceamount2   TYPE p LENGTH 15 DECIMALS 5.
+        DATA lv_unit_price_jpy2   TYPE p LENGTH 15 DECIMALS 3.
+        DATA lv_taxamount_jpy2    TYPE p LENGTH 15 DECIMALS 5.
+        DATA lv_taxamount_i       TYPE p LENGTH 15 .
 
         CASE lw_result-documentcurrency.
           WHEN 'JPY'.
@@ -959,10 +997,19 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
             ls_response-unitprice = lv_unit_price_jpy2.
 
             " 舍弃小数部分，取整
-            CONDENSE lw_result-taxamount.
+            "change by wz 20241219
+*            CONDENSE lw_result-taxamount.
+             "change by wz 20241219
+
             lv_taxamount2 = lw_result-taxamount * 100.
-            lv_taxamount_jpy2 = floor( lv_taxamount2 ).
-            ls_response-taxamount = lv_taxamount_jpy2.
+
+            lv_taxamount_i = floor( lv_taxamount2 ).
+
+            ls_response-taxamount = lv_taxamount_i.
+
+*           lv_taxamount_jpy2 = floor( lv_taxamount2 ).
+*           ls_response-taxamount = lv_taxamount_jpy2.
+
             ls_response-supplierinvoiceitemamount = lw_result-supplierinvoiceitemamount * 100.
             ls_response-totalamount  = lw_result-totalamount * 100.
             ls_response-invoicegrossamount  = lw_result-invoicegrossamount * 100.
@@ -1017,14 +1064,18 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         CONDENSE ls_response-lastchangedbyuser.
         CONDENSE ls_response-supplierinvoicetaxcounter.
         CONDENSE ls_response-taxcode.
+"=======change by wz 20241219=======================================
         CONDENSE ls_response-taxamount.
+"=======end by wz 20241219=======================================
         CONDENSE ls_response-supplierinvoiceitem.
         CONDENSE ls_response-purchaseorder.
         CONDENSE ls_response-purchaseorderitem.
         CONDENSE ls_response-debitcreditcode.
         CONDENSE ls_response-purchaseorderitemmaterial.
         CONDENSE ls_response-documentcurrency.
-        CONDENSE ls_response-supplierinvoiceitemamount.
+"=======change by wz 20241219=======================================
+*       CONDENSE ls_response-supplierinvoiceitemamount.
+"=======change by wz 20241219=======================================
         CONDENSE ls_response-quantityinpurchaseorderunit.
         CONDENSE ls_response-purchaseorderquantityunit.
         CONDENSE ls_response-costcenter.
@@ -1037,7 +1088,9 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         CONDENSE ls_response-companycode.
         CONDENSE ls_response-purchasinggroupname.
 *      CONDENSE ls_response-accountingdocument.
-        CONDENSE ls_response-taxamount.
+"=======change by wz 20241219=======================================
+*        CONDENSE ls_response-taxamount.
+"=======change by wz 20241219=======================================
         CONDENSE ls_response-totalamount.
         CONDENSE ls_response-unitprice.
         CONDENSE ls_response-taxrate.

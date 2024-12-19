@@ -287,7 +287,13 @@ CLASS zzcl_common_utils DEFINITION
                      RETURNING VALUE(rv_message) TYPE string,
 
       parse_error_v2 IMPORTING iv_response       TYPE string
-                     RETURNING VALUE(rv_message) TYPE string.
+                     RETURNING VALUE(rv_message) TYPE string,
+
+      get_email_by_uname IMPORTING iv_user         TYPE sy-uname OPTIONAL
+                         RETURNING VALUE(rv_email) TYPE i_workplaceaddress-defaultemailaddress,
+
+      get_access_by_user IMPORTING iv_email         TYPE i_workplaceaddress-defaultemailaddress
+                         RETURNING VALUE(rv_access) TYPE string.
 
   PROTECTED SECTION.
   PRIVATE SECTION.
@@ -296,7 +302,7 @@ ENDCLASS.
 
 
 
-CLASS ZZCL_COMMON_UTILS IMPLEMENTATION.
+CLASS zzcl_common_utils IMPLEMENTATION.
 
 
   METHOD calc_date_add.
@@ -1230,4 +1236,37 @@ CLASS ZZCL_COMMON_UTILS IMPLEMENTATION.
                                                 unit_in_not_found    = 07
                                                 unit_out_not_found   = 08 ).
   ENDMETHOD.
+
+  METHOD get_email_by_uname.
+    DATA lv_user TYPE sy-uname.
+
+    IF iv_user IS INITIAL.
+      lv_user = sy-uname.
+    ELSE.
+      lv_user = iv_user.
+    ENDIF.
+
+    SELECT SINGLE email FROM zc_businessuseremail WHERE userid = @lv_user INTO @rv_email.
+  ENDMETHOD.
+
+  METHOD get_access_by_user.
+    SELECT access~roleid,
+           access~accessid,
+           access~accessname
+      FROM zc_tbc1007 AS assignrole
+      JOIN zc_tbc1016 AS access ON access~roleid = assignrole~roleid
+     WHERE assignrole~mail = @iv_email
+     INTO TABLE @DATA(lt_access).
+    SORT lt_access BY accessid.
+
+    LOOP AT lt_access INTO DATA(ls_access).
+      CONDENSE ls_access-accessid NO-GAPS.
+      IF rv_access IS INITIAL.
+        rv_access = ls_access-accessid.
+      ELSE.
+        rv_access = rv_access && '|' && ls_access-accessid.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
 ENDCLASS.

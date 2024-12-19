@@ -50,6 +50,7 @@ define root custom entity ZR_SALESACCEPTANCE_RESULT
       Remarks                : abap.char(100); //備考
       ReasonCategory         : abap.char(20); //要因区分
       Reason                 : abap.char(20); //差異要因
+      FinishStatus           : abap.char(20); //Status
       CustomerName           : abap.char(80); //Customer Name
       PeriodTypeText         : abap.char(30);
       AcceptPeriodText       : abap.char(30);

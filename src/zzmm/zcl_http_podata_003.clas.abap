@@ -10,6 +10,7 @@ CLASS zcl_http_podata_003 DEFINITION
         SAPBusinessObjectNodeKey1     TYPE  string,
         WorkflowInternalID            TYPE  string,
         WorkflowExternalStatus        TYPE  string,
+        WrkflwTskCompletionUTCDateTime type String,
 
       END OF ts_workflow,
 
@@ -85,6 +86,8 @@ CLASS zcl_http_podata_003 DEFINITION
         InternationalArticleNumber     type c length 12,
         RequisitionerName              type c length 12,
         CorrespncInternalReference     type c length 12,
+        APPROVEDATE                    type string,
+
 
 
         _confirmation type STANDARD TABLE OF  ty_confirmation WITH EMPTY KEY,
@@ -322,6 +325,8 @@ DATA: lv_date       TYPE D,
         READ TABLE lt_workflow_api into data(lw_workflow) WITH KEY SAPBusinessObjectNodeKey1 = lw_poitems-purchaseorder BINARY SEARCH.
 
             if sy-subrc = 0.
+               lw_result-approvedate = lw_workflow-wrkflwtskcompletionutcdatetime.
+
                READ TABLE lt_workflowdetail_api into data(lw_workflow_d) WITH key WorkflowInternalID = lw_workflow-WorkflowInternalID BINARY SEARCH.
 
                "如果能在detail中取到WorkflowTaskInternalID
@@ -429,6 +434,15 @@ DATA: lv_date       TYPE D,
 *          rv_output   =
       ).
 
+*      "approve date 获取
+*      READ TABLE lt_workflow_api into data(lw_approvedate)  WITH KEY SAPBusinessObjectNodeKey1 = lw_result-purchaseorder BINARY SEARCH.
+*
+*      if sy-subrc = 0.
+*
+*        lw_result-approvedate = lw_approvedate-WrkflwTskCompletionUTCDateTime.
+*
+*      ENDIF.
+*      clear lw_approvedate.
 
 
        READ TABLE lt_1001 into data(lw_1001) WITH KEY Zvalue1 = lw_result-TaxCode.
@@ -495,6 +509,7 @@ DATA: lv_date       TYPE D,
       ls_response-InternationalArticleNumber         = lw_result-InternationalArticleNumber.
       ls_response-RequisitionerName                  = lw_result-RequisitionerName.
       ls_response-CorrespncInternalReference = lw_result-CorrespncInternalReference.
+      ls_response-approvedate                        = lw_result-approvedate.
 
       "change by wz 20241218 顾问教育归来 要求 去除po的前导零
       ls_response-purchaseorder  = |{ ls_response-purchaseorder  ALPHA = OUT }|.
@@ -529,6 +544,7 @@ DATA: lv_date       TYPE D,
       CONDENSE ls_response-InternationalArticleNumber     .
       CONDENSE ls_response-RequisitionerName     .
       condense ls_response-CorrespncInternalReference .
+      CONDENSE ls_response-approvedate.
 
 
       loop AT lt_confirmation INTO data(lw_confadd) WHERE purchaseorder = lw_result-purchaseorder and purchaseorderitem = lw_result-purchaseorderitem .

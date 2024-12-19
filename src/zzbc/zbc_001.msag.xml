@@ -188,6 +188,18 @@
      <MSGNR>029</MSGNR>
      <TEXT>No authority for sales org. &amp;1.</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>030</MSGNR>
+     <TEXT>No authority for purchasing org. &amp;1.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>031</MSGNR>
+     <TEXT>You are not authorized for this operation.</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

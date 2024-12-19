@@ -13,6 +13,7 @@ CLASS zcl_http_mfgorder_002 IMPLEMENTATION.
   METHOD if_http_service_extension~handle_request.
     TYPES:
       BEGIN OF ty_req,
+        plant      TYPE string,
         time_stamp TYPE string,
       END OF ty_req,
 
@@ -25,8 +26,8 @@ CLASS zcl_http_mfgorder_002 IMPLEMENTATION.
         _mfg_order_planned_start_date TYPE string,
         _production_version           TYPE i_manufacturingorder-productionversion,
         _production_version_text      TYPE i_productionversion-productionversiontext,
-        _last_change_date             TYPE string,"ztpp_1015-last_changed_date,
-        _last_change_time             TYPE string,"ztpp_1015-last_changed_time,
+        _last_change_date             TYPE string, "ztpp_1015-last_changed_date,
+        _last_change_time             TYPE string, "ztpp_1015-last_changed_time,
         _deleted_flag                 TYPE ztpp_1015-delete_flag,
         _plant                        TYPE ztpp_1015-plant,
       END OF ty_data,
@@ -40,14 +41,18 @@ CLASS zcl_http_mfgorder_002 IMPLEMENTATION.
 
     DATA:
       lo_root_exc  TYPE REF TO cx_root,
+      lr_plant     TYPE RANGE OF werks_d,
       ls_req       TYPE ty_req,
       ls_res       TYPE ty_res,
       ls_data      TYPE ty_data,
+      lv_plant     TYPE werks_d,
       lv_timestamp TYPE timestamp.
 
     CONSTANTS:
       lc_msgid_zpp_001 TYPE string VALUE 'ZPP_001',
-      lc_alpha_out     TYPE string VALUE 'OUT'.
+      lc_alpha_out     TYPE string VALUE 'OUT',
+      lc_sign_i        TYPE c LENGTH 1 VALUE 'I',
+      lc_option_eq     TYPE c LENGTH 2 VALUE 'EQ'.
 
     "Obtain request data
     DATA(lv_req_body) = request->get_text( ).
@@ -56,6 +61,7 @@ CLASS zcl_http_mfgorder_002 IMPLEMENTATION.
     xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
         ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
 
+    lv_plant     = ls_req-plant.
     lv_timestamp = ls_req-time_stamp.
 
     TRY.
@@ -64,6 +70,10 @@ CLASS zcl_http_mfgorder_002 IMPLEMENTATION.
           "前回送信時間を送信していください！
           MESSAGE ID lc_msgid_zpp_001 TYPE 'E' NUMBER 059 INTO ls_res-_msg.
           RAISE EXCEPTION TYPE cx_abap_invalid_value.
+        ENDIF.
+
+        IF lv_plant IS NOT INITIAL.
+          lr_plant = VALUE #( sign = lc_sign_i option = lc_option_eq ( low = lv_plant ) ).
         ENDIF.
 
         "Obtain data of picking list header and item
@@ -91,6 +101,7 @@ CLASS zcl_http_mfgorder_002 IMPLEMENTATION.
            AND d~productionversion = c~productionversion
          WHERE concat( a~last_changed_date,a~last_changed_time ) >= @lv_timestamp
            AND concat( a~created_date,a~created_time ) > @lv_timestamp
+           AND a~plant IN @lr_plant
            AND b~short_quantity <> 0
           INTO TABLE @DATA(lt_ztpp_1015).
         IF lt_ztpp_1015 IS NOT INITIAL.

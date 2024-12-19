@@ -45,6 +45,10 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
               DATA(lr_layer) = ls_filter_cond-range.
               READ TABLE lr_layer INTO DATA(lrs_layer) INDEX 1.
               DATA(lv_layer) = lrs_layer-low.
+            WHEN 'FINISHSTATUS'.
+              DATA(lr_finish) = ls_filter_cond-range.
+              READ TABLE lr_finish INTO DATA(lrs_finish) INDEX 1.
+              DATA(lv_finish) = lrs_finish-low.
           ENDCASE.
         ENDLOOP.
       CATCH cx_rap_query_filter_no_range.
@@ -111,137 +115,178 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       WHEN '1'.   "第一个页面
 *A 指定される期間の検収データと実績データを抽出
 *A 以前期間に保留となった検収と実績データ
-        SELECT *
-          FROM ztsd_1003 WITH PRIVILEGED ACCESS
-         WHERE customer IN @lr_kunnr
-           AND periodtype = @lv_periodtype
-           AND acceptperiod = @lv_acceptperiod
-           AND ( finishstatus = '0'
-              OR finishstatus = @space )
-          INTO TABLE @DATA(lt_1003).
-        IF sy-subrc = 0.
-          SELECT *                            "#EC CI_ALL_FIELDS_NEEDED
-          FROM ztsd_1012 WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_1003
-         WHERE salesorganization = @lt_1003-salesorganization
-           AND customer = @lt_1003-customer
-           AND periodtype = @lt_1003-periodtype
-           AND acceptperiod = @lt_1003-acceptperiod
-           AND customerpo = @lt_1003-customerpo
-          INTO TABLE @DATA(lt_1012).
-        ENDIF.
-
-        SELECT *
-          FROM ztsd_1003 WITH PRIVILEGED ACCESS
-         WHERE customer IN @lr_kunnr
-           AND periodtype = @lv_periodtype
-           AND acceptperiodfrom < @lv_from
-           AND ( finishstatus = '0'
-              OR finishstatus = @space )
-          INTO TABLE @DATA(lt_1003_t).
-        IF sy-subrc = 0.
+        IF lv_finish = '0'.
           SELECT *
-          FROM ztsd_1012 WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_1003_t
-         WHERE salesorganization = @lt_1003_t-salesorganization
-           AND customer = @lt_1003_t-customer
-           AND periodtype = @lt_1003_t-periodtype
-           AND acceptperiod = @lt_1003_t-acceptperiod
-           AND customerpo = @lt_1003_t-customerpo
-           AND processstatus = '4'
-          INTO TABLE @DATA(lt_1012_t).
-        ENDIF.
-
-        SORT lt_1012_t BY salesorganization customer periodtype acceptperiod customerpo.
-        LOOP AT lt_1003_t INTO DATA(ls_1003_t).
-          READ TABLE lt_1012_t TRANSPORTING NO FIELDS
-               WITH KEY salesorganization = ls_1003_t-salesorganization
-                        customer = ls_1003_t-customer
-                        periodtype = ls_1003_t-periodtype
-                        acceptperiod = ls_1003_t-acceptperiod
-                        customerpo = ls_1003_t-customerpo BINARY SEARCH.
-          IF sy-subrc <> 0.
-            DELETE lt_1003_t.
-            CONTINUE.
-          ENDIF.
-        ENDLOOP.
-
-
-        IF lt_1003_t IS NOT INITIAL.
-          APPEND LINES OF lt_1003_t TO lt_1003.
-        ENDIF.
-
-        IF lt_1012_t IS NOT INITIAL.
-          APPEND LINES OF lt_1012_t TO lt_1012.
-        ENDIF.
-
-
-      WHEN '2'.  "第2页面
-
-*A 指定される期間の検収データと実績データを抽出
-*A 以前期間に保留となった検収と実績データ
-        SELECT *
-          FROM ztsd_1003 WITH PRIVILEGED ACCESS
-         WHERE customer IN @lr_kunnr
-           AND periodtype = @lv_periodtype
-           AND acceptperiod = @lv_acceptperiod
-           AND ( finishstatus = '0'
-              OR finishstatus = @space )
-          INTO TABLE @lt_1003.
-        IF sy-subrc = 0.
-          SELECT *                            "#EC CI_ALL_FIELDS_NEEDED
+            FROM ztsd_1003 WITH PRIVILEGED ACCESS
+           WHERE customer IN @lr_kunnr
+             AND periodtype = @lv_periodtype
+             AND acceptperiod = @lv_acceptperiod
+             AND ( finishstatus = '0'
+                OR finishstatus = @space )
+            INTO TABLE @DATA(lt_1003).
+          IF sy-subrc = 0.
+            SELECT *                          "#EC CI_ALL_FIELDS_NEEDED
             FROM ztsd_1012 WITH PRIVILEGED ACCESS
-             FOR ALL ENTRIES IN @lt_1003
+            FOR ALL ENTRIES IN @lt_1003
            WHERE salesorganization = @lt_1003-salesorganization
              AND customer = @lt_1003-customer
              AND periodtype = @lt_1003-periodtype
              AND acceptperiod = @lt_1003-acceptperiod
              AND customerpo = @lt_1003-customerpo
-            INTO TABLE @lt_1012.
-        ENDIF.
+            INTO TABLE @DATA(lt_1012).
+          ENDIF.
 
-        SELECT *
-          FROM ztsd_1003 WITH PRIVILEGED ACCESS
-         WHERE customer IN @lr_kunnr
-           AND periodtype = @lv_periodtype
-           AND acceptperiodfrom < @lv_from
-           AND ( finishstatus = '0'
-              OR finishstatus = @space )
-          INTO TABLE @lt_1003_t.
-
-        IF lt_1003_t IS NOT INITIAL.
-          SELECT *                            "#EC CI_ALL_FIELDS_NEEDED
-            FROM ztsd_1012
+          SELECT *
+            FROM ztsd_1003 WITH PRIVILEGED ACCESS
+           WHERE customer IN @lr_kunnr
+             AND periodtype = @lv_periodtype
+             AND acceptperiodfrom < @lv_from
+             AND ( finishstatus = '0'
+                OR finishstatus = @space )
+            INTO TABLE @DATA(lt_1003_t).
+          IF sy-subrc = 0.
+            SELECT *
+            FROM ztsd_1012 WITH PRIVILEGED ACCESS
             FOR ALL ENTRIES IN @lt_1003_t
            WHERE salesorganization = @lt_1003_t-salesorganization
              AND customer = @lt_1003_t-customer
              AND periodtype = @lt_1003_t-periodtype
              AND acceptperiod = @lt_1003_t-acceptperiod
              AND customerpo = @lt_1003_t-customerpo
-             AND old_status = '4'
-            INTO TABLE @lt_1012_t.
-        ENDIF.
-
-        SORT lt_1012_t BY salesorganization customer periodtype acceptperiod customerpo.
-        LOOP AT lt_1003_t INTO ls_1003_t.
-          READ TABLE lt_1012_t TRANSPORTING NO FIELDS
-               WITH KEY salesorganization = ls_1003_t-salesorganization
-                        customer = ls_1003_t-customer
-                        periodtype = ls_1003_t-periodtype
-                        acceptperiod = ls_1003_t-acceptperiod
-                        customerpo = ls_1003_t-customerpo BINARY SEARCH.
-          IF sy-subrc <> 0.
-            DELETE lt_1003_t.
-            CONTINUE.
+             AND processstatus = '4'
+            INTO TABLE @DATA(lt_1012_t).
           ENDIF.
-        ENDLOOP.
 
-        IF lt_1003_t IS NOT INITIAL.
-          APPEND LINES OF lt_1003_t TO lt_1003.
+          SORT lt_1012_t BY salesorganization customer periodtype acceptperiod customerpo.
+          LOOP AT lt_1003_t INTO DATA(ls_1003_t).
+            READ TABLE lt_1012_t TRANSPORTING NO FIELDS
+                 WITH KEY salesorganization = ls_1003_t-salesorganization
+                          customer = ls_1003_t-customer
+                          periodtype = ls_1003_t-periodtype
+                          acceptperiod = ls_1003_t-acceptperiod
+                          customerpo = ls_1003_t-customerpo BINARY SEARCH.
+            IF sy-subrc <> 0.
+              DELETE lt_1003_t.
+              CONTINUE.
+            ENDIF.
+          ENDLOOP.
+
+
+          IF lt_1003_t IS NOT INITIAL.
+            APPEND LINES OF lt_1003_t TO lt_1003.
+          ENDIF.
+
+          IF lt_1012_t IS NOT INITIAL.
+            APPEND LINES OF lt_1012_t TO lt_1012.
+          ENDIF.
+        ELSE.
+          SELECT *
+            FROM ztsd_1003 WITH PRIVILEGED ACCESS
+           WHERE customer IN @lr_kunnr
+             AND periodtype = @lv_periodtype
+             AND acceptperiod = @lv_acceptperiod
+             AND finishstatus = '1'
+            INTO TABLE @lt_1003.
+          IF sy-subrc = 0.
+            SELECT *                          "#EC CI_ALL_FIELDS_NEEDED
+            FROM ztsd_1012 WITH PRIVILEGED ACCESS
+            FOR ALL ENTRIES IN @lt_1003
+           WHERE salesorganization = @lt_1003-salesorganization
+             AND customer = @lt_1003-customer
+             AND periodtype = @lt_1003-periodtype
+             AND acceptperiod = @lt_1003-acceptperiod
+             AND customerpo = @lt_1003-customerpo
+            INTO TABLE @lt_1012.
+          ENDIF.
+
         ENDIF.
 
-        IF lt_1012_t IS NOT INITIAL.
-          APPEND LINES OF lt_1012_t TO lt_1012.
+      WHEN '2'.  "第2页面
+*A 指定される期間の検収データと実績データを抽出
+*A 以前期間に保留となった検収と実績データ
+        IF lv_finish = '0'.
+          SELECT *
+            FROM ztsd_1003 WITH PRIVILEGED ACCESS
+           WHERE customer IN @lr_kunnr
+             AND periodtype = @lv_periodtype
+             AND acceptperiod = @lv_acceptperiod
+             AND ( finishstatus = '0'
+                OR finishstatus = @space )
+            INTO TABLE @lt_1003.
+          IF sy-subrc = 0.
+            SELECT *                          "#EC CI_ALL_FIELDS_NEEDED
+              FROM ztsd_1012 WITH PRIVILEGED ACCESS
+               FOR ALL ENTRIES IN @lt_1003
+             WHERE salesorganization = @lt_1003-salesorganization
+               AND customer = @lt_1003-customer
+               AND periodtype = @lt_1003-periodtype
+               AND acceptperiod = @lt_1003-acceptperiod
+               AND customerpo = @lt_1003-customerpo
+              INTO TABLE @lt_1012.
+          ENDIF.
+
+          SELECT *
+            FROM ztsd_1003 WITH PRIVILEGED ACCESS
+           WHERE customer IN @lr_kunnr
+             AND periodtype = @lv_periodtype
+             AND acceptperiodfrom < @lv_from
+             AND ( finishstatus = '0'
+                OR finishstatus = @space )
+            INTO TABLE @lt_1003_t.
+
+          IF lt_1003_t IS NOT INITIAL.
+            SELECT *                          "#EC CI_ALL_FIELDS_NEEDED
+              FROM ztsd_1012
+              FOR ALL ENTRIES IN @lt_1003_t
+             WHERE salesorganization = @lt_1003_t-salesorganization
+               AND customer = @lt_1003_t-customer
+               AND periodtype = @lt_1003_t-periodtype
+               AND acceptperiod = @lt_1003_t-acceptperiod
+               AND customerpo = @lt_1003_t-customerpo
+               AND old_status = '4'
+              INTO TABLE @lt_1012_t.
+          ENDIF.
+
+          SORT lt_1012_t BY salesorganization customer periodtype acceptperiod customerpo.
+          LOOP AT lt_1003_t INTO ls_1003_t.
+            READ TABLE lt_1012_t TRANSPORTING NO FIELDS
+                 WITH KEY salesorganization = ls_1003_t-salesorganization
+                          customer = ls_1003_t-customer
+                          periodtype = ls_1003_t-periodtype
+                          acceptperiod = ls_1003_t-acceptperiod
+                          customerpo = ls_1003_t-customerpo BINARY SEARCH.
+            IF sy-subrc <> 0.
+              DELETE lt_1003_t.
+              CONTINUE.
+            ENDIF.
+          ENDLOOP.
+
+          IF lt_1003_t IS NOT INITIAL.
+            APPEND LINES OF lt_1003_t TO lt_1003.
+          ENDIF.
+
+          IF lt_1012_t IS NOT INITIAL.
+            APPEND LINES OF lt_1012_t TO lt_1012.
+          ENDIF.
+        ELSE.
+          SELECT *
+            FROM ztsd_1003 WITH PRIVILEGED ACCESS
+           WHERE customer IN @lr_kunnr
+             AND periodtype = @lv_periodtype
+             AND acceptperiod = @lv_acceptperiod
+             AND finishstatus = '1'
+            INTO TABLE @lt_1003.
+          IF sy-subrc = 0.
+            SELECT *                          "#EC CI_ALL_FIELDS_NEEDED
+              FROM ztsd_1012 WITH PRIVILEGED ACCESS
+               FOR ALL ENTRIES IN @lt_1003
+             WHERE salesorganization = @lt_1003-salesorganization
+               AND customer = @lt_1003-customer
+               AND periodtype = @lt_1003-periodtype
+               AND acceptperiod = @lt_1003-acceptperiod
+               AND customerpo = @lt_1003-customerpo
+              INTO TABLE @lt_1012.
+          ENDIF.
         ENDIF.
     ENDCASE.
 
@@ -346,6 +391,8 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       ls_output-salesdocumentitem = ls_so-salesdocumentitem.
       ls_output-salesdocumenttype = ls_so-salesdocumenttype.
       ls_output-layer = lv_layer.
+      ls_output-finishstatus = lv_finish.
+
       READ TABLE lt_auart INTO DATA(ls_auart)
                  WITH KEY salesdocumenttype = ls_so-salesdocumenttype BINARY SEARCH.
       IF sy-subrc = 0.
@@ -428,26 +475,62 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       ENDIF.
 
       IF lv_layer = 1.
-        READ TABLE lt_1012 INTO DATA(ls_1012)
-             WITH KEY salesdocument = ls_output-salesdocument
-                      salesdocumentitem = ls_output-salesdocumentitem
-                      billingdocument = ls_output-billingdocument BINARY SEARCH.
-        IF sy-subrc = 0.
-          ls_output-remarks = ls_1012-remarks.
-          ls_output-processstatus = ls_1012-processstatus.
-          ls_output-reasoncategory = ls_1012-reasoncategory.
-          ls_output-reason = ls_1012-reason.
-        ELSE.
-          IF ls_output-conditionquantity <> 0.
-            lv_netpr = ls_output-conditionratevalue / ls_output-conditionquantity.
-          ENDIF.
-          IF ls_output-acceptqty = ls_output-billingquantity
-         AND ls_output-acceptprice = lv_netpr
-         AND ls_output-accceptamount = ls_output-netamount
-         AND ls_output-acccepttaxamount = ls_output-taxamount.
-            ls_output-processstatus = '0'.
+        IF lv_finish = '0'. "内部编码
+          READ TABLE lt_1012 INTO DATA(ls_1012)
+               WITH KEY salesdocument = ls_output-salesdocument
+                        salesdocumentitem = ls_output-salesdocumentitem
+                        billingdocument = ls_output-billingdocument BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_output-remarks = ls_1012-remarks.
+            ls_output-processstatus = ls_1012-processstatus.
+            ls_output-reasoncategory = ls_1012-reasoncategory.
+            ls_output-reason = ls_1012-reason.
           ELSE.
-            ls_output-processstatus = '2'.
+            IF ls_output-conditionquantity <> 0.
+              lv_netpr = ls_output-conditionratevalue / ls_output-conditionquantity.
+            ENDIF.
+            IF ls_output-acceptqty = ls_output-billingquantity
+           AND ls_output-acceptprice = lv_netpr
+           AND ls_output-accceptamount = ls_output-netamount
+           AND ls_output-acccepttaxamount = ls_output-taxamount.
+              ls_output-processstatus = '0'.
+            ELSE.
+              ls_output-processstatus = '2'.
+            ENDIF.
+          ENDIF.
+        ELSE.   "外部编码
+          READ TABLE lt_1012 INTO ls_1012
+               WITH KEY salesdocument = ls_output-salesdocument
+                        salesdocumentitem = ls_output-salesdocumentitem
+                        billingdocument = ls_output-billingdocument BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_output-remarks = ls_1012-remarks.
+            READ TABLE lt_1001 INTO DATA(ls_1001)
+               WITH KEY zid = 'ZSD008'
+                        zvalue1 = ls_1012-processstatus.
+            IF sy-subrc = 0.
+              ls_output-processstatus = ls_1001-zvalue2.
+            ELSE.
+              ls_output-processstatus = ls_1012-processstatus.
+            ENDIF.
+
+            READ TABLE lt_1001 INTO ls_1001
+                 WITH KEY zid = 'ZSD009'
+                          zvalue1 = ls_1012-reasoncategory.
+            IF sy-subrc = 0.
+              ls_output-reasoncategory = ls_1001-zvalue2.
+            ELSE.
+              ls_output-reasoncategory = ls_1012-reasoncategory.
+            ENDIF.
+
+            READ TABLE lt_1001 INTO ls_1001
+                 WITH KEY zid = 'ZSD010'
+                          zvalue1 = ls_1012-reason.
+            IF sy-subrc = 0.
+              ls_output-reason = ls_1001-zvalue2.
+            ELSE.
+              ls_output-reason = ls_1012-reason.
+            ENDIF.
           ENDIF.
         ENDIF.
       ELSE.
@@ -458,7 +541,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
                       billingdocument = ls_output-billingdocument BINARY SEARCH.
         IF sy-subrc = 0.
           ls_output-remarks = ls_1012-remarks.
-          READ TABLE lt_1001 INTO DATA(ls_1001)
+          READ TABLE lt_1001 INTO ls_1001
                WITH KEY zid = 'ZSD008'
                         zvalue1 = ls_1012-processstatus.
           IF sy-subrc = 0.
@@ -534,10 +617,12 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       ENDLOOP.
     ENDIF.
 
-    " Filtering
-    zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
-                                 CHANGING  ct_data     = lt_output ).
 
+    IF lv_layer = '1'.
+      " Filtering
+      zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
+                                   CHANGING  ct_data     = lt_output ).
+    ENDIF.
     IF io_request->is_total_numb_of_rec_requested(  ) .
       io_response->set_total_number_of_records( lines( lt_output ) ).
     ENDIF.
