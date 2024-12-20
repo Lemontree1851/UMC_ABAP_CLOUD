@@ -140,7 +140,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
             FROM ztsd_1003 WITH PRIVILEGED ACCESS
            WHERE customer IN @lr_kunnr
              AND periodtype = @lv_periodtype
-             AND acceptperiodfrom < @lv_from
+             AND acceptperiodto < @lv_from
              AND ( finishstatus = '0'
                 OR finishstatus = @space )
             INTO TABLE @DATA(lt_1003_t).

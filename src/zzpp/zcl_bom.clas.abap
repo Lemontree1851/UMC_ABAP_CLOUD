@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BOM IMPLEMENTATION.
+CLASS zcl_bom IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

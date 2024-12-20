@@ -181,22 +181,23 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       END OF ts_bom,
 
       BEGIN OF ts_matnrcost,
-        plant      TYPE werks_d,
-        matnr      TYPE matnr,
+        plant       TYPE werks_d,
+        matnr       TYPE matnr,
         tot2000(10) TYPE p DECIMALS 2,
         tot3000(10) TYPE p DECIMALS 2,
       END OF ts_matnrcost.
+
 
     DATA:
       lv_fiscalyearperiod TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
       lv_previousperiod   TYPE monat,
       lv_poper            TYPE poper,
-      lv_amt1(10)          TYPE p DECIMALS 2,
-      lv_amt2(10)          TYPE p DECIMALS 2,
-      lv_amt(10)           TYPE p DECIMALS 2,
-      lv_amt_bukrs(10)     TYPE p DECIMALS 2,
-      lv_amt_2000(10)      TYPE p DECIMALS 2,
-      lv_amt_3000(10)      TYPE p DECIMALS 2,
+      lv_amt1(10)         TYPE p DECIMALS 2,
+      lv_amt2(10)         TYPE p DECIMALS 2,
+      lv_amt(10)          TYPE p DECIMALS 2,
+      lv_amt_bukrs(10)    TYPE p DECIMALS 2,
+      lv_amt_2000(10)     TYPE p DECIMALS 2,
+      lv_amt_3000(10)     TYPE p DECIMALS 2,
       lv_year             TYPE c LENGTH 4,
       lv_lastyear         TYPE c LENGTH 4,
       lv_month            TYPE monat,
@@ -1081,7 +1082,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         READ TABLE lt_raw INTO DATA(ls_raw)
              WITH KEY costestimate = ls_prodcostno-prodcostestnumber BINARY SEARCH.
         IF ls_lotsize-costinglotsize <> 0.
-          <lfs_bom>-cost01 = ( ls_raw-CostComponentCostField1Amt + ls_raw-CostComponentCostField3Amt )
+          <lfs_bom>-cost01 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
 *        READ TABLE lt_costitem INTO DATA(ls_costitem)
@@ -1116,7 +1117,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         READ TABLE lt_raw INTO ls_raw
              WITH KEY costestimate = ls_prodcostno-prodcostestnumber BINARY SEARCH.
         IF ls_lotsize-costinglotsize <> 0.
-          <lfs_bom>-cost02 = ( ls_raw-CostComponentCostField1Amt + ls_raw-CostComponentCostField3Amt )
+          <lfs_bom>-cost02 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
 *        READ TABLE lt_costitem INTO ls_costitem
@@ -1151,7 +1152,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         READ TABLE lt_raw INTO ls_raw
              WITH KEY costestimate = ls_prodcostno-prodcostestnumber BINARY SEARCH.
         IF ls_lotsize-costinglotsize <> 0.
-          <lfs_bom>-cost03 = ( ls_raw-CostComponentCostField1Amt + ls_raw-CostComponentCostField3Amt )
+          <lfs_bom>-cost03 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
 *        READ TABLE lt_costitem INTO ls_costitem
@@ -1186,7 +1187,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         READ TABLE lt_raw INTO ls_raw
              WITH KEY costestimate = ls_prodcostno-prodcostestnumber BINARY SEARCH.
         IF ls_lotsize-costinglotsize <> 0.
-          <lfs_bom>-cost04 = ( ls_raw-CostComponentCostField1Amt + ls_raw-CostComponentCostField3Amt )
+          <lfs_bom>-cost04 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
 *        READ TABLE lt_costitem INTO ls_costitem
@@ -1221,7 +1222,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         READ TABLE lt_raw INTO ls_raw
              WITH KEY costestimate = ls_prodcostno-prodcostestnumber BINARY SEARCH.
         IF ls_lotsize-costinglotsize <> 0.
-          <lfs_bom>-cost05 = ( ls_raw-CostComponentCostField1Amt + ls_raw-CostComponentCostField3Amt )
+          <lfs_bom>-cost05 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
 *        READ TABLE lt_costitem INTO ls_costitem
@@ -1256,7 +1257,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         READ TABLE lt_raw INTO ls_raw
              WITH KEY costestimate = ls_prodcostno-prodcostestnumber BINARY SEARCH.
         IF ls_lotsize-costinglotsize <> 0.
-          <lfs_bom>-cost06 = ( ls_raw-CostComponentCostField1Amt + ls_raw-CostComponentCostField3Amt )
+          <lfs_bom>-cost06 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
 *        READ TABLE lt_costitem INTO ls_costitem
@@ -1291,7 +1292,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         READ TABLE lt_raw INTO ls_raw
              WITH KEY costestimate = ls_prodcostno-prodcostestnumber BINARY SEARCH.
         IF ls_lotsize-costinglotsize <> 0.
-          <lfs_bom>-cost07 = ( ls_raw-CostComponentCostField1Amt + ls_raw-CostComponentCostField3Amt )
+          <lfs_bom>-cost07 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
 *        READ TABLE lt_costitem INTO ls_costitem
@@ -1326,7 +1327,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         READ TABLE lt_raw INTO ls_raw
              WITH KEY costestimate = ls_prodcostno-prodcostestnumber BINARY SEARCH.
         IF ls_lotsize-costinglotsize <> 0.
-          <lfs_bom>-cost08 = ( ls_raw-CostComponentCostField1Amt + ls_raw-CostComponentCostField3Amt )
+          <lfs_bom>-cost08 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
 *        READ TABLE lt_costitem INTO ls_costitem
@@ -1361,7 +1362,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         READ TABLE lt_raw INTO ls_raw
              WITH KEY costestimate = ls_prodcostno-prodcostestnumber BINARY SEARCH.
         IF ls_lotsize-costinglotsize <> 0.
-          <lfs_bom>-cost09 = ( ls_raw-CostComponentCostField1Amt + ls_raw-CostComponentCostField3Amt )
+          <lfs_bom>-cost09 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
 *        READ TABLE lt_costitem INTO ls_costitem
@@ -1396,7 +1397,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         READ TABLE lt_raw INTO ls_raw
              WITH KEY costestimate = ls_prodcostno-prodcostestnumber BINARY SEARCH.
         IF ls_lotsize-costinglotsize <> 0.
-          <lfs_bom>-cost10 = ( ls_raw-CostComponentCostField1Amt + ls_raw-CostComponentCostField3Amt )
+          <lfs_bom>-cost10 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
 *        READ TABLE lt_costitem INTO ls_costitem
@@ -1752,7 +1753,15 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
 
   ENDMETHOD.
   METHOD calcu_b.
+    TYPES:
+      BEGIN OF ts_grpchg,
+        purchasinggroup TYPE ekgrp,
+        chargeable(10)  TYPE p DECIMALS 2,
+      END OF ts_grpchg.
+
     DATA:
+      lt_grpchg  TYPE STANDARD TABLE OF ts_grpchg,
+      ls_grpchg  TYPE ts_grpchg,
       lt_1011    TYPE STANDARD TABLE OF ztfi_1011,
       ls_1011    TYPE ztfi_1011,
       ls_request TYPE lty_request.
@@ -1761,12 +1770,14 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       lv_purgrp(10)          TYPE p DECIMALS 2,
       lv_chargeable(10)      TYPE p DECIMALS 2,
       lv_currentstockamt(10) TYPE p DECIMALS 2,
-      lv_semi(10)           TYPE p DECIMALS 2,
-      lv_fin(10)            TYPE p DECIMALS 2,
-      lv_fiscalyearperiod   TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
-      lv_poper              TYPE poper,
-      lv_year               TYPE gjahr,
-      lv_monat              TYPE monat.
+      lv_semi(10)            TYPE p DECIMALS 2,
+      lv_fin(10)             TYPE p DECIMALS 2,
+      lv_fiscalyearperiod    TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
+      lv_poper               TYPE poper,
+      lv_year                TYPE gjahr,
+      lv_monat               TYPE monat,
+      lv_matnr               TYPE matnr,
+      lv_rate(5)             TYPE p DECIMALS 2.
 
     CONSTANTS:
       lc_2000 TYPE c LENGTH 4 VALUE '2000',
@@ -1810,6 +1821,21 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
        AND ledge = @cv_ledge
       INTO TABLE @DATA(lt_1010).
 
+    DATA(lt_tmp) = lt_1010[].
+    SORT lt_tmp BY product purchasinggroup.
+    DELETE ADJACENT DUPLICATES FROM lt_tmp COMPARING product purchasinggroup.
+    LOOP AT lt_tmp INTO DATA(ls_tmp)
+                        GROUP BY ( purchasinggroup = ls_tmp-purchasinggroup )
+                        REFERENCE INTO DATA(chg).
+      LOOP AT GROUP chg INTO DATA(ls_chg).
+        ls_grpchg-chargeable = ls_grpchg-chargeable + ls_chg-chargeableamount
+                             + ls_chg-chargeableamount1 + ls_chg-chargeableamount2.
+      ENDLOOP.
+      ls_grpchg-purchasinggroup = ls_chg-purchasinggroup.
+      APPEND ls_grpchg TO lt_grpchg.
+      CLEAR: ls_grpchg.
+    ENDLOOP.
+
     LOOP AT lt_1010 INTO DATA(ls_1010)
             GROUP BY ( customer = ls_1010-customer
                        supplier = ls_1010-supplier
@@ -1817,10 +1843,12 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
                        purchasinggroup = ls_1010-purchasinggroup )
             REFERENCE INTO DATA(member).
       LOOP AT GROUP member ASSIGNING FIELD-SYMBOL(<lfs_member>).
-        lv_chargeable = <lfs_member>-chargeableamount + <lfs_member>-chargeableamount1 + <lfs_member>-chargeableamount2
-                      + lv_chargeable. "当期有償支給品仕入れ金額
-        lv_purgrp = <lfs_member>-purgrpamount1 + <lfs_member>-purgrpamount2 + <lfs_member>-purgrpamount
-                  + lv_purgrp.
+        IF <lfs_member>-product <> lv_matnr.
+          lv_chargeable = <lfs_member>-chargeableamount + <lfs_member>-chargeableamount1 + <lfs_member>-chargeableamount2
+                        + lv_chargeable. "当期有償支給品仕入れ金額
+        ENDIF.
+        lv_matnr = <lfs_member>-product.
+
         lv_currentstockamt = lv_currentstockamt + <lfs_member>-currentstockamount. "在庫金額（当期末）-有償支給品
         IF <lfs_member>-valuationclass01 = lc_2000.
           lv_semi = lv_semi + <lfs_member>-valuationquantity01 * <lfs_member>-cost01.
@@ -1872,13 +1900,24 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         ELSEIF <lfs_member>-valuationclass10 = lc_3000.
           lv_fin = lv_fin + <lfs_member>-valuationquantity10 * <lfs_member>-cost10.
         ENDIF.
+
       ENDLOOP.
 
+      lv_purgrp = <lfs_member>-purgrpamount1 + <lfs_member>-purgrpamount2 + <lfs_member>-purgrpamount
+                  + lv_purgrp.
       ls_1011-purgrpamount = lv_purgrp.
       ls_1011-chargeableamount = lv_chargeable.   "当期有償支給品仕入金額
+
+      READ TABLE lt_grpchg INTO ls_grpchg
+           WITH KEY purchasinggroup = <lfs_member>-purchasinggroup.
       IF lv_purgrp <> 0.
-        ls_1011-chargeablerate = lv_chargeable / lv_purgrp.  "当期仕入率
+        ls_1011-chargeablerate = ls_grpchg-chargeable / lv_purgrp.  "当期仕入率
       ENDIF.
+*      IF lv_rate = 0.
+*        CLEAR: ls_1011-chargeablerate.
+*      ELSE.
+*        ls_1011-chargeablerate = lv_rate.
+*      ENDIF.
 
       ls_1011-previousstocktotal = <lfs_member>-previousstockamount.  "在庫金額（前期末）-合計
       ls_1011-currentstockpaid = lv_currentstockamt.  "在庫金額（当期末）-有償支給品
@@ -1891,9 +1930,9 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       "払いだし材料費
       ls_1011-paidmaterialcost = ls_1011-stockchangeamount + ls_1011-chargeableamount.
       "該当得意先の総売上高
-      ls_1011-customerrevenue = <lfs_member>-customerrevenue.
+      ls_1011-customerrevenue = <lfs_member>-customerrevenue + <lfs_member>-customerrevenue1.
       "会社レベルの総売上高
-      ls_1011-revenue = <lfs_member>-revenue.
+      ls_1011-revenue = <lfs_member>-revenue + <lfs_member>-revenue1.
       "総売上金額占有率
       IF ls_1011-revenue <> 0.
         ls_1011-revenuerate = ls_1011-customerrevenue / ls_1011-revenue.

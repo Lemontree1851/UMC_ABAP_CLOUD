@@ -39,7 +39,10 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
     DATA:
       lv_amount(9)        TYPE p DECIMALS 2,
       lv_fiscalyearperiod TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
-      lv_poper            TYPE poper.
+      lv_poper            TYPE poper,
+      lv_year             TYPE c LENGTH 4,
+      lv_month            TYPE monat,
+      lv_length           TYPE i.
 
 * Get filter range
     TRY.
@@ -70,18 +73,6 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
         io_response->set_data( lt_output ).
     ENDTRY.
 
-* V3 会计期间转换
-*    lv_poper = lv_monat.
-*    lv_fiscalyearperiod = lv_gjahr && lv_poper.
-*    IF lv_fiscalyearperiod IS NOT INITIAL.
-*      SELECT SINGLE *          "#EC CI_ALL_FIELDS_NEEDED
-*        FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
-*       WHERE fiscalyearvariant = 'V3'
-*         AND fiscalyearperiod = @lv_fiscalyearperiod
-*        INTO @DATA(ls_v3).
-*      lv_gjahr = ls_v3-fiscalperiodstartdate+0(4).
-*      lv_monat = ls_v3-fiscalperiodstartdate+4(2).
-*    ENDIF.
     CASE lv_ztype.
       WHEN 'A'.          "売上/仕入純額処理
         SELECT *
@@ -154,10 +145,16 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
 
         "Filter 6th = 'D'
         LOOP AT lt_product INTO DATA(ls_product).
-          DATA(lv_matnr) = zzcl_common_utils=>conversion_matn1(
-                                                EXPORTING iv_alpha = 'OUT'
-                                                          iv_input = ls_product-product ).
-          IF lv_matnr+0(5) <> 'D'.
+*          DATA(lv_matnr) = zzcl_common_utils=>conversion_matn1(
+*                                                EXPORTING iv_alpha = 'OUT'
+*                                                          iv_input = ls_product-product ).
+*          IF lv_matnr+0(5) <> 'D'.
+*            DELETE lt_product.
+*            CONTINUE.
+*          ENDIF.
+          lv_length = strlen( ls_product-product ).
+          lv_length = lv_length - 1.
+          IF ls_product-product+lv_length(1) <> '2'.
             DELETE lt_product.
             CONTINUE.
           ENDIF.
@@ -168,14 +165,16 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
           SELECT product,
                  plant,
                  mrpresponsible
-            FROM i_productplantmrp WITH PRIVILEGED ACCESS
+            FROM i_productplantbasic WITH PRIVILEGED ACCESS
             FOR ALL ENTRIES IN @lt_product
-           WHERE product = @lt_product-product
-             AND plant = @lt_product-plant
+           WHERE plant = @lt_product-plant
             INTO TABLE @lt_mrp.
 
           LOOP AT lt_mrp ASSIGNING FIELD-SYMBOL(<lfs_mrp>).
             DATA(lv_len) = strlen( <lfs_mrp>-mrpresponsible ) - 2.
+            IF lv_len < 0.
+              CONTINUE.
+            ENDIF.
             lrs_sort-sign = 'I'.
             lrs_sort-option = 'EQ'.
             lrs_sort-low = <lfs_mrp>-mrpresponsible+lv_len(2).
@@ -193,6 +192,39 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
         ENDIF.
 
         IF lt_bp IS NOT INITIAL.
+          SELECT customer,
+                 companycode
+            FROM i_customercompany WITH PRIVILEGED ACCESS
+            FOR ALL ENTRIES IN @lt_bp
+           WHERE customer = @lt_bp-businesspartner
+             AND companycode = @lv_bukrs
+            INTO TABLE @DATA(lt_kunnr).
+        ENDIF.
+
+        IF lt_kunnr IS NOT INITIAL.
+          SELECT supplier,
+                 companycode
+            FROM i_suppliercompany
+            FOR ALL ENTRIES IN @lt_kunnr
+           WHERE supplier = @lt_kunnr-customer
+             AND companycode = @lv_bukrs
+            INTO TABLE @DATA(lt_lifnr).
+        ENDIF.
+
+* V3 会计期间转换
+        lv_poper = lv_monat.
+        lv_fiscalyearperiod = lv_gjahr && lv_poper.
+        IF lv_fiscalyearperiod IS NOT INITIAL.
+          SELECT SINGLE *                     "#EC CI_ALL_FIELDS_NEEDED
+            FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+           WHERE fiscalyearvariant = 'V3'
+             AND fiscalyearperiod = @lv_fiscalyearperiod
+            INTO @DATA(ls_v3).
+*          lv_year = ls_v3-fiscalperiodstartdate+0(4).
+*          lv_month = ls_v3-fiscalperiodstartdate+4(2).
+        ENDIF.
+
+        IF lt_kunnr IS NOT INITIAL.
 * 売掛金の金額
           SELECT sourceledger,
                  companycode,
@@ -204,17 +236,20 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
                  profitcenter,
                  companycodecurrency,
                  amountincompanycodecurrency,
-                 customer
+                 customer,
+                 fiscalperiod,
+                 postingdate
             FROM i_journalentryitem WITH PRIVILEGED ACCESS
-            FOR ALL ENTRIES IN @lt_bp
+            FOR ALL ENTRIES IN @lt_kunnr
            WHERE sourceledger = '0L'
              AND companycode = @lv_bukrs
-             AND fiscalyear = @lv_gjahr
+             AND ( AccountingDocumentType = 'DR'
+                OR AccountingDocumentType = 'RV'
+                OR AccountingDocumentType = 'DZ' )
+             AND ( ( fiscalyear = @lv_gjahr AND fiscalperiod <= @lv_monat )
+                 OR fiscalyear < @lv_gjahr )
              AND ledger = '0L'
-             AND isreversal = @space
-             AND isreversed = @space
-             AND fiscalperiod <= @lv_monat
-             AND customer = @lt_bp-businesspartner
+             AND customer = @lt_kunnr-customer
             INTO TABLE @DATA(lt_bseg_ar).
 * 買掛金の金額
           SELECT sourceledger,
@@ -227,17 +262,18 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
                  profitcenter,
                  companycodecurrency,
                  amountincompanycodecurrency,
-                 supplier
+                 supplier,
+                 fiscalperiod,
+                 postingdate
             FROM i_journalentryitem WITH PRIVILEGED ACCESS
-            FOR ALL ENTRIES IN @lt_bp
+            FOR ALL ENTRIES IN @lt_lifnr
            WHERE sourceledger = '0L'
              AND companycode = @lv_bukrs
-             AND fiscalyear = @lv_gjahr
+             AND AccountingDocumentType = 'RE'
+             AND ( ( fiscalyear = @lv_gjahr AND fiscalperiod <= @lv_monat )
+                 OR fiscalyear < @lv_gjahr )
              AND ledger = '0L'
-             AND isreversal = @space
-             AND isreversed = @space
-             AND fiscalperiod <= @lv_monat
-             AND supplier = @lt_bp-businesspartner
+             AND supplier = @lt_lifnr-supplier
             INTO TABLE @DATA(lt_bseg_ap).
         ENDIF.
 
@@ -336,7 +372,12 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
             ls_output-customername = ls_1013-customername.
             ls_output-suppliername = ls_1013-suppliername.
             ls_output-ar = ls_1013-ar.
-            ls_output-ap = ls_1013-ap.
+            IF ls_1013-ap < 0.
+              ls_output-ap = -1 * ls_1013-ap.
+            ELSE.
+              ls_output-ap = ls_1013-ap.
+            ENDIF.
+            ls_output-currency = ls_1013-currency.
             ls_output-belnr5 = ls_1013-belnr1.
             ls_output-gjahr5 = ls_1013-gjahr1.
             ls_output-belnr6 = ls_1013-belnr2.
@@ -349,6 +390,15 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
           ELSE.
             MOVE-CORRESPONDING ls_table TO ls_output.
             ls_output-ztype = lv_ztype.
+            ls_output-currency = ls_table-currency.
+            ls_output-belnr5 = ls_table-belnr1.
+            ls_output-gjahr5 = ls_table-gjahr1.
+            ls_output-belnr6 = ls_table-belnr2.
+            ls_output-gjahr6 = ls_table-gjahr2.
+            ls_output-belnr7 = ls_table-belnr3.
+            ls_output-gjahr7 = ls_table-gjahr3.
+            ls_output-belnr8 = ls_table-belnr4.
+            ls_output-gjahr8 = ls_table-gjahr4.
             APPEND ls_output TO lt_output.
           ENDIF.
           CLEAR: ls_output.

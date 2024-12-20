@@ -127,7 +127,7 @@ define root custom entity ZR_PAIDPAYCALCULATION
       Revenue             : abap.curr(16,2); //会社レベルの総売上高
 
       //購買グルー合計
-      ChargeableRate      : abap.dec(9,5); //当期仕入率
+      ChargeableRate      : abap.char(20); //当期仕入率
       @Semantics.amount.currencyCode : 'Currency'
       PurGrpTot           : abap.curr(16,2); //当期購買グループ別仕入金額当前期间
       @Semantics.amount.currencyCode : 'Currency'

@@ -289,11 +289,16 @@ CLASS zzcl_common_utils DEFINITION
       parse_error_v2 IMPORTING iv_response       TYPE string
                      RETURNING VALUE(rv_message) TYPE string,
 
+*&--Begin use for Authorization Check
       get_email_by_uname IMPORTING iv_user         TYPE sy-uname OPTIONAL
                          RETURNING VALUE(rv_email) TYPE i_workplaceaddress-defaultemailaddress,
 
       get_access_by_user IMPORTING iv_email         TYPE i_workplaceaddress-defaultemailaddress
-                         RETURNING VALUE(rv_access) TYPE string.
+                         RETURNING VALUE(rv_access) TYPE string,
+
+      get_plant_by_user IMPORTING iv_email        TYPE i_workplaceaddress-defaultemailaddress
+                        RETURNING VALUE(rv_plant) TYPE string.
+*&--End use for Authorization Check
 
   PROTECTED SECTION.
   PRIVATE SECTION.
@@ -1264,7 +1269,28 @@ CLASS zzcl_common_utils IMPLEMENTATION.
       IF rv_access IS INITIAL.
         rv_access = ls_access-accessid.
       ELSE.
-        rv_access = rv_access && '|' && ls_access-accessid.
+        rv_access = rv_access && '&' && ls_access-accessid.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD get_plant_by_user.
+    SELECT uuid,
+           mail,
+           plant
+      FROM zc_tbc1006
+     WHERE mail = @iv_email
+     INTO TABLE @DATA(lt_assign_plant).
+
+    SORT lt_assign_plant BY plant.
+    DELETE ADJACENT DUPLICATES FROM lt_assign_plant COMPARING plant.
+
+    LOOP AT lt_assign_plant INTO DATA(ls_assign_plant).
+      CONDENSE ls_assign_plant-plant NO-GAPS.
+      IF rv_plant IS INITIAL.
+        rv_plant = ls_assign_plant-plant.
+      ELSE.
+        rv_plant = rv_plant && '&' && ls_assign_plant-plant.
       ENDIF.
     ENDLOOP.
   ENDMETHOD.

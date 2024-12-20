@@ -75,6 +75,9 @@ CLASS lhc_zr_bomupload IMPLEMENTATION.
           lv_msg     TYPE string.
     DATA: lv_subitem_quantity TYPE zr_bomupload-billofmaterialsubitemquantity.
 
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
       CLEAR: <lfs_data>-status,<lfs_data>-message.
       CLEAR: lv_message.
@@ -86,6 +89,9 @@ CLASS lhc_zr_bomupload IMPLEMENTATION.
 
       IF <lfs_data>-plant IS INITIAL.
         MESSAGE e010(zpp_001) WITH TEXT-002 INTO lv_msg.
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+      ELSEIF NOT lv_plant CS <lfs_data>-plant.
+        MESSAGE e027(zbc_001) WITH <lfs_data>-plant INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
       ENDIF.
 

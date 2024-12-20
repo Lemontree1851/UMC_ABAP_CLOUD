@@ -102,64 +102,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
-
-
-  METHOD cancel.
-    DATA:
-      lv_msg     TYPE string,
-      lv_message TYPE string.
-    FIELD-SYMBOLS: <fs> TYPE any.
-    MODIFY ENTITIES OF i_journalentrytp
-            ENTITY journalentry
-            EXECUTE reverse  FROM ct_deep
-              FAILED DATA(ls_failed)
-              REPORTED DATA(ls_reported)
-              MAPPED DATA(ls_mapped).
-
-    IF ls_failed IS NOT INITIAL.
-      cv_fail = 'X'.
-      LOOP AT ls_reported-journalentry INTO DATA(ls_reported_rev).
-        DATA(lv_msgty) = ls_reported_rev-%msg->if_t100_dyn_msg~msgty.
-        IF lv_msgty = 'E'.
-          lv_msg = ls_reported_rev-%msg->if_message~get_text( ).
-          lv_message = zzcl_common_utils=>merge_message(
-                         iv_message1 = lv_message
-                         iv_message2 = lv_msg
-                         iv_symbol = '\' ).
-        ENDIF.
-      ENDLOOP.
-      cs_response-_status  = 'E'.
-      cs_response-_message = lv_message.
-    ELSE.
-      COMMIT ENTITIES BEGIN
-        RESPONSE OF i_journalentrytp
-        FAILED DATA(lt_commit_failed)
-        REPORTED DATA(lt_commit_reported).
-      IF sy-subrc = 0.
-        cs_response-_status  = 'S'.
-      ENDIF.
-      COMMIT ENTITIES END.
-
-      IF lt_commit_failed IS NOT INITIAL.
-        cv_fail = 'X'.
-        LOOP AT lt_commit_reported-journalentry INTO DATA(ls_commit_rep).
-          lv_msgty = ls_commit_rep-%msg->if_t100_dyn_msg~msgty.
-          IF lv_msgty = 'E'.
-            lv_msg = ls_commit_rep-%msg->if_message~get_text( ).
-            lv_message = zzcl_common_utils=>merge_message(
-                           iv_message1 = lv_message
-                           iv_message2 = lv_msg
-                           iv_symbol = '\' ).
-          ENDIF.
-        ENDLOOP.
-        cs_response-_status  = 'E'.
-        cs_response-_message = lv_message.
-      ENDIF.
-    ENDIF.
-  ENDMETHOD.
-
-
+CLASS zcl_http_paidpay_002 IMPLEMENTATION.
   METHOD if_http_service_extension~handle_request.
     DATA:
       lt_deep     TYPE TABLE FOR ACTION IMPORT i_journalentrytp~post,
@@ -205,8 +148,8 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
     IF lv_header = 'CREATE'.
       DATA(lt_create) = ls_create_in-to_create-items.
       LOOP AT lt_create INTO DATA(ls_create).
-        ls_create-customer = | { ls_create-customer ALPHA = IN } |.
-        ls_create-supplier = | { ls_create-supplier ALPHA = IN } |.
+*        ls_create-customer = | { ls_create-customer ALPHA = IN } |.
+*        ls_create-supplier = | { ls_create-supplier ALPHA = IN } |.
         IF ls_create-ap >= ls_create-ar.
           lv_dr = ls_create-ap.
         ELSE.
@@ -233,7 +176,7 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
           ).
         ls_deep-%param-_aritems =
           VALUE #(
-            ( glaccountlineitem = |001|
+            ( glaccountlineitem = |002|
               customer = ls_create-customer
               _currencyamount =
                 VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr currency = ls_create-currency ) )
@@ -265,7 +208,7 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
             ).
           ls_deep-%param-_apitems =
             VALUE #(
-              ( glaccountlineitem = |001|
+              ( glaccountlineitem = |002|
                 supplier = ls_create-supplier
                 _currencyamount =
                   VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr currency = ls_create-currency ) )
@@ -575,4 +518,59 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
       ENDIF.
     ENDIF.
   ENDMETHOD.
+
+  METHOD cancel.
+    DATA:
+      lv_msg     TYPE string,
+      lv_message TYPE string.
+    FIELD-SYMBOLS: <fs> TYPE any.
+    MODIFY ENTITIES OF i_journalentrytp
+            ENTITY journalentry
+            EXECUTE reverse  FROM ct_deep
+              FAILED DATA(ls_failed)
+              REPORTED DATA(ls_reported)
+              MAPPED DATA(ls_mapped).
+
+    IF ls_failed IS NOT INITIAL.
+      cv_fail = 'X'.
+      LOOP AT ls_reported-journalentry INTO DATA(ls_reported_rev).
+        DATA(lv_msgty) = ls_reported_rev-%msg->if_t100_dyn_msg~msgty.
+        IF lv_msgty = 'E'.
+          lv_msg = ls_reported_rev-%msg->if_message~get_text( ).
+          lv_message = zzcl_common_utils=>merge_message(
+                         iv_message1 = lv_message
+                         iv_message2 = lv_msg
+                         iv_symbol = '\' ).
+        ENDIF.
+      ENDLOOP.
+      cs_response-_status  = 'E'.
+      cs_response-_message = lv_message.
+    ELSE.
+      COMMIT ENTITIES BEGIN
+        RESPONSE OF i_journalentrytp
+        FAILED DATA(lt_commit_failed)
+        REPORTED DATA(lt_commit_reported).
+      IF sy-subrc = 0.
+        cs_response-_status  = 'S'.
+      ENDIF.
+      COMMIT ENTITIES END.
+
+      IF lt_commit_failed IS NOT INITIAL.
+        cv_fail = 'X'.
+        LOOP AT lt_commit_reported-journalentry INTO DATA(ls_commit_rep).
+          lv_msgty = ls_commit_rep-%msg->if_t100_dyn_msg~msgty.
+          IF lv_msgty = 'E'.
+            lv_msg = ls_commit_rep-%msg->if_message~get_text( ).
+            lv_message = zzcl_common_utils=>merge_message(
+                           iv_message1 = lv_message
+                           iv_message2 = lv_msg
+                           iv_symbol = '\' ).
+          ENDIF.
+        ENDLOOP.
+        cs_response-_status  = 'E'.
+        cs_response-_message = lv_message.
+      ENDIF.
+    ENDIF.
+  ENDMETHOD.
+
 ENDCLASS.

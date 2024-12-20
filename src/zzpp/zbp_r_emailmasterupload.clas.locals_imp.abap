@@ -16,8 +16,7 @@ CLASS lhc_zr_emailmasterupload IMPLEMENTATION.
     DATA(lv_access) = zzcl_common_utils=>get_access_by_user( lv_user_email ).
 
     IF requested_authorizations-%create = if_abap_behv=>mk-on.
-      FIND 'zemailmasterupload-Create' IN lv_access.
-      IF sy-subrc = 0.
+      IF lv_access CS 'zemailmasterupload-Create'.
         result-%create = if_abap_behv=>auth-allowed.
       ELSE.
         result-%create = if_abap_behv=>auth-unauthorized.
@@ -28,21 +27,16 @@ CLASS lhc_zr_emailmasterupload IMPLEMENTATION.
       ENDIF.
     ENDIF.
 
-    IF requested_authorizations-%update      = if_abap_behv=>mk-on
-    OR requested_authorizations-%action-edit = if_abap_behv=>mk-on.
-      FIND `zemailmasterupload-Edit` IN lv_access.
-      IF sy-subrc = 0.
-        result-%update = if_abap_behv=>auth-allowed.
+    IF requested_authorizations-%action-edit = if_abap_behv=>mk-on.
+      IF lv_access CS 'zemailmasterupload-Edit'.
         result-%action-edit = if_abap_behv=>auth-allowed.
       ELSE.
-        result-%update = if_abap_behv=>auth-unauthorized.
         result-%action-edit = if_abap_behv=>auth-unauthorized.
       ENDIF.
     ENDIF.
 
     IF requested_authorizations-%delete = if_abap_behv=>mk-on.
-      FIND `zemailmasterupload-Delete` IN lv_access.
-      IF sy-subrc = 0.
+      IF lv_access CS 'zemailmasterupload-Delete'.
         result-%delete = if_abap_behv=>auth-allowed.
       ELSE.
         result-%delete = if_abap_behv=>auth-unauthorized.
@@ -52,6 +46,31 @@ CLASS lhc_zr_emailmasterupload IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_instance_authorizations.
+    READ ENTITIES OF zr_emailmasterupload IN LOCAL MODE
+    ENTITY zremailmasterupload
+    FIELDS ( plant ) WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_data).
+
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
+    LOOP AT lt_data INTO DATA(ls_data).
+      APPEND INITIAL LINE TO result ASSIGNING FIELD-SYMBOL(<lfs_result>).
+      <lfs_result>-%tky = ls_data-%tky.
+
+      IF lv_plant CS ls_data-plant.
+        <lfs_result>-%delete = if_abap_behv=>auth-allowed.
+        <lfs_result>-%action-edit = if_abap_behv=>auth-allowed.
+      ELSE.
+        <lfs_result>-%delete = if_abap_behv=>auth-unauthorized.
+        <lfs_result>-%action-edit = if_abap_behv=>auth-unauthorized.
+        APPEND VALUE #( %msg    = new_message( id       = 'ZBC_001'
+                                               number   = 027
+                                               severity = if_abap_behv_message=>severity-error
+                                               v1       = ls_data-plant )
+                        %global = if_abap_behv=>mk-on ) TO reported-zremailmasterupload.
+      ENDIF.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD validationfields.
@@ -63,6 +82,9 @@ CLASS lhc_zr_emailmasterupload IMPLEMENTATION.
     ALL FIELDS WITH CORRESPONDING #( keys )
     RESULT DATA(lt_result).
 
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
     " Example for a POSIX regular expression engine (More configuration options are available
     " as optional parameters of the method POSIX).
     DATA(lo_posix_engine) = xco_cp_regular_expression=>engine->posix(
@@ -73,6 +95,15 @@ CLASS lhc_zr_emailmasterupload IMPLEMENTATION.
 
       IF <lfs_result>-plant IS INITIAL.
         MESSAGE e006(zbc_001) WITH TEXT-001 INTO lv_message.
+        APPEND VALUE #( %tky = <lfs_result>-%tky ) TO failed-zremailmasterupload.
+        APPEND VALUE #( %tky = <lfs_result>-%tky
+                        %element-plant = if_abap_behv=>mk-on
+                        %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error
+                                                      text     = lv_message ) )
+                     TO reported-zremailmasterupload.
+
+      ELSEIF NOT lv_plant CS <lfs_result>-plant.
+        MESSAGE e027(zbc_001) WITH <lfs_result>-plant INTO lv_message.
         APPEND VALUE #( %tky = <lfs_result>-%tky ) TO failed-zremailmasterupload.
         APPEND VALUE #( %tky = <lfs_result>-%tky
                         %element-plant = if_abap_behv=>mk-on
