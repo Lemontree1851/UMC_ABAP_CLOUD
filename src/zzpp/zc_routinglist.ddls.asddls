@@ -31,27 +31,27 @@ define custom entity ZC_ROUTINGLIST
       CostingLotSize             : menge_d;
 
       //      @Semantics.quantity.unitOfMeasure: 'StandardWorkQuantityUnit1'
-      StandardWorkQuantity1      : abap.dec(9,3); //abap.quan(9,3);
+      StandardWorkQuantity1      : abap.dec(23,3); //abap.quan(9,3);
       CostCtrActivityType1       : lstar;
 
       //      @Semantics.quantity.unitOfMeasure: 'StandardWorkQuantityUnit2'
-      StandardWorkQuantity2      : abap.dec(9,3); //abap.quan(9,3);
+      StandardWorkQuantity2      : abap.dec(23,3); //abap.quan(9,3);
       CostCtrActivityType2       : lstar;
 
       //      @Semantics.quantity.unitOfMeasure: 'StandardWorkQuantityUnit3'
-      StandardWorkQuantity3      : abap.dec(9,3); //abap.quan(9,3);
+      StandardWorkQuantity3      : abap.dec(23,3); //abap.quan(9,3);
       CostCtrActivityType3       : lstar;
 
       //      @Semantics.quantity.unitOfMeasure: 'StandardWorkQuantityUnit4'
-      StandardWorkQuantity4      : abap.dec(9,3); //abap.quan(9,3);
+      StandardWorkQuantity4      : abap.dec(23,3); //abap.quan(9,3);
       CostCtrActivityType4       : lstar;
 
       //      @Semantics.quantity.unitOfMeasure: 'StandardWorkQuantityUnit5'
-      StandardWorkQuantity5      : abap.dec(9,3); //abap.quan(9,3);
+      StandardWorkQuantity5      : abap.dec(23,3); //abap.quan(9,3);
       CostCtrActivityType5       : lstar;
 
       //      @Semantics.quantity.unitOfMeasure: 'StandardWorkQuantityUnit6'
-      StandardWorkQuantity6      : abap.dec(9,3); //abap.quan(9,3);
+      StandardWorkQuantity6      : abap.dec(23,3); //abap.quan(9,3);
       CostCtrActivityType6       : lstar;
 
       NumberOfTimeTickets        : abap.dec(3,0);

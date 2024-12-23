@@ -3,7 +3,11 @@
   headerInfo: {
     typeName: 'Purchasing Organization',
     typeNamePlural: 'Purchasing Organization'
-  }
+  },
+  presentationVariant: [{
+    sortOrder: [ { by: 'PurchasingOrganization', direction: #ASC } ],
+    visualizations: [ { type: #AS_LINEITEM } ]
+  }]
 }
 annotate view ZC_TBC1017 with
 {

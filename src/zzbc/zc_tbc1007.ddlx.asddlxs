@@ -5,7 +5,11 @@
     typeNamePlural: 'Role',
     title: { type: #STANDARD , value: 'RoleId'},
     description: { type: #STANDARD , value: 'RoleName'}
-  }
+  },
+  presentationVariant: [{
+    sortOrder: [ { by: 'RoleId', direction: #ASC } ],
+    visualizations: [ { type: #AS_LINEITEM } ]
+  }]
 }
 annotate view ZC_TBC1007 with
 {

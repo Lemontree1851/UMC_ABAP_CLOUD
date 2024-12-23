@@ -3,7 +3,11 @@
   headerInfo: {
     typeName: 'Company Code',
     typeNamePlural: 'Company Code'
-  }
+  },
+  presentationVariant: [{
+    sortOrder: [ { by: 'CompanyCode', direction: #ASC } ],
+    visualizations: [ { type: #AS_LINEITEM } ]
+  }]
 }
 annotate view ZC_TBC1012 with
 {

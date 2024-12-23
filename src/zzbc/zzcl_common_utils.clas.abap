@@ -297,7 +297,17 @@ CLASS zzcl_common_utils DEFINITION
                          RETURNING VALUE(rv_access) TYPE string,
 
       get_plant_by_user IMPORTING iv_email        TYPE i_workplaceaddress-defaultemailaddress
-                        RETURNING VALUE(rv_plant) TYPE string.
+                        RETURNING VALUE(rv_plant) TYPE string,
+
+      get_company_by_user IMPORTING iv_email          TYPE i_workplaceaddress-defaultemailaddress
+                          RETURNING VALUE(rv_company) TYPE string,
+
+      get_salesorg_by_user IMPORTING iv_email           TYPE i_workplaceaddress-defaultemailaddress
+                           RETURNING VALUE(rv_salesorg) TYPE string,
+
+      get_purchorg_by_user IMPORTING iv_email           TYPE i_workplaceaddress-defaultemailaddress
+                           RETURNING VALUE(rv_purchorg) TYPE string.
+
 *&--End use for Authorization Check
 
   PROTECTED SECTION.
@@ -1291,6 +1301,69 @@ CLASS zzcl_common_utils IMPLEMENTATION.
         rv_plant = ls_assign_plant-plant.
       ELSE.
         rv_plant = rv_plant && '&' && ls_assign_plant-plant.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD get_company_by_user.
+    SELECT uuid,
+           mail,
+           companycode
+      FROM zc_tbc1012
+     WHERE mail = @iv_email
+     INTO TABLE @DATA(lt_assign_company).
+
+    SORT lt_assign_company BY companycode.
+    DELETE ADJACENT DUPLICATES FROM lt_assign_company COMPARING companycode.
+
+    LOOP AT lt_assign_company INTO DATA(ls_assign_company).
+      CONDENSE ls_assign_company-companycode NO-GAPS.
+      IF rv_company IS INITIAL.
+        rv_company = ls_assign_company-companycode.
+      ELSE.
+        rv_company = rv_company && '&' && ls_assign_company-companycode.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD get_salesorg_by_user.
+    SELECT uuid,
+           mail,
+           salesorganization
+      FROM zc_tbc1013
+     WHERE mail = @iv_email
+     INTO TABLE @DATA(lt_assign_salesorg).
+
+    SORT lt_assign_salesorg BY salesorganization.
+    DELETE ADJACENT DUPLICATES FROM lt_assign_salesorg COMPARING salesorganization.
+
+    LOOP AT lt_assign_salesorg INTO DATA(ls_assign_salesorg).
+      CONDENSE ls_assign_salesorg-salesorganization NO-GAPS.
+      IF rv_salesorg IS INITIAL.
+        rv_salesorg = ls_assign_salesorg-salesorganization.
+      ELSE.
+        rv_salesorg = rv_salesorg && '&' && ls_assign_salesorg-salesorganization.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD get_purchorg_by_user.
+    SELECT uuid,
+           mail,
+           purchasingorganization
+      FROM zc_tbc1017
+     WHERE mail = @iv_email
+     INTO TABLE @DATA(lt_assign_purchorg).
+
+    SORT lt_assign_purchorg BY purchasingorganization.
+    DELETE ADJACENT DUPLICATES FROM lt_assign_purchorg COMPARING purchasingorganization.
+
+    LOOP AT lt_assign_purchorg INTO DATA(ls_assign_purchorg).
+      CONDENSE ls_assign_purchorg-purchasingorganization NO-GAPS.
+      IF rv_purchorg IS INITIAL.
+        rv_purchorg = ls_assign_purchorg-purchasingorganization.
+      ELSE.
+        rv_purchorg = rv_purchorg && '&' && ls_assign_purchorg-purchasingorganization.
       ENDIF.
     ENDLOOP.
   ENDMETHOD.

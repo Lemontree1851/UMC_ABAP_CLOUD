@@ -904,7 +904,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
               lw_data-workflowtaskresult = '2'.
               lw_data-taskresulttext = '承認済'.
             ELSEIF lw_workflow_d-workflowtaskresult = 'REJECTED' OR lw_workflow_d-workflowtaskresult = ''.
-              lw_data-workflowtaskresult = 'D'.
+              lw_data-workflowtaskresult = '0'.
               lw_data-taskresulttext = '未承認'.
             ENDIF.
           ELSE.

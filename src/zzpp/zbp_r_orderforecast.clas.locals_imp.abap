@@ -79,10 +79,18 @@ CLASS lhc_zr_orderforecast IMPLEMENTATION.
           lv_msg      TYPE string,
           n           TYPE i.
 
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
       n += 1.
       CLEAR: <lfs_data>-status,<lfs_data>-message.
       CLEAR: lv_message.
+
+      IF NOT lv_plant CS <lfs_data>-plant.
+        MESSAGE e027(zbc_001) WITH <lfs_data>-plant INTO lv_msg.
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+      ENDIF.
 
       IF n = 1.
         SELECT SINGLE zvalue2

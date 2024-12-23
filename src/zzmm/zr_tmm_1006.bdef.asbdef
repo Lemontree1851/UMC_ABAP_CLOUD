@@ -76,6 +76,7 @@ authorization master ( global )
       GlAccount                    = gl_account;
       CostCenter                   = cost_center;
       WbsElemnt                    = wbs_elemnt;
+      OrderID                      = order_id;
       AssetNo                      = asset_no;
       Tax                          = tax;
       ItemText                     = item_text;

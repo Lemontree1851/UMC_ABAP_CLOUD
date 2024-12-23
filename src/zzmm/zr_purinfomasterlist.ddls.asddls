@@ -47,7 +47,7 @@ define root custom entity ZR_PURINFOMASTERLIST
       organizationbpname1_ja         : abap.char(40);
       organizationbpname1_en         : abap.char(40);
       PurchasingGroupName            : abap.char(18);
-      FirstSalesSpecProductGroup     : abap.char(3);
+      FirstSalesSpecProductGroup     : bezei40;
       @Consumption.filter.selectionType: #INTERVAL
       CreationDate_1                 : abap.dats;
       CreatedByUser                  : abap.char(12);

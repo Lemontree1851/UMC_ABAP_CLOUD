@@ -18,7 +18,8 @@ CLASS zcl_paidpaycalculation IMPLEMENTATION.
       ls_output TYPE zr_paidpaycalculation.
     DATA:
       lv_fiscalyearperiod TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
-      lv_poper            TYPE poper.
+      lv_poper            TYPE poper,
+      lv_rate(10)         TYPE p DECIMALS 2.
 
 * Get filter range
     TRY.
@@ -174,7 +175,10 @@ CLASS zcl_paidpaycalculation IMPLEMENTATION.
             ls_output-profitcentername = ls_1011-profitcentername.  "利益センタテキスト
             ls_output-purgrptot = ls_1011-purgrpamount. "当期購買グループ別仕入金額
             ls_output-chargeabletot = ls_1011-chargeableamount. "当期有償支給品仕入金額
-            ls_output-chargeablerate = ls_1011-chargeablerate.  "当期仕入率
+            lv_rate = ls_1011-chargeablerate * 100.
+            IF lv_rate <> 0.
+              ls_output-chargeablerate = lv_rate.  "当期仕入率
+            ENDIF.
             ls_output-previousstockamount = ls_1011-previousstocktotal. "在庫金額（前期末）
             ls_output-currentstockamount = ls_1011-currentstockpaid. "在庫金額（当期末）-有償支給品
             ls_output-currentstocksemi = ls_1011-currentstocksemi.  "在庫金額（当期末）-半製品

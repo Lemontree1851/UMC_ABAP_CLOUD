@@ -258,6 +258,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                       glaccount
                       costcenter
                       wbselemnt
+                      orderid
                       assetno
                       tax
                       itemtext
@@ -635,6 +636,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         w_b_s_element_internal_i_d TYPE i_purordaccountassignmenttp_2-wbselementinternalid,
         master_fixed_asset         TYPE i_purordaccountassignmenttp_2-masterfixedasset,
         tax_code                   TYPE i_purordaccountassignmenttp_2-taxcode,
+        order_i_d                   TYPE i_purordaccountassignmenttp_2-OrderID,
       END OF ty_account_assignment,
       "PO行项目长文本
       BEGIN OF ty_item_note,
@@ -764,6 +766,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                                             cost_center = record_temp-costcenter
                                                             g_l_account = record_temp-glaccount
                                                             w_b_s_element_internal_i_d = record_temp-wbselemnt
+                                                            order_i_d = record_temp-orderid
                                                             master_fixed_asset = record_temp-assetno
                                                             tax_code = record_temp-tax ) )
                         "行项目长文本

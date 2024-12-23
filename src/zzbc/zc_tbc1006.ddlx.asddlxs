@@ -3,7 +3,11 @@
   headerInfo: {
     typeName: 'Plant',
     typeNamePlural: 'Plant'
-  }
+  },
+  presentationVariant: [{
+    sortOrder: [ { by: 'Plant', direction: #ASC } ],
+    visualizations: [ { type: #AS_LINEITEM } ]
+  }]
 }
 annotate view ZC_TBC1006 with
 {

@@ -5,7 +5,11 @@
     typeNamePlural: 'Authority Application',
     title: { type: #STANDARD , value: 'FunctionId'},
     description: { type: #STANDARD , value: 'FunctionName'}
-  }
+  },
+  presentationVariant: [{
+    sortOrder: [ { by: 'DesignFileId', direction: #ASC } ],
+    visualizations: [ { type: #AS_LINEITEM } ]
+  }]
 }
 annotate view ZC_TBC1014 with
 {

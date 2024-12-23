@@ -56,6 +56,7 @@ define root view entity ZC_TMM_1006
       GlAccount,
       CostCenter,
       WbsElemnt,
+      OrderId,
       AssetNo,
       @Consumption.filter.hidden: true
       Tax,

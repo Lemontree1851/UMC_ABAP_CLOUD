@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_QUERY_ROUTINGLIST IMPLEMENTATION.
+CLASS zcl_query_routinglist IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -53,6 +53,16 @@ CLASS ZCL_QUERY_ROUTINGLIST IMPLEMENTATION.
           ENDLOOP.
         CATCH cx_rap_query_filter_no_range.
           "handle exception
+          IF io_request->is_total_numb_of_rec_requested(  ) .
+            io_response->set_total_number_of_records( lines( lt_data ) ).
+          ENDIF.
+          "Sort
+          zzcl_odata_utils=>orderby( EXPORTING it_order = io_request->get_sort_elements( )
+                                     CHANGING  ct_data  = lt_data ).
+          " Paging
+          zzcl_odata_utils=>paging( EXPORTING io_paging = io_request->get_paging(  )
+                                    CHANGING  ct_data   = lt_data ).
+
           io_response->set_data( lt_data ).
       ENDTRY.
 
@@ -89,6 +99,19 @@ CLASS ZCL_QUERY_ROUTINGLIST IMPLEMENTATION.
          AND a~mrpresponsible IN @lr_mrpresponsible
          AND a~productionsupervisor IN @lr_productionsupervisor
         INTO TABLE @DATA(lt_header).
+
+*&--Authorization Check
+      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+      DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+      IF lv_plant IS INITIAL.
+        CLEAR lt_header.
+      ELSE.
+        SPLIT lv_plant AT '&' INTO TABLE DATA(lt_plant_check).
+        CLEAR lr_plant.
+        lr_plant = VALUE #( FOR plant IN lt_plant_check ( sign = 'I' option = 'EQ' low = plant ) ).
+        DELETE lt_header WHERE plant NOT IN lr_plant.
+      ENDIF.
+*&--Authorization Check
 
       IF lr_delete IS NOT INITIAL.
         DELETE lt_header WHERE ismarkedfordeletion NOT IN lr_delete.

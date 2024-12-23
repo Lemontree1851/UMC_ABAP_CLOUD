@@ -3,7 +3,11 @@
   headerInfo: {
     typeName: 'Access Button',
     typeNamePlural: 'Access Button'
-  }
+  },
+  presentationVariant: [{
+    sortOrder: [ { by: 'AccessId', direction: #ASC } ],
+    visualizations: [ { type: #AS_LINEITEM } ]
+  }]
 }
 annotate view ZC_TBC1016 with
 {

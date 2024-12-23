@@ -26,6 +26,7 @@ CLASS zcl_bom IMPLEMENTATION.
       lt_bomlist           TYPE STANDARD TABLE OF zcl_explodebom=>ty_bomlist,
       lt_changemaster_ent  TYPE STANDARD TABLE OF ty_changemaster_ent,
       lt_data              TYPE STANDARD TABLE OF zr_bom,
+      lr_plant             TYPE RANGE OF zr_bom-plant,
       lr_material          TYPE RANGE OF zr_bom-material,
       lr_mrpresponsible    TYPE RANGE OF zr_bom-mrpresponsible,
       lr_variant           TYPE RANGE OF zr_bom-billofmaterialvariant,
@@ -89,7 +90,16 @@ CLASS zcl_bom IMPLEMENTATION.
         LOOP AT ls_filter_cond-range INTO DATA(str_rec_l_range).
           CASE ls_filter_cond-name.
             WHEN 'PLANT'.
-              lv_plant = str_rec_l_range-low.
+              DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+              DATA(lv_user_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
+              IF lv_user_plant IS NOT INITIAL.
+                SPLIT lv_user_plant AT '&' INTO TABLE DATA(lt_plant).
+                lr_plant = VALUE #( FOR plant IN lt_plant ( sign = 'I' option = 'EQ' low = plant ) ).
+                IF str_rec_l_range-low IN lr_plant.
+                  lv_plant = str_rec_l_range-low.
+                ENDIF.
+              ENDIF.
             WHEN 'MATERIAL'.
               MOVE-CORRESPONDING str_rec_l_range TO ls_material.
               ls_material-low  = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_material-low ).

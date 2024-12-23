@@ -3,7 +3,11 @@
   headerInfo: {
     typeName: 'Sales Organization',
     typeNamePlural: 'Sales Organization'
-  }
+  },
+  presentationVariant: [{
+    sortOrder: [ { by: 'SalesOrganization', direction: #ASC } ],
+    visualizations: [ { type: #AS_LINEITEM } ]
+  }]
 }
 annotate view ZC_TBC1013 with
 {

@@ -132,7 +132,7 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
            b~industrystandardname,
            b~productmanufacturernumber,
 
-           c~firstsalesspecproductgroup,
+*           c~firstsalesspecproductgroup,
            c~productsalesorg,
 
            d~plant,
@@ -152,16 +152,13 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
            d~incotermsclassification,
            d~createdbyuser,
 
+           e~additionalmaterialgroup1name AS firstsalesspecproductgroup,
            f~productname,
-
            g~organizationbpname1 AS organizationbpname1_ja,
-           g~organizationbpname1 AS organizationbpname1_en,
-
            h~zvalue2,
-
            i~purchasinggroupname,
            j~shippingconditionname,
-
+           k~organizationbpname1 AS organizationbpname1_en,
            o~supplierisfixed
 
       FROM i_purchasinginforecordapi01 WITH PRIVILEGED ACCESS AS a
@@ -178,6 +175,9 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
              ON c~product = a~material
             AND c~productsalesorg = d~purchasingorganization
             AND c~productdistributionchnl = '10'
+      LEFT JOIN i_additionalmaterialgroup1text WITH PRIVILEGED ACCESS AS e
+             ON e~additionalmaterialgroup1 = c~firstsalesspecproductgroup
+            AND e~language = @sy-langu
       LEFT JOIN i_mppurchasingsourceitem WITH PRIVILEGED ACCESS AS o
              ON o~material = a~material
             AND o~plant    = d~plant
@@ -187,6 +187,8 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
       LEFT JOIN i_shippingconditiontext WITH PRIVILEGED ACCESS AS j
              ON j~shippingcondition = d~shippinginstruction
             AND j~language = @sy-langu
+      LEFT JOIN i_businesspartner WITH PRIVILEGED ACCESS AS k
+             ON k~businesspartner = b~manufacturernumber
       LEFT JOIN ztbc_1001 AS h ON zid = 'ZMM001' AND zvalue1 = d~taxcode
       WHERE a~purchasinginforecord IN @lr_purchasinginforecord
         AND a~supplier IN @lr_supplier
@@ -201,6 +203,28 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
         AND d~purchasinggroup IN @lr_purchasinggroup
         AND o~supplierisfixed IN @lr_supplierisfixed
       INTO TABLE @DATA(lt_purinfoitem).
+
+*&--Authorization Check
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+    DATA(lv_purchorg) = zzcl_common_utils=>get_purchorg_by_user( lv_user_email ).
+    IF lv_plant IS INITIAL.
+      CLEAR lt_purinfoitem.
+    ELSE.
+      SPLIT lv_plant AT '&' INTO TABLE DATA(lt_plant_check).
+      CLEAR lr_plant.
+      lr_plant = VALUE #( FOR plant IN lt_plant_check ( sign = 'I' option = 'EQ' low = plant ) ).
+      DELETE lt_purinfoitem WHERE plant NOT IN lr_plant.
+    ENDIF.
+    IF lv_purchorg IS INITIAL.
+      CLEAR lt_purinfoitem.
+    ELSE.
+      SPLIT lv_purchorg AT '&' INTO TABLE DATA(lt_purchorg_check).
+      CLEAR lr_purchasingorganization.
+      lr_purchasingorganization = VALUE #( FOR purchorg IN lt_purchorg_check ( sign = 'I' option = 'EQ' low = purchorg ) ).
+      DELETE lt_purinfoitem WHERE purchasingorganization NOT IN lr_purchasingorganization.
+    ENDIF.
+*&--Authorization Check
 
     IF lt_purinfoitem IS NOT INITIAL.
       SORT lt_purinfoitem ASCENDING.
@@ -373,29 +397,6 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
 
       ls_data-deliverylt = ls_data2-materialplanneddeliverydurn + lv_plusday.
 
-      IF ls_data2-materialpriceunitqty <> 0.
-        lv_unitprice_plnt = zzcl_common_utils=>conversion_amount( iv_alpha    = zzcl_common_utils=>lc_alpha_out
-                                                                  iv_currency = ls_data2-currency_plnt
-                                                                  iv_input    = ls_data2-netpriceamount ).
-        lv_unitprice_plnt = lv_unitprice_plnt / ls_data2-materialpriceunitqty.
-
-        IF ls_data2-currency_plnt = 'JPY'.
-          lv_dec = 3.
-        ELSE.
-          lv_dec = 5.
-        ENDIF.
-
-        ls_data-standardpurchaseorderquantity = round( val  = lv_unitprice_plnt
-                                                       dec  = lv_dec
-                                                       mode = cl_abap_math=>round_half_up ).
-      ENDIF.
-
-      IF lv_unitprice_plnt IS NOT INITIAL AND ls_data2-zvalue2 IS NOT INITIAL AND ls_data2-zvalue2 <> 0.
-        ls_data-taxprice = lv_unitprice_plnt * ls_data2-zvalue2 / 100.
-      ELSE.
-        ls_data-taxprice = 0.
-      ENDIF.
-
       " 查找对应的单价信息
       READ TABLE lt_productvaluation INTO DATA(ls_productvaluation) WITH KEY product = ls_data-material
                                                                              valuationarea = ls_data-plant
@@ -404,6 +405,7 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
         ls_data-unitprice_plnt = zzcl_common_utils=>conversion_amount( iv_alpha    = zzcl_common_utils=>lc_alpha_in
                                                                        iv_currency = ls_productvaluation-currency
                                                                        iv_input    = ls_productvaluation-standardprice ).
+
         ls_data-valuationclass    = ls_productvaluation-valuationclass.
         ls_data-priceunitqty      = ls_productvaluation-priceunitqty.
         ls_data-currency_standard = ls_productvaluation-currency.
@@ -422,23 +424,6 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
           ls_data-unitprice_standard = round( val  = lv_unitprice_standard
                                               dec  = lv_dec
                                               mode = cl_abap_math=>round_half_up ).
-        ENDIF.
-
-        lv_price = abs( ls_data-unitprice_standard - ls_data-standardpurchaseorderquantity ).
-
-        IF lv_price IS NOT INITIAL AND ls_data-unitprice_standard IS NOT INITIAL.
-          lv_rate = lv_price / ls_data-unitprice_standard.
-
-          " 转换为百分比形式
-          lv_rate = lv_rate * 100.
-          " 四舍五入至2位小数
-          lv_rate = round( val  = lv_rate
-                           dec  = 2
-                           mode = cl_abap_math=>round_half_up ).
-          lv_rate_display = lv_rate.
-          ls_data-rate = |{ lv_rate_display }%|.
-        ELSE.
-          ls_data-rate = '0.00%'.
         ENDIF.
       ENDIF.
 
@@ -499,10 +484,51 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
           READ TABLE lt_conditionrecord INTO DATA(ls_conditionrecord) WITH KEY conditionrecord = ls_recdvalidity-conditionrecord BINARY SEARCH.
           IF sy-subrc = 0.
             ls_data-creationdate_2 = ls_conditionrecord-creationdate_2.
+            ls_data-materialpriceunitqty = ls_conditionrecord-conditionquantity.
 
             IF ls_conditionrecord-pricingscalebasis IS INITIAL.
-              ls_data-conditionscalequantity = ls_conditionrecord-conditionquantity.
-              ls_data-conditionratevalue     = ls_conditionrecord-conditionratevalue.
+              ls_data-conditionratevalue = ls_conditionrecord-conditionratevalue.
+
+              IF ls_data-materialpriceunitqty <> 0.
+                lv_unitprice_plnt = zzcl_common_utils=>conversion_amount( iv_alpha    = zzcl_common_utils=>lc_alpha_out
+                                                                          iv_currency = ls_data-currency_plnt
+                                                                          iv_input    = ls_data-conditionratevalue ).
+                lv_unitprice_plnt = lv_unitprice_plnt / ls_data-materialpriceunitqty.
+
+                IF ls_data-currency_plnt = 'JPY'.
+                  lv_dec = 3.
+                ELSE.
+                  lv_dec = 5.
+                ENDIF.
+
+                ls_data-standardpurchaseorderquantity = round( val  = lv_unitprice_plnt
+                                                               dec  = lv_dec
+                                                               mode = cl_abap_math=>round_half_up ).
+              ENDIF.
+
+              IF lv_unitprice_plnt IS NOT INITIAL AND ls_data-zvalue2 IS NOT INITIAL AND ls_data-zvalue2 <> 0.
+                ls_data-taxprice = lv_unitprice_plnt * ls_data-zvalue2 / 100.
+              ELSE.
+                ls_data-taxprice = 0.
+              ENDIF.
+
+              lv_price = abs( ls_data-unitprice_standard - ls_data-standardpurchaseorderquantity ).
+
+              IF lv_price IS NOT INITIAL AND ls_data-unitprice_standard IS NOT INITIAL.
+                lv_rate = lv_price / ls_data-unitprice_standard.
+
+                " 转换为百分比形式
+                lv_rate = lv_rate * 100.
+                " 四舍五入至2位小数
+                lv_rate = round( val  = lv_rate
+                                 dec  = 2
+                                 mode = cl_abap_math=>round_half_up ).
+                lv_rate_display = lv_rate.
+                ls_data-rate = |{ lv_rate_display }%|.
+              ELSE.
+                ls_data-rate = '0.00%'.
+              ENDIF.
+
               TRY.
                   ls_data-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
                   ##NO_HANDLER
@@ -515,6 +541,47 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
               LOOP AT lt_recordscale INTO DATA(ls_recordscale) WHERE conditionrecord = ls_recdvalidity-conditionrecord.
                 ls_data-conditionscalequantity = ls_recordscale-conditionscalequantity.
                 ls_data-conditionratevalue = ls_recordscale-conditionratevalue.
+
+                IF ls_data-materialpriceunitqty <> 0.
+                  lv_unitprice_plnt = zzcl_common_utils=>conversion_amount( iv_alpha    = zzcl_common_utils=>lc_alpha_out
+                                                                            iv_currency = ls_data-currency_plnt
+                                                                            iv_input    = ls_data-conditionratevalue ).
+                  lv_unitprice_plnt = lv_unitprice_plnt / ls_data-materialpriceunitqty.
+
+                  IF ls_data-currency_plnt = 'JPY'.
+                    lv_dec = 3.
+                  ELSE.
+                    lv_dec = 5.
+                  ENDIF.
+
+                  ls_data-standardpurchaseorderquantity = round( val  = lv_unitprice_plnt
+                                                                 dec  = lv_dec
+                                                                 mode = cl_abap_math=>round_half_up ).
+                ENDIF.
+
+                IF lv_unitprice_plnt IS NOT INITIAL AND ls_data-zvalue2 IS NOT INITIAL AND ls_data-zvalue2 <> 0.
+                  ls_data-taxprice = lv_unitprice_plnt * ls_data-zvalue2 / 100.
+                ELSE.
+                  ls_data-taxprice = 0.
+                ENDIF.
+
+                lv_price = abs( ls_data-unitprice_standard - ls_data-standardpurchaseorderquantity ).
+
+                IF lv_price IS NOT INITIAL AND ls_data-unitprice_standard IS NOT INITIAL.
+                  lv_rate = lv_price / ls_data-unitprice_standard.
+
+                  " 转换为百分比形式
+                  lv_rate = lv_rate * 100.
+                  " 四舍五入至2位小数
+                  lv_rate = round( val  = lv_rate
+                                   dec  = 2
+                                   mode = cl_abap_math=>round_half_up ).
+                  lv_rate_display = lv_rate.
+                  ls_data-rate = |{ lv_rate_display }%|.
+                ELSE.
+                  ls_data-rate = '0.00%'.
+                ENDIF.
+
                 TRY.
                     ls_data-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
                     ##NO_HANDLER

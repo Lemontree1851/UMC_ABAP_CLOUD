@@ -11,9 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
-
-
+CLASS zcl_poacceptance_report IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
     TYPES:
       BEGIN OF ts_dimension,
@@ -810,8 +808,8 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
                         supplierinvoice supplierinvoiceitem.
 
       " Filtering
-*      zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
-*                                   CHANGING  ct_data     = lt_output ).
+      zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
+                                   CHANGING  ct_data     = lt_output ).
 
       IF io_request->is_total_numb_of_rec_requested(  ) .
         io_response->set_total_number_of_records( lines( lt_output ) ).
@@ -828,4 +826,5 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
       io_response->set_data( lt_output ).
     ENDIF.
   ENDMETHOD.
+
 ENDCLASS.
