@@ -181,6 +181,7 @@ CLASS lhc_purinforecordupdate IMPLEMENTATION.
       i                    TYPE i,
       lv_status            TYPE c LENGTH 1,
       lv_message           TYPE string,
+      lv_msg               TYPE string,
       lv_valid             TYPE budat,
       lv_purinforecordx    TYPE c LENGTH 1,
       lv_plantdatax        TYPE c LENGTH 1,
@@ -205,13 +206,35 @@ CLASS lhc_purinforecordupdate IMPLEMENTATION.
       INTO TABLE @DATA(lt_1001).
     SORT lt_1001 BY zvalue1.
 
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+    DATA(lv_ekorg) = zzcl_common_utils=>get_purchorg_by_user( lv_user_email ).
 * Check taxcode valid
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
       READ TABLE lt_1001 INTO DATA(ls_1001)
            WITH KEY zvalue1 = <lfs_data>-taxcode BINARY SEARCH.
       IF sy-subrc <> 0.
         <lfs_data>-status = 'E'.
-        MESSAGE s014(zmm_001) WITH <lfs_data>-taxcode INTO <lfs_data>-message.
+        MESSAGE s014(zmm_001) WITH <lfs_data>-taxcode INTO lv_msg.
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+      ENDIF.
+
+* Authorization Check
+      IF NOT lv_plant CS <lfs_data>-plant.
+        <lfs_data>-status = 'E'.
+        MESSAGE e027(zbc_001) WITH <lfs_data>-plant INTO lv_msg.
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+      ENDIF.
+
+      IF NOT lv_ekorg CS <lfs_data>-purchasingorganization.
+        <lfs_data>-status = 'E'.
+        MESSAGE e027(zbc_001) WITH <lfs_data>-purchasingorganization INTO lv_msg.
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+      ENDIF.
+
+      IF lv_message IS NOT INITIAL.
+        <lfs_data>-message = lv_message.
+        CLEAR: lv_message.
       ENDIF.
     ENDLOOP.
     IF <lfs_data>-status = 'E'.

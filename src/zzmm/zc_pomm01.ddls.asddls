@@ -73,6 +73,7 @@ define view ZC_POMM01
       b.NetPriceAmount,
       b.PurchaseOrderItemCategory,
       b.SupplierMaterialNumber,
+      b.PurchasingDocumentDeletionCode,
       d.MRPArea,
       e.MRPResponsible,
       //  f.MRPControllerName,
@@ -88,4 +89,4 @@ define view ZC_POMM01
       k.LotSizeRoundingQuantity,
       m.ScheduleLineDeliveryDate,
       m.RoughGoodsReceiptQty
-}
+} where b.PurchasingDocumentDeletionCode = ''

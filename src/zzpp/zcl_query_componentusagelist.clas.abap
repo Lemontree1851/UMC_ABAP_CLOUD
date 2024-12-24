@@ -11,9 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_QUERY_COMPONENTUSAGELIST IMPLEMENTATION.
-
-
+CLASS zcl_query_componentusagelist IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
     TYPES:
       BEGIN OF ty_finalproductinfo,
@@ -41,12 +39,12 @@ CLASS ZCL_QUERY_COMPONENTUSAGELIST IMPLEMENTATION.
       lr_productmanufacturernumber TYPE RANGE OF zc_componentusagelist-productmanufacturernumber,
       lr_suppliermaterialnumber    TYPE RANGE OF zc_componentusagelist-suppliermaterialnumber,
       lr_profilecode               TYPE RANGE OF i_productplantbasic-profilecode,
-      ls_plant                     LIKE LINE OF lr_plant,
       ls_billofmaterialcomponent   LIKE LINE OF lr_billofmaterialcomponent,
       ls_productmanufacturernumber LIKE LINE OF lr_productmanufacturernumber,
       ls_suppliermaterialnumber    LIKE LINE OF lr_suppliermaterialnumber,
       ls_data                      TYPE zc_componentusagelist,
       ls_finalproductinfo          TYPE ty_finalproductinfo,
+      lv_plant                     TYPE zc_componentusagelist-plant,
       lv_nodisplaynonproduct       TYPE abap_boolean.
 
     CONSTANTS:
@@ -68,9 +66,16 @@ CLASS ZCL_QUERY_COMPONENTUSAGELIST IMPLEMENTATION.
       LOOP AT ls_filter_cond-range INTO DATA(str_rec_l_range).
         CASE ls_filter_cond-name.
           WHEN 'PLANT'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_plant.
-            APPEND ls_plant TO lr_plant.
-            CLEAR ls_plant.
+            DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+            DATA(lv_user_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
+            IF lv_user_plant IS NOT INITIAL.
+              SPLIT lv_user_plant AT '&' INTO TABLE DATA(lt_plant).
+              lr_plant = VALUE #( FOR plant IN lt_plant ( sign = 'I' option = 'EQ' low = plant ) ).
+              IF str_rec_l_range-low IN lr_plant.
+                lv_plant = str_rec_l_range-low.
+              ENDIF.
+            ENDIF.
           WHEN 'BILLOFMATERIALCOMPONENT'.
             MOVE-CORRESPONDING str_rec_l_range TO ls_billofmaterialcomponent.
             APPEND ls_billofmaterialcomponent TO lr_billofmaterialcomponent.
@@ -109,7 +114,7 @@ CLASS ZCL_QUERY_COMPONENTUSAGELIST IMPLEMENTATION.
      WHERE a~product IN @lr_billofmaterialcomponent
        AND a~productmanufacturernumber IN @lr_productmanufacturernumber
        AND a~producttype <> @lc_producttype_zfrt
-       AND b~plant IN @lr_plant
+       AND b~plant = @lv_plant
        AND b~profilecode IN @lr_profilecode
       INTO TABLE @DATA(lt_component).
     IF sy-subrc = 0.

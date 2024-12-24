@@ -135,6 +135,33 @@ CLASS lhc_pochange IMPLEMENTATION.
       lv_message TYPE string,
       lc_null    TYPE c VALUE '-'.
 
+* Authorization Check
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+    lv_ekorg = zzcl_common_utils=>get_purchorg_by_user( lv_user_email ).
+
+    LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
+      IF NOT lv_plant CS <lfs_data>-plant.
+        lv_status = 'E'.
+        MESSAGE e027(zbc_001) WITH <lfs_data>-plant INTO lv_msg.
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+      ENDIF.
+
+      IF NOT lv_ekorg CS <lfs_data>-purchasingorganization.
+        lv_status = 'E'.
+        MESSAGE e027(zbc_001) WITH <lfs_data>-purchasingorganization INTO lv_msg.
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+      ENDIF.
+
+      IF lv_message IS NOT INITIAL.
+        <lfs_data>-status = lv_status.
+        <lfs_data>-message = lv_message.
+      ENDIF.
+    ENDLOOP.
+    IF lv_status = 'E'.
+      RETURN.
+    ENDIF.
+
 ** 1.Check if header values are same with multiple items in one PO
     READ TABLE ct_data INTO DATA(ls_data) INDEX 1.
 
@@ -197,7 +224,7 @@ CLASS lhc_pochange IMPLEMENTATION.
     ENDLOOP.
 
     IF lv_status = 'E'.
-      LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
+      LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = lv_status.
         <lfs_data>-message = lv_message.
       ENDLOOP.

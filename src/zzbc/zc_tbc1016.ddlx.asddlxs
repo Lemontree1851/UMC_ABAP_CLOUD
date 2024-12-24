@@ -16,7 +16,7 @@ annotate view ZC_TBC1016 with
   @UI.hidden: true
   RoleId;
 
-  @UI.lineItem: [{ position: 10, cssDefault.width: '20rem' }]
+  @UI.lineItem: [{ position: 10, cssDefault.width: '18rem' }]
   @Consumption.valueHelpDefinition: [{ entity: {name: 'ZC_TBC1015_VH' , element: 'AccessId' },
                additionalBinding: [{ localElement: 'AccessName', element: 'AccessName', usage: #RESULT },
                                    { localElement: 'FunctionId', element: 'FunctionId', usage: #RESULT },
@@ -26,7 +26,7 @@ annotate view ZC_TBC1016 with
   @EndUserText.label: 'Access Id'
   AccessId;
 
-  @UI.lineItem: [{ position: 20, cssDefault.width: '15rem' }]
+  @UI.lineItem: [{ position: 20, cssDefault.width: '12rem' }]
   @EndUserText.label: 'Access Name'
   AccessName;
 
@@ -34,13 +34,13 @@ annotate view ZC_TBC1016 with
   @EndUserText.label: 'Application Id'
   FunctionId;
 
+  @UI.lineItem: [{ position: 40, cssDefault.width: '20rem' }]
+  @EndUserText.label: 'Application Name'
+  FunctionName;
+  
   @UI.lineItem: [{ position: 50 }]
   @EndUserText.label: 'Design File Id'
   DesignFileId;
-
-  @UI.lineItem: [{ position: 60, cssDefault.width: '25rem' }]
-  @EndUserText.label: 'Application Name'
-  FunctionName;
 
   @UI.hidden: true
   LocalLastChangedAt;

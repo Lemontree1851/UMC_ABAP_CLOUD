@@ -10,10 +10,7 @@ CLASS zcl_query_pickinglist_std DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_QUERY_PICKINGLIST_STD IMPLEMENTATION.
-
+CLASS zcl_query_pickinglist_std IMPLEMENTATION.
 
   METHOD if_rap_query_provider~select.
     TYPES: BEGIN OF lty_detail.
@@ -141,7 +138,7 @@ CLASS ZCL_QUERY_PICKINGLIST_STD IMPLEMENTATION.
     IF lt_mfgorder IS NOT INITIAL.
       TRY.
           DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
-          " Get USAP Access configuration
+          " Get UWMS Access configuration
           SELECT SINGLE *
             FROM zc_tbc1001
            WHERE zid = 'ZBC002'
@@ -459,4 +456,5 @@ CLASS ZCL_QUERY_PICKINGLIST_STD IMPLEMENTATION.
 
     io_response->set_data( lt_data ).
   ENDMETHOD.
+
 ENDCLASS.

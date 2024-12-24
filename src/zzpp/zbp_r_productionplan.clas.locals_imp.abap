@@ -103,10 +103,6 @@ CLASS lhc_zr_productionplan DEFINITION INHERITING FROM cl_abap_behavior_handler.
         plannedquantity      TYPE i_plndindeprqmtitemtp-plannedquantity,
       END OF ts_plnd,
 
-      BEGIN OF ts_authcheck,
-        check TYPE string,
-      END OF ts_authcheck,
-
       cs_zday      TYPE c LENGTH 20,
       cv_planorder TYPE c LENGTH 10.
 
@@ -180,9 +176,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
     DATA:
       lt_request        TYPE TABLE OF zr_productionplan,
       lt_request_return TYPE TABLE OF zr_productionplan,
-      ls_request        TYPE zr_productionplan,
-      lt_authcheck      TYPE TABLE OF ts_authcheck,
-      ls_authcheck      TYPE ts_authcheck.
+      ls_request        TYPE zr_productionplan.
 
     CHECK keys IS NOT INITIAL.
     DATA(lv_event) = keys[ 1 ]-%param-event.
@@ -203,15 +197,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
           APPEND VALUE #( %cid   = key-%cid
                           %param = VALUE #( event = lv_event
                                             zzkey = lv_json ) ) TO result.
-        WHEN 'EDIT'.
 
-          ls_authcheck-check = 'X'.
-          APPEND ls_authcheck TO lt_authcheck.
-          lv_json = /ui2/cl_json=>serialize( data = ls_authcheck-check ).
-
-          APPEND VALUE #( %cid   = key-%cid
-                          %param = VALUE #( event = lv_event
-                                            zzkey = lv_json ) ) TO result.
         WHEN OTHERS.
 
       ENDCASE.

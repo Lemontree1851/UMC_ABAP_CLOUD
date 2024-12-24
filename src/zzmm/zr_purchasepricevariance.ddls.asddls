@@ -6,6 +6,14 @@ define root view entity ZR_PURCHASEPRICEVARIANCE
     left outer join I_PurchasingInfoRecordApi01 as _PurInfoRecord     on  _PurInfoRecord.Supplier = _PurchaseOrder.Supplier
                                                                       and _PurInfoRecord.Material = _PurchaseOrderItem.Material
 
+    inner join      ZR_TBC1006                  as _AssignPlant       on _AssignPlant.Plant = _PurchaseOrderItem.Plant
+    inner join      ZC_BusinessUserEmail        as _User              on  _User.Email  = _AssignPlant.Mail
+                                                                      and _User.UserID = $session.user
+
+    inner join      ZR_TBC1017                  as _AssignPurchOrg    on _AssignPurchOrg.PurchasingOrganization = _PurchaseOrder.PurchasingOrganization
+    inner join      ZC_BusinessUserEmail        as _User2             on  _User2.Email  = _AssignPurchOrg.Mail
+                                                                      and _User2.UserID = $session.user
+
   association [0..1] to I_PurOrdScheduleLineAPI01      as _PurOrdScheduleLine      on  $projection.PurchaseOrder                     = _PurOrdScheduleLine.PurchaseOrder
                                                                                    and $projection.PurchaseOrderItem                 = _PurOrdScheduleLine.PurchaseOrderItem
                                                                                    and _PurOrdScheduleLine.PurchaseOrderScheduleLine = '0001'

@@ -1,4 +1,4 @@
-CLASS zcl_get_usap_mcard DEFINITION
+CLASS zcl_get_uwms_mcard DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC .
@@ -12,8 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_GET_USAP_MCARD IMPLEMENTATION.
-
+CLASS zcl_get_uwms_mcard IMPLEMENTATION.
 
   METHOD if_sadl_exit_calc_element_read~calculate.
     TYPES: BEGIN OF ty_response_res,
@@ -37,7 +36,7 @@ CLASS ZCL_GET_USAP_MCARD IMPLEMENTATION.
 
     TRY.
         DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
-        " Get USAP Access configuration
+        " Get UWMS Access configuration
         SELECT SINGLE *
           FROM zc_tbc1001
          WHERE zid = 'ZBC002'
@@ -80,7 +79,7 @@ CLASS ZCL_GET_USAP_MCARD IMPLEMENTATION.
 
   ENDMETHOD.
 
-
   METHOD if_sadl_exit_calc_element_read~get_calculation_info.
   ENDMETHOD.
+
 ENDCLASS.

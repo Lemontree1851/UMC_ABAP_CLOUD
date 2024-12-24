@@ -9,10 +9,7 @@ CLASS zcl_query_salesdocumentlist DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
-
+CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
 
   METHOD if_rap_query_provider~select.
     TYPES:
@@ -34,6 +31,7 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
     DATA:
       lt_data                    TYPE STANDARD TABLE OF zc_salesdocumentlist,
       lr_salesorganization       TYPE RANGE OF zc_salesdocumentlist-salesorganization,
+      lr_user_salesorg           TYPE RANGE OF zc_salesdocumentlist-salesorganization,
       lr_salesdocument           TYPE RANGE OF zc_salesdocumentlist-salesdocument,
       lr_soldtoparty             TYPE RANGE OF zc_salesdocumentlist-soldtoparty,
       lr_salesdocumenttype       TYPE RANGE OF zc_salesdocumentlist-salesdocumenttype,
@@ -197,6 +195,26 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
         ENDCASE.
       ENDLOOP.
     ENDLOOP.
+
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_user_salesorg) = zzcl_common_utils=>get_salesorg_by_user( lv_user_email ).
+
+    SPLIT lv_user_salesorg AT '&' INTO TABLE DATA(lt_user_salesorg).
+    lr_user_salesorg = VALUE #( FOR salesorg IN lt_user_salesorg ( sign = 'I' option = 'EQ' low = salesorg ) ).
+
+    IF lr_user_salesorg IS NOT INITIAL.
+      IF lr_salesorganization IS INITIAL.
+        lr_salesorganization = lr_user_salesorg.
+      ELSE.
+        LOOP AT lr_salesorganization ASSIGNING FIELD-SYMBOL(<fs_salesorganization>).
+          IF <fs_salesorganization>-low NOT IN lr_user_salesorg.
+            CLEAR <fs_salesorganization>-low.
+          ENDIF.
+        ENDLOOP.
+      ENDIF.
+    ELSE.
+      lr_salesorganization = VALUE #( sign = 'I' option = 'EQ' ( low = '' ) ).
+    ENDIF.
 
     IF lv_indicator1 = abap_true.
       IF lv_indicator2 = abap_true.
@@ -887,4 +905,5 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
 
     io_response->set_data( lt_data ).
   ENDMETHOD.
+
 ENDCLASS.

@@ -12,9 +12,9 @@ define root view entity ZC_MaterialStockVH
           StockQuantity,
           MaterialBaseUnit,
 
-          @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_GET_USAP_MCARD'
+          @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_GET_UWMS_MCARD'
           @Semantics.quantity.unitOfMeasure : 'MaterialBaseUnit'
   virtual M_CARD_Quantity : menge_d,
-          @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_GET_USAP_MCARD'
+          @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_GET_UWMS_MCARD'
   virtual M_CARD          : maktx
 }

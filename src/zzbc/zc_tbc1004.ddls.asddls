@@ -9,11 +9,18 @@ define root view entity ZC_TBC1004
       UserId,
       UserName,
       Department,
+      @ObjectModel.text.element: ['CreateUserName']
       CreatedBy,
       CreatedAt,
+      @ObjectModel.text.element: ['UpdateUserName']
       LastChangedBy,
       LastChangedAt,
       LocalLastChangedAt,
+
+      @UI.hidden: true
+      _CreateUser.PersonFullName as CreateUserName,
+      @UI.hidden: true
+      _UpdateUser.PersonFullName as UpdateUserName,
 
       /* Associations */
       _AssignPlant    : redirected to composition child ZC_TBC1006,

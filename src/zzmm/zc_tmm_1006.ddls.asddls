@@ -56,6 +56,7 @@ define root view entity ZC_TMM_1006
       GlAccount,
       CostCenter,
       WbsElemnt,
+      @EndUserText.label: '指図'
       OrderId,
       AssetNo,
       @Consumption.filter.hidden: true
@@ -91,6 +92,8 @@ define root view entity ZC_TMM_1006
       SupplierMat,
       @Consumption.filter.hidden: true
       PolinkBy,
+      @Consumption.filter.hidden: true
+      @UI.hidden: true
       DocumentInfoRecordDocType,
       @Consumption.filter.hidden: true
       @UI.hidden: true

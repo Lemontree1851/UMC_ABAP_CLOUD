@@ -19,6 +19,7 @@ define root custom entity ZC_ACCOUNTINGDOC
         lineItem                     : [ { position: 40, label: '会社コード' } ]
       }
       @Consumption.valueHelpDefinition:[{entity:{ name: 'I_CompanyCodeStdVH', element: 'CompanyCode'} }]
+      @Consumption.filter       : {selectionType: #INTERVAL, multipleSelections: true }
       @EndUserText.label             : '会社コード'
   key Companycode                    : abap.char(4);
       @UI                            : {
