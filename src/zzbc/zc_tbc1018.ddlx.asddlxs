@@ -1,0 +1,32 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Shipping Point',
+    typeNamePlural: 'Shipping Point'
+  },
+  presentationVariant: [{
+    sortOrder: [ { by: 'ShippingPoint', direction: #ASC } ],
+    visualizations: [ { type: #AS_LINEITEM } ]
+  }]
+}
+annotate view ZC_TBC1018 with
+{
+  @UI.hidden: true
+  Uuid;
+  @UI.hidden: true
+  Mail;
+
+  @UI.lineItem: [{ position: 10, cssDefault.width: '10rem' }]
+  @Consumption.valueHelpDefinition: [{ entity: {name: 'I_ShippingPointStdVH' , element: 'ShippingPoint' },
+               additionalBinding: [{ localElement: 'ShippingPointName', element: 'ShippingPointName', usage: #RESULT }]
+  }]
+  @EndUserText.label: 'Shipping Point'
+  ShippingPoint;
+
+  @UI.lineItem: [{ position: 20, cssDefault.width: '20rem' }]
+  @EndUserText.label: 'Shipping Point Name'
+  ShippingPointName;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+}

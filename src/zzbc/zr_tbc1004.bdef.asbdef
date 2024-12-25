@@ -36,6 +36,7 @@ authorization master ( instance )
   association _AssignCompany { create; with draft; }
   association _AssignSalesOrg { create; with draft; }
   association _AssignPurchOrg { create; with draft; }
+  association _AssignShippingPoint { create; with draft; }
   association _AssignRole { create; with draft; }
 
   mapping for ztbc_1004
@@ -205,6 +206,45 @@ etag master LocalLastChangedAt
       LastChangedBy          = last_changed_by;
       LastChangedAt          = last_changed_at;
       LocalLastChangedAt     = local_last_changed_at;
+    }
+}
+
+define behavior for ZR_TBC1018 alias AssignShippingPoint
+persistent table ztbc_1018
+draft table ztbc_1018_d
+lock dependent by _User
+authorization dependent by _User
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) Uuid;
+  field ( readonly )
+  Mail,
+  ShippingPointName,
+  CreatedBy,
+  CreatedAt,
+  LastChangedBy,
+  LastChangedAt,
+  LocalLastChangedAt;
+
+  field ( mandatory ) ShippingPoint;
+
+  validation validateShippingPoint on save ##NOT_ASSIGNED_TO_DETACT { field ShippingPoint; create; update; }
+
+  association _User { with draft; }
+
+  mapping for ztbc_1018
+    {
+      Uuid               = uuid;
+      Mail               = mail;
+      ShippingPoint      = shipping_point;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LastChangedBy      = last_changed_by;
+      LastChangedAt      = last_changed_at;
+      LocalLastChangedAt = local_last_changed_at;
     }
 }
 

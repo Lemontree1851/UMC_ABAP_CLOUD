@@ -10,10 +10,7 @@ CLASS zcl_agencypurchasing DEFINITION
 ENDCLASS.
 
 
-
-CLASS ZCL_AGENCYPURCHASING IMPLEMENTATION.
-
-
+CLASS zcl_agencypurchasing IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
     DATA: lt_data    TYPE STANDARD TABLE OF zc_agencypurchasing,
           lt_sumdata TYPE STANDARD TABLE OF zc_agencypurchasing.
@@ -36,6 +33,11 @@ CLASS ZCL_AGENCYPURCHASING IMPLEMENTATION.
               DATA(lr_companycode) = ls_filter_cond-range.
             WHEN 'COMPANYCODE2'.
               DATA(lr_companycode2) = ls_filter_cond-range.
+            WHEN 'USEREMAIL'.
+              READ TABLE ls_filter_cond-range INTO DATA(ls_range) INDEX 1.
+              IF sy-subrc = 0.
+                DATA(lv_user_email) = ls_range-low.
+              ENDIF.
             WHEN OTHERS.
           ENDCASE.
         ENDLOOP.
@@ -174,6 +176,18 @@ CLASS ZCL_AGENCYPURCHASING IMPLEMENTATION.
        AND postingdate <= @lv_postingdateto
       INTO TABLE @DATA(lt_journalentry_re).
 
+*&--Authorization Check
+    DATA(lv_company) = zzcl_common_utils=>get_company_by_user( CONV #( lv_user_email ) ).
+    IF lv_company IS INITIAL.
+      CLEAR lt_journalentry_re.
+    ELSE.
+      SPLIT lv_company AT '&' INTO TABLE DATA(lt_company_check).
+      CLEAR lr_companycode.
+      lr_companycode = VALUE #( FOR company IN lt_company_check ( sign = 'I' option = 'EQ' low = company ) ).
+      DELETE lt_journalentry_re WHERE companycode NOT IN lr_companycode.
+    ENDIF.
+*&--Authorization Check
+
     IF lt_journalentry_re IS NOT INITIAL.
       SELECT sourceledger,
              companycode,
@@ -250,6 +264,7 @@ CLASS ZCL_AGENCYPURCHASING IMPLEMENTATION.
            SUM( currency2 ) AS currency2,
            SUM( currency3 ) AS currency3
       FROM @lt_data AS a
+     WHERE companycode2 IN @lr_companycode2
      GROUP BY a~postingdate,
            a~companycode,
            a~companycode2,
@@ -375,4 +390,5 @@ CLASS ZCL_AGENCYPURCHASING IMPLEMENTATION.
     io_response->set_data( lt_sumdata ).
 
   ENDMETHOD.
+
 ENDCLASS.

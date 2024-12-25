@@ -99,12 +99,27 @@ CLASS lhc_sourcelist IMPLEMENTATION.
       i           TYPE i,
       m           TYPE i,
       n           TYPE i,
+      lv_status   TYPE c,
       lv_message  TYPE string,
       lv_matnr    TYPE c LENGTH 18,
       lc_null     TYPE c VALUE '-'.
 
+* Authorization Check
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+    LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<ls_data>).
+*      IF NOT lv_plant CS <ls_data>-plant.
+*        lv_status = 'E'.
+*        <ls_data>-status = 'E'.
+*        MESSAGE e027(zbc_001) WITH <ls_data>-plant INTO <ls_data>-message.
+*      ENDIF.
+    ENDLOOP.
+    IF lv_status = 'E'.
+      RETURN.
+    ENDIF.
+*---------------------------------------------------------
 
-    READ TABLE ct_data ASSIGNING FIELD-SYMBOL(<ls_data>) INDEX 1.
+    READ TABLE ct_data ASSIGNING <ls_data> INDEX 1.
     lv_usage = <ls_data>-xflag. "A/B/C
 
     CASE lv_usage.
@@ -225,11 +240,11 @@ CLASS lhc_sourcelist IMPLEMENTATION.
               ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_res_api ) ).
 
           IF lv_stat_code = '201'.
-            DATA(lv_status) = 'S'.
+            lv_status = 'S'.
             MESSAGE s006(zmm_001) INTO lv_message.
             "Call boi update
             IF <ls_data>-supplierisfixed IS NOT INITIAL.
-              <ls_data>-Material = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = 'IN' iv_input = <ls_data>-material ).
+              <ls_data>-material = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = 'IN' iv_input = <ls_data>-material ).
               <ls_data>-supplier = |{ <ls_data>-supplier ALPHA = IN }|.
               SELECT SINGLE
                      a~material,                "#EC CI_FAE_NO_LINES_OK

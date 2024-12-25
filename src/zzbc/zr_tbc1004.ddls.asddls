@@ -10,6 +10,7 @@ define root view entity ZR_TBC1004
   composition [0..*] of ZR_TBC1012       as _AssignCompany
   composition [0..*] of ZR_TBC1013       as _AssignSalesOrg
   composition [0..*] of ZR_TBC1017       as _AssignPurchOrg
+  composition [0..*] of ZR_TBC1018       as _AssignShippingPoint
   composition [0..*] of ZR_TBC1007       as _AssignRole
 {
   key mail                  as Mail,
@@ -34,5 +35,6 @@ define root view entity ZR_TBC1004
       _AssignCompany,
       _AssignSalesOrg,
       _AssignPurchOrg,
+      _AssignShippingPoint,
       _AssignRole
 }

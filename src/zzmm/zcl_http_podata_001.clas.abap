@@ -99,11 +99,9 @@ CLASS zcl_http_podata_001 DEFINITION
       lv_token      TYPE string,
       lv_status     TYPE i.
 
-ENDCLASS.
+  ENDCLASS.
 
-
-
-CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
+CLASS zcl_http_podata_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -347,75 +345,115 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
           CLEAR lv_previous_pono.
           CLEAR lv_previous_dno.
 
-          LOOP AT lt_req INTO ls_req.
 
-            " 每次碰到新的pono和dno时，开始生成新的SOAP请求
-            IF lv_previous_pono <> ls_req-pono OR lv_previous_dno <> ls_req-dno.
 
-              " 如果不是第一次，并且上一条请求不为空，结束上一条请求并发送
-              IF lv_previous_pono IS NOT INITIAL.
-                " 结束上一条请求并将其传递出去
-                lv_current_request = lv_current_request &&
-                                     '</Item>' &&
-                                     '</OrderConfirmation>' &&
-                                     '</edi:OrderConfRequest>' &&
-                                     '</soap:Body>' &&
-                                     '</soap:Envelope>'.
+          " 每次碰到新的pono和dno时，开始生成新的SOAP请求
+          IF lv_previous_pono <> ls_req-pono OR lv_previous_dno <> ls_req-dno.
 
-                " 发送当前的请求
-                lo_http_request->set_text( lv_current_request ).
+            " 如果不是第一次，并且上一条请求不为空，结束上一条请求并发送
+            IF lv_previous_pono IS NOT INITIAL.
+              " 结束上一条请求并将其传递出去
+              lv_current_request = lv_current_request &&
+                                   '</Item>' &&
+                                   '</OrderConfirmation>' &&
+                                   '</edi:OrderConfRequest>' &&
+                                   '</soap:Body>' &&
+                                   '</soap:Envelope>'.
 
-                CLEAR lv_current_request.  " 清空当前请求
+              " 发送当前的请求
+              lo_http_request->set_text( lv_current_request ).
+
+              " 设置请求头
+              lo_http_request->set_header_field( i_name = 'Content-Type' i_value = 'text/xml' ).
+
+              TRY.
+                  DATA(lo_response) = lo_http_client->execute( i_method = if_web_http_client=>post ).
+                CATCH cx_web_http_client_error INTO DATA(lx_http_error).
+                  " 在这里处理异常，例如记录错误日志或返回自定义错误消息
+                  lv_text = 'HTTP リクエストに失敗しました。接続や設定を確認してください'.
+                  lv_error = 'X'.
+              ENDTRY.
+
+              lo_response->get_status( RECEIVING r_value = DATA(ls_http_status) ).
+              IF ls_http_status-code = 202
+              OR ls_http_status-code = 201.
+                DATA(lv_string) = lo_response->get_text( ).
+
+                /ui2/cl_json=>deserialize(
+                                EXPORTING json = lv_string
+                                          pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+                                CHANGING data = ls_response ).
+
+                " 成功消息
+                lv_text = '納期回答情報は購買伝票に反映されました.'.
+                lv_error = ''.
+              ELSE.
+                lv_text = '納期回答情報が購買伝票に反映されませんでした.再度ご確認ください.'.
+                lv_error = 'X'.
+                EXIT.
               ENDIF.
 
-              " 开始新的 OrderConfRequest
-              lv_current_request = |<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:edi="http://sap.com/xi/EDI">| &&
-                                   |<soap:Header/>| &&
-                                   |<soap:Body>| &&
-                                   |<edi:OrderConfRequest>| &&
-                                   |<MessageHeader>| &&
-                                   |<ID>{ lv_uuid }</ID>| &&
-                                   |<CreationDateTime>{ lv_final_time_string }</CreationDateTime>| &&
-                                   |</MessageHeader>| &&
-                                   |<OrderConfirmation>| &&
-                                   |<PurchaseOrderID>{ ls_req-pono }</PurchaseOrderID>| &&
-*                                   |<SalesOrderID>{ ls_req-extnumber }</SalesOrderID>| &&
-                                   |<Item>| &&
-                                   |<PurchaseOrderItemID>{ ls_req-dno }</PurchaseOrderItemID>|.
-
-              " 更新上一个pono和dno
-              lv_previous_pono = ls_req-pono.
-              lv_previous_dno = ls_req-dno.
+              CLEAR lv_current_request.  " 清空当前请求
             ENDIF.
 
-            " 假设获取到的单位信息包含在 lt_unit 中，取第一个单位信息
-            LOOP AT lt_unit INTO DATA(ls_unit).
+            "=====================================change by wz
+            TRY.
+                DATA(lv_uuid1) = cl_system_uuid=>create_uuid_c32_static( ).
+              CATCH cx_uuid_error INTO DATA(lx_uuid_error1).
+                " 处理 UUID 错误
+                lv_error = 'X'.
+                lv_text = 'UUID 创建失败: ' && lx_uuid_error1->get_text( ).
+                " 处理错误或记录日志
+            ENDTRY.
+            "=====================================change by wz
 
-              DATA:lv_converted_unit TYPE string.
-              CLEAR lv_converted_unit.
+            " 开始新的 OrderConfRequest
+            lv_current_request = |<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:edi="http://sap.com/xi/EDI">| &&
+                                 |<soap:Header/>| &&
+                                 |<soap:Body>| &&
+                                 |<edi:OrderConfRequest>| &&
+                                 |<MessageHeader>| &&
+                                 |<ID>{ lv_uuid1 }</ID>| &&
+                                 |<CreationDateTime>{ lv_final_time_string }</CreationDateTime>| &&
+                                 |</MessageHeader>| &&
+                                 |<OrderConfirmation>| &&
+                                 |<PurchaseOrderID>{ ls_req-pono }</PurchaseOrderID>| &&
+*                                   |<SalesOrderID>{ ls_req-extnumber }</SalesOrderID>| &&
+                                 |<Item>| &&
+                                 |<PurchaseOrderItemID>{ ls_req-dno }</PurchaseOrderItemID>|.
 
-              READ TABLE lt_unit1 WITH KEY unitofmeasure  = ls_unit-purchaseorderquantityunit INTO DATA(ls_unit1).
+            " 更新上一个pono和dno
+            lv_previous_pono = ls_req-pono.
+            lv_previous_dno = ls_req-dno.
+          ENDIF.
 
-              IF sy-subrc = 0.
-                lv_converted_unit = ls_unit1-unitofmeasureisocode.
-              ELSE.
-                " 如果未找到匹配，使用默认值或处理错误
-                lv_converted_unit = ls_unit-purchaseorderquantityunit.
-              ENDIF.
+          " 假设获取到的单位信息包含在 lt_unit 中，取第一个单位信息
+          LOOP AT lt_unit INTO DATA(ls_unit) WHERE purchaseorder = ls_req-pono AND purchaseorderitem = ls_req-dno.
+
+            DATA:lv_converted_unit TYPE string.
+            CLEAR lv_converted_unit.
+
+            READ TABLE lt_unit1 WITH KEY unitofmeasure  = ls_unit-purchaseorderquantityunit INTO DATA(ls_unit1).
+
+            IF sy-subrc = 0.
+              lv_converted_unit = ls_unit1-unitofmeasureisocode.
+            ELSE.
+              " 如果未找到匹配，使用默认值或处理错误
+              lv_converted_unit = ls_unit-purchaseorderquantityunit.
+            ENDIF.
 
 
-              " 正确拼接 <ScheduleLine> 标签
-              lv_current_request = lv_current_request &&
-                                   |<ScheduleLine>| &&
+            " 正确拼接 <ScheduleLine> 标签
+            lv_current_request = lv_current_request &&
+                                 |<ScheduleLine>| &&
 *                                   |<PurchaseOrderScheduleLine>{ ls_req-seq }</PurchaseOrderScheduleLine>| &&
-                                   |<ConfirmedDeliveryDate>{ ls_req-deliverydate }</ConfirmedDeliveryDate>| &&
-                                   |<ConfirmedDeliveryTime>{ lv_confirmed_delivery_time }</ConfirmedDeliveryTime>| &&
-                                   |<ConfirmedOrderQuantityByMaterialAvailableCheck unitCode="{ lv_converted_unit }">{ ls_req-quantity }</ConfirmedOrderQuantityByMaterialAvailableCheck>| &&
-                                   |</ScheduleLine>|.
-
-            ENDLOOP.
+                                 |<ConfirmedDeliveryDate>{ ls_req-deliverydate }</ConfirmedDeliveryDate>| &&
+                                 |<ConfirmedDeliveryTime>{ lv_confirmed_delivery_time }</ConfirmedDeliveryTime>| &&
+                                 |<ConfirmedOrderQuantityByMaterialAvailableCheck unitCode="{ lv_converted_unit }">{ ls_req-quantity }</ConfirmedOrderQuantityByMaterialAvailableCheck>| &&
+                                 |</ScheduleLine>|.
 
           ENDLOOP.
+
 
           " 结束最后一条请求并发送
           IF lv_previous_pono IS NOT INITIAL.
@@ -428,37 +466,43 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
 
             " 发送最后一个请求
             lo_http_request->set_text( lv_current_request ).
+
+               " 设置请求头
+              lo_http_request->set_header_field( i_name = 'Content-Type' i_value = 'text/xml' ).
+
+              TRY.
+                  DATA(lo_response1) = lo_http_client->execute( i_method = if_web_http_client=>post ).
+                CATCH cx_web_http_client_error INTO DATA(lx_http_error1).
+                  " 在这里处理异常，例如记录错误日志或返回自定义错误消息
+                  lv_text = 'HTTP リクエストに失敗しました。接続や設定を確認してください'.
+                  lv_error = 'X'.
+              ENDTRY.
+
+              lo_response1->get_status( RECEIVING r_value = DATA(ls_http_status1) ).
+              IF ls_http_status1-code = 202
+              OR ls_http_status1-code = 201.
+                DATA(lv_string1) = lo_response1->get_text( ).
+
+                /ui2/cl_json=>deserialize(
+                                EXPORTING json = lv_string1
+                                          pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+                                CHANGING data = ls_response ).
+
+                " 成功消息
+                lv_text = '納期回答情報は購買伝票に反映されました.'.
+                lv_error = ''.
+              ELSE.
+                lv_text = '納期回答情報が購買伝票に反映されませんでした.再度ご確認ください.'.
+                lv_error = 'X'.
+                EXIT.
+              ENDIF.
+
+
+
+
+
           ENDIF.
 
-          " 设置请求头
-          lo_http_request->set_header_field( i_name = 'Content-Type' i_value = 'text/xml' ).
-
-          TRY.
-              DATA(lo_response) = lo_http_client->execute( i_method = if_web_http_client=>post ).
-            CATCH cx_web_http_client_error INTO DATA(lx_http_error).
-              " 在这里处理异常，例如记录错误日志或返回自定义错误消息
-              lv_text = 'HTTP リクエストに失敗しました。接続や設定を確認してください'.
-              lv_error = 'X'.
-          ENDTRY.
-
-          lo_response->get_status( RECEIVING r_value = DATA(ls_http_status) ).
-          IF ls_http_status-code = 202
-          OR ls_http_status-code = 201.
-            DATA(lv_string) = lo_response->get_text( ).
-
-            /ui2/cl_json=>deserialize(
-                            EXPORTING json = lv_string
-                                      pretty_name = /ui2/cl_json=>pretty_mode-camel_case
-                            CHANGING data = ls_response ).
-
-            " 成功消息
-            lv_text = '納期回答情報は購買伝票に反映されました.'.
-            lv_error = ''.
-          ELSE.
-            lv_text = '納期回答情報が購買伝票に反映されませんでした.再度ご確認ください.'.
-            lv_error = 'X'.
-            EXIT.
-          ENDIF.
         ELSE.
           lv_text = '納期回答合計数量は購買発注の発注数を超過します. データをチェックしてください.'.
           lv_error = 'X'.

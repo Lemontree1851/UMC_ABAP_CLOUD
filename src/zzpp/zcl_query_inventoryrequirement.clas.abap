@@ -12,8 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
-
+CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
 
   METHOD if_rap_query_provider~select.
     TYPES: BEGIN OF ty_metadata,
@@ -176,7 +175,8 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
           lt_outofstockdate  TYPE TABLE OF ty_outofstockdate,
           lt_update_sequence TYPE TABLE OF ty_update_sequence.
 
-    DATA: lr_config_category  TYPE RANGE OF i_supplydemanditemtp-mrpelementcategory,
+    DATA: lr_plant            TYPE RANGE OF i_plant-plant,
+          lr_config_category  TYPE RANGE OF i_supplydemanditemtp-mrpelementcategory,
           lr_config_stocktype TYPE RANGE OF i_stockquantitycurrentvalue_2-inventorystocktype.
 
     DATA: ls_response TYPE ty_response.
@@ -298,6 +298,19 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
          AND supplier IN @lr_supplier
          AND \_purchasinginforecord-suppliermaterialnumber IN @lr_suppliermaterialnumber
         INTO TABLE @DATA(lt_fixed_data).
+
+*&--Authorization Check
+      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+      DATA(lv_plant_check) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+      IF lv_plant_check IS INITIAL.
+        CLEAR lt_fixed_data.
+      ELSE.
+        SPLIT lv_plant_check AT '&' INTO TABLE DATA(lt_plant_check).
+        CLEAR lr_plant.
+        lr_plant = VALUE #( FOR plant IN lt_plant_check ( sign = 'I' option = 'EQ' low = plant ) ).
+        DELETE lt_fixed_data WHERE plant NOT IN lr_plant.
+      ENDIF.
+*&--Authorization Check
 
       IF lt_fixed_data IS NOT INITIAL.
         SORT lt_fixed_data BY product.
@@ -2178,4 +2191,5 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
     ENDIF.
 
   ENDMETHOD.
+
 ENDCLASS.

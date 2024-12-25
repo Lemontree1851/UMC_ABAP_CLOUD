@@ -115,6 +115,14 @@ CLASS lhc_user IMPLEMENTATION.
        WHERE mail = @lt_user-mail
         INTO TABLE @DATA(lt_assign_purchorg).
       SORT lt_assign_purchorg BY mail.
+
+      SELECT uuid,
+             mail
+        FROM zr_tbc1018
+         FOR ALL ENTRIES IN @lt_user
+       WHERE mail = @lt_user-mail
+        INTO TABLE @DATA(lt_assign_shippingpoint).
+      SORT lt_assign_shippingpoint BY mail.
     ENDIF.
 
     LOOP AT lt_user ASSIGNING FIELD-SYMBOL(<lfs_user>).
@@ -136,6 +144,11 @@ CLASS lhc_user IMPLEMENTATION.
       ENDIF.
 
       READ TABLE lt_assign_purchorg TRANSPORTING NO FIELDS WITH KEY mail = <lfs_user>-mail BINARY SEARCH.
+      IF sy-subrc = 0.
+        lv_has_assign = abap_true.
+      ENDIF.
+
+      READ TABLE lt_assign_shippingpoint TRANSPORTING NO FIELDS WITH KEY mail = <lfs_user>-mail BINARY SEARCH.
       IF sy-subrc = 0.
         lv_has_assign = abap_true.
       ENDIF.
@@ -487,6 +500,90 @@ CLASS lhc_assignpurchorg IMPLEMENTATION.
                           %msg           = new_message_with_text( severity = if_abap_behv_message=>severity-error
                                                                   text     = lv_message )
                           %path          = VALUE #( user-%key-mail = ls_result-mail ) ) TO reported-assignpurchorg.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+  ENDMETHOD.
+
+ENDCLASS.
+
+CLASS lhc_assignshippingpoint DEFINITION INHERITING FROM cl_abap_behavior_handler.
+
+  PRIVATE SECTION.
+
+    METHODS validateshippingpoint FOR VALIDATE ON SAVE
+      IMPORTING keys FOR assignshippingpoint~validateshippingpoint.
+
+ENDCLASS.
+
+CLASS lhc_assignshippingpoint IMPLEMENTATION.
+
+  METHOD validateshippingpoint.
+    DATA: lv_message TYPE string.
+
+    READ ENTITIES OF zr_tbc1004 IN LOCAL MODE
+    ENTITY assignshippingpoint
+    FIELDS ( mail shippingpoint ) WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result).
+
+    IF lt_result IS NOT INITIAL.
+      ##ITAB_DB_SELECT
+      SELECT shippingpoint,
+             COUNT(*) AS count
+        FROM @lt_result AS a
+       GROUP BY shippingpoint
+        INTO TABLE @DATA(lt_shippingpoint_count).
+      SORT lt_shippingpoint_count BY shippingpoint.
+
+      SELECT uuid,
+             mail,
+             shippingpoint
+        FROM zr_tbc1018
+         FOR ALL ENTRIES IN @lt_result
+       WHERE mail = @lt_result-mail
+        INTO TABLE @DATA(lt_db_data).
+      SORT lt_db_data BY shippingpoint.
+
+      SELECT shippingpoint
+        FROM i_shippingpoint WITH PRIVILEGED ACCESS
+         FOR ALL ENTRIES IN @lt_result
+       WHERE shippingpoint = @lt_result-shippingpoint
+        INTO TABLE @DATA(lt_shippingpoint).
+      SORT lt_shippingpoint BY shippingpoint.
+
+      LOOP AT lt_result INTO DATA(ls_result).
+        CLEAR lv_message.
+
+        IF ls_result-shippingpoint IS INITIAL.
+          MESSAGE e006(zbc_001) WITH TEXT-008 INTO lv_message.
+        ELSE.
+          READ TABLE lt_shippingpoint TRANSPORTING NO FIELDS WITH KEY shippingpoint = ls_result-shippingpoint BINARY SEARCH.
+          IF sy-subrc <> 0.
+            MESSAGE e008(zbc_001) WITH TEXT-008 ls_result-shippingpoint INTO lv_message.
+          ENDIF.
+
+          READ TABLE lt_shippingpoint_count INTO DATA(ls_shippingpoint_count) WITH KEY shippingpoint = ls_result-shippingpoint BINARY SEARCH.
+          IF sy-subrc = 0.
+            IF ls_shippingpoint_count-count > 1.
+              MESSAGE e009(zbc_001) WITH TEXT-008 ls_result-shippingpoint INTO lv_message.
+            ELSE.
+              READ TABLE lt_db_data TRANSPORTING NO FIELDS WITH KEY mail  = ls_result-mail
+                                                                    shippingpoint = ls_result-shippingpoint BINARY SEARCH.
+              IF sy-subrc = 0.
+                MESSAGE e009(zbc_001) WITH TEXT-008 ls_result-shippingpoint INTO lv_message.
+              ENDIF.
+            ENDIF.
+          ENDIF.
+        ENDIF.
+
+        IF lv_message IS NOT INITIAL.
+          APPEND VALUE #( %tky = ls_result-%tky ) TO failed-assignshippingpoint.
+          APPEND VALUE #( %tky           = ls_result-%tky
+                          %state_area    = 'VALIDATE_SHIPPINGPOINT'
+                          %element-shippingpoint = if_abap_behv=>mk-on
+                          %msg           = new_message_with_text( severity = if_abap_behv_message=>severity-error
+                                                                  text     = lv_message )
+                          %path          = VALUE #( user-%key-mail = ls_result-mail ) ) TO reported-assignshippingpoint.
         ENDIF.
       ENDLOOP.
     ENDIF.

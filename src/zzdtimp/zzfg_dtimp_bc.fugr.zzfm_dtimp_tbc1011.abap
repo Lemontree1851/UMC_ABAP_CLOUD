@@ -21,7 +21,10 @@ FUNCTION zzfm_dtimp_tbc1011.
     END OF ty_salesorg,
     BEGIN OF ty_purchorg,
       purchorg TYPE ekorg,
-    END OF ty_purchorg.
+    END OF ty_purchorg,
+    BEGIN OF ty_ShippingPoint,
+      ShippingPoint TYPE I_ShippingPoint-ShippingPoint,
+    END OF ty_ShippingPoint.
 
   DATA:
     ls_data      TYPE zzs_dtimp_tbc1011,
@@ -35,10 +38,13 @@ FUNCTION zzfm_dtimp_tbc1011.
     lt_ztbc_1013 TYPE TABLE OF ztbc_1013,   "User Sales Organization information
     ls_ztbc_1017 TYPE ztbc_1017,            "User Purchasing Organization information
     lt_ztbc_1017 TYPE TABLE OF ztbc_1017,   "User Purchasing Organization information
+    ls_ztbc_1018 TYPE ztbc_1018,            "User Shipping Point information
+    lt_ztbc_1018 TYPE TABLE OF ztbc_1018,   "User Shipping Point information
     lt_plant     TYPE TABLE OF ty_plant,
     lt_company   TYPE TABLE OF ty_company,
     lt_salesorg  TYPE TABLE OF ty_salesorg,
     lt_purchorg  TYPE TABLE OF ty_purchorg,
+    lt_ShippingPoint      TYPE TABLE OF ty_ShippingPoint,
     lv_regular_expression TYPE string VALUE '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
     lv_flag      TYPE STRING.
 
@@ -69,6 +75,7 @@ FUNCTION zzfm_dtimp_tbc1011.
     ls_data-company_code            = <line>-('company_code').
     ls_data-sales_organization      = <line>-('sales_organization').
     ls_data-purchasing_organization = <line>-('purchasing_organization').
+    ls_data-shipping_point          = <line>-('shipping_point').
     CLEAR: <line>-('Message'), <line>-('Type').
     CONDENSE ls_data-mail NO-GAPS.
 
@@ -402,6 +409,68 @@ FUNCTION zzfm_dtimp_tbc1011.
 
       ENDIF.
 
+*     Insert Shipping Point data
+      IF ls_data-shipping_point IS NOT INITIAL.
+
+        SELECT COUNT( * ) FROM ztbc_1018 WHERE mail = @ls_ztbc_1004-mail.
+        IF sy-subrc = 0.
+          MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-021 INTO <line>-('Message').    "User Shipping Point data already exist
+          <line>-('Type')    = 'E'.
+          CONTINUE.
+        ENDIF.
+
+        CLEAR:
+          ls_ztbc_1018,
+          lt_ztbc_1018.
+
+        ls_ztbc_1018-mail = ls_ztbc_1004-mail.
+        ls_ztbc_1018-created_by = sy-uname.
+        GET TIME STAMP FIELD ls_ztbc_1018-created_at.
+        ls_ztbc_1018-last_changed_by = sy-uname.
+        GET TIME STAMP FIELD ls_ztbc_1018-last_changed_at.
+        GET TIME STAMP FIELD ls_ztbc_1018-local_last_changed_at.
+
+        CLEAR lt_ShippingPoint.
+        SPLIT ls_data-shipping_point AT lc_splitflag INTO TABLE lt_ShippingPoint.
+
+        CLEAR lv_flag.
+        LOOP AT lt_ShippingPoint INTO DATA(ls_ShippingPoint).
+
+          SELECT COUNT( * ) FROM i_ShippingPoint WHERE ShippingPoint = @ls_ShippingPoint-ShippingPoint.
+          IF sy-subrc <> 0.  "&1 &2 is invalid.
+            MESSAGE e008(zbc_001) WITH TEXT-022 ls_ShippingPoint-ShippingPoint INTO <line>-('Message').
+            <line>-('Type')    = 'E'.
+            lv_flag = 'X'.
+            EXIT.
+          ENDIF.
+
+          TRY.
+              ls_ztbc_1018-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+              ##NO_HANDLER
+            CATCH cx_uuid_error.
+              " handle exception
+          ENDTRY.
+          ls_ztbc_1018-shipping_point = ls_ShippingPoint-ShippingPoint.
+          APPEND ls_ztbc_1018 TO lt_ztbc_1018.
+        ENDLOOP.
+        IF lv_flag = 'X'.
+          CONTINUE.
+        ENDIF.
+
+        MODIFY ztbc_1018 FROM TABLE @lt_ztbc_1018.
+        IF sy-subrc = 0.
+          COMMIT WORK AND WAIT.
+          <line>-('Type') = 'S'.
+          <line>-('Message') = 'Success'.
+        ELSE.
+          ROLLBACK WORK.
+          MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+          <line>-('Type') = 'E'.
+          CONTINUE.
+        ENDIF.
+
+      ENDIF.
+
       IF <line>-('Type') IS INITIAL.
         MESSAGE e009(zbc_001) WITH TEXT-002 TEXT-012 INTO <line>-('Message').    "User data already exist
         <line>-('Type') = 'E'.
@@ -708,6 +777,71 @@ FUNCTION zzfm_dtimp_tbc1011.
 
       ENDIF.
 
+*     Update shipping point data
+      IF ls_data-shipping_point IS NOT INITIAL.
+
+        DELETE FROM ztbc_1018 WHERE mail = @ls_ztbc_1004-mail.
+
+        IF ls_data-shipping_point <> 'D'.
+
+          CLEAR:
+            ls_ztbc_1018,
+            lt_ztbc_1018.
+
+          ls_ztbc_1018-mail = ls_ztbc_1004-mail.
+          ls_ztbc_1018-created_by = sy-uname.
+          GET TIME STAMP FIELD ls_ztbc_1018-created_at.
+          ls_ztbc_1018-last_changed_by = sy-uname.
+          GET TIME STAMP FIELD ls_ztbc_1018-last_changed_at.
+          GET TIME STAMP FIELD ls_ztbc_1018-local_last_changed_at.
+
+          CLEAR lt_ShippingPoint.
+          SPLIT ls_data-shipping_point AT lc_splitflag INTO TABLE lt_ShippingPoint.
+
+          CLEAR lv_flag.
+          LOOP AT lt_ShippingPoint INTO ls_ShippingPoint.
+
+            SELECT COUNT( * ) FROM i_ShippingPoint WHERE ShippingPoint = @ls_ShippingPoint-ShippingPoint.
+            IF sy-subrc <> 0.  "&1 &2 is invalid.
+              MESSAGE e008(zbc_001) WITH TEXT-022 ls_ShippingPoint-ShippingPoint INTO <line>-('Message').
+              <line>-('Type')    = 'E'.
+              lv_flag = 'X'.
+              EXIT.
+            ENDIF.
+
+            TRY.
+                ls_ztbc_1018-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+                ##NO_HANDLER
+              CATCH cx_uuid_error.
+                " handle exception
+            ENDTRY.
+            ls_ztbc_1018-shipping_point = ls_ShippingPoint-ShippingPoint.
+            APPEND ls_ztbc_1018 TO lt_ztbc_1018.
+          ENDLOOP.
+          IF lv_flag = 'X'.
+            CONTINUE.
+          ENDIF.
+
+          MODIFY ztbc_1018 FROM TABLE @lt_ztbc_1018.
+          IF sy-subrc = 0.
+            COMMIT WORK AND WAIT.
+            <line>-('Type') = 'S'.
+            <line>-('Message') = 'Success'.
+          ELSE.
+            ROLLBACK WORK.
+            MESSAGE ID sy-msgid TYPE 'S' NUMBER sy-msgno INTO <line>-('Message') WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+            <line>-('Type') = 'E'.
+            CONTINUE.
+          ENDIF.
+
+        ELSE.
+          COMMIT WORK AND WAIT.
+          <line>-('Type') = 'S'.
+          <line>-('Message') = 'Success'.
+        ENDIF.
+
+      ENDIF.
+
       IF <line>-('Type') IS INITIAL.
         <line>-('Message') = 'Success'.
         <line>-('Type')    = 'S'.
@@ -736,6 +870,9 @@ FUNCTION zzfm_dtimp_tbc1011.
 
       "Delete purchasing organization data
       DELETE FROM ztbc_1017 WHERE mail = @ls_ztbc_1004-mail.
+
+      "Delete shipping point data
+      DELETE FROM ztbc_1018 WHERE mail = @ls_ztbc_1004-mail.
 
       COMMIT WORK AND WAIT.
       <line>-('Type') = 'S'.

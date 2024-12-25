@@ -128,6 +128,18 @@
      <ENTRY>PurchasingOrganization</ENTRY>
      <LENGTH>50</LENGTH>
     </item>
+    <item>
+     <ID>I</ID>
+     <KEY>021</KEY>
+     <ENTRY>Shipping Point Data</ENTRY>
+     <LENGTH>50</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
+     <KEY>022</KEY>
+     <ENTRY>ShippingPoint</ENTRY>
+     <LENGTH>50</LENGTH>
+    </item>
    </TPOOL>
   </asx:values>
  </asx:abap>

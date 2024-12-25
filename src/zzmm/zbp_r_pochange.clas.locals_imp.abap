@@ -141,22 +141,22 @@ CLASS lhc_pochange IMPLEMENTATION.
     lv_ekorg = zzcl_common_utils=>get_purchorg_by_user( lv_user_email ).
 
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
-      IF NOT lv_plant CS <lfs_data>-plant.
-        lv_status = 'E'.
-        MESSAGE e027(zbc_001) WITH <lfs_data>-plant INTO lv_msg.
-        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
-      ENDIF.
-
-      IF NOT lv_ekorg CS <lfs_data>-purchasingorganization.
-        lv_status = 'E'.
-        MESSAGE e027(zbc_001) WITH <lfs_data>-purchasingorganization INTO lv_msg.
-        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
-      ENDIF.
-
-      IF lv_message IS NOT INITIAL.
-        <lfs_data>-status = lv_status.
-        <lfs_data>-message = lv_message.
-      ENDIF.
+*      IF NOT lv_plant CS <lfs_data>-plant.
+*        lv_status = 'E'.
+*        MESSAGE e027(zbc_001) WITH <lfs_data>-plant INTO lv_msg.
+*        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+*      ENDIF.
+*
+*      IF NOT lv_ekorg CS <lfs_data>-purchasingorganization.
+*        lv_status = 'E'.
+*        MESSAGE e027(zbc_001) WITH <lfs_data>-purchasingorganization INTO lv_msg.
+*        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+*      ENDIF.
+*
+*      IF lv_message IS NOT INITIAL.
+*        <lfs_data>-status = lv_status.
+*        <lfs_data>-message = lv_message.
+*      ENDIF.
     ENDLOOP.
     IF lv_status = 'E'.
       RETURN.

@@ -63,4 +63,7 @@ define root custom entity ZC_AGENCYPURCHASING
       @Consumption.filter.hidden: true
       @UI.lineItem        : [{ position: 01, label: 'ステータス' }]
       Status              : abap.char( 10 );
+
+      @UI.hidden          : true
+      UserEmail           : zze_emailaddress;
 }

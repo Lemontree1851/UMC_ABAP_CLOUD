@@ -165,7 +165,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_USAP_001 IMPLEMENTATION.
+CLASS zcl_http_usap_001 IMPLEMENTATION.
 
 
   METHOD cancel.
@@ -577,6 +577,8 @@ CLASS ZCL_HTTP_USAP_001 IMPLEMENTATION.
     ELSEIF lv_header = 'CANCEL'.
 * Cancel Process
       DATA(lt_cancel) = ls_cancel_in-to_cancel-items.
+      SORT lt_cancel BY uwmskey itemno.
+
       " Get log data
       SELECT *                                  "#EC CI_FAE_NO_LINES_OK
         FROM ztmm_1003

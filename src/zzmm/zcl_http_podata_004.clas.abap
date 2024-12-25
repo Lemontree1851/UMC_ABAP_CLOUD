@@ -27,8 +27,8 @@ CLASS zcl_http_podata_004 DEFINITION
         supplierinvoicetaxcounter   TYPE c LENGTH 6,    "請求書明細
         taxcode                     TYPE c LENGTH 2,    "税コード
 "=======begin change by wz 20241219==========================================================================
-*        taxamount                   TYPE i_supplierinvoicetaxapi01-taxamount,   "消費税額
-        taxamount                   TYPE string,   "消費税額
+        taxamount                   TYPE i_supplierinvoicetaxapi01-taxamount,   "消費税額
+*        taxamount                   TYPE string,   "消費税額
 "=======end change by wz 20241219============================================================================
         totalamount                 TYPE c LENGTH 13,
         unitprice                   TYPE c LENGTH 13,
@@ -40,8 +40,8 @@ CLASS zcl_http_podata_004 DEFINITION
         documentcurrency            TYPE c LENGTH 5,    "通貨"
 
 "=======begin change by wz 20241219==========================================================================
-*        supplierinvoiceitemamount   TYPE i_suplrinvcitempurordrefapi01-supplierinvoiceitemamount,   "金額"
-        supplierinvoiceitemamount   TYPE string,   "金額"
+        supplierinvoiceitemamount   TYPE i_suplrinvcitempurordrefapi01-supplierinvoiceitemamount,   "金額"
+*        supplierinvoiceitemamount   TYPE string,   "金額"
 "=======end change by wz 20241219============================================================================
 
         quantityinpurchaseorderunit TYPE c LENGTH 13,   "数量"
@@ -1065,7 +1065,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         CONDENSE ls_response-supplierinvoicetaxcounter.
         CONDENSE ls_response-taxcode.
 "=======change by wz 20241219=======================================
-        CONDENSE ls_response-taxamount.
+*        CONDENSE ls_response-taxamount.
 "=======end by wz 20241219=======================================
         CONDENSE ls_response-supplierinvoiceitem.
         CONDENSE ls_response-purchaseorder.

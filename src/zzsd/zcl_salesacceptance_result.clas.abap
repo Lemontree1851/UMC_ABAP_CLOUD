@@ -320,17 +320,17 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
     ENDIF.
 
 * Authorization Check
-    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
-    DATA(lv_vkorg) = zzcl_common_utils=>get_salesorg_by_user( lv_user_email ).
-    IF lv_vkorg IS INITIAL.
-        CLEAR: lt_1003, lt_so.
-      ELSE.
-        SPLIT lv_vkorg AT '&' INTO TABLE DATA(lt_vkorg_check).
-        CLEAR lr_vkorg.
-        lr_vkorg = VALUE #( FOR salesorganization IN lt_vkorg_check ( sign = 'I' option = 'EQ' low = salesorganization ) ).
-        DELETE lt_1003 WHERE salesorganization NOT IN lr_vkorg.
-        DELETE lt_so WHERE salesorganization NOT IN lr_vkorg.
-      ENDIF.
+*    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+*    DATA(lv_vkorg) = zzcl_common_utils=>get_salesorg_by_user( lv_user_email ).
+*    IF lv_vkorg IS INITIAL.
+*        CLEAR: lt_1003, lt_so.
+*      ELSE.
+*        SPLIT lv_vkorg AT '&' INTO TABLE DATA(lt_vkorg_check).
+*        CLEAR lr_vkorg.
+*        lr_vkorg = VALUE #( FOR salesorganization IN lt_vkorg_check ( sign = 'I' option = 'EQ' low = salesorganization ) ).
+*        DELETE lt_1003 WHERE salesorganization NOT IN lr_vkorg.
+*        DELETE lt_so WHERE salesorganization NOT IN lr_vkorg.
+*      ENDIF.
 
     IF lt_so IS NOT INITIAL.
 * C: I_BillingDocumentItem

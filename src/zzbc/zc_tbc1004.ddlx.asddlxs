@@ -47,10 +47,17 @@ annotate view ZC_TBC1004 with
         targetElement: '_AssignPurchOrg'
       },
       {
+        id: 'idLineItemShippingPoint' ,
+        type : #LINEITEM_REFERENCE ,
+        label : 'Assign Shipping Point' ,
+        position: 60 ,
+        targetElement: '_AssignShippingPoint'
+      },
+      {
         id: 'idLineItemRole' ,
         type : #LINEITEM_REFERENCE ,
         label : 'Assign Role' ,
-        position: 60 ,
+        position: 70 ,
         targetElement: '_AssignRole'
       }
   ]
