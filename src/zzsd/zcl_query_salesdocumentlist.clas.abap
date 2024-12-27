@@ -64,6 +64,7 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
       ls_deliverystatus          LIKE LINE OF lr_deliverystatus,
       ls_conditiontype           LIKE LINE OF lr_conditiontype,
       ls_data                    TYPE zc_salesdocumentlist,
+      lv_user_email              TYPE i_workplaceaddress-defaultemailaddress,
       lv_actualdelqtyinbaseunit  TYPE i_deliverydocumentitem-actualdeliveredqtyinbaseunit,
       lv_billingqtyinbaseunit    TYPE i_billingdocumentitem-billingquantityinbaseunit,
       lv_indicator1              TYPE abap_boolean,
@@ -127,6 +128,8 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
     LOOP AT lt_filter_cond INTO DATA(ls_filter_cond).
       LOOP AT ls_filter_cond-range INTO DATA(str_rec_l_range).
         CASE ls_filter_cond-name.
+          WHEN 'USEREMAIL'.
+            lv_user_email = str_rec_l_range-low.
           WHEN 'SALESORGANIZATION'.
             MOVE-CORRESPONDING str_rec_l_range TO ls_salesorganization.
             APPEND ls_salesorganization TO lr_salesorganization.
@@ -196,9 +199,7 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
       ENDLOOP.
     ENDLOOP.
 
-    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
     DATA(lv_user_salesorg) = zzcl_common_utils=>get_salesorg_by_user( lv_user_email ).
-
     SPLIT lv_user_salesorg AT '&' INTO TABLE DATA(lt_user_salesorg).
     lr_user_salesorg = VALUE #( FOR salesorg IN lt_user_salesorg ( sign = 'I' option = 'EQ' low = salesorg ) ).
 

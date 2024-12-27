@@ -22,8 +22,40 @@ ENDCLASS.
 
 CLASS lhc_bdglupload IMPLEMENTATION.
 
-  METHOD get_global_authorizations.
+ METHOD get_global_authorizations.
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_access) = zzcl_common_utils=>get_access_by_user( lv_user_email ).
+
+    IF requested_authorizations-%create = if_abap_behv=>mk-on.
+      IF lv_access CS 'zbindglupload-Create'.
+        result-%create = if_abap_behv=>auth-allowed.
+      ELSE.
+        result-%create = if_abap_behv=>auth-unauthorized.
+        APPEND VALUE #( %msg    = new_message( id       = 'ZBC_001'
+                                               number   = 031
+                                               severity = if_abap_behv_message=>severity-error )
+                        %global = if_abap_behv=>mk-on ) TO reported-bdglupload .
+      ENDIF.
+    ENDIF.
+
+    IF requested_authorizations-%action-edit = if_abap_behv=>mk-on.
+      IF lv_access CS 'zbindglupload-Edit'.
+        result-%action-edit = if_abap_behv=>auth-allowed.
+      ELSE.
+        result-%action-edit = if_abap_behv=>auth-unauthorized.
+      ENDIF.
+    ENDIF.
+
+    IF requested_authorizations-%delete = if_abap_behv=>mk-on.
+      IF lv_access CS 'zbindglupload-Delete'.
+        result-%delete = if_abap_behv=>auth-allowed.
+      ELSE.
+        result-%delete = if_abap_behv=>auth-unauthorized.
+      ENDIF.
+    ENDIF.
+
   ENDMETHOD.
+
 
   METHOD processlogic.
     DATA: lt_request TYPE TABLE OF lty_request,

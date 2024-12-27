@@ -69,6 +69,7 @@ etag master LocalLastChangedAt
   field ( mandatory ) AccessId;
 
   determination setFunctionId on save { field AccessId; }
+  validation validateAccessId on save ##NOT_ASSIGNED_TO_DETACT { field AccessId; create; update; }
 
   association _Role { with draft; }
 

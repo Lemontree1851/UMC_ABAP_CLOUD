@@ -2,9 +2,9 @@ CLASS lhc_commonconfig DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
     METHODS:
       get_global_authorizations FOR GLOBAL AUTHORIZATION
-        IMPORTING
-        REQUEST requested_authorizations FOR commonconfig
-        RESULT result,
+        IMPORTING REQUEST requested_authorizations FOR commonconfig RESULT result,
+      get_instance_authorizations FOR INSTANCE AUTHORIZATION
+            IMPORTING keys REQUEST requested_authorizations FOR commonconfig RESULT result,
       precheck_update FOR PRECHECK
         IMPORTING entities FOR UPDATE commonconfig,
       precheck_delete FOR PRECHECK
@@ -14,6 +14,26 @@ ENDCLASS.
 CLASS lhc_commonconfig IMPLEMENTATION.
 
   METHOD get_global_authorizations.
+  ENDMETHOD.
+
+  METHOD get_instance_authorizations.
+    READ ENTITIES OF zr_tbc1001 IN LOCAL MODE
+    ENTITY commonconfig
+    FIELDS ( unmodifiable ) WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_data).
+
+    LOOP AT lt_data INTO DATA(ls_data).
+      APPEND INITIAL LINE TO result ASSIGNING FIELD-SYMBOL(<lfs_result>).
+      <lfs_result>-%tky = ls_data-%tky.
+
+      IF ls_data-unmodifiable = abap_true.
+        <lfs_result>-%delete = if_abap_behv=>auth-unauthorized.
+        <lfs_result>-%action-edit = if_abap_behv=>auth-unauthorized.
+      ELSE.
+        <lfs_result>-%delete = if_abap_behv=>auth-allowed.
+        <lfs_result>-%action-edit = if_abap_behv=>auth-allowed.
+      ENDIF.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD precheck_update.

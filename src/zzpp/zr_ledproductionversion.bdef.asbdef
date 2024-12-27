@@ -7,7 +7,7 @@ persistent table ztpp_1017
 draft table ztpp_1017_d
 etag master LocalLastChangedAt
 lock master total etag LastChangedAt
-authorization master ( global )
+authorization master ( global, instance )
 
 {
   field ( mandatory : create )
@@ -32,6 +32,8 @@ authorization master ( global )
   create;
   update;
   delete;
+
+  validation validationFields on save { create; update; }
 
   static action processLogic parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
 

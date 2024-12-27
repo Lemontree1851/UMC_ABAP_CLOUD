@@ -43,6 +43,7 @@ FUNCTION zzfm_dtimp_tbc1001.
     ls_data-zvalue9  = <line>-('Zvalue9').
     ls_data-zremark  = <line>-('Zremark').
     ls_data-zprogram = <line>-('Zprogram').
+    ls_data-unmodifiable = <line>-('Unmodifiable').
 
     IF ls_data-zid IS INITIAL.
       MESSAGE s006(zbc_001) WITH TEXT-001 INTO <line>-('Message').

@@ -153,6 +153,11 @@ annotate view ZC_TBC1001 with
   @EndUserText.label: 'Program Desc.'
   Zprogram;
 
+  @UI.lineItem: [ { position: 230, importance: #MEDIUM } ]
+  @UI.fieldGroup: [{ qualifier: 'idQualifier_Values', position: 220 }]
+  @EndUserText.label: 'Unmodifiable'
+  Unmodifiable;
+
   @UI.hidden: true
   LocalLastChangedAt;
 }

@@ -200,6 +200,12 @@
      <MSGNR>031</MSGNR>
      <TEXT>You are not authorized for this operation.</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>032</MSGNR>
+     <TEXT>Please delete the assignment information for role &amp;1.</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

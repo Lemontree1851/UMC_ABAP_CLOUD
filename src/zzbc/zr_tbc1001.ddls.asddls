@@ -25,6 +25,7 @@ define root view entity ZR_TBC1001
       zvalue9               as Zvalue9,
       zremark               as Zremark,
       zprogram              as Zprogram,
+      unmodifiable          as Unmodifiable,
       @Semantics.user.createdBy: true
       created_by            as CreatedBy,
       @Semantics.systemDateTime.createdAt: true

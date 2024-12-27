@@ -15,17 +15,18 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
 
     DATA:
-      lt_data              TYPE STANDARD TABLE OF zr_salesdocumentreport,
-      lw_data              LIKE LINE OF lt_data,
-      lt_output            TYPE STANDARD TABLE OF zr_salesdocumentreport,
-      lr_salesorganization TYPE RANGE OF zr_salesdocumentreport-salesorganization,  "販売組織
-      lr_customer          TYPE RANGE OF zr_salesdocumentreport-customer,           "得意先
-      lr_product           TYPE RANGE OF zr_salesdocumentreport-product,            "品目
-      lr_conditioncurrency TYPE RANGE OF zr_salesdocumentreport-conditioncurrency,  "通貨
-      ls_salesorganization LIKE LINE OF  lr_salesorganization,
-      ls_customer          LIKE LINE OF  lr_customer,
-      ls_product           LIKE LINE OF  lr_product,
-      ls_conditioncurrency LIKE LINE OF  lr_conditioncurrency.
+      lt_data                   TYPE STANDARD TABLE OF zr_salesdocumentreport,
+      lw_data                   LIKE LINE OF lt_data,
+      lt_output                 TYPE STANDARD TABLE OF zr_salesdocumentreport,
+      lr_salesorganization      TYPE RANGE OF zr_salesdocumentreport-salesorganization,  "販売組織
+      lr_salesorganization_auth TYPE RANGE OF zr_salesdocumentreport-salesorganization,  "販売組織
+      lr_customer               TYPE RANGE OF zr_salesdocumentreport-customer,           "得意先
+      lr_product                TYPE RANGE OF zr_salesdocumentreport-product,            "品目
+      lr_conditioncurrency      TYPE RANGE OF zr_salesdocumentreport-conditioncurrency,  "通貨
+      ls_salesorganization      LIKE LINE OF  lr_salesorganization,
+      ls_customer               LIKE LINE OF  lr_customer,
+      ls_product                LIKE LINE OF  lr_product,
+      ls_conditioncurrency      LIKE LINE OF  lr_conditioncurrency.
     TYPES:
       BEGIN OF ty_finalproductinfo,
         highlevelmaterial            TYPE matnr,
@@ -179,6 +180,11 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
     DATA(lt_fields) = io_request->get_requested_elements( ).
     DATA(lt_sort)   = io_request->get_sort_elements( ).
 
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_user_salesorg) = zzcl_common_utils=>get_salesorg_by_user( lv_user_email ).
+    SPLIT lv_user_salesorg AT '&' INTO TABLE DATA(lt_salesorg).
+    lr_salesorganization_auth = VALUE #( FOR salesorganization IN lt_salesorg ( sign = 'I' option = 'EQ' low = salesorganization ) ).
+
     LOOP AT lt_filter_cond INTO DATA(ls_filter_cond).
 
       LOOP AT ls_filter_cond-range INTO DATA(str_rec_l_range).
@@ -186,7 +192,9 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
         CASE ls_filter_cond-name.
           WHEN 'SALESORGANIZATION'.
             MOVE-CORRESPONDING str_rec_l_range TO ls_salesorganization.
-            APPEND ls_salesorganization TO lr_salesorganization.
+            IF ls_salesorganization-low IN lr_salesorganization_auth AND lr_salesorganization_auth IS NOT INITIAL.
+              APPEND ls_salesorganization TO lr_salesorganization.
+            ENDIF.
             CLEAR ls_salesorganization.
           WHEN 'CUSTOMER'.
             MOVE-CORRESPONDING str_rec_l_range TO ls_customer.
@@ -220,6 +228,18 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 
     ENDLOOP.
 
+    READ TABLE lt_filter_cond TRANSPORTING NO FIELDS WITH KEY name = 'SALESORGANIZATION'.
+    IF sy-subrc <> 0.
+      lr_salesorganization = lr_salesorganization_auth.
+    ENDIF.
+    "不存在为空的情况
+    IF lr_salesorganization IS INITIAL .
+      CLEAR ls_salesorganization.
+      ls_salesorganization-sign = 'I'.
+      ls_salesorganization-option = 'EQ' .
+      ls_salesorganization-low = '' .
+      INSERT ls_salesorganization INTO TABLE lr_salesorganization.
+    ENDIF.
 ***-------------------------ADD -----------20241207---begin-----***
     DATA: lv_begda TYPE d,
           lv_endda TYPE d.
@@ -952,8 +972,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 
 
         READ TABLE lt_userdescription INTO DATA(ls_userdescription) WITH KEY userid = ls_result-username .
-        if sy-subrc = 0.
-                ls_output-createdbyuser = ls_userdescription-UserDescription.
+        IF sy-subrc = 0.
+          ls_output-createdbyuser = ls_userdescription-userdescription.
         ENDIF.
 
 

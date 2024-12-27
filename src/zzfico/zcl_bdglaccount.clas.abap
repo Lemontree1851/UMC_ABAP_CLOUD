@@ -20,7 +20,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BDGLACCOUNT IMPLEMENTATION.
+CLASS zcl_bdglaccount IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -94,10 +94,11 @@ CLASS ZCL_BDGLACCOUNT IMPLEMENTATION.
       lv_select_string  TYPE string.
     "select options
     DATA:
-      lr_ledger       TYPE RANGE OF zc_bdglaccount-ledger,
-      lrs_ledger      LIKE LINE OF lr_ledger,
-      lr_companycode  TYPE RANGE OF zc_bdglaccount-companycode,
-      lrs_companycode LIKE LINE OF lr_companycode.
+      lr_ledger           TYPE RANGE OF zc_bdglaccount-ledger,
+      lrs_ledger          LIKE LINE OF lr_ledger,
+      lr_companycode      TYPE RANGE OF zc_bdglaccount-companycode,
+      lrs_companycode     LIKE LINE OF lr_companycode,
+      lr_companycode_auth TYPE RANGE OF zc_bdglaccount-companycode.
     DATA:
       lv_calendaryear  TYPE calendaryear,
       lv_calendarmonth TYPE calendarmonth.
@@ -149,14 +150,27 @@ CLASS ZCL_BDGLACCOUNT IMPLEMENTATION.
         lv_orderby_string = 'PRODUCT'.
       ENDIF.
       "filter
+      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+      DATA(lv_user_company) = zzcl_common_utils=>get_company_by_user( lv_user_email ).
+      SPLIT lv_user_company AT '&' INTO TABLE DATA(lt_company).
+      lr_companycode_auth = VALUE #( FOR companycode IN lt_company ( sign = 'I' option = 'EQ' low = companycode ) ).
+
       READ TABLE lt_filter_cond INTO DATA(ls_companycode_cond) WITH KEY name = 'COMPANYCODE' .
       IF sy-subrc EQ 0.
         LOOP AT ls_companycode_cond-range INTO DATA(ls_sel_opt_companycode).
           MOVE-CORRESPONDING ls_sel_opt_companycode TO lrs_companycode.
           lv_companycode = lrs_companycode-low.
+          IF lv_companycode IN lr_companycode_auth.
+            INSERT lrs_companycode INTO TABLE lr_companycode.
+          ELSE.
+            CLEAR lv_companycode.
 
-
-          INSERT lrs_companycode INTO TABLE lr_companycode.
+            CLEAR lr_companycode.
+            lrs_companycode-sign = 'I'.
+            lrs_companycode-option = 'EQ' .
+            lrs_companycode-low = '' .
+            INSERT lrs_companycode INTO TABLE lr_companycode.
+          ENDIF.
         ENDLOOP.
       ENDIF.
 

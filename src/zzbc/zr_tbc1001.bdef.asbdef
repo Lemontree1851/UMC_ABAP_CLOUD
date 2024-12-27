@@ -7,7 +7,7 @@ persistent table ztbc_1001
 draft table ztbc_1001_d
 etag master LocalLastChangedAt
 lock master total etag LastChangedAt
-authorization master ( global )
+authorization master ( global, instance )
 
 {
   field ( readonly )
@@ -54,6 +54,7 @@ authorization master ( global )
       Zvalue9            = zvalue9;
       Zremark            = zremark;
       Zprogram           = zprogram;
+      Unmodifiable       = unmodifiable;
       CreatedBy          = created_by;
       CreatedAt          = created_at;
       LastChangedBy      = last_changed_by;

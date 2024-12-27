@@ -133,4 +133,5 @@ define root custom entity ZC_SALESDOCUMENTLIST
       Indicator4                     : abap_boolean; //未請求
       Indicator5                     : abap_boolean; //請求済
       Indicator6                     : abap_boolean; //拒否項目の表示
+      UserEmail                      : abap.char(241);
 }

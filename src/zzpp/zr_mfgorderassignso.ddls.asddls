@@ -2,11 +2,15 @@
 @EndUserText.label: 'Manufacturing Order Assign SO'
 define root view entity ZR_MFGORDERASSIGNSO
   as select from    I_ManufacturingOrderItem as _MfgOrder
-    left outer join ztpp_1014                as _AssignItem on  _AssignItem.plant               = _MfgOrder.ProductionPlant
-                                                            and _AssignItem.manufacturing_order = _MfgOrder.ManufacturingOrder
-                                                            and _AssignItem.assign_qty          > 0
-    left outer join I_SalesDocumentItem      as _SOItem     on  _SOItem.SalesDocument     = _AssignItem.sales_order
-                                                            and _SOItem.SalesDocumentItem = _AssignItem.sales_order_item
+    left outer join ztpp_1014                as _AssignItem  on  _AssignItem.plant               = _MfgOrder.ProductionPlant
+                                                             and _AssignItem.manufacturing_order = _MfgOrder.ManufacturingOrder
+                                                             and _AssignItem.assign_qty          > 0
+    left outer join I_SalesDocumentItem      as _SOItem      on  _SOItem.SalesDocument     = _AssignItem.sales_order
+                                                             and _SOItem.SalesDocumentItem = _AssignItem.sales_order_item
+
+    inner join      ZR_TBC1006               as _AssignPlant on _AssignPlant.Plant = _MfgOrder.ProductionPlant
+    inner join      ZC_BusinessUserEmail     as _User        on  _User.Email  = _AssignPlant.Mail
+                                                             and _User.UserID = $session.user
 
   association [1..1] to ZR_MFGORDERASSIGNSOITEM_SUMMFG as _SumAssignQty on  $projection.ProductionPlant    = _SumAssignQty.Plant
                                                                         and $projection.ManufacturingOrder = _SumAssignQty.ManufacturingOrder

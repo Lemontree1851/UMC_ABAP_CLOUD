@@ -36,6 +36,7 @@ define view ZC_POMM01
 
       l.SupplierConfirmationExtNumber,
       l.OrderQuantityUnit,
+      l.MRPRelevantQuantity,
       @Semantics.quantity.unitOfMeasure: 'OrderQuantityUnit'
       l.ConfirmedQuantity,
       a.PurchaseOrderType,
@@ -46,11 +47,15 @@ define view ZC_POMM01
       a.PurchasingOrganization,
       a.CreatedByUser,
       a.CorrespncInternalReference,
+
+      case when a.CorrespncExternalReference = ''  then ''
+      else concat(a.CorrespncExternalReference,b.PurchaseOrderItem)   end as CorrespncExternalReference,
       b.Material,
       b.PurchaseOrderItemText,
       b.ManufacturerMaterial,
       b.ManufacturerPartNmbr,
       b.Manufacturer,
+      b.AccountAssignmentCategory,
       c.SupplierName                              as SupplierName2,
       b.PlannedDeliveryDurationInDays,
       b.GoodsReceiptDurationInDays,
@@ -83,6 +88,7 @@ define view ZC_POMM01
       h.StorageLocationName,
       i.ProductionMemoPageFormat,
       i.ProductionOrInspectionMemoTxt,
+      i.YY1_BPCODE_PRD_PRD,
       //  j.SupplierRespSalesPersonName,
       k.BaseUnit,
       @Semantics.quantity.unitOfMeasure: 'BaseUnit'

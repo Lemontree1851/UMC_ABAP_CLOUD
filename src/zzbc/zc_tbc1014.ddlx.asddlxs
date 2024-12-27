@@ -36,13 +36,13 @@ annotate view ZC_TBC1014 with
   @EndUserText.label: 'Application Id'
   FunctionId;
 
-  @UI.lineItem: [{ position: 20, cssDefault.width: '15rem' }]
+  @UI.lineItem: [{ position: 20, cssDefault.width: '20rem' }]
   @UI.selectionField: [{ position: 20 }]
   @UI.identification: [ { position: 20 } ]
   @EndUserText.label: 'Application Name'
   FunctionName;
 
-  @UI.lineItem: [{ position: 30 }]
+  @UI.lineItem: [{ position: 30, cssDefault.width: '15rem' }]
   @UI.selectionField: [{ position: 30 }]
   @UI.identification: [ { position: 30 } ]
   @EndUserText.label: 'Design File Id'

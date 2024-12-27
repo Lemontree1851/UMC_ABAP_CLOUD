@@ -33,7 +33,7 @@ CLASS zcl_http_usap_001 DEFINITION
         stocktype                    TYPE c LENGTH 2,
         inventoryspecialstocktype    TYPE c LENGTH 1,
         split                        TYPE c LENGTH 1,
-        vmi_flag                     TYPE c LENGTH 1,
+        vmiflag                      TYPE c LENGTH 1,
         mrno                         TYPE c LENGTH 15,
         mritemno                     TYPE c LENGTH 4,
         remark                       TYPE c LENGTH 50,
@@ -344,7 +344,7 @@ CLASS zcl_http_usap_001 IMPLEMENTATION.
         CLEAR: ls_response.
       ENDIF.
       "VMI update
-      IF cs_create-vmi_flag = 'X'.
+      IF cs_create-vmiflag = 'X'.
         GET TIME STAMP FIELD lv_timestamp.
         ls_ztmm_1010-uuid = cs_create-uwmskey.
         ls_ztmm_1010-material = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = 'IN' iv_input = cs_create-material ).
@@ -362,7 +362,7 @@ CLASS zcl_http_usap_001 IMPLEMENTATION.
         ls_ztmm_1010-postingdate = cs_create-postingdate.
         ls_ztmm_1010-created_at = lv_timestamp.
         ls_ztmm_1010-created_by = sy-uname.
-        INSERT ztmm_1010 FROM @ls_ztmm_1010.
+        MODIFY ztmm_1010 FROM @ls_ztmm_1010.
         IF sy-subrc <> 0.
           ROLLBACK WORK.
         ELSE.
@@ -413,8 +413,12 @@ CLASS zcl_http_usap_001 IMPLEMENTATION.
 
     DATA:
       lt_ztmm_usap TYPE STANDARD TABLE OF ztmm_1003,
-      ls_ztmm_usap TYPE ztmm_1003.
+      ls_ztmm_usap TYPE ztmm_1003,
+      lt_ztmm_1010 TYPE STANDARD TABLE OF ztmm_1010,
+      ls_ztmm_1010 TYPE ztmm_1010.
 
+    DATA:
+      lv_timestamp TYPE timestamp.
 
     DATA(lv_req_body) = request->get_text( ).
     IF sy-subrc <> 0.
@@ -476,6 +480,33 @@ CLASS zcl_http_usap_001 IMPLEMENTATION.
 
             APPEND ls_response TO es_response-items.
             CLEAR: ls_response.
+
+            "VMI update
+            IF ls_create-vmiflag = 'X'.
+              GET TIME STAMP FIELD lv_timestamp.
+              ls_ztmm_1010-uuid = ls_create-uwmskey.
+              ls_ztmm_1010-material = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = 'IN' iv_input = ls_create-material ).
+              ls_ztmm_1010-quantity = ls_create-quantityinentryunit.
+              TRY.
+                  ls_ztmm_1010-unit = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = 'IN'
+                                                                                     iv_input = ls_create-entryunit ).
+                CATCH zzcx_custom_exception INTO lo_root_exc.
+                  ls_ztmm_1010-unit = ls_create-entryunit.
+              ENDTRY.
+              ls_ztmm_1010-plant = ls_create-plant.
+              ls_ztmm_1010-storagelocation = ls_create-storagelocation.
+              ls_ztmm_1010-customer = |{ ls_create-customer ALPHA = IN }|.
+              ls_ztmm_1010-documentdate = ls_create-documentdate.
+              ls_ztmm_1010-postingdate = ls_create-postingdate.
+              ls_ztmm_1010-last_changed_at = lv_timestamp.
+              ls_ztmm_1010-last_changed_by = sy-uname.
+              MODIFY ztmm_1010 FROM @ls_ztmm_1010.
+              IF sy-subrc <> 0.
+                ROLLBACK WORK.
+              ELSE.
+                COMMIT WORK AND WAIT.
+              ENDIF.
+            ENDIF.
             CONTINUE.
 
           ELSE.

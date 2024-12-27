@@ -7,7 +7,7 @@ persistent table ztpp_1008
 draft table ztpp_1008_d
 etag master LocalLastChangedAt
 lock master total etag LastChangedAt
-authorization master ( global )
+authorization master ( global, instance )
 
 {
 

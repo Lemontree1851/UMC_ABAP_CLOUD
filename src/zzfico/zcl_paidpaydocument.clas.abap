@@ -24,17 +24,21 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
       END OF ts_mrp.
 
     DATA:
-      lt_output TYPE STANDARD TABLE OF zr_paidpaydocument,
-      ls_output TYPE zr_paidpaydocument,
-      lt_mrp    TYPE STANDARD TABLE OF ts_mrp,
-      ls_mrp    TYPE ts_mrp,
-      lt_1013   TYPE STANDARD TABLE OF ztfi_1013,
-      ls_1013   TYPE ztfi_1013,
+      lt_output       TYPE STANDARD TABLE OF zr_paidpaydocument,
+      ls_output       TYPE zr_paidpaydocument,
+      lt_mrp          TYPE STANDARD TABLE OF ts_mrp,
+      ls_mrp          TYPE ts_mrp,
+      lt_1013         TYPE STANDARD TABLE OF ztfi_1013,
+      ls_1013         TYPE ztfi_1013,
 
-      lr_sort   TYPE RANGE OF i_businesspartner-searchterm2,
-      lrs_sort  LIKE LINE OF lr_sort,
-      lr_plant  TYPE RANGE OF werks_d,
-      lrs_plant LIKE LINE OF lr_plant.
+      lr_sort         TYPE RANGE OF i_businesspartner-searchterm2,
+      lrs_sort        LIKE LINE OF lr_sort,
+      lr_plant        TYPE RANGE OF werks_d,
+      lrs_plant       LIKE LINE OF lr_plant,
+      lr_blart_kunnr  TYPE RANGE OF blart,
+      lrs_blart_kunnr LIKE LINE OF lr_blart_kunnr,
+      lr_blart_lifnr  TYPE RANGE OF blart,
+      lrs_blart_lifnr LIKE LINE OF lr_blart_lifnr.
 
     DATA:
       lv_amount(9)        TYPE p DECIMALS 2,
@@ -220,9 +224,30 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
            WHERE fiscalyearvariant = 'V3'
              AND fiscalyearperiod = @lv_fiscalyearperiod
             INTO @DATA(ls_v3).
-*          lv_year = ls_v3-fiscalperiodstartdate+0(4).
-*          lv_month = ls_v3-fiscalperiodstartdate+4(2).
         ENDIF.
+
+        SELECT *
+          FROM ztbc_1001
+         WHERE ( zid = 'ZFI008' OR zid = 'ZFI009' )
+           AND zvalue1 = @lv_bukrs
+          INTO TABLE @DATA(lt_1001).
+        LOOP AT lt_1001 INTO DATA(ls_1001).
+          IF ls_1001-zid = 'ZFI008'.  "customer
+            lrs_blart_kunnr-sign = 'I'.
+            lrs_blart_kunnr-option = 'EQ'.
+            lrs_blart_kunnr-low = ls_1001-zvalue2.
+            APPEND lrs_blart_kunnr TO lr_blart_kunnr.
+            CLEAR: lrs_blart_kunnr.
+          ENDIF.
+
+          IF ls_1001-zid = 'ZFI009'.  "supplier
+            lrs_blart_lifnr-sign = 'I'.
+            lrs_blart_lifnr-option = 'EQ'.
+            lrs_blart_lifnr-low = ls_1001-zvalue2.
+            APPEND lrs_blart_lifnr TO lr_blart_lifnr.
+            CLEAR: lrs_blart_lifnr.
+          ENDIF.
+        ENDLOOP.
 
         IF lt_kunnr IS NOT INITIAL.
 * 売掛金の金額
@@ -243,9 +268,7 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
             FOR ALL ENTRIES IN @lt_kunnr
            WHERE sourceledger = '0L'
              AND companycode = @lv_bukrs
-             AND ( AccountingDocumentType = 'DR'
-                OR AccountingDocumentType = 'RV'
-                OR AccountingDocumentType = 'DZ' )
+             AND accountingdocumenttype IN @lr_blart_kunnr
              AND ( ( fiscalyear = @lv_gjahr AND fiscalperiod <= @lv_monat )
                  OR fiscalyear < @lv_gjahr )
              AND ledger = '0L'
@@ -269,7 +292,7 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
             FOR ALL ENTRIES IN @lt_lifnr
            WHERE sourceledger = '0L'
              AND companycode = @lv_bukrs
-             AND AccountingDocumentType = 'RE'
+             AND accountingdocumenttype IN @lr_blart_lifnr
              AND ( ( fiscalyear = @lv_gjahr AND fiscalperiod <= @lv_monat )
                  OR fiscalyear < @lv_gjahr )
              AND ledger = '0L'

@@ -9,15 +9,12 @@ CLASS zcl_query_productionorder DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_QUERY_PRODUCTIONORDER IMPLEMENTATION.
-
-
+CLASS zcl_query_productionorder IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
 
     DATA:
       lt_data                     TYPE STANDARD TABLE OF zc_productionorder,
+      lr_user_plant               TYPE RANGE OF zc_productionorder-plant,
       lr_plant                    TYPE RANGE OF zc_productionorder-plant,
       lr_mrpcontroller            TYPE RANGE OF zc_productionorder-mrpcontroller,
       lr_productionsupervisor     TYPE RANGE OF zc_productionorder-productionsupervisor,
@@ -91,6 +88,11 @@ CLASS ZCL_QUERY_PRODUCTIONORDER IMPLEMENTATION.
         ENDLOOP.
       ENDLOOP.
 
+      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+      DATA(lv_user_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+      SPLIT lv_user_plant AT '&' INTO TABLE DATA(lt_user_plant).
+      lr_user_plant = VALUE #( FOR plant IN lt_user_plant ( sign = 'I' option = 'EQ' low = plant ) ).
+
       "Obtain data of manufacturing order item
       SELECT a~manufacturingorder,
              a~productionplant AS plant,
@@ -127,7 +129,14 @@ CLASS ZCL_QUERY_PRODUCTIONORDER IMPLEMENTATION.
          AND a~mrpcontroller IN @lr_mrpcontroller
          AND a~productionsupervisor IN @lr_productionsupervisor
         INTO TABLE @DATA(lt_manufacturingorderitem).
-      IF sy-subrc = 0.
+
+      IF lr_user_plant IS INITIAL.
+        CLEAR lt_manufacturingorderitem.
+      ELSE.
+        DELETE lt_manufacturingorderitem WHERE plant NOT IN lr_user_plant.
+      ENDIF.
+
+      IF lt_manufacturingorderitem IS NOT INITIAL.
         "Obtain data of allocation relationship between production order and so
         SELECT plant,
                manufacturing_order,

@@ -58,6 +58,7 @@ FUNCTION zzfm_dtimp_tbc1011.
     lc_updateflag_insert TYPE string VALUE 'I',
     lc_updateflag_update TYPE string VALUE 'U',
     lc_updateflag_delete TYPE string VALUE 'D',
+    lc_splituser         TYPE string VALUE '@',
     lc_splitflag         TYPE string VALUE '、'.
 
   CREATE DATA eo_data TYPE TABLE OF (iv_struc).
@@ -68,7 +69,7 @@ FUNCTION zzfm_dtimp_tbc1011.
 
     CLEAR ls_data.
     ls_data-updateflag              = <line>-('updateflag').
-    ls_data-user_id                 = <line>-('user_id').
+    ls_data-user_name               = <line>-('user_name').
     ls_data-mail                    = <line>-('mail').
     ls_data-department              = <line>-('department').
     ls_data-plant                   = <line>-('plant').
@@ -117,17 +118,19 @@ FUNCTION zzfm_dtimp_tbc1011.
 *     Insert user data
       IF ls_ztbc_1004 IS INITIAL.
 
-        "Check user id
-        IF ls_data-user_id IS INITIAL.
+        "Check user_name
+        IF ls_data-user_name IS INITIAL.
           MESSAGE e006(zbc_001) WITH TEXT-002 INTO <line>-('Message').
           <line>-('Type')    = 'E'.
           CONTINUE.
         ENDIF.
 
-        ls_ztbc_1004-user_id    = ls_data-user_id.
+        SPLIT ls_data-mail AT lc_splituser
+         INTO ls_ztbc_1004-user_id DATA(lv_dumy).
+        "ls_ztbc_1004-user_id    = ls_data-user_name.
         ls_ztbc_1004-mail       = ls_data-mail.
         ls_ztbc_1004-department = ls_data-department .
-        ls_ztbc_1004-user_name  = ls_data-user_id.
+        ls_ztbc_1004-user_name  = ls_data-user_name.
 
         ls_ztbc_1004-created_by = sy-uname.
         GET TIME STAMP FIELD ls_ztbc_1004-created_at.
@@ -484,15 +487,15 @@ FUNCTION zzfm_dtimp_tbc1011.
 
 *     Update user data
       IF ls_ztbc_1004 IS INITIAL.
-        MESSAGE e007(zbc_001) WITH TEXT-002 ls_data-user_id INTO <line>-('Message').
+        MESSAGE e007(zbc_001) WITH TEXT-002 ls_data-user_name INTO <line>-('Message').
         <line>-('Type')    = 'E'.
         CONTINUE.
       ENDIF.
 
-      IF ls_data-user_id IS NOT INITIAL OR ls_data-department IS NOT INITIAL.
+      IF ls_data-user_name IS NOT INITIAL OR ls_data-department IS NOT INITIAL.
 
-        IF ls_data-user_id IS NOT INITIAL.
-          ls_ztbc_1004-user_id = ls_data-user_id.
+        IF ls_data-user_name IS NOT INITIAL.
+          ls_ztbc_1004-user_name = ls_data-user_name.
         ENDIF.
 
         IF ls_data-department IS NOT INITIAL.

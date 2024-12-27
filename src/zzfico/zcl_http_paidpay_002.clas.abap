@@ -5,16 +5,17 @@ CLASS zcl_http_paidpay_002 DEFINITION
   PUBLIC SECTION.
     TYPES:
       BEGIN OF ts_item1,
-        companycode TYPE string,
-        fiscalyear  TYPE string,
-        period      TYPE string,
-        postingdate TYPE string,
-        customer    TYPE string,
-        supplier    TYPE string,
-        currency    TYPE string,
-        ztype       TYPE string,
-        ap          TYPE string,
-        ar          TYPE string,
+        companycode  TYPE string,
+        fiscalyear   TYPE string,
+        period       TYPE string,
+        postingdate1 TYPE string,
+        postingdate2 TYPE string,
+        customer     TYPE string,
+        supplier     TYPE string,
+        currency     TYPE string,
+        ztype        TYPE string,
+        ap           TYPE string,
+        ar           TYPE string,
       END OF ts_item1,
 
       tt_item1 TYPE STANDARD TABLE OF ts_item1 WITH DEFAULT KEY,
@@ -162,8 +163,8 @@ CLASS zcl_http_paidpay_002 IMPLEMENTATION.
 
         ls_deep-%param-companycode = ls_create-companycode.
         ls_deep-%param-accountingdocumenttype = 'Z2'.
-        ls_deep-%param-documentdate = ls_create-postingdate.
-        ls_deep-%param-postingdate = ls_create-postingdate.
+        ls_deep-%param-documentdate = ls_create-postingdate1.
+        ls_deep-%param-postingdate = ls_create-postingdate1.
         ls_deep-%param-createdbyuser = sy-uname.
 
         ls_deep-%param-_apitems =
@@ -195,8 +196,8 @@ CLASS zcl_http_paidpay_002 IMPLEMENTATION.
 
           ls_deep-%param-companycode = ls_create-companycode.
           ls_deep-%param-accountingdocumenttype = 'Z2'.
-          ls_deep-%param-documentdate = ls_create-postingdate.
-          ls_deep-%param-postingdate = ls_create-postingdate.
+          ls_deep-%param-documentdate = ls_create-postingdate1.
+          ls_deep-%param-postingdate = ls_create-postingdate1.
           ls_deep-%param-createdbyuser = sy-uname.
           ls_deep-%param-_aritems =
             VALUE #(
@@ -232,8 +233,8 @@ CLASS zcl_http_paidpay_002 IMPLEMENTATION.
 
         ls_deep-%param-companycode = ls_create-companycode.
         ls_deep-%param-accountingdocumenttype = 'Z2'.
-        ls_deep-%param-documentdate = ls_create-postingdate.
-        ls_deep-%param-postingdate = ls_create-postingdate.
+        ls_deep-%param-documentdate = ls_create-postingdate2.
+        ls_deep-%param-postingdate = ls_create-postingdate2.
         ls_deep-%param-createdbyuser = sy-uname.
         ls_deep-%param-_apitems =
           VALUE #(
@@ -262,8 +263,8 @@ CLASS zcl_http_paidpay_002 IMPLEMENTATION.
 
           ls_deep-%param-companycode = ls_create-companycode.
           ls_deep-%param-accountingdocumenttype = 'Z2'.
-          ls_deep-%param-documentdate = ls_create-postingdate.
-          ls_deep-%param-postingdate = ls_create-postingdate.
+          ls_deep-%param-documentdate = ls_create-postingdate2.
+          ls_deep-%param-postingdate = ls_create-postingdate2.
           ls_deep-%param-createdbyuser = sy-uname.
           ls_deep-%param-_apitems =
             VALUE #(

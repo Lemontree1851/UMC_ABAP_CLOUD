@@ -64,6 +64,8 @@ etag master LocalLastChangedAt
 
   field ( mandatory ) AccessId;
 
+  validation validateAccessId on save ##NOT_ASSIGNED_TO_DETACT { field AccessId; create; update; }
+
   association _Function { with draft; }
 
   mapping for ztbc_1015

@@ -108,11 +108,11 @@ CLASS lhc_sourcelist IMPLEMENTATION.
     DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
     DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<ls_data>).
-*      IF NOT lv_plant CS <ls_data>-plant.
-*        lv_status = 'E'.
-*        <ls_data>-status = 'E'.
-*        MESSAGE e027(zbc_001) WITH <ls_data>-plant INTO <ls_data>-message.
-*      ENDIF.
+      IF NOT lv_plant CS <ls_data>-plant.
+        lv_status = 'E'.
+        <ls_data>-status = 'E'.
+        MESSAGE e027(zbc_001) WITH <ls_data>-plant INTO <ls_data>-message.
+      ENDIF.
     ENDLOOP.
     IF lv_status = 'E'.
       RETURN.

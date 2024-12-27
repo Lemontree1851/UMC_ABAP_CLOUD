@@ -67,6 +67,8 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
     DATA: ls_request  TYPE ty_request,
           lt_response TYPE TABLE OF ty_salesorderlist.
 
+    DATA: lr_plant TYPE RANGE OF i_plant-plant.
+
     CHECK keys IS NOT INITIAL.
     xco_cp_json=>data->from_string( keys[ 1 ]-%param-zzkey )->apply( VALUE #(
       ( xco_cp_json=>transformation->pascal_case_to_underscore )
@@ -78,6 +80,7 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
              soitem~salesdocumentitem AS sales_order_item,
              soitem~salesdocumentitem AS sales_order_item_i,
              soitem~material,
+             soitem~plant,
              soitem~requestedquantityinbaseunit,
              soitem~baseunit AS base_unit,
              soitem~purchaseorderbycustomer AS purchase_order_by_customer,
@@ -95,10 +98,24 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
         LEFT OUTER JOIN zr_mfgorderassignsoitem_sumso WITH PRIVILEGED ACCESS
                      AS sum ON  sum~salesorder = soitem~salesdocument
                             AND sum~salesorderitem = soitem~salesdocumentitem
-       WHERE soitem~material = @ls_request-material
+       WHERE soitem~plant = @ls_request-production_plant
+         AND soitem~material = @ls_request-material
          AND soitem~salesdocumentrjcnreason <> 'C'
          AND soitem~deliverystatus <> 'C'
         INTO CORRESPONDING FIELDS OF TABLE @lt_response.
+
+*&--Authorization Check
+      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+      DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+      IF lv_plant IS INITIAL.
+        CLEAR lt_response.
+      ELSE.
+        SPLIT lv_plant AT '&' INTO TABLE DATA(lt_plant_check).
+        CLEAR lr_plant.
+        lr_plant = VALUE #( FOR plant IN lt_plant_check ( sign = 'I' option = 'EQ' low = plant ) ).
+        DELETE lt_response WHERE plant NOT IN lr_plant.
+      ENDIF.
+*&--Authorization Check
 
       DELETE lt_response WHERE un_assign_qty IS INITIAL.
       SORT lt_response BY requested_delivery_date sales_order sales_order_item.

@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
+CLASS zcl_http_confirmmfgord_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -77,6 +77,7 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
         _confirmation_text           TYPE string,
         _work_center                 TYPE string,
         _sequence                    TYPE string,
+        _final_confirmation_type     TYPE string,
         apiconfhasnogoodsmovements   TYPE string,
       END OF ty_req_api,
 
@@ -99,37 +100,38 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
       END OF ty_res_api.
 
     DATA:
-      lo_root_exc  TYPE REF TO cx_root,
-      lt_ztpp_1004 TYPE STANDARD TABLE OF ztpp_1004,
-      lt_ztpp_1005 TYPE STANDARD TABLE OF ztpp_1005,
-      ls_ztpp_1004 TYPE ztpp_1004,
-      ls_ztpp_1005 TYPE ztpp_1005,
-      ls_req       TYPE ty_req,
-      ls_res       TYPE ty_res,
-      ls_req_api   TYPE ty_req_api,
-      ls_res_api   TYPE ty_res_api,
-      lv_path      TYPE string,
-      lv_monat     TYPE monat,
+      lo_root_exc           TYPE REF TO cx_root,
+      lt_ztpp_1004          TYPE STANDARD TABLE OF ztpp_1004,
+      lt_ztpp_1005          TYPE STANDARD TABLE OF ztpp_1005,
+      ls_ztpp_1004          TYPE ztpp_1004,
+      ls_ztpp_1005          TYPE ztpp_1005,
+      ls_req                TYPE ty_req,
+      ls_res                TYPE ty_res,
+      ls_req_api            TYPE ty_req_api,
+      ls_res_api            TYPE ty_res_api,
+      lv_path               TYPE string,
+      lv_monat              TYPE monat,
       lv_previous_processed TYPE ztpp_1004-messagetype,
-      ls_error     TYPE zzcl_odata_utils=>gty_error.
+      ls_error              TYPE zzcl_odata_utils=>gty_error.
 
     CONSTANTS:
-      lc_msgid         TYPE string     VALUE 'ZPP_001',
-      lc_msgty         TYPE string     VALUE 'E',
-      lc_msgty_s       TYPE string     VALUE 'S',
-      lc_msgty_w       TYPE string     VALUE 'W',
-      lc_stat_code_201 TYPE string     VALUE '201',
-      lc_stat_code_500 TYPE string     VALUE '500',
-      lc_alpha_in      TYPE string     VALUE 'IN',
-      lc_updateflag_i  TYPE string     VALUE 'I',
-      lc_updateflag_c  TYPE string     VALUE 'C',
-      lc_sequence_0    TYPE string     VALUE '0',
-      lc_count_10      TYPE i          VALUE '10',
-      lc_second_in_ms  TYPE i          VALUE '1000',
-      lc_pgmid         TYPE string     VALUE 'ZCL_HTTP_CONFIRMMFGORD_001',
-      lc_hour_08       TYPE n LENGTH 2 VALUE '08',
-      lc_minute_00     TYPE n LENGTH 2 VALUE '00',
-      lc_second_00     TYPE n LENGTH 2 VALUE '00'.
+      lc_msgid           TYPE string     VALUE 'ZPP_001',
+      lc_msgty           TYPE string     VALUE 'E',
+      lc_msgty_s         TYPE string     VALUE 'S',
+      lc_msgty_w         TYPE string     VALUE 'W',
+      lc_stat_code_201   TYPE string     VALUE '201',
+      lc_stat_code_500   TYPE string     VALUE '500',
+      lc_alpha_in        TYPE string     VALUE 'IN',
+      lc_updateflag_i    TYPE string     VALUE 'I',
+      lc_updateflag_c    TYPE string     VALUE 'C',
+      lc_sequence_0      TYPE string     VALUE '0',
+      lc_finalconftype_1 TYPE string     VALUE '1',
+      lc_count_10        TYPE i          VALUE '10',
+      lc_second_in_ms    TYPE i          VALUE '1000',
+      lc_pgmid           TYPE string     VALUE 'ZCL_HTTP_CONFIRMMFGORD_001',
+      lc_hour_08         TYPE n LENGTH 2 VALUE '08',
+      lc_minute_00       TYPE n LENGTH 2 VALUE '00',
+      lc_second_00       TYPE n LENGTH 2 VALUE '00'.
 
     "Obtain request data
     DATA(lv_req_body) = request->get_text( ).
@@ -296,9 +298,9 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
 
         "Check confirmation text of input parameter must be valuable
         "IF ls_ztpp_1004-confirmationtext IS INITIAL.
-          "確認テキストを送信していください！
-          "MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 046 INTO ls_res-_msg.
-          "RAISE EXCEPTION TYPE cx_abap_api_state.
+        "確認テキストを送信していください！
+        "MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 046 INTO ls_res-_msg.
+        "RAISE EXCEPTION TYPE cx_abap_api_state.
         "ENDIF.
 
         "Check plant of input parameter must be existent
@@ -342,10 +344,10 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
             ev_period = DATA(lv_fiscal_period) ).
         lv_monat = lv_fiscal_period+1(2).
         SELECT COUNT(*)
-          FROM I_CompanyCodePeriod WITH PRIVILEGED ACCESS
-         WHERE CompanyCode = @ls_ztpp_1004-plant
-           AND ( ( FiscalMonthCurrentPeriod  = @lv_monat AND ProductCurrentFiscalYear     = @lv_fiscal_year )
-              OR ( FiscalMonthPreviousPeriod = @lv_monat AND ProdPreviousPeriodFiscalYear = @lv_fiscal_year ) ).
+          FROM i_companycodeperiod WITH PRIVILEGED ACCESS
+         WHERE companycode = @ls_ztpp_1004-plant
+           AND ( ( fiscalmonthcurrentperiod  = @lv_monat AND productcurrentfiscalyear     = @lv_fiscal_year )
+              OR ( fiscalmonthpreviousperiod = @lv_monat AND prodpreviousperiodfiscalyear = @lv_fiscal_year ) ).
         IF sy-subrc <> 0.
           "記日付とS4HCの会計期間をチェックしてください！
           MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 109 INTO ls_res-_msg.
@@ -390,7 +392,7 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
         ls_res-_data-_u_m_e_s_i_d = ls_ztpp_1004-umesid.
 
         IF lv_previous_processed = lc_msgty_w.
-          READ TABLE lt_ztpp_1004_i INTO DATA(ls_ztpp_1004_i) iNDEX 1.
+          READ TABLE lt_ztpp_1004_i INTO DATA(ls_ztpp_1004_i) INDEX 1.
           ls_res-_data-_mfg_order_confirmation_group = |{ ls_ztpp_1004_i-mfgorderconfirmationgroup ALPHA = OUT }|.
           ls_res-_data-_mfg_order_confirmation       = |{ ls_ztpp_1004_i-mfgorderconfirmation ALPHA = OUT }|.
           CONDENSE ls_res-_data-_mfg_order_confirmation_group NO-GAPS.
@@ -400,68 +402,69 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
           ls_res-_msgty = lv_previous_processed.
         ELSE.
 
-        "/API_PROD_ORDER_CONFIRMATION_2_SRV/ProdnOrdConf2
-        lv_path = '/API_PROD_ORDER_CONFIRMATION_2_SRV/ProdnOrdConf2'.
+          "/API_PROD_ORDER_CONFIRMATION_2_SRV/ProdnOrdConf2
+          lv_path = '/API_PROD_ORDER_CONFIRMATION_2_SRV/ProdnOrdConf2'.
 
-        MOVE-CORRESPONDING ls_req TO ls_req_api.
-        DATA(lv_timestamp) = xco_cp_time=>moment( iv_year   = CONV #( ls_req-_posting_date+0(4) )
-                                                  iv_month  = CONV #( ls_req-_posting_date+4(2) )
-                                                  iv_day    = CONV #( ls_req-_posting_date+6(2) )
-                                                  iv_hour   = lc_hour_08
-                                                  iv_minute = lc_minute_00
-                                                  iv_second = lc_second_00
-                                                )->get_unix_timestamp( )->value * lc_second_in_ms.
+          MOVE-CORRESPONDING ls_req TO ls_req_api.
+          DATA(lv_timestamp) = xco_cp_time=>moment( iv_year   = CONV #( ls_req-_posting_date+0(4) )
+                                                    iv_month  = CONV #( ls_req-_posting_date+4(2) )
+                                                    iv_day    = CONV #( ls_req-_posting_date+6(2) )
+                                                    iv_hour   = lc_hour_08
+                                                    iv_minute = lc_minute_00
+                                                    iv_second = lc_second_00
+                                                  )->get_unix_timestamp( )->value * lc_second_in_ms.
 
-        ls_req_api-_posting_date              = |/Date({ lv_timestamp })/|.
-        ls_req_api-_order_i_d                 = ls_req-_manufacturing_order.
-        ls_req_api-_order_operation           = ls_req-_manufacturingorderoperation2.
-        ls_req_api-apiconfhasnogoodsmovements = abap_false.
-        ls_req_api-_sequence                  = lc_sequence_0.
+          ls_req_api-_posting_date              = |/Date({ lv_timestamp })/|.
+          ls_req_api-_order_i_d                 = ls_req-_manufacturing_order.
+          ls_req_api-_order_operation           = ls_req-_manufacturingorderoperation2.
+          ls_req_api-apiconfhasnogoodsmovements = abap_false.
+          ls_req_api-_sequence                  = lc_sequence_0.
+          ls_req_api-_final_confirmation_type   = lc_finalconftype_1.
 
-        DATA(lv_reqbody_api) = /ui2/cl_json=>serialize( data = ls_req_api
-                                                        compress = 'X'
-                                                        pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+          DATA(lv_reqbody_api) = /ui2/cl_json=>serialize( data = ls_req_api
+                                                          compress = 'X'
+                                                          pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
 
-        REPLACE ALL OCCURRENCES OF 'apiconfhasnogoodsmovements' IN lv_reqbody_api WITH 'APIConfHasNoGoodsMovements'.
+          REPLACE ALL OCCURRENCES OF 'apiconfhasnogoodsmovements' IN lv_reqbody_api WITH 'APIConfHasNoGoodsMovements'.
 
-        "Call API of canceling manufacturing order confirmation
-        zzcl_common_utils=>request_api_v2(
-          EXPORTING
-            iv_path        = lv_path
-            iv_method      = if_web_http_client=>post
-            iv_body        = lv_reqbody_api
-          IMPORTING
-            ev_status_code = DATA(lv_stat_code)
-            ev_response    = DATA(lv_resbody_api) ).
+          "Call API of canceling manufacturing order confirmation
+          zzcl_common_utils=>request_api_v2(
+            EXPORTING
+              iv_path        = lv_path
+              iv_method      = if_web_http_client=>post
+              iv_body        = lv_reqbody_api
+            IMPORTING
+              ev_status_code = DATA(lv_stat_code)
+              ev_response    = DATA(lv_resbody_api) ).
 
-        "Could not fetch SCRF token
-        IF lv_stat_code = lc_stat_code_500.
-          ls_res-_msg = lv_resbody_api.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
+          "Could not fetch SCRF token
+          IF lv_stat_code = lc_stat_code_500.
+            ls_res-_msg = lv_resbody_api.
+            RAISE EXCEPTION TYPE cx_abap_api_state.
+          ENDIF.
 
-        IF lv_stat_code = lc_stat_code_201.
-          "JSON->ABAP
-          xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
-              ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_res_api ) ).
-          "ls_res-_data-_mfg_order_confirmation_group = ls_res_api-d-confirmation_group.
-          "ls_res-_data-_mfg_order_confirmation       = ls_res_api-d-confirmation_count.
-          ls_res-_data-_mfg_order_confirmation_group = |{ ls_res_api-d-confirmation_group ALPHA = OUT }|.
-          ls_res-_data-_mfg_order_confirmation       = |{ ls_res_api-d-confirmation_count ALPHA = OUT }|.
-          CONDENSE ls_res-_data-_mfg_order_confirmation_group NO-GAPS.
-          CONDENSE ls_res-_data-_mfg_order_confirmation NO-GAPS.
-          "作業実績確認は成功しました！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 048 INTO ls_res-_msg.
-          ls_res-_msgty = 'S'.
-        ELSE.
-          "作業実績確認が失敗しました：
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 049 INTO ls_res-_msg.
-          /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
-                                     CHANGING  data = ls_error ).
-          "ls_res-_msg = ls_res-_msg && ls_res_api-error-message-value.
-          ls_res-_msg = ls_res-_msg && ls_error-error-message-value.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
+          IF lv_stat_code = lc_stat_code_201.
+            "JSON->ABAP
+            xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
+                ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_res_api ) ).
+            "ls_res-_data-_mfg_order_confirmation_group = ls_res_api-d-confirmation_group.
+            "ls_res-_data-_mfg_order_confirmation       = ls_res_api-d-confirmation_count.
+            ls_res-_data-_mfg_order_confirmation_group = |{ ls_res_api-d-confirmation_group ALPHA = OUT }|.
+            ls_res-_data-_mfg_order_confirmation       = |{ ls_res_api-d-confirmation_count ALPHA = OUT }|.
+            CONDENSE ls_res-_data-_mfg_order_confirmation_group NO-GAPS.
+            CONDENSE ls_res-_data-_mfg_order_confirmation NO-GAPS.
+            "作業実績確認は成功しました！
+            MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 048 INTO ls_res-_msg.
+            ls_res-_msgty = 'S'.
+          ELSE.
+            "作業実績確認が失敗しました：
+            MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 049 INTO ls_res-_msg.
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+                                       CHANGING  data = ls_error ).
+            "ls_res-_msg = ls_res-_msg && ls_res_api-error-message-value.
+            ls_res-_msg = ls_res-_msg && ls_error-error-message-value.
+            RAISE EXCEPTION TYPE cx_abap_api_state.
+          ENDIF.
 
         ENDIF.
 
@@ -510,7 +513,7 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
       MODIFY ztpp_1005 FROM TABLE @lt_ztpp_1005.
     ENDIF.
 
-     "Set request data
+    "Set request data
     response->set_text( lv_res_body ).
 
   ENDMETHOD.

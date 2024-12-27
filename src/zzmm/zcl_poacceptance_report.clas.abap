@@ -163,16 +163,16 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
       INTO TABLE @DATA(lt_po).
 
 * Authorization Check
-*      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
-*      DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
-*      IF lv_plant IS INITIAL.
-*        CLEAR lt_po.
-*      ELSE.
-*        SPLIT lv_plant AT '&' INTO TABLE DATA(lt_plant_check).
-*        CLEAR lr_werks.
-*        lr_werks = VALUE #( FOR plant IN lt_plant_check ( sign = 'I' option = 'EQ' low = plant ) ).
-*        DELETE lt_po WHERE plant NOT IN lr_werks.
-*      ENDIF.
+      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+      DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+      IF lv_plant IS INITIAL.
+        CLEAR lt_po.
+      ELSE.
+        SPLIT lv_plant AT '&' INTO TABLE DATA(lt_plant_check).
+        CLEAR lr_werks.
+        lr_werks = VALUE #( FOR plant IN lt_plant_check ( sign = 'I' option = 'EQ' low = plant ) ).
+        DELETE lt_po WHERE plant NOT IN lr_werks.
+      ENDIF.
 
 
       IF lt_po IS NOT INITIAL.

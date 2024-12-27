@@ -52,15 +52,16 @@ CLASS lhc_paidpaydocument DEFINITION INHERITING FROM cl_abap_behavior_handler.
       END OF ts_output_a,
 * 買掛金/売掛金仕訳
       BEGIN OF ts_item1_b,
-        companycode TYPE string,
-        fiscalyear  TYPE string,
-        postingdate TYPE string,
-        customer    TYPE string,
-        supplier    TYPE string,
-        currency    TYPE string,
-        ztype       TYPE string,
-        ap          TYPE string,
-        ar          TYPE string,
+        companycode  TYPE string,
+        fiscalyear   TYPE string,
+        postingdate1 TYPE string,
+        postingdate2 TYPE string,
+        customer     TYPE string,
+        supplier     TYPE string,
+        currency     TYPE string,
+        ztype        TYPE string,
+        ap           TYPE string,
+        ar           TYPE string,
       END OF ts_item1_b,
       tt_item1_b TYPE STANDARD TABLE OF ts_item1_b WITH DEFAULT KEY,
 
@@ -480,7 +481,8 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
         LOOP AT ct_data INTO ls_data.
           ls_item_b-companycode = ls_data-companycode.
           ls_item_b-fiscalyear = ls_data-fiscalyear.
-          ls_item_b-postingdate = lv_postdate1.
+          ls_item_b-postingdate1 = lv_postdate1.
+          ls_item_b-postingdate2 = lv_postdate2.
           ls_item_b-customer = ls_data-customer.
           ls_item_b-supplier = ls_data-supplier.
           ls_item_b-currency = ls_data-currency.

@@ -2,7 +2,9 @@
 @UI: {
   headerInfo: {
     typeName: 'Access Button',
-    typeNamePlural: 'Access Button'
+    typeNamePlural: 'Access Button',
+    title: { type: #STANDARD , value: 'AccessId'},
+    description: { type: #STANDARD , value: 'AccessName'}
   },
   presentationVariant: [{
     sortOrder: [ { by: 'AccessId', direction: #ASC } ],

@@ -59,4 +59,7 @@ annotate entity ZC_SALESDOCUMENTLIST with
   @Consumption.filter.selectionType: #SINGLE
   Indicator6; //拒否項目の表示
 
+  @Consumption.filter.selectionType: #SINGLE
+  UserEmail; 
+  
 }

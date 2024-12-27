@@ -3,12 +3,13 @@
 define view entity ZC_PODATAANALYSIS
   as select from ZC_POMM01
 
-  association [1..1] to I_Supplier              as _Supplier       on  ZC_POMM01.Supplier = _Supplier.Supplier
-  association [0..1] to I_MRPController         as _MRPController  on  ZC_POMM01.MRPResponsible = _MRPController.MRPController
-                                                                   and ZC_POMM01.Plant          = _MRPController.Plant
-  association [0..1] to I_SupplierPurchasingOrg as _SupplierPurOrg on  ZC_POMM01.Supplier               = _SupplierPurOrg.Supplier
-                                                                   and ZC_POMM01.PurchasingOrganization = _SupplierPurOrg.PurchasingOrganization
-
+  association [1..1] to I_Supplier              as _Supplier        on  ZC_POMM01.Supplier               = _Supplier.Supplier
+  association [0..1] to I_MRPController         as _MRPController   on  ZC_POMM01.MRPResponsible         = _MRPController.MRPController
+                                                                    and ZC_POMM01.Plant                  = _MRPController.Plant
+  association [0..1] to I_SupplierPurchasingOrg as _SupplierPurOrg  on  ZC_POMM01.Supplier               = _SupplierPurOrg.Supplier
+                                                                    and ZC_POMM01.PurchasingOrganization = _SupplierPurOrg.PurchasingOrganization
+  association [0..1] to I_PurchasingGroup       as _PurchasingGroup on  ZC_POMM01.PurchasingGroup        = _PurchasingGroup.PurchasingGroup
+                                                                    
 {
   key PurchaseOrder,
   key PurchaseOrderItem,
@@ -17,6 +18,7 @@ define view entity ZC_PODATAANALYSIS
       DeliveryDate,
       SupplierConfirmationExtNumber,
       OrderQuantityUnit,
+      MRPRelevantQuantity,
       ConfirmedQuantity,
       PurchaseOrderType,
       Supplier,
@@ -26,11 +28,13 @@ define view entity ZC_PODATAANALYSIS
       PurchasingOrganization,
       CreatedByUser,
       CorrespncInternalReference,
+      CorrespncExternalReference,
       Material,
       PurchaseOrderItemText,
       ManufacturerMaterial,
       ManufacturerPartNmbr,
       Manufacturer,
+      AccountAssignmentCategory,
       SupplierName2,
       PlannedDeliveryDurationInDays,
       GoodsReceiptDurationInDays,
@@ -61,6 +65,7 @@ define view entity ZC_PODATAANALYSIS
       StorageLocationName,
       ProductionMemoPageFormat,
       ProductionOrInspectionMemoTxt,
+      YY1_BPCODE_PRD_PRD,
       BaseUnit,
       LotSizeRoundingQuantity,
       ScheduleLineDeliveryDate,
@@ -69,8 +74,10 @@ define view entity ZC_PODATAANALYSIS
       _Supplier.SupplierName as SupplierName1,
       _MRPController.MRPControllerName,
       _SupplierPurOrg.SupplierRespSalesPersonName,
+      _PurchasingGroup.PurchasingGroupName,
 
       _Supplier,
       _MRPController,
-      _SupplierPurOrg
+      _SupplierPurOrg,
+      _PurchasingGroup
 }

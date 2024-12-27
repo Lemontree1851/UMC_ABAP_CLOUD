@@ -8,7 +8,7 @@ draft table ztfi_1004_d
 
 etag master LocalLastChangedAt
 lock master total etag LastChangedAt
-authorization master ( global )
+authorization master ( global , instance)
 {
 
   field ( mandatory ) InventoryType,Ledger,CalendarYear, CalendarMonth,CompanyCode,Plant, Material, Age ;

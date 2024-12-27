@@ -11,12 +11,14 @@ CLASS lhc_zr_ledproductionversion DEFINITION INHERITING FROM cl_abap_behavior_ha
 
     METHODS:
       get_global_authorizations FOR GLOBAL AUTHORIZATION
-        IMPORTING
-        REQUEST requested_authorizations FOR ledversioninfo
-        RESULT result,
+        IMPORTING REQUEST requested_authorizations FOR ledversioninfo RESULT result,
+      get_instance_authorizations FOR INSTANCE AUTHORIZATION
+        IMPORTING keys REQUEST requested_authorizations FOR ledversioninfo RESULT result,
 
       processlogic FOR MODIFY
-        IMPORTING keys FOR ACTION ledversioninfo~processlogic RESULT result.
+        IMPORTING keys FOR ACTION ledversioninfo~processlogic RESULT result,
+      validationfields FOR VALIDATE ON SAVE
+            IMPORTING keys FOR ledversioninfo~validationfields.
 
     METHODS check  CHANGING ct_data TYPE lty_request_t.
     METHODS excute CHANGING ct_data TYPE lty_request_t.
@@ -27,6 +29,64 @@ ENDCLASS.
 CLASS lhc_zr_ledproductionversion IMPLEMENTATION.
 
   METHOD get_global_authorizations.
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_access) = zzcl_common_utils=>get_access_by_user( lv_user_email ).
+
+    IF requested_authorizations-%create = if_abap_behv=>mk-on.
+      IF lv_access CS 'zledversioninfo-Create'.
+        result-%create = if_abap_behv=>auth-allowed.
+      ELSE.
+        result-%create = if_abap_behv=>auth-unauthorized.
+        APPEND VALUE #( %msg    = new_message( id       = 'ZBC_001'
+                                               number   = 031
+                                               severity = if_abap_behv_message=>severity-error )
+                        %global = if_abap_behv=>mk-on ) TO reported-ledversioninfo.
+      ENDIF.
+    ENDIF.
+
+    IF requested_authorizations-%action-edit = if_abap_behv=>mk-on.
+      IF lv_access CS 'zledversioninfo-Edit'.
+        result-%action-edit = if_abap_behv=>auth-allowed.
+      ELSE.
+        result-%action-edit = if_abap_behv=>auth-unauthorized.
+      ENDIF.
+    ENDIF.
+
+    IF requested_authorizations-%delete = if_abap_behv=>mk-on.
+      IF lv_access CS 'zledversioninfo-Delete'.
+        result-%delete = if_abap_behv=>auth-allowed.
+      ELSE.
+        result-%delete = if_abap_behv=>auth-unauthorized.
+      ENDIF.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD get_instance_authorizations.
+    READ ENTITIES OF zr_ledproductionversion IN LOCAL MODE
+    ENTITY ledversioninfo
+    FIELDS ( plant ) WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_data).
+
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
+    LOOP AT lt_data INTO DATA(ls_data).
+      APPEND INITIAL LINE TO result ASSIGNING FIELD-SYMBOL(<lfs_result>).
+      <lfs_result>-%tky = ls_data-%tky.
+
+      IF lv_plant CS ls_data-plant.
+        <lfs_result>-%delete = if_abap_behv=>auth-allowed.
+        <lfs_result>-%action-edit = if_abap_behv=>auth-allowed.
+      ELSE.
+        <lfs_result>-%delete = if_abap_behv=>auth-unauthorized.
+        <lfs_result>-%action-edit = if_abap_behv=>auth-unauthorized.
+        APPEND VALUE #( %msg    = new_message( id       = 'ZBC_001'
+                                               number   = 027
+                                               severity = if_abap_behv_message=>severity-error
+                                               v1       = ls_data-plant )
+                        %global = if_abap_behv=>mk-on ) TO reported-ledversioninfo.
+      ENDIF.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD processlogic.
@@ -79,9 +139,17 @@ CLASS lhc_zr_ledproductionversion IMPLEMENTATION.
           lv_message  TYPE string,
           lv_msg      TYPE string.
 
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
       CLEAR: <lfs_data>-status,<lfs_data>-message.
       CLEAR: lv_message.
+
+      IF NOT lv_plant CS <lfs_data>-plant.
+        MESSAGE e027(zbc_001) WITH <lfs_data>-plant INTO lv_msg.
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+      ENDIF.
 
       DATA(lv_material) = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = <lfs_data>-material ).
       SELECT SINGLE product,
@@ -234,6 +302,30 @@ CLASS lhc_zr_ledproductionversion IMPLEMENTATION.
           " handle exception
       ENDTRY.
     ENDIF.
+  ENDMETHOD.
+
+  METHOD validationfields.
+    DATA: lv_message TYPE string.
+
+    READ ENTITIES OF zr_ledproductionversion IN LOCAL MODE
+    ENTITY ledversioninfo
+    ALL FIELDS WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result).
+
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
+    LOOP AT lt_result ASSIGNING FIELD-SYMBOL(<lfs_result>).
+      IF NOT lv_plant CS <lfs_result>-plant.
+        MESSAGE e027(zbc_001) WITH <lfs_result>-plant INTO lv_message.
+        APPEND VALUE #( %tky = <lfs_result>-%tky ) TO failed-ledversioninfo.
+        APPEND VALUE #( %tky = <lfs_result>-%tky
+                        %element-plant = if_abap_behv=>mk-on
+                        %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error
+                                                      text     = lv_message ) )
+                     TO reported-ledversioninfo.
+      ENDIF.
+    ENDLOOP.
   ENDMETHOD.
 
 ENDCLASS.

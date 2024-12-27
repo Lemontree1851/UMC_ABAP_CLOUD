@@ -20,6 +20,12 @@
      <ENTRY>Role Id</ENTRY>
      <LENGTH>50</LENGTH>
     </item>
+    <item>
+     <ID>I</ID>
+     <KEY>002</KEY>
+     <ENTRY>Access Id</ENTRY>
+     <LENGTH>50</LENGTH>
+    </item>
    </TPOOL>
    <I18N_TPOOL>
     <item>
@@ -29,6 +35,12 @@
        <ID>I</ID>
        <KEY>001</KEY>
        <ENTRY>ロール</ENTRY>
+       <LENGTH>50</LENGTH>
+      </item>
+      <item>
+       <ID>I</ID>
+       <KEY>002</KEY>
+       <ENTRY>機能権限ID</ENTRY>
        <LENGTH>50</LENGTH>
       </item>
      </TEXTPOOL>

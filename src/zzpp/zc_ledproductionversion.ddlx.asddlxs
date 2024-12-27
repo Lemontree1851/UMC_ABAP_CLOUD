@@ -17,45 +17,45 @@ annotate view ZC_LEDPRODUCTIONVERSION with
     type: #IDENTIFICATION_REFERENCE
   } ]
 
-  @UI.identification: [ { position: 10  } ]
-  @UI.lineItem: [ { position: 10  } ]
+  @UI.lineItem: [ { position: 10, cssDefault.width: '12rem'  } ]
   @UI.selectionField: [ { position: 10  } ]
+  @UI.identification: [ { position: 10  } ]
   @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
   @EndUserText.label: 'Production Material'
   Material;
 
+  @UI.lineItem: [ { position: 15, cssDefault.width: '15rem' } ]
   @UI.identification: [ { position: 15 } ]
-  @UI.lineItem: [ { position: 15 } ]
   @EndUserText.label: 'Production Material Name'
   MaterialName;
 
-  @UI.identification: [ { position: 20  } ]
   @UI.lineItem: [ { position: 20, cssDefault.width: '10rem' } ]
   @UI.selectionField: [ { position: 20  } ]
-  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Plant', element: 'Plant' } }]
+  @UI.identification: [ { position: 20  } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_PlantVH', element: 'Plant' } }]
   Plant;
 
-  @UI.identification: [ { position: 30  } ]
   @UI.lineItem: [ { position: 30, cssDefault.width: '10rem' } ]
   @UI.selectionField: [ { position: 30  } ]
+  @UI.identification: [ { position: 30  } ]
   @EndUserText.label: 'Version Info'
   VersionInfo;
 
-  @UI.identification: [ { position: 40  } ]
-  @UI.lineItem: [ { position: 40  } ]
+  @UI.lineItem: [ { position: 40, cssDefault.width: '12rem'  } ]
   @UI.selectionField: [ { position: 40  } ]
+  @UI.identification: [ { position: 40  } ]
   @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
   @EndUserText.label: 'Component'
   Component;
 
+  @UI.lineItem: [ { position: 45, cssDefault.width: '15rem' } ]
   @UI.identification: [ { position: 45 } ]
-  @UI.lineItem: [ { position: 45 } ]
   @EndUserText.label: 'Component Name'
   ComponentName;
 
-  @UI.identification: [ { position: 50  } ]
   @UI.lineItem: [ { position: 50  } ]
   @UI.selectionField: [ { position: 50  } ]
+  @UI.identification: [ { position: 50  } ]
   @EndUserText.label: 'Delete Flag'
   DeleteFlag;
 

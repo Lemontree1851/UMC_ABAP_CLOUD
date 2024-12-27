@@ -240,10 +240,10 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       ENDIF.
 
 * Authorization Check
-*      IF NOT lv_vkorg CS <lfs_data>-salesorganization.
-*        MESSAGE e027(zbc_001) WITH <lfs_data>-salesorganization INTO lv_msg.
-*        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
-*      ENDIF.
+      IF NOT lv_vkorg CS <lfs_data>-salesorganization.
+        MESSAGE e027(zbc_001) WITH <lfs_data>-salesorganization INTO lv_msg.
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+      ENDIF.
 
 * Edit output
       IF lv_message IS NOT INITIAL.

@@ -11,6 +11,8 @@ CLASS lhc_splitrule DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS get_global_authorizations FOR GLOBAL AUTHORIZATION
       IMPORTING REQUEST requested_authorizations FOR splitrule RESULT result.
+    METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
+      IMPORTING keys REQUEST requested_authorizations FOR splitrule RESULT result.
 
     METHODS processlogic FOR MODIFY
       IMPORTING keys FOR ACTION splitrule~processlogic RESULT result.
@@ -29,6 +31,54 @@ ENDCLASS.
 CLASS lhc_splitrule IMPLEMENTATION.
 
   METHOD get_global_authorizations.
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_access) = zzcl_common_utils=>get_access_by_user( lv_user_email ).
+
+    IF requested_authorizations-%create = if_abap_behv=>mk-on.
+      IF lv_access CS 'zofsplitrule-Create'.
+        result-%create = if_abap_behv=>auth-allowed.
+      ELSE.
+        result-%create = if_abap_behv=>auth-unauthorized.
+        APPEND VALUE #( %msg    = new_message( id       = 'ZBC_001'
+                                               number   = 031
+                                               severity = if_abap_behv_message=>severity-error )
+                        %global = if_abap_behv=>mk-on ) TO reported-splitrule.
+      ENDIF.
+    ENDIF.
+
+    IF requested_authorizations-%action-edit = if_abap_behv=>mk-on.
+      IF lv_access CS 'zofsplitrule-Edit'.
+        result-%action-edit = if_abap_behv=>auth-allowed.
+      ELSE.
+        result-%action-edit = if_abap_behv=>auth-unauthorized.
+      ENDIF.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD get_instance_authorizations.
+    READ ENTITIES OF zr_ofsplitrule IN LOCAL MODE
+    ENTITY splitrule
+    FIELDS ( plant ) WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_data).
+
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
+    LOOP AT lt_data INTO DATA(ls_data).
+      APPEND INITIAL LINE TO result ASSIGNING FIELD-SYMBOL(<lfs_result>).
+      <lfs_result>-%tky = ls_data-%tky.
+
+      IF lv_plant CS ls_data-plant.
+        <lfs_result>-%action-edit = if_abap_behv=>auth-allowed.
+      ELSE.
+        <lfs_result>-%action-edit = if_abap_behv=>auth-unauthorized.
+        APPEND VALUE #( %msg    = new_message( id       = 'ZBC_001'
+                                               number   = 027
+                                               severity = if_abap_behv_message=>severity-error
+                                               v1       = ls_data-plant )
+                        %global = if_abap_behv=>mk-on ) TO reported-splitrule.
+      ENDIF.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD processlogic.
@@ -81,6 +131,9 @@ CLASS lhc_splitrule IMPLEMENTATION.
           lv_message  TYPE string,
           lv_msg      TYPE string.
 
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
       CLEAR: <lfs_data>-status,<lfs_data>-message.
       CLEAR: lv_message.
@@ -109,6 +162,9 @@ CLASS lhc_splitrule IMPLEMENTATION.
 
       IF <lfs_data>-plant IS INITIAL.
         MESSAGE e010(zpp_001) WITH TEXT-002 INTO lv_msg.
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+      ELSEIF NOT lv_plant CS <lfs_data>-plant.
+        MESSAGE e027(zbc_001) WITH <lfs_data>-plant INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
       ENDIF.
 
@@ -322,7 +378,20 @@ CLASS lhc_splitrule IMPLEMENTATION.
     ALL FIELDS WITH CORRESPONDING #( keys )
     RESULT DATA(lt_result).
 
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
     LOOP AT lt_result ASSIGNING FIELD-SYMBOL(<lfs_result>).
+      IF NOT lv_plant CS <lfs_result>-plant.
+        MESSAGE e027(zbc_001) WITH <lfs_result>-plant INTO lv_message.
+        APPEND VALUE #( %tky = <lfs_result>-%tky ) TO failed-splitrule.
+        APPEND VALUE #( %tky = <lfs_result>-%tky
+                        %element-plant = if_abap_behv=>mk-on
+                        %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error
+                                                      text     = lv_message ) )
+                     TO reported-splitrule.
+      ENDIF.
+
       IF <lfs_result>-shipunit IS INITIAL.
         MESSAGE e010(zpp_001) WITH TEXT-004 INTO lv_message.
         APPEND VALUE #( %tky = <lfs_result>-%tky ) TO failed-splitrule.

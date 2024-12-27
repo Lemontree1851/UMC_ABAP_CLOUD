@@ -27,5 +27,6 @@ define root view entity ZC_TBC1001
       Zvalue9,
       Zremark,
       Zprogram,
+      Unmodifiable,
       LocalLastChangedAt
 }
