@@ -908,6 +908,8 @@ CLASS zzcl_common_utils IMPLEMENTATION.
 *        DATA(lv_text) = lx_bcs_mail->get_longtext(  ).
 *        "handle exception
 *    ENDTRY.
+
+
   ENDMETHOD.
 
 

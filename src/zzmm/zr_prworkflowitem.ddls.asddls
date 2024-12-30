@@ -43,6 +43,7 @@ define root view entity ZR_PRWORKFLOWITEM
       gl_account                             as GlAccount,
       cost_center                            as CostCenter,
       wbs_elemnt                             as WbsElemnt,
+      order_id as OrderId,
       asset_no                               as AssetNo,
       tax                                    as Tax,
       item_text                              as ItemText,

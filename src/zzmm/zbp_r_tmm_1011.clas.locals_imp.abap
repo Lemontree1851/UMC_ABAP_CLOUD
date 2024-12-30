@@ -361,8 +361,10 @@ CLASS lhc_zr_tmm_1011 IMPLEMENTATION.
 
   METHOD export.
     TYPES:BEGIN OF lty_export,
-            status                     TYPE bapi_mtype,
             message                    TYPE zze_zzkey,
+            materialdocument           TYPE mblnr,
+            materialdocumentyear       TYPE string,
+            materialdocumentitem       TYPE string,
             documentdate               TYPE c LENGTH 10,
             postingdate                TYPE c LENGTH 10,
             materialdocumentheadertext TYPE bktxt,
@@ -381,6 +383,14 @@ CLASS lhc_zr_tmm_1011 IMPLEMENTATION.
       <lfs_export> = CORRESPONDING #( ls_data ).
       <lfs_export>-documentdate = |{ <lfs_export>-documentdate+0(4) }/{ <lfs_export>-documentdate+4(2) }/{ <lfs_export>-documentdate+6(2) }|.
       <lfs_export>-postingdate   = |{ <lfs_export>-postingdate+0(4) }/{ <lfs_export>-postingdate+4(2) }/{ <lfs_export>-postingdate+6(2) }|.
+
+      IF ls_data-materialdocumentyear IS INITIAL.
+        CLEAR <lfs_export>-materialdocumentyear.
+      ENDIF.
+
+      IF ls_data-materialdocumentitem IS INITIAL.
+        CLEAR <lfs_export>-materialdocumentitem.
+      ENDIF.
     ENDLOOP.
 
     SELECT SINGLE uuidconf, object, templatecontent, startcolumn, startrow

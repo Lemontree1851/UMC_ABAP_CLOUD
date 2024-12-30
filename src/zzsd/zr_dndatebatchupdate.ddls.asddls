@@ -2,6 +2,10 @@
 @EndUserText.label: '出荷伝票外部移転の日付一括更新'
 define root view entity ZR_DNDATEBATCHUPDATE
   as select from    ZR_DNDATEBATCHUPDATE_01 as _itmes
+    inner join   ZR_TBC1006           as _AssignPlant on _AssignPlant.Plant = _itmes.Plant
+    inner join   ZR_TBC1018           as _AssignSP    on _AssignSP.ShippingPoint = _itmes.ShippingPoint
+    inner join   ZC_BusinessUserEmail as _User        on _User.Email  = _AssignPlant.Mail
+                                                     and _User.Email  = _AssignSP.Mail
     left outer join ZR_DNDATEBATCHUPDATE_01 as _check on  _check.DeliveryDocument2 is initial
                                                       and _check.DeliveryDocument3 = _itmes.DeliveryDocument
 {
@@ -48,5 +52,6 @@ define root view entity ZR_DNDATEBATCHUPDATE
         when _check.DeliveryDocument is not initial
             then ''
         else _itmes.DeliveryDocument
-      end                           as DeliveryDocument4
+      end                           as DeliveryDocument4,
+      _User.Email as UserEmail
 }

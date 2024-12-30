@@ -89,6 +89,7 @@ CLASS zcl_query_productionorder IMPLEMENTATION.
       ENDLOOP.
 
       DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+*      lv_user_email = 'xinlei.xu@sh.shin-china.com'.
       DATA(lv_user_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
       SPLIT lv_user_plant AT '&' INTO TABLE DATA(lt_user_plant).
       lr_user_plant = VALUE #( FOR plant IN lt_user_plant ( sign = 'I' option = 'EQ' low = plant ) ).

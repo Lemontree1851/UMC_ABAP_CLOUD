@@ -18,6 +18,7 @@ CLASS zzcl_wf_utils DEFINITION
                lc_polinkby_zid    TYPE string VALUE `ZMM006`,
                lc_buy_zid         TYPE string VALUE `ZMM002`,
                lc_ordertype_zid   TYPE string VALUE `ZMM003`,
+               lc_costcenter_zid  TYPE string VALUE `ZMM021`,
                lc_company_1100(4) TYPE c  VALUE `1100`,
                lc_company_1400(4) TYPE c  VALUE `1400`,
                lc_workflowid_pr   TYPE zc_wf_approvalhistory-workflowid VALUE 'purchaserequisition'.
@@ -200,50 +201,67 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
           ENDTRY.
 
         ELSEIF ls_ztmm_1006-company_code = lc_company_1400.
-
+          "get fixed cost center
           SELECT SINGLE *
-          FROM zr_prworkflow_sum
-          WHERE applydepart_sum = @ls_ztmm_1006-apply_depart
-          AND   prno_sum        = @ls_ztmm_1006-pr_no
-          INTO @DATA(ls_prworkflow_sum).
+            FROM ztbc_1001
+          WHERE  zid   = @lc_costcenter_zid
+            AND zvalue1 = @ls_ztmm_1006-cost_center
+          INTO @DATA(ls_costcenter).
+          IF sy-subrc = 0.
+            "固定成本中心忽略金额范围
 
-          DATA:lv_curr TYPE p LENGTH 16 DECIMALS 2.
-          lv_curr    = ls_prworkflow_sum-amount_sum.
-          lv_curr = zzcl_common_utils=>conversion_amount(
-                                                 iv_alpha = 'OUT'
-                                                 iv_currency = ls_prworkflow_sum-currency
-                                                 iv_input = lv_curr ).
+            SELECT SINGLE applicationid
+            FROM zc_wf_approvalpath
+           WHERE applydepart = @ls_ztmm_1006-apply_depart
+             AND knttp       = @ls_ztmm_1006-account_type
+             AND costcenter  = @ls_ztmm_1006-cost_center
+            INTO @ev_applicationid.
 
-          TRY .
-              SELECT SINGLE applicationid
-              FROM zc_wf_approvalpath
-             WHERE applydepart = @ls_ztmm_1006-apply_depart
-               AND knttp       = @ls_ztmm_1006-account_type
-               AND costcenter  = @ls_ztmm_1006-cost_center
-               AND amountfrom <= @lv_curr
-               AND amountto   >= @lv_curr
-              INTO @lv_applicationid.
-              "如果等于K 优先找能对应costcenter的 找不到 找costcenter为空的
-              IF sy-subrc <> 0 AND ls_ztmm_1006-account_type = 'K'.
+          ELSE.
+            SELECT SINGLE *
+            FROM zr_prworkflow_sum
+            WHERE applydepart_sum = @ls_ztmm_1006-apply_depart
+            AND   prno_sum        = @ls_ztmm_1006-pr_no
+            INTO @DATA(ls_prworkflow_sum).
+
+            DATA:lv_curr TYPE p LENGTH 16 DECIMALS 2.
+            lv_curr    = ls_prworkflow_sum-amount_sum.
+            lv_curr = zzcl_common_utils=>conversion_amount(
+                                                   iv_alpha = 'OUT'
+                                                   iv_currency = ls_prworkflow_sum-currency
+                                                   iv_input = lv_curr ).
+
+            TRY .
                 SELECT SINGLE applicationid
                 FROM zc_wf_approvalpath
                WHERE applydepart = @ls_ztmm_1006-apply_depart
                  AND knttp       = @ls_ztmm_1006-account_type
-                 AND costcenter  = ''
+                 AND costcenter  = @ls_ztmm_1006-cost_center
                  AND amountfrom <= @lv_curr
                  AND amountto   >= @lv_curr
                 INTO @lv_applicationid.
-              ENDIF.
-              ev_applicationid = lv_applicationid.
-            CATCH cx_root INTO lx_root.
-              " handle exception
-              rv_error_text = lx_root->get_longtext(  ).
-              ev_error = 'X'.
-              ev_errortext = rv_error_text.
-          ENDTRY.
+                "如果等于K 优先找能对应costcenter的 找不到 找costcenter为空的
+                IF sy-subrc <> 0 AND ls_ztmm_1006-account_type = 'K'.
+                  SELECT SINGLE applicationid
+                  FROM zc_wf_approvalpath
+                 WHERE applydepart = @ls_ztmm_1006-apply_depart
+                   AND knttp       = @ls_ztmm_1006-account_type
+                   AND costcenter  = ''
+                   AND amountfrom <= @lv_curr
+                   AND amountto   >= @lv_curr
+                  INTO @lv_applicationid.
+                ENDIF.
+                ev_applicationid = lv_applicationid.
+              CATCH cx_root INTO lx_root.
+                " handle exception
+                rv_error_text = lx_root->get_longtext(  ).
+                ev_error = 'X'.
+                ev_errortext = rv_error_text.
+            ENDTRY.
+
+          ENDIF.
 
         ENDIF.
-
       WHEN OTHERS.
 
     ENDCASE.

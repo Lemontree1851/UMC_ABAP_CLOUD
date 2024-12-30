@@ -31,4 +31,4 @@ define view entity ZC_POREMAINVH
       Zvalue2
 }
 where
-  ZID = 'ZBC010'
+  ZID = 'ZMM019'

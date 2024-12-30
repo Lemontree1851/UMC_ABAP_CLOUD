@@ -13,7 +13,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
 
     DATA:
-      lv_KUNNR             TYPE KUNNR,
+      lv_kunnr             TYPE kunnr,
       lt_data              TYPE STANDARD TABLE OF zr_creditmantable,
       ls_data              TYPE zr_creditmantable,
       ls_data_salesd       TYPE zr_creditmantable, "本月の売上金額-予
@@ -23,7 +23,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
       lr_salesorganization TYPE RANGE OF zr_creditmantable-salesorganization,
       ls_salesorganization LIKE LINE OF lr_salesorganization,
       lr_customer          TYPE RANGE OF zr_creditmantable-customer,
-      lS_customer          LIKE LINE OF lr_customer,
+      ls_customer          LIKE LINE OF lr_customer,
 *      lv_termsno           TYPE char10,
       lv_zyear             TYPE zr_creditmantable-zyear.
     DATA:
@@ -46,15 +46,15 @@ CLASS zcl_creditmantable IMPLEMENTATION.
                 APPEND ls_salesorganization TO lr_salesorganization.
 
               WHEN 'CUSTOMER'.
-                 CLEAR lS_customer.
-                lS_customer-sign   = 'I'.
-                lS_customer-option = 'EQ'.
+                CLEAR ls_customer.
+                ls_customer-sign   = 'I'.
+                ls_customer-option = 'EQ'.
 
-                lv_KUNNR = str_rec_l_range-low.
-                lv_KUNNR = |{ lv_KUNNR ALPHA = IN }|.
-                lS_customer-low    = lv_KUNNR.
+                lv_kunnr = str_rec_l_range-low.
+                lv_kunnr = |{ lv_kunnr ALPHA = IN }|.
+                ls_customer-low    = lv_kunnr.
 
-                APPEND lS_customer TO lr_customer.
+                APPEND ls_customer TO lr_customer.
 
               WHEN 'ZYEAR'.
                 lv_zyear = str_rec_l_range-low.
@@ -68,7 +68,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
         io_response->set_data( lt_data ).
     ENDTRY.
 
-    if lv_zyear is INITIAL.
+    IF lv_zyear IS INITIAL.
 
       lv_zyear = sy-datum+0(4).
 
@@ -83,7 +83,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
       credit~customercreditlimitamount      AS limitamount,"与信限度額
       customerpay~customerpaymenttermsname  AS terms,       "回収条件-支払条件
       payment~paymentterms,
-      payment~PaymentTermsValidityMonthDay,
+      payment~paymenttermsvaliditymonthday,
       payment~bslndtecalcaddlmnths          AS addlmnths,   "追加月
       payment~cashdiscount1days             AS cadays      "日数
  FROM i_salesorganization WITH PRIVILEGED ACCESS AS sales
@@ -104,75 +104,88 @@ CLASS zcl_creditmantable IMPLEMENTATION.
               ON payment~paymentterms = customerc~paymentterms
  LEFT OUTER JOIN i_customerpaymenttermstext WITH PRIVILEGED ACCESS AS customerpay
               ON customerpay~customerpaymentterms = payment~paymentterms
-             AND customerpay~Language = 'J'
+             AND customerpay~language = 'J'
            WHERE sales~salesorganization IN @lr_salesorganization
              AND customerc~customer  IN @lr_customer
   INTO TABLE @DATA(lt_customer).
 
-    SORT lt_customer by salesorganization customer customername creditsegmentcurrency limitamount terms paymentterms PaymentTermsValidityMonthDay.
+    SORT lt_customer BY salesorganization customer customername creditsegmentcurrency limitamount terms paymentterms paymenttermsvaliditymonthday.
     DELETE ADJACENT DUPLICATES FROM lt_customer COMPARING salesorganization customer customername creditsegmentcurrency limitamount terms paymentterms.
 
-    if lt_customer is NOT INITIAL.
+*&--Authorization Check
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_salesorg) = zzcl_common_utils=>get_salesorg_by_user( lv_user_email ).
+    IF lv_salesorg IS INITIAL.
+      CLEAR lt_customer.
+    ELSE.
+      SPLIT lv_salesorg AT '&' INTO TABLE DATA(lt_salesorg_check).
+      CLEAR lr_salesorganization.
+      lr_salesorganization = VALUE #( FOR salesorg IN lt_salesorg_check ( sign = 'I' option = 'EQ' low = salesorg ) ).
+      DELETE lt_customer WHERE salesorganization NOT IN lr_salesorganization.
+    ENDIF.
+*&--Authorization Check
 
-        DATA(lt_customer_n) = lt_customer.
+    IF lt_customer IS NOT INITIAL.
 
-        SORT lt_customer_n BY customer
-                              salesorganization.
-        DELETE ADJACENT DUPLICATES FROM lt_customer_n
-                              COMPARING customer
-                                        salesorganization.
-        IF lt_customer_n IS NOT INITIAL.
-          SELECT
-            salesd~SalesDocument,
-            salesd~SalesDocumentItem,
-            salesd~payerparty AS customer,
-            salesd~salesorganization,
-            salesd~salesdocumentdate AS zdate,
-            salesd~netamount                "売上金額-予
-          FROM i_salesdocumentitem         WITH PRIVILEGED ACCESS AS salesd
-           FOR ALL ENTRIES IN @lt_customer_n
+      DATA(lt_customer_n) = lt_customer.
+
+      SORT lt_customer_n BY customer
+                            salesorganization.
+      DELETE ADJACENT DUPLICATES FROM lt_customer_n
+                            COMPARING customer
+                                      salesorganization.
+      IF lt_customer_n IS NOT INITIAL.
+        SELECT
+          salesd~salesdocument,
+          salesd~salesdocumentitem,
+          salesd~payerparty AS customer,
+          salesd~salesorganization,
+          salesd~salesdocumentdate AS zdate,
+          salesd~netamount                "売上金額-予
+        FROM i_salesdocumentitem         WITH PRIVILEGED ACCESS AS salesd
+         FOR ALL ENTRIES IN @lt_customer_n
 *         WHERE salesd~SoldToParty               = @lt_customer_n-customer
-         WHERE salesd~payerparty               = @lt_customer_n-customer
-           AND salesd~salesorganization        = @lt_customer_n-salesorganization
-          INTO TABLE @DATA(lt_salesd).
+       WHERE salesd~payerparty               = @lt_customer_n-customer
+         AND salesd~salesorganization        = @lt_customer_n-salesorganization
+        INTO TABLE @DATA(lt_salesd).
 
-          SELECT
-            billing~BillingDocument,
-            billing~payerparty AS customer,
-            billing~salesorganization,
-            billing~billingdocumentdate AS zdate,
-            billing~totalnetamount,"売上金額-実(正味額)
-            billing~totaltaxamount "売上金額-実（税額）
-          FROM i_billingdocument WITH PRIVILEGED ACCESS AS billing
-           FOR ALL ENTRIES IN @lt_customer_n
-         WHERE billing~payerparty               = @lt_customer_n-customer
-           AND billing~salesorganization        = @lt_customer_n-salesorganization
-          INTO TABLE @DATA(lt_billing).
+        SELECT
+          billing~billingdocument,
+          billing~payerparty AS customer,
+          billing~salesorganization,
+          billing~billingdocumentdate AS zdate,
+          billing~totalnetamount,"売上金額-実(正味額)
+          billing~totaltaxamount "売上金額-実（税額）
+        FROM i_billingdocument WITH PRIVILEGED ACCESS AS billing
+         FOR ALL ENTRIES IN @lt_customer_n
+       WHERE billing~payerparty               = @lt_customer_n-customer
+         AND billing~salesorganization        = @lt_customer_n-salesorganization
+        INTO TABLE @DATA(lt_billing).
 
-          SELECT
-            glaccount~SourceLedger,
-            glaccount~CompanyCode,
-            glaccount~FiscalYear,
-            glaccount~AccountingDocument,
-            glaccount~LedgerGLLineItem,
-            glaccount~Ledger,
-            glaccount~customer,
-            glaccount~salesorganization,
-            glaccount~postingdate AS zdate,
-            glaccount~amountincompanycodecurrency "与信利用額-実
-          FROM i_glaccountlineitem WITH PRIVILEGED ACCESS AS glaccount
-           FOR ALL ENTRIES IN @lt_customer_n
-         WHERE glaccount~customer           = @lt_customer_n-customer
-           AND glaccount~CompanyCode        = @lt_customer_n-companycode
-           AND glaccount~accountingdocumentcategory <> 'A'
-           AND glaccount~accountingdocumentcategory <> 'S'
-          INTO TABLE @DATA(lt_glaccount).
-        ENDIF.
+        SELECT
+          glaccount~sourceledger,
+          glaccount~companycode,
+          glaccount~fiscalyear,
+          glaccount~accountingdocument,
+          glaccount~ledgergllineitem,
+          glaccount~ledger,
+          glaccount~customer,
+          glaccount~salesorganization,
+          glaccount~postingdate AS zdate,
+          glaccount~amountincompanycodecurrency "与信利用額-実
+        FROM i_glaccountlineitem WITH PRIVILEGED ACCESS AS glaccount
+         FOR ALL ENTRIES IN @lt_customer_n
+       WHERE glaccount~customer           = @lt_customer_n-customer
+         AND glaccount~companycode        = @lt_customer_n-companycode
+         AND glaccount~accountingdocumentcategory <> 'A'
+         AND glaccount~accountingdocumentcategory <> 'S'
+        INTO TABLE @DATA(lt_glaccount).
+      ENDIF.
 
-        SORT lt_customer BY customer
-                            salesorganization
-                            limitamount .
-    endif.
+      SORT lt_customer BY customer
+                          salesorganization
+                          limitamount .
+    ENDIF.
 
     CLEAR lv_rowno.
     LOOP AT lt_customer ASSIGNING  FIELD-SYMBOL(<lfs_customer>)
@@ -183,7 +196,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
 
       CLEAR ls_data.
       ls_data-customer           = <lfs_customer>-customer.
-      ls_data-customer = |{ ls_data-customer alpha = out }|.
+      ls_data-customer = |{ ls_data-customer ALPHA = OUT }|.
       ls_data-customername       = <lfs_customer>-customername.
       ls_data-limitamount        = <lfs_customer>-limitamount .
       ls_data-currency           = <lfs_customer>-creditsegmentcurrency.
@@ -207,7 +220,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
         IF <lfs_customerg>-cadays = 0.
 
           ls_data-terms1     = <lfs_customerg>-addlmnths.
-          data(lv_termsno) = |{ ls_data-terms1 alpha = out }|.
+          DATA(lv_termsno) = |{ ls_data-terms1 ALPHA = OUT }|.
           ls_data-termstext1 = lv_termsno && 'か月後回収'.
 
 *         日数がゼロ以外の場合
@@ -216,7 +229,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
           lv_day = <lfs_customerg>-cadays / 30.
           lv_day = ceil( lv_day ).
           ls_data-terms1     = lv_day + <lfs_customerg>-addlmnths.
-          lv_termsno = |{ ls_data-terms1 alpha = out }|.
+          lv_termsno = |{ ls_data-terms1 ALPHA = OUT }|.
           ls_data-termstext1 = lv_termsno && 'か月後回収'.
         ENDIF.
 
@@ -685,7 +698,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
         CLEAR ls_data_xy.
         MOVE-CORRESPONDING ls_data TO ls_data_xy.
 
-        try.
+        TRY.
             ls_data_xy-zmonth1 = ls_data_xy-zmonth1 / ls_data_xy-limitamount.
             ls_data_xy-zmonth2 = ls_data_xy-zmonth2 / ls_data_xy-limitamount.
             ls_data_xy-zmonth3 = ls_data_xy-zmonth3 / ls_data_xy-limitamount.
@@ -698,7 +711,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
             ls_data_xy-zmonth10 = ls_data_xy-zmonth10 / ls_data_xy-limitamount.
             ls_data_xy-zmonth11 = ls_data_xy-zmonth11 / ls_data_xy-limitamount.
             ls_data_xy-zmonth12 = ls_data_xy-zmonth12 / ls_data_xy-limitamount.
-        CATCH cx_root  INTO DATA(exc).
+          CATCH cx_root  INTO DATA(exc).
             ls_data_xy-zmonth1 = 0.
             ls_data_xy-zmonth2 = 0.
             ls_data_xy-zmonth3 = 0.
@@ -742,7 +755,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
 *         与信利用額-実
         LOOP AT lt_glaccount ASSIGNING FIELD-SYMBOL(<lfs_glaccount>)
                                     WHERE customer          = <lfs_customerg>-customer
-                                      AND CompanyCode       = <lfs_customerg>-CompanyCode
+                                      AND companycode       = <lfs_customerg>-companycode
                                       AND zdate+0(4)        = lv_zyear.
           CASE <lfs_glaccount>-zdate+4(2).
             WHEN 01.
@@ -780,7 +793,7 @@ CLASS zcl_creditmantable IMPLEMENTATION.
         CLEAR ls_data_xs.
         MOVE-CORRESPONDING ls_data TO ls_data_xs.
 
-        try.
+        TRY.
             ls_data_xs-zmonth1 = ls_data_xs-zmonth1 / ls_data_xy-limitamount.
             ls_data_xs-zmonth2 = ls_data_xs-zmonth2 / ls_data_xy-limitamount.
             ls_data_xs-zmonth3 = ls_data_xs-zmonth3 / ls_data_xy-limitamount.
@@ -793,8 +806,8 @@ CLASS zcl_creditmantable IMPLEMENTATION.
             ls_data_xs-zmonth10 = ls_data_xs-zmonth10 / ls_data_xy-limitamount.
             ls_data_xs-zmonth11 = ls_data_xs-zmonth11 / ls_data_xy-limitamount.
             ls_data_xs-zmonth12 = ls_data_xs-zmonth12 / ls_data_xy-limitamount.
-        CATCH cx_root  INTO DATA(excc).
-             ls_data_xs-zmonth1 = 0.
+          CATCH cx_root  INTO DATA(excc).
+            ls_data_xs-zmonth1 = 0.
             ls_data_xs-zmonth2 = 0.
             ls_data_xs-zmonth3 = 0.
             ls_data_xs-zmonth4 = 0.
@@ -838,87 +851,87 @@ CLASS zcl_creditmantable IMPLEMENTATION.
         lv_rowno = lv_rowno + 1.
         ls_data_xy-text1         = '限度使用率:予利用見込÷限度額'.
 
-        if ls_data_xy-zmonth1 <> 0.
+        IF ls_data_xy-zmonth1 <> 0.
           ls_data_xy-zpercent1 = '%'.
         ENDIF.
-        if ls_data_xy-zmonth2 <> 0.
+        IF ls_data_xy-zmonth2 <> 0.
           ls_data_xy-zpercent2 = '%'.
         ENDIF.
-        if ls_data_xy-zmonth3 <> 0.
+        IF ls_data_xy-zmonth3 <> 0.
           ls_data_xy-zpercent3 = '%'.
         ENDIF.
-        if ls_data_xy-zmonth4 <> 0.
+        IF ls_data_xy-zmonth4 <> 0.
           ls_data_xy-zpercent4 = '%'.
         ENDIF.
-        if ls_data_xy-zmonth5 <> 0.
+        IF ls_data_xy-zmonth5 <> 0.
           ls_data_xy-zpercent5 = '%'.
         ENDIF.
-        if ls_data_xy-zmonth6 <> 0.
+        IF ls_data_xy-zmonth6 <> 0.
           ls_data_xy-zpercent6 = '%'.
         ENDIF.
-        if ls_data_xy-zmonth7 <> 0.
+        IF ls_data_xy-zmonth7 <> 0.
           ls_data_xy-zpercent7 = '%'.
         ENDIF.
-        if ls_data_xy-zmonth8 <> 0.
+        IF ls_data_xy-zmonth8 <> 0.
           ls_data_xy-zpercent8 = '%'.
         ENDIF.
-        if ls_data_xy-zmonth9 <> 0.
+        IF ls_data_xy-zmonth9 <> 0.
           ls_data_xy-zpercent9 = '%'.
         ENDIF.
-        if ls_data_xy-zmonth10 <> 0.
+        IF ls_data_xy-zmonth10 <> 0.
           ls_data_xy-zpercent10 = '%'.
         ENDIF.
-        if ls_data_xy-zmonth11 <> 0.
+        IF ls_data_xy-zmonth11 <> 0.
           ls_data_xy-zpercent11 = '%'.
         ENDIF.
-        if ls_data_xy-zmonth12 <> 0.
+        IF ls_data_xy-zmonth12 <> 0.
           ls_data_xy-zpercent12 = '%'.
         ENDIF.
         APPEND ls_data_xy TO lt_data.
-        CLEAr ls_data_xy.
+        CLEAR ls_data_xy.
 
 *         限度使用率-実
         lv_rowno = lv_rowno + 1.
         ls_data_xs-text1         = '限度使用率:実利用実績÷限度額'.
 
-        if ls_data_xs-zmonth1 <> 0.
+        IF ls_data_xs-zmonth1 <> 0.
           ls_data_xs-zpercent1 = '%'.
         ENDIF.
-        if ls_data_xs-zmonth2 <> 0.
+        IF ls_data_xs-zmonth2 <> 0.
           ls_data_xs-zpercent2 = '%'.
         ENDIF.
-        if ls_data_xs-zmonth3 <> 0.
+        IF ls_data_xs-zmonth3 <> 0.
           ls_data_xs-zpercent3 = '%'.
         ENDIF.
-        if ls_data_xs-zmonth4 <> 0.
+        IF ls_data_xs-zmonth4 <> 0.
           ls_data_xs-zpercent4 = '%'.
         ENDIF.
-        if ls_data_xs-zmonth5 <> 0.
+        IF ls_data_xs-zmonth5 <> 0.
           ls_data_xs-zpercent5 = '%'.
         ENDIF.
-        if ls_data_xs-zmonth6 <> 0.
+        IF ls_data_xs-zmonth6 <> 0.
           ls_data_xs-zpercent6 = '%'.
         ENDIF.
-        if ls_data_xs-zmonth7 <> 0.
+        IF ls_data_xs-zmonth7 <> 0.
           ls_data_xs-zpercent7 = '%'.
         ENDIF.
-        if ls_data_xs-zmonth8 <> 0.
+        IF ls_data_xs-zmonth8 <> 0.
           ls_data_xs-zpercent8 = '%'.
         ENDIF.
-        if ls_data_xs-zmonth9 <> 0.
+        IF ls_data_xs-zmonth9 <> 0.
           ls_data_xs-zpercent9 = '%'.
         ENDIF.
-        if ls_data_xs-zmonth10 <> 0.
+        IF ls_data_xs-zmonth10 <> 0.
           ls_data_xs-zpercent10 = '%'.
         ENDIF.
-        if ls_data_xs-zmonth11 <> 0.
+        IF ls_data_xs-zmonth11 <> 0.
           ls_data_xs-zpercent11 = '%'.
         ENDIF.
-        if ls_data_xs-zmonth12 <> 0.
+        IF ls_data_xs-zmonth12 <> 0.
           ls_data_xs-zpercent12 = '%'.
         ENDIF.
         APPEND ls_data_xs TO lt_data.
-        clear ls_data_xs.
+        CLEAR ls_data_xs.
       ENDLOOP.
     ENDLOOP.
 

@@ -18,14 +18,15 @@ CLASS lhc_paymethod DEFINITION INHERITING FROM cl_abap_behavior_handler.
           END OF ty_zr_paymethod_sum,
           lty_zr_paymethod_sum TYPE TABLE OF ty_zr_paymethod_sum.
     DATA:
-      lr_customer       TYPE RANGE OF kunnr,
-      lrs_customer      LIKE LINE OF lr_customer,
-      lr_companycode    TYPE RANGE OF bukrs,
-      lrs_companycode   LIKE LINE OF lr_companycode,
-      lr_paymentmethod  TYPE RANGE OF dzlsch,
-      lrs_paymentmethod LIKE LINE OF lr_paymentmethod,
-      lr_postdate       TYPE RANGE OF zr_paymethod-postingdate,
-      lrs_postdate      LIKE LINE OF lr_postdate.
+      lr_customer         TYPE RANGE OF kunnr,
+      lrs_customer        LIKE LINE OF lr_customer,
+      lr_companycode      TYPE RANGE OF bukrs,
+      lr_companycode_auth TYPE RANGE OF bukrs,
+      lrs_companycode     LIKE LINE OF lr_companycode,
+      lr_paymentmethod    TYPE RANGE OF dzlsch,
+      lrs_paymentmethod   LIKE LINE OF lr_paymentmethod,
+      lr_postdate         TYPE RANGE OF zr_paymethod-postingdate,
+      lrs_postdate        LIKE LINE OF lr_postdate.
     CONSTANTS: lc_mode_insert TYPE string VALUE `I`,
                lc_mode_update TYPE string VALUE `U`,
                lc_mode_in     TYPE string VALUE `IN`,
@@ -83,6 +84,11 @@ CLASS lhc_paymethod IMPLEMENTATION.
     DATA: lv_error TYPE c.
     DATA: lv_execute TYPE c.
 
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_user_company) = zzcl_common_utils=>get_company_by_user( lv_user_email ).
+    SPLIT lv_user_company AT '&' INTO TABLE DATA(lt_company).
+    lr_companycode_auth = VALUE #( FOR companycode IN lt_company ( sign = 'I' option = 'EQ' low = companycode ) ).
+
     DATA: i TYPE i.
 
     CLEAR: lv_error,lv_execute.
@@ -103,7 +109,9 @@ CLASS lhc_paymethod IMPLEMENTATION.
         CASE ls_sel_opt_1-name.
           WHEN 'CompanyCode'.
             MOVE-CORRESPONDING ls_sel_opt_1 TO lrs_companycode.
-            INSERT lrs_companycode INTO TABLE lr_companycode.
+            IF lrs_companycode-low IN lr_companycode_auth AND lr_companycode_auth IS NOT INITIAL.
+              INSERT lrs_companycode INTO TABLE lr_companycode.
+            ENDIF.
           WHEN 'Customer'.
             MOVE-CORRESPONDING ls_sel_opt_1 TO lrs_customer.
             lrs_customer-low = |{ lrs_customer-low ALPHA = IN }| .
@@ -123,7 +131,14 @@ CLASS lhc_paymethod IMPLEMENTATION.
           WHEN OTHERS.
         ENDCASE.
       ENDLOOP.
-
+      "不存在为空的情况
+      IF lr_companycode IS INITIAL .
+        CLEAR lr_companycode.
+        lrs_companycode-sign = 'I'.
+        lrs_companycode-option = 'EQ' .
+        lrs_companycode-low = '' .
+        INSERT lrs_companycode INTO TABLE lr_companycode.
+      ENDIF.
       TRY.
           search( IMPORTING ct_data = lt_request ).
 
@@ -434,9 +449,9 @@ CLASS lhc_paymethod IMPLEMENTATION.
       LOOP AT lt_data INTO DATA(ls_data) WHERE status NE 'S'.
         cs_data-message =  |{ cs_data-message }{ '/' }{ ls_data-message }|.
       ENDLOOP.
-      if sy-subrc <> 0.
-      "如果全对
-      MESSAGE s043(zfico_001) INTO cs_data-message .
+      IF sy-subrc <> 0.
+        "如果全对
+        MESSAGE s043(zfico_001) INTO cs_data-message .
       ENDIF.
       READ TABLE lt_data TRANSPORTING NO FIELDS WITH KEY status = 'E'.
       IF sy-subrc = 0.

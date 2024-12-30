@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
+CLASS zcl_ofsocomparison IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -154,6 +154,19 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
        AND ztpp_1012~requirement_date IN @lr_duration
 *       AND ztpp_1012~created_at       IN @lr_created_at
       INTO TABLE @DATA(lt_of).
+
+*&--Authorization Check
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+    IF lv_plant IS INITIAL.
+      CLEAR lt_of.
+    ELSE.
+      SPLIT lv_plant AT '&' INTO TABLE DATA(lt_plant_check).
+      CLEAR lr_plant.
+      lr_plant = VALUE #( FOR plant IN lt_plant_check ( sign = 'I' option = 'EQ' low = plant ) ).
+      DELETE lt_of WHERE plant NOT IN lr_plant.
+    ENDIF.
+*&--Authorization Check
 
 *   対象SOデータ取得
     IF lt_of IS NOT INITIAL.

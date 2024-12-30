@@ -184,117 +184,117 @@ CLASS zcl_http_confirmmfgord_001 IMPLEMENTATION.
           RAISE EXCEPTION TYPE cx_abap_api_state.
         ENDIF.
 
-        "Check manufacturing order of input parameter must be valuable
-        IF ls_ztpp_1004-manufacturingorder IS INITIAL.
-          "製造指図を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 015 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check manufacturing order operation of input parameter must be valuable
-        IF ls_ztpp_1004-manufacturingorderoperation_2 IS INITIAL.
-          "作業番号を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 031 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check yield to be confirmed quantity of input parameter must be valuable
-        IF ls_ztpp_1004-confirmationyieldquantity IS INITIAL.
-          "歩留数量を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 032 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check activity 1 currently to be confirmed quantity of input parameter must be valuable
-        IF ls_ztpp_1004-opconfirmedworkquantity1 IS INITIAL.
-          "確認済作業数量 1を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 033 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check unit of measure for the activity 1 to be confirmed of input parameter must be valuable
-        IF ls_ztpp_1004-opworkquantityunit1 IS INITIAL.
-          "確認済作業数量単位 1を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 034 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check activity 2 currently to be confirmed quantity of input parameter must be valuable
-        IF ls_ztpp_1004-opconfirmedworkquantity2 IS INITIAL.
-          "確認済作業数量 2を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 035 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check unit of measure for the activity 2 to be confirmed of input parameter must be valuable
-        IF ls_ztpp_1004-opworkquantityunit2 IS INITIAL.
-          "確認済作業数量単位 2を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 036 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check activity 3 currently to be confirmed quantity of input parameter must be valuable
-        IF ls_ztpp_1004-opconfirmedworkquantity3 IS INITIAL.
-          "確認済作業数量 3を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 037 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check unit of measure for the activity 3 to be confirmed of input parameter must be valuable
-        IF ls_ztpp_1004-opworkquantityunit3 IS INITIAL.
-          "確認済作業数量単位 3を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 038 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check activity 4 currently to be confirmed quantity of input parameter must be valuable
-        IF ls_ztpp_1004-opconfirmedworkquantity4 IS INITIAL.
-          "確認済作業数量 4を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 039 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check unit of measure for the activity 4 to be confirmed of input parameter must be valuable
-        IF ls_ztpp_1004-opworkquantityunit4 IS INITIAL.
-          "確認済作業数量単位 4を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 040 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check activity 5 currently to be confirmed quantity of input parameter must be valuable
-        IF ls_ztpp_1004-opconfirmedworkquantity5 IS INITIAL.
-          "確認済作業数量 5を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 041 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check unit of measure for the activity 5 to be confirmed of input parameter must be valuable
-        IF ls_ztpp_1004-opworkquantityunit5 IS INITIAL.
-          "確認済作業数量単位 5を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 042 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check activity 6 currently to be confirmed quantity of input parameter must be valuable
-        IF ls_ztpp_1004-opconfirmedworkquantity6 IS INITIAL.
-          "確認済作業数量 6を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 043 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check unit of measure for the activity 6 to be confirmed of input parameter must be valuable
-        IF ls_ztpp_1004-opworkquantityunit6 IS INITIAL.
-          "確認済作業数量単位 6を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 044 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
-
-        "Check posting date of input parameter must be valuable
-        IF ls_ztpp_1004-postingdate IS INITIAL.
-          "転記日付を送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 045 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
+*        "Check manufacturing order of input parameter must be valuable
+*        IF ls_ztpp_1004-manufacturingorder IS INITIAL.
+*          "製造指図を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 015 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check manufacturing order operation of input parameter must be valuable
+*        IF ls_ztpp_1004-manufacturingorderoperation_2 IS INITIAL.
+*          "作業番号を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 031 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check yield to be confirmed quantity of input parameter must be valuable
+*        IF ls_ztpp_1004-confirmationyieldquantity IS INITIAL.
+*          "歩留数量を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 032 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check activity 1 currently to be confirmed quantity of input parameter must be valuable
+*        IF ls_ztpp_1004-opconfirmedworkquantity1 IS INITIAL.
+*          "確認済作業数量 1を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 033 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check unit of measure for the activity 1 to be confirmed of input parameter must be valuable
+*        IF ls_ztpp_1004-opworkquantityunit1 IS INITIAL.
+*          "確認済作業数量単位 1を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 034 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check activity 2 currently to be confirmed quantity of input parameter must be valuable
+*        IF ls_ztpp_1004-opconfirmedworkquantity2 IS INITIAL.
+*          "確認済作業数量 2を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 035 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check unit of measure for the activity 2 to be confirmed of input parameter must be valuable
+*        IF ls_ztpp_1004-opworkquantityunit2 IS INITIAL.
+*          "確認済作業数量単位 2を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 036 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check activity 3 currently to be confirmed quantity of input parameter must be valuable
+*        IF ls_ztpp_1004-opconfirmedworkquantity3 IS INITIAL.
+*          "確認済作業数量 3を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 037 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check unit of measure for the activity 3 to be confirmed of input parameter must be valuable
+*        IF ls_ztpp_1004-opworkquantityunit3 IS INITIAL.
+*          "確認済作業数量単位 3を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 038 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check activity 4 currently to be confirmed quantity of input parameter must be valuable
+*        IF ls_ztpp_1004-opconfirmedworkquantity4 IS INITIAL.
+*          "確認済作業数量 4を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 039 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check unit of measure for the activity 4 to be confirmed of input parameter must be valuable
+*        IF ls_ztpp_1004-opworkquantityunit4 IS INITIAL.
+*          "確認済作業数量単位 4を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 040 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check activity 5 currently to be confirmed quantity of input parameter must be valuable
+*        IF ls_ztpp_1004-opconfirmedworkquantity5 IS INITIAL.
+*          "確認済作業数量 5を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 041 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check unit of measure for the activity 5 to be confirmed of input parameter must be valuable
+*        IF ls_ztpp_1004-opworkquantityunit5 IS INITIAL.
+*          "確認済作業数量単位 5を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 042 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check activity 6 currently to be confirmed quantity of input parameter must be valuable
+*        IF ls_ztpp_1004-opconfirmedworkquantity6 IS INITIAL.
+*          "確認済作業数量 6を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 043 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check unit of measure for the activity 6 to be confirmed of input parameter must be valuable
+*        IF ls_ztpp_1004-opworkquantityunit6 IS INITIAL.
+*          "確認済作業数量単位 6を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 044 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
+*
+*        "Check posting date of input parameter must be valuable
+*        IF ls_ztpp_1004-postingdate IS INITIAL.
+*          "転記日付を送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 045 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
 
         "Check confirmation text of input parameter must be valuable
         "IF ls_ztpp_1004-confirmationtext IS INITIAL.
@@ -313,46 +313,48 @@ CLASS zcl_http_confirmmfgord_001 IMPLEMENTATION.
           RAISE EXCEPTION TYPE cx_abap_api_state.
         ENDIF.
 
-        "Check manufacturing order and plant of input parameter must be existent
-        SELECT COUNT(*)
-          FROM i_manufacturingorder WITH PRIVILEGED ACCESS
-         WHERE manufacturingorder = @ls_ztpp_1004-manufacturingorder
-           AND productionplant = @ls_ztpp_1004-plant.
-        IF sy-subrc <> 0.
-          "プラント&1製造指図&2存在しません！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 007 WITH ls_ztpp_1004-plant ls_ztpp_1004-manufacturingorder INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_invalid_value.
-        ENDIF.
-
-        "Check manufacturing order operation of input parameter must be existent
-        SELECT COUNT(*)
-          FROM i_manufacturingorderoperation WITH PRIVILEGED ACCESS
-         WHERE manufacturingorder = @ls_ztpp_1004-manufacturingorder
-           AND manufacturingorderoperation_2 = @ls_ztpp_1004-manufacturingorderoperation_2.
-        IF sy-subrc <> 0.
-          "製造指図&1の作業番号&2が存在しません！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 047 WITH ls_ztpp_1004-manufacturingorder ls_ztpp_1004-manufacturingorderoperation_2 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_invalid_value.
-        ENDIF.
-
-        "Check fiscal year and period
-        zzcl_common_utils=>get_fiscal_year_period(
-          EXPORTING
-            iv_date   = ls_ztpp_1004-postingdate
-          IMPORTING
-            ev_year   = DATA(lv_fiscal_year)
-            ev_period = DATA(lv_fiscal_period) ).
-        lv_monat = lv_fiscal_period+1(2).
-        SELECT COUNT(*)
-          FROM i_companycodeperiod WITH PRIVILEGED ACCESS
-         WHERE companycode = @ls_ztpp_1004-plant
-           AND ( ( fiscalmonthcurrentperiod  = @lv_monat AND productcurrentfiscalyear     = @lv_fiscal_year )
-              OR ( fiscalmonthpreviousperiod = @lv_monat AND prodpreviousperiodfiscalyear = @lv_fiscal_year ) ).
-        IF sy-subrc <> 0.
-          "記日付とS4HCの会計期間をチェックしてください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 109 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_invalid_value.
-        ENDIF.
+*        "Check manufacturing order and plant of input parameter must be existent
+*        SELECT COUNT(*)
+*          FROM i_manufacturingorder WITH PRIVILEGED ACCESS
+*         WHERE manufacturingorder = @ls_ztpp_1004-manufacturingorder
+*           AND productionplant = @ls_ztpp_1004-plant.
+*        IF sy-subrc <> 0.
+*          "プラント&1製造指図&2存在しません！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 007 WITH ls_ztpp_1004-plant ls_ztpp_1004-manufacturingorder INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_invalid_value.
+*        ENDIF.
+*
+*        "Check manufacturing order operation of input parameter must be existent
+*        SELECT COUNT(*)
+*          FROM i_manufacturingorderoperation WITH PRIVILEGED ACCESS
+*         WHERE manufacturingorder = @ls_ztpp_1004-manufacturingorder
+*           AND manufacturingorderoperation_2 = @ls_ztpp_1004-manufacturingorderoperation_2.
+*        IF sy-subrc <> 0.
+*          "製造指図&1の作業番号&2が存在しません！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 047 WITH ls_ztpp_1004-manufacturingorder ls_ztpp_1004-manufacturingorderoperation_2 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_invalid_value.
+*        ENDIF.
+*
+*        "Check fiscal year and period
+*        zzcl_common_utils=>get_fiscal_year_period(
+*          EXPORTING
+*            iv_date   = ls_ztpp_1004-postingdate
+*          IMPORTING
+*            ev_year   = DATA(lv_fiscal_year)
+*            ev_period = DATA(lv_fiscal_period) ).
+*
+*        lv_monat = lv_fiscal_period+1(2).
+*
+*        SELECT COUNT(*)
+*          FROM i_companycodeperiod WITH PRIVILEGED ACCESS
+*         WHERE companycode = @ls_ztpp_1004-plant
+*           AND ( ( fiscalmonthcurrentperiod  = @lv_monat AND productcurrentfiscalyear     = @lv_fiscal_year )
+*              OR ( fiscalmonthpreviousperiod = @lv_monat AND prodpreviousperiodfiscalyear = @lv_fiscal_year ) ).
+*        IF sy-subrc <> 0.
+*          "記日付とS4HCの会計期間をチェックしてください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 109 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_invalid_value.
+*        ENDIF.
 
         "Check previous processed
         SELECT umesid,

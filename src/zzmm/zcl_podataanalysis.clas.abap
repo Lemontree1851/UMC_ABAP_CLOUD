@@ -182,9 +182,9 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
 **********************************************************************
     DATA:
-      lt_mrp_api         TYPE STANDARD TABLE OF ts_mrp_api,
-      ls_mrp_api         TYPE ts_mrp_api,
-      ls_res_mrp_api     TYPE ts_res_mrp_api.
+      lt_mrp_api     TYPE STANDARD TABLE OF ts_mrp_api,
+      ls_mrp_api     TYPE ts_mrp_api,
+      ls_res_mrp_api TYPE ts_res_mrp_api.
 
     DATA:
       "lt_result          type STANDARD TABLE OF zr_podataanalysis,
@@ -197,22 +197,22 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
       lr_purchasinggroup TYPE RANGE OF zr_podataanalysis-purchasinggroup     ,       "購買グループ
       lr_material        TYPE RANGE OF zr_podataanalysis-material            ,       "品目
       lr_plant           TYPE RANGE OF zr_podataanalysis-plant               ,       "プラント
-      lr_MRPResponsible  TYPE RANGE OF zr_podataanalysis-MRPResponsible      ,       "MRPコントロール
+      lr_mrpresponsible  TYPE RANGE OF zr_podataanalysis-mrpresponsible      ,       "MRPコントロール
       lr_createdbyuser   TYPE RANGE OF zr_podataanalysis-createdbyuser       ,       "登録者
-      lr_Category        TYPE RANGE OF zr_podataanalysis-AccountAssignmentCategory   ,       "勘定設定 Categ.
-      lr_IntArtiNum      TYPE RANGE OF zr_podataanalysis-InternationalArticleNumber,         "海外PO番号/回収管理番号
-      lr_EXTREF          TYPE RANGE OF zr_podataanalysis-CORRESPNCEXTERNALREFERENCE ,  "旧購買発注番号明細
+      lr_category        TYPE RANGE OF zr_podataanalysis-accountassignmentcategory   ,       "勘定設定 Categ.
+      lr_intartinum      TYPE RANGE OF zr_podataanalysis-internationalarticlenumber,         "海外PO番号/回収管理番号
+      lr_extref          TYPE RANGE OF zr_podataanalysis-correspncexternalreference ,  "旧購買発注番号明細
       ls_purchaseorder   LIKE LINE OF  lr_purchaseorder,
       ls_poitem          LIKE LINE OF  lr_poitem,
       ls_supplier        LIKE LINE OF  lr_supplier,
       ls_purchasinggroup LIKE LINE OF  lr_purchasinggroup,
       ls_material        LIKE LINE OF  lr_material,
       ls_plant           LIKE LINE OF  lr_plant,
-      ls_MRPResponsible  LIKE LINE OF  lr_MRPResponsible,
-      ls_IntArtiNum      LIKE LINE OF  lr_IntArtiNum,
-      ls_EXTREF          LIKE LINE OF  lr_EXTREF,
+      ls_mrpresponsible  LIKE LINE OF  lr_mrpresponsible,
+      ls_intartinum      LIKE LINE OF  lr_intartinum,
+      ls_extref          LIKE LINE OF  lr_extref,
       ls_createdbyuser   LIKE LINE OF  lr_createdbyuser,
-      ls_Category        LIKE LINE OF  lr_Category,
+      ls_category        LIKE LINE OF  lr_category,
       ls_res_api         TYPE ty_res_api.
 
     DATA:
@@ -232,41 +232,43 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
       ls_incotermsclassification    LIKE LINE OF lr_incotermsclassification.
 
     DATA:
-      lr_new_range       TYPE RANGE OF zr_podataanalysis-purchasinggroup, " 新的 range 表
-      ls_new_range       LIKE LINE OF lr_new_range,                     " 新的 range 表的条目
-      ls_old_range       LIKE LINE OF lr_purchasinggroup.               " 原来的 range 表的条目
+      lr_new_range TYPE RANGE OF zr_podataanalysis-purchasinggroup, " 新的 range 表
+      ls_new_range LIKE LINE OF lr_new_range,                     " 新的 range 表的条目
+      ls_old_range LIKE LINE OF lr_purchasinggroup.               " 原来的 range 表的条目
 
     DATA:
          lt_tlines       TYPE tt_tline.
 
     DATA:
-        lv_dur           TYPE i .
+      lv_dur     TYPE i,
+      lv_days    TYPE i,
+      lv_befdays TYPE d.
 
     DATA:
         lv_mrpdate       TYPE d.
 
     DATA:
-      lo_root_exc        TYPE REF TO cx_root,
-      lv_path            TYPE string,
-      i                  TYPE i,
-      lv_status          TYPE c LENGTH 1,
-      lv_message         TYPE string,
-      lv_valid           TYPE budat.
+      lo_root_exc TYPE REF TO cx_root,
+      lv_path     TYPE string,
+      i           TYPE i,
+      lv_status   TYPE c LENGTH 1,
+      lv_message  TYPE string,
+      lv_valid    TYPE budat.
 
     CONSTANTS:
-      lc_msgid           TYPE string VALUE 'ZMM_001',
-      lc_msgty           TYPE string VALUE 'E',
-      lc_alpha_in        TYPE string VALUE 'IN',
-      lc_alpha_out       TYPE string VALUE 'OUT'.
+      lc_msgid     TYPE string VALUE 'ZMM_001',
+      lc_msgty     TYPE string VALUE 'E',
+      lc_alpha_in  TYPE string VALUE 'IN',
+      lc_alpha_out TYPE string VALUE 'OUT'.
 
     DATA :
-      lv_matnr           TYPE matnr,
-      lv_sup             TYPE i_purchaseorderapi01-supplier,
-      lv_sup_h           TYPE i_purchaseorderapi01-supplier.
+      lv_matnr TYPE matnr,
+      lv_sup   TYPE i_purchaseorderapi01-supplier,
+      lv_sup_h TYPE i_purchaseorderapi01-supplier.
 
     DATA:
-      lr_sup             TYPE RANGE OF i_purchaseorderapi01-supplier,
-      ls_sup             LIKE LINE OF lr_sup.
+      lr_sup TYPE RANGE OF i_purchaseorderapi01-supplier,
+      ls_sup LIKE LINE OF lr_sup.
 
     DATA:
       lt_workflow_api       TYPE STANDARD TABLE OF ts_workflow,
@@ -275,23 +277,23 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
       ls_res_workflowdetail TYPE ts_workflowdetail_api.
 
     DATA:
-      lt_mrp_api_boi     TYPE STANDARD TABLE OF ts_mrp_api_boi,
-      ls_mrp_api_boi     TYPE ts_mrp_api_boi.
+      lt_mrp_api_boi TYPE STANDARD TABLE OF ts_mrp_api_boi,
+      ls_mrp_api_boi TYPE ts_mrp_api_boi.
 
     DATA:
       lv_conf            TYPE n LENGTH 4.
 
     DATA:
-      lv_pathoverview    TYPE string,
-      lv_pathdetails     TYPE string.
+      lv_pathoverview TYPE string,
+      lv_pathdetails  TYPE string.
 
     DATA:
-      lt_uweb_api        TYPE STANDARD TABLE OF ty_response_res,
-      ls_response        TYPE ty_response.
+      lt_uweb_api TYPE STANDARD TABLE OF ty_response_res,
+      ls_response TYPE ty_response.
 
     DATA:
-      lv_filter          TYPE string,
-      lv_count           TYPE sy-index.
+      lv_filter TYPE string,
+      lv_count  TYPE sy-index.
 
     IF io_request->is_data_requested( ).
       TRY.
@@ -364,9 +366,9 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
               CLEAR ls_plant.
 
             WHEN 'MRPCONTROLLERNAME'.
-              MOVE-CORRESPONDING str_rec_l_range TO ls_MRPResponsible.
-              APPEND ls_MRPResponsible TO lr_MRPResponsible.
-              CLEAR ls_MRPResponsible.
+              MOVE-CORRESPONDING str_rec_l_range TO ls_mrpresponsible.
+              APPEND ls_mrpresponsible TO lr_mrpresponsible.
+              CLEAR ls_mrpresponsible.
 
             WHEN 'CREATEDBYUSER'.
               MOVE-CORRESPONDING str_rec_l_range TO ls_createdbyuser.
@@ -393,23 +395,23 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
               APPEND ls_schedulelinedeliverydate TO lr_schedulelinedeliverydate.
               CLEAR ls_schedulelinedeliverydate.
 
-           "add by wz 20241227
-            When 'ACCOUNTASSIGNMENTCATEGORY'."勘定設定 Categ.
-              MOVE-CORRESPONDING str_rec_l_range TO ls_Category.
-              APPEND ls_Category TO lr_Category.
-              CLEAR ls_Category.
+              "add by wz 20241227
+            WHEN 'ACCOUNTASSIGNMENTCATEGORY'."勘定設定 Categ.
+              MOVE-CORRESPONDING str_rec_l_range TO ls_category.
+              APPEND ls_category TO lr_category.
+              CLEAR ls_category.
 
-            When 'INTERNATIONALARTICLENUMBER'."海外PO番号/回収管理番号
-              MOVE-CORRESPONDING str_rec_l_range TO ls_IntArtiNum.
-              APPEND ls_IntArtiNum TO lr_IntArtiNum.
-              CLEAR ls_IntArtiNum.
+            WHEN 'INTERNATIONALARTICLENUMBER'."海外PO番号/回収管理番号
+              MOVE-CORRESPONDING str_rec_l_range TO ls_intartinum.
+              APPEND ls_intartinum TO lr_intartinum.
+              CLEAR ls_intartinum.
 
-            When 'CORRESPNCEXTERNALREFERENCE'."旧購買発注番号明細
-              MOVE-CORRESPONDING str_rec_l_range TO ls_EXTREF.
-              APPEND ls_EXTREF TO lr_EXTREF.
-              CLEAR ls_EXTREF.
+            WHEN 'CORRESPNCEXTERNALREFERENCE'."旧購買発注番号明細
+              MOVE-CORRESPONDING str_rec_l_range TO ls_extref.
+              APPEND ls_extref TO lr_extref.
+              CLEAR ls_extref.
 
-           "end add by wz 20241227
+              "end add by wz 20241227
 
             WHEN 'DELIVERYDATE'."回答納期
               MOVE-CORRESPONDING str_rec_l_range TO ls_deliverydate.
@@ -587,10 +589,10 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
          AND purchaseorderdate IN @lr_purchaseorderdate
          AND schedulelinedeliverydate IN @lr_schedulelinedeliverydate
          AND deliverydate IN @lr_deliverydate
-         AND mrpresponsible IN @lr_MRPResponsible
-         and ACCOUNTASSIGNMENTCATEGORY in @lr_Category
-         and InternationalArticleNumber in @lr_IntArtiNum
-         and CORRESPNCEXTERNALREFERENCE in @lr_EXTREF
+         AND mrpresponsible IN @lr_mrpresponsible
+         AND accountassignmentcategory IN @lr_category
+         AND internationalarticlenumber IN @lr_intartinum
+         AND correspncexternalreference IN @lr_extref
         INTO TABLE @DATA(lt_result).
 **********************************************************************
 * MOD END BY XINLEI XU
@@ -674,6 +676,17 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         SORT lt_material BY material.
         DELETE ADJACENT DUPLICATES FROM lt_material COMPARING material.
       ENDIF.
+
+
+      SELECT  plant,
+              factorycalendarid,
+              factorycalendarvalidityenddate
+      FROM i_factorycalendarbasic WITH PRIVILEGED ACCESS AS a
+      JOIN i_plant AS b ON b~factorycalendar = a~factorycalendarlegacyid
+      INTO TABLE @DATA(lt_factorycalendar).
+      SORT lt_factorycalendar BY plant.
+
+
 
       " MRP数据取得
       CLEAR lv_count.
@@ -770,9 +783,9 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         DELETE ADJACENT DUPLICATES FROM lt_workflowdetail_api COMPARING workflowinternalid.
       ENDIF.
 
-      data:
-          lv_netprice3 type p LENGTH 13 DECIMALS 3,         " 日元三位小数
-          lv_netprice5 type p LENGTH 13 DECIMALS 5.         " 五位小数
+      DATA:
+        lv_netprice3 TYPE p LENGTH 13 DECIMALS 3,         " 日元三位小数
+        lv_netprice5 TYPE p LENGTH 13 DECIMALS 5.         " 五位小数
 
       LOOP AT lt_result INTO DATA(lw_result).
         CLEAR lw_data.
@@ -842,35 +855,63 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
             lw_data-mrpelementreschedulingdate = lw_mrp-mrpelementreschedulingdate.
           ENDIF.
 
+
+          CLEAR lv_dur.
           "2.12　生産可能日付 PossibleProductionDate
           "回答納期  GoodsReceiptDurationInDays（入庫処理時間）稼働日
-          if lw_result-DeliveryDate is NOT INITIAL and lw_result-GoodsReceiptDurationInDays is NOT INITIAL.
+          IF lw_result-deliverydate IS NOT INITIAL AND lw_result-goodsreceiptdurationindays IS NOT INITIAL.
 
-              if lw_result-GoodsReceiptDurationInDays = 0.
+            IF lw_result-goodsreceiptdurationindays = 0.
 
-                lw_data-possibleproductiondate = lw_result-DeliveryDate.
+              lw_data-possibleproductiondate = lw_result-deliverydate.
 
-              ELSE.
+            ELSE.
 
-                lv_dur = lw_result-goodsreceiptdurationindays.  "入庫処理時間（稼働日）
+              lv_dur = lw_result-goodsreceiptdurationindays.  "入庫処理時間（稼働日）
 
-                lw_data-possibleproductiondate = zzcl_common_utils=>calc_date_add(
-                    EXPORTING
-                      date  = lw_result-deliverydate  "回答納期
-                      day   = lv_dur                  "入庫処理時間（稼働日）
-                ).
+              lw_data-possibleproductiondate = zzcl_common_utils=>calc_date_add(
+                  EXPORTING
+                    date  = lw_result-deliverydate  "回答納期
+                    day   = lv_dur                  "入庫処理時間（稼働日）
+              ).
 
-                lw_data-possibleproductiondate = zzcl_common_utils=>get_workingday( iv_date = lw_data-possibleproductiondate
-                                                 iv_next = abap_false
-                                                 iv_plant = lw_data-plant ).
+              lw_data-possibleproductiondate = zzcl_common_utils=>get_workingday( iv_date = lw_data-possibleproductiondate
+                                               iv_next = abap_false
+                                               iv_plant = lw_data-plant ).
 
-              ENDIF.
+            ENDIF.
 
           ENDIF.
 
-          clear lv_dur.
+          CLEAR lv_dur.
 
-"          comment by wz 20241227 顾问日期变更
+
+          IF lw_result-goodsreceiptdurationindays IS NOT INITIAL AND lw_mrp-mrpelementreschedulingdate IS NOT INITIAL.
+
+            IF lw_result-goodsreceiptdurationindays = 0.
+              lw_data-mrpdiliverydate = lw_mrp-mrpelementreschedulingdate.
+
+            ELSE.
+
+              lv_dur = lw_result-goodsreceiptdurationindays.  "入庫処理時間（稼働日）
+
+              READ TABLE lt_factorycalendar INTO DATA(lw_factory) WITH KEY plant = lw_data-plant BINARY SEARCH .
+
+              IF sy-subrc = 0 .
+
+                TRY.
+                    DATA(lo_fcal_run) = cl_fhc_calendar_runtime=>create_factorycalendar_runtime( iv_factorycalendar_id = lw_factory-factorycalendarid ).
+                    lw_data-mrpdiliverydate = lo_fcal_run->subtract_workingdays_from_date(  iv_start = lw_mrp-mrpelementreschedulingdate iv_number_of_workingdays = lv_dur  ).
+
+                  CATCH cx_fhc_runtime.
+                    "handle exception
+                ENDTRY.
+
+              ENDIF.
+              CLEAR lv_days.
+            ENDIF.
+          ENDIF.
+          "          comment by wz 20241227 顾问日期变更
 *          IF lw_mrp-mrpelementavailyorrqmtdate IS NOT INITIAL.
 *            lw_data-possibleproductiondate = lw_mrp-mrpelementavailyorrqmtdate.
 *
@@ -886,7 +927,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 *              CLEAR:lv_yy,lv_dd,lv_mm,lv_date,lv_length.
 *            ENDIF.
 *          ENDIF.
-           "comment by wz 20241227 顾问日期变更
+          "comment by wz 20241227 顾问日期变更
 
 *        "2.12　生産可能日付   生産可能日付=回答納期＋入庫処理時間（稼働日） 然后需要使用工厂日期
 *        CLEAR lv_dur.
@@ -909,22 +950,22 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 *                                                        iv_plant = lw_data-plant ).
 *        ENDIF.
 
-          IF lw_mrp-mrpelementavailyorrqmtdate IS NOT INITIAL AND lw_data-mrpelementreschedulingdate IS NOT INITIAL .
-*            lv_dur = lw_mrp-mrpelementavailyorrqmtdate.   "入庫処理時間
-            "購買納入日付
-*            lw_data-mrpdiliverydate = zzcl_common_utils=>calc_date_subtract(
-*              EXPORTING
-*                date      = lw_data-mrpelementreschedulingdate
-*                day       = lv_dur
-*            ).
-*            lw_data-mrpdiliverydate = zzcl_common_utils=>get_workingday( iv_date = lw_data-mrpdiliverydate
-*                                                                    iv_next = abap_false
-*                                                                    iv_plant = lw_data-plant ).
-          ELSE.
-            IF lw_mrp-mrpelementreschedulingdate IS NOT INITIAL.
-              lw_data-mrpdiliverydate = lw_mrp-mrpelementreschedulingdate.
-            ENDIF.
-          ENDIF.
+*          IF lw_mrp-mrpelementavailyorrqmtdate IS NOT INITIAL AND lw_data-mrpelementreschedulingdate IS NOT INITIAL .
+**            lv_dur = lw_mrp-mrpelementavailyorrqmtdate.   "入庫処理時間
+*            "購買納入日付
+**            lw_data-mrpdiliverydate = zzcl_common_utils=>calc_date_subtract(
+**              EXPORTING
+**                date      = lw_data-mrpelementreschedulingdate
+**                day       = lv_dur
+**            ).
+**            lw_data-mrpdiliverydate = zzcl_common_utils=>get_workingday( iv_date = lw_data-mrpdiliverydate
+**                                                                    iv_next = abap_false
+**                                                                    iv_plant = lw_data-plant ).
+*          ELSE.
+*            IF lw_mrp-mrpelementreschedulingdate IS NOT INITIAL.
+*              lw_data-mrpdiliverydate = lw_mrp-mrpelementreschedulingdate.
+*            ENDIF.
+*          ENDIF.
         ENDIF.
 
         " 2.21 MC要求
@@ -1019,7 +1060,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
             lv_netprice3 = round( val = lw_data-netpriceamount * 100 / lw_data-netpricequantity dec = 3 ).
 
             lw_data-netprice  = lv_netprice3.
-            clear lv_netprice3.
+            CLEAR lv_netprice3.
 
             CONDENSE lw_data-netprice.
 
@@ -1031,7 +1072,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
             lv_netprice5 = round( val = lw_data-netpriceamount / lw_data-netpricequantity dec = 5 ).
 
             lw_data-netprice = lv_netprice5.
-            clear lv_netprice5.
+            CLEAR lv_netprice5.
 
             lw_data-netamount = lw_data-netprice * lw_data-confirmedquantity.
             lw_data-netamount = round( val = lw_data-netamount dec = 2 mode = cl_abap_math=>round_half_up ).
@@ -1050,20 +1091,20 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
                                                                   BINARY SEARCH.
         IF sy-subrc = 0 .
 
-        "change by wz 20241218 只取前后都有空格的  ' # '
-          if ls_longtext1-plainlongtext is NOT INITIAL.
+          "change by wz 20241218 只取前后都有空格的  ' # '
+          IF ls_longtext1-plainlongtext IS NOT INITIAL.
 
-              FIND ALL OCCURRENCES OF ' # ' IN ls_longtext1-plainlongtext MATCH OFFSET data(lv_pos).
+            FIND ALL OCCURRENCES OF ' # ' IN ls_longtext1-plainlongtext MATCH OFFSET DATA(lv_pos).
 
-              if lv_pos is not INITIAL.
+            IF lv_pos IS NOT INITIAL.
 
-                lv_pos = lv_pos + 3.
+              lv_pos = lv_pos + 3.
 
-              ENDIF.
+            ENDIF.
 
-              lw_data-plainlongtext1 = ls_longtext1-plainlongtext+lv_pos.
+            lw_data-plainlongtext1 = ls_longtext1-plainlongtext+lv_pos.
 
-              clear lv_pos.
+            CLEAR lv_pos.
 
           ENDIF.
 
@@ -1071,25 +1112,25 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
         "add by wz 20241227 客户要求追加
         "2.28 PO連携担当者
-        if lw_data-CorrespncInternalReference is NOT INITIAL.
+        IF lw_data-correspncinternalreference IS NOT INITIAL.
 
-            "如果该字段全是数字则不显示。
-            IF cl_abap_matcher=>matches(
-                pattern = '^(-?[1-9]\d*(\.\d*[1-9])?)|(-?0\.\d*[1-9])$'
-                text = lw_data-CorrespncInternalReference
-                ) = abap_true.
+          "如果该字段全是数字则不显示。
+          IF cl_abap_matcher=>matches(
+              pattern = '^(-?[1-9]\d*(\.\d*[1-9])?)|(-?0\.\d*[1-9])$'
+              text = lw_data-correspncinternalreference
+              ) = abap_true.
 
-                lw_data-CorrespncInternalReference = ''.
+            lw_data-correspncinternalreference = ''.
 
-            ENDIF.
+          ENDIF.
 
         ENDIF.
 
         "add by wz 20241227 客户要求追加
         "2.30 旧購買発注番号明細 CorrespncExternalReference
-        if lw_data-CorrespncExternalReference is not INITIAL.
+        IF lw_data-correspncexternalreference IS NOT INITIAL.
 
-           lw_data-CorrespncExternalReference = lw_data-CorrespncExternalReference && lw_data-PurchaseOrderItem.
+          lw_data-correspncexternalreference = lw_data-correspncexternalreference && lw_data-purchaseorderitem.
 
         ENDIF.
 

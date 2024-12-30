@@ -14,6 +14,7 @@ annotate view ZC_PURCHASEPRICEVARIANCE with
   Material;
 
   @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Plant', element: 'Plant' } }]
+  @Consumption.filter.mandatory: true
   Plant;
   
   @Consumption.filter.selectionType: #INTERVAL

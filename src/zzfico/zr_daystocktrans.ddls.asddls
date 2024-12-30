@@ -3,47 +3,50 @@
 @Metadata.allowExtensions: true
 define root view entity ZR_DAYSTOCKTRANS
   as select from ztfi_1015
+    inner join   ZR_TBC1012           as _AssignCompany on _AssignCompany.CompanyCode = ztfi_1015.companycode
+    inner join   ZC_BusinessUserEmail as _User          on  _User.Email  = _AssignCompany.Mail
+                                                        and _User.UserID = $session.user
 {
-  key excudate                       as ExcuDate,
-  key companycode                    as CompanyCode,
-  key plant                          as Plant,
-  key businesspartner                as BusinessPartner,
-      businesspartnername            as BusinessPartnerName,
+  key ztfi_1015.excudate                       as ExcuDate,
+  key ztfi_1015.companycode                    as CompanyCode,
+  key ztfi_1015.plant                          as Plant,
+  key ztfi_1015.businesspartner                as BusinessPartner,
+      ztfi_1015.businesspartnername            as BusinessPartnerName,
       @Semantics.amount.currencyCode: 'DisplayCurrency'
-      finishedgoods                  as FinishedGoods,
+      ztfi_1015.finishedgoods                  as FinishedGoods,
       @Semantics.amount.currencyCode: 'DisplayCurrency'
-      semifinishedgoods              as SemiFinishedGoods,
+      ztfi_1015.semifinishedgoods              as SemiFinishedGoods,
       @Semantics.amount.currencyCode: 'DisplayCurrency'
-      material                       as Material,
+      ztfi_1015.material                       as Material,
       @Semantics.amount.currencyCode: 'DisplayCurrency'
-      movingaverageprice             as MovingAveragePrice,
+      ztfi_1015.movingaverageprice             as MovingAveragePrice,
       @Semantics.amount.currencyCode: 'DisplayCurrency'
-      standardprice                  as StandardPrice,
-      priceunitqty                   as Priceunitqty,
-      valuationquantity              as ValuationQuantity,
+      ztfi_1015.standardprice                  as StandardPrice,
+      ztfi_1015.priceunitqty                   as Priceunitqty,
+      ztfi_1015.valuationquantity              as ValuationQuantity,
       @Semantics.amount.currencyCode : 'DisplayCurrency'
-      total                          as Total,
+      ztfi_1015.total                          as Total,
       @Semantics.amount.currencyCode : 'DisplayCurrency'
-      salesperfactlamtindspcurrency  as SalesPerfActlAmtInDspCurrency,
-      salesperformanceactualquantity as SalesPerformanceActualQuantity,
+      ztfi_1015.salesperfactlamtindspcurrency  as SalesPerfActlAmtInDspCurrency,
+      ztfi_1015.salesperformanceactualquantity as SalesPerformanceActualQuantity,
       @Semantics.amount.currencyCode : 'DisplayCurrency'
-      saleactual                     as SaleActual,
-      necessraryquantity             as NecessraryQuantity,
+      ztfi_1015.saleactual                     as SaleActual,
+      ztfi_1015.necessraryquantity             as NecessraryQuantity,
       @Semantics.amount.currencyCode : 'DisplayCurrency'
-      salesprice                     as SalesPrice,
+      ztfi_1015.salesprice                     as SalesPrice,
       @Semantics.amount.currencyCode : 'DisplayCurrency'
-      saleforcast                    as Saleforcast,
-      displaycurrency                as DisplayCurrency,
+      ztfi_1015.saleforcast                    as Saleforcast,
+      ztfi_1015.displaycurrency                as DisplayCurrency,
 
       @Semantics.user.createdBy: true
-      created_by                     as CreatedBy,
+      ztfi_1015.created_by                     as CreatedBy,
       @Semantics.systemDateTime.createdAt: true
-      created_at                     as CreatedAt,
+      ztfi_1015.created_at                     as CreatedAt,
       @Semantics.user.lastChangedBy: true
-      last_changed_by                as LastChangedBy,
+      ztfi_1015.last_changed_by                as LastChangedBy,
       @Semantics.systemDateTime.lastChangedAt: true
-      last_changed_at                as LastChangedAt,
+      ztfi_1015.last_changed_at                as LastChangedAt,
       @Semantics.systemDateTime.localInstanceLastChangedAt: true
-      local_last_changed_at          as LocalLastChangedAt
+      ztfi_1015.local_last_changed_at          as LocalLastChangedAt
 
 }

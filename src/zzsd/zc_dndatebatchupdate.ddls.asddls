@@ -38,7 +38,8 @@ define root view entity ZC_DNDATEBATCHUPDATE
       @Consumption.hidden: true
       DeliveryDocument2,
       @Consumption.hidden: true
-      DeliveryDocument4
+      DeliveryDocument4,
+      UserEmail
       
 }
 where DeliveryDocument4 is not initial

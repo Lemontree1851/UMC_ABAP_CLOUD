@@ -31,4 +31,4 @@ define view entity ZC_POAPPROVEVH
       Zvalue2
 }
 where
-  ZID = 'ZBC011'
+  ZID = 'ZMM020'

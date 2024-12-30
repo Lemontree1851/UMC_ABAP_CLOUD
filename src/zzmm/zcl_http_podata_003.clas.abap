@@ -87,6 +87,7 @@ CLASS zcl_http_podata_003 DEFINITION
         RequisitionerName              type c length 12,
         CorrespncInternalReference     type c length 12,
         APPROVEDATE                    type string,
+        PurchasingOrganization         type c length 4,
 
 
 
@@ -187,6 +188,7 @@ DATA: lv_date       TYPE D,
            a~createdbyuser,
            a~lastchangedatetime,
            a~CorrespncInternalReference,
+           a~PurchasingOrganization,
            d~textobjecttype,
            d~plainlongtext,
            e~schedulelinedeliverydate
@@ -414,6 +416,7 @@ DATA: lv_date       TYPE D,
       ls_response-orderquantity                      = lw_result-orderquantity                  .
       ls_response-purchaseorderquantityunit          = lw_result-purchaseorderquantityunit      .
       ls_response-netpricequantity                   = lw_result-netpricequantity               .
+      ls_response-PurchasingOrganization             = lw_result-PurchasingOrganization         .
 
 
       ls_response-netamount = zzcl_common_utils=>conversion_amount(
@@ -545,6 +548,7 @@ DATA: lv_date       TYPE D,
       CONDENSE ls_response-RequisitionerName     .
       condense ls_response-CorrespncInternalReference .
       CONDENSE ls_response-approvedate.
+      CONDENSE ls_response-PurchasingOrganization.
 
 
       loop AT lt_confirmation INTO data(lw_confadd) WHERE purchaseorder = lw_result-purchaseorder and purchaseorderitem = lw_result-purchaseorderitem .
@@ -581,7 +585,7 @@ DATA: lv_date       TYPE D,
     sort es_response-items by purchaseorder purchaseorderitem.
 
     IF lt_result IS INITIAL.
-      lv_text = 'error'.
+      lv_text = 'there is no data to send'.
       "propagate any errors raised
       response->set_status( '500' )."500
       response->set_text( lv_text ).

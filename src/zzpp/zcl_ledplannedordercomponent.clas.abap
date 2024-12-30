@@ -9,11 +9,7 @@ CLASS zcl_ledplannedordercomponent DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_LEDPLANNEDORDERCOMPONENT IMPLEMENTATION.
-
-
+CLASS zcl_ledplannedordercomponent IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
 
     DATA:
@@ -51,9 +47,18 @@ CLASS ZCL_LEDPLANNEDORDERCOMPONENT IMPLEMENTATION.
           CASE ls_filter_cond-name.
 *           プラント
             WHEN 'PLANT'.
-              MOVE-CORRESPONDING str_rec_l_range TO ls_plant.
-              APPEND ls_plant TO lr_plant.
-              CLEAR ls_plant.
+              DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+              DATA(lv_user_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
+              IF lv_user_plant IS NOT INITIAL.
+                SPLIT lv_user_plant AT '&' INTO TABLE DATA(lt_plant).
+                lr_plant = VALUE #( FOR plant IN lt_plant ( sign = 'I' option = 'EQ' low = plant ) ).
+                IF str_rec_l_range-low IN lr_plant.
+                  MOVE-CORRESPONDING str_rec_l_range TO ls_plant.
+                  APPEND ls_plant TO lr_plant.
+                  CLEAR ls_plant.
+                ENDIF.
+              ENDIF.
 *           MRP 管理者
             WHEN 'MRPCONTROLLER'.
               MOVE-CORRESPONDING str_rec_l_range TO ls_mrpcontroller.

@@ -34,6 +34,7 @@ define root view entity ZC_PRWORKFLOWITEM
       GlAccount,
       CostCenter,
       WbsElemnt,
+      OrderId,
       AssetNo,
       Tax,
       ItemText,
