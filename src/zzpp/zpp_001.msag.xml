@@ -686,6 +686,12 @@
      <MSGNR>112</MSGNR>
      <TEXT>The required date must be entered within the factory calendar.</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>113</MSGNR>
+     <TEXT>&amp;1を送信してください</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_CHECKMFGORDERMDOC_001 IMPLEMENTATION.
+CLASS zcl_http_checkmfgordermdoc_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -22,20 +22,21 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_001 IMPLEMENTATION.
       END OF ty_req,
 
       BEGIN OF ty_stocks,
-        _plant                        TYPE i_mfgorderoperationcomponent-plant,
-        _assembly                     TYPE i_mfgorderoperationcomponent-assembly,
-        _material                     TYPE i_mfgorderoperationcomponent-material,
-        _required_quantity            TYPE i_mfgorderoperationcomponent-requiredquantity,
-        _base_unit                    TYPE i_mfgorderoperationcomponent-baseunit,
-        _storage_location             TYPE i_mfgorderoperationcomponent-storagelocation,
-        _batch                        TYPE i_mfgorderoperationcomponent-batch,
-        matlcompismarkedforbackflush  TYPE i_mfgorderoperationcomponent-matlcompismarkedforbackflush,
-        _withdrawn_quantity           TYPE i_mfgorderoperationcomponent-withdrawnquantity,
-        _reservation                  TYPE i_mfgorderoperationcomponent-reservation,
-        _reservationitem              TYPE i_mfgorderoperationcomponent-reservationitem,
-        _goods_movement_type          TYPE i_mfgorderoperationcomponent-goodsmovementtype,
-        _is_batch_management_required TYPE i_product-isbatchmanagementrequired,
-        matlwrhsstkqtyinmatlbaseunit  TYPE i_materialstock_2-matlwrhsstkqtyinmatlbaseunit,
+        _plant                         TYPE i_mfgorderoperationcomponent-plant,
+        _assembly                      TYPE i_mfgorderoperationcomponent-assembly,
+        _material                      TYPE i_mfgorderoperationcomponent-material,
+        _required_quantity             TYPE i_mfgorderoperationcomponent-requiredquantity,
+        _base_unit                     TYPE i_mfgorderoperationcomponent-baseunit,
+        _storage_location              TYPE i_mfgorderoperationcomponent-storagelocation,
+        _batch                         TYPE i_mfgorderoperationcomponent-batch,
+        matlcompismarkedforbackflush   TYPE i_mfgorderoperationcomponent-matlcompismarkedforbackflush,
+        _withdrawn_quantity            TYPE i_mfgorderoperationcomponent-withdrawnquantity,
+        _reservation                   TYPE i_mfgorderoperationcomponent-reservation,
+        _reservationitem               TYPE i_mfgorderoperationcomponent-reservationitem,
+        _goods_movement_type           TYPE i_mfgorderoperationcomponent-goodsmovementtype,
+        _is_batch_management_required  TYPE i_product-isbatchmanagementrequired,
+        matlwrhsstkqtyinmatlbaseunit   TYPE i_materialstock_2-matlwrhsstkqtyinmatlbaseunit,
+        _material_is_directly_produced TYPE i_mfgorderoperationcomponent-materialisdirectlyproduced,
       END OF ty_stocks,
       tt_stocks TYPE STANDARD TABLE OF ty_stocks WITH DEFAULT KEY,
 
@@ -177,7 +178,8 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_001 IMPLEMENTATION.
                goodsmovementtype,
                salesorder,
                salesorderitem,
-               wbselementinternalid_2
+               wbselementinternalid_2,
+               MaterialIsDirectlyProduced
           FROM i_mfgorderoperationcomponent WITH PRIVILEGED ACCESS
          WHERE reservation = @ls_mfgorderwithstatus-reservation
            AND matlcompismarkedfordeletion = @space
@@ -296,17 +298,18 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_001 IMPLEMENTATION.
         ENDLOOP.
       ENDIF.
 
-      ls_stocks-_plant                       = ls_mfgorderoperationcomponent-plant.
-      ls_stocks-_assembly                    = ls_mfgorderoperationcomponent-assembly.
-      ls_stocks-_material                    = ls_mfgorderoperationcomponent-material.
-      ls_stocks-_required_quantity           = ls_mfgorderoperationcomponent-requiredquantity.
-      ls_stocks-_storage_location            = ls_mfgorderoperationcomponent-storagelocation.
-      ls_stocks-_batch                       = ls_mfgorderoperationcomponent-batch.
-      ls_stocks-matlcompismarkedforbackflush = ls_mfgorderoperationcomponent-matlcompismarkedforbackflush.
-      ls_stocks-_withdrawn_quantity          = ls_mfgorderoperationcomponent-withdrawnquantity.
-      ls_stocks-_reservation                 = ls_mfgorderoperationcomponent-reservation.
-      ls_stocks-_reservationitem             = ls_mfgorderoperationcomponent-reservationitem.
-      ls_stocks-_goods_movement_type         = ls_mfgorderoperationcomponent-goodsmovementtype.
+      ls_stocks-_plant                         = ls_mfgorderoperationcomponent-plant.
+      ls_stocks-_assembly                      = ls_mfgorderoperationcomponent-assembly.
+      ls_stocks-_material                      = ls_mfgorderoperationcomponent-material.
+      ls_stocks-_required_quantity             = ls_mfgorderoperationcomponent-requiredquantity.
+      ls_stocks-_storage_location              = ls_mfgorderoperationcomponent-storagelocation.
+      ls_stocks-_batch                         = ls_mfgorderoperationcomponent-batch.
+      ls_stocks-matlcompismarkedforbackflush   = ls_mfgorderoperationcomponent-matlcompismarkedforbackflush.
+      ls_stocks-_withdrawn_quantity            = ls_mfgorderoperationcomponent-withdrawnquantity.
+      ls_stocks-_reservation                   = ls_mfgorderoperationcomponent-reservation.
+      ls_stocks-_reservationitem               = ls_mfgorderoperationcomponent-reservationitem.
+      ls_stocks-_goods_movement_type           = ls_mfgorderoperationcomponent-goodsmovementtype.
+      ls_stocks-_material_is_directly_produced = ls_mfgorderoperationcomponent-MaterialIsDirectlyProduced.
 
       TRY.
           ls_stocks-_base_unit = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out

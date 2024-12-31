@@ -48,10 +48,12 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BI006_DATA IMPLEMENTATION.
+CLASS zcl_bi006_data IMPLEMENTATION.
 
 
   METHOD get_data.
+    DATA: lr_companycode TYPE RANGE OF i_companycode-companycode.
+
     "Step 1. Get ztfi_1019
     SELECT a~ledger,
            a~companycode,
@@ -80,6 +82,21 @@ CLASS ZCL_BI006_DATA IMPLEMENTATION.
     AND a~plant IN @ir_plant
     AND a~product IN @ir_product
     INTO TABLE @DATA(lt_detail).
+
+*&--Authorization Check
+    IF sy-batch = abap_false.
+      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+      DATA(lv_company) = zzcl_common_utils=>get_company_by_user( lv_user_email ).
+      IF lv_company IS INITIAL.
+        CLEAR lt_detail.
+      ELSE.
+        SPLIT lv_company AT '&' INTO TABLE DATA(lt_company_check).
+        CLEAR lr_companycode.
+        lr_companycode = VALUE #( FOR company IN lt_company_check ( sign = 'I' option = 'EQ' low = company ) ).
+        DELETE lt_detail WHERE companycode NOT IN lr_companycode.
+      ENDIF.
+    ENDIF.
+*&--Authorization Check
 
     CHECK lt_detail IS NOT INITIAL.
 
@@ -285,7 +302,7 @@ CLASS ZCL_BI006_DATA IMPLEMENTATION.
      AND currencyrole = '10'
      AND valuationarea = @lt_group_data-valuationarea
      AND ( materialpricecontrol = 'V' OR  materialpricecontrol = 'S' )
-     AND InventorySpecialStockType = ''
+     AND inventoryspecialstocktype = ''
      APPENDING CORRESPONDING FIELDS OF TABLE @lt_price.
     ENDLOOP.
 

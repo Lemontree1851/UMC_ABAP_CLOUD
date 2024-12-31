@@ -115,23 +115,24 @@ CLASS zcl_http_confirmmfgord_001 IMPLEMENTATION.
       ls_error              TYPE zzcl_odata_utils=>gty_error.
 
     CONSTANTS:
-      lc_msgid           TYPE string     VALUE 'ZPP_001',
-      lc_msgty           TYPE string     VALUE 'E',
-      lc_msgty_s         TYPE string     VALUE 'S',
-      lc_msgty_w         TYPE string     VALUE 'W',
-      lc_stat_code_201   TYPE string     VALUE '201',
-      lc_stat_code_500   TYPE string     VALUE '500',
-      lc_alpha_in        TYPE string     VALUE 'IN',
-      lc_updateflag_i    TYPE string     VALUE 'I',
-      lc_updateflag_c    TYPE string     VALUE 'C',
-      lc_sequence_0      TYPE string     VALUE '0',
-      lc_finalconftype_1 TYPE string     VALUE '1',
-      lc_count_10        TYPE i          VALUE '10',
-      lc_second_in_ms    TYPE i          VALUE '1000',
-      lc_pgmid           TYPE string     VALUE 'ZCL_HTTP_CONFIRMMFGORD_001',
-      lc_hour_08         TYPE n LENGTH 2 VALUE '08',
-      lc_minute_00       TYPE n LENGTH 2 VALUE '00',
-      lc_second_00       TYPE n LENGTH 2 VALUE '00'.
+      lc_zid_zpp020      TYPE ztbc_1001-zid VALUE 'ZPP020',
+      lc_msgid           TYPE string        VALUE 'ZPP_001',
+      lc_msgty           TYPE string        VALUE 'E',
+      lc_msgty_s         TYPE string        VALUE 'S',
+      lc_msgty_w         TYPE string        VALUE 'W',
+      lc_stat_code_201   TYPE string        VALUE '201',
+      lc_stat_code_500   TYPE string        VALUE '500',
+      lc_alpha_in        TYPE string        VALUE 'IN',
+      lc_updateflag_i    TYPE string        VALUE 'I',
+      lc_updateflag_c    TYPE string        VALUE 'C',
+      lc_sequence_0      TYPE string        VALUE '0',
+      lc_finalconftype_1 TYPE string        VALUE '1',
+      lc_count_10        TYPE i             VALUE '10',
+      lc_second_in_ms    TYPE i             VALUE '1000',
+      lc_pgmid           TYPE string        VALUE 'ZCL_HTTP_CONFIRMMFGORD_001',
+      lc_hour_08         TYPE n LENGTH 2    VALUE '08',
+      lc_minute_00       TYPE n LENGTH 2    VALUE '00',
+      lc_second_00       TYPE n LENGTH 2    VALUE '00'.
 
     "Obtain request data
     DATA(lv_req_body) = request->get_text( ).
@@ -170,34 +171,70 @@ CLASS zcl_http_confirmmfgord_001 IMPLEMENTATION.
     ls_ztpp_1004-creator                       = ls_req-_creator.
 
     TRY.
-        "Check UMESID of input parameter must be valuable
-        IF ls_ztpp_1004-umesid IS INITIAL.
-          "UMESIDを送信していください！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 026 INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
+*        "Check UMESID of input parameter must be valuable
+*        IF ls_ztpp_1004-umesid IS INITIAL.
+*          "UMESIDを送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 026 INTO ls_res-_msg.
+*          RAISE EXCEPTION TYPE cx_abap_api_state.
+*        ENDIF.
 
         "Check plant of input parameter must be valuable
         IF ls_ztpp_1004-plant IS INITIAL.
           "プラントを送信していください！
           MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 001 INTO ls_res-_msg.
           RAISE EXCEPTION TYPE cx_abap_api_state.
+        ELSE.
+          "Check plant of input parameter must be existent
+          SELECT COUNT(*)
+            FROM i_plant
+           WHERE plant = @ls_ztpp_1004-plant.
+          IF sy-subrc <> 0.
+            "プラント&1存在しません！
+            MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 002 WITH ls_ztpp_1004-plant INTO ls_res-_msg.
+            RAISE EXCEPTION TYPE cx_abap_api_state.
+          ENDIF.
         ENDIF.
 
-*        "Check manufacturing order of input parameter must be valuable
-*        IF ls_ztpp_1004-manufacturingorder IS INITIAL.
-*          "製造指図を送信していください！
-*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 015 INTO ls_res-_msg.
-*          RAISE EXCEPTION TYPE cx_abap_api_state.
-*        ENDIF.
-*
-*        "Check manufacturing order operation of input parameter must be valuable
-*        IF ls_ztpp_1004-manufacturingorderoperation_2 IS INITIAL.
-*          "作業番号を送信していください！
-*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 031 INTO ls_res-_msg.
-*          RAISE EXCEPTION TYPE cx_abap_api_state.
-*        ENDIF.
-*
+        "Check manufacturing order of input parameter must be valuable
+        IF ls_ztpp_1004-manufacturingorder IS INITIAL.
+          "製造指図を送信していください！
+          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 015 INTO ls_res-_msg.
+          RAISE EXCEPTION TYPE cx_abap_api_state.
+        ENDIF.
+
+        "Check manufacturing order operation of input parameter must be valuable
+        IF ls_ztpp_1004-manufacturingorderoperation_2 IS INITIAL.
+          "作業番号を送信していください！
+          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 031 INTO ls_res-_msg.
+          RAISE EXCEPTION TYPE cx_abap_api_state.
+        ENDIF.
+
+        "Check posting date of input parameter must be valuable
+        IF ls_ztpp_1004-postingdate IS INITIAL.
+          "転記日付を送信していください！
+          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 045 INTO ls_res-_msg.
+          RAISE EXCEPTION TYPE cx_abap_api_state.
+        ENDIF.
+
+        "Obtain attribute of input parameter fields
+        SELECT zvalue2,
+               zvalue4
+          FROM ztbc_1001
+         WHERE zid = @lc_zid_zpp020
+           AND zvalue1 = @ls_ztpp_1004-plant
+          INTO TABLE @DATA(lt_ztbc_1001).
+
+        LOOP AT lt_ztbc_1001 INTO DATA(ls_ztbc_1001).
+          ASSIGN COMPONENT ls_ztbc_1001-zvalue2 OF STRUCTURE ls_ztpp_1004 TO FIELD-SYMBOL(<fs_value>).
+          IF sy-subrc = 0.
+            IF <fs_value> IS INITIAL.
+              "&1を送信してください
+              MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 113 WITH ls_ztbc_1001-zvalue4 INTO ls_res-_msg.
+              RAISE EXCEPTION TYPE cx_abap_api_state.
+            ENDIF.
+          ENDIF.
+        ENDLOOP.
+
 *        "Check yield to be confirmed quantity of input parameter must be valuable
 *        IF ls_ztpp_1004-confirmationyieldquantity IS INITIAL.
 *          "歩留数量を送信していください！
@@ -289,52 +326,35 @@ CLASS zcl_http_confirmmfgord_001 IMPLEMENTATION.
 *          RAISE EXCEPTION TYPE cx_abap_api_state.
 *        ENDIF.
 *
-*        "Check posting date of input parameter must be valuable
-*        IF ls_ztpp_1004-postingdate IS INITIAL.
-*          "転記日付を送信していください！
-*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 045 INTO ls_res-_msg.
+*        "Check confirmation text of input parameter must be valuable
+*        IF ls_ztpp_1004-confirmationtext IS INITIAL.
+*          "確認テキストを送信していください！
+*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 046 INTO ls_res-_msg.
 *          RAISE EXCEPTION TYPE cx_abap_api_state.
 *        ENDIF.
 
-        "Check confirmation text of input parameter must be valuable
-        "IF ls_ztpp_1004-confirmationtext IS INITIAL.
-        "確認テキストを送信していください！
-        "MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 046 INTO ls_res-_msg.
-        "RAISE EXCEPTION TYPE cx_abap_api_state.
-        "ENDIF.
-
-        "Check plant of input parameter must be existent
+        "Check manufacturing order and plant of input parameter must be existent
         SELECT COUNT(*)
-          FROM i_plant
-         WHERE plant = @ls_ztpp_1004-plant.
+          FROM i_manufacturingorder WITH PRIVILEGED ACCESS
+         WHERE manufacturingorder = @ls_ztpp_1004-manufacturingorder
+           AND productionplant = @ls_ztpp_1004-plant.
         IF sy-subrc <> 0.
-          "プラント&1存在しません！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 002 WITH ls_ztpp_1004-plant INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
+          "プラント&1製造指図&2存在しません！
+          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 007 WITH ls_ztpp_1004-plant ls_ztpp_1004-manufacturingorder INTO ls_res-_msg.
+          RAISE EXCEPTION TYPE cx_abap_invalid_value.
         ENDIF.
 
-*        "Check manufacturing order and plant of input parameter must be existent
-*        SELECT COUNT(*)
-*          FROM i_manufacturingorder WITH PRIVILEGED ACCESS
-*         WHERE manufacturingorder = @ls_ztpp_1004-manufacturingorder
-*           AND productionplant = @ls_ztpp_1004-plant.
-*        IF sy-subrc <> 0.
-*          "プラント&1製造指図&2存在しません！
-*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 007 WITH ls_ztpp_1004-plant ls_ztpp_1004-manufacturingorder INTO ls_res-_msg.
-*          RAISE EXCEPTION TYPE cx_abap_invalid_value.
-*        ENDIF.
-*
-*        "Check manufacturing order operation of input parameter must be existent
-*        SELECT COUNT(*)
-*          FROM i_manufacturingorderoperation WITH PRIVILEGED ACCESS
-*         WHERE manufacturingorder = @ls_ztpp_1004-manufacturingorder
-*           AND manufacturingorderoperation_2 = @ls_ztpp_1004-manufacturingorderoperation_2.
-*        IF sy-subrc <> 0.
-*          "製造指図&1の作業番号&2が存在しません！
-*          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 047 WITH ls_ztpp_1004-manufacturingorder ls_ztpp_1004-manufacturingorderoperation_2 INTO ls_res-_msg.
-*          RAISE EXCEPTION TYPE cx_abap_invalid_value.
-*        ENDIF.
-*
+        "Check manufacturing order operation of input parameter must be existent
+        SELECT COUNT(*)
+          FROM i_manufacturingorderoperation WITH PRIVILEGED ACCESS
+         WHERE manufacturingorder = @ls_ztpp_1004-manufacturingorder
+           AND manufacturingorderoperation_2 = @ls_ztpp_1004-manufacturingorderoperation_2.
+        IF sy-subrc <> 0.
+          "製造指図&1の作業番号&2が存在しません！
+          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 047 WITH ls_ztpp_1004-manufacturingorder ls_ztpp_1004-manufacturingorderoperation_2 INTO ls_res-_msg.
+          RAISE EXCEPTION TYPE cx_abap_invalid_value.
+        ENDIF.
+
 *        "Check fiscal year and period
 *        zzcl_common_utils=>get_fiscal_year_period(
 *          EXPORTING
@@ -403,7 +423,6 @@ CLASS zcl_http_confirmmfgord_001 IMPLEMENTATION.
           MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 110 INTO ls_res-_msg.
           ls_res-_msgty = lv_previous_processed.
         ELSE.
-
           "/API_PROD_ORDER_CONFIRMATION_2_SRV/ProdnOrdConf2
           lv_path = '/API_PROD_ORDER_CONFIRMATION_2_SRV/ProdnOrdConf2'.
 
@@ -449,12 +468,10 @@ CLASS zcl_http_confirmmfgord_001 IMPLEMENTATION.
             "JSON->ABAP
             xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
                 ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_res_api ) ).
-            "ls_res-_data-_mfg_order_confirmation_group = ls_res_api-d-confirmation_group.
-            "ls_res-_data-_mfg_order_confirmation       = ls_res_api-d-confirmation_count.
             ls_res-_data-_mfg_order_confirmation_group = |{ ls_res_api-d-confirmation_group ALPHA = OUT }|.
             ls_res-_data-_mfg_order_confirmation       = |{ ls_res_api-d-confirmation_count ALPHA = OUT }|.
-            CONDENSE ls_res-_data-_mfg_order_confirmation_group NO-GAPS.
-            CONDENSE ls_res-_data-_mfg_order_confirmation NO-GAPS.
+            CONDENSE ls_res-_data-_mfg_order_confirmation_group.
+            CONDENSE ls_res-_data-_mfg_order_confirmation.
             "作業実績確認は成功しました！
             MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 048 INTO ls_res-_msg.
             ls_res-_msgty = 'S'.
@@ -467,7 +484,6 @@ CLASS zcl_http_confirmmfgord_001 IMPLEMENTATION.
             ls_res-_msg = ls_res-_msg && ls_error-error-message-value.
             RAISE EXCEPTION TYPE cx_abap_api_state.
           ENDIF.
-
         ENDIF.
 
       CATCH cx_root INTO lo_root_exc.

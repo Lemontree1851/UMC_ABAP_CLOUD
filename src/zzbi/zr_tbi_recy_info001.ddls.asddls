@@ -2,7 +2,12 @@
 @Metadata.allowExtensions: true
 @EndUserText.label: '###GENERATED Core Data Service Entity'
 define root view entity ZR_TBI_RECY_INFO001
-  as select from ztbi_recy_info as recy_info
+  as select from ztbi_recy_info       as recy_info
+
+    inner join   ZR_TBC1012           as _AssignCompany on _AssignCompany.CompanyCode = recy_info.company_code
+    inner join   ZC_BusinessUserEmail as _User          on  _User.Email  = _AssignCompany.Mail
+                                                        and _User.UserID = $session.user
+
   association [0..1] to ZI_BI003_RECOVERY_AMT_TOTAL as _AmtTotal        on $projection.RecoveryManagementNumber = _AmtTotal.RecoveryManagementNumber
   association [1]    to ZI_RECOVER_TYPE_VH          as _RecoverTypeVH   on $projection.RecoveryType = _RecoverTypeVH.RecoverType
   association [1]    to ZI_RECOVER_STATUS_VH        as _RecoverStatusVH on $projection.RecoveryStatus = _RecoverStatusVH.RecoverStatus
@@ -43,8 +48,8 @@ define root view entity ZR_TBI_RECY_INFO001
       @Semantics.user.createdBy: true
       @ObjectModel.text.element: [ 'CreatedName' ]
       recy_info.created_by                 as CreatedBy,
-      
-      recy_info.created_name as CreatedName,
+
+      recy_info.created_name               as CreatedName,
       recy_info.created_date               as CreatedDate,
       @Semantics.systemDateTime.createdAt: true
       recy_info.created_at                 as CreatedAt,

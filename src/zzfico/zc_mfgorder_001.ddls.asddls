@@ -125,17 +125,18 @@ define root custom entity ZC_MFGORDER_001
       ActualCostRate            : abap.curr(16,2);
       Currency1:waerk;
       Currency2:waerk;
+      Currency_Empty:waerk;
       CostRateScaleFactor1:abap.dec(5);
       CostRateScaleFactor2:abap.dec(5);
       @UI                       : {
       lineItem                  : [ { position: 220, label: '加工費実績合計' } ] }
       @EndUserText.label        : '加工費実績合計'
-      @Semantics.amount.currencyCode : 'Currency2'
+      @Semantics.amount.currencyCode : 'Currency_Empty'
       TotalActualCost           : abap.curr(20,2);
       @UI                       : {
       lineItem                  : [ { position: 230, label: '加工費実績（1単位）' } ] }
       @EndUserText.label        : '加工費実績（1単位）'
-      @Semantics.amount.currencyCode : 'Currency2'
+      @Semantics.amount.currencyCode : 'Currency_Empty'
       ActualCost1PC             : abap.curr(20,2);
       @UI                       : {
       selectionField            : [ { position: 3 } ] }

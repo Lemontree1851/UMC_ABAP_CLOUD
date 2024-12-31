@@ -2,6 +2,10 @@
 @EndUserText.label: '用于创建DN的SO信息'
 define root view entity ZR_SALESORDER_U
   as select from    ZR_SALESORDERBASIC          as basic
+    //权限控制
+    inner join   ZR_TBC1006           as _AssignPlant on _AssignPlant.Plant = basic.Plant
+    inner join   ZC_BusinessUserEmail as _User        on  _User.Email  = _AssignPlant.Mail
+                                                      and _User.UserID = $session.user
     left outer join ZTF_SALESORDERSTORLOC(
                         clnt: $session.client ) as SalesStorLoc on  SalesStorLoc.SalesDocument     = basic.SalesDocument
                                                                 and SalesStorLoc.SalesDocumentItem = basic.SalesDocumentItem

@@ -77,6 +77,9 @@ CLASS lhc_zr_tmm_1011 IMPLEMENTATION.
 
     CHECK ct_data IS NOT INITIAL.
 
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
       CLEAR lv_length.
       lv_length = strlen( <lfs_data>-orderkey ).
@@ -164,6 +167,9 @@ CLASS lhc_zr_tmm_1011 IMPLEMENTATION.
 
       IF <lfs_data>-plant IS INITIAL.
         MESSAGE e008(zmm_020) INTO lv_msg.
+        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+      ELSEIF NOT lv_plant CS <lfs_data>-plant.
+        MESSAGE e027(zbc_001) WITH <lfs_data>-plant INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
       ENDIF.
 

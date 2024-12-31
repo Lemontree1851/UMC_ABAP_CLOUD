@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
+CLASS zcl_mfgorder_001 IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -51,7 +51,7 @@ CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
         companycode                TYPE string,
         costcenter                 TYPE string,
         activitytype               TYPE string,
-        currency                   TYPE string,
+        currency                   TYPE waerk,
         controllingarea            TYPE string,
         validitystartfiscalyear    TYPE string,
         validitystartfiscalperiod  TYPE string,
@@ -74,7 +74,7 @@ CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
         companycode                TYPE string,
         costcenter                 TYPE string,
         activitytype               TYPE string,
-        currency                   TYPE string,
+        currency                   TYPE waerk,
         controllingarea            TYPE string,
         validitystartfiscalyear    TYPE string,
         validitystartfiscalperiod  TYPE string,
@@ -780,22 +780,17 @@ CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
           "??validityendfiscalyear
           "??validityendfiscalperiod
           IF sy-subrc = 0.
-            "ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount. "'実際賃率'
-            IF ls_actualcostrate-costratescalefactor IS NOT INITIAL.
-              " ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount / ls_actualcostrate-costratescalefactor  ."'実際賃率'
-              " ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount    ."'実際賃率'
-
-              ls_mfgorder_001-costratescalefactor2 = ls_actualcostrate-costratescalefactor.
-              ls_mfgorder_001-currency2 = ls_actualcostrate-currency.
-            ENDIF.
-            "ls_mfgorder_001-actualcostrate = lv_curr.
-
+            ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount. "'実際賃率'
+            ls_mfgorder_001-actualcostrate = zzcl_common_utils=>conversion_amount(
+                iv_alpha = 'IN'
+                iv_currency = ls_actualcostrate-currency
+                iv_input =  ls_mfgorder_001-actualcostrate ).
+            ls_mfgorder_001-costratescalefactor2 = ls_actualcostrate-costratescalefactor.
+            ls_mfgorder_001-currency2 = ls_actualcostrate-currency.
             IF ls_actualcostrate-costratescalefactor IS NOT INITIAL.
               ls_mfgorder_001-totalactualcost  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_actualcostrate-costratescalefactor. "'加工費実績合計'
               "ls_mfgorder_001-totalactualcost  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit. "'加工費実績合計'
             ENDIF.
-
-
             READ TABLE lt_sum_qty INTO DATA(ls_sum_qty1) WITH KEY product = ls_mfgorder_001-product BINARY SEARCH.
             IF sy-subrc = 0 AND ls_sum_qty1-mfgorderconfirmedyieldqty IS NOT INITIAL AND ls_actualcostrate-costratescalefactor IS NOT INITIAL.
               ls_mfgorder_001-actualcost1pc  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_sum_qty1-mfgorderconfirmedyieldqty / ls_actualcostrate-costratescalefactor. "'加工費実績（1単位）'
@@ -815,11 +810,16 @@ CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
           "??validityendfiscalyear
           "??validityendfiscalperiod
           IF sy-subrc = 0.
-            IF ls_plancostrate-costratescalefactor IS NOT INITIAL.
-              ls_mfgorder_001-plancostrate = ls_plancostrate-costratevarblamount / ls_plancostrate-costratescalefactor. "'計画賃率'
-              ls_mfgorder_001-currency1  = ls_plancostrate-currency.
-              ls_mfgorder_001-costratescalefactor1 = ls_plancostrate-costratescalefactor.
-            ENDIF.
+            "API取出的是OUT的amount，所以要选转IN
+            ls_mfgorder_001-plancostrate = ls_plancostrate-costratevarblamount. "'計画賃率'
+            ls_mfgorder_001-plancostrate = zzcl_common_utils=>conversion_amount(
+             iv_alpha = 'IN'
+            iv_currency = ls_plancostrate-currency
+            iv_input =  ls_mfgorder_001-plancostrate ).
+
+            ls_mfgorder_001-currency1  = ls_plancostrate-currency.
+            ls_mfgorder_001-costratescalefactor1 = ls_plancostrate-costratescalefactor.
+
           ENDIF.
           ls_mfgorder_001-product = zzcl_common_utils=>conversion_matn1(
                              EXPORTING iv_alpha = 'OUT'
@@ -864,11 +864,11 @@ CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
 
 
 
-     SORT lt_mfgorder_001 by YearMonth companycode plant product  BusinessPartner ProfitCenter CostCenter  ActivityType  orderid.
-     DELETE ADJACENT DUPLICATES FROM lt_mfgorder_001 COMPARING YearMonth companycode plant product  BusinessPartner ProfitCenter CostCenter  ActivityType  orderid.
+      SORT lt_mfgorder_001 BY yearmonth companycode plant product  businesspartner profitcenter costcenter  activitytype  orderid.
+      DELETE ADJACENT DUPLICATES FROM lt_mfgorder_001 COMPARING yearmonth companycode plant product  businesspartner profitcenter costcenter  activitytype  orderid.
 
 
-     SORT lt_mfgorder_001 by orderid  YearMonth Companycode Plant Product producedproduct BusinessPartner ProfitCenter CostCenter ActivityType   .
+      SORT lt_mfgorder_001 BY orderid  yearmonth companycode plant product producedproduct businesspartner profitcenter costcenter activitytype   .
 
 
       "排序
@@ -902,8 +902,8 @@ CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
     ELSE.
 
       IF io_request->is_total_numb_of_rec_requested(  ) .
-         io_response->set_total_number_of_records( 1 ).
-       ENDIF.
+        io_response->set_total_number_of_records( 1 ).
+      ENDIF.
 
     ENDIF.
   ENDMETHOD.

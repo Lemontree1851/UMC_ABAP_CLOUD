@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_MFGORDER_001 IMPLEMENTATION.
+CLASS zcl_http_mfgorder_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -28,6 +28,7 @@ CLASS ZCL_HTTP_MFGORDER_001 IMPLEMENTATION.
         _manufacturing_order_type      TYPE i_manufacturingorder-manufacturingordertype,
         _material                      TYPE i_manufacturingorder-material,
         _product_description           TYPE i_productdescription-productdescription,
+        _manufacturing_order_text      TYPE i_manufacturingorder-manufacturingordertext,
         _production_plant              TYPE i_manufacturingorder-productionplant,
         _leading_order                 TYPE i_manufacturingorder-leadingorder,
         _superior_order                TYPE i_manufacturingorder-superiororder,
@@ -283,6 +284,7 @@ CLASS ZCL_HTTP_MFGORDER_001 IMPLEMENTATION.
                  manufacturingordertype AS _manufacturing_order_type,
                  material AS _material,
                  productdescription AS _product_description,
+                 manufacturingordertext AS _manufacturing_order_text,
                  productionplant AS _production_plant,
                  leadingorder AS _leading_order,
                  superiororder AS _superior_order,
@@ -350,6 +352,7 @@ CLASS ZCL_HTTP_MFGORDER_001 IMPLEMENTATION.
                    manufacturingordertype AS _manufacturing_order_type,
                    material AS _material,
                    productdescription AS _product_description,
+                   manufacturingordertext AS _manufacturing_order_text,
                    productionplant AS _production_plant,
                    leadingorder AS _leading_order,
                    superiororder AS _superior_order,
