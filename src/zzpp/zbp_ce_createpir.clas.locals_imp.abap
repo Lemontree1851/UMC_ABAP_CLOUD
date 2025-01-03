@@ -1,6 +1,6 @@
 CLASS lhc_zce_createpir DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
-    TYPES tt_ofpartition TYPE TABLE for HIERARCHY zd_orderforecastitem.
+    TYPES tt_ofpartition TYPE TABLE FOR HIERARCHY zd_orderforecastitem.
 
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
       IMPORTING keys REQUEST requested_authorizations FOR zce_createpir RESULT result.
@@ -39,7 +39,7 @@ CLASS lhc_zce_createpir DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS createpir
       IMPORTING iv_type          TYPE string DEFAULT 'OF'
       CHANGING  ct_plndindeprqmt TYPE tt_ofpartition
-                !failed          TYPE DATA optional
+                !failed          TYPE data OPTIONAL
                 !reported        TYPE data OPTIONAL.
     METHODS processpir
       IMPORTING iv_request     TYPE data
@@ -76,54 +76,60 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
       DATA(lt_ofpartition) = ls_request-_item.
       DATA ls_ofpartition LIKE LINE OF lt_ofpartition.
 
-
-
-      "分割后数据直接登录PIR
-      createpir(
-        EXPORTING
-          iv_type = 'OF'
-        CHANGING
-          ct_plndindeprqmt = lt_ofpartition
-          failed    = failed
-          reported  = reported ).
-
-      " 拼接BO返回的消息
-      DATA lv_msg TYPE string.
-      DATA lv_type TYPE c.
-      " 如果有返回消息则视为失败
-      IF reported-zce_createpir IS NOT INITIAL.
-        lv_type = 'E'.
-      ENDIF.
-      IF lv_type <> 'E'.
-        " 将分割后的OF数据和受注残出荷残一起处理
-        processpir(
-          EXPORTING
-            iv_request = ls_request
-          CHANGING
-            ct_ofpartition = lt_ofpartition ).
-
-        "经过受注残出荷残处理的PIR创建
+      "权限校验
+      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+      DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+      IF lv_plant CS ls_request-plant.
+        "分割后数据直接登录PIR
         createpir(
           EXPORTING
-            iv_type = 'PIR'
+            iv_type = 'OF'
           CHANGING
             ct_plndindeprqmt = lt_ofpartition
             failed    = failed
             reported  = reported ).
-      ENDIF.
-      " 如果没有返回消息则视为成功
-      IF reported-zce_createpir IS INITIAL.
-        lv_type = 'S'.
-        MESSAGE s090(zpp_001) INTO lv_msg.
+
+        " 拼接BO返回的消息
+        DATA lv_msg TYPE string.
+        DATA lv_type TYPE c.
+        " 如果有返回消息则视为失败
+        IF reported-zce_createpir IS NOT INITIAL.
+          lv_type = 'E'.
+        ENDIF.
+        IF lv_type <> 'E'.
+          " 将分割后的OF数据和受注残出荷残一起处理
+          processpir(
+            EXPORTING
+              iv_request = ls_request
+            CHANGING
+              ct_ofpartition = lt_ofpartition ).
+
+          "经过受注残出荷残处理的PIR创建
+          createpir(
+            EXPORTING
+              iv_type = 'PIR'
+            CHANGING
+              ct_plndindeprqmt = lt_ofpartition
+              failed    = failed
+              reported  = reported ).
+        ENDIF.
+        " 如果没有返回消息则视为成功
+        IF reported-zce_createpir IS INITIAL.
+          lv_type = 'S'.
+          MESSAGE s090(zpp_001) INTO lv_msg.
+        ELSE.
+          lv_type = 'E'.
+          " 将所有错误消息拼接在一起
+          LOOP AT reported-zce_createpir INTO DATA(ls_message).
+            lv_msg = zzcl_common_utils=>merge_message(
+                                          iv_message1 = lv_msg
+                                          iv_message2 = cl_message_helper=>get_text_for_message( ls_message-%msg )
+                                          iv_symbol = ';' ).
+          ENDLOOP.
+        ENDIF.
       ELSE.
         lv_type = 'E'.
-        " 将所有错误消息拼接在一起
-        LOOP AT reported-zce_createpir INTO DATA(ls_message).
-          lv_msg = zzcl_common_utils=>merge_message(
-                                        iv_message1 = lv_msg
-                                        iv_message2 = cl_message_helper=>get_text_for_message( ls_message-%msg )
-                                        iv_symbol = ';' ).
-        ENDLOOP.
+        MESSAGE e027(zbc_001) WITH ls_request-plant INTO lv_msg.
       ENDIF.
       "返回处理过数据
       DATA: lt_item TYPE TABLE FOR HIERARCHY zd_orderforecastitem,
@@ -235,23 +241,23 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
           ls_plndindeprqmt     LIKE LINE OF lt_plndindeprqmt,
           lt_plndindeprqmtitem TYPE TABLE FOR CREATE i_plndindeprqmttp\_plndindeprqmtitem,
           ls_plndindeprqmtitem LIKE LINE OF lt_plndindeprqmtitem,
-          cs_plndindeprqmt like LINE OF ct_plndindeprqmt,
-          lt_ofpartition TYPE table of zd_orderforecastitem,
-          ls_ofpartition like LINE OF lt_ofpartition.
+          cs_plndindeprqmt     LIKE LINE OF ct_plndindeprqmt,
+          lt_ofpartition       TYPE TABLE OF zd_orderforecastitem,
+          ls_ofpartition       LIKE LINE OF lt_ofpartition.
     DATA: lv_customer        TYPE kunnr,
           lv_requirementdate TYPE datum,
           lv_plant           TYPE werks_d,
           lv_tabix           TYPE i,
-          lv_date TYPE datum.
+          lv_date            TYPE datum.
     "有些日期不是工作日，sap会自动变成节日的前一个工作日，但业务需求要后一个工作日，所以需要手动更改为后一个工作日
     LOOP AT ct_plndindeprqmt INTO cs_plndindeprqmt.
       lv_requirementdate = cs_plndindeprqmt-requirementdate.
       cs_plndindeprqmt-requirementdate = zzcl_common_utils=>get_workingday( iv_plant = cs_plndindeprqmt-plant iv_date = lv_requirementdate ).
-      cs_plndindeprqmt-RequirementMonth = cs_plndindeprqmt-requirementdate(6).
-      MOVE-CORRESPONDING cs_plndindeprqmt to ls_ofpartition.
+      cs_plndindeprqmt-requirementmonth = cs_plndindeprqmt-requirementdate(6).
+      MOVE-CORRESPONDING cs_plndindeprqmt TO ls_ofpartition.
       COLLECT ls_ofpartition INTO lt_ofpartition.
     ENDLOOP.
-    MOVE-CORRESPONDING lt_ofpartition to ct_plndindeprqmt.
+    MOVE-CORRESPONDING lt_ofpartition TO ct_plndindeprqmt.
     "获取要创建pir的日期范围
     DATA(lv_date_range) = zcl_ofpartition=>get_process_date_range( ).
     "为减少数据传输量，前端只会传入数量不等于0的日期
@@ -392,7 +398,7 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
                           iv_enddate    = CONV #( ls_request-processend ) ).
     "2. 对实际发货进行排序，确保按日期从早到晚处理
     SORT lt_shipping BY customer plant material productavailabilitydate.
-      "3. 遍历发货数据，依次减少生产计划
+    "3. 遍历发货数据，依次减少生产计划
     LOOP AT lt_shipping ASSIGNING FIELD-SYMBOL(<ls_shipping>) WHERE quantityinbaseunit > 0.
       lv_delivered = <ls_shipping>-quantityinbaseunit.
 

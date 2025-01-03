@@ -72,7 +72,7 @@ define root custom entity ZR_POACCEPTANCE
 
       //プラント
       @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'Plant', name: 'I_PlantStdVH'}}],
-                  filter             : { multipleSelections: true, selectionType: #SINGLE } }
+                  filter             : { multipleSelections: true, selectionType: #SINGLE, mandatory:true } }
       @UI                            : { lineItem: [ { position: 20 } ],
                                          selectionField: [ { position: 1 } ] }
       @EndUserText.label             : '{@i18n>Plant}'

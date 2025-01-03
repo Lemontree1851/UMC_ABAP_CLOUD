@@ -21,23 +21,34 @@
 
 @EndUserText.label: 'Material Stock Value Help'
 define root view entity ZR_MaterialStockVH
-  as select from I_MaterialStock_2
+  as select from    I_ProductStorageLocationBasic as _Basic
+    left outer join I_MaterialStock_2             as _Stock on  _Stock.Material        = _Basic.Product
+                                                            and _Stock.Plant           = _Basic.Plant
+                                                            and _Stock.StorageLocation = _Basic.StorageLocation
 {
-  key Material,
-  key Plant,
-  key StorageLocation,
-      _StorageLocation.StorageLocationName,
+  key _Basic.Product                             as Material,
+  key _Basic.Plant,
+  key _Basic.StorageLocation,
+      _Basic._StorageLocation.StorageLocationName,
       @Semantics.quantity.unitOfMeasure: 'MaterialBaseUnit'
-      sum( MatlWrhsStkQtyInMatlBaseUnit ) as StockQuantity,
-      MaterialBaseUnit
+      sum( _Stock.MatlWrhsStkQtyInMatlBaseUnit ) as StockQuantity,
+      _Basic._Product.BaseUnit                   as MaterialBaseUnit
 }
 where
-      StorageLocation           is not initial
-  and InventoryStockType        = '01'
-  and InventorySpecialStockType = ''
+       _Basic.StorageLocation           is not initial
+  and  _Basic.IsMarkedForDeletion       <> 'X'
+  and  _Basic.IsActiveEntity            =  'X'
+  and(
+       _Stock.InventoryStockType        =  '01'
+    or _Stock.InventoryStockType        is null
+  )
+  and(
+       _Stock.InventorySpecialStockType =  ''
+    or _Stock.InventorySpecialStockType is null
+  )
 group by
-  Material,
-  Plant,
-  StorageLocation,
-  _StorageLocation.StorageLocationName,
-  MaterialBaseUnit
+  _Basic.Product,
+  _Basic.Plant,
+  _Basic.StorageLocation,
+  _Basic._StorageLocation.StorageLocationName,
+  _Basic._Product.BaseUnit

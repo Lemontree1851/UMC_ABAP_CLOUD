@@ -191,7 +191,7 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
              reservation~product AS material,
              reservation~issuingorreceivingplant,
              reservation~issuingorreceivingstorageloc,
-             SUM( reservation~resvnitmrequiredqtyinentryunit ) AS resvnitmrequiredqtyinentryunit,
+             SUM( reservation~resvnitmrequiredqtyinbaseunit ) AS resvnitmrequiredqtyinbaseunit,
              reservation~baseunit
         FROM i_reservationdocumentitem WITH PRIVILEGED ACCESS AS reservation
         JOIN @lt_temp2 AS order ON  order~plant = reservation~plant
@@ -281,7 +281,7 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
                                                                        issuingorreceivingstorageloc = <lfs_group>-storagelocation
                                                                        BINARY SEARCH.
         IF sy-subrc = 0.
-          ls_data-storagelocationtostock += ls_to_stock_311-resvnitmrequiredqtyinentryunit.
+          ls_data-storagelocationtostock += ls_to_stock_311-resvnitmrequiredqtyinbaseunit.
         ENDIF.
 
         LOOP AT lt_to_stock_from INTO DATA(ls_to_stock_from) WHERE plant    = <lfs_group>-plant
@@ -314,32 +314,13 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
             ENDIF.
           ENDIF.
 
-          CLEAR lv_required_quantity.
-          IF <lfs_group_item>-entryunit <> <lfs_group_item>-baseunit.
-            lo_unit->unit_conversion_simple( EXPORTING  input                = <lfs_group_item>-requiredquantity
-                                                        round_sign           = 'X'
-                                                        unit_in              = <lfs_group_item>-entryunit
-                                                        unit_out             = <lfs_group_item>-baseunit
-                                             IMPORTING  output               = lv_required_quantity
-                                             EXCEPTIONS conversion_not_found = 01
-                                                        division_by_zero     = 02
-                                                        input_invalid        = 03
-                                                        output_invalid       = 04
-                                                        overflow             = 05
-                                                        units_missing        = 06
-                                                        unit_in_not_found    = 07
-                                                        unit_out_not_found   = 08 ).
-          ELSE.
-            lv_required_quantity = <lfs_group_item>-requiredquantity.
-          ENDIF.
-
-          ls_data-totalrequiredquantity += lv_required_quantity.
+          ls_data-totalrequiredquantity += <lfs_group_item>-requiredquantity.
 
           APPEND VALUE #( manufacturing_order          = |{ <lfs_group_item>-manufacturingorder ALPHA = OUT }|
                           product                      = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = <lfs_group_item>-product )
                           material                     = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = <lfs_group_item>-material )
                           base_unit                    = <lfs_group_item>-baseunit
-                          required_quantity            = lv_required_quantity
+                          required_quantity            = <lfs_group_item>-requiredquantity
                           confirmed_available_quantity = <lfs_group_item>-confirmedavailablequantity
                           storage_location             = <lfs_group_item>-storagelocation
                           requisition_date             = <lfs_group_item>-requisitiondate

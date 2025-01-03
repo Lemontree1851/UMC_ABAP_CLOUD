@@ -54,6 +54,7 @@ CLASS zcl_http_checkmfgordermdoc_001 IMPLEMENTATION.
       lo_root_exc  TYPE REF TO cx_root,
       lr_backflush TYPE RANGE OF i_mfgorderoperationcomponent-matlcompismarkedforbackflush,
       lr_gmallowed TYPE RANGE OF i_mfgorderoperationcomponent-goodsmovementisallowed,
+      lr_ordertype TYPE RANGE OF i_mfgorderwithstatus-manufacturingordertype,
       ls_backflush LIKE LINE OF lr_backflush,
       ls_gmallowed LIKE LINE OF lr_gmallowed,
       ls_req       TYPE ty_req,
@@ -63,11 +64,12 @@ CLASS zcl_http_checkmfgordermdoc_001 IMPLEMENTATION.
       lv_order     TYPE i_mfgorderoperationcomponent-manufacturingorder.
 
     CONSTANTS:
+      lc_zid_zpp008   TYPE ztbc_1001-zid VALUE 'ZPP008',
       lc_msgid        TYPE string VALUE 'ZPP_001',
       lc_msgty        TYPE string VALUE 'E',
       lc_alpha_out    TYPE string VALUE 'OUT',
-      lc_sign_i       TYPE string VALUE 'I',
-      lc_opt_eq       TYPE string VALUE 'EQ',
+      lc_sign_i       TYPE c LENGTH 1 VALUE 'I',
+      lc_opt_eq       TYPE c LENGTH 2 VALUE 'EQ',
       lc_gmtype_261   TYPE i_mfgorderoperationcomponent-goodsmovementtype VALUE '261',
       lc_stocktype_01 TYPE i_materialstock_2-inventorystocktype           VALUE '01'.
 
@@ -110,7 +112,8 @@ CLASS zcl_http_checkmfgordermdoc_001 IMPLEMENTATION.
         SELECT SINGLE
                orderistechnicallycompleted,
                reservation,
-               leadingorder
+               leadingorder,
+               manufacturingordertype
           FROM i_mfgorderwithstatus WITH PRIVILEGED ACCESS
          WHERE manufacturingorder = @lv_order
            AND productionplant = @lv_plant
@@ -179,7 +182,7 @@ CLASS zcl_http_checkmfgordermdoc_001 IMPLEMENTATION.
                salesorder,
                salesorderitem,
                wbselementinternalid_2,
-               MaterialIsDirectlyProduced
+               materialisdirectlyproduced
           FROM i_mfgorderoperationcomponent WITH PRIVILEGED ACCESS
          WHERE reservation = @ls_mfgorderwithstatus-reservation
            AND matlcompismarkedfordeletion = @space
@@ -245,9 +248,22 @@ CLASS zcl_http_checkmfgordermdoc_001 IMPLEMENTATION.
           "製造指図&1の構成品目の在庫を参照してください！
           MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 025 WITH lv_order INTO ls_res-_msg.
         ELSE.
-          "製造指図&1の入出庫予定&2の明細が見つかりません！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 018 WITH lv_order ls_mfgorderwithstatus-reservation INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
+          "Obtain manufacturing order type
+          SELECT @lc_sign_i,
+                 @lc_opt_eq,
+                 zvalue1
+            FROM ztbc_1001
+           WHERE zid = @lc_zid_zpp008
+             AND zvalue2 = @lv_plant
+            INTO TABLE @lr_ordertype.
+
+          IF lr_ordertype IS NOT INITIAL AND ls_mfgorderwithstatus-manufacturingordertype IN lr_ordertype.
+            ls_res-_msgty = 'S'.
+          ELSE.
+            "製造指図&1の入出庫予定&2の明細が見つかりません！
+            MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 018 WITH lv_order ls_mfgorderwithstatus-reservation INTO ls_res-_msg.
+            RAISE EXCEPTION TYPE cx_abap_api_state.
+          ENDIF.
         ENDIF.
       CATCH cx_root INTO lo_root_exc.
         ls_res-_msgty = 'E'.
@@ -309,7 +325,7 @@ CLASS zcl_http_checkmfgordermdoc_001 IMPLEMENTATION.
       ls_stocks-_reservation                   = ls_mfgorderoperationcomponent-reservation.
       ls_stocks-_reservationitem               = ls_mfgorderoperationcomponent-reservationitem.
       ls_stocks-_goods_movement_type           = ls_mfgorderoperationcomponent-goodsmovementtype.
-      ls_stocks-_material_is_directly_produced = ls_mfgorderoperationcomponent-MaterialIsDirectlyProduced.
+      ls_stocks-_material_is_directly_produced = ls_mfgorderoperationcomponent-materialisdirectlyproduced.
 
       TRY.
           ls_stocks-_base_unit = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out

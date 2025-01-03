@@ -56,93 +56,93 @@ define root custom entity ZR_PAIDPAYCALCULATION
       ProfitCenterName    : ktext; //利益センタテキスト
       ProductDescription  : maktx; //有償支給品番テキスト
       @Semantics.amount.currencyCode : 'Currency'
-      Cost01              : abap.curr(16,2); //標準原価-材料費
+      Cost01              : abap.curr(23,2); //標準原価-材料費
       @Semantics.quantity.unitOfMeasure : 'Unit'
       ValuationQuantity01 : abap.quan(23,3);  //库存数量
       @Semantics.amount.currencyCode : 'Currency'
-      Cost02              : abap.curr(16,2);
+      Cost02              : abap.curr(23,2);
       @Semantics.quantity.unitOfMeasure : 'Unit'
       ValuationQuantity02 : abap.quan(23,3);
       @Semantics.amount.currencyCode : 'Currency'
-      Cost03              : abap.curr(16,2);
+      Cost03              : abap.curr(23,2);
       @Semantics.quantity.unitOfMeasure : 'Unit'
       ValuationQuantity03 : abap.quan(23,3);
       @Semantics.amount.currencyCode : 'Currency'
-      Cost04              : abap.curr(16,2);
+      Cost04              : abap.curr(23,2);
       @Semantics.quantity.unitOfMeasure : 'Unit'
       ValuationQuantity04 : abap.quan(23,3);
       @Semantics.amount.currencyCode : 'Currency'
-      Cost05              : abap.curr(16,2);
+      Cost05              : abap.curr(23,2);
       @Semantics.quantity.unitOfMeasure : 'Unit'
       ValuationQuantity05 : abap.quan(23,3);
       @Semantics.amount.currencyCode : 'Currency'
-      Cost06              : abap.curr(16,2);
+      Cost06              : abap.curr(23,2);
       @Semantics.quantity.unitOfMeasure : 'Unit'
       ValuationQuantity06 : abap.quan(23,3);
       @Semantics.amount.currencyCode : 'Currency'
-      Cost07              : abap.curr(16,2);
+      Cost07              : abap.curr(23,2);
       @Semantics.quantity.unitOfMeasure : 'Unit'
       ValuationQuantity07 : abap.quan(23,3);
       @Semantics.amount.currencyCode : 'Currency'
-      Cost08              : abap.curr(16,2);
+      Cost08              : abap.curr(23,2);
       @Semantics.quantity.unitOfMeasure : 'Unit'
       ValuationQuantity08 : abap.quan(23,3);
       @Semantics.amount.currencyCode : 'Currency'
-      Cost09              : abap.curr(16,2);
+      Cost09              : abap.curr(23,2);
       @Semantics.quantity.unitOfMeasure : 'Unit'
       ValuationQuantity09 : abap.quan(23,3);
       @Semantics.amount.currencyCode : 'Currency'
-      Cost10              : abap.curr(16,2);
+      Cost10              : abap.curr(23,2);
       @Semantics.quantity.unitOfMeasure : 'Unit'
       ValuationQuantity10 : abap.quan(23,3);
       @Semantics.amount.currencyCode : 'Currency'
-      MaterialCost2000    : abap.curr(16,2); //標準原価-材料費合計-2000
+      MaterialCost2000    : abap.curr(23,2); //標準原価-材料費合計-2000
       @Semantics.amount.currencyCode : 'Currency'
-      MaterialCost3000    : abap.curr(16,2); //標準原価-材料費合計-3000
+      MaterialCost3000    : abap.curr(23,2); //標準原価-材料費合計-3000
 
       //品番別&購買グルー合計 共用
       @Semantics.amount.currencyCode : 'Currency'
-      PurGrpAmount1       : abap.curr(16,2); //当期購買グループ別仕入金額期初
+      PurGrpAmount1       : abap.curr(23,2); //当期購買グループ別仕入金額期初
       @Semantics.amount.currencyCode : 'Currency'
-      PurGrpAmount2       : abap.curr(16,2); //当期購買グループ別仕入金額本年初-上个月末
+      PurGrpAmount2       : abap.curr(23,2); //当期購買グループ別仕入金額本年初-上个月末
       @Semantics.amount.currencyCode : 'Currency'
-      PurGrpAmount        : abap.curr(16,2); //当期購買グループ別仕入金額当前期间
+      PurGrpAmount        : abap.curr(23,2); //当期購買グループ別仕入金額当前期间
       @Semantics.amount.currencyCode : 'Currency'
-      ChargeableAmount1   : abap.curr(16,2); //当期有償支給品仕入金額-期初
+      ChargeableAmount1   : abap.curr(23,2); //当期有償支給品仕入金額-期初
       @Semantics.amount.currencyCode : 'Currency'
-      ChargeableAmount2   : abap.curr(16,2); //当期有償支給品仕入金額本年初-上个月末
+      ChargeableAmount2   : abap.curr(23,2); //当期有償支給品仕入金額本年初-上个月末
       @Semantics.amount.currencyCode : 'Currency'
-      ChargeableAmount    : abap.curr(16,2); //当期有償支給品仕入金額当前期间
+      ChargeableAmount    : abap.curr(23,2); //当期有償支給品仕入金額当前期间
       @Semantics.amount.currencyCode : 'Currency'
-      PreviousStockAmount : abap.curr(16,2); //在庫金額（前期末）
+      PreviousStockAmount : abap.curr(23,2); //在庫金額（前期末）
       @Semantics.amount.currencyCode : 'Currency'
-      CurrentStockAmount  : abap.curr(16,2); //在庫金額（当期末）-有償支給品
+      CurrentStockAmount  : abap.curr(23,2); //在庫金額（当期末）-有償支給品
       @Semantics.amount.currencyCode : 'Currency'
-      CustomerRevenue1    : abap.curr(16,2); //該当得意先の総売上高期初
+      CustomerRevenue1    : abap.curr(23,2); //該当得意先の総売上高期初
       @Semantics.amount.currencyCode : 'Currency'
-      CustomerRevenue     : abap.curr(16,2); //該当得意先の総売上高
+      CustomerRevenue     : abap.curr(23,2); //該当得意先の総売上高
       @Semantics.amount.currencyCode : 'Currency'
-      Revenue1            : abap.curr(16,2); //会社レベルの総売上高期初
+      Revenue1            : abap.curr(23,2); //会社レベルの総売上高期初
       @Semantics.amount.currencyCode : 'Currency'
-      Revenue             : abap.curr(16,2); //会社レベルの総売上高
+      Revenue             : abap.curr(23,2); //会社レベルの総売上高
 
       //購買グルー合計
-      ChargeableRate      : abap.dec(16,2); //当期仕入率
+      ChargeableRate      : abap.char(16); //当期仕入率
       @Semantics.amount.currencyCode : 'Currency'
-      PurGrpTot           : abap.curr(16,2); //当期購買グループ別仕入金額当前期间
+      PurGrpTot           : abap.curr(23,2); //当期購買グループ別仕入金額当前期间
       @Semantics.amount.currencyCode : 'Currency'
-      ChargeableTot       : abap.curr(16,2); //当期有償支給品仕入金額当前期间
+      ChargeableTot       : abap.curr(23,2); //当期有償支給品仕入金額当前期间
       @Semantics.amount.currencyCode : 'currency'
-      CurrentStockSemi    : abap.curr(16,2); //在庫金額（当期末）-半製品
+      CurrentStockSemi    : abap.curr(23,2); //在庫金額（当期末）-半製品
       @Semantics.amount.currencyCode : 'currency'
-      CurrentStockFin     : abap.curr(16,2); //在庫金額（当期末）-製品
+      CurrentStockFin     : abap.curr(23,2); //在庫金額（当期末）-製品
       @Semantics.amount.currencyCode : 'currency'
-      CurrentStockTotal   : abap.curr(16,2); //在庫金額（当期末）-合計
+      CurrentStockTotal   : abap.curr(23,2); //在庫金額（当期末）-合計
       @Semantics.amount.currencyCode : 'currency'
-      StockChangeAmount   : abap.curr(16,2); //在庫増減金額
+      StockChangeAmount   : abap.curr(23,2); //在庫増減金額
       @Semantics.amount.currencyCode : 'currency'
-      PaidMaterialCost    : abap.curr(16,2); //払いだし材料費
-      RevenueRate         : abap.dec(9,5); //"総売上金額占有率
+      PaidMaterialCost    : abap.curr(23,2); //払いだし材料費
+      RevenueRate         : abap.char(16); //"総売上金額占有率
 
       Currency            : abap.cuky;
       Unit                : meins;

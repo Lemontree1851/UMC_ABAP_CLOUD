@@ -11,6 +11,7 @@ CLASS zcl_http_podata_003 DEFINITION
         WorkflowInternalID            TYPE  string,
         WorkflowExternalStatus        TYPE  string,
         WrkflwTskCompletionUTCDateTime type String,
+        SAPObjectNodeRepresentation TYPE string,
 
       END OF ts_workflow,
 
@@ -29,6 +30,7 @@ CLASS zcl_http_podata_003 DEFINITION
         WorkflowInternalID         TYPE  string,
         WorkflowTaskInternalID     TYPE  string,
         WorkflowTaskResult         TYPE  string,
+
 
       END OF ts_workflowdetail,
 
@@ -210,7 +212,7 @@ DATA: lv_date       TYPE D,
 
 *--------------------------------------------------------------just for test
 
-*DELETE lt_poitem WHERE purchaseorder <> '2100001939'.
+*DELETE lt_poitem WHERE purchaseorder <> '0600000082'.
 
 *--------------------------------------------------------------just for test
 
@@ -285,7 +287,7 @@ DATA: lv_date       TYPE D,
 
       if lt_workflow_api is NOT INITIAL.
 
-        SORT lt_workflow_api by SAPBusinessObjectNodeKey1.
+        SORT lt_workflow_api by SAPBusinessObjectNodeKey1 SAPObjectNodeRepresentation.
 
       ENDIF.
 
@@ -324,7 +326,7 @@ DATA: lv_date       TYPE D,
 
     LOOP AT lt_poitem INTO DATA(lw_poitems).
 
-        READ TABLE lt_workflow_api into data(lw_workflow) WITH KEY SAPBusinessObjectNodeKey1 = lw_poitems-purchaseorder BINARY SEARCH.
+        READ TABLE lt_workflow_api into data(lw_workflow) WITH KEY SAPBusinessObjectNodeKey1 = lw_poitems-purchaseorder SAPObjectNodeRepresentation = 'PurchaseOrder' BINARY SEARCH.
 
             if sy-subrc = 0.
                lw_result-approvedate = lw_workflow-wrkflwtskcompletionutcdatetime.

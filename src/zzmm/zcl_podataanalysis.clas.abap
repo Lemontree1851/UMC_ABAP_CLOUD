@@ -19,6 +19,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         sapbusinessobjectnodekey1 TYPE  string,
         workflowinternalid        TYPE  string,
         workflowexternalstatus    TYPE  string,
+        SAPObjectNodeRepresentation TYPE string,
 
       END OF ts_workflow,
 
@@ -264,7 +265,9 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
     DATA :
       lv_matnr TYPE matnr,
       lv_sup   TYPE i_purchaseorderapi01-supplier,
-      lv_sup_h TYPE i_purchaseorderapi01-supplier.
+      lv_sup_h TYPE i_purchaseorderapi01-supplier,
+      lv_Purchaseorder type i_purchaseorderapi01-Purchaseorder,
+      lv_Purchaseorder_h type i_purchaseorderapi01-Purchaseorder.
 
     DATA:
       lr_sup TYPE RANGE OF i_purchaseorderapi01-supplier,
@@ -315,6 +318,15 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
           CASE ls_filter_cond-name.
             WHEN 'PURCHASEORDER'.
               MOVE-CORRESPONDING str_rec_l_range TO ls_purchaseorder.
+
+              lv_Purchaseorder = |{ str_rec_l_range-low ALPHA = IN }|.
+              lv_Purchaseorder_h = |{ str_rec_l_range-high ALPHA = IN }|.
+
+              ls_purchaseorder-sign = str_rec_l_range-sign.
+              ls_purchaseorder-option = str_rec_l_range-option.
+              ls_purchaseorder-low = lv_Purchaseorder.
+              ls_purchaseorder-high = lv_Purchaseorder_h.
+
               APPEND ls_purchaseorder TO lr_purchaseorder.
               CLEAR ls_purchaseorder.
 
@@ -598,6 +610,21 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 * MOD END BY XINLEI XU
 **********************************************************************
 
+* Authorization Check
+      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+      DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+      DATA(lv_ekorg) = zzcl_common_utils=>get_purchorg_by_user( lv_user_email ).
+
+      IF lv_plant IS INITIAL.
+        CLEAR lt_result.
+      ELSE.
+        SPLIT lv_plant AT '&' INTO TABLE DATA(lt_plant_check).
+        CLEAR lr_plant.
+        lr_plant = VALUE #( FOR plant IN lt_plant_check ( sign = 'I' option = 'EQ' low = plant ) ).
+        DELETE lt_result WHERE plant NOT IN lr_plant.
+      ENDIF.
+*---------------------------------------------------------------------------
+
       IF lt_result IS NOT INITIAL.
         " 购买组取值
         IF lr_purchasinggroup IS NOT INITIAL.
@@ -761,7 +788,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
                                    CHANGING data = ls_res_workflow ).
 
         APPEND LINES OF ls_res_workflow-d-results TO lt_workflow_api.
-        SORT lt_workflow_api BY sapbusinessobjectnodekey1.
+        SORT lt_workflow_api BY sapbusinessobjectnodekey1 SAPObjectNodeRepresentation.
       ENDIF.
 
       " 审批详情取得
@@ -811,7 +838,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         "2.19 例外
         "2.20 注意
         IF lw_result-sequentialnmbrofsuplrconf IS NOT INITIAL .
-          READ TABLE lt_mrp_api INTO DATA(lw_mrp) WITH KEY mrpelement = lw_result-purchaseorder
+          READ TABLE lt_mrp_api INTO DATA(lw_mrp) WITH KEY mrpelement = |{ lw_result-purchaseorder ALPHA = OUT }|
                                                            mrpelementitem = |{ lw_result-purchaseorderitem ALPHA = OUT }|
                                                            mrpelementscheduleline = lw_result-sequentialnmbrofsuplrconf
                                                            BINARY SEARCH.
@@ -821,7 +848,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
             lv_getnop = ''.
           ENDIF.
         ELSE.
-          READ TABLE lt_mrp_api INTO lw_mrp WITH KEY mrpelement = lw_result-purchaseorder
+          READ TABLE lt_mrp_api INTO lw_mrp WITH KEY mrpelement = |{ lw_result-purchaseorder ALPHA = OUT }|
                                                      mrpelementitem = |{ lw_result-purchaseorderitem ALPHA = OUT }|
                                                      mrpelementcategory = 'BE' BINARY SEARCH.
           IF sy-subrc = 0.
@@ -1003,7 +1030,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         ENDIF.
 
         " 2.26 承認サイト
-        READ TABLE lt_workflow_api INTO DATA(lw_workflow) WITH KEY sapbusinessobjectnodekey1 = lw_data-purchaseorder BINARY SEARCH.
+        READ TABLE lt_workflow_api INTO DATA(lw_workflow) WITH KEY sapbusinessobjectnodekey1 = lw_data-purchaseorder SAPObjectNodeRepresentation = 'PurchaseOrder' BINARY SEARCH.
         IF sy-subrc = 0.
           READ TABLE lt_workflowdetail_api INTO DATA(lw_workflow_d) WITH KEY workflowinternalid = lw_workflow-workflowinternalid BINARY SEARCH.
           " 如果能在detail中取到WorkflowTaskInternalID

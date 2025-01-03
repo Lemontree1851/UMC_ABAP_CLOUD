@@ -222,6 +222,7 @@ CLASS zcl_http_confirmmfgord_001 IMPLEMENTATION.
           FROM ztbc_1001
          WHERE zid = @lc_zid_zpp020
            AND zvalue1 = @ls_ztpp_1004-plant
+           and zvalue3 = @abap_true
           INTO TABLE @DATA(lt_ztbc_1001).
 
         LOOP AT lt_ztbc_1001 INTO DATA(ls_ztbc_1001).

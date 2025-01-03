@@ -57,6 +57,8 @@ define root view entity ZC_PURCHASEPRICEVARIANCE
            @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_PURCHASEPRICEVARIANCE'
   virtual  CurrentPrice               : abap.dec(11,5),
            @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_PURCHASEPRICEVARIANCE'
+  virtual  ConditionRateValue         : abap.dec(11,5),
+           @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_PURCHASEPRICEVARIANCE'
   virtual  NewPrice                   : abap.dec(11,5),
            @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_PURCHASEPRICEVARIANCE'
   virtual  Difference                 : abap.dec(11,5),

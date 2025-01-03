@@ -141,6 +141,7 @@ CLASS lhc_physicalinvupload IMPLEMENTATION.
       lv_path     TYPE string,
       lv_path_c   TYPE string,
       lv_usage(1) TYPE c,
+      lv_status   TYPE c,
       i           TYPE i,
       m           TYPE i,
       n           TYPE i,
@@ -180,9 +181,22 @@ types: BEGIN OF ty_response_C,
    data:ls_response_cc type ty_response_cc.
 *-----------------------------------
 
-
-
+* Authorization Check
+    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<ls_data>).
+      IF NOT lv_plant CS <ls_data>-plant.
+        lv_status = 'E'.
+        <ls_data>-status = 'E'.
+        MESSAGE e027(zbc_001) WITH <ls_data>-plant INTO <ls_data>-message.
+      ENDIF.
+    ENDLOOP.
+    IF lv_status = 'E'.
+      RETURN.
+    ENDIF.
+*---------------------------------------------------------
+
+    LOOP AT ct_data ASSIGNING <ls_data>.
 
       SELECT
           b~physicalinventorydocument,

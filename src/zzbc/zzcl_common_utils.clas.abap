@@ -306,7 +306,9 @@ CLASS zzcl_common_utils DEFINITION
                            RETURNING VALUE(rv_salesorg) TYPE string,
 
       get_purchorg_by_user IMPORTING iv_email           TYPE i_workplaceaddress-defaultemailaddress
-                           RETURNING VALUE(rv_purchorg) TYPE string.
+                           RETURNING VALUE(rv_purchorg) TYPE string,
+      get_shippingpoint_by_user IMPORTING iv_email           TYPE i_workplaceaddress-defaultemailaddress
+                                RETURNING VALUE(rv_shippingpoint) TYPE string.
 
 *&--End use for Authorization Check
 
@@ -1366,6 +1368,27 @@ CLASS zzcl_common_utils IMPLEMENTATION.
         rv_purchorg = ls_assign_purchorg-purchasingorganization.
       ELSE.
         rv_purchorg = rv_purchorg && '&' && ls_assign_purchorg-purchasingorganization.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD get_shippingpoint_by_user.
+    SELECT uuid,
+           mail,
+           shippingpoint
+      FROM zc_tbc1018
+     WHERE mail = @iv_email
+     INTO TABLE @DATA(lt_assign_shippingpoint).
+
+    SORT lt_assign_shippingpoint BY shippingpoint.
+    DELETE ADJACENT DUPLICATES FROM lt_assign_shippingpoint COMPARING shippingpoint.
+
+    LOOP AT lt_assign_shippingpoint INTO DATA(ls_assign_shippingpoint).
+      CONDENSE ls_assign_shippingpoint-shippingpoint NO-GAPS.
+      IF rv_shippingpoint IS INITIAL.
+        rv_shippingpoint = ls_assign_shippingpoint-shippingpoint.
+      ELSE.
+        rv_shippingpoint = rv_shippingpoint && '&' && ls_assign_shippingpoint-shippingpoint.
       ENDIF.
     ENDLOOP.
   ENDMETHOD.

@@ -1,9 +1,9 @@
 @ObjectModel.query.implementedBy: 'ABAP:ZCL_PURINFOMASTERLIST'
-@EndUserText.label: 'MM-018購買情報マスタ一覧'
+@EndUserText.label: 'MM-018購買情報マスタレポート'
 @UI: {
   headerInfo: {
-    typeName: 'MM-018購買情報マスタ一覧',
-    typeNamePlural: 'MM-018購買情報マスタ一覧',
+    typeName: 'MM-018購買情報マスタレポート',
+    typeNamePlural: 'MM-018購買情報マスタレポート',
     title: { type: #STANDARD, value: 'purchasinginforecord' }
         } }
 define root custom entity ZR_PURINFOMASTERLIST

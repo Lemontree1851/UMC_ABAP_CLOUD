@@ -59,6 +59,8 @@ define root custom entity ZCE_SALESACCEPT_DNPROCESS
       UnDeliveredQty              : menge_d;
       Type                        : msgty;
       Message                     : abap.string;
+      FrontEndUser                : abap.string;
+      FrontEndEmail               : abap.string;
 
 
 }

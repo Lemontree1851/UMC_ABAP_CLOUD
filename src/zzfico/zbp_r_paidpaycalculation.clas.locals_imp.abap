@@ -808,8 +808,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       INTO TABLE @DATA(lt_bklas).
 
 * 3.13上位半製品/製品の在庫数量を取得
-    lv_poper = ls_v3-fiscalperiodstartdate+4(2).
-    lv_year = ls_v3-fiscalperiodstartdate+0(4).
     SELECT ledger,
            companycode,
            costestimate,
@@ -818,7 +816,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
            valuationquantity,
            unitofmeasure
       FROM i_inventoryamtbyfsclperd( p_fiscalperiod = @lv_poper,
-                                     p_fiscalyear = @lv_year )
+                                     p_fiscalyear = @cv_gjahr )
       WITH PRIVILEGED ACCESS
      WHERE ledger = @cv_ledge
        AND material IN @lr_bom
@@ -1085,14 +1083,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
           <lfs_bom>-cost01 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
-*        READ TABLE lt_costitem INTO DATA(ls_costitem)
-*             WITH KEY product = <lfs_bom>-parent01
-*                      plant = <lfs_bom>-plant BINARY SEARCH.
-*        IF ls_lotsize-costinglotsize <> 0.
-*          lv_peinh = ls_costitem-quantityinbaseunit / ls_lotsize-costinglotsize.
-*          <lfs_bom>-cost01 = ls_costitem-totalpriceincompanycodecrcy / ls_lotsize-costinglotsize
-*                           * lv_peinh.       "材料費
-*        ENDIF.
       ENDIF.
       " 2nd layer
       CLEAR: ls_lotsize, ls_raw.
@@ -1120,14 +1110,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
           <lfs_bom>-cost02 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
-*        READ TABLE lt_costitem INTO ls_costitem
-*             WITH KEY product = <lfs_bom>-parent02
-*                      plant = <lfs_bom>-plant BINARY SEARCH.
-*        IF ls_lotsize-costinglotsize <> 0.
-*          lv_peinh = ls_costitem-quantityinbaseunit / ls_lotsize-costinglotsize.
-*          <lfs_bom>-cost02 = ls_costitem-totalpriceincompanycodecrcy / ls_lotsize-costinglotsize
-*                           * lv_peinh.       "材料費
-*        ENDIF.
       ENDIF.
       " 3rd layer
       CLEAR: ls_lotsize, ls_raw.
@@ -1155,14 +1137,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
           <lfs_bom>-cost03 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
-*        READ TABLE lt_costitem INTO ls_costitem
-*             WITH KEY product = <lfs_bom>-parent03
-*                      plant = <lfs_bom>-plant BINARY SEARCH.
-*        IF ls_lotsize-costinglotsize <> 0.
-*          lv_peinh = ls_costitem-quantityinbaseunit / ls_lotsize-costinglotsize.
-*          <lfs_bom>-cost03 = ls_costitem-totalpriceincompanycodecrcy / ls_lotsize-costinglotsize
-*                           * lv_peinh.       "材料費
-*        ENDIF.
       ENDIF.
       " 4th layer
       CLEAR: ls_lotsize, ls_raw.
@@ -1190,14 +1164,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
           <lfs_bom>-cost04 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
-*        READ TABLE lt_costitem INTO ls_costitem
-*             WITH KEY product = <lfs_bom>-parent04
-*                      plant = <lfs_bom>-plant BINARY SEARCH.
-*        IF ls_lotsize-costinglotsize <> 0.
-*          lv_peinh = ls_costitem-quantityinbaseunit / ls_lotsize-costinglotsize.
-*          <lfs_bom>-cost04 = ls_costitem-totalpriceincompanycodecrcy / ls_lotsize-costinglotsize
-*                           * lv_peinh.       "材料費
-*        ENDIF.
       ENDIF.
       " 5th layer
       CLEAR: ls_lotsize, ls_raw.
@@ -1225,14 +1191,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
           <lfs_bom>-cost05 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
-*        READ TABLE lt_costitem INTO ls_costitem
-*             WITH KEY product = <lfs_bom>-parent05
-*                      plant = <lfs_bom>-plant BINARY SEARCH.
-*        IF ls_lotsize-costinglotsize <> 0.
-*          lv_peinh = ls_costitem-quantityinbaseunit / ls_lotsize-costinglotsize.
-*          <lfs_bom>-cost05 = ls_costitem-totalpriceincompanycodecrcy / ls_lotsize-costinglotsize
-*                           * lv_peinh.       "材料費
-*        ENDIF.
       ENDIF.
       " 6th layer
       CLEAR: ls_lotsize, ls_raw.
@@ -1260,14 +1218,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
           <lfs_bom>-cost06 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
-*        READ TABLE lt_costitem INTO ls_costitem
-*             WITH KEY product = <lfs_bom>-parent06
-*                      plant = <lfs_bom>-plant BINARY SEARCH.
-*        IF ls_lotsize-costinglotsize <> 0.
-*          lv_peinh = ls_costitem-quantityinbaseunit / ls_lotsize-costinglotsize.
-*          <lfs_bom>-cost06 = ls_costitem-totalpriceincompanycodecrcy / ls_lotsize-costinglotsize
-*                           * lv_peinh.       "材料費
-*        ENDIF.
       ENDIF.
       " 7th layer
       CLEAR: ls_lotsize, ls_raw.
@@ -1295,14 +1245,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
           <lfs_bom>-cost07 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
-*        READ TABLE lt_costitem INTO ls_costitem
-*             WITH KEY product = <lfs_bom>-parent07
-*                      plant = <lfs_bom>-plant BINARY SEARCH.
-*        IF ls_lotsize-costinglotsize <> 0.
-*          lv_peinh = ls_costitem-quantityinbaseunit / ls_lotsize-costinglotsize.
-*          <lfs_bom>-cost07 = ls_costitem-totalpriceincompanycodecrcy / ls_lotsize-costinglotsize
-*                           * lv_peinh.       "材料費
-*        ENDIF.
       ENDIF.
       " 8th layer
       CLEAR: ls_lotsize, ls_raw.
@@ -1330,14 +1272,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
           <lfs_bom>-cost08 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
-*        READ TABLE lt_costitem INTO ls_costitem
-*             WITH KEY product = <lfs_bom>-parent08
-*                      plant = <lfs_bom>-plant BINARY SEARCH.
-*        IF ls_lotsize-costinglotsize <> 0.
-*          lv_peinh = ls_costitem-quantityinbaseunit / ls_lotsize-costinglotsize.
-*          <lfs_bom>-cost08 = ls_costitem-totalpriceincompanycodecrcy / ls_lotsize-costinglotsize
-*                           * lv_peinh.       "材料費
-*        ENDIF.
       ENDIF.
       " 9th layer
       CLEAR: ls_lotsize, ls_raw.
@@ -1365,14 +1299,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
           <lfs_bom>-cost09 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
-*        READ TABLE lt_costitem INTO ls_costitem
-*             WITH KEY product = <lfs_bom>-parent09
-*                      plant = <lfs_bom>-plant BINARY SEARCH.
-*        IF ls_lotsize-costinglotsize <> 0.
-*          lv_peinh = ls_costitem-quantityinbaseunit / ls_lotsize-costinglotsize.
-*          <lfs_bom>-cost09 = ls_costitem-totalpriceincompanycodecrcy / ls_lotsize-costinglotsize
-*                           * lv_peinh.       "材料費
-*        ENDIF.
       ENDIF.
       " 10th layer
       CLEAR: ls_lotsize, ls_raw.
@@ -1400,14 +1326,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
           <lfs_bom>-cost10 = ( ls_raw-costcomponentcostfield1amt + ls_raw-costcomponentcostfield3amt )
                            / ls_lotsize-costinglotsize.
         ENDIF.
-*        READ TABLE lt_costitem INTO ls_costitem
-*             WITH KEY product = <lfs_bom>-parent10
-*                      plant = <lfs_bom>-plant BINARY SEARCH.
-*        IF ls_lotsize-costinglotsize <> 0.
-*          lv_peinh = ls_costitem-quantityinbaseunit / ls_lotsize-costinglotsize.
-*          <lfs_bom>-cost10 = ls_costitem-totalpriceincompanycodecrcy / ls_lotsize-costinglotsize
-*                           * lv_peinh.       "材料費
-*        ENDIF.
       ENDIF.
     ENDLOOP.
     DELETE lt_bom WHERE cost01 = 0
@@ -1601,7 +1519,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       "当期購買グループ仕入れ金額期首
       "当期有償支給品の仕入れ金額期首
       "該当得意先の総売上高beginning
-      "会社レベルの総売上高begin
       READ TABLE lt_ztfi_1009 INTO DATA(ls_1009)         "#EC CI_SORTED
            WITH KEY businesspartner = ls_1010-customer
                     profitcenter = ls_1010-profitcenter
@@ -1610,7 +1527,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         ls_1010-purgrpamount1 = ls_1009-begpurgrpamt.
         ls_1010-chargeableamount1 = ls_1009-begchgmaterialamt.
         ls_1010-customerrevenue1 = ls_1009-begcustomerrev.
-        ls_1010-revenue1 = ls_1009-begrev.
       ENDIF.
 
       "購買グループ仕入れ金額
@@ -1658,6 +1574,9 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         ls_1010-customerrevenue = ls_kunnramt-amt.
       ENDIF.
 
+      "会社レベルの総売上高begin
+      READ TABLE lt_ztfi_1009 INTO ls_1009 INDEX 1.        "#EC CI_SORTED
+      ls_1010-revenue1 = ls_1009-begrev.
       "会社レベルの総売上高
       ls_1010-revenue = lv_amt_bukrs.
       "2000材料費合計/3000材料費合計
@@ -1846,10 +1765,11 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         IF <lfs_member>-product <> lv_matnr.
           lv_chargeable = <lfs_member>-chargeableamount + <lfs_member>-chargeableamount1 + <lfs_member>-chargeableamount2
                         + lv_chargeable. "当期有償支給品仕入れ金額
+          lv_currentstockamt = lv_currentstockamt + <lfs_member>-currentstockamount. "在庫金額（当期末）-有償支給品
         ENDIF.
         lv_matnr = <lfs_member>-product.
 
-        lv_currentstockamt = lv_currentstockamt + <lfs_member>-currentstockamount. "在庫金額（当期末）-有償支給品
+
         IF <lfs_member>-valuationclass01 = lc_2000.
           lv_semi = lv_semi + <lfs_member>-valuationquantity01 * <lfs_member>-cost01.
         ELSEIF <lfs_member>-valuationclass01 = lc_3000.
@@ -1912,17 +1832,13 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
            WITH KEY purchasinggroup = <lfs_member>-purchasinggroup.
       IF lv_purgrp <> 0.
         ls_1011-chargeablerate = ls_grpchg-chargeable / lv_purgrp.  "当期仕入率
+        lv_rate = ls_1011-chargeablerate.
       ENDIF.
-*      IF lv_rate = 0.
-*        CLEAR: ls_1011-chargeablerate.
-*      ELSE.
-*        ls_1011-chargeablerate = lv_rate.
-*      ENDIF.
 
       ls_1011-previousstocktotal = <lfs_member>-previousstockamount.  "在庫金額（前期末）-合計
       ls_1011-currentstockpaid = lv_currentstockamt.  "在庫金額（当期末）-有償支給品
-      ls_1011-currentstocksemi = lv_semi * ls_1011-chargeablerate. "在庫金額（当期末）-半製品
-      ls_1011-currentstockfin = lv_fin * ls_1011-chargeablerate.  "在庫金額（当期末）-製品
+      ls_1011-currentstocksemi = lv_semi * lv_rate. "在庫金額（当期末）-半製品
+      ls_1011-currentstockfin = lv_fin * lv_rate.  "在庫金額（当期末）-製品
       ls_1011-currentstocktotal = ls_1011-currentstockpaid + ls_1011-currentstocksemi
                                 + ls_1011-currentstockfin. "在庫金額（当期末）-合計
       "在庫増減金額

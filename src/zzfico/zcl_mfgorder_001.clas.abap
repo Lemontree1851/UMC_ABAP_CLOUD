@@ -119,6 +119,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
       lr_plant        TYPE RANGE OF zc_mfgorder_001-plant,
       lrs_plant       LIKE LINE OF lr_plant,
       lr_companycode  TYPE RANGE OF zc_mfgorder_001-companycode,
+      lr_companycode_auth            TYPE RANGE OF zc_mfgorder_001-companycode,
       lrs_companycode LIKE LINE OF lr_companycode.
     DATA:
       lv_calendaryear  TYPE calendaryear,
@@ -169,12 +170,29 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
 *****************************************************************
 *       Filter
 *****************************************************************
+      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+      DATA(lv_user_company) = zzcl_common_utils=>get_company_by_user( lv_user_email ).
+      SPLIT lv_user_company AT '&' INTO TABLE DATA(lt_company).
+      lr_companycode_auth = VALUE #( FOR companycode IN lt_company ( sign = 'I' option = 'EQ' low = companycode ) ).
+
       READ TABLE lt_filter_cond INTO DATA(ls_companycode_cond) WITH KEY name = 'COMPANYCODE' .
       IF sy-subrc EQ 0.
         LOOP AT ls_companycode_cond-range INTO DATA(ls_sel_opt_companycode).
           MOVE-CORRESPONDING ls_sel_opt_companycode TO lrs_companycode.
-          INSERT lrs_companycode INTO TABLE lr_companycode.
+          IF lrs_companycode-low IN lr_companycode_auth AND lr_companycode_auth IS not INITIAL.
+            INSERT lrs_companycode INTO TABLE lr_companycode.
+          ENDIF.
         ENDLOOP.
+      ELSE.
+        lr_companycode = lr_companycode_auth.
+      ENDIF.
+      "不存在为空的情况
+      IF lr_companycode IS INITIAL .
+        CLEAR lr_companycode.
+        lrs_companycode-sign = 'I'.
+        lrs_companycode-option = 'EQ' .
+        lrs_companycode-low = '' .
+        INSERT lrs_companycode INTO TABLE lr_companycode.
       ENDIF.
 
       READ TABLE lt_filter_cond INTO DATA(ls_plant_cond) WITH KEY name = 'PLANT' .
@@ -401,7 +419,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
           SORT lt_sum_qty BY product.
         ENDIF.
         "提取月末时的实际工资率和计划工资率
-        lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$filter=ValidityStartFiscalYear%20eq%20'{ lv_calendaryear }'%20and%20ValidityStartFiscalPeriod%20eq%20'{ lv_calendarmonth_s }'&$top=1000|.
+        lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$filter=ValidityStartFiscalYear%20eq%20'{ lv_calendaryear }'%20and%20ValidityStartFiscalPeriod%20eq%20'{ lv_calendarmonth_s }'&$top=5000|.
         "Call API
         zzcl_common_utils=>request_api_v4(
           EXPORTING
@@ -420,7 +438,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
           CATCH cx_root INTO DATA(lx_root1) ##NO_HANDLER.
         ENDTRY.
 
-        lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$filter=ValidityStartFiscalYear%20eq%20'{ lv_calendaryear }'%20and%20ValidityStartFiscalPeriod%20eq%20'{ lv_calendarmonth_s }'&$top=1000|.
+        lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$filter=ValidityStartFiscalYear%20eq%20'{ lv_calendaryear }'%20and%20ValidityStartFiscalPeriod%20eq%20'{ lv_calendarmonth_s }'&$top=5000|.
         "Call API
         zzcl_common_utils=>request_api_v4(
           EXPORTING

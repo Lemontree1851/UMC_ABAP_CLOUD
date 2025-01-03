@@ -4,6 +4,9 @@
 @EndUserText.label: 'Fixed Asset Print'
 define view ZC_FIXEDASSETPRINT
   as select from I_FixedAssetAssgmt as A
+     inner join   ZR_TBC1012           as _AssignCompany on _AssignCompany.CompanyCode = A.CompanyCode
+    inner join   ZC_BusinessUserEmail as _UserCompany   on  _UserCompany.Email  = _AssignCompany.Mail
+                                                       and _UserCompany.UserID = $session.user 
 {
       @UI:{
           lineItem: [ { position: 1 } ],

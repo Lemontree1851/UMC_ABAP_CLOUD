@@ -7,7 +7,7 @@
     description: { type: #STANDARD , value: 'AccessName'}
   },
   presentationVariant: [{
-    sortOrder: [ { by: 'AccessId', direction: #ASC } ],
+    sortOrder: [ { by: 'DesignFileId', direction: #ASC } ],
     visualizations: [ { type: #AS_LINEITEM } ]
   }]
 }

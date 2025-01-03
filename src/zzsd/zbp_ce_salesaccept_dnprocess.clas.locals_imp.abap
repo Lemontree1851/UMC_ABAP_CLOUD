@@ -29,6 +29,7 @@ ENDCLASS.
 CLASS lhc_dnprocess IMPLEMENTATION.
 
   METHOD get_instance_authorizations.
+
   ENDMETHOD.
 
   METHOD create.
@@ -63,10 +64,10 @@ CLASS lhc_dnprocess IMPLEMENTATION.
 
     "获取模板需要的客户数据
     SELECT
-      ZID,
-      ZVALUE1,
-      ZVALUE2,
-      ZVALUE3
+      zid,
+      zvalue1,
+      zvalue2,
+      zvalue3
     FROM ztbc_1001
     WHERE zid = 'ZSD001'
       OR zid = 'ZSD002'
@@ -103,6 +104,19 @@ CLASS lhc_dnprocess IMPLEMENTATION.
       WHERE purchaseorderbycustomer = @records-purchaseorderbycustomer
         AND soldtoparty = @records-soldtoparty
       INTO TABLE @DATA(lt_salesdocumentfordn).
+
+      "获取权限数据
+      DATA(lv_salesorg) = zzcl_common_utils=>get_salesorg_by_user( CONV #( records[ 1 ]-frontendemail ) ).
+      DATA(lv_shippingpoint) = zzcl_common_utils=>get_shippingpoint_by_user( CONV #( records[ 1 ]-frontendemail ) ).
+      "权限校验，删除没有权限的数据
+      LOOP AT lt_salesdocumentfordn INTO DATA(ls_data).
+        IF NOT lv_salesorg CS ls_data-salesorganization.
+          DELETE lt_salesdocumentfordn.
+        ENDIF.
+        IF NOT lv_shippingpoint CS ls_data-shippingpoint.
+          DELETE lt_salesdocumentfordn.
+        ENDIF.
+      ENDLOOP.
     ENDIF.
     "返回结果
     DATA ls_result LIKE LINE OF result.
@@ -168,11 +182,11 @@ CLASS lhc_dnprocess IMPLEMENTATION.
       BEGIN OF ty_response,
         d TYPE ty_delivery_reponse,
       END OF ty_response.
-    DATA: ls_request  TYPE ty_outb_delivery_head,
+    DATA: ls_request       TYPE ty_outb_delivery_head,
           ls_delivery_item TYPE ty_delivery_document_item,
-          ls_response TYPE ty_response,
-          ls_error_v2 TYPE zzcl_odata_utils=>gty_error,
-          is_error    TYPE abap_boolean.
+          ls_response      TYPE ty_response,
+          ls_error_v2      TYPE zzcl_odata_utils=>gty_error,
+          is_error         TYPE abap_boolean.
 
     "DN修改
     TYPES:
@@ -210,10 +224,10 @@ CLASS lhc_dnprocess IMPLEMENTATION.
         CLEAR ls_delivery_item.
 
         "获取库存地点
-        data lv_salesdocument TYPE vbeln.
-        data lv_salesdocumentitem type posnr.
-        lv_salesdocument = |{ record_temp-salesdocument ALPHA = in }|.
-        lv_salesdocumentitem = |{ record_temp-salesdocumentitem ALPHA = in }|.
+        DATA lv_salesdocument TYPE vbeln.
+        DATA lv_salesdocumentitem TYPE posnr.
+        lv_salesdocument = |{ record_temp-salesdocument ALPHA = IN }|.
+        lv_salesdocumentitem = |{ record_temp-salesdocumentitem ALPHA = IN }|.
         SELECT SINGLE
           i_salesdocumentitem~salesdocument,
           i_salesdocumentitem~salesdocumentitem,
@@ -226,15 +240,15 @@ CLASS lhc_dnprocess IMPLEMENTATION.
         WHERE i_salesdocumentitem~salesdocument = @lv_salesdocument
           AND i_salesdocumentitem~salesdocumentitem = @lv_salesdocumentitem
         INTO @DATA(ls_storagelocation).
-        data lv_storage_location TYPE lgort_d.
-        clear lv_storage_location.
-        if ls_storagelocation is not INITIAL.
-          if ls_storagelocation-shippingstoragelocation is not INITIAL.
-            record_temp-StorageLocation = ls_storagelocation-shippingstoragelocation.
-          else.
-            record_temp-StorageLocation = ls_storagelocation-storagelocation.
-          endif.
-        endif.
+        DATA lv_storage_location TYPE lgort_d.
+        CLEAR lv_storage_location.
+        IF ls_storagelocation IS NOT INITIAL.
+          IF ls_storagelocation-shippingstoragelocation IS NOT INITIAL.
+            record_temp-storagelocation = ls_storagelocation-shippingstoragelocation.
+          ELSE.
+            record_temp-storagelocation = ls_storagelocation-storagelocation.
+          ENDIF.
+        ENDIF.
         MODIFY records FROM record_temp.
       ENDLOOP.
 
@@ -315,7 +329,7 @@ CLASS lhc_dnprocess IMPLEMENTATION.
 
             DATA(lv_param) = |DeliveryDocument='{ record_temp-deliverydocument }',DeliveryDocumentItem='{ record_temp-deliverydocumentitem }'|.
             lv_path = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryItem({ lv_param })?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-            lv_requestbody = |\{"d":\{"StorageLocation":"{ record_temp-StorageLocation }"\}\}|."由于目前只修改一个字段，所以直接构建字符串
+            lv_requestbody = |\{"d":\{"StorageLocation":"{ record_temp-storagelocation }"\}\}|."由于目前只修改一个字段，所以直接构建字符串
             zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
                                                          iv_method      = if_web_http_client=>patch
                                                          iv_body        = lv_requestbody
@@ -370,7 +384,7 @@ CLASS lhc_dnprocess IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
 
-    SELECT "#EC CI_NOWHERE
+    SELECT                                              "#EC CI_NOWHERE
       unitofmeasure,
       unitofmeasure_e
     FROM i_unitofmeasure WITH PRIVILEGED ACCESS

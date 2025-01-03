@@ -6,7 +6,7 @@ persistent table ztsd_1001
 draft table ZTSD_1001_D
 etag master LocalLastChangedAt
 lock master total etag LatCahangedAt
-authorization master( global )
+authorization master( global, instance )
 
 {
   field ( mandatory : create )

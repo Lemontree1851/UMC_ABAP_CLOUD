@@ -178,27 +178,42 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
       lv_length TYPE i VALUE 0,
       lv_index  TYPE i.
 
+    DATA: lv_newdn type c,
+          lv_dno          TYPE n    LENGTH 5.
+
     " 如果没有删除标志的错误，进行数量总和比较
     IF lv_error IS INITIAL.
 
       CLEAR: lv_sum_qty.
       SORT lt_req BY pono dno deliverydate.
 
-      SORT lt_req BY pono dno.
-
       DATA(lt_req1) = lt_req.
 
-      DELETE ADJACENT DUPLICATES FROM lt_req1 COMPARING pono dno.
+      DELETE ADJACENT DUPLICATES FROM lt_req1 COMPARING pono.
 
       LOOP AT lt_req1 INTO DATA(lw_req1).
+        CLEAR:lv_newdn,lv_dno.
         lv_index = 0.
 
-        LOOP AT lt_req INTO DATA(ls_req) WHERE pono = lw_req1-pono AND dno = lw_req1-dno .
+        LOOP AT lt_req INTO DATA(ls_req) WHERE pono = lw_req1-pono  .
+
+          "判断是否有新行需要item标签结尾
+            if lv_dno = 0.
+                lv_dno = ls_req-dno.
+            endif.
+            if lv_dno NE ls_req-dno.
+                lv_newdn = 'X'.
+                lv_dno = ls_req-dno.
+            else.
+                clear lv_newdn.
+            endif.
+          "end
+
           lv_index = lv_index + 1.
 
           lv_length  = 0.
 
-          LOOP AT lt_req INTO DATA(ls_req3) WHERE pono = lw_req1-pono AND dno = lw_req1-dno.
+          LOOP AT lt_req INTO DATA(ls_req3) WHERE pono = lw_req1-pono.
 
             lv_length = lv_length + 1.
 
@@ -403,7 +418,12 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
                                    |<Item>| &&
                                    |<PurchaseOrderItemID>{ ls_req-dno }</PurchaseOrderItemID>|.
 
-
+            ELSE.
+                if lv_newdn = 'X'.
+                 lv_current_request = lv_current_request &&
+                                      |</Item>| && |<Item>| &&
+                                      |<PurchaseOrderItemID>{ ls_req-dno }</PurchaseOrderItemID>|.
+                endif.
             ENDIF.
 
             " 假设获取到的单位信息包含在 lt_unit 中，取第一个单位信息
@@ -487,7 +507,7 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
 
         ENDLOOP.
 
-        WAIT UP TO 1 SECONDS.
+        WAIT UP TO '1.5' SECONDS.
 
       ENDLOOP.
     ENDIF.

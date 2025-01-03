@@ -71,6 +71,7 @@ CLASS ZCL_MFGORDER_003 IMPLEMENTATION.
       lr_plant        TYPE RANGE OF zc_mfgorder_003-plant,
       lrs_plant       LIKE LINE OF lr_plant,
       lr_companycode  TYPE RANGE OF zc_mfgorder_003-companycode,
+      lr_companycode_auth            TYPE RANGE OF zc_mfgorder_003-companycode,
       lrs_companycode LIKE LINE OF lr_companycode.
     DATA:
       lv_calendaryear  TYPE calendaryear,
@@ -113,12 +114,29 @@ CLASS ZCL_MFGORDER_003 IMPLEMENTATION.
         lv_orderby_string = 'PRODUCT'.
       ENDIF.
       "filter
+      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+      DATA(lv_user_company) = zzcl_common_utils=>get_company_by_user( lv_user_email ).
+      SPLIT lv_user_company AT '&' INTO TABLE DATA(lt_company).
+      lr_companycode_auth = VALUE #( FOR companycode IN lt_company ( sign = 'I' option = 'EQ' low = companycode ) ).
+
       READ TABLE lt_filter_cond INTO DATA(ls_companycode_cond) WITH KEY name = 'COMPANYCODE' .
       IF sy-subrc EQ 0.
         LOOP AT ls_companycode_cond-range INTO DATA(ls_sel_opt_companycode).
           MOVE-CORRESPONDING ls_sel_opt_companycode TO lrs_companycode.
-          INSERT lrs_companycode INTO TABLE lr_companycode.
+          IF lrs_companycode-low IN lr_companycode_auth AND lr_companycode_auth IS not INITIAL.
+            INSERT lrs_companycode INTO TABLE lr_companycode.
+          ENDIF.
         ENDLOOP.
+      ELSE.
+        lr_companycode = lr_companycode_auth.
+      ENDIF.
+      "不存在为空的情况
+      IF lr_companycode IS INITIAL .
+        CLEAR lr_companycode.
+        lrs_companycode-sign = 'I'.
+        lrs_companycode-option = 'EQ' .
+        lrs_companycode-low = '' .
+        INSERT lrs_companycode INTO TABLE lr_companycode.
       ENDIF.
 
       READ TABLE lt_filter_cond INTO DATA(ls_plant_cond) WITH KEY name = 'PLANT' .

@@ -167,6 +167,10 @@ CLASS zcl_paidpaycalculation IMPLEMENTATION.
             lv_rate = ls_1011-chargeablerate * 100.
             IF lv_rate <> 0.
               ls_output-chargeablerate = lv_rate.  "当期仕入率
+              CONDENSE ls_output-chargeablerate NO-GAPS.
+            ELSE.
+              ls_output-chargeablerate = '0'.  "当期仕入率
+              CONDENSE ls_output-chargeablerate NO-GAPS.
             ENDIF.
             ls_output-previousstockamount = ls_1011-previousstocktotal. "在庫金額（前期末）
             ls_output-currentstockamount = ls_1011-currentstockpaid. "在庫金額（当期末）-有償支給品
@@ -177,7 +181,14 @@ CLASS zcl_paidpaycalculation IMPLEMENTATION.
             ls_output-paidmaterialcost = ls_1011-paidmaterialcost.  "払いだし材料費
             ls_output-customerrevenue = ls_1011-customerrevenue.  "該当得意先の総売上高
             ls_output-revenue = ls_1011-revenue.  "会社レベルの総売上高
-            ls_output-revenuerate = ls_1011-revenuerate.  "総売上金額占有率
+            lv_rate = ls_1011-revenuerate * 100.
+            IF lv_rate <> 0.
+              ls_output-revenuerate = lv_rate.  "総売上金額占有率
+              CONDENSE ls_output-revenuerate NO-GAPS.
+            ELSE.
+              ls_output-revenuerate = '0'.  "総売上金額占有率
+              CONDENSE ls_output-revenuerate NO-GAPS.
+            ENDIF.
             ls_output-currency = ls_1011-currency.
             APPEND ls_output TO lt_output.
             CLEAR: ls_output.

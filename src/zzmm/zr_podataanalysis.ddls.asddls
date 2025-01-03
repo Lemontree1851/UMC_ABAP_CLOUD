@@ -272,7 +272,7 @@ define custom entity ZR_PODATAANALYSIS
       @UI                           : { lineItem: [ { position: 580, label: 'プラント' } ], selectionField: [ { position: 150 } ] }
       
       @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'Plant', name: 'I_PlantStdVH'}}],
-                  filter             : { multipleSelections: true, selectionType: #SINGLE } }
+                  filter             : { multipleSelections: false, selectionType: #SINGLE } }
       
       @EndUserText.label            : 'プラント'      
       Plant                         : werks_d;      

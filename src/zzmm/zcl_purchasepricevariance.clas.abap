@@ -11,9 +11,7 @@ CLASS zcl_purchasepricevariance DEFINITION
 ENDCLASS.
 
 
-
-CLASS ZCL_PURCHASEPRICEVARIANCE IMPLEMENTATION.
-
+CLASS zcl_purchasepricevariance IMPLEMENTATION.
 
   METHOD if_sadl_exit_calc_element_read~calculate.
     TYPES: BEGIN OF ty_record,
@@ -272,6 +270,8 @@ CLASS ZCL_PURCHASEPRICEVARIANCE IMPLEMENTATION.
             <lfs_original_data>-conditionquantityunit = ls_conditionrecord-conditionquantityunit.
 
             IF ls_conditionrecord-pricingscalebasis IS INITIAL.
+              " 新・正味発注価格
+              <lfs_original_data>-conditionratevalue = ls_conditionrecord-conditionratevalue.
               " 新PO単価
               <lfs_original_data>-newprice = ls_conditionrecord-conditionratevalue / ls_conditionrecord-conditionquantity.
             ELSEIF ls_conditionrecord-pricingscalebasis = 'C'.
@@ -282,6 +282,8 @@ CLASS ZCL_PURCHASEPRICEVARIANCE IMPLEMENTATION.
                 " 阶梯价格
                 LOOP AT lt_recordscale INTO DATA(ls_recordscale) WHERE conditionrecord = ls_recdvalidity-condition_record.
                   IF ls_group-orderquantity >= ls_recordscale-conditionscalequantity.
+                    " 新・正味発注価格
+                    <lfs_original_data>-conditionratevalue = ls_recordscale-conditionratevalue.
                     " 新PO単価
                     <lfs_original_data>-newprice = ls_recordscale-conditionratevalue / ls_conditionrecord-conditionquantity.
                     EXIT.
@@ -316,7 +318,7 @@ CLASS ZCL_PURCHASEPRICEVARIANCE IMPLEMENTATION.
     ct_calculated_data = CORRESPONDING #( lt_original_data ).
   ENDMETHOD.
 
-
   METHOD if_sadl_exit_calc_element_read~get_calculation_info.
   ENDMETHOD.
+
 ENDCLASS.

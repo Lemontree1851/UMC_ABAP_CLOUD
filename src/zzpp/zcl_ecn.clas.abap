@@ -9,11 +9,7 @@ CLASS zcl_ecn DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_ECN IMPLEMENTATION.
-
-
+CLASS zcl_ecn IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
     TYPES:
       BEGIN OF ty_changemaster_ent,
@@ -34,6 +30,7 @@ CLASS ZCL_ECN IMPLEMENTATION.
       lr_variant        TYPE RANGE OF zr_ecn-billofmaterialvariant,
       ls_variant        LIKE LINE OF lr_variant,
       lv_plant          TYPE zr_ecn-plant,
+      lr_plant          TYPE RANGE OF zr_ecn-plant,
 
       lr_changedoc      TYPE RANGE OF zr_ecn-ecnno,
       ls_changedoc      LIKE LINE OF lr_changedoc,
@@ -267,6 +264,20 @@ CLASS ZCL_ECN IMPLEMENTATION.
           CASE ls_filter_cond-name.
             WHEN 'PLANT'.
               lv_plant = str_rec_l_range-low.
+
+              DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+              DATA(lv_user_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+
+              IF lv_user_plant IS NOT INITIAL.
+                SPLIT lv_user_plant AT '&' INTO TABLE DATA(lt_plant).
+                lr_plant = VALUE #( FOR plant IN lt_plant ( sign = 'I' option = 'EQ' low = plant ) ).
+                IF str_rec_l_range-low IN lr_plant.
+                  lv_plant = str_rec_l_range-low.
+                ENDIF.
+              ENDIF.
+
+
+
 
             WHEN 'MATERIAL'.
               MOVE-CORRESPONDING str_rec_l_range TO ls_material.

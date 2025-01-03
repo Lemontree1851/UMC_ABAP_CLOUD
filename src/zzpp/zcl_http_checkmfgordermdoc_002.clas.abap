@@ -9,11 +9,7 @@ CLASS zcl_http_checkmfgordermdoc_002 DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
-
-
+CLASS zcl_http_checkmfgordermdoc_002 IMPLEMENTATION.
   METHOD if_http_service_extension~handle_request.
     TYPES:
       BEGIN OF ty_req,
@@ -101,15 +97,16 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
       lv_qty_short TYPE p LENGTH 8 DECIMALS 3.
 
     CONSTANTS:
-      lc_zid_zpp008    TYPE string     VALUE 'ZPP008',
-      lc_msgid         TYPE string     VALUE 'ZPP_001',
-      lc_msgty         TYPE string     VALUE 'E',
-      lc_stat_code_500 TYPE string     VALUE '500',
-      lc_sign_e        TYPE c LENGTH 1 VALUE 'E',
-      lc_opt_eq        TYPE c LENGTH 2 VALUE 'EQ',
-      lc_gmtype_101    TYPE i_materialdocumentitemtp-goodsmovementtype VALUE '101',
-      lc_gmtype_531    TYPE i_materialdocumentitemtp-goodsmovementtype VALUE '531',
-      lc_stocktype_01  TYPE i_materialstock_2-inventorystocktype       VALUE '01'.
+      lc_zid_zpp008      TYPE string     VALUE 'ZPP008',
+      lc_specproctype_52 TYPE string     VALUE '52',
+      lc_msgid           TYPE string     VALUE 'ZPP_001',
+      lc_msgty           TYPE string     VALUE 'E',
+      lc_stat_code_500   TYPE string     VALUE '500',
+      lc_sign_e          TYPE c LENGTH 1 VALUE 'E',
+      lc_opt_eq          TYPE c LENGTH 2 VALUE 'EQ',
+      lc_gmtype_101      TYPE i_materialdocumentitemtp-goodsmovementtype VALUE '101',
+      lc_gmtype_531      TYPE i_materialdocumentitemtp-goodsmovementtype VALUE '531',
+      lc_stocktype_01    TYPE i_materialstock_2-inventorystocktype       VALUE '01'.
 
 
     "Obtain request data
@@ -186,7 +183,7 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
                  zvalue1
             FROM ztbc_1001
            WHERE zid = @lc_zid_zpp008
-             AND zvalue3 = @abap_true
+             AND zvalue2 = @lv_plant
             INTO TABLE @lr_type.
 
           "Obtain data of manufacturing order header with status
@@ -297,6 +294,16 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
                    AND inventorystocktype = @lc_stocktype_01
                   INTO TABLE @lt_stock.
               ENDIF.
+
+              "Obtain product plant
+              SELECT product,
+                     plant
+                FROM i_productplantbasic WITH PRIVILEGED ACCESS
+                 FOR ALL ENTRIES IN @lt_materialdocumentitem
+               WHERE product = @lt_materialdocumentitem-material
+                 AND plant = @lt_materialdocumentitem-plant
+                 AND specialprocurementtype = @lc_specproctype_52
+                INTO TABLE @DATA(lt_productplantbasic).
             ELSE.
               "入出庫伝票は取得できません！
               MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 023 INTO ls_res-_msg.
@@ -345,51 +352,59 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
     SORT lt_require BY material plant storagelocation batch salesorder salesorderitem wbselementinternalid.
     SORT lt_stock_sum BY material plant storagelocation batch sddocument sddocumentitem wbselementinternalid.
     SORT lt_productstoragelocationbasic BY product plant storagelocation.
+    SORT lt_productplantbasic BY product plant.
 
-    LOOP AT lt_require INTO ls_require.
-      "Read data of storage location
-      READ TABLE lt_productstoragelocationbasic INTO DATA(ls_productstoragelocationbasic) WITH KEY product = ls_require-material
-                                                                                                   plant = ls_require-plant
-                                                                                                   storagelocation = ls_require-storagelocation
-                                                                                          BINARY SEARCH.
-      IF sy-subrc = 0.
-        "保管場所&1の品目&2の在庫は利用できません！
-        MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 024 WITH ls_require-storagelocation ls_require-material INTO ls_res-_msg.
-        ls_res-_msgty = 'E'.
-        CLEAR ls_res-_data.
-        EXIT.
-      ENDIF.
-
-      CLEAR ls_stock_sum.
-      "Read data of material stock
-      READ TABLE lt_stock_sum INTO ls_stock_sum WITH KEY material = ls_require-material
-                                                         plant = ls_require-plant
-                                                         storagelocation = ls_require-storagelocation
-                                                         batch = ls_require-batch
-                                                         sddocument = ls_require-salesorder
-                                                         sddocumentitem = ls_require-salesorderitem
-                                                         wbselementinternalid = ls_require-wbselementinternalid
-                                                BINARY SEARCH.
-      "Require quantity > Stock quantity
-      IF ls_require-quantityinbaseunit > ls_stock_sum-matlwrhsstkqtyinmatlbaseunit.
-        IF ls_stock_sum-matlwrhsstkqtyinmatlbaseunit >= 0.
-          lv_qty_short = ls_require-quantityinbaseunit - ls_stock_sum-matlwrhsstkqtyinmatlbaseunit.
-        ELSE.
-          lv_qty_short = ls_require-quantityinbaseunit.
+    LOOP AT lt_productplantbasic INTO DATA(ls_productplantbasic).
+      DELETE lt_require WHERE material = ls_productplantbasic-product AND plant = ls_productplantbasic-plant.
+    ENDLOOP.
+    IF sy-subrc = 0 AND lt_require IS INITIAL.
+      ls_res-_msgty = 'S'.
+    ELSE.
+      LOOP AT lt_require INTO ls_require.
+        "Read data of storage location
+        READ TABLE lt_productstoragelocationbasic INTO DATA(ls_productstoragelocationbasic) WITH KEY product = ls_require-material
+                                                                                                     plant = ls_require-plant
+                                                                                                     storagelocation = ls_require-storagelocation
+                                                                                            BINARY SEARCH.
+        IF sy-subrc = 0.
+          "保管場所&1の品目&2の在庫は利用できません！
+          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 024 WITH ls_require-storagelocation ls_require-material INTO ls_res-_msg.
+          ls_res-_msgty = 'E'.
+          CLEAR ls_res-_data.
+          EXIT.
         ENDIF.
 
-        ls_res-_data-_material = ls_require-material.
+        CLEAR ls_stock_sum.
+        "Read data of material stock
+        READ TABLE lt_stock_sum INTO ls_stock_sum WITH KEY material = ls_require-material
+                                                           plant = ls_require-plant
+                                                           storagelocation = ls_require-storagelocation
+                                                           batch = ls_require-batch
+                                                           sddocument = ls_require-salesorder
+                                                           sddocumentitem = ls_require-salesorderitem
+                                                           wbselementinternalid = ls_require-wbselementinternalid
+                                                  BINARY SEARCH.
+        "Require quantity > Stock quantity
+        IF ls_require-quantityinbaseunit > ls_stock_sum-matlwrhsstkqtyinmatlbaseunit.
+          IF ls_stock_sum-matlwrhsstkqtyinmatlbaseunit >= 0.
+            lv_qty_short = ls_require-quantityinbaseunit - ls_stock_sum-matlwrhsstkqtyinmatlbaseunit.
+          ELSE.
+            lv_qty_short = ls_require-quantityinbaseunit.
+          ENDIF.
 
-        "品目&1が足りません、不足数量は&2！
-        MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 050 WITH ls_require-material lv_qty_short INTO ls_res-_msg.
-        ls_res-_msgty = 'E'.
-        EXIT.
+          ls_res-_data-_material = ls_require-material.
+
+          "品目&1が足りません、不足数量は&2！
+          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 050 WITH ls_require-material lv_qty_short INTO ls_res-_msg.
+          ls_res-_msgty = 'E'.
+          EXIT.
+        ENDIF.
+      ENDLOOP.
+
+      IF ls_res-_msgty = 'S'.
+        "品目は全て足りています、生産実績取消は可能です！
+        MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 051 INTO ls_res-_msg.
       ENDIF.
-    ENDLOOP.
-
-    IF ls_res-_msgty = 'S'.
-      "品目は全て足りています、生産実績取消は可能です！
-      MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 051 INTO ls_res-_msg.
     ENDIF.
 
     "ABAP->JSON

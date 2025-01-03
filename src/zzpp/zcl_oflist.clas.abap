@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_OFLIST IMPLEMENTATION.
+CLASS zcl_oflist IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -82,6 +82,12 @@ CLASS ZCL_OFLIST IMPLEMENTATION.
         LEFT OUTER JOIN i_productdescription WITH PRIVILEGED ACCESS AS product_text
           ON root~product = product_text~product
           AND product_text~language = @sy-langu
+        "权限控制
+        INNER JOIN zr_tbc1006 AS _assignplant
+          ON _assignplant~plant = root~plant
+        INNER JOIN zc_businessuseremail AS _user
+          ON  _user~email  = _assignplant~mail
+          AND _user~userid = @sy-uname
         WHERE root~plant IN @r_plant
           AND root~requirementplan IN @r_requirementplan
           AND root~product IN @r_product

@@ -9,11 +9,7 @@ CLASS zcl_http_customermaterial_001 DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_HTTP_CUSTOMERMATERIAL_001 IMPLEMENTATION.
-
-
+CLASS zcl_http_customermaterial_001 IMPLEMENTATION.
   METHOD if_http_service_extension~handle_request.
 
     TYPES:
@@ -321,8 +317,8 @@ CLASS ZCL_HTTP_CUSTOMERMATERIAL_001 IMPLEMENTATION.
         ls_ztsd_1011-product               = ls_log-product.
         ls_ztsd_1011-deleteindicator       = abap_true.
         ls_ztsd_1011-last_changed_by       = sy-uname.
-        ls_ztsd_1011-last_changed_at       = lv_timestampl.
-        ls_ztsd_1011-local_last_changed_at = lv_timestampl.
+        ls_ztsd_1011-last_changed_at       = lv_timestampl_tmp."lv_timestampl.
+        ls_ztsd_1011-local_last_changed_at = lv_timestampl_tmp."lv_timestampl.
         APPEND ls_ztsd_1011 TO lt_ztsd_1011.
         CLEAR ls_ztsd_1011.
       ENDIF.
