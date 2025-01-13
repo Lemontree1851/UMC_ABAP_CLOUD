@@ -367,6 +367,17 @@ CLASS zcl_http_usap_001 IMPLEMENTATION.
           ROLLBACK WORK.
         ELSE.
           COMMIT WORK AND WAIT.
+          IF cs_create-goodsmovementtype = '101'
+          OR cs_create-goodsmovementtype = '321'.
+            TRY.
+                zcl_vmi_processing_auto=>execute(
+                                           IMPORTING
+                                              et_results = DATA(lt_results) ).
+              CATCH zzcx_custom_exception INTO DATA(lx_zzcx_custom_exception).
+                DATA(lv_message) = lx_zzcx_custom_exception->get_text( ).
+
+            ENDTRY.
+          ENDIF.
         ENDIF.
       ENDIF.
       "MR update
@@ -505,6 +516,17 @@ CLASS zcl_http_usap_001 IMPLEMENTATION.
                 ROLLBACK WORK.
               ELSE.
                 COMMIT WORK AND WAIT.
+                IF ls_create-goodsmovementtype = '101'
+                OR ls_create-goodsmovementtype = '321'.
+                  TRY.
+                      zcl_vmi_processing_auto=>execute(
+                                                 IMPORTING
+                                                    et_results = DATA(lt_results) ).
+                    CATCH zzcx_custom_exception INTO DATA(lx_zzcx_custom_exception).
+                      DATA(lv_message) = lx_zzcx_custom_exception->get_text( ).
+
+                  ENDTRY.
+                ENDIF.
               ENDIF.
             ENDIF.
             CONTINUE.

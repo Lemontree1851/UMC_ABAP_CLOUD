@@ -1398,9 +1398,9 @@ CLASS lhc_materialrequisition IMPLEMENTATION.
     SORT lt_data BY itemno.
     READ TABLE lt_data INTO DATA(ls_data) INDEX 1.
 
-    SELECT receivertype,
-           mailaddress
-      FROM zc_emailmasterupload
+    SELECT receiver_type AS receivertype,
+           mail_address AS mailaddress
+      FROM ztpp_1011
       FOR ALL ENTRIES IN @lt_data
      WHERE plant    = @lt_data-plant
        AND customer = @lt_data-customer

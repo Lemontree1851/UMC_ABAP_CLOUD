@@ -71,7 +71,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
+CLASS zcl_job_daystocktrans IMPLEMENTATION.
 
 
   METHOD add_message_to_log.
@@ -314,18 +314,64 @@ CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
     DELETE ADJACENT DUPLICATES FROM lt_tmpsql COMPARING product plant businesspartner.
 *    DELETE ADJACENT DUPLICATES FROM lt_tmpsql COMPARING product plant.
 
-    SELECT a~material,
-           b~producttype,
-           a~plant,
-           b~businesspartner AS customer,
-           a~requirement_qty
-      FROM ztpp_1012 AS a
-      INNER JOIN @lt_tmpsql AS b ON b~product = a~material
-                                AND b~plant = a~plant
-*                                AND b~businesspartner = a~customer
-     WHERE a~requirement_date >= @lv_next_start
-       AND a~requirement_date <= @lv_next_end
-        INTO TABLE @lt_next.
+*&--ADD BEGIN BY XINLEI XU 2025/01/13 CR#4046
+    " 頭2桁固定値「B0」、後は最大値
+    SELECT salesplanuuid,
+           salesplan,
+           salesplanversion,
+           createdbyuser
+      FROM c_salesplanversionvaluehelp WITH PRIVILEGED ACCESS
+     WHERE salesplanversion LIKE 'B0%'
+      INTO TABLE @DATA(lt_salesplanversion).
+    SORT lt_salesplanversion BY salesplanversion DESCENDING.
+    READ TABLE lt_salesplanversion INTO DATA(ls_salesplanversion) INDEX 1.
+*&--ADD END BY XINLEI XU 2025/01/13 CR#4046
+
+*&--DEL BEGIN BY XINLEI XU 2025/01/13 CR#4046
+*    SELECT a~material,
+*           b~producttype,
+*           a~plant,
+*           b~businesspartner AS customer,
+*           a~requirement_qty
+*      FROM ztpp_1012 AS a
+*      INNER JOIN @lt_tmpsql AS b ON b~product = a~material
+*                                AND b~plant = a~plant
+**                                AND b~businesspartner = a~customer
+*     WHERE a~requirement_date >= @lv_next_start
+*       AND a~requirement_date <= @lv_next_end
+*        INTO TABLE @lt_next.
+*&--DEL BEGIN BY XINLEI XU 2025/01/13 CR#4046
+
+*&--ADD BEGIN BY XINLEI XU 2025/01/13 CR#4046
+    DATA(lt_currency) = lt_productplant.
+    SORT lt_currency BY currency.
+    DELETE ADJACENT DUPLICATES FROM lt_currency COMPARING currency.
+
+    LOOP AT lt_currency INTO DATA(ls_currency).
+      SELECT a~product AS material,
+             b~producttype,
+             a~plant,
+             d~businesspartner AS customer,
+             a~salesplanquantity AS requirement_qty
+        FROM i_slsperformanceplanactualcube( p_exchangeratetype = '0',
+                                             p_displaycurrency  = @ls_currency-currency,
+                                             p_salesplan        = @ls_salesplanversion-salesplan,
+                                             p_salesplanversion = @ls_salesplanversion-salesplanversion,
+                                             p_createdbyuser    = @ls_salesplanversion-createdbyuser )
+        WITH PRIVILEGED ACCESS AS a
+        LEFT JOIN i_product WITH PRIVILEGED ACCESS AS b ON b~product = a~product
+        LEFT JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS c ON  c~plant   = a~plant
+                                                                  AND c~product = a~product
+                                                                  AND c~mrpresponsible IS NOT INITIAL
+        LEFT JOIN i_businesspartner WITH PRIVILEGED ACCESS AS d ON d~searchterm2 = right( c~mrpresponsible,2 )
+        FOR ALL ENTRIES IN @lt_productplant
+       WHERE a~product = @lt_productplant-product
+         AND a~plant = @lt_productplant-plant
+         AND a~sddocument IS INITIAL
+         AND a~salesplanperiodname = @lv_next_start+0(6)
+       APPENDING TABLE @lt_next.
+    ENDLOOP.
+*&--ADD END BY XINLEI XU 2025/01/13 CR#4046
 
     DATA(lt_next_tmp) = lt_next.
     CLEAR lt_next.

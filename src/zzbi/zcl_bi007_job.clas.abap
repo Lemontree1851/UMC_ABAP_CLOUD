@@ -26,8 +26,8 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
 
   METHOD if_apj_dt_exec_object~get_parameters.
     et_parameter_def = VALUE #( ( selname = 'S_BUKRS' changeable_ind = abap_true kind = if_apj_dt_exec_object=>select_option datatype = 'BUKRS' length = 4 param_text = 'Company Code' )
-                                ( selname = 'P_YEAR'  changeable_ind = abap_true kind = if_apj_dt_exec_object=>parameter mandatory_ind = 'X' datatype = 'GJAHR' length = 4 param_text = 'Fiscal Year' )
-                                ( selname = 'P_MONAT' changeable_ind = abap_true kind = if_apj_dt_exec_object=>parameter mandatory_ind = 'X' datatype = 'POPER' length = 3 param_text = 'Fiscal Period' )
+                                ( selname = 'P_YEAR'  changeable_ind = abap_true kind = if_apj_dt_exec_object=>parameter mandatory_ind = '' datatype = 'GJAHR' length = 4 param_text = 'Fiscal Year' )
+                                ( selname = 'P_MONAT' changeable_ind = abap_true kind = if_apj_dt_exec_object=>parameter mandatory_ind = '' datatype = 'POPER' length = 3 param_text = 'Fiscal Period' )
                                 ( selname = 'S_PLANT' changeable_ind = abap_true kind = if_apj_dt_exec_object=>select_option datatype = 'WERKS_D' length = 4 param_text = 'Plant' )
                                 ( selname = 'S_PROD' changeable_ind = abap_true kind = if_apj_dt_exec_object=>select_option datatype = 'MATNR' length = 40 param_text = 'Product' )
                                 ( selname = 'S_CUST' changeable_ind = abap_true kind = if_apj_dt_exec_object=>select_option datatype = 'KUNNR' length = 10 param_text = 'Customer' )
@@ -68,6 +68,33 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
           APPEND CORRESPONDING #( ls_para ) TO mr_cust.
       ENDCASE.
     ENDLOOP.
+
+    "Step 1.1 Default YEAR&MONAT
+    READ TABLE it_parameters TRANSPORTING NO FIELDS WITH KEY selname = 'P_MONAT'.
+    IF sy-subrc <> 0 .
+      DATA:lv_date_local TYPE aedat.
+      DATA:lv_datetime   TYPE string.
+      DATA:lmr_year      LIKE LINE OF mr_year.
+      DATA:lmr_monat     LIKE LINE OF mr_monat.
+
+      GET TIME STAMP FIELD DATA(lv_timestamp_local).
+      lv_datetime     = lv_timestamp_local.
+      lv_date_local   = lv_datetime+0(6) && '01'.
+      lv_date_local   = lv_date_local - 1.
+
+      CLEAR lmr_year.
+      lmr_year-sign   = 'I'.
+      lmr_year-option = 'EQ'.
+      lmr_year-low    = lv_date_local+0(4).
+      APPEND lmr_year TO mr_year.
+
+      CLEAR lmr_monat.
+      lmr_monat-sign   = 'I'.
+      lmr_monat-option = 'EQ'.
+      lmr_monat-low    = lv_date_local+4(2).
+      APPEND lmr_monat TO mr_monat.
+
+    ENDIF.
 
     "Step 2. Get Data
     DATA(lo_data_handler) = NEW zcl_bi007_data( ir_companycode = mr_bukrs

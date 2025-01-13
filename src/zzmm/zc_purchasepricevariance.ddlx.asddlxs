@@ -69,8 +69,6 @@ annotate view ZC_PURCHASEPRICEVARIANCE with
   @Consumption.filter.hidden: true
   Difference;
   @Consumption.filter.hidden: true
-  PurchaseOrderStr;
-  @Consumption.filter.hidden: true
   PriceDate;
   @Consumption.filter.hidden: true
   CompanyCode;

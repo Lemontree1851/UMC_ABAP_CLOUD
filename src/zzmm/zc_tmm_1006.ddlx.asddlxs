@@ -292,6 +292,17 @@ annotate view ZC_TMM_1006 with
   WbsElemnt;
   
   @UI.lineItem: [ {
+    position: 255 , 
+    importance: #MEDIUM, 
+    label: 'OrderId'
+  } ]
+  @UI.identification: [ {
+    position: 255 , 
+    label: 'OrderId'
+  } ]
+  OrderId;
+  
+  @UI.lineItem: [ {
     position: 260 , 
     importance: #MEDIUM, 
     label: 'AssetNo'

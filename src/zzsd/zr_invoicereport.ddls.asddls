@@ -54,5 +54,10 @@ define root view entity ZR_INVOICEREPORT
       //消费税对象外
       _main.NetAmountExclude,
       _main._SD1008.invoice_no                                                                      as InvoiceNo,
+      
+      // ADD BEGIN BY XINLEI XU 2025/01/10
+      _main._SD1008.invoice_item_no                                                                 as InvoiceItemNo,
+      // ADD END BY XINLEI XU 2025/01/10
+      
       _main._BC1001
 }

@@ -177,13 +177,13 @@ define custom entity ZR_PODATAANALYSIS
       @UI                           : { lineItem: [ { position: 370, label: 'PO発行日' } ],selectionField: [ { position: 90 } ]}
       @Consumption.filter           : { mandatory: false }
       @Consumption.filter:          { selectionType: #INTERVAL, multipleSelections: false }
-      @EndUserText.label            : '伝票日付'
+      @EndUserText.label            : 'PO発行日'
       PurchaseOrderDate             : abap.dats;
       
       @UI                           : { lineItem: [ { position: 380, label: 'PO納期' } ], selectionField: [ { position: 100 } ]}
       @Consumption.filter           : { mandatory: false }
       @Consumption.filter:          { selectionType: #INTERVAL, multipleSelections: false }
-      @EndUserText.label            : '納入日付'
+      @EndUserText.label            : 'PO納期'
       ScheduleLineDeliveryDate      : abap.dats;
       
       @UI                           : { lineItem: [ { position: 390, label: 'PO発注数量' } ]}

@@ -200,7 +200,8 @@ types: BEGIN OF ty_response_C,
 
       SELECT
           b~physicalinventorydocument,
-          b~physicalinventorydocumentitem
+          b~physicalinventorydocumentitem,
+          b~FiscalYear
           FROM i_physinvtrydocitem WITH PRIVILEGED ACCESS AS b
           INNER JOIN i_physinvtrydocheader WITH PRIVILEGED ACCESS AS a
           ON a~physicalinventorydocument = b~physicalinventorydocument
@@ -263,10 +264,9 @@ types: BEGIN OF ty_response_C,
         REPLACE ALL OCCURRENCES OF `Unitofentry`   IN lv_requestbody  WITH `UnitOfEntry`.
         REPLACE ALL OCCURRENCES OF 'physicalinventoryitemiszero' IN lv_requestbody  WITH `PhysicalInventoryItemIsZero`.
 
-
-
         "修改地址中的信息
-        DATA(lv_a) = '2024'."顾问说先固定 2024
+
+        DATA(lv_a) = ls_phyinv-FiscalYear.
         data(lv_b) = ls_phyinv-PhysicalInventoryDocument.
         data(lv_c) = ls_phyinv-PhysicalInventoryDocumentItem.
 

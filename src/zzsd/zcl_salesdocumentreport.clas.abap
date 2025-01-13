@@ -576,13 +576,13 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
     ENDIF.
 
     "取账号名称
-    SELECT
-      userid,userdescription
-    FROM i_user
-    WITH PRIVILEGED ACCESS
-    FOR ALL ENTRIES IN @lt_planversion
-    WHERE userid = @lt_planversion-createdbyuser
-    INTO TABLE @DATA(lt_userdescription).
+    SELECT userid,
+           userdescription
+      FROM i_user WITH PRIVILEGED ACCESS
+       FOR ALL ENTRIES IN @lt_planversion
+     WHERE userid = @lt_planversion-createdbyuser
+      INTO TABLE @DATA(lt_userdescription).   "#EC CI_FAE_LINES_ENSURED
+
     SORT lt_userdescription BY userid.
 
     "取单价
@@ -810,12 +810,11 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 
       SORT lt_productcost BY material plant ztype.
 
-      SELECT
-        *
-      FROM ztbc_1001 WITH PRIVILEGED ACCESS
-      WHERE zid   = 'ZSD017'
-        AND zkey1 = 'GL_ACCOUNT'
-      INTO TABLE @DATA(lt_ztbc_1001).
+      SELECT *
+        FROM ztbc_1001 WITH PRIVILEGED ACCESS
+       WHERE zid   = 'ZSD017'
+         AND zkey1 = 'GL_ACCOUNT'
+        INTO TABLE @DATA(lt_ztbc_1001).       "#EC CI_ALL_FIELDS_NEEDED
 
 *
 *

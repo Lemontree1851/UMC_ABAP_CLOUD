@@ -3,9 +3,11 @@
 define root view entity ZR_TMM_1006
   as select from ztmm_1006            as _main
     inner join   ZR_TBC1012           as _AssignCompany     on _AssignCompany.CompanyCode = _main.company_code
+    inner join   ZR_TBC1006           as _AssignPlant       on _AssignPlant.Plant = _main.plant
     inner join   ZR_TBC1017           as _AssignPurchaseOrg on _AssignPurchaseOrg.PurchasingOrganization = _main.purchase_org
     inner join   ZC_BusinessUserEmail as _User              on  _User.Email  = _AssignCompany.Mail
                                                             and _User.Email  = _AssignPurchaseOrg.Mail
+                                                            and _User.Email  = _AssignPlant.Mail
                                                             and _User.UserID = $session.user
   association [0..1] to ZC_WF_PrType_VH         as _PrTypeText         on  $projection.PrType = _PrTypeText.Zvalue1
   association [0..1] to ZC_WF_ApplyDepart_VH    as _ApplyDepartText    on  $projection.ApplyDepart = _ApplyDepartText.Zvalue1

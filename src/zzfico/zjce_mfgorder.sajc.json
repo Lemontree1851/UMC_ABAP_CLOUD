@@ -16,12 +16,10 @@
       "name": "P_PLANT"
     },
     {
-      "name": "P_YEAR",
-      "mandatory": true
+      "name": "P_YEAR"
     },
     {
-      "name": "P_MONTH",
-      "mandatory": true
+      "name": "P_MONTH"
     },
     {
       "name": "P_TABLE"

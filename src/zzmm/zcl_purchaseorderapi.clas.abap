@@ -17,6 +17,7 @@ CLASS zcl_purchaseorderapi IMPLEMENTATION.
     TYPES: BEGIN OF ts_workflow_overview,
              sapbusinessobjectnodekey1 TYPE string,
              workflowinternalid        TYPE string,
+             workflowexternalstatus    TYPE string,
            END OF ts_workflow_overview,
            BEGIN OF ts_workflow_overview_d,
              results TYPE STANDARD TABLE OF ts_workflow_overview WITH DEFAULT KEY,
@@ -97,6 +98,8 @@ CLASS zcl_purchaseorderapi IMPLEMENTATION.
                                                BINARY SEARCH.
         IF sy-subrc = 0.
           <lfs_original_data>-workflowtaskresult = ls_detail-workflowtaskresult.
+        ELSE.
+          <lfs_original_data>-workflowtaskresult = ls_overview-workflowexternalstatus.
         ENDIF.
       ENDIF.
     ENDLOOP.

@@ -16,10 +16,10 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
       BEGIN OF ts_workflow,
 
-        sapbusinessobjectnodekey1 TYPE  string,
-        workflowinternalid        TYPE  string,
-        workflowexternalstatus    TYPE  string,
-        SAPObjectNodeRepresentation TYPE string,
+        sapbusinessobjectnodekey1   TYPE  string,
+        workflowinternalid          TYPE  string,
+        workflowexternalstatus      TYPE  string,
+        sapobjectnoderepresentation TYPE string,
 
       END OF ts_workflow,
 
@@ -230,7 +230,8 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
       ls_schedulelinedeliverydate   LIKE LINE OF lr_schedulelinedeliverydate,
       ls_deliverydate               LIKE LINE OF lr_deliverydate,
       ls_storagelocation            LIKE LINE OF lr_storagelocation,
-      ls_incotermsclassification    LIKE LINE OF lr_incotermsclassification.
+      ls_incotermsclassification    LIKE LINE OF lr_incotermsclassification,
+      lr_purchasingorganization     TYPE RANGE OF i_purchaseorderapi01-purchasingorganization.
 
     DATA:
       lr_new_range TYPE RANGE OF zr_podataanalysis-purchasinggroup, " 新的 range 表
@@ -263,11 +264,11 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
       lc_alpha_out TYPE string VALUE 'OUT'.
 
     DATA :
-      lv_matnr TYPE matnr,
-      lv_sup   TYPE i_purchaseorderapi01-supplier,
-      lv_sup_h TYPE i_purchaseorderapi01-supplier,
-      lv_Purchaseorder type i_purchaseorderapi01-Purchaseorder,
-      lv_Purchaseorder_h type i_purchaseorderapi01-Purchaseorder.
+      lv_matnr           TYPE matnr,
+      lv_sup             TYPE i_purchaseorderapi01-supplier,
+      lv_sup_h           TYPE i_purchaseorderapi01-supplier,
+      lv_purchaseorder   TYPE i_purchaseorderapi01-purchaseorder,
+      lv_purchaseorder_h TYPE i_purchaseorderapi01-purchaseorder.
 
     DATA:
       lr_sup TYPE RANGE OF i_purchaseorderapi01-supplier,
@@ -319,13 +320,13 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
             WHEN 'PURCHASEORDER'.
               MOVE-CORRESPONDING str_rec_l_range TO ls_purchaseorder.
 
-              lv_Purchaseorder = |{ str_rec_l_range-low ALPHA = IN }|.
-              lv_Purchaseorder_h = |{ str_rec_l_range-high ALPHA = IN }|.
+              lv_purchaseorder = |{ str_rec_l_range-low ALPHA = IN }|.
+              lv_purchaseorder_h = |{ str_rec_l_range-high ALPHA = IN }|.
 
               ls_purchaseorder-sign = str_rec_l_range-sign.
               ls_purchaseorder-option = str_rec_l_range-option.
-              ls_purchaseorder-low = lv_Purchaseorder.
-              ls_purchaseorder-high = lv_Purchaseorder_h.
+              ls_purchaseorder-low = lv_purchaseorder.
+              ls_purchaseorder-high = lv_purchaseorder_h.
 
               APPEND ls_purchaseorder TO lr_purchaseorder.
               CLEAR ls_purchaseorder.
@@ -611,6 +612,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 **********************************************************************
 
 * Authorization Check
+
       DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
       DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
       DATA(lv_ekorg) = zzcl_common_utils=>get_purchorg_by_user( lv_user_email ).
@@ -623,6 +625,16 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         lr_plant = VALUE #( FOR plant IN lt_plant_check ( sign = 'I' option = 'EQ' low = plant ) ).
         DELETE lt_result WHERE plant NOT IN lr_plant.
       ENDIF.
+
+      IF lv_ekorg IS INITIAL.
+        CLEAR lt_result.
+      ELSE.
+        SPLIT lv_ekorg AT '&' INTO TABLE DATA(lt_purchorg_check).
+        CLEAR lr_purchasingorganization.
+        lr_purchasingorganization = VALUE #( FOR purchorg IN lt_purchorg_check ( sign = 'I' option = 'EQ' low = purchorg ) ).
+        DELETE lt_result WHERE purchasingorganization NOT IN lr_purchasingorganization.
+      ENDIF.
+
 *---------------------------------------------------------------------------
 
       IF lt_result IS NOT INITIAL.
@@ -755,13 +767,32 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         SORT lt_mrp_api BY mrpelement mrpelementitem mrpelementscheduleline mrpelementcategory.
       ENDIF.
 
-      " UWEB接口，打印次数
-      zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |http://220.248.121.53:11380/srv/odata/v2/TableService/T02_PO_D|
-                                                              iv_client_id     = CONV #( 'Tom' )
-                                                              iv_client_secret = CONV #( '1' )
-                                                              iv_authtype      = 'Basic'
-                                                    IMPORTING ev_status_code   = DATA(lv_status_code_uweb)
-                                                              ev_response      = DATA(lv_response_uweb) ).
+      TRY.
+          DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
+          " Get UWMS Access configuration
+          SELECT SINGLE *
+            FROM zc_tbc1001
+           WHERE zid = 'ZBC005'
+            INTO @DATA(ls_config).            "#EC CI_ALL_FIELDS_NEEDED
+          ##NO_HANDLER
+        CATCH cx_abap_context_info_error.
+          "handle exception
+      ENDTRY.
+
+      CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
+      CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
+      CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
+      CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
+
+      zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/T02_PO_D|
+*                                                                    iv_odata_filter  = lv_filter
+                                                                    iv_token_url     = CONV #( ls_config-zvalue3 )
+                                                                    iv_client_id     = CONV #( ls_config-zvalue4 )
+                                                                    iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                                    iv_authtype      = 'OAuth2.0'
+                                                          IMPORTING ev_status_code   = DATA(lv_status_code_uweb)
+                                                                    ev_response      = DATA(lv_response_uweb) ).
+
       IF lv_status_code_uweb = 200.
         xco_cp_json=>data->from_string( lv_response_uweb )->apply( VALUE #(
           ( xco_cp_json=>transformation->boolean_to_abap_bool )
@@ -772,6 +803,15 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         ENDIF.
         SORT lt_uweb_api BY po_no d_no.
       ENDIF.
+
+*      " UWEB接口，打印次数
+*      zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |http://220.248.121.53:11380/srv/odata/v2/TableService/T02_PO_D|
+*                                                              iv_client_id     = CONV #( ls_bc005-zvalue4 )
+*                                                              iv_client_secret = CONV #( ls_bc005-zvalue5 )
+*                                                              iv_authtype      = 'Basic'
+*                                                    IMPORTING ev_status_code   = DATA(lv_status_code_uweb)
+*                                                              ev_response      = DATA(lv_response_uweb) ).
+
 
       " 审批状态取得取得
       lv_pathoverview = |/YY1_WORKFLOWSTATUSOVERVIEW_CDS/YY1_WorkflowStatusOverview|.
@@ -788,7 +828,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
                                    CHANGING data = ls_res_workflow ).
 
         APPEND LINES OF ls_res_workflow-d-results TO lt_workflow_api.
-        SORT lt_workflow_api BY sapbusinessobjectnodekey1 SAPObjectNodeRepresentation.
+        SORT lt_workflow_api BY sapbusinessobjectnodekey1 sapobjectnoderepresentation.
       ENDIF.
 
       " 审批详情取得
@@ -886,7 +926,8 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
           CLEAR lv_dur.
           "2.12　生産可能日付 PossibleProductionDate
           "回答納期  GoodsReceiptDurationInDays（入庫処理時間）稼働日
-          IF lw_result-deliverydate IS NOT INITIAL AND lw_result-goodsreceiptdurationindays IS NOT INITIAL.
+          IF lw_result-deliverydate IS NOT INITIAL .
+*          AND lw_result-goodsreceiptdurationindays IS NOT INITIAL.
 
             IF lw_result-goodsreceiptdurationindays = 0.
 
@@ -896,31 +937,6 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
               lv_dur = lw_result-goodsreceiptdurationindays.  "入庫処理時間（稼働日）
 
-              lw_data-possibleproductiondate = zzcl_common_utils=>calc_date_add(
-                  EXPORTING
-                    date  = lw_result-deliverydate  "回答納期
-                    day   = lv_dur                  "入庫処理時間（稼働日）
-              ).
-
-              lw_data-possibleproductiondate = zzcl_common_utils=>get_workingday( iv_date = lw_data-possibleproductiondate
-                                               iv_next = abap_false
-                                               iv_plant = lw_data-plant ).
-
-            ENDIF.
-
-          ENDIF.
-
-          CLEAR lv_dur.
-
-
-          IF lw_result-goodsreceiptdurationindays IS NOT INITIAL AND lw_mrp-mrpelementreschedulingdate IS NOT INITIAL.
-
-            IF lw_result-goodsreceiptdurationindays = 0.
-              lw_data-mrpdiliverydate = lw_mrp-mrpelementreschedulingdate.
-
-            ELSE.
-
-              lv_dur = lw_result-goodsreceiptdurationindays.  "入庫処理時間（稼働日）
 
               READ TABLE lt_factorycalendar INTO DATA(lw_factory) WITH KEY plant = lw_data-plant BINARY SEARCH .
 
@@ -928,16 +944,61 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
                 TRY.
                     DATA(lo_fcal_run) = cl_fhc_calendar_runtime=>create_factorycalendar_runtime( iv_factorycalendar_id = lw_factory-factorycalendarid ).
-                    lw_data-mrpdiliverydate = lo_fcal_run->subtract_workingdays_from_date(  iv_start = lw_mrp-mrpelementreschedulingdate iv_number_of_workingdays = lv_dur  ).
+                    lw_data-possibleproductiondate = lo_fcal_run->add_workingdays_to_date(  iv_start = lw_result-deliverydate iv_number_of_workingdays = lv_dur  ).
 
+                    ##NO_HANDLER
                   CATCH cx_fhc_runtime.
                     "handle exception
                 ENDTRY.
 
               ENDIF.
               CLEAR lv_days.
+
+*              lw_data-possibleproductiondate = zzcl_common_utils=>calc_date_add(
+*                  EXPORTING
+*                    date  = lw_result-deliverydate  "回答納期
+*                    day   = lv_dur                  "入庫処理時間（稼働日）
+*              ).
+*
+*              lw_data-possibleproductiondate = zzcl_common_utils=>get_workingday( iv_date = lw_data-possibleproductiondate
+*                                               iv_next = abap_false
+*                                               iv_plant = lw_data-plant ).
+
             ENDIF.
+
           ENDIF.
+
+          CLEAR lv_dur.
+
+          "日期型 不能判断initial 还有数字型
+*          IF lw_result-goodsreceiptdurationindays IS NOT INITIAL AND lw_mrp-mrpelementreschedulingdate IS NOT INITIAL.
+
+          IF lw_result-goodsreceiptdurationindays = 0.
+            lw_data-mrpdiliverydate = lw_mrp-mrpelementreschedulingdate.
+
+          ELSE.
+
+            lv_dur = lw_result-goodsreceiptdurationindays.  "入庫処理時間（稼働日）
+
+            CLEAR lw_factory.
+            READ TABLE lt_factorycalendar INTO lw_factory WITH KEY plant = lw_data-plant BINARY SEARCH .
+
+            IF sy-subrc = 0 .
+
+              TRY.
+                  CLEAR lo_fcal_run.
+                  lo_fcal_run = cl_fhc_calendar_runtime=>create_factorycalendar_runtime( iv_factorycalendar_id = lw_factory-factorycalendarid ).
+                  lw_data-mrpdiliverydate = lo_fcal_run->subtract_workingdays_from_date(  iv_start = lw_mrp-mrpelementreschedulingdate iv_number_of_workingdays = lv_dur  ).
+
+                  ##NO_HANDLER
+                CATCH cx_fhc_runtime.
+                  "handle exception
+              ENDTRY.
+
+            ENDIF.
+            CLEAR lv_days.
+          ENDIF.
+*          ENDIF.
           "          comment by wz 20241227 顾问日期变更
 *          IF lw_mrp-mrpelementavailyorrqmtdate IS NOT INITIAL.
 *            lw_data-possibleproductiondate = lw_mrp-mrpelementavailyorrqmtdate.
@@ -1030,7 +1091,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         ENDIF.
 
         " 2.26 承認サイト
-        READ TABLE lt_workflow_api INTO DATA(lw_workflow) WITH KEY sapbusinessobjectnodekey1 = lw_data-purchaseorder SAPObjectNodeRepresentation = 'PurchaseOrder' BINARY SEARCH.
+        READ TABLE lt_workflow_api INTO DATA(lw_workflow) WITH KEY sapbusinessobjectnodekey1 = lw_data-purchaseorder sapobjectnoderepresentation = 'PurchaseOrder' BINARY SEARCH.
         IF sy-subrc = 0.
           READ TABLE lt_workflowdetail_api INTO DATA(lw_workflow_d) WITH KEY workflowinternalid = lw_workflow-workflowinternalid BINARY SEARCH.
           " 如果能在detail中取到WorkflowTaskInternalID
@@ -1157,7 +1218,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         "2.30 旧購買発注番号明細 CorrespncExternalReference
         IF lw_data-correspncexternalreference IS NOT INITIAL.
 
-          lw_data-correspncexternalreference = lw_data-correspncexternalreference && lw_data-purchaseorderitem.
+          lw_data-correspncexternalreference = lw_data-correspncexternalreference.
 
         ENDIF.
 
@@ -1169,6 +1230,8 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         lw_data-manufacturermaterial = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lw_data-manufacturermaterial ).
         lw_data-purchaseorderquantityunit = |{ lw_data-purchaseorderquantityunit ALPHA = OUT }|.
         lw_data-customer = |{ lw_data-customer ALPHA = OUT }|.
+        lw_data-purchaseorder = |{ lw_data-purchaseorder ALPHA = OUT }|.
+        lw_data-purchaseorderitem = |{ lw_data-purchaseorderitem ALPHA = OUT }|.
 
         " PO残＝PO明細の発注数-入庫済数量
         lw_data-ponokoru = lw_data-orderquantity - lw_data-roughgoodsreceiptqty .

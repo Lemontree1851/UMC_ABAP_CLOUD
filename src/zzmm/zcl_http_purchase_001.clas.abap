@@ -65,7 +65,7 @@ CLASS zcl_http_purchase_001 DEFINITION
 *    DATA: lt_req TYPE STANDARD TABLE OF lt_items.
 
     INTERFACES if_http_service_extension .
-PROTECTED SECTION.
+  PROTECTED SECTION.
   PRIVATE SECTION.
 
     DATA:
@@ -97,7 +97,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_PURCHASE_001 IMPLEMENTATION.
+CLASS zcl_http_purchase_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -123,105 +123,117 @@ CLASS ZCL_HTTP_PURCHASE_001 IMPLEMENTATION.
     ENDIF.
 
     IF lt_req IS NOT INITIAL.
-
       LOOP AT lt_req INTO DATA(ls_req).
-
         ls_req-bp_number = |{ ls_req-bp_number ALPHA = IN }|.
+        ls_req-material_number = zzcl_common_utils=>conversion_matn1(
+                                   EXPORTING iv_alpha = zzcl_common_utils=>lc_alpha_in
+                                             iv_input = ls_req-material_number ).
 
         " 查询第一张表
-        SELECT baseunit,suppliercertorigincountry,purchasinginforecord,suppliermaterialnumber,supplier,material,isdeleted
+        SELECT SINGLE
+               baseunit,
+               suppliercertorigincountry,
+               purchasinginforecord,
+               suppliermaterialnumber,
+               supplier,
+               material,
+               isdeleted
           FROM i_purchasinginforecordapi01 WITH PRIVILEGED ACCESS
-          WHERE supplier  = @ls_req-bp_number
-            AND material  = @ls_req-material_number
-            AND isdeleted = ' '
+         WHERE supplier  = @ls_req-bp_number
+           AND material  = @ls_req-material_number
+           AND isdeleted IS INITIAL
           INTO @DATA(ls_porecord01).
-        ENDSELECT.
 
-        " 查询第二张表
-        SELECT  pricingdatecontrol,
-                minimumpurchaseorderquantity,
-                incotermsclassification,
-                incotermslocation1,
-                materialpriceunitqty,
-                netpriceamount,
-                pricevalidityenddate,
-                currency,
-                materialplanneddeliverydurn,
-                purchasinginforecord
-          FROM i_purginforecdorgplntdataapi01 WITH PRIVILEGED ACCESS
-          WHERE purchasinginforecord   = @ls_porecord01-purchasinginforecord
-            AND purchasingorganization = @ls_req-plant_id
-            AND ismarkedfordeletion    = ' '
-          INTO @DATA(ls_porecord02).
-        ENDSELECT.
+        IF sy-subrc = 0.
+          " 查询第二张表
+          SELECT SINGLE
+                 pricingdatecontrol,
+                 minimumpurchaseorderquantity,
+                 incotermsclassification,
+                 incotermslocation1,
+                 materialpriceunitqty,
+                 netpriceamount,
+                 pricevalidityenddate,
+                 currency,
+                 materialplanneddeliverydurn,
+                 purchasinginforecord
+            FROM i_purginforecdorgplntdataapi01 WITH PRIVILEGED ACCESS
+           WHERE purchasinginforecord   = @ls_porecord01-purchasinginforecord
+             AND purchasingorganization = @ls_req-plant_id
+             AND ismarkedfordeletion    IS INITIAL
+            INTO @DATA(ls_porecord02).
 
-        CLEAR ls_req.
+          CLEAR ls_req.
 
-        " 组装输出数据
-        CLEAR ls_response.
-        DATA(lv_unit) = ls_porecord01-baseunit.
+          " 组装输出数据
+          CLEAR ls_response.
+          DATA(lv_unit) = ls_porecord01-baseunit.
 *        DATA(lv_unit1) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit ).
 
-        TRY.
-            DATA(lv_unit1) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit ).
-          CATCH zzcx_custom_exception INTO DATA(lo_exc).
-            ls_response-baseunit                       = ls_porecord01-baseunit.
-        ENDTRY.
+          TRY.
+              DATA(lv_unit1) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = lv_unit ).
+            CATCH zzcx_custom_exception INTO DATA(lo_exc).
+              ls_response-baseunit = ls_porecord01-baseunit.
+          ENDTRY.
 
-        ls_response-baseunit                       = lv_unit1.
-        ls_response-suppliercertorigincountry      = ls_porecord01-suppliercertorigincountry.
-        ls_response-purchasinginforecord           = ls_porecord01-purchasinginforecord.
-        ls_response-suppliermaterialnumber         = ls_porecord01-suppliermaterialnumber.
+          ls_response-baseunit                       = lv_unit1.
+          ls_response-suppliercertorigincountry      = ls_porecord01-suppliercertorigincountry.
+          ls_response-purchasinginforecord           = ls_porecord01-purchasinginforecord.
+          ls_response-suppliermaterialnumber         = ls_porecord01-suppliermaterialnumber.
 
-        " 价格设置日控制文本处理
-        CASE ls_porecord02-pricingdatecontrol.
-          WHEN '1'.
-            ls_response-pricingdatecontrol = '購買発注日付'.
-          WHEN '2'.
-            ls_response-pricingdatecontrol = '納入期日'.
-          WHEN OTHERS.
-            ls_response-pricingdatecontrol = ''. " 可以定义一个默认值
-        ENDCASE.
+          " 价格设置日控制文本处理
+          CASE ls_porecord02-pricingdatecontrol.
+            WHEN '1'.
+              ls_response-pricingdatecontrol = '購買発注日付'.
+            WHEN '2'.
+              ls_response-pricingdatecontrol = '納入期日'.
+            WHEN OTHERS.
+              ls_response-pricingdatecontrol = ''. " 可以定义一个默认值
+          ENDCASE.
 
-        " 计算单价
-        IF ls_porecord02-pricevalidityenddate >= sy-datum.
-          ls_response-netpriceamount = ls_porecord02-netpriceamount / ls_porecord02-materialpriceunitqty.
-        ELSE.
-          ls_response-netpriceamount = ''. " 单价为空
+          " 计算单价
+          IF ls_porecord02-pricevalidityenddate >= sy-datum.
+            ls_response-netpriceamount = ls_porecord02-netpriceamount / ls_porecord02-materialpriceunitqty.
+          ELSE.
+            ls_response-netpriceamount = ''. " 单价为空
+          ENDIF.
+
+          ls_response-minimumpurchaseorderquantity   = ls_porecord02-minimumpurchaseorderquantity.
+          ls_response-incotermsclassification        = ls_porecord02-incotermsclassification.
+          ls_response-incotermslocation1             = ls_porecord02-incotermslocation1.
+          ls_response-materialpriceunitqty           = ls_porecord02-materialpriceunitqty.
+          ls_response-pricevalidityenddate           = ls_porecord02-pricevalidityenddate.
+          ls_response-materialplanneddeliverydurn    = ls_porecord02-materialplanneddeliverydurn.
+          ls_response-currency                       = ls_porecord02-currency.
+          CONDENSE ls_response-baseunit.
+          CONDENSE ls_response-suppliercertorigincountry.
+          CONDENSE ls_response-purchasinginforecord.
+          CONDENSE ls_response-suppliermaterialnumber.
+          CONDENSE ls_response-pricingdatecontrol.
+          CONDENSE ls_response-minimumpurchaseorderquantity.
+          CONDENSE ls_response-incotermsclassification.
+          CONDENSE ls_response-incotermslocation1.
+          CONDENSE ls_response-materialpriceunitqty.
+          CONDENSE ls_response-netpriceamount.
+          CONDENSE ls_response-pricevalidityenddate.
+          CONDENSE ls_response-materialplanneddeliverydurn.
+          CONDENSE ls_response-currency.
+          APPEND ls_response TO es_outputs-items.
         ENDIF.
-
-        ls_response-minimumpurchaseorderquantity   = ls_porecord02-minimumpurchaseorderquantity.
-        ls_response-incotermsclassification        = ls_porecord02-incotermsclassification.
-        ls_response-incotermslocation1             = ls_porecord02-incotermslocation1.
-        ls_response-materialpriceunitqty           = ls_porecord02-materialpriceunitqty.
-        ls_response-pricevalidityenddate           = ls_porecord02-pricevalidityenddate.
-        ls_response-materialplanneddeliverydurn    = ls_porecord02-materialplanneddeliverydurn.
-        ls_response-currency                       = ls_porecord02-currency.
-        CONDENSE ls_response-baseunit.
-        CONDENSE ls_response-suppliercertorigincountry.
-        CONDENSE ls_response-purchasinginforecord.
-        CONDENSE ls_response-suppliermaterialnumber.
-        CONDENSE ls_response-pricingdatecontrol.
-        CONDENSE ls_response-minimumpurchaseorderquantity.
-        CONDENSE ls_response-incotermsclassification.
-        CONDENSE ls_response-incotermslocation1.
-        CONDENSE ls_response-materialpriceunitqty.
-        CONDENSE ls_response-netpriceamount.
-        CONDENSE ls_response-pricevalidityenddate.
-        CONDENSE ls_response-materialplanneddeliverydurn.
-        CONDENSE ls_response-currency.
-        APPEND ls_response TO es_outputs-items.
-
       ENDLOOP.
     ENDIF.
 
-    IF es_outputs-items IS INITIAL.
+    IF lt_req IS INITIAL.
       lv_text = 'error'.
       "propagate any errors raised
-      response->set_status( '500' )."500
+      response->set_status( '500' ).
+      response->set_text( lv_text ).
+    ELSEIF es_outputs-items IS INITIAL.
+      lv_text = 'Not Found'.
+      "propagate any errors raised
+      response->set_status( '404' ).
       response->set_text( lv_text ).
     ELSE.
-
       "respond with success payload
       response->set_status( '200' ).
 

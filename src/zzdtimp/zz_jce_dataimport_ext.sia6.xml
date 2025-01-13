@@ -43,6 +43,7 @@
             <LOW_VALUE>ZZ_LOG_DTIMP</LOW_VALUE>
            </item>
           </VALUES>
+          <TEXT>Application log: Object name (Application code)</TEXT>
           <STATUS>U</STATUS>
          </item>
          <item>
@@ -57,6 +58,7 @@
             <LOW_VALUE>ZZ_LOG_DTIMP_SUB</LOW_VALUE>
            </item>
           </VALUES>
+          <TEXT>Application Log: Subobject</TEXT>
           <STATUS>U</STATUS>
          </item>
          <item>
@@ -68,6 +70,7 @@
             <LOW_VALUE>03</LOW_VALUE>
            </item>
           </VALUES>
+          <TEXT>Activity</TEXT>
           <STATUS>U</STATUS>
           <IS_ACTVT>X</IS_ACTVT>
          </item>

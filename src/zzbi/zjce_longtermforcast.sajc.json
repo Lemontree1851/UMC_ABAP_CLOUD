@@ -13,12 +13,10 @@
       "name": "S_BUKRS"
     },
     {
-      "name": "P_YEAR",
-      "mandatory": true
+      "name": "P_YEAR"
     },
     {
-      "name": "P_MONAT",
-      "mandatory": true
+      "name": "P_MONAT"
     },
     {
       "name": "S_PLANT"

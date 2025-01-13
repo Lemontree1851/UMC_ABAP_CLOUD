@@ -91,7 +91,10 @@ define root view entity ZR_MATERIALREQUISITION
 
       _MfgOrderWithStatus.OrderIsClosed,
       @Semantics.amount.currencyCode: 'Currency'
-      _ProductValuation.StandardPrice,
+      // _ProductValuation.StandardPrice,
+      cast( cast( _ProductValuation.StandardPrice as abap.dec( 20, 4 ) ) / _ProductValuation.PriceUnitQty
+      as abap.curr( 11, 2 ))             as StandardPrice,
+
       _ProductValuation.PriceUnitQty,
       _ProductValuation.Currency,
 

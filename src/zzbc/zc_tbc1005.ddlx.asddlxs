@@ -38,13 +38,13 @@ annotate view ZC_TBC1005 with
       }
   ]
 
-  @UI.lineItem: [{ position: 10 }]
+  @UI.lineItem: [{ position: 10, cssDefault.width: '15rem' }]
   @UI.selectionField: [{ position: 10 }]
   @UI.identification: [ { position: 10 } ]
   @EndUserText.label: 'Role Id'
   RoleId;
 
-  @UI.lineItem: [{ position: 20 }]
+  @UI.lineItem: [{ position: 20, cssDefault.width: '20rem' }]
   @UI.selectionField: [{ position: 20 }]
   @UI.identification: [ { position: 20 } ]
   @EndUserText.label: 'Role Name'

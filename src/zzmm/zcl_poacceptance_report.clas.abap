@@ -90,10 +90,14 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
                 DATA(lr_werks) = ls_filter_cond-range.
               WHEN 'PURCHASEORDERITEMUNIQUEID'.
                 DATA(lr_poitem) = ls_filter_cond-range.
+              WHEN 'OLDID'.
+                DATA(lr_oldpoitem) = ls_filter_cond-range.
               WHEN 'PURCHASINGORGANIZATION'.
                 DATA(lr_ekorg) = ls_filter_cond-range.
               WHEN 'MATERIALGROUP'.
                 DATA(lr_matkl) = ls_filter_cond-range.
+              WHEN 'SUPPLIERMATERIALNUMBER'.
+                DATA(lr_suppliermatnr) = ls_filter_cond-range.
               WHEN 'DOCUMENTDATE'.
                 DATA(lr_date1) = ls_filter_cond-range.
               WHEN 'POSTINGDATE'.
@@ -102,6 +106,14 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
                 DATA(lr_date3) = ls_filter_cond-range.
               WHEN 'INVOICEDOCUMENTPOSTINGDATE'.
                 DATA(lr_date4) = ls_filter_cond-range.
+              WHEN 'MANUFACTURERNUMBER'.
+                DATA(lr_mfrnr) = ls_filter_cond-range.
+              WHEN 'MANUFACTURERNUMBERNAME'.
+                DATA(lr_mfrnrname) = ls_filter_cond-range.
+              WHEN 'SUPPLIERMATERIALGROUP'.
+                DATA(lr_wglif) = ls_filter_cond-range.
+              WHEN 'INCOTERMSCLASSIFICATION'.
+                DATA(lr_icon1) = ls_filter_cond-range.
               WHEN OTHERS.
             ENDCASE.
           ENDLOOP.
@@ -128,6 +140,7 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
            a~supplier,
            a~documentcurrency,
            a~exchangerate,
+           a~correspncexternalreference,
            b~purchaseorderitem,
            b~purchaseorderitemuniqueid,
            b~materialgroup,
@@ -147,7 +160,8 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
            b~orderquantity,
            b~netpriceamount,
            b~taxcode,
-           b~purgdocpricedate
+           b~purgdocpricedate,
+           b~purchaseorderitemcategory
       FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS AS a
         INNER JOIN i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS AS b
         ON ( a~purchaseorder = b~purchaseorder )
@@ -160,6 +174,7 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
        AND b~material IN @lr_matnr
        AND b~materialgroup IN @lr_matkl
        AND b~plant IN @lr_werks
+       AND b~suppliermaterialnumber IN @lr_suppliermatnr
       INTO TABLE @DATA(lt_po).
 
 * Authorization Check
@@ -179,10 +194,12 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
 * Get Product
         SELECT product,
                productmanufacturernumber,
-               yy1_customermaterial_prd
+               yy1_customermaterial_prd,
+               manufacturernumber
           FROM i_product
           FOR ALL ENTRIES IN @lt_po
          WHERE product = @lt_po-material
+           AND manufacturernumber IN @lr_mfrnr
           INTO TABLE @DATA(lt_product).
 
 * Get Purchasing Group
@@ -200,6 +217,12 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
           FOR ALL ENTRIES IN @lt_po
          WHERE businesspartner = @lt_po-supplier
           INTO TABLE @DATA(lt_bp).
+
+        SELECT businesspartner,
+               organizationbpname1
+          FROM i_businesspartner
+         WHERE businesspartner IN @lr_mfrnr
+          APPENDING TABLE @lt_bp.
 
 * Get EKES
         SELECT purchaseorder,
@@ -241,6 +264,23 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
          WHERE purchaseorder = @lt_po-purchaseorder
            AND purchaseorderitem = @lt_po-purchaseorderitem
           INTO TABLE @DATA(lt_ekkn).
+
+* Get 価格コントロール区分
+        SELECT a~purchasinginforecord,
+               a~supplier,
+               a~material,
+               a~suppliermaterialgroup,
+               b~purchasingorganization,
+               b~purchasinginforecordcategory,
+               b~plant,
+               b~incotermsclassification
+          FROM i_purchasinginforecordapi01 WITH PRIVILEGED ACCESS AS a
+          INNER JOIN i_purginforecdorgplntdataapi01 WITH PRIVILEGED ACCESS AS b
+            ON ( a~purchasinginforecord = b~purchasinginforecord )
+          FOR ALL ENTRIES IN @lt_po
+         WHERE a~supplier = @lt_po-supplier
+           AND a~material = @lt_po-material
+          INTO TABLE @DATA(lt_info).
 
 * Get ekbe
         SELECT purchaseorder,
@@ -425,10 +465,13 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
       ENDLOOP.
 
 * Edit output
+      DATA(lt_info1) = lt_info[].
       SORT lt_po BY purchaseorder purchaseorderitem.
       SORT lt_product BY product.
       SORT lt_purchasinggroup BY purchasinggroup.
       SORT lt_bp BY businesspartner.
+      SORT lt_info BY supplier material.
+      SORT lt_info1 BY purchasinginforecord purchasingorganization purchasinginforecordcategory plant.
       SORT lt_eket BY purchaseorder purchaseorderitem.
       SORT lt_ekes BY purchaseorder purchaseorderitem.
       SORT lt_ekes_tmp BY purchaseorder purchaseorderitem deliverydate.
@@ -469,6 +512,9 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
           ls_output-requirementtracking = ls_po-requirementtracking.
           ls_output-requisitionername = ls_po-requisitionername.
           ls_output-taxcode = ls_po-taxcode.
+          IF ls_po-correspncexternalreference IS NOT INITIAL.
+            ls_output-oldid = ls_po-correspncexternalreference && ls_po-purchaseorderitem.
+          ENDIF.
 
           IF ls_po-documentcurrency = 'JPY'.
             lv_netpr_jp = ls_po-netpriceamount.
@@ -494,8 +540,9 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
         READ TABLE lt_product INTO DATA(ls_product)
              WITH KEY product = ls_po-material BINARY SEARCH.
         IF sy-subrc = 0.
-          ls_output-productmanufacturernumber = ls_product-productmanufacturernumber.
+          ls_output-productmanufacturernumber = ls_product-productmanufacturernumber. "メーカー品番
           ls_output-customermaterial = ls_product-yy1_customermaterial_prd.  "顧客品番
+          ls_output-manufacturernumber = ls_product-manufacturernumber.  "メーカーCD
         ENDIF.
 
         READ TABLE lt_purchasinggroup INTO DATA(ls_purchasinggroup)
@@ -508,6 +555,28 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
              WITH KEY businesspartner = ls_po-supplier BINARY SEARCH.
         IF sy-subrc = 0.
           ls_output-suppliername = ls_bp-organizationbpname1.
+        ENDIF.
+
+        READ TABLE lt_bp INTO ls_bp
+             WITH KEY businesspartner = ls_product-manufacturernumber BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_output-manufacturernumbername = ls_bp-organizationbpname1. "メーカー名
+        ENDIF.
+
+        READ TABLE lt_info INTO DATA(ls_info)
+             WITH KEY supplier = ls_po-supplier
+                      material = ls_po-material BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_output-suppliermaterialgroup = ls_info-suppliermaterialgroup. "価格コントロール区分
+        ENDIF.
+
+        READ TABLE lt_info1 INTO DATA(ls_info1)
+             WITH KEY purchasinginforecord = ls_info-purchasinginforecord
+                      purchasingorganization = ls_po-purchasingorganization
+                      purchasinginforecordcategory = ls_po-purchaseorderitemcategory
+                      plant = ls_po-plant BINARY SEARCH.
+        IF sy-subrc = 0.
+          ls_output-incotermsclassification = ls_info1-incotermsclassification. "基軸通貨
         ENDIF.
 
         READ TABLE lt_eket INTO DATA(ls_eket)
@@ -676,6 +745,7 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
                ls_invoice, ls_bkpf.
       ENDLOOP.
 * --2. PO without material document or invoice
+
       SORT lt_pur BY purchaseorder purchaseorderitem.
       DELETE ADJACENT DUPLICATES FROM lt_pur COMPARING purchaseorder purchaseorderitem.
       LOOP AT lt_po INTO ls_po.
@@ -709,6 +779,9 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
           ls_output-requirementtracking = ls_po-requirementtracking.
           ls_output-requisitionername = ls_po-requisitionername.
           ls_output-taxcode = ls_po-taxcode.
+          IF ls_po-correspncexternalreference IS NOT INITIAL.
+            ls_output-oldid = ls_po-correspncexternalreference && ls_po-purchaseorderitem.
+          ENDIF.
 
           IF ls_po-documentcurrency = 'JPY'.
             lv_netpr_jp = ls_po-netpriceamount.
@@ -737,6 +810,7 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
           IF sy-subrc = 0.
             ls_output-productmanufacturernumber = ls_product-productmanufacturernumber.
             ls_output-customermaterial = ls_product-yy1_customermaterial_prd.
+            ls_output-manufacturernumber = ls_product-manufacturernumber.  "メーカーCD
           ENDIF.
 
           READ TABLE lt_purchasinggroup INTO ls_purchasinggroup
@@ -749,6 +823,28 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
                WITH KEY businesspartner = ls_po-supplier BINARY SEARCH.
           IF sy-subrc = 0.
             ls_output-suppliername = ls_bp-organizationbpname1.
+          ENDIF.
+
+          READ TABLE lt_bp INTO ls_bp
+             WITH KEY businesspartner = ls_product-manufacturernumber BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_output-manufacturernumbername = ls_bp-organizationbpname1. "メーカー名
+          ENDIF.
+
+          READ TABLE lt_info INTO ls_info
+               WITH KEY supplier = ls_po-supplier
+                        material = ls_po-material BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_output-suppliermaterialgroup = ls_info-suppliermaterialgroup. "価格コントロール区分
+          ENDIF.
+
+          READ TABLE lt_info1 INTO ls_info1
+               WITH KEY purchasinginforecord = ls_info-purchasinginforecord
+                        purchasingorganization = ls_po-purchasingorganization
+                        purchasinginforecordcategory = ls_po-purchaseorderitemcategory
+                        plant = ls_po-plant BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_output-incotermsclassification = ls_info1-incotermsclassification. "基軸通貨
           ENDIF.
 
           READ TABLE lt_eket INTO ls_eket
@@ -814,6 +910,17 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
                  ls_ekes, ls_ekkn.
         ENDIF.
       ENDLOOP.
+
+
+      DELETE lt_output WHERE oldid NOT IN lr_oldpoitem
+                          OR documentdate NOT IN lr_date1
+                          OR postingdate NOT IN lr_date2
+                          OR invoicedocumentdate NOT IN lr_date3
+                          OR invoicedocumentpostingdate NOT IN lr_date4
+                          OR manufacturernumber NOT IN lr_mfrnr
+                          OR manufacturernumbername NOT IN lr_mfrnrname
+                          OR suppliermaterialgroup NOT IN lr_wglif
+                          OR incotermsclassification NOT IN lr_icon1.
 
       SORT lt_output BY purchaseorder purchaseorderitem
                         materialdocument materialdocumentitem

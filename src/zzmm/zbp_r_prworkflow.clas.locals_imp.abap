@@ -558,10 +558,15 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         ENDIF.
         record-instanceid = lv_instanceid.
         record-approvestatus = lv_approve_status.
+        SELECT SINGLE
+          zvalue2
+        FROM zc_wf_approvalstatus_vh
+        WHERE zvalue1 = @record-approvestatus
+        INTO @record-approvestatustext.
         record-applydate = current_date.
         record-applytime = current_time.
 
-        MODIFY records FROM record TRANSPORTING message type instanceid applicationid approvestatus applydate applytime.
+        MODIFY records FROM record TRANSPORTING message type instanceid applicationid approvestatus approvestatustext applydate applytime.
         CLEAR:lv_next_node,lv_approvalend,lv_ev_error,lv_error_text,lv_users,lv_instanceid.
 
       ENDLOOP.
@@ -663,9 +668,14 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         MESSAGE s030(zmm_001)  INTO record-message.
         record-type = 'S'.
         record-approvestatus = lv_approve_status.
+        SELECT SINGLE
+          zvalue2
+        FROM zc_wf_approvalstatus_vh
+        WHERE zvalue1 = @record-approvestatus
+        INTO @record-approvestatustext.
         record-applydate = ''.
         record-applytime = ''.
-        MODIFY records FROM record TRANSPORTING message type approvestatus applydate applytime.
+        MODIFY records FROM record TRANSPORTING message type approvestatus approvestatustext applydate applytime.
         CLEAR:lv_next_node,lv_approvalend,lv_ev_error,lv_error_text,lv_users.
       ENDLOOP.
 

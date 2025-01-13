@@ -7,6 +7,7 @@ CLASS zcl_bi006_job DEFINITION
 
     INTERFACES if_apj_dt_exec_object .
     INTERFACES if_apj_rt_exec_object .
+    INTERFACES if_oo_adt_classrun .
   PROTECTED SECTION.
   PRIVATE SECTION.
     DATA: mr_bukrs TYPE RANGE OF bukrs,
@@ -19,7 +20,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BI006_JOB IMPLEMENTATION.
+CLASS zcl_bi006_job IMPLEMENTATION.
 
 
   METHOD if_apj_dt_exec_object~get_parameters.
@@ -51,6 +52,33 @@ CLASS ZCL_BI006_JOB IMPLEMENTATION.
           APPEND CORRESPONDING #( ls_para ) TO mr_cust.
       ENDCASE.
     ENDLOOP.
+
+    "Step 1.1 Default YEAR&MONAT
+    READ TABLE it_parameters TRANSPORTING NO FIELDS WITH KEY selname = 'S_MONAT'.
+    IF sy-subrc <> 0 .
+      DATA:lv_date_local TYPE aedat.
+      DATA:lv_datetime   TYPE string.
+      DATA:lmr_year      LIKE LINE OF mr_year.
+      DATA:lmr_monat     LIKE LINE OF mr_monat.
+
+      GET TIME STAMP FIELD DATA(lv_timestamp_local).
+      lv_datetime     = lv_timestamp_local.
+      lv_date_local   = lv_datetime+0(6) && '01'.
+      lv_date_local   = lv_date_local - 1.
+
+      CLEAR lmr_year.
+      lmr_year-sign   = 'I'.
+      lmr_year-option = 'EQ'.
+      lmr_year-low    = lv_date_local+0(4).
+      APPEND lmr_year TO mr_year.
+
+      CLEAR lmr_monat.
+      lmr_monat-sign   = 'I'.
+      lmr_monat-option = 'EQ'.
+      lmr_monat-low    = lv_date_local+4(2).
+      APPEND lmr_monat TO mr_monat.
+
+    ENDIF.
 
     "Step 2. Get Data
     DATA(lo_data_handler) = NEW zcl_bi006_data(  ).
@@ -93,5 +121,46 @@ CLASS ZCL_BI006_JOB IMPLEMENTATION.
 
       MODIFY ztbi_bi006_j01 FROM TABLE @lt_save_data.
     ENDIF.
+  ENDMETHOD.
+    METHOD if_oo_adt_classrun~main.
+    DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
+    lt_parameters = VALUE #( ( selname = 'P_BUKRS'
+                               kind    = if_apj_dt_exec_object=>select_option
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1100' )
+                               ( selname = 'P_BUKRS'
+                               kind    = if_apj_dt_exec_object=>select_option
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1400' )
+                               ( selname = 'P_PLANT'
+                               kind    = if_apj_dt_exec_object=>select_option
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1100' )
+                               ( selname = 'P_PLANT'
+                               kind    = if_apj_dt_exec_object=>select_option
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1400' )
+*                               ( selname = 'P_GJAHR'
+*                               kind    = if_apj_dt_exec_object=>parameter
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '2024' )
+*                               ( selname = 'P_POPER'
+*                               kind    = if_apj_dt_exec_object=>parameter
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '009' )
+                                ).
+    TRY.
+        if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
+
+        if_apj_rt_exec_object~execute( lt_parameters ).
+      CATCH cx_root INTO DATA(lo_root).
+        out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
+    ENDTRY.
   ENDMETHOD.
 ENDCLASS.

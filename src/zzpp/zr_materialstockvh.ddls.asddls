@@ -32,7 +32,8 @@ define root view entity ZR_MaterialStockVH
       _Basic._StorageLocation.StorageLocationName,
       @Semantics.quantity.unitOfMeasure: 'MaterialBaseUnit'
       sum( _Stock.MatlWrhsStkQtyInMatlBaseUnit ) as StockQuantity,
-      _Basic._Product.BaseUnit                   as MaterialBaseUnit
+      _Basic._Product.BaseUnit                   as MaterialBaseUnit,
+      _Stock.InventorySpecialStockType
 }
 where
        _Basic.StorageLocation           is not initial
@@ -51,4 +52,5 @@ group by
   _Basic.Plant,
   _Basic.StorageLocation,
   _Basic._StorageLocation.StorageLocationName,
-  _Basic._Product.BaseUnit
+  _Basic._Product.BaseUnit,
+  _Stock.InventorySpecialStockType

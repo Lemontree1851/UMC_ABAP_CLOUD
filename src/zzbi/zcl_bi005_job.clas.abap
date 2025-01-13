@@ -87,7 +87,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BI005_JOB IMPLEMENTATION.
+CLASS zcl_bi005_job IMPLEMENTATION.
 
 
   METHOD add_message_to_log.
@@ -138,7 +138,7 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
                                   length         = 4
                                   param_text     = '会計年度'
                                   changeable_ind = abap_true
-                                  mandatory_ind  = abap_true )
+                                  mandatory_ind  = abap_false )
 
                                   ( selname      = 'P_POPER'
                                   kind           = if_apj_dt_exec_object=>parameter
@@ -146,7 +146,8 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
                                   length         = 3
                                   param_text     = '会計期間'
                                   changeable_ind = abap_true
-                                  mandatory_ind  = abap_true ) ).
+                                  mandatory_ind  = abap_false )
+                                   ).
 
   ENDMETHOD.
 
@@ -235,6 +236,18 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
         CATCH cx_bali_runtime ##NO_HANDLER.
       ENDTRY.
       RETURN.
+    ENDIF.
+
+    "不填期间的逻辑
+    IF lv_poper IS INITIAL.
+
+      DATA:lv_date_local TYPE aedat,
+           lv_datetime   TYPE string.
+      GET TIME STAMP FIELD DATA(lv_timestamp_local).
+      lv_datetime       = lv_timestamp_local.
+      lv_poper     = lv_datetime+4(2).
+      lv_gjahr     = lv_datetime+0(4).
+
     ENDIF.
 
 *   前会計期間の編集
@@ -399,15 +412,32 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
       CLEAR ls_supply.
     ENDLOOP.
 
+    TRY.
+      DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
+      " Get UWMS Access configuration
+      SELECT SINGLE *
+        FROM zc_tbc1001
+       WHERE zid = 'ZBC005'
+        INTO @DATA(ls_config).
+      ##NO_HANDLER
+    CATCH cx_abap_context_info_error.
+      "handle exception
+    ENDTRY.
+
+    CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
+    CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
+    CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
+    CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
 
 *   PO登録されない原材料のSupplyの数字を取得する（ZMM06）
     DATA(lv_start_c) = lv_now_start+0(4) && '-' && lv_now_start+4(2) && '-' && lv_now_start+6(2) && 'T00:00:00'.
     DATA(lv_next_end_c)   = lv_next_end+0(4) && '-' && lv_next_end+4(2) && '-' && lv_next_end+6(2)  && 'T00:00:00'.
     lv_filter2 = |{ lv_filter2 } and ARRANGE_END_DATE be datetime'{ lv_start_c }' and ARRANGE_END_DATE le datetime'{ lv_next_end_c }'|.
-    zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |http://220.248.121.53:11380/srv/odata/v2/TableService/PCH09_LIST?sap-language={ zzcl_common_utils=>get_current_language(  ) }|
-                                                            iv_client_id     = CONV #( 'Tom' )
-                                                            iv_client_secret = CONV #( '1' )
-                                                            iv_authtype      = 'Basic'
+    zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/PCH09_LIST?sap-language={ zzcl_common_utils=>get_current_language(  ) }|
+                                                            iv_token_url     = CONV #( ls_config-zvalue3 )
+                                                            iv_client_id     = CONV #( ls_config-zvalue4 )
+                                                            iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                            iv_authtype      = 'OAuth2.0'
                                                   IMPORTING ev_status_code   = DATA(lv_status_code_uweb)
                                                             ev_response      = DATA(lv_response_uweb) ).
     IF lv_status_code_uweb = 200.
@@ -830,7 +860,7 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
           ls_bi1003 = <fs_l_bi1003>.
           ls_bi1003-balanceopenning = <fs_l_bi1003>-balanceclosing.
         ENDIF.
-        if ls_bi1003-yearmonth = |{ lv_gjahr }012|.
+        IF ls_bi1003-yearmonth = |{ lv_gjahr }012|.
           ls_bi1003-yearmonth = |{ lv_gjahr + 1 }001|.
         ELSE.
           ls_bi1003-yearmonth = ls_bi1003-yearmonth + 1.
@@ -864,26 +894,26 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
 
   METHOD if_oo_adt_classrun~main.
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
-*    lt_parameters = VALUE #( ( selname = 'P_BUKRS'
-*                               kind    = if_apj_dt_exec_object=>select_option
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '1100' )
-*                               ( selname = 'P_BUKRS'
-*                               kind    = if_apj_dt_exec_object=>select_option
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '1400' )
-*                               ( selname = 'P_PLANT'
-*                               kind    = if_apj_dt_exec_object=>select_option
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '1100' )
-*                               ( selname = 'P_PLANT'
-*                               kind    = if_apj_dt_exec_object=>select_option
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '1400' )
+    lt_parameters = VALUE #( ( selname = 'P_BUKRS'
+                               kind    = if_apj_dt_exec_object=>select_option
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1100' )
+                               ( selname = 'P_BUKRS'
+                               kind    = if_apj_dt_exec_object=>select_option
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1400' )
+                               ( selname = 'P_PLANT'
+                               kind    = if_apj_dt_exec_object=>select_option
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1100' )
+                               ( selname = 'P_PLANT'
+                               kind    = if_apj_dt_exec_object=>select_option
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1400' )
 *                               ( selname = 'P_GJAHR'
 *                               kind    = if_apj_dt_exec_object=>parameter
 *                               sign    = 'I'
@@ -893,7 +923,8 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
 *                               kind    = if_apj_dt_exec_object=>parameter
 *                               sign    = 'I'
 *                               option  = 'EQ'
-*                               low     = '009' ) ).
+*                               low     = '009' )
+                                ).
     TRY.
         if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
 

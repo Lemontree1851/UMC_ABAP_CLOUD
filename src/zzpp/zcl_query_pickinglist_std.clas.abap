@@ -217,21 +217,16 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
       SELECT stock~plant,
              stock~material,
              stock~storagelocation,
-             \_storagelocation-storagelocationname ##SELECT_WITH_PRIVILEGED_ACCESS[_STORAGELOCATION],
-             SUM( stock~matlwrhsstkqtyinmatlbaseunit ) AS matlwrhsstkqtyinmatlbaseunit,
+             stock~storagelocationname,
+             stock~stockquantity,
              stock~materialbaseunit
-        FROM i_materialstock_2 WITH PRIVILEGED ACCESS AS stock
+        FROM zc_materialstockvh WITH PRIVILEGED ACCESS AS stock
         JOIN @lt_temp3 AS order ON  order~plant = stock~plant
                                 AND order~material = stock~material
        WHERE stock~storagelocation IS NOT INITIAL
          AND stock~storagelocation IN @lr_storagelocationfrom
-       GROUP BY stock~plant,
-                stock~material,
-                stock~storagelocation,
-                \_storagelocation-storagelocationname,
-                stock~materialbaseunit
         INTO TABLE @DATA(lt_to_stock_from).
-      SORT lt_to_stock_from BY plant material storagelocation matlwrhsstkqtyinmatlbaseunit DESCENDING.
+      SORT lt_to_stock_from BY plant material storagelocation stockquantity DESCENDING.
 
       SELECT product,
              nmbrofgrorgislipstoprintqty
@@ -289,7 +284,7 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
                                                                AND storagelocation <> ls_data-storagelocationto.
           ls_data-storagelocationfrom = ls_to_stock_from-storagelocation.
           ls_data-storagelocationfromname = ls_to_stock_from-storagelocationname.
-          ls_data-storagelocationfromstock = ls_to_stock_from-matlwrhsstkqtyinmatlbaseunit.
+          ls_data-storagelocationfromstock = ls_to_stock_from-stockquantity.
           EXIT.
         ENDLOOP.
 

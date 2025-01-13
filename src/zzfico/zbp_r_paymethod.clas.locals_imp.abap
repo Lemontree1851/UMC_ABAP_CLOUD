@@ -616,6 +616,7 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
         cs_data-status  = 'E'.
         cs_data-message = lv_message.
       ENDIF.
+
       MODIFY ct_data FROM cs_data TRANSPORTING status message.
 
     ENDLOOP.

@@ -11,6 +11,7 @@ define root view entity ZC_MaterialStockVH
           @Semantics.quantity.unitOfMeasure: 'MaterialBaseUnit'
           StockQuantity,
           MaterialBaseUnit,
+          InventorySpecialStockType,
 
           @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_GET_UWMS_MCARD'
           @Semantics.quantity.unitOfMeasure : 'MaterialBaseUnit'

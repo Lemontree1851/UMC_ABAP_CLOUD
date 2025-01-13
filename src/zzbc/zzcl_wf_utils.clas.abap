@@ -206,7 +206,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
             FROM ztbc_1001
           WHERE  zid   = @lc_costcenter_zid
             AND zvalue1 = @ls_ztmm_1006-cost_center
-          INTO @DATA(ls_costcenter).
+          INTO @DATA(ls_costcenter). "#EC CI_ALL_FIELDS_NEEDED
           IF sy-subrc = 0.
             "固定成本中心忽略金额范围
 
@@ -222,7 +222,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
             FROM zr_prworkflow_sum
             WHERE applydepart_sum = @ls_ztmm_1006-apply_depart
             AND   prno_sum        = @ls_ztmm_1006-pr_no
-            INTO @DATA(ls_prworkflow_sum).
+            INTO @DATA(ls_prworkflow_sum). "#EC CI_ALL_FIELDS_NEEDED
 
             DATA:lv_curr TYPE p LENGTH 16 DECIMALS 2.
             lv_curr    = ls_prworkflow_sum-amount_sum.

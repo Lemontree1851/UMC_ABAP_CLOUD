@@ -145,7 +145,7 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
           AND purchaseorderitem = @lt_req-dno
         INTO TABLE @DATA(lt_deletecode).
 
-      SELECT purchaseorder, purchaseorderitem,purchaseorderquantityunit
+      SELECT purchaseorder, purchaseorderitem,purchaseorderquantityunit,NetAmount,DocumentCurrency
         FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_req
         WHERE purchaseorder = @lt_req-pono
@@ -383,6 +383,7 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
             DATA:
               lv_previous_pono   TYPE c LENGTH 10,  " 记录上一个pono
               lv_previous_dno    TYPE n LENGTH 5,   " 记录上一个dno
+              lv_free_charge_xml TYPE string,
               lv_current_request TYPE string.        " 当前SOAP请求，逐条拼接
 *                lv_request         TYPE string.        " 最终的完整请求
 
@@ -451,6 +452,17 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
                                    |<ConfirmedOrderQuantityByMaterialAvailableCheck unitCode="{ lv_converted_unit }">{ ls_req-quantity }</ConfirmedOrderQuantityByMaterialAvailableCheck>| &&
                                    |</ScheduleLine>|.
 
+
+              " ADD BY STANLEY 20250108
+              if ls_unit-NetAmount = 0.
+                  lv_current_request = lv_current_request &&
+                                       |<NetPrice>| &&
+                                       |<Amount currencyCode="{ ls_unit-DocumentCurrency }"> { ls_unit-NetAmount }</Amount>| &&
+                                       |<BaseQuantity unitCode="{ lv_converted_unit }">{ ls_req-quantity }</BaseQuantity>| &&
+                                       |</NetPrice>|.
+              endif.
+              " END ADD
+
             ENDLOOP.
 
             "如果是最后一条
@@ -506,9 +518,6 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
           ENDIF.
 
         ENDLOOP.
-
-        WAIT UP TO '1.5' SECONDS.
-
       ENDLOOP.
     ENDIF.
 

@@ -21,7 +21,7 @@
 
 @EndUserText.label: 'MR Application Receiver Value Help'
 define view entity ZC_ApplicationReceiverVH
-  as select from ZR_EMAILMASTERUPLOAD
+  as select from ZR_ApplicationReceiverVH
 {
       @UI.hidden: true
   key UUID,

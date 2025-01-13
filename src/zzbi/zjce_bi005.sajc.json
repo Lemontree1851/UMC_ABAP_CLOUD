@@ -18,12 +18,10 @@
       "mandatory": true
     },
     {
-      "name": "P_GJAHR",
-      "mandatory": true
+      "name": "P_GJAHR"
     },
     {
-      "name": "P_POPER",
-      "mandatory": true
+      "name": "P_POPER"
     }
   ]
 }

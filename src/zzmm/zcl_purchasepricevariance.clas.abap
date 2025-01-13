@@ -309,6 +309,12 @@ CLASS zcl_purchasepricevariance IMPLEMENTATION.
                                                                                iv_currency = <lfs_original_data>-currency
                                                                                iv_input = <lfs_original_data>-newprice ).
         ENDIF.
+        " 新・正味発注価格
+        IF <lfs_original_data>-conditionratevalue IS NOT INITIAL.
+          <lfs_original_data>-conditionratevalue = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
+                                                                                         iv_currency = <lfs_original_data>-currency
+                                                                                         iv_input = <lfs_original_data>-conditionratevalue ).
+        ENDIF.
 
         " 単価差異
         <lfs_original_data>-difference = <lfs_original_data>-newprice - <lfs_original_data>-currentprice.

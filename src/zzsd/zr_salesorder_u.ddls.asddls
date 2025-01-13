@@ -42,11 +42,11 @@ define root view entity ZR_SALESORDER_U
       basic.DeliveryBlockReasonText,
       basic.Material,
       basic.MaterialByCustomer,
-      @Consumption.valueHelpDefinition: [{ entity:{ name: 'ZC_PlantVH', element: 'Plant' } }]
+      @Consumption.valueHelpDefinition: [{ entity:{ name: 'I_Plant', element: 'Plant' } }]
       basic.Plant,
       basic.TransitPlant,
-      @Consumption.valueHelpDefinition: [{  entity:{ name: 'I_StorageLocationStdVH', element: 'StorageLocation' },
-                                            additionalBinding: [{ localElement: 'Plant', element: 'Plant', usage: #FILTER }] }]
+      @Consumption.valueHelpDefinition: [{ entity:{ name: 'I_StorageLocationStdVH', element: 'StorageLocation' },
+                                           additionalBinding: [{ localElement: 'Plant', element: 'Plant', usage: #FILTER }] }]
       basic.StorageLocation,
       basic.StorageLocationName,
       basic.Route,

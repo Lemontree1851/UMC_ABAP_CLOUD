@@ -299,7 +299,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       SELECT a~salesdocument,
              b~salesdocumentitem,
              a~salesdocumenttype,
-             a~SalesOrganization,
+             a~salesorganization,
              a~purchaseorderbycustomer,
              b~product,
              b~salesdocumentitemtext
@@ -323,14 +323,14 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
     DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
     DATA(lv_vkorg) = zzcl_common_utils=>get_salesorg_by_user( lv_user_email ).
     IF lv_vkorg IS INITIAL.
-        CLEAR: lt_1003, lt_so.
-      ELSE.
-        SPLIT lv_vkorg AT '&' INTO TABLE DATA(lt_vkorg_check).
-        CLEAR lr_vkorg.
-        lr_vkorg = VALUE #( FOR salesorganization IN lt_vkorg_check ( sign = 'I' option = 'EQ' low = salesorganization ) ).
-        DELETE lt_1003 WHERE salesorganization NOT IN lr_vkorg.
-        DELETE lt_so WHERE salesorganization NOT IN lr_vkorg.
-      ENDIF.
+      CLEAR: lt_1003, lt_so.
+    ELSE.
+      SPLIT lv_vkorg AT '&' INTO TABLE DATA(lt_vkorg_check).
+      CLEAR lr_vkorg.
+      lr_vkorg = VALUE #( FOR salesorganization IN lt_vkorg_check ( sign = 'I' option = 'EQ' low = salesorganization ) ).
+      DELETE lt_1003 WHERE salesorganization NOT IN lr_vkorg.
+      DELETE lt_so WHERE salesorganization NOT IN lr_vkorg.
+    ENDIF.
 
     IF lt_so IS NOT INITIAL.
 * C: I_BillingDocumentItem
@@ -490,12 +490,11 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ENDIF.
       ENDIF.
 
-      IF lv_layer = 1.
-        IF lv_finish = '0'. "内部编码
+      IF lv_layer = 1. "第1画面
+        IF lv_finish = '0'.
           READ TABLE lt_1012 INTO DATA(ls_1012)
                WITH KEY salesdocument = ls_output-salesdocument
-                        salesdocumentitem = ls_output-salesdocumentitem
-                        billingdocument = ls_output-billingdocument BINARY SEARCH.
+                        salesdocumentitem = ls_output-salesdocumentitem BINARY SEARCH.
           IF sy-subrc = 0.
             ls_output-remarks = ls_1012-remarks.
             ls_output-processstatus = ls_1012-processstatus.
@@ -509,23 +508,22 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
            AND ls_output-acceptprice = lv_netpr
            AND ls_output-accceptamount = ls_output-netamount
            AND ls_output-acccepttaxamount = ls_output-taxamount.
-              ls_output-processstatus = '0'.
+              ls_output-processstatus = '0'.  "内部编码
             ELSE.
               ls_output-processstatus = '2'.
             ENDIF.
           ENDIF.
-        ELSE.   "外部编码
+        ELSE.
           READ TABLE lt_1012 INTO ls_1012
                WITH KEY salesdocument = ls_output-salesdocument
-                        salesdocumentitem = ls_output-salesdocumentitem
-                        billingdocument = ls_output-billingdocument BINARY SEARCH.
+                        salesdocumentitem = ls_output-salesdocumentitem BINARY SEARCH.
           IF sy-subrc = 0.
             ls_output-remarks = ls_1012-remarks.
             READ TABLE lt_1001 INTO DATA(ls_1001)
                WITH KEY zid = 'ZSD008'
                         zvalue1 = ls_1012-processstatus.
             IF sy-subrc = 0.
-              ls_output-processstatus = ls_1001-zvalue2.
+              ls_output-processstatus = ls_1001-zvalue2.  "转外部描述
             ELSE.
               ls_output-processstatus = ls_1012-processstatus.
             ENDIF.
@@ -553,8 +551,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         "Code转描述
         READ TABLE lt_1012 INTO ls_1012
              WITH KEY salesdocument = ls_output-salesdocument
-                      salesdocumentitem = ls_output-salesdocumentitem
-                      billingdocument = ls_output-billingdocument BINARY SEARCH.
+                      salesdocumentitem = ls_output-salesdocumentitem BINARY SEARCH.
         IF sy-subrc = 0.
           ls_output-remarks = ls_1012-remarks.
           READ TABLE lt_1001 INTO ls_1001
@@ -611,6 +608,85 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       CLEAR: ls_output.
     ENDLOOP.
 
+    "没有SO的数据
+    IF lv_finish = '0'.
+      SORT lt_so BY purchaseorderbycustomer.
+      LOOP AT lt_1003 INTO ls_1003.
+        READ TABLE lt_so INTO ls_so
+             WITH KEY purchaseorderbycustomer = ls_1003-customerpo BINARY SEARCH.
+        IF sy-subrc <> 0.
+          ls_output-finishstatus = lv_finish.
+          ls_output-customer = ls_1003-customer.          "得意先
+          ls_output-periodtype = ls_1003-periodtype.      "期間区分
+          ls_output-acceptperiod = ls_1003-acceptperiod.  "検収期間
+          ls_output-customerpo = ls_1003-customerpo.      "得意先PO番号
+          ls_output-acceptperiodfrom = ls_1003-acceptperiodfrom.
+          ls_output-acceptperiodto = ls_1003-acceptperiodto.
+          ls_output-acceptdate = ls_1003-acceptdate.   "検収日付
+          ls_output-acceptqty = ls_1003-acceptqty.     "検収数
+          "検収単価
+          ls_output-acceptprice = zzcl_common_utils=>conversion_amount(
+                                                           iv_alpha = 'OUT'
+                                                           iv_currency = ls_1003-currency
+                                                           iv_input = ls_1003-acceptprice ).
+          CONDENSE ls_output-acceptprice NO-GAPS.
+          "検収金額
+          ls_output-accceptamount = zzcl_common_utils=>conversion_amount(
+                                                           iv_alpha = 'OUT'
+                                                           iv_currency = ls_1003-currency
+                                                           iv_input = ls_1003-accceptamount ).
+          CONDENSE ls_output-accceptamount NO-GAPS.
+          "検収税額
+          ls_output-acccepttaxamount = ls_1003-accceptamount * ls_1003-taxrate.
+          CONDENSE ls_output-acccepttaxamount NO-GAPS.
+          ls_output-acccepttaxamount = zzcl_common_utils=>conversion_amount(
+                                                           iv_alpha = 'OUT'
+                                                           iv_currency = ls_1003-currency
+                                                           iv_input = ls_output-acccepttaxamount ).
+          CONDENSE ls_output-acccepttaxamount NO-GAPS.
+          ls_output-currency = ls_1003-currency.        "検収通貨(受注通貨)
+          ls_output-outsidedata = ls_1003-outsidedata.  "SAP外売上区分(フラグ)
+          IF lv_layer = '1'.
+            ls_output-processstatus = '2'.
+          ELSE.
+            READ TABLE lt_1001 INTO ls_1001
+                 WITH KEY zid = 'ZSD008'
+                          zvalue1 = '2'.
+            IF sy-subrc = 0.
+              ls_output-processstatus = ls_1001-zvalue2.  "转外部描述
+            ENDIF.
+          ENDIF.
+
+          "编辑表头描述
+          READ TABLE lt_customer INTO ls_customer
+               WITH KEY customer = ls_1003-customer BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_output-customername = |{ ls_output-customer ALPHA = OUT }|.
+            ls_output-customername = ls_output-customername && ` ` && ls_customer-customername.
+          ENDIF.
+          READ TABLE lt_1001 INTO ls_1001
+               WITH KEY zid = 'ZSD003'
+                        zvalue1 = lv_periodtype.
+          IF sy-subrc = 0.
+            ls_output-periodtypetext = lv_periodtype && ` ` && ls_1001-zvalue2.
+          ENDIF.
+          READ TABLE lt_1001 INTO ls_1001
+               WITH KEY zid = 'ZSD004'
+                        zvalue1 = lv_acceptperiod.
+          IF sy-subrc = 0.
+            ls_output-acceptperiodtext = lv_acceptperiod && ` ` && ls_1001-zvalue2.
+          ENDIF.
+          ls_output-acceptperiodfromtext = |{ lv_from+0(4) }/{ lv_from+4(2) }/{ lv_from+6(2) }|.
+          ls_output-acceptperiodtotext = |{ lv_to+0(4) }/{ lv_to+4(2) }/{ lv_to+6(2) }|.
+
+          APPEND ls_output TO lt_output.
+          CLEAR: ls_output.
+        ENDIF.
+
+      ENDLOOP.
+    ENDIF.
+
+
     IF lv_layer = '2'.
       DATA:
         lv_first TYPE c VALUE 'X'.
@@ -637,6 +713,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
     IF lv_layer = '1'.
       " Filtering
       zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
+                                             it_excluded = VALUE #( ( fieldname = 'LAYER' ) )
                                    CHANGING  ct_data     = lt_output ).
     ENDIF.
     IF io_request->is_total_numb_of_rec_requested(  ) .
