@@ -6,7 +6,6 @@ public section.
 
 "　T024D、T001L、MARC、MKAL、AFKO、AFPO、PLPO、RESB、AFVC、ZPLAF
 " 20241010 MBEW
-
     TYPES:
       BEGIN OF ty_item,
         tablename         TYPE c    LENGTH 10,
@@ -393,147 +392,179 @@ public section.
 
       "NO.6 製品
       BEGIN OF TY_MARA,
-        Product                                     type c length   40  ,
-        ProductExternalID                           type c length   40  ,
-        ProductOID                                  type c length   128  ,
-        ProductType                                 type c length   4  ,
-        CreationDate                                type c length   8  ,
-        CreationTime                                type c length   6  ,
-        CreationDateTime                            type c length   21  ,
-        CreatedByUser                               type c length   12  ,
-        LastChangeDate                              type c length   8  ,
-        LastChangedByUser                           type c length   12  ,
-        IsMarkedForDeletion                         type c length   1  ,
-        CrossPlantStatus                            type c length   2  ,
-        CrossPlantStatusValidityDate                type c length   8  ,
-        ProductOldID                                type c length   40  ,
-        GrossWeight                                 type c length   13  ,
-        PurchaseOrderQuantityUnit                   type c length   3  ,
-        SourceOfSupply                              type c length   1  ,
-        WeightUnit                                  type c length   3  ,
-        CountryOfOrigin                             type c length   3  ,
-        CompetitorID                                type c length   10  ,
-        ProductGroup                                type c length   9  ,
-        BaseUnit                                    type c length   3  ,
-        ItemCategoryGroup                           type c length   4  ,
-        NetWeight                                   type c length   13  ,
-        ProductHierarchy                            type c length   18  ,
-        Division                                    type c length   2  ,
-        VarblPurOrdUnitIsActive                     type c length   1  ,
-        VolumeUnit                                  type c length   3  ,
-        MaterialVolume                              type c length   13  ,
-        SalesStatus                                 type c length   2  ,
-        TransportationGroup                         type c length   4  ,
-        SalesStatusValidityDate                     type c length   8  ,
-        AuthorizationGroup                          type c length   4  ,
-        ANPCode                                     type c length   9  ,
-        ProductCategory                             type c length   2  ,
-        Brand                                       type c length   4  ,
-        ProcurementRule                             type c length   1  ,
-        ValidityStartDate                           type c length   8  ,
-        LowLevelCode                                type c length   3  ,
-        ProdNoInGenProdInPrepackProd                type c length   40  ,
-        SerialIdentifierAssgmtProfile               type c length   4  ,
-        SizeOrDimensionText                         type c length   32  ,
-        IndustryStandardName                        type c length   18  ,
-        ProductStandardID                           type c length   18  ,
-        InternationalArticleNumberCat               type c length   2  ,
-        ProductIsConfigurable                       type c length   1  ,
-        IsBatchManagementRequired                   type c length   1  ,
-        HasEmptiesBOM                               type c length   1  ,
-        ExternalProductGroup                        type c length   18  ,
-        CrossPlantConfigurableProduct               type c length   40  ,
-        SerialNoExplicitnessLevel                   type c length   1  ,
-        ProductManufacturerNumber                   type c length   40  ,
-        ManufacturerNumber                          type c length   10  ,
-        ManufacturerPartProfile                     type c length   4  ,
-        QltyMgmtInProcmtIsActive                    type c length   1  ,
-        IsApprovedBatchRecordReqd                   type c length   1  ,
-        HandlingIndicator                           type c length   4  ,
-        WarehouseProductGroup                       type c length   4  ,
-        WarehouseStorageCondition                   type c length   2  ,
-        StandardHandlingUnitType                    type c length   4  ,
-        SerialNumberProfile                         type c length   4  ,
-        AdjustmentProfile                           type c length   3  ,
-        PreferredUnitOfMeasure                      type c length   3  ,
-        IsPilferable                                type c length   1  ,
-        IsRelevantForHzdsSubstances                 type c length   1  ,
-        QuarantinePeriod                            type c length   3  ,
-        TimeUnitForQuarantinePeriod                 type c length   3  ,
-        QualityInspectionGroup                      type c length   4  ,
-        HandlingUnitType                            type c length   4  ,
-        HasVariableTareWeight                       type c length   1  ,
-        MaximumPackagingLength                      type c length   15  ,
-        MaximumPackagingWidth                       type c length   15  ,
-        MaximumPackagingHeight                      type c length   15  ,
-        MaximumCapacity                             type c length   15  ,
-        OvercapacityTolerance                       type c length   3  ,
-        UnitForMaxPackagingDimensions               type c length   3  ,
-        BaseUnitSpecificProductLength               type c length   13  ,
-        BaseUnitSpecificProductWidth                type c length   13  ,
-        BaseUnitSpecificProductHeight               type c length   13  ,
-        ProductMeasurementUnit                      type c length   3  ,
-        ProductValidStartDate                       type c length   8  ,
-        ArticleCategory                             type c length   2  ,
-        ContentUnit                                 type c length   3  ,
-        NetContent                                  type c length   13  ,
-        ComparisonPriceQuantity                     type c length   5  ,
-        GrossContent                                type c length   13  ,
-        ProductValidEndDate                         type c length   8  ,
-        AssortmentListType                          type c length   1  ,
-        HasTextilePartsWthAnimalOrigin              type c length   1  ,
-        ProductSeasonUsageCategory                  type c length   1  ,
-        IndustrySector                              type c length   1  ,
-        ChangeNumber                                type c length   12  ,
-        MaterialRevisionLevel                       type c length   2  ,
-        IsActiveEntity                              type c length   1  ,
-        LastChangeDateTime                          type c length   21  ,
-        LastChangeTime                              type c length   6  ,
-        DangerousGoodsIndProfile                    type c length   3  ,
-        ProductUUID                                 type c length   16  ,
-        ProdSupChnMgmtUUID22                        type c length   22  ,
-        ProductDocumentChangeNumber                 type c length   6  ,
-        ProductDocumentPageCount                    type c length   3  ,
-        ProductDocumentPageNumber                   type c length   3  ,
-        OwnInventoryManagedProduct                  type c length   40  ,
-        DocumentIsCreatedByCAD                      type c length   1  ,
-        ProductionOrInspectionMemoTxt               type c length   18  ,
-        ProductionMemoPageFormat                    type c length   4  ,
-        GlobalTradeItemNumberVariant                type c length   2  ,
-        ProductIsHighlyViscous                      type c length   1  ,
-        TransportIsInBulk                           type c length   1  ,
-        ProdAllocDetnProcedure                      type c length   18  ,
-        ProdEffctyParamValsAreAssigned              type c length   1  ,
-        ProdIsEnvironmentallyRelevant               type c length   1  ,
-        LaboratoryOrDesignOffice                    type c length   3  ,
-        PackagingMaterialGroup                      type c length   4  ,
-        ProductIsLocked                             type c length   1  ,
-        DiscountInKindEligibility                   type c length   1  ,
-        SmartFormName                               type c length   30  ,
-        PackingReferenceProduct                     type c length   40  ,
-        BasicMaterial                               type c length   48  ,
-        ProductDocumentNumber                       type c length   22  ,
-        ProductDocumentVersion                      type c length   2  ,
-        ProductDocumentType                         type c length   3  ,
-        ProductDocumentPageFormat                   type c length   4  ,
-        ProductConfiguration                        type c length   18  ,
-        SegmentationStrategy                        type c length   8  ,
-        SegmentationIsRelevant                      type c length   1  ,
-        ProductCompositionIsRelevant                type c length   1  ,
-        IsChemicalComplianceRelevant                type c length   1  ,
-        ManufacturerBookPartNumber                  type c length   40  ,
-        LogisticalProductCategory                   type c length   1  ,
-        SalesProduct                                type c length   40  ,
-        ProdCharc1InternalNumber                    type c length   10  ,
-        ProdCharc2InternalNumber                    type c length   10  ,
-        ProdCharc3InternalNumber                    type c length   10  ,
-        ProductCharacteristic1                      type c length   18  ,
-        ProductCharacteristic2                      type c length   18  ,
-        ProductCharacteristic3                      type c length   18  ,
-        MaintenanceStatus                           type c length   15  ,
-        FashionProdInformationField1                type c length   10  ,
-        FashionProdInformationField2                type c length   10  ,
-        FashionProdInformationField3                type c length   6  ,
+*        Product                                     type c length   40  ,
+*        ProductExternalID                           type c length   40  ,
+*        ProductOID                                  type c length   128  ,
+*        ProductType                                 type c length   4  ,
+*        CreationDate                                type c length   8  ,
+*        CreationTime                                type c length   6  ,
+*        CreationDateTime                            type c length   21  ,
+*        CreatedByUser                               type c length   12  ,
+*        LastChangeDate                              type c length   8  ,
+*        LastChangedByUser                           type c length   12  ,
+*        IsMarkedForDeletion                         type c length   1  ,
+*        CrossPlantStatus                            type c length   2  ,
+*        CrossPlantStatusValidityDate                type c length   8  ,
+*        ProductOldID                                type c length   40  ,
+*        GrossWeight                                 type c length   13  ,
+*        PurchaseOrderQuantityUnit                   type c length   3  ,
+*        SourceOfSupply                              type c length   1  ,
+*        WeightUnit                                  type c length   3  ,
+*        CountryOfOrigin                             type c length   3  ,
+*        CompetitorID                                type c length   10  ,
+*        ProductGroup                                type c length   9  ,
+*        BaseUnit                                    type c length   3  ,
+*        ItemCategoryGroup                           type c length   4  ,
+*        NetWeight                                   type c length   13  ,
+*        ProductHierarchy                            type c length   18  ,
+*        Division                                    type c length   2  ,
+*        VarblPurOrdUnitIsActive                     type c length   1  ,
+*        VolumeUnit                                  type c length   3  ,
+*        MaterialVolume                              type c length   13  ,
+*        SalesStatus                                 type c length   2  ,
+*        TransportationGroup                         type c length   4  ,
+*        SalesStatusValidityDate                     type c length   8  ,
+*        AuthorizationGroup                          type c length   4  ,
+*        ANPCode                                     type c length   9  ,
+*        ProductCategory                             type c length   2  ,
+*        Brand                                       type c length   4  ,
+*        ProcurementRule                             type c length   1  ,
+*        ValidityStartDate                           type c length   8  ,
+*        LowLevelCode                                type c length   3  ,
+*        ProdNoInGenProdInPrepackProd                type c length   40  ,
+*        SerialIdentifierAssgmtProfile               type c length   4  ,
+*        SizeOrDimensionText                         type c length   32  ,
+*        IndustryStandardName                        type c length   18  ,
+*        ProductStandardID                           type c length   18  ,
+*        InternationalArticleNumberCat               type c length   2  ,
+*        ProductIsConfigurable                       type c length   1  ,
+*        IsBatchManagementRequired                   type c length   1  ,
+*        HasEmptiesBOM                               type c length   1  ,
+*        ExternalProductGroup                        type c length   18  ,
+*        CrossPlantConfigurableProduct               type c length   40  ,
+*        SerialNoExplicitnessLevel                   type c length   1  ,
+*        ProductManufacturerNumber                   type c length   40  ,
+*        ManufacturerNumber                          type c length   10  ,
+*        ManufacturerPartProfile                     type c length   4  ,
+*        QltyMgmtInProcmtIsActive                    type c length   1  ,
+*        IsApprovedBatchRecordReqd                   type c length   1  ,
+*        HandlingIndicator                           type c length   4  ,
+*        WarehouseProductGroup                       type c length   4  ,
+*        WarehouseStorageCondition                   type c length   2  ,
+*        StandardHandlingUnitType                    type c length   4  ,
+*        SerialNumberProfile                         type c length   4  ,
+*        AdjustmentProfile                           type c length   3  ,
+*        PreferredUnitOfMeasure                      type c length   3  ,
+*        IsPilferable                                type c length   1  ,
+*        IsRelevantForHzdsSubstances                 type c length   1  ,
+*        QuarantinePeriod                            type c length   3  ,
+*        TimeUnitForQuarantinePeriod                 type c length   3  ,
+*        QualityInspectionGroup                      type c length   4  ,
+*        HandlingUnitType                            type c length   4  ,
+*        HasVariableTareWeight                       type c length   1  ,
+*        MaximumPackagingLength                      type c length   15  ,
+*        MaximumPackagingWidth                       type c length   15  ,
+*        MaximumPackagingHeight                      type c length   15  ,
+*        MaximumCapacity                             type c length   15  ,
+*        OvercapacityTolerance                       type c length   3  ,
+*        UnitForMaxPackagingDimensions               type c length   3  ,
+*        BaseUnitSpecificProductLength               type c length   13  ,
+*        BaseUnitSpecificProductWidth                type c length   13  ,
+*        BaseUnitSpecificProductHeight               type c length   13  ,
+*        ProductMeasurementUnit                      type c length   3  ,
+*        ProductValidStartDate                       type c length   8  ,
+*        ArticleCategory                             type c length   2  ,
+*        ContentUnit                                 type c length   3  ,
+*        NetContent                                  type c length   13  ,
+*        ComparisonPriceQuantity                     type c length   5  ,
+*        GrossContent                                type c length   13  ,
+*        ProductValidEndDate                         type c length   8  ,
+*        AssortmentListType                          type c length   1  ,
+*        HasTextilePartsWthAnimalOrigin              type c length   1  ,
+*        ProductSeasonUsageCategory                  type c length   1  ,
+*        IndustrySector                              type c length   1  ,
+*        ChangeNumber                                type c length   12  ,
+*        MaterialRevisionLevel                       type c length   2  ,
+*        IsActiveEntity                              type c length   1  ,
+*        LastChangeDateTime                          type c length   21  ,
+*        LastChangeTime                              type c length   6  ,
+*        DangerousGoodsIndProfile                    type c length   3  ,
+*        ProductUUID                                 type c length   16  ,
+*        ProdSupChnMgmtUUID22                        type c length   22  ,
+*        ProductDocumentChangeNumber                 type c length   6  ,
+*        ProductDocumentPageCount                    type c length   3  ,
+*        ProductDocumentPageNumber                   type c length   3  ,
+*        OwnInventoryManagedProduct                  type c length   40  ,
+*        DocumentIsCreatedByCAD                      type c length   1  ,
+*        ProductionOrInspectionMemoTxt               type c length   18  ,
+*        ProductionMemoPageFormat                    type c length   4  ,
+*        GlobalTradeItemNumberVariant                type c length   2  ,
+*        ProductIsHighlyViscous                      type c length   1  ,
+*        TransportIsInBulk                           type c length   1  ,
+*        ProdAllocDetnProcedure                      type c length   18  ,
+*        ProdEffctyParamValsAreAssigned              type c length   1  ,
+*        ProdIsEnvironmentallyRelevant               type c length   1  ,
+*        LaboratoryOrDesignOffice                    type c length   3  ,
+*        PackagingMaterialGroup                      type c length   4  ,
+*        ProductIsLocked                             type c length   1  ,
+*        DiscountInKindEligibility                   type c length   1  ,
+*        SmartFormName                               type c length   30  ,
+*        PackingReferenceProduct                     type c length   40  ,
+*        BasicMaterial                               type c length   48  ,
+*        ProductDocumentNumber                       type c length   22  ,
+*        ProductDocumentVersion                      type c length   2  ,
+*        ProductDocumentType                         type c length   3  ,
+*        ProductDocumentPageFormat                   type c length   4  ,
+*        ProductConfiguration                        type c length   18  ,
+*        SegmentationStrategy                        type c length   8  ,
+*        SegmentationIsRelevant                      type c length   1  ,
+*        ProductCompositionIsRelevant                type c length   1  ,
+*        IsChemicalComplianceRelevant                type c length   1  ,
+*        ManufacturerBookPartNumber                  type c length   40  ,
+*        LogisticalProductCategory                   type c length   1  ,
+*        SalesProduct                                type c length   40  ,
+*        ProdCharc1InternalNumber                    type c length   10  ,
+*        ProdCharc2InternalNumber                    type c length   10  ,
+*        ProdCharc3InternalNumber                    type c length   10  ,
+*        ProductCharacteristic1                      type c length   18  ,
+*        ProductCharacteristic2                      type c length   18  ,
+*        ProductCharacteristic3                      type c length   18  ,
+*        MaintenanceStatus                           type c length   15  ,
+*        FashionProdInformationField1                type c length   10  ,
+*        FashionProdInformationField2                type c length   10  ,
+*        FashionProdInformationField3                type c length   6  ,
+
+        "add by wang.z 20250207-------
+
+        Product type I_Product-Product,
+        CreationDate type I_Product-CreationDate,
+        IsMarkedForDeletion type I_Product-IsMarkedForDeletion,
+        ProductType type I_Product-ProductType,
+        ProductGroup type I_Product-ProductGroup,
+        ProductOldID type I_Product-ProductOldID,
+        BaseUnit type I_Product-BaseUnit,
+        PurchaseOrderQuantityUnit type I_Product-PurchaseOrderQuantityUnit,
+        ProductDocumentVersion type I_Product-ProductDocumentVersion,
+        ProductDocumentChangeNumber type I_Product-ProductDocumentChangeNumber,
+        ProductionOrInspectionMemoTxt type I_Product-ProductionOrInspectionMemoTxt,
+        SizeOrDimensionText type I_Product-SizeOrDimensionText,
+        LaboratoryOrDesignOffice type I_Product-LaboratoryOrDesignOffice,
+        GrossWeight type I_Product-GrossWeight,
+        NetWeight type I_Product-NetWeight,
+        WeightUnit type I_Product-WeightUnit,
+        TransportationGroup type I_Product-TransportationGroup,
+        Division type I_Product-Division,
+        IsBatchManagementRequired type I_Product-IsBatchManagementRequired,
+        PackagingMaterialGroup type I_Product-PackagingMaterialGroup,
+        ExternalProductGroup type I_Product-ExternalProductGroup,
+        ProductManufacturerNumber type I_Product-ProductManufacturerNumber,
+        ManufacturerNumber type I_Product-ManufacturerNumber,
+        YY1_BPCODE_PRD_PRD type I_Product-YY1_BPCODE_PRD_PRD,
+        YY1_CUSTOMERMATERIAL_PRD type I_Product-YY1_CUSTOMERMATERIAL_PRD,
+
+        PackagingMaterialType type I_ProductSales-PackagingMaterialType,
+
+        "end add by wang.z 20250207---------
 
       END OF TY_MARA,
 
@@ -600,72 +631,132 @@ public section.
 
       "NO.11 製品プラント
       BEGIN OF ty_MARC,
-        Product                        TYPE C LENGTH   40   ,
-        Plant                          TYPE C LENGTH   4    ,
-        PurchasingGroup                TYPE C LENGTH   3    ,
-        CountryOfOrigin                TYPE C LENGTH   3    ,
-        RegionOfOrigin                 TYPE C LENGTH   3    ,
-        ProductionInvtryManagedLoc     TYPE C LENGTH   4    ,
-        ProfileCode                    TYPE C LENGTH   2    ,
-        ProfileValidityStartDate       TYPE C LENGTH   8    ,
-        AvailabilityCheckType          TYPE C LENGTH   2    ,
-        FiscalYearVariant              TYPE C LENGTH   2    ,
-        PeriodType                     TYPE C LENGTH   1    ,
-        ProfitCenter                   TYPE C LENGTH   10   ,
-        GoodsReceiptDuration           TYPE C LENGTH   3    ,
-        MaintenanceStatusName          TYPE C LENGTH   15   ,
-        IsMarkedForDeletion            TYPE C LENGTH   1    ,
-        MRPType                        TYPE C LENGTH   2    ,
-        MRPResponsible                 TYPE C LENGTH   3    ,
-        ABCIndicator                   TYPE C LENGTH   1    ,
-        MinimumLotSizeQuantity         TYPE C LENGTH   13   ,
-        MaximumLotSizeQuantity         TYPE C LENGTH   13   ,
-        FixedLotSizeQuantity           TYPE C LENGTH   13   ,
-        ConsumptionTaxCtrlCode         TYPE C LENGTH   16   ,
-        IsCoProduct                    TYPE C LENGTH   1    ,
-        ConfigurableProduct            TYPE C LENGTH   40   ,
-        StockDeterminationGroup        TYPE C LENGTH   4    ,
-        HasPostToInspectionStock       TYPE C LENGTH   1    ,
-        IsBatchManagementRequired      TYPE C LENGTH   1    ,
-        SerialNumberProfile            TYPE C LENGTH   4    ,
-        IsNegativeStockAllowed         TYPE C LENGTH   1    ,
-        HasConsignmentCtrl             TYPE C LENGTH   1    ,
-        IsPurgAcrossPurgGroup          TYPE C LENGTH   1    ,
-        IsInternalBatchManaged         TYPE C LENGTH   1    ,
-        ProductCFOPCategory            TYPE C LENGTH   2    ,
-        ProductIsExciseTaxRelevant     TYPE C LENGTH   1    ,
-        UnderDelivToleranceLimit       TYPE C LENGTH   3    ,
-        OverDelivToleranceLimit        TYPE C LENGTH   3    ,
-        ProcurementType                TYPE C LENGTH   1    ,
-        SpecialProcurementType         TYPE C LENGTH   2    ,
-        ProductionSchedulingProfile    TYPE C LENGTH   6    ,
-        ProductionSupervisor           TYPE C LENGTH   3    ,
-        SafetyStockQuantity            TYPE C LENGTH   13   ,
-        GoodsIssueUnit                 TYPE C LENGTH   3    ,
-        SourceOfSupplyCategory         TYPE C LENGTH   1    ,
-        ConsumptionReferenceProduct    TYPE C LENGTH   40   ,
-        ConsumptionReferencePlant      TYPE C LENGTH   4    ,
-        ConsumptionRefUsageEndDate     TYPE C LENGTH   8    ,
-        ConsumptionQtyMultiplier       TYPE C LENGTH   4    ,
-        ProductUnitGroup               TYPE C LENGTH   4    ,
-        DistrCntrDistributionProfile   TYPE C LENGTH   3    ,
-        ConsignmentControl             TYPE C LENGTH   1    ,
-        GoodIssueProcessingDays        TYPE C LENGTH   3    ,
-        PlannedDeliveryDurationInDays  TYPE C LENGTH   3    ,
-        ProductIsCriticalPrt           TYPE C LENGTH   1    ,
-        ProductLogisticsHandlingGroup  TYPE C LENGTH   4    ,
-        MaterialFreightGroup           TYPE C LENGTH   8    ,
-        OriginalBatchReferenceMaterial TYPE C LENGTH   40   ,
-        OriglBatchManagementIsRequired TYPE C LENGTH   1    ,
-        ProductConfiguration           TYPE C LENGTH   18   ,
-        ProductMinControlTemperature   TYPE C LENGTH   7    ,
-        ProductMaxControlTemperature   TYPE C LENGTH   7    ,
-        ProductControlTemperatureUnit  TYPE C LENGTH   3    ,
-        ValuationCategory              TYPE C LENGTH   1    ,
-        BaseUnit                       TYPE C LENGTH   3    ,
-        ItemUniqueIdentifierIsRelevant TYPE C LENGTH   1    ,
-        ItemUniqueIdentifierType       TYPE C LENGTH   10   ,
-        ExtAllocOfItmUnqIdtIsRelevant  TYPE C LENGTH   1    ,
+*        Product                        TYPE C LENGTH   40   ,
+*        Plant                          TYPE C LENGTH   4    ,
+*        PurchasingGroup                TYPE C LENGTH   3    ,
+*        CountryOfOrigin                TYPE C LENGTH   3    ,
+*        RegionOfOrigin                 TYPE C LENGTH   3    ,
+*        ProductionInvtryManagedLoc     TYPE C LENGTH   4    ,
+*        ProfileCode                    TYPE C LENGTH   2    ,
+*        ProfileValidityStartDate       TYPE C LENGTH   8    ,
+*        AvailabilityCheckType          TYPE C LENGTH   2    ,
+*        FiscalYearVariant              TYPE C LENGTH   2    ,
+*        PeriodType                     TYPE C LENGTH   1    ,
+*        ProfitCenter                   TYPE C LENGTH   10   ,
+*        GoodsReceiptDuration           TYPE C LENGTH   3    ,
+*        MaintenanceStatusName          TYPE C LENGTH   15   ,
+*        IsMarkedForDeletion            TYPE C LENGTH   1    ,
+*        MRPType                        TYPE C LENGTH   2    ,
+*        MRPResponsible                 TYPE C LENGTH   3    ,
+*        ABCIndicator                   TYPE C LENGTH   1    ,
+*        MinimumLotSizeQuantity         TYPE C LENGTH   13   ,
+*        MaximumLotSizeQuantity         TYPE C LENGTH   13   ,
+*        FixedLotSizeQuantity           TYPE C LENGTH   13   ,
+*        ConsumptionTaxCtrlCode         TYPE C LENGTH   16   ,
+*        IsCoProduct                    TYPE C LENGTH   1    ,
+*        ConfigurableProduct            TYPE C LENGTH   40   ,
+*        StockDeterminationGroup        TYPE C LENGTH   4    ,
+*        HasPostToInspectionStock       TYPE C LENGTH   1    ,
+*        IsBatchManagementRequired      TYPE C LENGTH   1    ,
+*        SerialNumberProfile            TYPE C LENGTH   4    ,
+*        IsNegativeStockAllowed         TYPE C LENGTH   1    ,
+*        HasConsignmentCtrl             TYPE C LENGTH   1    ,
+*        IsPurgAcrossPurgGroup          TYPE C LENGTH   1    ,
+*        IsInternalBatchManaged         TYPE C LENGTH   1    ,
+*        ProductCFOPCategory            TYPE C LENGTH   2    ,
+*        ProductIsExciseTaxRelevant     TYPE C LENGTH   1    ,
+*        UnderDelivToleranceLimit       TYPE C LENGTH   3    ,
+*        OverDelivToleranceLimit        TYPE C LENGTH   3    ,
+*        ProcurementType                TYPE C LENGTH   1    ,
+*        SpecialProcurementType         TYPE C LENGTH   2    ,
+*        ProductionSchedulingProfile    TYPE C LENGTH   6    ,
+*        ProductionSupervisor           TYPE C LENGTH   3    ,
+*        SafetyStockQuantity            TYPE C LENGTH   13   ,
+*        GoodsIssueUnit                 TYPE C LENGTH   3    ,
+*        SourceOfSupplyCategory         TYPE C LENGTH   1    ,
+*        ConsumptionReferenceProduct    TYPE C LENGTH   40   ,
+*        ConsumptionReferencePlant      TYPE C LENGTH   4    ,
+*        ConsumptionRefUsageEndDate     TYPE C LENGTH   8    ,
+*        ConsumptionQtyMultiplier       TYPE C LENGTH   4    ,
+*        ProductUnitGroup               TYPE C LENGTH   4    ,
+*        DistrCntrDistributionProfile   TYPE C LENGTH   3    ,
+*        ConsignmentControl             TYPE C LENGTH   1    ,
+*        GoodIssueProcessingDays        TYPE C LENGTH   3    ,
+*        PlannedDeliveryDurationInDays  TYPE C LENGTH   3    ,
+*        ProductIsCriticalPrt           TYPE C LENGTH   1    ,
+*        ProductLogisticsHandlingGroup  TYPE C LENGTH   4    ,
+*        MaterialFreightGroup           TYPE C LENGTH   8    ,
+*        OriginalBatchReferenceMaterial TYPE C LENGTH   40   ,
+*        OriglBatchManagementIsRequired TYPE C LENGTH   1    ,
+*        ProductConfiguration           TYPE C LENGTH   18   ,
+*        ProductMinControlTemperature   TYPE C LENGTH   7    ,
+*        ProductMaxControlTemperature   TYPE C LENGTH   7    ,
+*        ProductControlTemperatureUnit  TYPE C LENGTH   3    ,
+*        ValuationCategory              TYPE C LENGTH   1    ,
+*        BaseUnit                       TYPE C LENGTH   3    ,
+*        ItemUniqueIdentifierIsRelevant TYPE C LENGTH   1    ,
+*        ItemUniqueIdentifierType       TYPE C LENGTH   10   ,
+*        ExtAllocOfItmUnqIdtIsRelevant  TYPE C LENGTH   1    ,
+
+
+"add by wang.z 20250207 -----------------
+
+        Product type I_ProductPlantBasic-Product,
+        Plant type I_ProductPlantBasic-Plant,
+        IsMarkedForDeletion type I_ProductPlantBasic-IsMarkedForDeletion,
+        ProfileCode type I_ProductPlantBasic-ProfileCode,
+        ProductIsCriticalPrt type I_ProductPlantBasic-ProductIsCriticalPrt,
+        PurchasingGroup type I_ProductPlantBasic-PurchasingGroup,
+        GoodsIssueUnit type I_ProductPlantBasic-GoodsIssueUnit,
+        MRPType type I_ProductPlantBasic-MRPType,
+        MRPResponsible type I_ProductPlantBasic-MRPResponsible,
+        PlannedDeliveryDurationInDays type I_ProductPlantBasic-PlannedDeliveryDurationInDays,
+        GoodsReceiptDuration type I_ProductPlantBasic-GoodsReceiptDuration,
+        ProcurementType type I_ProductPlantBasic-ProcurementType,
+        SpecialProcurementType type I_ProductPlantBasic-SpecialProcurementType,
+        SafetyStockQuantity type I_ProductPlantBasic-SafetyStockQuantity,
+        MinimumLotSizeQuantity type I_ProductPlantBasic-MinimumLotSizeQuantity,
+        MaximumLotSizeQuantity type I_ProductPlantBasic-MaximumLotSizeQuantity,
+        FixedLotSizeQuantity type I_ProductPlantBasic-FixedLotSizeQuantity,
+        ProductionSupervisor type I_ProductPlantBasic-ProductionSupervisor,
+        HasPostToInspectionStock type I_ProductPlantBasic-HasPostToInspectionStock,
+        IsBatchManagementRequired type I_ProductPlantBasic-IsBatchManagementRequired,
+        AvailabilityCheckType type I_ProductPlantBasic-AvailabilityCheckType,
+        ProfitCenter type I_ProductPlantBasic-ProfitCenter,
+        ProductionInvtryManagedLoc type I_ProductPlantBasic-ProductionInvtryManagedLoc,
+
+        ProductProductionQuantityUnit type I_ProductWorkScheduling-ProductProductionQuantityUnit,
+        ProductionSchedulingProfile type I_ProductWorkScheduling-ProductionSchedulingProfile,
+
+        AssemblyScrapPercent type I_PRODUCTPLANTSUPPLYPLANNING-AssemblyScrapPercent,
+        LotSizingProcedure type I_PRODUCTPLANTSUPPLYPLANNING-LotSizingProcedure,
+        LotSizeRoundingQuantity type I_PRODUCTPLANTSUPPLYPLANNING-LotSizeRoundingQuantity,
+        DependentRequirementsType type I_PRODUCTPLANTSUPPLYPLANNING-DependentRequirementsType,
+        SchedulingFloatProfile type I_PRODUCTPLANTSUPPLYPLANNING-SchedulingFloatProfile,
+        ProductComponentBackflushCode type I_PRODUCTPLANTSUPPLYPLANNING-ProductComponentBackflushCode,
+        ProdInhProdnDurationInWorkDays type I_PRODUCTPLANTSUPPLYPLANNING-ProdInhProdnDurationInWorkDays,
+        MRPPlanningCalendar type I_PRODUCTPLANTSUPPLYPLANNING-MRPPlanningCalendar,
+        PlanningTimeFence type I_PRODUCTPLANTSUPPLYPLANNING-PlanningTimeFence,
+        ProdRqmtsConsumptionMode type I_PRODUCTPLANTSUPPLYPLANNING-ProdRqmtsConsumptionMode,
+        BackwardCnsmpnPeriodInWorkDays type I_PRODUCTPLANTSUPPLYPLANNING-BackwardCnsmpnPeriodInWorkDays,
+        FwdConsumptionPeriodInWorkDays type I_PRODUCTPLANTSUPPLYPLANNING-FwdConsumptionPeriodInWorkDays,
+        MRPGroup type I_PRODUCTPLANTSUPPLYPLANNING-MRPGroup,
+        ComponentScrapInPercent type I_PRODUCTPLANTSUPPLYPLANNING-ComponentScrapInPercent,
+        PlanningStrategyGroup type I_PRODUCTPLANTSUPPLYPLANNING-PlanningStrategyGroup,
+        DfltStorageLocationExtProcmt type I_PRODUCTPLANTSUPPLYPLANNING-DfltStorageLocationExtProcmt,
+        ProductIsBulkComponent type I_PRODUCTPLANTSUPPLYPLANNING-ProductIsBulkComponent,
+        ProductSafetyTimeMRPRelevance type I_PRODUCTPLANTSUPPLYPLANNING-ProductSafetyTimeMRPRelevance,
+        SafetySupplyDurationInDays type I_PRODUCTPLANTSUPPLYPLANNING-SafetySupplyDurationInDays,
+
+        LoadingGroup type I_Productplantsales-LoadingGroup,
+
+        IsAutoPurOrdCreationAllowed type I_Productplantprocurement-IsAutoPurOrdCreationAllowed,
+        IsSourceListRequired type I_Productplantprocurement-IsSourceListRequired,
+
+        CostingLotSize type I_PRODUCTPLANTCOSTING-CostingLotSize,
+        ProductIsCostingRelevant type I_PRODUCTPLANTCOSTING-ProductIsCostingRelevant,
+
+"end add by wang.z 20250207--------------
 
       END OF ty_MARC,
 
@@ -872,6 +963,13 @@ public section.
         ProductCollection                   TYPE C LENGTH   10   ,
         ProductTheme                        TYPE C LENGTH   10   ,
 
+        "add by wang.z 20250207-----------------------------------------------------------
+
+        BillOfMaterialStatus  type I_BillOfMaterialHeaderDEX_2-BillOfMaterialStatus,
+        BOMHeaderQuantityInBaseUnit  type I_BillOfMaterialHeaderDEX_2-BOMHeaderQuantityInBaseUnit,
+        BOMHeaderBaseUnit  type I_BillOfMaterialHeaderDEX_2-BOMHeaderBaseUnit,
+
+        "end add by wang.z 20250207-------------------------------------------------------
       END OF TY_afko,
 
       "NO.14製造指図明細
@@ -985,38 +1083,170 @@ public section.
 
       "NO.15 品質検査計画作業のバージョン
       BEGIN OF ty_PLPO,
-        InspectionPlanGroup             type c length     8     ,
-        BOOOperationInternalID          type c length     8     ,
-        BOOOpInternalVersionCounter     type c length     8     ,
-        BillOfOperationsType            type c length     1     ,
-        InspectionPlan                  type c length     2     ,
-        WorkCenterInternalID            type c length     8     ,
-        WorkCenterTypeCode              type c length     2     ,
-        IsDeleted                       type c length     1     ,
-        IsImplicitlyDeleted             type c length     1     ,
-        OperationExternalID             type c length     8     ,
-        Operation                       type c length     4     ,
-        OperationText                   type c length     40    ,
-        Plant                           type c length     4     ,
-        OperationControlProfile         type c length     4     ,
-        OperationStandardTextCode       type c length     7     ,
-        BillOfOperationsRefType         type c length     1     ,
-        BillOfOperationsRefGroup        type c length     8     ,
-        BillOfOperationsRefVariant      type c length     2     ,
-        BOORefOperationIncrementValue   type c length     3     ,
-        InspSbstCompletionConfirmation  type c length     1     ,
-        InspSbstHasNoTimeOrQuantity     type c length     1     ,
-        OperationReferenceQuantity      type c length     13    ,
-        OperationUnit                   type c length     3     ,
-        OpQtyToBaseQtyDnmntr            type c length     5     ,
-        OpQtyToBaseQtyNmrtr             type c length     5     ,
-        CreationDate                    type c length     8     ,
-        CreatedByUser                   type c length     12    ,
-        LastChangeDate                  type c length     8     ,
-        LastChangedByUser               type c length     12    ,
-        ChangeNumber                    type c length     12    ,
-        ValidityStartDate               type c length     8     ,
-        ValidityEndDate                 type c length     8     ,
+*        InspectionPlanGroup             type c length     8     ,
+*        BOOOperationInternalID          type c length     8     ,
+*        BOOOpInternalVersionCounter     type c length     8     ,
+*        BillOfOperationsType            type c length     1     ,
+*        InspectionPlan                  type c length     2     ,
+*        WorkCenterInternalID            type c length     8     ,
+*        WorkCenterTypeCode              type c length     2     ,
+*        IsDeleted                       type c length     1     ,
+*        IsImplicitlyDeleted             type c length     1     ,
+*        OperationExternalID             type c length     8     ,
+*        Operation                       type c length     4     ,
+*        OperationText                   type c length     40    ,
+*        Plant                           type c length     4     ,
+*        OperationControlProfile         type c length     4     ,
+*        OperationStandardTextCode       type c length     7     ,
+*        BillOfOperationsRefType         type c length     1     ,
+*        BillOfOperationsRefGroup        type c length     8     ,
+*        BillOfOperationsRefVariant      type c length     2     ,
+*        BOORefOperationIncrementValue   type c length     3     ,
+*        InspSbstCompletionConfirmation  type c length     1     ,
+*        InspSbstHasNoTimeOrQuantity     type c length     1     ,
+*        OperationReferenceQuantity      type c length     13    ,
+*        OperationUnit                   type c length     3     ,
+*        OpQtyToBaseQtyDnmntr            type c length     5     ,
+*        OpQtyToBaseQtyNmrtr             type c length     5     ,
+*        CreationDate                    type c length     8     ,
+*        CreatedByUser                   type c length     12    ,
+*        LastChangeDate                  type c length     8     ,
+*        LastChangedByUser               type c length     12    ,
+*        ChangeNumber                    type c length     12    ,
+*        ValidityStartDate               type c length     8     ,
+*        ValidityEndDate                 type c length     8     ,
+"change by wang.z 20250207----------------------------------------------------------------
+        BillOfOperationsType type I_MfgBOOOperationChangeState-BillOfOperationsType,
+        BillOfOperationsGroup type I_MfgBOOOperationChangeState-BillOfOperationsGroup,
+        BillOfOperationsVariant type I_MfgBOOOperationChangeState-BillOfOperationsVariant,
+        BillOfOperationsSequence type I_MfgBOOOperationChangeState-BillOfOperationsSequence,
+        BOOOperationInternalID type I_MfgBOOOperationChangeState-BOOOperationInternalID,
+        BOOSqncOpAssgmtIntVersionCntr type I_MfgBOOOperationChangeState-BOOSqncOpAssgmtIntVersionCntr,
+        BOOOpInternalVersionCounter type I_MfgBOOOperationChangeState-BOOOpInternalVersionCounter,
+        OperationExternalID type I_MfgBOOOperationChangeState-OperationExternalID,
+        Operation type I_MfgBOOOperationChangeState-Operation,
+        Operation_2 type I_MfgBOOOperationChangeState-Operation_2,
+        CreationDate type I_MfgBOOOperationChangeState-CreationDate,
+        CreatedByUser type I_MfgBOOOperationChangeState-CreatedByUser,
+        LastChangeDate type I_MfgBOOOperationChangeState-LastChangeDate,
+        LastChangedByUser type I_MfgBOOOperationChangeState-LastChangedByUser,
+        ChangeNumber type I_MfgBOOOperationChangeState-ChangeNumber,
+        ValidityStartDate type I_MfgBOOOperationChangeState-ValidityStartDate,
+        ValidityEndDate type I_MfgBOOOperationChangeState-ValidityEndDate,
+        IsDeleted type I_MfgBOOOperationChangeState-IsDeleted,
+        IsImplicitlyDeleted type I_MfgBOOOperationChangeState-IsImplicitlyDeleted,
+        OperationText type I_MfgBOOOperationChangeState-OperationText,
+        LongTextLanguageCode type I_MfgBOOOperationChangeState-LongTextLanguageCode,
+        Plant type I_MfgBOOOperationChangeState-Plant,
+        OperationControlProfile type I_MfgBOOOperationChangeState-OperationControlProfile,
+        OperationStandardTextCode type I_MfgBOOOperationChangeState-OperationStandardTextCode,
+        WorkCenterInternalID type I_MfgBOOOperationChangeState-WorkCenterInternalID,
+        WorkCenterTypeCode type I_MfgBOOOperationChangeState-WorkCenterTypeCode,
+        FactoryCalendar type I_MfgBOOOperationChangeState-FactoryCalendar,
+        CapacityCategoryCode type I_MfgBOOOperationChangeState-CapacityCategoryCode,
+        CostElement type I_MfgBOOOperationChangeState-CostElement,
+        CompanyCode type I_MfgBOOOperationChangeState-CompanyCode,
+        OperationCostingRelevancyType type I_MfgBOOOperationChangeState-OperationCostingRelevancyType,
+        NumberOfTimeTickets type I_MfgBOOOperationChangeState-NumberOfTimeTickets,
+        NumberOfConfirmationSlips type I_MfgBOOOperationChangeState-NumberOfConfirmationSlips,
+        EmployeeWageGroup type I_MfgBOOOperationChangeState-EmployeeWageGroup,
+        EmployeeWageType type I_MfgBOOOperationChangeState-EmployeeWageType,
+        EmployeeSuitability type I_MfgBOOOperationChangeState-EmployeeSuitability,
+        NumberOfEmployees type I_MfgBOOOperationChangeState-NumberOfEmployees,
+        BillOfOperationsRefType type I_MfgBOOOperationChangeState-BillOfOperationsRefType,
+        BillOfOperationsRefGroup type I_MfgBOOOperationChangeState-BillOfOperationsRefGroup,
+        BillOfOperationsRefVariant type I_MfgBOOOperationChangeState-BillOfOperationsRefVariant,
+        LineSegmentTakt type I_MfgBOOOperationChangeState-LineSegmentTakt,
+        OperationStdWorkQtyGrpgCat type I_MfgBOOOperationChangeState-OperationStdWorkQtyGrpgCat,
+        OrderHasNoSubOperations type I_MfgBOOOperationChangeState-OrderHasNoSubOperations,
+        OperationSetupType type I_MfgBOOOperationChangeState-OperationSetupType,
+        OperationSetupGroupCategory type I_MfgBOOOperationChangeState-OperationSetupGroupCategory,
+        OperationSetupGroup type I_MfgBOOOperationChangeState-OperationSetupGroup,
+        BOOOperationIsPhase type I_MfgBOOOperationChangeState-BOOOperationIsPhase,
+        BOOPhaseSuperiorOpInternalID type I_MfgBOOOperationChangeState-BOOPhaseSuperiorOpInternalID,
+        ControlRecipeDestination type I_MfgBOOOperationChangeState-ControlRecipeDestination,
+        OpIsExtlyProcdWithSubcontrg type I_MfgBOOOperationChangeState-OpIsExtlyProcdWithSubcontrg,
+        PurchasingInfoRecord type I_MfgBOOOperationChangeState-PurchasingInfoRecord,
+        PurchasingOrganization type I_MfgBOOOperationChangeState-PurchasingOrganization,
+        PurchaseContract type I_MfgBOOOperationChangeState-PurchaseContract,
+        PurchaseContractItem type I_MfgBOOOperationChangeState-PurchaseContractItem,
+        PurchasingInfoRecdAddlGrpgName type I_MfgBOOOperationChangeState-PurchasingInfoRecdAddlGrpgName,
+        MaterialGroup type I_MfgBOOOperationChangeState-MaterialGroup,
+        PurchasingGroup type I_MfgBOOOperationChangeState-PurchasingGroup,
+        Supplier type I_MfgBOOOperationChangeState-Supplier,
+        PlannedDeliveryDuration type I_MfgBOOOperationChangeState-PlannedDeliveryDuration,
+        NumberOfOperationPriceUnits type I_MfgBOOOperationChangeState-NumberOfOperationPriceUnits,
+        OpExternalProcessingCurrency type I_MfgBOOOperationChangeState-OpExternalProcessingCurrency,
+        OpExternalProcessingPrice type I_MfgBOOOperationChangeState-OpExternalProcessingPrice,
+        InspectionLotType type I_MfgBOOOperationChangeState-InspectionLotType,
+        InspResultRecordingView type I_MfgBOOOperationChangeState-InspResultRecordingView,
+        InspSbstCompletionConfirmation type I_MfgBOOOperationChangeState-InspSbstCompletionConfirmation,
+        InspSbstHasNoTimeOrQuantity type I_MfgBOOOperationChangeState-InspSbstHasNoTimeOrQuantity,
+        OperationReferenceQuantity type I_MfgBOOOperationChangeState-OperationReferenceQuantity,
+        OperationUnit type I_MfgBOOOperationChangeState-OperationUnit,
+        OperationScrapPercent type I_MfgBOOOperationChangeState-OperationScrapPercent,
+        OpQtyToBaseQtyNmrtr type I_MfgBOOOperationChangeState-OpQtyToBaseQtyNmrtr,
+        OpQtyToBaseQtyDnmntr type I_MfgBOOOperationChangeState-OpQtyToBaseQtyDnmntr,
+        StandardWorkFormulaParam1 type I_MfgBOOOperationChangeState-StandardWorkFormulaParam1,
+        StandardWorkQuantity1 type I_MfgBOOOperationChangeState-StandardWorkQuantity1,
+        StandardWorkQuantityUnit1 type I_MfgBOOOperationChangeState-StandardWorkQuantityUnit1,
+        CostCtrActivityType1 type I_MfgBOOOperationChangeState-CostCtrActivityType1,
+        PerfEfficiencyRatioCode1 type I_MfgBOOOperationChangeState-PerfEfficiencyRatioCode1,
+        StandardWorkFormulaParam2 type I_MfgBOOOperationChangeState-StandardWorkFormulaParam2,
+        StandardWorkQuantity2 type I_MfgBOOOperationChangeState-StandardWorkQuantity2,
+        StandardWorkQuantityUnit2 type I_MfgBOOOperationChangeState-StandardWorkQuantityUnit2,
+        CostCtrActivityType2 type I_MfgBOOOperationChangeState-CostCtrActivityType2,
+        PerfEfficiencyRatioCode2 type I_MfgBOOOperationChangeState-PerfEfficiencyRatioCode2,
+        StandardWorkFormulaParam3 type I_MfgBOOOperationChangeState-StandardWorkFormulaParam3,
+        StandardWorkQuantity3 type I_MfgBOOOperationChangeState-StandardWorkQuantity3,
+        StandardWorkQuantityUnit3 type I_MfgBOOOperationChangeState-StandardWorkQuantityUnit3,
+        CostCtrActivityType3 type I_MfgBOOOperationChangeState-CostCtrActivityType3,
+        PerfEfficiencyRatioCode3 type I_MfgBOOOperationChangeState-PerfEfficiencyRatioCode3,
+        StandardWorkFormulaParam4 type I_MfgBOOOperationChangeState-StandardWorkFormulaParam4,
+        StandardWorkQuantity4 type I_MfgBOOOperationChangeState-StandardWorkQuantity4,
+        StandardWorkQuantityUnit4 type I_MfgBOOOperationChangeState-StandardWorkQuantityUnit4,
+        CostCtrActivityType4 type I_MfgBOOOperationChangeState-CostCtrActivityType4,
+        PerfEfficiencyRatioCode4 type I_MfgBOOOperationChangeState-PerfEfficiencyRatioCode4,
+        StandardWorkFormulaParam5 type I_MfgBOOOperationChangeState-StandardWorkFormulaParam5,
+        StandardWorkQuantity5 type I_MfgBOOOperationChangeState-StandardWorkQuantity5,
+        StandardWorkQuantityUnit5 type I_MfgBOOOperationChangeState-StandardWorkQuantityUnit5,
+        CostCtrActivityType5 type I_MfgBOOOperationChangeState-CostCtrActivityType5,
+        PerfEfficiencyRatioCode5 type I_MfgBOOOperationChangeState-PerfEfficiencyRatioCode5,
+        StandardWorkFormulaParam6 type I_MfgBOOOperationChangeState-StandardWorkFormulaParam6,
+        StandardWorkQuantity6 type I_MfgBOOOperationChangeState-StandardWorkQuantity6,
+        StandardWorkQuantityUnit6 type I_MfgBOOOperationChangeState-StandardWorkQuantityUnit6,
+        CostCtrActivityType6 type I_MfgBOOOperationChangeState-CostCtrActivityType6,
+        PerfEfficiencyRatioCode6 type I_MfgBOOOperationChangeState-PerfEfficiencyRatioCode6,
+        BusinessProcess type I_MfgBOOOperationChangeState-BusinessProcess,
+        LeadTimeReductionStrategy type I_MfgBOOOperationChangeState-LeadTimeReductionStrategy,
+        TeardownAndWaitIsParallel type I_MfgBOOOperationChangeState-TeardownAndWaitIsParallel,
+        BillOfOperationsBreakDuration type I_MfgBOOOperationChangeState-BillOfOperationsBreakDuration,
+        BreakDurationUnit type I_MfgBOOOperationChangeState-BreakDurationUnit,
+        MaximumWaitDuration type I_MfgBOOOperationChangeState-MaximumWaitDuration,
+        MaximumWaitDurationUnit type I_MfgBOOOperationChangeState-MaximumWaitDurationUnit,
+        MinimumWaitDuration type I_MfgBOOOperationChangeState-MinimumWaitDuration,
+        MinimumWaitDurationUnit type I_MfgBOOOperationChangeState-MinimumWaitDurationUnit,
+        StandardQueueDuration type I_MfgBOOOperationChangeState-StandardQueueDuration,
+        StandardQueueDurationUnit type I_MfgBOOOperationChangeState-StandardQueueDurationUnit,
+        MinimumQueueDuration type I_MfgBOOOperationChangeState-MinimumQueueDuration,
+        MinimumQueueDurationUnit type I_MfgBOOOperationChangeState-MinimumQueueDurationUnit,
+        StandardMoveDuration type I_MfgBOOOperationChangeState-StandardMoveDuration,
+        StandardMoveDurationUnit type I_MfgBOOOperationChangeState-StandardMoveDurationUnit,
+        MinimumMoveDuration type I_MfgBOOOperationChangeState-MinimumMoveDuration,
+        MinimumMoveDurationUnit type I_MfgBOOOperationChangeState-MinimumMoveDurationUnit,
+        OperationSplitIsRequired type I_MfgBOOOperationChangeState-OperationSplitIsRequired,
+        MaximumNumberOfSplits type I_MfgBOOOperationChangeState-MaximumNumberOfSplits,
+        MinProcessingDurationPerSplit type I_MfgBOOOperationChangeState-MinProcessingDurationPerSplit,
+        MinProcessingDurnPerSplitUnit type I_MfgBOOOperationChangeState-MinProcessingDurnPerSplitUnit,
+        OperationOverlappingIsRequired type I_MfgBOOOperationChangeState-OperationOverlappingIsRequired,
+        OperationOverlappingIsPossible type I_MfgBOOOperationChangeState-OperationOverlappingIsPossible,
+        OperationsIsAlwaysOverlapping type I_MfgBOOOperationChangeState-OperationsIsAlwaysOverlapping,
+        OperationHasNoOverlapping type I_MfgBOOOperationChangeState-OperationHasNoOverlapping,
+        OverlapMinimumDuration type I_MfgBOOOperationChangeState-OverlapMinimumDuration,
+        OverlapMinimumDurationUnit type I_MfgBOOOperationChangeState-OverlapMinimumDurationUnit,
+        OverlapMinimumTransferQty type I_MfgBOOOperationChangeState-OverlapMinimumTransferQty,
+        OverlapMinimumTransferQtyUnit type I_MfgBOOOperationChangeState-OverlapMinimumTransferQtyUnit,
+"end change by wang.z 20250207----------------------------------------------------
       END OF TY_PLPO,
 
       "NO.16 入出庫予定伝票明細
@@ -1183,6 +1413,12 @@ public section.
         WithdrawnQuantityAmount            type c length   13 ,
         CriticalComponentType              type c length   1 ,
         CriticalComponentLevel             type c length   2 ,
+
+        "add by wang.z 20250207
+
+        PlannedOrder type I_ManufacturingOrderItem-PlannedOrder,
+
+        "end add by wang.z 20250207
 
       END OF TY_RESB,
 
@@ -1655,10 +1891,11 @@ private section.
     LRS_EBELN LIKE LINE OF LR_EBELN,
     lv_tablename(10)  type c,
     lv_error(1)       TYPE c,
+    lv_error1(1)      type c,
     lv_text           TYPE string,
     lc_header_content TYPE string VALUE 'content-type',
     lc_content_type   TYPE string VALUE 'text/json',
-    lv_where type c length 128.
+    lv_where type string.
   DATA:
     lv_start_time TYPE sy-uzeit,
     lv_start_date TYPE sy-datum,
@@ -1785,9 +2022,22 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 *        ENDIF.***                                                                                   *
 ******************************************************************************************************
       WHEN `EKKO` OR 'ekko'.
-        SELECT * FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_ekko).
+
+      data:lv_error_message_ekko type string.
+
+
+        try.
+
+         SELECT * FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS
+         WHERE (lv_where)
+         INTO TABLE @DATA(lt_ekko).
+
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_ekko).
+
+            lv_error = 'X'.
+            lv_error_message_ekko = lo_sql_error_ekko->get_text( ).    " 获取错误描述
+
+         ENDTRY.
 
         IF lt_ekko IS NOT INITIAL.
           LOOP  AT lt_ekko INTO DATA(ls_ekko).
@@ -1933,13 +2183,34 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         ELSE.
           lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+
+          if lv_error_message_ekko is NOT INITIAL.
+
+            lv_text = lv_error_message_ekko .
+
+          else.
+            lv_text = 'There is no data in table'.
+
+          ENDIF.
+
         ENDIF.
 
       WHEN `EKPO` OR 'ekpo'.
+
+      data: lv_error_message_ekpo type String.
+
+       try.
+
         SELECT * FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS
         WHERE (lv_where)
         INTO TABLE @DATA(lt_ekpo).
+
+       catch cx_sy_dynamic_osql_error into data(lo_sql_error_ekpo).
+
+            lv_error = 'X'.
+            lv_error_message_ekpo = lo_sql_error_ekpo->get_text( ).    " 获取错误描述
+
+       ENDTRY.
 
         IF lt_ekpo IS NOT INITIAL.
           LOOP  AT lt_ekpo INTO DATA(ls_ekpo).
@@ -2239,8 +2510,14 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
+
           lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+
+          if lv_error_message_ekpo is NOT INITIAL.
+            lv_text = lv_error_message_ekpo.
+          else.
+            lv_text = 'There is no data in table'.
+          ENDIF.
         ENDIF.
 
       WHEN `EKET` OR 'eket'.
@@ -2615,296 +2892,302 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
         ENDIF.
 
       WHEN 'MARA'  OR 'mara' .
-        SELECT * FROM i_product WITH PRIVILEGED ACCESS
+        SELECT a~*,
+               b~PackagingMaterialType
+        FROM i_product WITH PRIVILEGED ACCESS as a
+        left join I_ProductSales WITH PRIVILEGED ACCESS as b
+        on a~product = b~product
         WHERE (lv_where)
         INTO TABLE @DATA(lt_mara).
 
         IF lt_mara IS NOT INITIAL.
           LOOP AT lt_mara INTO DATA(ls_mara).
           lv_count = lv_count + 1.
-            es_mara-product                           = ls_mara-product.
-            es_mara-productexternalid                 = ls_mara-productexternalid.
-            es_mara-productoid                        = ls_mara-productoid.
-            es_mara-producttype                       = ls_mara-producttype.
-            es_mara-creationdate                      = ls_mara-creationdate.
-            es_mara-creationtime                      = ls_mara-creationtime.
-            es_mara-creationdatetime                  = ls_mara-creationdatetime.
-            es_mara-createdbyuser                     = ls_mara-createdbyuser.
-            es_mara-lastchangedate                    = ls_mara-lastchangedate.
-            es_mara-lastchangedbyuser                 = ls_mara-lastchangedbyuser.
-            es_mara-ismarkedfordeletion               = ls_mara-ismarkedfordeletion.
-            es_mara-crossplantstatus                  = ls_mara-crossplantstatus.
-            es_mara-crossplantstatusvaliditydate      = ls_mara-crossplantstatusvaliditydate.
-            es_mara-productoldid                      = ls_mara-productoldid.
-            es_mara-grossweight                       = ls_mara-grossweight.
-            es_mara-purchaseorderquantityunit         = ls_mara-purchaseorderquantityunit.
-            es_mara-sourceofsupply                    = ls_mara-sourceofsupply.
-            es_mara-weightunit                        = ls_mara-weightunit.
-            es_mara-countryoforigin                   = ls_mara-countryoforigin.
-            es_mara-competitorid                      = ls_mara-competitorid.
-            es_mara-productgroup                      = ls_mara-productgroup.
-            es_mara-baseunit                          = ls_mara-baseunit.
-            es_mara-itemcategorygroup                 = ls_mara-itemcategorygroup.
-            es_mara-netweight                         = ls_mara-netweight.
-            es_mara-producthierarchy                  = ls_mara-producthierarchy.
-            es_mara-division                          = ls_mara-division.
-            es_mara-varblpurordunitisactive           = ls_mara-varblpurordunitisactive.
-            es_mara-volumeunit                        = ls_mara-volumeunit.
-            es_mara-materialvolume                    = ls_mara-materialvolume.
-            es_mara-salesstatus                       = ls_mara-salesstatus.
-            es_mara-transportationgroup               = ls_mara-transportationgroup.
-            es_mara-salesstatusvaliditydate           = ls_mara-salesstatusvaliditydate.
-            es_mara-authorizationgroup                = ls_mara-authorizationgroup.
-            es_mara-anpcode                           = ls_mara-anpcode.
-            es_mara-productcategory                   = ls_mara-productcategory.
-            es_mara-brand                             = ls_mara-brand.
-            es_mara-procurementrule                   = ls_mara-procurementrule.
-            es_mara-validitystartdate                 = ls_mara-validitystartdate.
-            es_mara-lowlevelcode                      = ls_mara-lowlevelcode.
-            es_mara-prodnoingenprodinprepackprod      = ls_mara-prodnoingenprodinprepackprod.
-            es_mara-serialidentifierassgmtprofile     = ls_mara-serialidentifierassgmtprofile.
-            es_mara-sizeordimensiontext               = ls_mara-sizeordimensiontext.
-            es_mara-industrystandardname              = ls_mara-industrystandardname.
-            es_mara-productstandardid                 = ls_mara-productstandardid.
-            es_mara-internationalarticlenumbercat     = ls_mara-internationalarticlenumbercat.
-            es_mara-productisconfigurable             = ls_mara-productisconfigurable.
-            es_mara-isbatchmanagementrequired         = ls_mara-isbatchmanagementrequired.
-            es_mara-hasemptiesbom                     = ls_mara-hasemptiesbom.
-            es_mara-externalproductgroup              = ls_mara-externalproductgroup.
-            es_mara-crossplantconfigurableproduct     = ls_mara-crossplantconfigurableproduct.
-            es_mara-serialnoexplicitnesslevel         = ls_mara-serialnoexplicitnesslevel.
-            es_mara-productmanufacturernumber         = ls_mara-productmanufacturernumber.
-            es_mara-manufacturernumber                = ls_mara-manufacturernumber.
-            es_mara-manufacturerpartprofile           = ls_mara-manufacturerpartprofile.
-            es_mara-qltymgmtinprocmtisactive          = ls_mara-qltymgmtinprocmtisactive.
-            es_mara-isapprovedbatchrecordreqd         = ls_mara-isapprovedbatchrecordreqd.
-            es_mara-handlingindicator                 = ls_mara-handlingindicator.
-            es_mara-warehouseproductgroup             = ls_mara-warehouseproductgroup.
-            es_mara-warehousestoragecondition         = ls_mara-warehousestoragecondition.
-            es_mara-standardhandlingunittype          = ls_mara-standardhandlingunittype.
-            es_mara-serialnumberprofile               = ls_mara-serialnumberprofile.
-            es_mara-adjustmentprofile                 = ls_mara-adjustmentprofile.
-            es_mara-preferredunitofmeasure            = ls_mara-preferredunitofmeasure.
-            es_mara-ispilferable                      = ls_mara-ispilferable.
-            es_mara-isrelevantforhzdssubstances       = ls_mara-isrelevantforhzdssubstances.
-            es_mara-quarantineperiod                  = ls_mara-quarantineperiod.
-            es_mara-timeunitforquarantineperiod       = ls_mara-timeunitforquarantineperiod.
-            es_mara-qualityinspectiongroup            = ls_mara-qualityinspectiongroup.
-            es_mara-handlingunittype                  = ls_mara-handlingunittype.
-            es_mara-hasvariabletareweight             = ls_mara-hasvariabletareweight.
-            es_mara-maximumpackaginglength            = ls_mara-maximumpackaginglength.
-            es_mara-maximumpackagingwidth             = ls_mara-maximumpackagingwidth.
-            es_mara-maximumpackagingheight            = ls_mara-maximumpackagingheight.
-            es_mara-maximumcapacity                   = ls_mara-maximumcapacity.
-            es_mara-overcapacitytolerance             = ls_mara-overcapacitytolerance.
-            es_mara-unitformaxpackagingdimensions     = ls_mara-unitformaxpackagingdimensions.
-            es_mara-baseunitspecificproductlength     = ls_mara-baseunitspecificproductlength.
-            es_mara-baseunitspecificproductwidth      = ls_mara-baseunitspecificproductwidth.
-            es_mara-baseunitspecificproductheight     = ls_mara-baseunitspecificproductheight.
-            es_mara-productmeasurementunit            = ls_mara-productmeasurementunit.
-            es_mara-productvalidstartdate             = ls_mara-productvalidstartdate.
-            es_mara-articlecategory                   = ls_mara-articlecategory.
-            es_mara-contentunit                       = ls_mara-contentunit.
-            es_mara-netcontent                        = ls_mara-netcontent.
-            es_mara-comparisonpricequantity           = ls_mara-comparisonpricequantity.
-            es_mara-grosscontent                      = ls_mara-grosscontent.
-            es_mara-productvalidenddate               = ls_mara-productvalidenddate.
-            es_mara-assortmentlisttype                = ls_mara-assortmentlisttype.
-            es_mara-hastextilepartswthanimalorigin    = ls_mara-hastextilepartswthanimalorigin.
-            es_mara-productseasonusagecategory        = ls_mara-productseasonusagecategory.
-            es_mara-industrysector                    = ls_mara-industrysector.
-            es_mara-changenumber                      = ls_mara-changenumber.
-            es_mara-materialrevisionlevel             = ls_mara-materialrevisionlevel.
-            es_mara-isactiveentity                    = ls_mara-isactiveentity.
-            es_mara-lastchangedatetime                = ls_mara-lastchangedatetime.
-            es_mara-lastchangetime                    = ls_mara-lastchangetime.
-            es_mara-dangerousgoodsindprofile          = ls_mara-dangerousgoodsindprofile.
-            es_mara-productuuid                       = ls_mara-productuuid.
-            es_mara-prodsupchnmgmtuuid22              = ls_mara-prodsupchnmgmtuuid22.
-            es_mara-productdocumentchangenumber       = ls_mara-productdocumentchangenumber.
-            es_mara-productdocumentpagecount          = ls_mara-productdocumentpagecount.
-            es_mara-productdocumentpagenumber         = ls_mara-productdocumentpagenumber.
-            es_mara-owninventorymanagedproduct        = ls_mara-owninventorymanagedproduct.
-            es_mara-documentiscreatedbycad            = ls_mara-documentiscreatedbycad.
-            es_mara-productionorinspectionmemotxt     = ls_mara-productionorinspectionmemotxt.
-            es_mara-productionmemopageformat          = ls_mara-productionmemopageformat.
-            es_mara-globaltradeitemnumbervariant      = ls_mara-globaltradeitemnumbervariant.
-            es_mara-productishighlyviscous            = ls_mara-productishighlyviscous.
-            es_mara-transportisinbulk                 = ls_mara-transportisinbulk.
-            es_mara-prodallocdetnprocedure            = ls_mara-prodallocdetnprocedure.
-            es_mara-prodeffctyparamvalsareassigned    = ls_mara-prodeffctyparamvalsareassigned.
-            es_mara-prodisenvironmentallyrelevant     = ls_mara-prodisenvironmentallyrelevant.
-            es_mara-laboratoryordesignoffice          = ls_mara-laboratoryordesignoffice.
-            es_mara-packagingmaterialgroup            = ls_mara-packagingmaterialgroup.
-            es_mara-productislocked                   = ls_mara-productislocked.
-            es_mara-discountinkindeligibility         = ls_mara-discountinkindeligibility.
-            es_mara-smartformname                     = ls_mara-smartformname.
-            es_mara-packingreferenceproduct           = ls_mara-packingreferenceproduct.
-            es_mara-basicmaterial                     = ls_mara-basicmaterial.
-            es_mara-productdocumentnumber             = ls_mara-productdocumentnumber.
-            es_mara-productdocumentversion            = ls_mara-productdocumentversion.
-            es_mara-productdocumenttype               = ls_mara-productdocumenttype.
-            es_mara-productdocumentpageformat         = ls_mara-productdocumentpageformat.
-            es_mara-productconfiguration              = ls_mara-productconfiguration.
-            es_mara-segmentationstrategy              = ls_mara-segmentationstrategy.
-            es_mara-segmentationisrelevant            = ls_mara-segmentationisrelevant.
-            es_mara-productcompositionisrelevant      = ls_mara-productcompositionisrelevant.
-            es_mara-ischemicalcompliancerelevant      = ls_mara-ischemicalcompliancerelevant.
-            es_mara-manufacturerbookpartnumber        = ls_mara-manufacturerbookpartnumber.
-            es_mara-logisticalproductcategory         = ls_mara-logisticalproductcategory.
-            es_mara-salesproduct                      = ls_mara-salesproduct.
-            es_mara-prodcharc1internalnumber          = ls_mara-prodcharc1internalnumber.
-            es_mara-prodcharc2internalnumber          = ls_mara-prodcharc2internalnumber.
-            es_mara-prodcharc3internalnumber          = ls_mara-prodcharc3internalnumber.
-            es_mara-productcharacteristic1            = ls_mara-productcharacteristic1.
-            es_mara-productcharacteristic2            = ls_mara-productcharacteristic2.
-            es_mara-productcharacteristic3            = ls_mara-productcharacteristic3.
-            es_mara-maintenancestatus                 = ls_mara-maintenancestatus.
-            es_mara-fashionprodinformationfield1      = ls_mara-fashionprodinformationfield1.
-            es_mara-fashionprodinformationfield2      = ls_mara-fashionprodinformationfield2.
-            es_mara-fashionprodinformationfield3      = ls_mara-fashionprodinformationfield3.
+          MOVE-CORRESPONDING ls_mara-a to es_mara.
+          es_mara-PackagingMaterialType = ls_mara-PackagingMaterialType .
+*            es_mara-product                           = ls_mara-product.
+*            es_mara-productexternalid                 = ls_mara-productexternalid.
+*            es_mara-productoid                        = ls_mara-productoid.
+*            es_mara-producttype                       = ls_mara-producttype.
+*            es_mara-creationdate                      = ls_mara-creationdate.
+*            es_mara-creationtime                      = ls_mara-creationtime.
+*            es_mara-creationdatetime                  = ls_mara-creationdatetime.
+*            es_mara-createdbyuser                     = ls_mara-createdbyuser.
+*            es_mara-lastchangedate                    = ls_mara-lastchangedate.
+*            es_mara-lastchangedbyuser                 = ls_mara-lastchangedbyuser.
+*            es_mara-ismarkedfordeletion               = ls_mara-ismarkedfordeletion.
+*            es_mara-crossplantstatus                  = ls_mara-crossplantstatus.
+*            es_mara-crossplantstatusvaliditydate      = ls_mara-crossplantstatusvaliditydate.
+*            es_mara-productoldid                      = ls_mara-productoldid.
+*            es_mara-grossweight                       = ls_mara-grossweight.
+*            es_mara-purchaseorderquantityunit         = ls_mara-purchaseorderquantityunit.
+*            es_mara-sourceofsupply                    = ls_mara-sourceofsupply.
+*            es_mara-weightunit                        = ls_mara-weightunit.
+*            es_mara-countryoforigin                   = ls_mara-countryoforigin.
+*            es_mara-competitorid                      = ls_mara-competitorid.
+*            es_mara-productgroup                      = ls_mara-productgroup.
+*            es_mara-baseunit                          = ls_mara-baseunit.
+*            es_mara-itemcategorygroup                 = ls_mara-itemcategorygroup.
+*            es_mara-netweight                         = ls_mara-netweight.
+*            es_mara-producthierarchy                  = ls_mara-producthierarchy.
+*            es_mara-division                          = ls_mara-division.
+*            es_mara-varblpurordunitisactive           = ls_mara-varblpurordunitisactive.
+*            es_mara-volumeunit                        = ls_mara-volumeunit.
+*            es_mara-materialvolume                    = ls_mara-materialvolume.
+*            es_mara-salesstatus                       = ls_mara-salesstatus.
+*            es_mara-transportationgroup               = ls_mara-transportationgroup.
+*            es_mara-salesstatusvaliditydate           = ls_mara-salesstatusvaliditydate.
+*            es_mara-authorizationgroup                = ls_mara-authorizationgroup.
+*            es_mara-anpcode                           = ls_mara-anpcode.
+*            es_mara-productcategory                   = ls_mara-productcategory.
+*            es_mara-brand                             = ls_mara-brand.
+*            es_mara-procurementrule                   = ls_mara-procurementrule.
+*            es_mara-validitystartdate                 = ls_mara-validitystartdate.
+*            es_mara-lowlevelcode                      = ls_mara-lowlevelcode.
+*            es_mara-prodnoingenprodinprepackprod      = ls_mara-prodnoingenprodinprepackprod.
+*            es_mara-serialidentifierassgmtprofile     = ls_mara-serialidentifierassgmtprofile.
+*            es_mara-sizeordimensiontext               = ls_mara-sizeordimensiontext.
+*            es_mara-industrystandardname              = ls_mara-industrystandardname.
+*            es_mara-productstandardid                 = ls_mara-productstandardid.
+*            es_mara-internationalarticlenumbercat     = ls_mara-internationalarticlenumbercat.
+*            es_mara-productisconfigurable             = ls_mara-productisconfigurable.
+*            es_mara-isbatchmanagementrequired         = ls_mara-isbatchmanagementrequired.
+*            es_mara-hasemptiesbom                     = ls_mara-hasemptiesbom.
+*            es_mara-externalproductgroup              = ls_mara-externalproductgroup.
+*            es_mara-crossplantconfigurableproduct     = ls_mara-crossplantconfigurableproduct.
+*            es_mara-serialnoexplicitnesslevel         = ls_mara-serialnoexplicitnesslevel.
+*            es_mara-productmanufacturernumber         = ls_mara-productmanufacturernumber.
+*            es_mara-manufacturernumber                = ls_mara-manufacturernumber.
+*            es_mara-manufacturerpartprofile           = ls_mara-manufacturerpartprofile.
+*            es_mara-qltymgmtinprocmtisactive          = ls_mara-qltymgmtinprocmtisactive.
+*            es_mara-isapprovedbatchrecordreqd         = ls_mara-isapprovedbatchrecordreqd.
+*            es_mara-handlingindicator                 = ls_mara-handlingindicator.
+*            es_mara-warehouseproductgroup             = ls_mara-warehouseproductgroup.
+*            es_mara-warehousestoragecondition         = ls_mara-warehousestoragecondition.
+*            es_mara-standardhandlingunittype          = ls_mara-standardhandlingunittype.
+*            es_mara-serialnumberprofile               = ls_mara-serialnumberprofile.
+*            es_mara-adjustmentprofile                 = ls_mara-adjustmentprofile.
+*            es_mara-preferredunitofmeasure            = ls_mara-preferredunitofmeasure.
+*            es_mara-ispilferable                      = ls_mara-ispilferable.
+*            es_mara-isrelevantforhzdssubstances       = ls_mara-isrelevantforhzdssubstances.
+*            es_mara-quarantineperiod                  = ls_mara-quarantineperiod.
+*            es_mara-timeunitforquarantineperiod       = ls_mara-timeunitforquarantineperiod.
+*            es_mara-qualityinspectiongroup            = ls_mara-qualityinspectiongroup.
+*            es_mara-handlingunittype                  = ls_mara-handlingunittype.
+*            es_mara-hasvariabletareweight             = ls_mara-hasvariabletareweight.
+*            es_mara-maximumpackaginglength            = ls_mara-maximumpackaginglength.
+*            es_mara-maximumpackagingwidth             = ls_mara-maximumpackagingwidth.
+*            es_mara-maximumpackagingheight            = ls_mara-maximumpackagingheight.
+*            es_mara-maximumcapacity                   = ls_mara-maximumcapacity.
+*            es_mara-overcapacitytolerance             = ls_mara-overcapacitytolerance.
+*            es_mara-unitformaxpackagingdimensions     = ls_mara-unitformaxpackagingdimensions.
+*            es_mara-baseunitspecificproductlength     = ls_mara-baseunitspecificproductlength.
+*            es_mara-baseunitspecificproductwidth      = ls_mara-baseunitspecificproductwidth.
+*            es_mara-baseunitspecificproductheight     = ls_mara-baseunitspecificproductheight.
+*            es_mara-productmeasurementunit            = ls_mara-productmeasurementunit.
+*            es_mara-productvalidstartdate             = ls_mara-productvalidstartdate.
+*            es_mara-articlecategory                   = ls_mara-articlecategory.
+*            es_mara-contentunit                       = ls_mara-contentunit.
+*            es_mara-netcontent                        = ls_mara-netcontent.
+*            es_mara-comparisonpricequantity           = ls_mara-comparisonpricequantity.
+*            es_mara-grosscontent                      = ls_mara-grosscontent.
+*            es_mara-productvalidenddate               = ls_mara-productvalidenddate.
+*            es_mara-assortmentlisttype                = ls_mara-assortmentlisttype.
+*            es_mara-hastextilepartswthanimalorigin    = ls_mara-hastextilepartswthanimalorigin.
+*            es_mara-productseasonusagecategory        = ls_mara-productseasonusagecategory.
+*            es_mara-industrysector                    = ls_mara-industrysector.
+*            es_mara-changenumber                      = ls_mara-changenumber.
+*            es_mara-materialrevisionlevel             = ls_mara-materialrevisionlevel.
+*            es_mara-isactiveentity                    = ls_mara-isactiveentity.
+*            es_mara-lastchangedatetime                = ls_mara-lastchangedatetime.
+*            es_mara-lastchangetime                    = ls_mara-lastchangetime.
+*            es_mara-dangerousgoodsindprofile          = ls_mara-dangerousgoodsindprofile.
+*            es_mara-productuuid                       = ls_mara-productuuid.
+*            es_mara-prodsupchnmgmtuuid22              = ls_mara-prodsupchnmgmtuuid22.
+*            es_mara-productdocumentchangenumber       = ls_mara-productdocumentchangenumber.
+*            es_mara-productdocumentpagecount          = ls_mara-productdocumentpagecount.
+*            es_mara-productdocumentpagenumber         = ls_mara-productdocumentpagenumber.
+*            es_mara-owninventorymanagedproduct        = ls_mara-owninventorymanagedproduct.
+*            es_mara-documentiscreatedbycad            = ls_mara-documentiscreatedbycad.
+*            es_mara-productionorinspectionmemotxt     = ls_mara-productionorinspectionmemotxt.
+*            es_mara-productionmemopageformat          = ls_mara-productionmemopageformat.
+*            es_mara-globaltradeitemnumbervariant      = ls_mara-globaltradeitemnumbervariant.
+*            es_mara-productishighlyviscous            = ls_mara-productishighlyviscous.
+*            es_mara-transportisinbulk                 = ls_mara-transportisinbulk.
+*            es_mara-prodallocdetnprocedure            = ls_mara-prodallocdetnprocedure.
+*            es_mara-prodeffctyparamvalsareassigned    = ls_mara-prodeffctyparamvalsareassigned.
+*            es_mara-prodisenvironmentallyrelevant     = ls_mara-prodisenvironmentallyrelevant.
+*            es_mara-laboratoryordesignoffice          = ls_mara-laboratoryordesignoffice.
+*            es_mara-packagingmaterialgroup            = ls_mara-packagingmaterialgroup.
+*            es_mara-productislocked                   = ls_mara-productislocked.
+*            es_mara-discountinkindeligibility         = ls_mara-discountinkindeligibility.
+*            es_mara-smartformname                     = ls_mara-smartformname.
+*            es_mara-packingreferenceproduct           = ls_mara-packingreferenceproduct.
+*            es_mara-basicmaterial                     = ls_mara-basicmaterial.
+*            es_mara-productdocumentnumber             = ls_mara-productdocumentnumber.
+*            es_mara-productdocumentversion            = ls_mara-productdocumentversion.
+*            es_mara-productdocumenttype               = ls_mara-productdocumenttype.
+*            es_mara-productdocumentpageformat         = ls_mara-productdocumentpageformat.
+*            es_mara-productconfiguration              = ls_mara-productconfiguration.
+*            es_mara-segmentationstrategy              = ls_mara-segmentationstrategy.
+*            es_mara-segmentationisrelevant            = ls_mara-segmentationisrelevant.
+*            es_mara-productcompositionisrelevant      = ls_mara-productcompositionisrelevant.
+*            es_mara-ischemicalcompliancerelevant      = ls_mara-ischemicalcompliancerelevant.
+*            es_mara-manufacturerbookpartnumber        = ls_mara-manufacturerbookpartnumber.
+*            es_mara-logisticalproductcategory         = ls_mara-logisticalproductcategory.
+*            es_mara-salesproduct                      = ls_mara-salesproduct.
+*            es_mara-prodcharc1internalnumber          = ls_mara-prodcharc1internalnumber.
+*            es_mara-prodcharc2internalnumber          = ls_mara-prodcharc2internalnumber.
+*            es_mara-prodcharc3internalnumber          = ls_mara-prodcharc3internalnumber.
+*            es_mara-productcharacteristic1            = ls_mara-productcharacteristic1.
+*            es_mara-productcharacteristic2            = ls_mara-productcharacteristic2.
+*            es_mara-productcharacteristic3            = ls_mara-productcharacteristic3.
+*            es_mara-maintenancestatus                 = ls_mara-maintenancestatus.
+*            es_mara-fashionprodinformationfield1      = ls_mara-fashionprodinformationfield1.
+*            es_mara-fashionprodinformationfield2      = ls_mara-fashionprodinformationfield2.
+*            es_mara-fashionprodinformationfield3      = ls_mara-fashionprodinformationfield3.
 
-            CONDENSE es_mara-product                         .
-            CONDENSE es_mara-productexternalid               .
-            CONDENSE es_mara-productoid                      .
-            CONDENSE es_mara-producttype                     .
-            CONDENSE es_mara-creationdate                    .
-            CONDENSE es_mara-creationtime                    .
-            CONDENSE es_mara-creationdatetime                .
-            CONDENSE es_mara-createdbyuser                   .
-            CONDENSE es_mara-lastchangedate                  .
-            CONDENSE es_mara-lastchangedbyuser               .
-            CONDENSE es_mara-ismarkedfordeletion             .
-            CONDENSE es_mara-crossplantstatus                .
-            CONDENSE es_mara-crossplantstatusvaliditydate    .
-            CONDENSE es_mara-productoldid                    .
-            CONDENSE es_mara-grossweight                     .
-            CONDENSE es_mara-purchaseorderquantityunit       .
-            CONDENSE es_mara-sourceofsupply                  .
-            CONDENSE es_mara-weightunit                      .
-            CONDENSE es_mara-countryoforigin                 .
-            CONDENSE es_mara-competitorid                    .
-            CONDENSE es_mara-productgroup                    .
-            CONDENSE es_mara-baseunit                        .
-            CONDENSE es_mara-itemcategorygroup               .
-            CONDENSE es_mara-netweight                       .
-            CONDENSE es_mara-producthierarchy                .
-            CONDENSE es_mara-division                        .
-            CONDENSE es_mara-varblpurordunitisactive         .
-            CONDENSE es_mara-volumeunit                      .
-            CONDENSE es_mara-materialvolume                  .
-            CONDENSE es_mara-salesstatus                     .
-            CONDENSE es_mara-transportationgroup             .
-            CONDENSE es_mara-salesstatusvaliditydate         .
-            CONDENSE es_mara-authorizationgroup              .
-            CONDENSE es_mara-anpcode                         .
-            CONDENSE es_mara-productcategory                 .
-            CONDENSE es_mara-brand                           .
-            CONDENSE es_mara-procurementrule                 .
-            CONDENSE es_mara-validitystartdate               .
-            CONDENSE es_mara-lowlevelcode                    .
-            CONDENSE es_mara-prodnoingenprodinprepackprod    .
-            CONDENSE es_mara-serialidentifierassgmtprofile   .
-            CONDENSE es_mara-sizeordimensiontext             .
-            CONDENSE es_mara-industrystandardname            .
-            CONDENSE es_mara-productstandardid               .
-            CONDENSE es_mara-internationalarticlenumbercat   .
-            CONDENSE es_mara-productisconfigurable           .
-            CONDENSE es_mara-isbatchmanagementrequired       .
-            CONDENSE es_mara-hasemptiesbom                   .
-            CONDENSE es_mara-externalproductgroup            .
-            CONDENSE es_mara-crossplantconfigurableproduct   .
-            CONDENSE es_mara-serialnoexplicitnesslevel       .
-            CONDENSE es_mara-productmanufacturernumber       .
-            CONDENSE es_mara-manufacturernumber              .
-            CONDENSE es_mara-manufacturerpartprofile          .
-            CONDENSE es_mara-qltymgmtinprocmtisactive         .
-            CONDENSE es_mara-isapprovedbatchrecordreqd        .
-            CONDENSE es_mara-handlingindicator                .
-            CONDENSE es_mara-warehouseproductgroup            .
-            CONDENSE es_mara-warehousestoragecondition        .
-            CONDENSE es_mara-standardhandlingunittype         .
-            CONDENSE es_mara-serialnumberprofile              .
-            CONDENSE es_mara-adjustmentprofile                .
-            CONDENSE es_mara-preferredunitofmeasure           .
-            CONDENSE es_mara-ispilferable                     .
-            CONDENSE es_mara-isrelevantforhzdssubstances      .
-            CONDENSE es_mara-quarantineperiod                 .
-            CONDENSE es_mara-timeunitforquarantineperiod      .
-            CONDENSE es_mara-qualityinspectiongroup           .
-            CONDENSE es_mara-handlingunittype                 .
-            CONDENSE es_mara-hasvariabletareweight            .
-            CONDENSE es_mara-maximumpackaginglength           .
-            CONDENSE es_mara-maximumpackagingwidth            .
-            CONDENSE es_mara-maximumpackagingheight           .
-            CONDENSE es_mara-maximumcapacity                  .
-            CONDENSE es_mara-overcapacitytolerance            .
-            CONDENSE es_mara-unitformaxpackagingdimensions    .
-            CONDENSE es_mara-baseunitspecificproductlength    .
-            CONDENSE es_mara-baseunitspecificproductwidth     .
-            CONDENSE es_mara-baseunitspecificproductheight    .
-            CONDENSE es_mara-productmeasurementunit           .
-            CONDENSE es_mara-productvalidstartdate            .
-            CONDENSE es_mara-articlecategory                  .
-            CONDENSE es_mara-contentunit                      .
-            CONDENSE es_mara-netcontent                       .
-            CONDENSE es_mara-comparisonpricequantity          .
-            CONDENSE es_mara-grosscontent                     .
-            CONDENSE es_mara-productvalidenddate              .
-            CONDENSE es_mara-assortmentlisttype               .
-            CONDENSE es_mara-hastextilepartswthanimalorigin   .
-            CONDENSE es_mara-productseasonusagecategory       .
-            CONDENSE es_mara-industrysector                   .
-            CONDENSE es_mara-changenumber                     .
-            CONDENSE es_mara-materialrevisionlevel            .
-            CONDENSE es_mara-isactiveentity                   .
-            CONDENSE es_mara-lastchangedatetime               .
-            CONDENSE es_mara-lastchangetime                   .
-            CONDENSE es_mara-dangerousgoodsindprofile         .
-            CONDENSE es_mara-productuuid                      .
-            CONDENSE es_mara-prodsupchnmgmtuuid22             .
-            CONDENSE es_mara-productdocumentchangenumber      .
-            CONDENSE es_mara-productdocumentpagecount         .
-            CONDENSE es_mara-productdocumentpagenumber        .
-            CONDENSE es_mara-owninventorymanagedproduct       .
-            CONDENSE es_mara-documentiscreatedbycad           .
-            CONDENSE es_mara-productionorinspectionmemotxt    .
-            CONDENSE es_mara-productionmemopageformat         .
-            CONDENSE es_mara-globaltradeitemnumbervariant     .
-            CONDENSE es_mara-productishighlyviscous           .
-            CONDENSE es_mara-transportisinbulk                .
-            CONDENSE es_mara-prodallocdetnprocedure           .
-            CONDENSE es_mara-prodeffctyparamvalsareassigned   .
-            CONDENSE es_mara-prodisenvironmentallyrelevant    .
-            CONDENSE es_mara-laboratoryordesignoffice         .
-            CONDENSE es_mara-packagingmaterialgroup           .
-            CONDENSE es_mara-productislocked                  .
-            CONDENSE es_mara-discountinkindeligibility        .
-            CONDENSE es_mara-smartformname                    .
-            CONDENSE es_mara-packingreferenceproduct          .
-            CONDENSE es_mara-basicmaterial                    .
-            CONDENSE es_mara-productdocumentnumber            .
-            CONDENSE es_mara-productdocumentversion           .
-            CONDENSE es_mara-productdocumenttype              .
-            CONDENSE es_mara-productdocumentpageformat        .
-            CONDENSE es_mara-productconfiguration             .
-            CONDENSE es_mara-segmentationstrategy             .
-            CONDENSE es_mara-segmentationisrelevant           .
-            CONDENSE es_mara-productcompositionisrelevant     .
-            CONDENSE es_mara-ischemicalcompliancerelevant     .
-            CONDENSE es_mara-manufacturerbookpartnumber       .
-            CONDENSE es_mara-logisticalproductcategory        .
-            CONDENSE es_mara-salesproduct                     .
-            CONDENSE es_mara-prodcharc1internalnumber         .
-            CONDENSE es_mara-prodcharc2internalnumber         .
-            CONDENSE es_mara-prodcharc3internalnumber         .
-            CONDENSE es_mara-productcharacteristic1           .
-            CONDENSE es_mara-productcharacteristic2           .
-            CONDENSE es_mara-productcharacteristic3           .
-            CONDENSE es_mara-maintenancestatus                .
-            CONDENSE es_mara-fashionprodinformationfield1     .
-            CONDENSE es_mara-fashionprodinformationfield2     .
-            CONDENSE es_mara-fashionprodinformationfield3     .
+*            CONDENSE es_mara-product                         .
+*            CONDENSE es_mara-productexternalid               .
+*            CONDENSE es_mara-productoid                      .
+*            CONDENSE es_mara-producttype                     .
+*            CONDENSE es_mara-creationdate                    .
+*            CONDENSE es_mara-creationtime                    .
+*            CONDENSE es_mara-creationdatetime                .
+*            CONDENSE es_mara-createdbyuser                   .
+*            CONDENSE es_mara-lastchangedate                  .
+*            CONDENSE es_mara-lastchangedbyuser               .
+*            CONDENSE es_mara-ismarkedfordeletion             .
+*            CONDENSE es_mara-crossplantstatus                .
+*            CONDENSE es_mara-crossplantstatusvaliditydate    .
+*            CONDENSE es_mara-productoldid                    .
+*            CONDENSE es_mara-grossweight                     .
+*            CONDENSE es_mara-purchaseorderquantityunit       .
+*            CONDENSE es_mara-sourceofsupply                  .
+*            CONDENSE es_mara-weightunit                      .
+*            CONDENSE es_mara-countryoforigin                 .
+*            CONDENSE es_mara-competitorid                    .
+*            CONDENSE es_mara-productgroup                    .
+*            CONDENSE es_mara-baseunit                        .
+*            CONDENSE es_mara-itemcategorygroup               .
+*            CONDENSE es_mara-netweight                       .
+*            CONDENSE es_mara-producthierarchy                .
+*            CONDENSE es_mara-division                        .
+*            CONDENSE es_mara-varblpurordunitisactive         .
+*            CONDENSE es_mara-volumeunit                      .
+*            CONDENSE es_mara-materialvolume                  .
+*            CONDENSE es_mara-salesstatus                     .
+*            CONDENSE es_mara-transportationgroup             .
+*            CONDENSE es_mara-salesstatusvaliditydate         .
+*            CONDENSE es_mara-authorizationgroup              .
+*            CONDENSE es_mara-anpcode                         .
+*            CONDENSE es_mara-productcategory                 .
+*            CONDENSE es_mara-brand                           .
+*            CONDENSE es_mara-procurementrule                 .
+*            CONDENSE es_mara-validitystartdate               .
+*            CONDENSE es_mara-lowlevelcode                    .
+*            CONDENSE es_mara-prodnoingenprodinprepackprod    .
+*            CONDENSE es_mara-serialidentifierassgmtprofile   .
+*            CONDENSE es_mara-sizeordimensiontext             .
+*            CONDENSE es_mara-industrystandardname            .
+*            CONDENSE es_mara-productstandardid               .
+*            CONDENSE es_mara-internationalarticlenumbercat   .
+*            CONDENSE es_mara-productisconfigurable           .
+*            CONDENSE es_mara-isbatchmanagementrequired       .
+*            CONDENSE es_mara-hasemptiesbom                   .
+*            CONDENSE es_mara-externalproductgroup            .
+*            CONDENSE es_mara-crossplantconfigurableproduct   .
+*            CONDENSE es_mara-serialnoexplicitnesslevel       .
+*            CONDENSE es_mara-productmanufacturernumber       .
+*            CONDENSE es_mara-manufacturernumber              .
+*            CONDENSE es_mara-manufacturerpartprofile          .
+*            CONDENSE es_mara-qltymgmtinprocmtisactive         .
+*            CONDENSE es_mara-isapprovedbatchrecordreqd        .
+*            CONDENSE es_mara-handlingindicator                .
+*            CONDENSE es_mara-warehouseproductgroup            .
+*            CONDENSE es_mara-warehousestoragecondition        .
+*            CONDENSE es_mara-standardhandlingunittype         .
+*            CONDENSE es_mara-serialnumberprofile              .
+*            CONDENSE es_mara-adjustmentprofile                .
+*            CONDENSE es_mara-preferredunitofmeasure           .
+*            CONDENSE es_mara-ispilferable                     .
+*            CONDENSE es_mara-isrelevantforhzdssubstances      .
+*            CONDENSE es_mara-quarantineperiod                 .
+*            CONDENSE es_mara-timeunitforquarantineperiod      .
+*            CONDENSE es_mara-qualityinspectiongroup           .
+*            CONDENSE es_mara-handlingunittype                 .
+*            CONDENSE es_mara-hasvariabletareweight            .
+*            CONDENSE es_mara-maximumpackaginglength           .
+*            CONDENSE es_mara-maximumpackagingwidth            .
+*            CONDENSE es_mara-maximumpackagingheight           .
+*            CONDENSE es_mara-maximumcapacity                  .
+*            CONDENSE es_mara-overcapacitytolerance            .
+*            CONDENSE es_mara-unitformaxpackagingdimensions    .
+*            CONDENSE es_mara-baseunitspecificproductlength    .
+*            CONDENSE es_mara-baseunitspecificproductwidth     .
+*            CONDENSE es_mara-baseunitspecificproductheight    .
+*            CONDENSE es_mara-productmeasurementunit           .
+*            CONDENSE es_mara-productvalidstartdate            .
+*            CONDENSE es_mara-articlecategory                  .
+*            CONDENSE es_mara-contentunit                      .
+*            CONDENSE es_mara-netcontent                       .
+*            CONDENSE es_mara-comparisonpricequantity          .
+*            CONDENSE es_mara-grosscontent                     .
+*            CONDENSE es_mara-productvalidenddate              .
+*            CONDENSE es_mara-assortmentlisttype               .
+*            CONDENSE es_mara-hastextilepartswthanimalorigin   .
+*            CONDENSE es_mara-productseasonusagecategory       .
+*            CONDENSE es_mara-industrysector                   .
+*            CONDENSE es_mara-changenumber                     .
+*            CONDENSE es_mara-materialrevisionlevel            .
+*            CONDENSE es_mara-isactiveentity                   .
+*            CONDENSE es_mara-lastchangedatetime               .
+*            CONDENSE es_mara-lastchangetime                   .
+*            CONDENSE es_mara-dangerousgoodsindprofile         .
+*            CONDENSE es_mara-productuuid                      .
+*            CONDENSE es_mara-prodsupchnmgmtuuid22             .
+*            CONDENSE es_mara-productdocumentchangenumber      .
+*            CONDENSE es_mara-productdocumentpagecount         .
+*            CONDENSE es_mara-productdocumentpagenumber        .
+*            CONDENSE es_mara-owninventorymanagedproduct       .
+*            CONDENSE es_mara-documentiscreatedbycad           .
+*            CONDENSE es_mara-productionorinspectionmemotxt    .
+*            CONDENSE es_mara-productionmemopageformat         .
+*            CONDENSE es_mara-globaltradeitemnumbervariant     .
+*            CONDENSE es_mara-productishighlyviscous           .
+*            CONDENSE es_mara-transportisinbulk                .
+*            CONDENSE es_mara-prodallocdetnprocedure           .
+*            CONDENSE es_mara-prodeffctyparamvalsareassigned   .
+*            CONDENSE es_mara-prodisenvironmentallyrelevant    .
+*            CONDENSE es_mara-laboratoryordesignoffice         .
+*            CONDENSE es_mara-packagingmaterialgroup           .
+*            CONDENSE es_mara-productislocked                  .
+*            CONDENSE es_mara-discountinkindeligibility        .
+*            CONDENSE es_mara-smartformname                    .
+*            CONDENSE es_mara-packingreferenceproduct          .
+*            CONDENSE es_mara-basicmaterial                    .
+*            CONDENSE es_mara-productdocumentnumber            .
+*            CONDENSE es_mara-productdocumentversion           .
+*            CONDENSE es_mara-productdocumenttype              .
+*            CONDENSE es_mara-productdocumentpageformat        .
+*            CONDENSE es_mara-productconfiguration             .
+*            CONDENSE es_mara-segmentationstrategy             .
+*            CONDENSE es_mara-segmentationisrelevant           .
+*            CONDENSE es_mara-productcompositionisrelevant     .
+*            CONDENSE es_mara-ischemicalcompliancerelevant     .
+*            CONDENSE es_mara-manufacturerbookpartnumber       .
+*            CONDENSE es_mara-logisticalproductcategory        .
+*            CONDENSE es_mara-salesproduct                     .
+*            CONDENSE es_mara-prodcharc1internalnumber         .
+*            CONDENSE es_mara-prodcharc2internalnumber         .
+*            CONDENSE es_mara-prodcharc3internalnumber         .
+*            CONDENSE es_mara-productcharacteristic1           .
+*            CONDENSE es_mara-productcharacteristic2           .
+*            CONDENSE es_mara-productcharacteristic3           .
+*            CONDENSE es_mara-maintenancestatus                .
+*            CONDENSE es_mara-fashionprodinformationfield1     .
+*            CONDENSE es_mara-fashionprodinformationfield2     .
+*            CONDENSE es_mara-fashionprodinformationfield3     .
 
             APPEND es_mara TO es_response_mara-items.
 
@@ -3172,146 +3455,183 @@ DATA:
         ENDIF.
 
       WHEN 'MARC'  OR 'marc' .
-        SELECT * FROM i_productplantbasic WITH PRIVILEGED ACCESS
+        SELECT a~*,
+               b~ProductProductionQuantityUnit,
+               b~ProductionSchedulingProfile,
+               c~*,
+               d~LoadingGroup,
+               e~IsAutoPurOrdCreationAllowed,
+               e~IsSourceListRequired,
+               f~CostingLotSize,
+               f~ProductIsCostingRelevant
+
+        FROM i_productplantbasic WITH PRIVILEGED ACCESS as a
+        LEFT JOIN I_ProductWorkScheduling WITH PRIVILEGED ACCESS as b
+          on a~Product = b~product
+         and a~plant = b~plant
+        LEFT JOIN I_PRODUCTPLANTSUPPLYPLANNING WITH PRIVILEGED ACCESS as c
+          on a~product = c~product
+         and a~plant = c~Plant
+        LEFT JOIN I_Productplantsales WITH PRIVILEGED ACCESS as d
+          on a~product = d~product
+         and a~plant = d~Plant
+        LEFT JOIN I_Productplantprocurement WITH PRIVILEGED ACCESS as e
+          on a~product = e~product
+         and a~plant = e~Plant
+        LEFT JOIN I_PRODUCTPLANTCOSTING WITH PRIVILEGED ACCESS as f
+          on a~product = f~product
+         and a~plant = f~Plant
+
         WHERE (lv_where)
         INTO TABLE @DATA(lt_marc).
 
         IF lt_marc IS NOT INITIAL.
           LOOP  AT lt_marc INTO DATA(ls_marc).
           lv_count = lv_count + 1.
-            es_marc-product                          = ls_marc-product                          .
-            es_marc-plant                            = ls_marc-plant                            .
-            es_marc-purchasinggroup                  = ls_marc-purchasinggroup                  .
-            es_marc-countryoforigin                  = ls_marc-countryoforigin                  .
-            es_marc-regionoforigin                   = ls_marc-regionoforigin                   .
-            es_marc-productioninvtrymanagedloc       = ls_marc-productioninvtrymanagedloc       .
-            es_marc-profilecode                      = ls_marc-profilecode                      .
-            es_marc-profilevaliditystartdate         = ls_marc-profilevaliditystartdate         .
-            es_marc-availabilitychecktype            = ls_marc-availabilitychecktype            .
-            es_marc-fiscalyearvariant                = ls_marc-fiscalyearvariant                .
-            es_marc-periodtype                       = ls_marc-periodtype                       .
-            es_marc-profitcenter                     = ls_marc-profitcenter                     .
-            es_marc-goodsreceiptduration             = ls_marc-goodsreceiptduration             .
-            es_marc-maintenancestatusname            = ls_marc-maintenancestatusname            .
-            es_marc-ismarkedfordeletion              = ls_marc-ismarkedfordeletion              .
-            es_marc-mrptype                          = ls_marc-mrptype                          .
-            es_marc-mrpresponsible                   = ls_marc-mrpresponsible                   .
-            es_marc-abcindicator                     = ls_marc-abcindicator                     .
-            es_marc-minimumlotsizequantity           = ls_marc-minimumlotsizequantity           .
-            es_marc-maximumlotsizequantity           = ls_marc-maximumlotsizequantity           .
-            es_marc-fixedlotsizequantity             = ls_marc-fixedlotsizequantity             .
-            es_marc-consumptiontaxctrlcode           = ls_marc-consumptiontaxctrlcode           .
-            es_marc-iscoproduct                      = ls_marc-iscoproduct                      .
-            es_marc-configurableproduct              = ls_marc-configurableproduct              .
-            es_marc-stockdeterminationgroup          = ls_marc-stockdeterminationgroup          .
-            es_marc-hasposttoinspectionstock         = ls_marc-hasposttoinspectionstock         .
-            es_marc-isbatchmanagementrequired        = ls_marc-isbatchmanagementrequired        .
-            es_marc-serialnumberprofile              = ls_marc-serialnumberprofile              .
-            es_marc-isnegativestockallowed           = ls_marc-isnegativestockallowed           .
-            es_marc-hasconsignmentctrl               = ls_marc-hasconsignmentctrl               .
-            es_marc-ispurgacrosspurggroup            = ls_marc-ispurgacrosspurggroup            .
-            es_marc-isinternalbatchmanaged           = ls_marc-isinternalbatchmanaged           .
-            es_marc-productcfopcategory              = ls_marc-productcfopcategory              .
-            es_marc-productisexcisetaxrelevant       = ls_marc-productisexcisetaxrelevant       .
-            es_marc-underdelivtolerancelimit         = ls_marc-underdelivtolerancelimit         .
-            es_marc-overdelivtolerancelimit          = ls_marc-overdelivtolerancelimit          .
-            es_marc-procurementtype                  = ls_marc-procurementtype                  .
-            es_marc-specialprocurementtype           = ls_marc-specialprocurementtype           .
-            es_marc-productionschedulingprofile      = ls_marc-productionschedulingprofile      .
-            es_marc-productionsupervisor             = ls_marc-productionsupervisor             .
-            es_marc-safetystockquantity              = ls_marc-safetystockquantity              .
-            es_marc-goodsissueunit                   = ls_marc-goodsissueunit                   .
-            es_marc-sourceofsupplycategory           = ls_marc-sourceofsupplycategory           .
-            es_marc-consumptionreferenceproduct      = ls_marc-consumptionreferenceproduct      .
-            es_marc-consumptionreferenceplant        = ls_marc-consumptionreferenceplant        .
-            es_marc-consumptionrefusageenddate       = ls_marc-consumptionrefusageenddate       .
-            es_marc-consumptionqtymultiplier         = ls_marc-consumptionqtymultiplier         .
-            es_marc-productunitgroup                 = ls_marc-productunitgroup                 .
-            es_marc-distrcntrdistributionprofile     = ls_marc-distrcntrdistributionprofile     .
-            es_marc-consignmentcontrol               = ls_marc-consignmentcontrol               .
-            es_marc-goodissueprocessingdays          = ls_marc-goodissueprocessingdays          .
-            es_marc-planneddeliverydurationindays    = ls_marc-planneddeliverydurationindays    .
-            es_marc-productiscriticalprt             = ls_marc-productiscriticalprt             .
-            es_marc-productlogisticshandlinggroup    = ls_marc-productlogisticshandlinggroup    .
-            es_marc-materialfreightgroup             = ls_marc-materialfreightgroup             .
-            es_marc-originalbatchreferencematerial   = ls_marc-originalbatchreferencematerial   .
-            es_marc-origlbatchmanagementisrequired   = ls_marc-origlbatchmanagementisrequired   .
-            es_marc-productconfiguration             = ls_marc-productconfiguration             .
-            es_marc-productmincontroltemperature     = ls_marc-productmincontroltemperature     .
-            es_marc-productmaxcontroltemperature     = ls_marc-productmaxcontroltemperature     .
-            es_marc-productcontroltemperatureunit    = ls_marc-productcontroltemperatureunit    .
-            es_marc-valuationcategory                = ls_marc-valuationcategory                .
-            es_marc-baseunit                         = ls_marc-baseunit                         .
-            es_marc-itemuniqueidentifierisrelevant   = ls_marc-itemuniqueidentifierisrelevant   .
-            es_marc-itemuniqueidentifiertype         = ls_marc-itemuniqueidentifiertype         .
-            es_marc-extallocofitmunqidtisrelevant    = ls_marc-extallocofitmunqidtisrelevant    .
+          MOVE-CORRESPONDING ls_marc-c to es_marc.
+          MOVE-CORRESPONDING ls_marc-a to es_marc.
 
-            CONDENSE es_marc-product                          .
-            CONDENSE es_marc-plant                            .
-            CONDENSE es_marc-purchasinggroup                  .
-            CONDENSE es_marc-countryoforigin                  .
-            CONDENSE es_marc-regionoforigin                   .
-            CONDENSE es_marc-productioninvtrymanagedloc       .
-            CONDENSE es_marc-profilecode                      .
-            CONDENSE es_marc-profilevaliditystartdate         .
-            CONDENSE es_marc-availabilitychecktype            .
-            CONDENSE es_marc-fiscalyearvariant                .
-            CONDENSE es_marc-periodtype                       .
-            CONDENSE es_marc-profitcenter                     .
-            CONDENSE es_marc-goodsreceiptduration             .
-            CONDENSE es_marc-maintenancestatusname            .
-            CONDENSE es_marc-ismarkedfordeletion              .
-            CONDENSE es_marc-mrptype                          .
-            CONDENSE es_marc-mrpresponsible                   .
-            CONDENSE es_marc-abcindicator                     .
-            CONDENSE es_marc-minimumlotsizequantity           .
-            CONDENSE es_marc-maximumlotsizequantity           .
-            CONDENSE es_marc-fixedlotsizequantity             .
-            CONDENSE es_marc-consumptiontaxctrlcode           .
-            CONDENSE es_marc-iscoproduct                      .
-            CONDENSE es_marc-configurableproduct              .
-            CONDENSE es_marc-stockdeterminationgroup          .
-            CONDENSE es_marc-hasposttoinspectionstock         .
-            CONDENSE es_marc-isbatchmanagementrequired        .
-            CONDENSE es_marc-serialnumberprofile              .
-            CONDENSE es_marc-isnegativestockallowed           .
-            CONDENSE es_marc-hasconsignmentctrl               .
-            CONDENSE es_marc-ispurgacrosspurggroup            .
-            CONDENSE es_marc-isinternalbatchmanaged           .
-            CONDENSE es_marc-productcfopcategory              .
-            CONDENSE es_marc-productisexcisetaxrelevant       .
-            CONDENSE es_marc-underdelivtolerancelimit         .
-            CONDENSE es_marc-overdelivtolerancelimit          .
-            CONDENSE es_marc-procurementtype                  .
-            CONDENSE es_marc-specialprocurementtype           .
-            CONDENSE es_marc-productionschedulingprofile      .
-            CONDENSE es_marc-productionsupervisor             .
-            CONDENSE es_marc-safetystockquantity              .
-            CONDENSE es_marc-goodsissueunit                   .
-            CONDENSE es_marc-sourceofsupplycategory           .
-            CONDENSE es_marc-consumptionreferenceproduct      .
-            CONDENSE es_marc-consumptionreferenceplant        .
-            CONDENSE es_marc-consumptionrefusageenddate       .
-            CONDENSE es_marc-consumptionqtymultiplier         .
-            CONDENSE es_marc-productunitgroup                 .
-            CONDENSE es_marc-distrcntrdistributionprofile     .
-            CONDENSE es_marc-consignmentcontrol               .
-            CONDENSE es_marc-goodissueprocessingdays          .
-            CONDENSE es_marc-planneddeliverydurationindays    .
-            CONDENSE es_marc-productiscriticalprt             .
-            CONDENSE es_marc-productlogisticshandlinggroup    .
-            CONDENSE es_marc-materialfreightgroup             .
-            CONDENSE es_marc-originalbatchreferencematerial   .
-            CONDENSE es_marc-origlbatchmanagementisrequired   .
-            CONDENSE es_marc-productconfiguration             .
-            CONDENSE es_marc-productmincontroltemperature     .
-            CONDENSE es_marc-productmaxcontroltemperature     .
-            CONDENSE es_marc-productcontroltemperatureunit    .
-            CONDENSE es_marc-valuationcategory                .
-            CONDENSE es_marc-baseunit                         .
-            CONDENSE es_marc-itemuniqueidentifierisrelevant   .
-            CONDENSE es_marc-itemuniqueidentifiertype         .
-            CONDENSE es_marc-extallocofitmunqidtisrelevant    .
+*          es_marc-ProductProductionQuantityUnit = ls_marc-ProductProductionQuantityUnit.
+*          es_marc-ProductionSchedulingProfile = ls_marc-ProductionSchedulingProfile.
+*          es_marc-LoadingGroup = ls_marc-LoadingGroup.
+*          es_marc-IsAutoPurOrdCreationAllowed = ls_marc-IsAutoPurOrdCreationAllowed.
+*          es_marc-IsSourceListRequired = ls_marc-IsSourceListRequired.
+*          es_marc-CostingLotSize = ls_marc-CostingLotSize.
+*          es_marc-ProductIsCostingRelevant = ls_marc-ProductIsCostingRelevant.
+
+*            es_marc-product                          = ls_marc-product                          .
+*            es_marc-plant                            = ls_marc-plant                            .
+*            es_marc-purchasinggroup                  = ls_marc-purchasinggroup                  .
+*            es_marc-countryoforigin                  = ls_marc-countryoforigin                  .
+*            es_marc-regionoforigin                   = ls_marc-regionoforigin                   .
+*            es_marc-productioninvtrymanagedloc       = ls_marc-productioninvtrymanagedloc       .
+*            es_marc-profilecode                      = ls_marc-profilecode                      .
+*            es_marc-profilevaliditystartdate         = ls_marc-profilevaliditystartdate         .
+*            es_marc-availabilitychecktype            = ls_marc-availabilitychecktype            .
+*            es_marc-fiscalyearvariant                = ls_marc-fiscalyearvariant                .
+*            es_marc-periodtype                       = ls_marc-periodtype                       .
+*            es_marc-profitcenter                     = ls_marc-profitcenter                     .
+*            es_marc-goodsreceiptduration             = ls_marc-goodsreceiptduration             .
+*            es_marc-maintenancestatusname            = ls_marc-maintenancestatusname            .
+*            es_marc-ismarkedfordeletion              = ls_marc-ismarkedfordeletion              .
+*            es_marc-mrptype                          = ls_marc-mrptype                          .
+*            es_marc-mrpresponsible                   = ls_marc-mrpresponsible                   .
+*            es_marc-abcindicator                     = ls_marc-abcindicator                     .
+*            es_marc-minimumlotsizequantity           = ls_marc-minimumlotsizequantity           .
+*            es_marc-maximumlotsizequantity           = ls_marc-maximumlotsizequantity           .
+*            es_marc-fixedlotsizequantity             = ls_marc-fixedlotsizequantity             .
+*            es_marc-consumptiontaxctrlcode           = ls_marc-consumptiontaxctrlcode           .
+*            es_marc-iscoproduct                      = ls_marc-iscoproduct                      .
+*            es_marc-configurableproduct              = ls_marc-configurableproduct              .
+*            es_marc-stockdeterminationgroup          = ls_marc-stockdeterminationgroup          .
+*            es_marc-hasposttoinspectionstock         = ls_marc-hasposttoinspectionstock         .
+*            es_marc-isbatchmanagementrequired        = ls_marc-isbatchmanagementrequired        .
+*            es_marc-serialnumberprofile              = ls_marc-serialnumberprofile              .
+*            es_marc-isnegativestockallowed           = ls_marc-isnegativestockallowed           .
+*            es_marc-hasconsignmentctrl               = ls_marc-hasconsignmentctrl               .
+*            es_marc-ispurgacrosspurggroup            = ls_marc-ispurgacrosspurggroup            .
+*            es_marc-isinternalbatchmanaged           = ls_marc-isinternalbatchmanaged           .
+*            es_marc-productcfopcategory              = ls_marc-productcfopcategory              .
+*            es_marc-productisexcisetaxrelevant       = ls_marc-productisexcisetaxrelevant       .
+*            es_marc-underdelivtolerancelimit         = ls_marc-underdelivtolerancelimit         .
+*            es_marc-overdelivtolerancelimit          = ls_marc-overdelivtolerancelimit          .
+*            es_marc-procurementtype                  = ls_marc-procurementtype                  .
+*            es_marc-specialprocurementtype           = ls_marc-specialprocurementtype           .
+*            es_marc-productionschedulingprofile      = ls_marc-productionschedulingprofile      .
+*            es_marc-productionsupervisor             = ls_marc-productionsupervisor             .
+*            es_marc-safetystockquantity              = ls_marc-safetystockquantity              .
+*            es_marc-goodsissueunit                   = ls_marc-goodsissueunit                   .
+*            es_marc-sourceofsupplycategory           = ls_marc-sourceofsupplycategory           .
+*            es_marc-consumptionreferenceproduct      = ls_marc-consumptionreferenceproduct      .
+*            es_marc-consumptionreferenceplant        = ls_marc-consumptionreferenceplant        .
+*            es_marc-consumptionrefusageenddate       = ls_marc-consumptionrefusageenddate       .
+*            es_marc-consumptionqtymultiplier         = ls_marc-consumptionqtymultiplier         .
+*            es_marc-productunitgroup                 = ls_marc-productunitgroup                 .
+*            es_marc-distrcntrdistributionprofile     = ls_marc-distrcntrdistributionprofile     .
+*            es_marc-consignmentcontrol               = ls_marc-consignmentcontrol               .
+*            es_marc-goodissueprocessingdays          = ls_marc-goodissueprocessingdays          .
+*            es_marc-planneddeliverydurationindays    = ls_marc-planneddeliverydurationindays    .
+*            es_marc-productiscriticalprt             = ls_marc-productiscriticalprt             .
+*            es_marc-productlogisticshandlinggroup    = ls_marc-productlogisticshandlinggroup    .
+*            es_marc-materialfreightgroup             = ls_marc-materialfreightgroup             .
+*            es_marc-originalbatchreferencematerial   = ls_marc-originalbatchreferencematerial   .
+*            es_marc-origlbatchmanagementisrequired   = ls_marc-origlbatchmanagementisrequired   .
+*            es_marc-productconfiguration             = ls_marc-productconfiguration             .
+*            es_marc-productmincontroltemperature     = ls_marc-productmincontroltemperature     .
+*            es_marc-productmaxcontroltemperature     = ls_marc-productmaxcontroltemperature     .
+*            es_marc-productcontroltemperatureunit    = ls_marc-productcontroltemperatureunit    .
+*            es_marc-valuationcategory                = ls_marc-valuationcategory                .
+*            es_marc-baseunit                         = ls_marc-baseunit                         .
+*            es_marc-itemuniqueidentifierisrelevant   = ls_marc-itemuniqueidentifierisrelevant   .
+*            es_marc-itemuniqueidentifiertype         = ls_marc-itemuniqueidentifiertype         .
+*            es_marc-extallocofitmunqidtisrelevant    = ls_marc-extallocofitmunqidtisrelevant    .
+*
+*            CONDENSE es_marc-product                          .
+*            CONDENSE es_marc-plant                            .
+*            CONDENSE es_marc-purchasinggroup                  .
+*            CONDENSE es_marc-countryoforigin                  .
+*            CONDENSE es_marc-regionoforigin                   .
+*            CONDENSE es_marc-productioninvtrymanagedloc       .
+*            CONDENSE es_marc-profilecode                      .
+*            CONDENSE es_marc-profilevaliditystartdate         .
+*            CONDENSE es_marc-availabilitychecktype            .
+*            CONDENSE es_marc-fiscalyearvariant                .
+*            CONDENSE es_marc-periodtype                       .
+*            CONDENSE es_marc-profitcenter                     .
+*            CONDENSE es_marc-goodsreceiptduration             .
+*            CONDENSE es_marc-maintenancestatusname            .
+*            CONDENSE es_marc-ismarkedfordeletion              .
+*            CONDENSE es_marc-mrptype                          .
+*            CONDENSE es_marc-mrpresponsible                   .
+*            CONDENSE es_marc-abcindicator                     .
+*            CONDENSE es_marc-minimumlotsizequantity           .
+*            CONDENSE es_marc-maximumlotsizequantity           .
+*            CONDENSE es_marc-fixedlotsizequantity             .
+*            CONDENSE es_marc-consumptiontaxctrlcode           .
+*            CONDENSE es_marc-iscoproduct                      .
+*            CONDENSE es_marc-configurableproduct              .
+*            CONDENSE es_marc-stockdeterminationgroup          .
+*            CONDENSE es_marc-hasposttoinspectionstock         .
+*            CONDENSE es_marc-isbatchmanagementrequired        .
+*            CONDENSE es_marc-serialnumberprofile              .
+*            CONDENSE es_marc-isnegativestockallowed           .
+*            CONDENSE es_marc-hasconsignmentctrl               .
+*            CONDENSE es_marc-ispurgacrosspurggroup            .
+*            CONDENSE es_marc-isinternalbatchmanaged           .
+*            CONDENSE es_marc-productcfopcategory              .
+*            CONDENSE es_marc-productisexcisetaxrelevant       .
+*            CONDENSE es_marc-underdelivtolerancelimit         .
+*            CONDENSE es_marc-overdelivtolerancelimit          .
+*            CONDENSE es_marc-procurementtype                  .
+*            CONDENSE es_marc-specialprocurementtype           .
+*            CONDENSE es_marc-productionschedulingprofile      .
+*            CONDENSE es_marc-productionsupervisor             .
+*            CONDENSE es_marc-safetystockquantity              .
+*            CONDENSE es_marc-goodsissueunit                   .
+*            CONDENSE es_marc-sourceofsupplycategory           .
+*            CONDENSE es_marc-consumptionreferenceproduct      .
+*            CONDENSE es_marc-consumptionreferenceplant        .
+*            CONDENSE es_marc-consumptionrefusageenddate       .
+*            CONDENSE es_marc-consumptionqtymultiplier         .
+*            CONDENSE es_marc-productunitgroup                 .
+*            CONDENSE es_marc-distrcntrdistributionprofile     .
+*            CONDENSE es_marc-consignmentcontrol               .
+*            CONDENSE es_marc-goodissueprocessingdays          .
+*            CONDENSE es_marc-planneddeliverydurationindays    .
+*            CONDENSE es_marc-productiscriticalprt             .
+*            CONDENSE es_marc-productlogisticshandlinggroup    .
+*            CONDENSE es_marc-materialfreightgroup             .
+*            CONDENSE es_marc-originalbatchreferencematerial   .
+*            CONDENSE es_marc-origlbatchmanagementisrequired   .
+*            CONDENSE es_marc-productconfiguration             .
+*            CONDENSE es_marc-productmincontroltemperature     .
+*            CONDENSE es_marc-productmaxcontroltemperature     .
+*            CONDENSE es_marc-productcontroltemperatureunit    .
+*            CONDENSE es_marc-valuationcategory                .
+*            CONDENSE es_marc-baseunit                         .
+*            CONDENSE es_marc-itemuniqueidentifierisrelevant   .
+*            CONDENSE es_marc-itemuniqueidentifiertype         .
+*            CONDENSE es_marc-extallocofitmunqidtisrelevant    .
 
             APPEND es_marc TO es_response_marc-items.
 
@@ -3461,157 +3781,167 @@ DATA:
         ENDIF.
 
       WHEN 'AFKO'  OR 'afko' .
-        SELECT * FROM i_manufacturingorder WITH PRIVILEGED ACCESS
+        SELECT a~*,
+               b~*
+          FROM i_manufacturingorder WITH PRIVILEGED ACCESS as a
+          LEFT JOIN I_BillOfMaterialHeaderDEX_2 WITH PRIVILEGED ACCESS as b
+            on a~BillOfMaterialCategory = b~BillOfMaterialCategory
+           and a~BillOfMaterial = b~BillOfMaterial
+           and a~BillOfMaterialVariant = b~BillOfMaterialVariant
+           and a~BillOfMaterialVariantUsage = b~BillOfMaterialVariantUsage
         WHERE (lv_where)
         INTO TABLE @DATA(lt_afko).
 
         IF lt_afko IS NOT INITIAL.
           LOOP  AT lt_afko INTO DATA(ls_afko).
+
           lv_count = lv_count + 1.
-            es_afko-manufacturingorder                   = ls_afko-manufacturingorder                 .
-            es_afko-manufacturingorderitem               = ls_afko-manufacturingorderitem             .
-            es_afko-manufacturingordercategory           = ls_afko-manufacturingordercategory         .
-            es_afko-manufacturingordertype               = ls_afko-manufacturingordertype             .
-            es_afko-manufacturingordertext               = ls_afko-manufacturingordertext             .
-            es_afko-manufacturingorderhaslongtext        = ls_afko-manufacturingorderhaslongtext      .
-            es_afko-longtextlanguagecode                 = ls_afko-longtextlanguagecode               .
-            es_afko-manufacturingorderimportance         = ls_afko-manufacturingorderimportance       .
-            es_afko-ismarkedfordeletion                  = ls_afko-ismarkedfordeletion                .
-            es_afko-iscompletelydelivered                = ls_afko-iscompletelydelivered              .
-            es_afko-mfgorderhasmultipleitems             = ls_afko-mfgorderhasmultipleitems           .
-            es_afko-mfgorderispartofcollvorder           = ls_afko-mfgorderispartofcollvorder         .
-*            es_afko-mfgorderhierarchylevel               = ls_afko-mfgorderhierarchylevel             .
-            es_afko-mfgorderhierarchylevelvalue          = ls_afko-mfgorderhierarchylevelvalue        .
-            es_afko-mfgorderhierarchypathvalue           = ls_afko-mfgorderhierarchypathvalue         .
-            es_afko-orderisnotcostedautomatically        = ls_afko-orderisnotcostedautomatically      .
-            es_afko-ordisnotschedldautomatically         = ls_afko-ordisnotschedldautomatically       .
-            es_afko-prodnprocgisflexible                 = ls_afko-prodnprocgisflexible               .
-            es_afko-creationdate                         = ls_afko-creationdate                       .
-            es_afko-creationtime                         = ls_afko-creationtime                       .
-            es_afko-createdbyuser                        = ls_afko-createdbyuser                      .
-            es_afko-lastchangedate                       = ls_afko-lastchangedate                     .
-            es_afko-lastchangetime                       = ls_afko-lastchangetime                     .
-            es_afko-lastchangedbyuser                    = ls_afko-lastchangedbyuser                  .
-            es_afko-material                             = ls_afko-material                           .
-            es_afko-product                              = ls_afko-product                            .
-            es_afko-storagelocation                      = ls_afko-storagelocation                    .
-            es_afko-batch                                = ls_afko-batch                              .
-            es_afko-goodsrecipientname                   = ls_afko-goodsrecipientname                 .
-            es_afko-unloadingpointname                   = ls_afko-unloadingpointname                 .
-            es_afko-inventoryusabilitycode               = ls_afko-inventoryusabilitycode             .
-            es_afko-materialgoodsreceiptduration         = ls_afko-materialgoodsreceiptduration       .
-            es_afko-quantitydistributionkey              = ls_afko-quantitydistributionkey            .
-            es_afko-stocksegment                         = ls_afko-stocksegment                       .
-            es_afko-mfgorderinternalid                   = ls_afko-mfgorderinternalid                 .
-            es_afko-referenceorder                       = ls_afko-referenceorder                     .
-            es_afko-leadingorder                         = ls_afko-leadingorder                       .
-            es_afko-superiororder                        = ls_afko-superiororder                      .
-            es_afko-currency                             = ls_afko-currency                           .
-            es_afko-productionplant                      = ls_afko-productionplant                    .
-            es_afko-planningplant                        = ls_afko-planningplant                      .
-            es_afko-mrparea                              = ls_afko-mrparea                            .
-            es_afko-mrpcontroller                        = ls_afko-mrpcontroller                      .
-            es_afko-productionsupervisor                 = ls_afko-productionsupervisor               .
-            es_afko-productionschedulingprofile          = ls_afko-productionschedulingprofile        .
-            es_afko-responsibleplannergroup              = ls_afko-responsibleplannergroup            .
-            es_afko-productionversion                    = ls_afko-productionversion                  .
-            es_afko-salesorder                           = ls_afko-salesorder                         .
-            es_afko-salesorderitem                       = ls_afko-salesorderitem                     .
-*            es_afko-wbselementinternalid                 = ls_afko-wbselementinternalid               .
-            es_afko-wbselementinternalid_2               = ls_afko-wbselementinternalid_2             .
-            es_afko-reservation                          = ls_afko-reservation                        .
-            es_afko-settlementreservation                = ls_afko-settlementreservation              .
-            es_afko-mfgorderconfirmation                 = ls_afko-mfgorderconfirmation               .
-            es_afko-numberofmfgorderconfirmations        = ls_afko-numberofmfgorderconfirmations      .
-            es_afko-plannedorder                         = ls_afko-plannedorder                       .
-            es_afko-capacityrequirement                  = ls_afko-capacityrequirement                .
-            es_afko-inspectionlot                        = ls_afko-inspectionlot                      .
-            es_afko-changenumber                         = ls_afko-changenumber                       .
-*            es_afko-materialrevisionlevel                = ls_afko-materialrevisionlevel              .
-            es_afko-materialrevisionlevel_2              = ls_afko-materialrevisionlevel_2            .
-            es_afko-basicschedulingtype                  = ls_afko-basicschedulingtype                .
-            es_afko-forecastschedulingtype               = ls_afko-forecastschedulingtype             .
-            es_afko-objectinternalid                     = ls_afko-objectinternalid                   .
-            es_afko-productconfiguration                 = ls_afko-productconfiguration               .
-            es_afko-effectivityparametervariant          = ls_afko-effectivityparametervariant        .
-            es_afko-conditionapplication                 = ls_afko-conditionapplication               .
-            es_afko-capacityactiveversion                = ls_afko-capacityactiveversion              .
-            es_afko-capacityrqmthasnottobecreated        = ls_afko-capacityrqmthasnottobecreated      .
-            es_afko-ordersequencenumber                  = ls_afko-ordersequencenumber                .
-            es_afko-mfgordersplitstatus                  = ls_afko-mfgordersplitstatus                .
-            es_afko-billofoperationsmaterial             = ls_afko-billofoperationsmaterial           .
-            es_afko-billofoperationstype                 = ls_afko-billofoperationstype               .
-*            es_afko-billofoperations                     = ls_afko-billofoperations                   .
-            es_afko-billofoperationsgroup                = ls_afko-billofoperationsgroup              .
-            es_afko-billofoperationsvariant              = ls_afko-billofoperationsvariant            .
-            es_afko-boointernalversioncounter            = ls_afko-boointernalversioncounter          .
-            es_afko-billofoperationsapplication          = ls_afko-billofoperationsapplication        .
-            es_afko-billofoperationsusage                = ls_afko-billofoperationsusage              .
-            es_afko-billofoperationsversion              = ls_afko-billofoperationsversion            .
-            es_afko-booexplosiondate                     = ls_afko-booexplosiondate                   .
-            es_afko-boovaliditystartdate                 = ls_afko-boovaliditystartdate               .
-            es_afko-billofmaterialcategory               = ls_afko-billofmaterialcategory             .
-*            es_afko-billofmaterial                       = ls_afko-billofmaterial                     .
-            es_afko-billofmaterialinternalid             = ls_afko-billofmaterialinternalid           .
-            es_afko-billofmaterialvariant                = ls_afko-billofmaterialvariant              .
-            es_afko-billofmaterialvariantusage           = ls_afko-billofmaterialvariantusage         .
-            es_afko-billofmaterialversion                = ls_afko-billofmaterialversion              .
-            es_afko-bomexplosiondate                     = ls_afko-bomexplosiondate                   .
-            es_afko-bomvaliditystartdate                 = ls_afko-bomvaliditystartdate               .
-            es_afko-businessarea                         = ls_afko-businessarea                       .
-            es_afko-companycode                          = ls_afko-companycode                        .
-            es_afko-controllingarea                      = ls_afko-controllingarea                    .
-            es_afko-profitcenter                         = ls_afko-profitcenter                       .
-            es_afko-costcenter                           = ls_afko-costcenter                         .
-            es_afko-responsiblecostcenter                = ls_afko-responsiblecostcenter              .
-            es_afko-costelement                          = ls_afko-costelement                        .
-            es_afko-costingsheet                         = ls_afko-costingsheet                       .
-            es_afko-glaccount                            = ls_afko-glaccount                          .
-            es_afko-productcostcollector                 = ls_afko-productcostcollector               .
-            es_afko-actualcostscostingvariant            = ls_afko-actualcostscostingvariant          .
-            es_afko-plannedcostscostingvariant           = ls_afko-plannedcostscostingvariant         .
-            es_afko-controllingobjectclass               = ls_afko-controllingobjectclass             .
-            es_afko-functionalarea                       = ls_afko-functionalarea                     .
-*            es_afko-orderiseventbasedposting             = ls_afko-orderiseventbasedposting           .
-            es_afko-eventbasedpostingmethod              = ls_afko-eventbasedpostingmethod            .
-            es_afko-eventbasedprocessingkey              = ls_afko-eventbasedprocessingkey            .
-            es_afko-schedulingfloatprofile               = ls_afko-schedulingfloatprofile             .
-            es_afko-floatbeforeproductioninwrkdays       = ls_afko-floatbeforeproductioninwrkdays     .
-            es_afko-floatafterproductioninworkdays       = ls_afko-floatafterproductioninworkdays     .
-            es_afko-releaseperiodinworkdays              = ls_afko-releaseperiodinworkdays            .
-            es_afko-changetoscheduleddatesismade         = ls_afko-changetoscheduleddatesismade       .
-            es_afko-mfgorderplannedstartdate             = ls_afko-mfgorderplannedstartdate           .
-            es_afko-mfgorderplannedstarttime             = ls_afko-mfgorderplannedstarttime           .
-            es_afko-mfgorderplannedenddate               = ls_afko-mfgorderplannedenddate             .
-            es_afko-mfgorderplannedendtime               = ls_afko-mfgorderplannedendtime             .
-            es_afko-mfgorderplannedreleasedate           = ls_afko-mfgorderplannedreleasedate         .
-            es_afko-mfgorderscheduledstartdate           = ls_afko-mfgorderscheduledstartdate         .
-            es_afko-mfgorderscheduledstarttime           = ls_afko-mfgorderscheduledstarttime         .
-            es_afko-mfgorderscheduledenddate             = ls_afko-mfgorderscheduledenddate           .
-            es_afko-mfgorderscheduledendtime             = ls_afko-mfgorderscheduledendtime           .
-            es_afko-mfgorderscheduledreleasedate         = ls_afko-mfgorderscheduledreleasedate       .
-            es_afko-mfgorderactualstartdate              = ls_afko-mfgorderactualstartdate            .
-            es_afko-mfgorderactualstarttime              = ls_afko-mfgorderactualstarttime            .
-            es_afko-mfgorderconfirmedenddate             = ls_afko-mfgorderconfirmedenddate           .
-            es_afko-mfgorderconfirmedendtime             = ls_afko-mfgorderconfirmedendtime           .
-*            es_afko-mfgorderactualenddate                = ls_afko-mfgorderactualenddate              .
-            es_afko-mfgorderactualreleasedate            = ls_afko-mfgorderactualreleasedate          .
-            es_afko-mfgordertotalcommitmentdate          = ls_afko-mfgordertotalcommitmentdate        .
-            es_afko-mfgorderactualcompletiondate         = ls_afko-mfgorderactualcompletiondate       .
-            es_afko-mfgorderitemactualdeliverydate       = ls_afko-mfgorderitemactualdeliverydate     .
-            es_afko-productionunit                       = ls_afko-productionunit                     .
-            es_afko-mfgorderplannedtotalqty              = ls_afko-mfgorderplannedtotalqty            .
-            es_afko-mfgorderplannedscrapqty              = ls_afko-mfgorderplannedscrapqty            .
-            es_afko-mfgorderconfirmedyieldqty            = ls_afko-mfgorderconfirmedyieldqty          .
-            es_afko-mfgorderconfirmedscrapqty            = ls_afko-mfgorderconfirmedscrapqty          .
-            es_afko-mfgorderconfirmedreworkqty           = ls_afko-mfgorderconfirmedreworkqty         .
-            es_afko-expecteddeviationquantity            = ls_afko-expecteddeviationquantity          .
-            es_afko-actualdeliveredquantity              = ls_afko-actualdeliveredquantity            .
-            es_afko-masterproductionorder                = ls_afko-masterproductionorder              .
-            es_afko-productseasonyear                    = ls_afko-productseasonyear                  .
-            es_afko-productseason                        = ls_afko-productseason                      .
-            es_afko-productcollection                    = ls_afko-productcollection                  .
-            es_afko-producttheme                         = ls_afko-producttheme                       .
+          MOVE-CORRESPONDING ls_afko-a to es_afko.
+          MOVE-CORRESPONDING ls_afko-b to es_afko.
+*            es_afko-manufacturingorder                   = ls_afko-manufacturingorder                 .
+*            es_afko-manufacturingorderitem               = ls_afko-manufacturingorderitem             .
+*            es_afko-manufacturingordercategory           = ls_afko-manufacturingordercategory         .
+*            es_afko-manufacturingordertype               = ls_afko-manufacturingordertype             .
+*            es_afko-manufacturingordertext               = ls_afko-manufacturingordertext             .
+*            es_afko-manufacturingorderhaslongtext        = ls_afko-manufacturingorderhaslongtext      .
+*            es_afko-longtextlanguagecode                 = ls_afko-longtextlanguagecode               .
+*            es_afko-manufacturingorderimportance         = ls_afko-manufacturingorderimportance       .
+*            es_afko-ismarkedfordeletion                  = ls_afko-ismarkedfordeletion                .
+*            es_afko-iscompletelydelivered                = ls_afko-iscompletelydelivered              .
+*            es_afko-mfgorderhasmultipleitems             = ls_afko-mfgorderhasmultipleitems           .
+*            es_afko-mfgorderispartofcollvorder           = ls_afko-mfgorderispartofcollvorder         .
+**            es_afko-mfgorderhierarchylevel               = ls_afko-mfgorderhierarchylevel             .
+*            es_afko-mfgorderhierarchylevelvalue          = ls_afko-mfgorderhierarchylevelvalue        .
+*            es_afko-mfgorderhierarchypathvalue           = ls_afko-mfgorderhierarchypathvalue         .
+*            es_afko-orderisnotcostedautomatically        = ls_afko-orderisnotcostedautomatically      .
+*            es_afko-ordisnotschedldautomatically         = ls_afko-ordisnotschedldautomatically       .
+*            es_afko-prodnprocgisflexible                 = ls_afko-prodnprocgisflexible               .
+*            es_afko-creationdate                         = ls_afko-creationdate                       .
+*            es_afko-creationtime                         = ls_afko-creationtime                       .
+*            es_afko-createdbyuser                        = ls_afko-createdbyuser                      .
+*            es_afko-lastchangedate                       = ls_afko-lastchangedate                     .
+*            es_afko-lastchangetime                       = ls_afko-lastchangetime                     .
+*            es_afko-lastchangedbyuser                    = ls_afko-lastchangedbyuser                  .
+*            es_afko-material                             = ls_afko-material                           .
+*            es_afko-product                              = ls_afko-product                            .
+*            es_afko-storagelocation                      = ls_afko-storagelocation                    .
+*            es_afko-batch                                = ls_afko-batch                              .
+*            es_afko-goodsrecipientname                   = ls_afko-goodsrecipientname                 .
+*            es_afko-unloadingpointname                   = ls_afko-unloadingpointname                 .
+*            es_afko-inventoryusabilitycode               = ls_afko-inventoryusabilitycode             .
+*            es_afko-materialgoodsreceiptduration         = ls_afko-materialgoodsreceiptduration       .
+*            es_afko-quantitydistributionkey              = ls_afko-quantitydistributionkey            .
+*            es_afko-stocksegment                         = ls_afko-stocksegment                       .
+*            es_afko-mfgorderinternalid                   = ls_afko-mfgorderinternalid                 .
+*            es_afko-referenceorder                       = ls_afko-referenceorder                     .
+*            es_afko-leadingorder                         = ls_afko-leadingorder                       .
+*            es_afko-superiororder                        = ls_afko-superiororder                      .
+*            es_afko-currency                             = ls_afko-currency                           .
+*            es_afko-productionplant                      = ls_afko-productionplant                    .
+*            es_afko-planningplant                        = ls_afko-planningplant                      .
+*            es_afko-mrparea                              = ls_afko-mrparea                            .
+*            es_afko-mrpcontroller                        = ls_afko-mrpcontroller                      .
+*            es_afko-productionsupervisor                 = ls_afko-productionsupervisor               .
+*            es_afko-productionschedulingprofile          = ls_afko-productionschedulingprofile        .
+*            es_afko-responsibleplannergroup              = ls_afko-responsibleplannergroup            .
+*            es_afko-productionversion                    = ls_afko-productionversion                  .
+*            es_afko-salesorder                           = ls_afko-salesorder                         .
+*            es_afko-salesorderitem                       = ls_afko-salesorderitem                     .
+**            es_afko-wbselementinternalid                 = ls_afko-wbselementinternalid               .
+*            es_afko-wbselementinternalid_2               = ls_afko-wbselementinternalid_2             .
+*            es_afko-reservation                          = ls_afko-reservation                        .
+*            es_afko-settlementreservation                = ls_afko-settlementreservation              .
+*            es_afko-mfgorderconfirmation                 = ls_afko-mfgorderconfirmation               .
+*            es_afko-numberofmfgorderconfirmations        = ls_afko-numberofmfgorderconfirmations      .
+*            es_afko-plannedorder                         = ls_afko-plannedorder                       .
+*            es_afko-capacityrequirement                  = ls_afko-capacityrequirement                .
+*            es_afko-inspectionlot                        = ls_afko-inspectionlot                      .
+*            es_afko-changenumber                         = ls_afko-changenumber                       .
+**            es_afko-materialrevisionlevel                = ls_afko-materialrevisionlevel              .
+*            es_afko-materialrevisionlevel_2              = ls_afko-materialrevisionlevel_2            .
+*            es_afko-basicschedulingtype                  = ls_afko-basicschedulingtype                .
+*            es_afko-forecastschedulingtype               = ls_afko-forecastschedulingtype             .
+*            es_afko-objectinternalid                     = ls_afko-objectinternalid                   .
+*            es_afko-productconfiguration                 = ls_afko-productconfiguration               .
+*            es_afko-effectivityparametervariant          = ls_afko-effectivityparametervariant        .
+*            es_afko-conditionapplication                 = ls_afko-conditionapplication               .
+*            es_afko-capacityactiveversion                = ls_afko-capacityactiveversion              .
+*            es_afko-capacityrqmthasnottobecreated        = ls_afko-capacityrqmthasnottobecreated      .
+*            es_afko-ordersequencenumber                  = ls_afko-ordersequencenumber                .
+*            es_afko-mfgordersplitstatus                  = ls_afko-mfgordersplitstatus                .
+*            es_afko-billofoperationsmaterial             = ls_afko-billofoperationsmaterial           .
+*            es_afko-billofoperationstype                 = ls_afko-billofoperationstype               .
+**            es_afko-billofoperations                     = ls_afko-billofoperations                   .
+*            es_afko-billofoperationsgroup                = ls_afko-billofoperationsgroup              .
+*            es_afko-billofoperationsvariant              = ls_afko-billofoperationsvariant            .
+*            es_afko-boointernalversioncounter            = ls_afko-boointernalversioncounter          .
+*            es_afko-billofoperationsapplication          = ls_afko-billofoperationsapplication        .
+*            es_afko-billofoperationsusage                = ls_afko-billofoperationsusage              .
+*            es_afko-billofoperationsversion              = ls_afko-billofoperationsversion            .
+*            es_afko-booexplosiondate                     = ls_afko-booexplosiondate                   .
+*            es_afko-boovaliditystartdate                 = ls_afko-boovaliditystartdate               .
+*            es_afko-billofmaterialcategory               = ls_afko-billofmaterialcategory             .
+**            es_afko-billofmaterial                       = ls_afko-billofmaterial                     .
+*            es_afko-billofmaterialinternalid             = ls_afko-billofmaterialinternalid           .
+*            es_afko-billofmaterialvariant                = ls_afko-billofmaterialvariant              .
+*            es_afko-billofmaterialvariantusage           = ls_afko-billofmaterialvariantusage         .
+*            es_afko-billofmaterialversion                = ls_afko-billofmaterialversion              .
+*            es_afko-bomexplosiondate                     = ls_afko-bomexplosiondate                   .
+*            es_afko-bomvaliditystartdate                 = ls_afko-bomvaliditystartdate               .
+*            es_afko-businessarea                         = ls_afko-businessarea                       .
+*            es_afko-companycode                          = ls_afko-companycode                        .
+*            es_afko-controllingarea                      = ls_afko-controllingarea                    .
+*            es_afko-profitcenter                         = ls_afko-profitcenter                       .
+*            es_afko-costcenter                           = ls_afko-costcenter                         .
+*            es_afko-responsiblecostcenter                = ls_afko-responsiblecostcenter              .
+*            es_afko-costelement                          = ls_afko-costelement                        .
+*            es_afko-costingsheet                         = ls_afko-costingsheet                       .
+*            es_afko-glaccount                            = ls_afko-glaccount                          .
+*            es_afko-productcostcollector                 = ls_afko-productcostcollector               .
+*            es_afko-actualcostscostingvariant            = ls_afko-actualcostscostingvariant          .
+*            es_afko-plannedcostscostingvariant           = ls_afko-plannedcostscostingvariant         .
+*            es_afko-controllingobjectclass               = ls_afko-controllingobjectclass             .
+*            es_afko-functionalarea                       = ls_afko-functionalarea                     .
+**            es_afko-orderiseventbasedposting             = ls_afko-orderiseventbasedposting           .
+*            es_afko-eventbasedpostingmethod              = ls_afko-eventbasedpostingmethod            .
+*            es_afko-eventbasedprocessingkey              = ls_afko-eventbasedprocessingkey            .
+*            es_afko-schedulingfloatprofile               = ls_afko-schedulingfloatprofile             .
+*            es_afko-floatbeforeproductioninwrkdays       = ls_afko-floatbeforeproductioninwrkdays     .
+*            es_afko-floatafterproductioninworkdays       = ls_afko-floatafterproductioninworkdays     .
+*            es_afko-releaseperiodinworkdays              = ls_afko-releaseperiodinworkdays            .
+*            es_afko-changetoscheduleddatesismade         = ls_afko-changetoscheduleddatesismade       .
+*            es_afko-mfgorderplannedstartdate             = ls_afko-mfgorderplannedstartdate           .
+*            es_afko-mfgorderplannedstarttime             = ls_afko-mfgorderplannedstarttime           .
+*            es_afko-mfgorderplannedenddate               = ls_afko-mfgorderplannedenddate             .
+*            es_afko-mfgorderplannedendtime               = ls_afko-mfgorderplannedendtime             .
+*            es_afko-mfgorderplannedreleasedate           = ls_afko-mfgorderplannedreleasedate         .
+*            es_afko-mfgorderscheduledstartdate           = ls_afko-mfgorderscheduledstartdate         .
+*            es_afko-mfgorderscheduledstarttime           = ls_afko-mfgorderscheduledstarttime         .
+*            es_afko-mfgorderscheduledenddate             = ls_afko-mfgorderscheduledenddate           .
+*            es_afko-mfgorderscheduledendtime             = ls_afko-mfgorderscheduledendtime           .
+*            es_afko-mfgorderscheduledreleasedate         = ls_afko-mfgorderscheduledreleasedate       .
+*            es_afko-mfgorderactualstartdate              = ls_afko-mfgorderactualstartdate            .
+*            es_afko-mfgorderactualstarttime              = ls_afko-mfgorderactualstarttime            .
+*            es_afko-mfgorderconfirmedenddate             = ls_afko-mfgorderconfirmedenddate           .
+*            es_afko-mfgorderconfirmedendtime             = ls_afko-mfgorderconfirmedendtime           .
+**            es_afko-mfgorderactualenddate                = ls_afko-mfgorderactualenddate              .
+*            es_afko-mfgorderactualreleasedate            = ls_afko-mfgorderactualreleasedate          .
+*            es_afko-mfgordertotalcommitmentdate          = ls_afko-mfgordertotalcommitmentdate        .
+*            es_afko-mfgorderactualcompletiondate         = ls_afko-mfgorderactualcompletiondate       .
+*            es_afko-mfgorderitemactualdeliverydate       = ls_afko-mfgorderitemactualdeliverydate     .
+*            es_afko-productionunit                       = ls_afko-productionunit                     .
+*            es_afko-mfgorderplannedtotalqty              = ls_afko-mfgorderplannedtotalqty            .
+*            es_afko-mfgorderplannedscrapqty              = ls_afko-mfgorderplannedscrapqty            .
+*            es_afko-mfgorderconfirmedyieldqty            = ls_afko-mfgorderconfirmedyieldqty          .
+*            es_afko-mfgorderconfirmedscrapqty            = ls_afko-mfgorderconfirmedscrapqty          .
+*            es_afko-mfgorderconfirmedreworkqty           = ls_afko-mfgorderconfirmedreworkqty         .
+*            es_afko-expecteddeviationquantity            = ls_afko-expecteddeviationquantity          .
+*            es_afko-actualdeliveredquantity              = ls_afko-actualdeliveredquantity            .
+*            es_afko-masterproductionorder                = ls_afko-masterproductionorder              .
+*            es_afko-productseasonyear                    = ls_afko-productseasonyear                  .
+*            es_afko-productseason                        = ls_afko-productseason                      .
+*            es_afko-productcollection                    = ls_afko-productcollection                  .
+*            es_afko-producttheme                         = ls_afko-producttheme                       .
 
 
 
@@ -3761,6 +4091,7 @@ DATA:
             CONDENSE es_afko-producttheme                        .
 
             APPEND es_afko TO es_response_afko-items.
+            clear es_afko.
 
           ENDLOOP.
 
@@ -4015,114 +4346,116 @@ DATA:
         ENDIF.
 
       WHEN 'PLPO'  OR 'plpo' .
-        SELECT
-           i_inspplanoperationversion_2~inspectionplangroup,
-           i_inspplanoperationversion_2~boooperationinternalid,
-           i_inspplanoperationversion_2~booopinternalversioncounter,
-           i_inspplanoperationversion_2~billofoperationstype,
-           i_inspplanoperationversion_2~inspectionplan,
-           i_inspplanoperationversion_2~workcenterinternalid,
-           i_inspplanoperationversion_2~workcentertypecode,
-           i_inspplanoperationversion_2~isdeleted,
-           i_inspplanoperationversion_2~isimplicitlydeleted,
-           i_inspplanoperationversion_2~operationexternalid,
-           i_inspplanoperationversion_2~operation,
-           i_inspplanoperationversion_2~operationtext,
-           i_inspplanoperationversion_2~plant,
-           i_inspplanoperationversion_2~operationcontrolprofile,
-           i_inspplanoperationversion_2~operationstandardtextcode,
-           i_inspplanoperationversion_2~billofoperationsreftype,
-           i_inspplanoperationversion_2~billofoperationsrefgroup,
-           i_inspplanoperationversion_2~billofoperationsrefvariant,
-           i_inspplanoperationversion_2~boorefoperationincrementvalue,
-           i_inspplanoperationversion_2~inspsbstcompletionconfirmation,
-           i_inspplanoperationversion_2~inspsbsthasnotimeorquantity,
-           i_inspplanoperationversion_2~operationreferencequantity,
-           i_inspplanoperationversion_2~operationunit,
-           i_inspplanoperationversion_2~opqtytobaseqtydnmntr,
-           i_inspplanoperationversion_2~opqtytobaseqtynmrtr,
-           i_inspplanoperationversion_2~creationdate,
-           i_inspplanoperationversion_2~createdbyuser,
-           i_inspplanoperationversion_2~lastchangedate,
-           i_inspplanoperationversion_2~lastchangedbyuser,
-           i_inspplanoperationversion_2~changenumber,
-           i_inspplanoperationversion_2~validitystartdate,
-           i_inspplanoperationversion_2~validityenddate
+        SELECT *
+*           i_inspplanoperationversion_2~inspectionplangroup,
+*           i_inspplanoperationversion_2~boooperationinternalid,
+*           i_inspplanoperationversion_2~booopinternalversioncounter,
+*           i_inspplanoperationversion_2~billofoperationstype,
+*           i_inspplanoperationversion_2~inspectionplan,
+*           i_inspplanoperationversion_2~workcenterinternalid,
+*           i_inspplanoperationversion_2~workcentertypecode,
+*           i_inspplanoperationversion_2~isdeleted,
+*           i_inspplanoperationversion_2~isimplicitlydeleted,
+*           i_inspplanoperationversion_2~operationexternalid,
+*           i_inspplanoperationversion_2~operation,
+*           i_inspplanoperationversion_2~operationtext,
+*           i_inspplanoperationversion_2~plant,
+*           i_inspplanoperationversion_2~operationcontrolprofile,
+*           i_inspplanoperationversion_2~operationstandardtextcode,
+*           i_inspplanoperationversion_2~billofoperationsreftype,
+*           i_inspplanoperationversion_2~billofoperationsrefgroup,
+*           i_inspplanoperationversion_2~billofoperationsrefvariant,
+*           i_inspplanoperationversion_2~boorefoperationincrementvalue,
+*           i_inspplanoperationversion_2~inspsbstcompletionconfirmation,
+*           i_inspplanoperationversion_2~inspsbsthasnotimeorquantity,
+*           i_inspplanoperationversion_2~operationreferencequantity,
+*           i_inspplanoperationversion_2~operationunit,
+*           i_inspplanoperationversion_2~opqtytobaseqtydnmntr,
+*           i_inspplanoperationversion_2~opqtytobaseqtynmrtr,
+*           i_inspplanoperationversion_2~creationdate,
+*           i_inspplanoperationversion_2~createdbyuser,
+*           i_inspplanoperationversion_2~lastchangedate,
+*           i_inspplanoperationversion_2~lastchangedbyuser,
+*           i_inspplanoperationversion_2~changenumber,
+*           i_inspplanoperationversion_2~validitystartdate,
+*           i_inspplanoperationversion_2~validityenddate
 
-        FROM i_inspplanoperationversion_2 WITH PRIVILEGED ACCESS
+        FROM I_MfgBOOOperationChangeState WITH PRIVILEGED ACCESS
         WHERE (lv_where)
         INTO TABLE @DATA(lt_plpo).
 
         IF lt_plpo IS NOT INITIAL.
           LOOP  AT lt_plpo INTO DATA(ls_plpo).
           lv_count = lv_count + 1.
-            es_plpo-inspectionplangroup             = ls_plpo-inspectionplangroup             .
-            es_plpo-boooperationinternalid          = ls_plpo-boooperationinternalid          .
-            es_plpo-booopinternalversioncounter     = ls_plpo-booopinternalversioncounter     .
-            es_plpo-billofoperationstype            = ls_plpo-billofoperationstype            .
-            es_plpo-inspectionplan                  = ls_plpo-inspectionplan                  .
-            es_plpo-workcenterinternalid            = ls_plpo-workcenterinternalid            .
-            es_plpo-workcentertypecode              = ls_plpo-workcentertypecode              .
-            es_plpo-isdeleted                       = ls_plpo-isdeleted                       .
-            es_plpo-isimplicitlydeleted             = ls_plpo-isimplicitlydeleted             .
-            es_plpo-operationexternalid             = ls_plpo-operationexternalid             .
-            es_plpo-operation                       = ls_plpo-operation                       .
-            es_plpo-operationtext                   = ls_plpo-operationtext                   .
-            es_plpo-plant                           = ls_plpo-plant                           .
-            es_plpo-operationcontrolprofile         = ls_plpo-operationcontrolprofile         .
-            es_plpo-operationstandardtextcode       = ls_plpo-operationstandardtextcode       .
-            es_plpo-billofoperationsreftype         = ls_plpo-billofoperationsreftype         .
-            es_plpo-billofoperationsrefgroup        = ls_plpo-billofoperationsrefgroup        .
-            es_plpo-billofoperationsrefvariant      = ls_plpo-billofoperationsrefvariant      .
-            es_plpo-boorefoperationincrementvalue   = ls_plpo-boorefoperationincrementvalue   .
-            es_plpo-inspsbstcompletionconfirmation  = ls_plpo-inspsbstcompletionconfirmation  .
-            es_plpo-inspsbsthasnotimeorquantity     = ls_plpo-inspsbsthasnotimeorquantity     .
-            es_plpo-operationreferencequantity      = ls_plpo-operationreferencequantity      .
-            es_plpo-operationunit                   = ls_plpo-operationunit                   .
-            es_plpo-opqtytobaseqtydnmntr            = ls_plpo-opqtytobaseqtydnmntr            .
-            es_plpo-opqtytobaseqtynmrtr             = ls_plpo-opqtytobaseqtynmrtr             .
-            es_plpo-creationdate                    = ls_plpo-creationdate                    .
-            es_plpo-createdbyuser                   = ls_plpo-createdbyuser                   .
-            es_plpo-lastchangedate                  = ls_plpo-lastchangedate                  .
-            es_plpo-lastchangedbyuser               = ls_plpo-lastchangedbyuser               .
-            es_plpo-changenumber                    = ls_plpo-changenumber                    .
-            es_plpo-validitystartdate               = ls_plpo-validitystartdate               .
-            es_plpo-validityenddate                 = ls_plpo-validityenddate                 .
+             MOVE-CORRESPONDING ls_plpo to es_plpo.
+*            es_plpo-inspectionplangroup             = ls_plpo-inspectionplangroup             .
+*            es_plpo-boooperationinternalid          = ls_plpo-boooperationinternalid          .
+*            es_plpo-booopinternalversioncounter     = ls_plpo-booopinternalversioncounter     .
+*            es_plpo-billofoperationstype            = ls_plpo-billofoperationstype            .
+*            es_plpo-inspectionplan                  = ls_plpo-inspectionplan                  .
+*            es_plpo-workcenterinternalid            = ls_plpo-workcenterinternalid            .
+*            es_plpo-workcentertypecode              = ls_plpo-workcentertypecode              .
+*            es_plpo-isdeleted                       = ls_plpo-isdeleted                       .
+*            es_plpo-isimplicitlydeleted             = ls_plpo-isimplicitlydeleted             .
+*            es_plpo-operationexternalid             = ls_plpo-operationexternalid             .
+*            es_plpo-operation                       = ls_plpo-operation                       .
+*            es_plpo-operationtext                   = ls_plpo-operationtext                   .
+*            es_plpo-plant                           = ls_plpo-plant                           .
+*            es_plpo-operationcontrolprofile         = ls_plpo-operationcontrolprofile         .
+*            es_plpo-operationstandardtextcode       = ls_plpo-operationstandardtextcode       .
+*            es_plpo-billofoperationsreftype         = ls_plpo-billofoperationsreftype         .
+*            es_plpo-billofoperationsrefgroup        = ls_plpo-billofoperationsrefgroup        .
+*            es_plpo-billofoperationsrefvariant      = ls_plpo-billofoperationsrefvariant      .
+*            es_plpo-boorefoperationincrementvalue   = ls_plpo-boorefoperationincrementvalue   .
+*            es_plpo-inspsbstcompletionconfirmation  = ls_plpo-inspsbstcompletionconfirmation  .
+*            es_plpo-inspsbsthasnotimeorquantity     = ls_plpo-inspsbsthasnotimeorquantity     .
+*            es_plpo-operationreferencequantity      = ls_plpo-operationreferencequantity      .
+*            es_plpo-operationunit                   = ls_plpo-operationunit                   .
+*            es_plpo-opqtytobaseqtydnmntr            = ls_plpo-opqtytobaseqtydnmntr            .
+*            es_plpo-opqtytobaseqtynmrtr             = ls_plpo-opqtytobaseqtynmrtr             .
+*            es_plpo-creationdate                    = ls_plpo-creationdate                    .
+*            es_plpo-createdbyuser                   = ls_plpo-createdbyuser                   .
+*            es_plpo-lastchangedate                  = ls_plpo-lastchangedate                  .
+*            es_plpo-lastchangedbyuser               = ls_plpo-lastchangedbyuser               .
+*            es_plpo-changenumber                    = ls_plpo-changenumber                    .
+*            es_plpo-validitystartdate               = ls_plpo-validitystartdate               .
+*            es_plpo-validityenddate                 = ls_plpo-validityenddate                 .
 
-            CONDENSE es_plpo-inspectionplangroup            .
-            CONDENSE es_plpo-boooperationinternalid         .
-            CONDENSE es_plpo-booopinternalversioncounter    .
-            CONDENSE es_plpo-billofoperationstype           .
-            CONDENSE es_plpo-inspectionplan                 .
-            CONDENSE es_plpo-workcenterinternalid           .
-            CONDENSE es_plpo-workcentertypecode             .
-            CONDENSE es_plpo-isdeleted                      .
-            CONDENSE es_plpo-isimplicitlydeleted            .
-            CONDENSE es_plpo-operationexternalid            .
-            CONDENSE es_plpo-operation                      .
-            CONDENSE es_plpo-operationtext                  .
-            CONDENSE es_plpo-plant                          .
-            CONDENSE es_plpo-operationcontrolprofile        .
-            CONDENSE es_plpo-operationstandardtextcode      .
-            CONDENSE es_plpo-billofoperationsreftype        .
-            CONDENSE es_plpo-billofoperationsrefgroup       .
-            CONDENSE es_plpo-billofoperationsrefvariant     .
-            CONDENSE es_plpo-boorefoperationincrementvalue  .
-            CONDENSE es_plpo-inspsbstcompletionconfirmation .
-            CONDENSE es_plpo-inspsbsthasnotimeorquantity    .
-            CONDENSE es_plpo-operationreferencequantity     .
-            CONDENSE es_plpo-operationunit                  .
-            CONDENSE es_plpo-opqtytobaseqtydnmntr           .
-            CONDENSE es_plpo-opqtytobaseqtynmrtr            .
-            CONDENSE es_plpo-creationdate                   .
-            CONDENSE es_plpo-createdbyuser                  .
-            CONDENSE es_plpo-lastchangedate                 .
-            CONDENSE es_plpo-lastchangedbyuser              .
-            CONDENSE es_plpo-changenumber                   .
-            CONDENSE es_plpo-validitystartdate              .
-            CONDENSE es_plpo-validityenddate                .
+*            CONDENSE es_plpo-inspectionplangroup            .
+*            CONDENSE es_plpo-boooperationinternalid         .
+*            CONDENSE es_plpo-booopinternalversioncounter    .
+*            CONDENSE es_plpo-billofoperationstype           .
+*            CONDENSE es_plpo-inspectionplan                 .
+*            CONDENSE es_plpo-workcenterinternalid           .
+*            CONDENSE es_plpo-workcentertypecode             .
+*            CONDENSE es_plpo-isdeleted                      .
+*            CONDENSE es_plpo-isimplicitlydeleted            .
+*            CONDENSE es_plpo-operationexternalid            .
+*            CONDENSE es_plpo-operation                      .
+*            CONDENSE es_plpo-operationtext                  .
+*            CONDENSE es_plpo-plant                          .
+*            CONDENSE es_plpo-operationcontrolprofile        .
+*            CONDENSE es_plpo-operationstandardtextcode      .
+*            CONDENSE es_plpo-billofoperationsreftype        .
+*            CONDENSE es_plpo-billofoperationsrefgroup       .
+*            CONDENSE es_plpo-billofoperationsrefvariant     .
+*            CONDENSE es_plpo-boorefoperationincrementvalue  .
+*            CONDENSE es_plpo-inspsbstcompletionconfirmation .
+*            CONDENSE es_plpo-inspsbsthasnotimeorquantity    .
+*            CONDENSE es_plpo-operationreferencequantity     .
+*            CONDENSE es_plpo-operationunit                  .
+*            CONDENSE es_plpo-opqtytobaseqtydnmntr           .
+*            CONDENSE es_plpo-opqtytobaseqtynmrtr            .
+*            CONDENSE es_plpo-creationdate                   .
+*            CONDENSE es_plpo-createdbyuser                  .
+*            CONDENSE es_plpo-lastchangedate                 .
+*            CONDENSE es_plpo-lastchangedbyuser              .
+*            CONDENSE es_plpo-changenumber                   .
+*            CONDENSE es_plpo-validitystartdate              .
+*            CONDENSE es_plpo-validityenddate                .
 
             APPEND es_plpo TO es_response_plpo-items.
+            clear es_plpo.
 
           ENDLOOP.
 
@@ -4141,339 +4474,345 @@ DATA:
         ENDIF.
 
       WHEN 'RESB'  OR 'resb' .
-        SELECT * FROM i_mfgorderoperationcomponent WITH PRIVILEGED ACCESS
+        SELECT i_mfgorderoperationcomponent~*,
+               I_ManufacturingOrderItem~PlannedOrder
+        FROM i_mfgorderoperationcomponent WITH PRIVILEGED ACCESS
+        LEFT JOIN I_ManufacturingOrderItem WITH PRIVILEGED ACCESS
+        on i_mfgorderoperationcomponent~ManufacturingOrder = I_ManufacturingOrderItem~ManufacturingOrder
         WHERE (lv_where)
         INTO TABLE @DATA(lt_resb).
 
         IF lt_resb IS NOT INITIAL.
           LOOP  AT lt_resb INTO DATA(ls_resb).
           lv_count = lv_count + 1.
-            es_resb-reservation                        = ls_resb-reservation                       .
-            es_resb-reservationitem                    = ls_resb-reservationitem                   .
-            es_resb-recordtype                         = ls_resb-recordtype                        .
-            es_resb-materialgroup                      = ls_resb-materialgroup                     .
-            es_resb-material                           = ls_resb-material                          .
-            es_resb-plant                              = ls_resb-plant                             .
-            es_resb-manufacturingordercategory         = ls_resb-manufacturingordercategory        .
-            es_resb-manufacturingordertype             = ls_resb-manufacturingordertype            .
-            es_resb-manufacturingorder                 = ls_resb-manufacturingorder                .
-            es_resb-manufacturingordersequence         = ls_resb-manufacturingordersequence        .
-            es_resb-mfgordersequencecategory           = ls_resb-mfgordersequencecategory          .
-*            es_resb-manufacturingorderoperation        = ls_resb-manufacturingorderoperation       .
-            es_resb-manufacturingorderoperation_2      = ls_resb-manufacturingorderoperation_2     .
-            es_resb-productionplant                    = ls_resb-productionplant                   .
-            es_resb-orderinternalbillofoperations      = ls_resb-orderinternalbillofoperations     .
-            es_resb-orderintbillofoperationsitem       = ls_resb-orderintbillofoperationsitem      .
-            es_resb-assemblymrpcontroller              = ls_resb-assemblymrpcontroller             .
-            es_resb-productionsupervisor               = ls_resb-productionsupervisor              .
-            es_resb-orderobjectinternalid              = ls_resb-orderobjectinternalid             .
-            es_resb-matlcomprequirementdate            = ls_resb-matlcomprequirementdate           .
-            es_resb-matlcomprequirementtime            = ls_resb-matlcomprequirementtime           .
-            es_resb-latestrequirementdate              = ls_resb-latestrequirementdate             .
-            es_resb-mfgorderactualreleasedate          = ls_resb-mfgorderactualreleasedate         .
-            es_resb-reservationitemcreationcode        = ls_resb-reservationitemcreationcode       .
-            es_resb-reservationisfinallyissued         = ls_resb-reservationisfinallyissued        .
-            es_resb-matlcompismarkedfordeletion        = ls_resb-matlcompismarkedfordeletion       .
-            es_resb-materialcomponentismissing         = ls_resb-materialcomponentismissing        .
-            es_resb-isbulkmaterialcomponent            = ls_resb-isbulkmaterialcomponent           .
-            es_resb-matlcompismarkedforbackflush       = ls_resb-matlcompismarkedforbackflush      .
-            es_resb-matlcompistextitem                 = ls_resb-matlcompistextitem                .
-            es_resb-materialplanningrelevance          = ls_resb-materialplanningrelevance         .
-            es_resb-matlcompisconfigurable             = ls_resb-matlcompisconfigurable            .
-            es_resb-materialcomponentisclassified      = ls_resb-materialcomponentisclassified     .
-            es_resb-materialcompisintramaterial        = ls_resb-materialcompisintramaterial       .
-            es_resb-materialisdirectlyproduced         = ls_resb-materialisdirectlyproduced        .
-            es_resb-materialisdirectlyprocured         = ls_resb-materialisdirectlyprocured        .
-            es_resb-longtextlanguagecode               = ls_resb-longtextlanguagecode              .
-            es_resb-longtextexists                     = ls_resb-longtextexists                    .
-            es_resb-requirementtype                    = ls_resb-requirementtype                   .
-            es_resb-salesorder                         = ls_resb-salesorder                        .
-            es_resb-salesorderitem                     = ls_resb-salesorderitem                    .
-*            es_resb-wbselementinternalid               = ls_resb-wbselementinternalid              .
-            es_resb-wbselementinternalid_2             = ls_resb-wbselementinternalid_2            .
-            es_resb-productconfiguration               = ls_resb-productconfiguration              .
-            es_resb-changenumber                       = ls_resb-changenumber                      .
-            es_resb-materialrevisionlevel              = ls_resb-materialrevisionlevel             .
-            es_resb-effectivityparametervariant        = ls_resb-effectivityparametervariant       .
-*            es_resb-sortfield                          = ls_resb-sortfield                         .
-            es_resb-materialcomponentsorttext          = ls_resb-materialcomponentsorttext         .
-            es_resb-objectinternalid                   = ls_resb-objectinternalid                  .
-            es_resb-billofmaterialcategory             = ls_resb-billofmaterialcategory            .
-*            es_resb-billofmaterialinternalid           = ls_resb-billofmaterialinternalid          .
-            es_resb-billofmaterialinternalid_2         = ls_resb-billofmaterialinternalid_2        .
-            es_resb-billofmaterialvariantusage         = ls_resb-billofmaterialvariantusage        .
-            es_resb-billofmaterialvariant              = ls_resb-billofmaterialvariant             .
-            es_resb-billofmaterial                     = ls_resb-billofmaterial                    .
-            es_resb-bomitem                            = ls_resb-bomitem                           .
-            es_resb-billofmaterialversion              = ls_resb-billofmaterialversion             .
-            es_resb-bomiteminternalchangecount         = ls_resb-bomiteminternalchangecount        .
-            es_resb-inheritedbomitemnode               = ls_resb-inheritedbomitemnode              .
-            es_resb-bomitemcategory                    = ls_resb-bomitemcategory                   .
-*            es_resb-billofmaterialitemnumber           = ls_resb-billofmaterialitemnumber          .
-            es_resb-billofmaterialitemnumber_2         = ls_resb-billofmaterialitemnumber_2        .
-            es_resb-bomitemdescription                 = ls_resb-bomitemdescription                .
-            es_resb-bomitemtext2                       = ls_resb-bomitemtext2                      .
-            es_resb-bomexplosiondateid                 = ls_resb-bomexplosiondateid                .
-            es_resb-purchasinginforecord               = ls_resb-purchasinginforecord              .
-            es_resb-purchasinggroup                    = ls_resb-purchasinggroup                   .
-            es_resb-purchaserequisition                = ls_resb-purchaserequisition               .
-            es_resb-purchaserequisitionitem            = ls_resb-purchaserequisitionitem           .
-            es_resb-purchaseorder                      = ls_resb-purchaseorder                     .
-            es_resb-purchaseorderitem                  = ls_resb-purchaseorderitem                 .
-            es_resb-purchaseorderscheduleline          = ls_resb-purchaseorderscheduleline         .
-            es_resb-supplier                           = ls_resb-supplier                          .
-            es_resb-deliverydurationindays             = ls_resb-deliverydurationindays            .
-            es_resb-materialgoodsreceiptduration       = ls_resb-materialgoodsreceiptduration      .
-            es_resb-externalprocessingprice            = ls_resb-externalprocessingprice           .
-            es_resb-numberofoperationpriceunits        = ls_resb-numberofoperationpriceunits       .
-            es_resb-goodsmovementisallowed             = ls_resb-goodsmovementisallowed            .
-            es_resb-storagelocation                    = ls_resb-storagelocation                   .
-            es_resb-debitcreditcode                    = ls_resb-debitcreditcode                   .
-            es_resb-goodsmovementtype                  = ls_resb-goodsmovementtype                 .
-            es_resb-inventoryspecialstocktype          = ls_resb-inventoryspecialstocktype         .
-            es_resb-inventoryspecialstockvalntype      = ls_resb-inventoryspecialstockvalntype     .
-            es_resb-consumptionposting                 = ls_resb-consumptionposting                .
-            es_resb-supplyarea                         = ls_resb-supplyarea                        .
-            es_resb-goodsrecipientname                 = ls_resb-goodsrecipientname                .
-            es_resb-unloadingpointname                 = ls_resb-unloadingpointname                .
-            es_resb-stocksegment                       = ls_resb-stocksegment                      .
-            es_resb-requirementsegment                 = ls_resb-requirementsegment                .
-            es_resb-batch                              = ls_resb-batch                             .
-            es_resb-batchentrydeterminationcode        = ls_resb-batchentrydeterminationcode       .
-            es_resb-batchsplittype                     = ls_resb-batchsplittype                    .
-            es_resb-batchmasterreservationitem         = ls_resb-batchmasterreservationitem        .
-            es_resb-batchclassification                = ls_resb-batchclassification               .
-            es_resb-materialstaging                    = ls_resb-materialstaging                   .
-            es_resb-warehouse                          = ls_resb-warehouse                         .
-            es_resb-storagetype                        = ls_resb-storagetype                       .
-            es_resb-storagebin                         = ls_resb-storagebin                        .
-            es_resb-materialcompiscostrelevant         = ls_resb-materialcompiscostrelevant        .
-            es_resb-businessarea                       = ls_resb-businessarea                      .
-            es_resb-companycode                        = ls_resb-companycode                       .
-            es_resb-glaccount                          = ls_resb-glaccount                         .
-            es_resb-functionalarea                     = ls_resb-functionalarea                    .
-            es_resb-controllingarea                    = ls_resb-controllingarea                   .
-            es_resb-accountassignmentcategory          = ls_resb-accountassignmentcategory         .
-*            es_resb-commitmentitem                     = ls_resb-commitmentitem                    .
-            es_resb-commitmentitemshortid              = ls_resb-commitmentitemshortid             .
-            es_resb-fundscenter                        = ls_resb-fundscenter                       .
-            es_resb-materialcompisvariablesized        = ls_resb-materialcompisvariablesized       .
-*            es_resb-numberofvariablesizecomponents     = ls_resb-numberofvariablesizecomponents    .
-            es_resb-variablesizeitemunit               = ls_resb-variablesizeitemunit              .
-            es_resb-variablesizeitemquantity           = ls_resb-variablesizeitemquantity          .
-            es_resb-variablesizecomponentunit          = ls_resb-variablesizecomponentunit         .
-            es_resb-variablesizecomponentquantity      = ls_resb-variablesizecomponentquantity     .
-            es_resb-variablesizedimensionunit          = ls_resb-variablesizedimensionunit         .
-            es_resb-variablesizedimension1             = ls_resb-variablesizedimension1            .
-            es_resb-variablesizedimension2             = ls_resb-variablesizedimension2            .
-            es_resb-variablesizedimension3             = ls_resb-variablesizedimension3            .
-            es_resb-formulakey                         = ls_resb-formulakey                        .
-            es_resb-materialcompisalternativeitem      = ls_resb-materialcompisalternativeitem     .
-            es_resb-alternativeitemgroup               = ls_resb-alternativeitemgroup              .
-            es_resb-alternativeitemstrategy            = ls_resb-alternativeitemstrategy           .
-            es_resb-alternativeitempriority            = ls_resb-alternativeitempriority           .
-            es_resb-usageprobabilitypercent            = ls_resb-usageprobabilitypercent           .
-            es_resb-alternativemstrreservationitem     = ls_resb-alternativemstrreservationitem    .
-            es_resb-materialcomponentisphantomitem     = ls_resb-materialcomponentisphantomitem    .
-            es_resb-orderpathvalue                     = ls_resb-orderpathvalue                    .
-            es_resb-orderlevelvalue                    = ls_resb-orderlevelvalue                   .
-            es_resb-assembly                           = ls_resb-assembly                          .
-            es_resb-assemblyorderpathvalue             = ls_resb-assemblyorderpathvalue            .
-            es_resb-assemblyorderlevelvalue            = ls_resb-assemblyorderlevelvalue           .
-            es_resb-discontinuationgroup               = ls_resb-discontinuationgroup              .
-            es_resb-matlcompdiscontinuationtype        = ls_resb-matlcompdiscontinuationtype       .
-            es_resb-matlcompisfollowupmaterial         = ls_resb-matlcompisfollowupmaterial        .
-            es_resb-followupgroup                      = ls_resb-followupgroup                     .
-            es_resb-followupmaterial                   = ls_resb-followupmaterial                  .
-*            es_resb-followupmaterialisnotactive        = ls_resb-followupmaterialisnotactive       .
-            es_resb-followupmaterialisactive           = ls_resb-followupmaterialisactive          .
-            es_resb-discontinuationmasterresvnitem     = ls_resb-discontinuationmasterresvnitem    .
-            es_resb-materialprovisiontype              = ls_resb-materialprovisiontype             .
-            es_resb-matlcomponentspareparttype         = ls_resb-matlcomponentspareparttype        .
-            es_resb-leadtimeoffset                     = ls_resb-leadtimeoffset                    .
-            es_resb-operationleadtimeoffsetunit        = ls_resb-operationleadtimeoffsetunit       .
-            es_resb-operationleadtimeoffset            = ls_resb-operationleadtimeoffset           .
-            es_resb-quantityisfixed                    = ls_resb-quantityisfixed                   .
-            es_resb-isnetscrap                         = ls_resb-isnetscrap                        .
-            es_resb-componentscrapinpercent            = ls_resb-componentscrapinpercent           .
-            es_resb-operationscrapinpercent            = ls_resb-operationscrapinpercent           .
-            es_resb-materialqtytobaseqtynmrtr          = ls_resb-materialqtytobaseqtynmrtr         .
-            es_resb-materialqtytobaseqtydnmntr         = ls_resb-materialqtytobaseqtydnmntr        .
-            es_resb-baseunit                           = ls_resb-baseunit                          .
-            es_resb-requiredquantity                   = ls_resb-requiredquantity                  .
-            es_resb-withdrawnquantity                  = ls_resb-withdrawnquantity                 .
-            es_resb-confirmedavailablequantity         = ls_resb-confirmedavailablequantity        .
-            es_resb-materialcomporiginalquantity       = ls_resb-materialcomporiginalquantity      .
-            es_resb-entryunit                          = ls_resb-entryunit                         .
-            es_resb-goodsmovemententryqty              = ls_resb-goodsmovemententryqty             .
-            es_resb-currency                           = ls_resb-currency                          .
-            es_resb-withdrawnquantityamount            = ls_resb-withdrawnquantityamount           .
-            es_resb-criticalcomponenttype              = ls_resb-criticalcomponenttype             .
-            es_resb-criticalcomponentlevel             = ls_resb-criticalcomponentlevel            .
-            .
-
-            CONDENSE es_resb-reservation                       .
-            CONDENSE es_resb-reservationitem                   .
-            CONDENSE es_resb-recordtype                        .
-            CONDENSE es_resb-materialgroup                     .
-            CONDENSE es_resb-material                          .
-            CONDENSE es_resb-plant                             .
-            CONDENSE es_resb-manufacturingordercategory        .
-            CONDENSE es_resb-manufacturingordertype            .
-            CONDENSE es_resb-manufacturingorder                .
-            CONDENSE es_resb-manufacturingordersequence        .
-            CONDENSE es_resb-mfgordersequencecategory          .
-            CONDENSE es_resb-manufacturingorderoperation       .
-            CONDENSE es_resb-manufacturingorderoperation_2     .
-            CONDENSE es_resb-productionplant                   .
-            CONDENSE es_resb-orderinternalbillofoperations     .
-            CONDENSE es_resb-orderintbillofoperationsitem      .
-            CONDENSE es_resb-assemblymrpcontroller             .
-            CONDENSE es_resb-productionsupervisor              .
-            CONDENSE es_resb-orderobjectinternalid             .
-            CONDENSE es_resb-matlcomprequirementdate           .
-            CONDENSE es_resb-matlcomprequirementtime           .
-            CONDENSE es_resb-latestrequirementdate             .
-            CONDENSE es_resb-mfgorderactualreleasedate         .
-            CONDENSE es_resb-reservationitemcreationcode       .
-            CONDENSE es_resb-reservationisfinallyissued        .
-            CONDENSE es_resb-matlcompismarkedfordeletion       .
-            CONDENSE es_resb-materialcomponentismissing        .
-            CONDENSE es_resb-isbulkmaterialcomponent           .
-            CONDENSE es_resb-matlcompismarkedforbackflush      .
-            CONDENSE es_resb-matlcompistextitem                .
-            CONDENSE es_resb-materialplanningrelevance         .
-            CONDENSE es_resb-matlcompisconfigurable            .
-            CONDENSE es_resb-materialcomponentisclassified     .
-            CONDENSE es_resb-materialcompisintramaterial       .
-            CONDENSE es_resb-materialisdirectlyproduced        .
-            CONDENSE es_resb-materialisdirectlyprocured        .
-            CONDENSE es_resb-longtextlanguagecode              .
-            CONDENSE es_resb-longtextexists                    .
-            CONDENSE es_resb-requirementtype                   .
-            CONDENSE es_resb-salesorder                        .
-            CONDENSE es_resb-salesorderitem                    .
-            CONDENSE es_resb-wbselementinternalid              .
-            CONDENSE es_resb-wbselementinternalid_2            .
-            CONDENSE es_resb-productconfiguration              .
-            CONDENSE es_resb-changenumber                      .
-            CONDENSE es_resb-materialrevisionlevel             .
-            CONDENSE es_resb-effectivityparametervariant       .
-            CONDENSE es_resb-sortfield                         .
-            CONDENSE es_resb-materialcomponentsorttext         .
-            CONDENSE es_resb-objectinternalid                  .
-            CONDENSE es_resb-billofmaterialcategory            .
-            CONDENSE es_resb-billofmaterialinternalid          .
-            CONDENSE es_resb-billofmaterialinternalid_2        .
-            CONDENSE es_resb-billofmaterialvariantusage        .
-            CONDENSE es_resb-billofmaterialvariant             .
-            CONDENSE es_resb-billofmaterial                    .
-            CONDENSE es_resb-bomitem                           .
-            CONDENSE es_resb-billofmaterialversion             .
-            CONDENSE es_resb-bomiteminternalchangecount        .
-            CONDENSE es_resb-inheritedbomitemnode              .
-            CONDENSE es_resb-bomitemcategory                   .
-            CONDENSE es_resb-billofmaterialitemnumber          .
-            CONDENSE es_resb-billofmaterialitemnumber_2        .
-            CONDENSE es_resb-bomitemdescription                .
-            CONDENSE es_resb-bomitemtext2                      .
-            CONDENSE es_resb-bomexplosiondateid                .
-            CONDENSE es_resb-purchasinginforecord              .
-            CONDENSE es_resb-purchasinggroup                   .
-            CONDENSE es_resb-purchaserequisition               .
-            CONDENSE es_resb-purchaserequisitionitem           .
-            CONDENSE es_resb-purchaseorder                     .
-            CONDENSE es_resb-purchaseorderitem                 .
-            CONDENSE es_resb-purchaseorderscheduleline         .
-            CONDENSE es_resb-supplier                          .
-            CONDENSE es_resb-deliverydurationindays            .
-            CONDENSE es_resb-materialgoodsreceiptduration      .
-            CONDENSE es_resb-externalprocessingprice           .
-            CONDENSE es_resb-numberofoperationpriceunits       .
-            CONDENSE es_resb-goodsmovementisallowed            .
-            CONDENSE es_resb-storagelocation                   .
-            CONDENSE es_resb-debitcreditcode                   .
-            CONDENSE es_resb-goodsmovementtype                 .
-            CONDENSE es_resb-inventoryspecialstocktype         .
-            CONDENSE es_resb-inventoryspecialstockvalntype     .
-            CONDENSE es_resb-consumptionposting                .
-            CONDENSE es_resb-supplyarea                        .
-            CONDENSE es_resb-goodsrecipientname                .
-            CONDENSE es_resb-unloadingpointname                .
-            CONDENSE es_resb-stocksegment                      .
-            CONDENSE es_resb-requirementsegment                .
-            CONDENSE es_resb-batch                             .
-            CONDENSE es_resb-batchentrydeterminationcode       .
-            CONDENSE es_resb-batchsplittype                    .
-            CONDENSE es_resb-batchmasterreservationitem        .
-            CONDENSE es_resb-batchclassification               .
-            CONDENSE es_resb-materialstaging                   .
-            CONDENSE es_resb-warehouse                         .
-            CONDENSE es_resb-storagetype                       .
-            CONDENSE es_resb-storagebin                        .
-            CONDENSE es_resb-materialcompiscostrelevant        .
-            CONDENSE es_resb-businessarea                      .
-            CONDENSE es_resb-companycode                       .
-            CONDENSE es_resb-glaccount                         .
-            CONDENSE es_resb-functionalarea                    .
-            CONDENSE es_resb-controllingarea                   .
-            CONDENSE es_resb-accountassignmentcategory         .
-            CONDENSE es_resb-commitmentitem                    .
-            CONDENSE es_resb-commitmentitemshortid             .
-            CONDENSE es_resb-fundscenter                       .
-            CONDENSE es_resb-materialcompisvariablesized       .
-            CONDENSE es_resb-numberofvariablesizecomponents    .
-            CONDENSE es_resb-variablesizeitemunit              .
-            CONDENSE es_resb-variablesizeitemquantity          .
-            CONDENSE es_resb-variablesizecomponentunit         .
-            CONDENSE es_resb-variablesizecomponentquantity     .
-            CONDENSE es_resb-variablesizedimensionunit         .
-            CONDENSE es_resb-variablesizedimension1            .
-            CONDENSE es_resb-variablesizedimension2            .
-            CONDENSE es_resb-variablesizedimension3            .
-            CONDENSE es_resb-formulakey                        .
-            CONDENSE es_resb-materialcompisalternativeitem     .
-            CONDENSE es_resb-alternativeitemgroup              .
-            CONDENSE es_resb-alternativeitemstrategy           .
-            CONDENSE es_resb-alternativeitempriority           .
-            CONDENSE es_resb-usageprobabilitypercent           .
-            CONDENSE es_resb-alternativemstrreservationitem    .
-            CONDENSE es_resb-materialcomponentisphantomitem    .
-            CONDENSE es_resb-orderpathvalue                    .
-            CONDENSE es_resb-orderlevelvalue                   .
-            CONDENSE es_resb-assembly                          .
-            CONDENSE es_resb-assemblyorderpathvalue            .
-            CONDENSE es_resb-assemblyorderlevelvalue           .
-            CONDENSE es_resb-discontinuationgroup              .
-            CONDENSE es_resb-matlcompdiscontinuationtype       .
-            CONDENSE es_resb-matlcompisfollowupmaterial        .
-            CONDENSE es_resb-followupgroup                     .
-            CONDENSE es_resb-followupmaterial                  .
-            CONDENSE es_resb-followupmaterialisnotactive       .
-            CONDENSE es_resb-followupmaterialisactive          .
-            CONDENSE es_resb-discontinuationmasterresvnitem    .
-            CONDENSE es_resb-materialprovisiontype             .
-            CONDENSE es_resb-matlcomponentspareparttype        .
-            CONDENSE es_resb-leadtimeoffset                    .
-            CONDENSE es_resb-operationleadtimeoffsetunit       .
-            CONDENSE es_resb-operationleadtimeoffset           .
-            CONDENSE es_resb-quantityisfixed                   .
-            CONDENSE es_resb-isnetscrap                        .
-            CONDENSE es_resb-componentscrapinpercent           .
-            CONDENSE es_resb-operationscrapinpercent           .
-            CONDENSE es_resb-materialqtytobaseqtynmrtr         .
-            CONDENSE es_resb-materialqtytobaseqtydnmntr        .
-            CONDENSE es_resb-baseunit                          .
-            CONDENSE es_resb-requiredquantity                  .
-            CONDENSE es_resb-withdrawnquantity                 .
-            CONDENSE es_resb-confirmedavailablequantity        .
-            CONDENSE es_resb-materialcomporiginalquantity      .
-            CONDENSE es_resb-entryunit                         .
-            CONDENSE es_resb-goodsmovemententryqty             .
-            CONDENSE es_resb-currency                          .
-            CONDENSE es_resb-withdrawnquantityamount           .
-            CONDENSE es_resb-criticalcomponenttype             .
-            CONDENSE es_resb-criticalcomponentlevel            .
+          MOVE-CORRESPONDING ls_resb-i_mfgorderoperationcomponent to es_resb.
+          es_resb-PlannedOrder = ls_resb-PlannedOrder  .
+*            es_resb-reservation                        = ls_resb-reservation                       .
+*            es_resb-reservationitem                    = ls_resb-reservationitem                   .
+*            es_resb-recordtype                         = ls_resb-recordtype                        .
+*            es_resb-materialgroup                      = ls_resb-materialgroup                     .
+*            es_resb-material                           = ls_resb-material                          .
+*            es_resb-plant                              = ls_resb-plant                             .
+*            es_resb-manufacturingordercategory         = ls_resb-manufacturingordercategory        .
+*            es_resb-manufacturingordertype             = ls_resb-manufacturingordertype            .
+*            es_resb-manufacturingorder                 = ls_resb-manufacturingorder                .
+*            es_resb-manufacturingordersequence         = ls_resb-manufacturingordersequence        .
+*            es_resb-mfgordersequencecategory           = ls_resb-mfgordersequencecategory          .
+**            es_resb-manufacturingorderoperation        = ls_resb-manufacturingorderoperation       .
+*            es_resb-manufacturingorderoperation_2      = ls_resb-manufacturingorderoperation_2     .
+*            es_resb-productionplant                    = ls_resb-productionplant                   .
+*            es_resb-orderinternalbillofoperations      = ls_resb-orderinternalbillofoperations     .
+*            es_resb-orderintbillofoperationsitem       = ls_resb-orderintbillofoperationsitem      .
+*            es_resb-assemblymrpcontroller              = ls_resb-assemblymrpcontroller             .
+*            es_resb-productionsupervisor               = ls_resb-productionsupervisor              .
+*            es_resb-orderobjectinternalid              = ls_resb-orderobjectinternalid             .
+*            es_resb-matlcomprequirementdate            = ls_resb-matlcomprequirementdate           .
+*            es_resb-matlcomprequirementtime            = ls_resb-matlcomprequirementtime           .
+*            es_resb-latestrequirementdate              = ls_resb-latestrequirementdate             .
+*            es_resb-mfgorderactualreleasedate          = ls_resb-mfgorderactualreleasedate         .
+*            es_resb-reservationitemcreationcode        = ls_resb-reservationitemcreationcode       .
+*            es_resb-reservationisfinallyissued         = ls_resb-reservationisfinallyissued        .
+*            es_resb-matlcompismarkedfordeletion        = ls_resb-matlcompismarkedfordeletion       .
+*            es_resb-materialcomponentismissing         = ls_resb-materialcomponentismissing        .
+*            es_resb-isbulkmaterialcomponent            = ls_resb-isbulkmaterialcomponent           .
+*            es_resb-matlcompismarkedforbackflush       = ls_resb-matlcompismarkedforbackflush      .
+*            es_resb-matlcompistextitem                 = ls_resb-matlcompistextitem                .
+*            es_resb-materialplanningrelevance          = ls_resb-materialplanningrelevance         .
+*            es_resb-matlcompisconfigurable             = ls_resb-matlcompisconfigurable            .
+*            es_resb-materialcomponentisclassified      = ls_resb-materialcomponentisclassified     .
+*            es_resb-materialcompisintramaterial        = ls_resb-materialcompisintramaterial       .
+*            es_resb-materialisdirectlyproduced         = ls_resb-materialisdirectlyproduced        .
+*            es_resb-materialisdirectlyprocured         = ls_resb-materialisdirectlyprocured        .
+*            es_resb-longtextlanguagecode               = ls_resb-longtextlanguagecode              .
+*            es_resb-longtextexists                     = ls_resb-longtextexists                    .
+*            es_resb-requirementtype                    = ls_resb-requirementtype                   .
+*            es_resb-salesorder                         = ls_resb-salesorder                        .
+*            es_resb-salesorderitem                     = ls_resb-salesorderitem                    .
+**            es_resb-wbselementinternalid               = ls_resb-wbselementinternalid              .
+*            es_resb-wbselementinternalid_2             = ls_resb-wbselementinternalid_2            .
+*            es_resb-productconfiguration               = ls_resb-productconfiguration              .
+*            es_resb-changenumber                       = ls_resb-changenumber                      .
+*            es_resb-materialrevisionlevel              = ls_resb-materialrevisionlevel             .
+*            es_resb-effectivityparametervariant        = ls_resb-effectivityparametervariant       .
+**            es_resb-sortfield                          = ls_resb-sortfield                         .
+*            es_resb-materialcomponentsorttext          = ls_resb-materialcomponentsorttext         .
+*            es_resb-objectinternalid                   = ls_resb-objectinternalid                  .
+*            es_resb-billofmaterialcategory             = ls_resb-billofmaterialcategory            .
+**            es_resb-billofmaterialinternalid           = ls_resb-billofmaterialinternalid          .
+*            es_resb-billofmaterialinternalid_2         = ls_resb-billofmaterialinternalid_2        .
+*            es_resb-billofmaterialvariantusage         = ls_resb-billofmaterialvariantusage        .
+*            es_resb-billofmaterialvariant              = ls_resb-billofmaterialvariant             .
+*            es_resb-billofmaterial                     = ls_resb-billofmaterial                    .
+*            es_resb-bomitem                            = ls_resb-bomitem                           .
+*            es_resb-billofmaterialversion              = ls_resb-billofmaterialversion             .
+*            es_resb-bomiteminternalchangecount         = ls_resb-bomiteminternalchangecount        .
+*            es_resb-inheritedbomitemnode               = ls_resb-inheritedbomitemnode              .
+*            es_resb-bomitemcategory                    = ls_resb-bomitemcategory                   .
+**            es_resb-billofmaterialitemnumber           = ls_resb-billofmaterialitemnumber          .
+*            es_resb-billofmaterialitemnumber_2         = ls_resb-billofmaterialitemnumber_2        .
+*            es_resb-bomitemdescription                 = ls_resb-bomitemdescription                .
+*            es_resb-bomitemtext2                       = ls_resb-bomitemtext2                      .
+*            es_resb-bomexplosiondateid                 = ls_resb-bomexplosiondateid                .
+*            es_resb-purchasinginforecord               = ls_resb-purchasinginforecord              .
+*            es_resb-purchasinggroup                    = ls_resb-purchasinggroup                   .
+*            es_resb-purchaserequisition                = ls_resb-purchaserequisition               .
+*            es_resb-purchaserequisitionitem            = ls_resb-purchaserequisitionitem           .
+*            es_resb-purchaseorder                      = ls_resb-purchaseorder                     .
+*            es_resb-purchaseorderitem                  = ls_resb-purchaseorderitem                 .
+*            es_resb-purchaseorderscheduleline          = ls_resb-purchaseorderscheduleline         .
+*            es_resb-supplier                           = ls_resb-supplier                          .
+*            es_resb-deliverydurationindays             = ls_resb-deliverydurationindays            .
+*            es_resb-materialgoodsreceiptduration       = ls_resb-materialgoodsreceiptduration      .
+*            es_resb-externalprocessingprice            = ls_resb-externalprocessingprice           .
+*            es_resb-numberofoperationpriceunits        = ls_resb-numberofoperationpriceunits       .
+*            es_resb-goodsmovementisallowed             = ls_resb-goodsmovementisallowed            .
+*            es_resb-storagelocation                    = ls_resb-storagelocation                   .
+*            es_resb-debitcreditcode                    = ls_resb-debitcreditcode                   .
+*            es_resb-goodsmovementtype                  = ls_resb-goodsmovementtype                 .
+*            es_resb-inventoryspecialstocktype          = ls_resb-inventoryspecialstocktype         .
+*            es_resb-inventoryspecialstockvalntype      = ls_resb-inventoryspecialstockvalntype     .
+*            es_resb-consumptionposting                 = ls_resb-consumptionposting                .
+*            es_resb-supplyarea                         = ls_resb-supplyarea                        .
+*            es_resb-goodsrecipientname                 = ls_resb-goodsrecipientname                .
+*            es_resb-unloadingpointname                 = ls_resb-unloadingpointname                .
+*            es_resb-stocksegment                       = ls_resb-stocksegment                      .
+*            es_resb-requirementsegment                 = ls_resb-requirementsegment                .
+*            es_resb-batch                              = ls_resb-batch                             .
+*            es_resb-batchentrydeterminationcode        = ls_resb-batchentrydeterminationcode       .
+*            es_resb-batchsplittype                     = ls_resb-batchsplittype                    .
+*            es_resb-batchmasterreservationitem         = ls_resb-batchmasterreservationitem        .
+*            es_resb-batchclassification                = ls_resb-batchclassification               .
+*            es_resb-materialstaging                    = ls_resb-materialstaging                   .
+*            es_resb-warehouse                          = ls_resb-warehouse                         .
+*            es_resb-storagetype                        = ls_resb-storagetype                       .
+*            es_resb-storagebin                         = ls_resb-storagebin                        .
+*            es_resb-materialcompiscostrelevant         = ls_resb-materialcompiscostrelevant        .
+*            es_resb-businessarea                       = ls_resb-businessarea                      .
+*            es_resb-companycode                        = ls_resb-companycode                       .
+*            es_resb-glaccount                          = ls_resb-glaccount                         .
+*            es_resb-functionalarea                     = ls_resb-functionalarea                    .
+*            es_resb-controllingarea                    = ls_resb-controllingarea                   .
+*            es_resb-accountassignmentcategory          = ls_resb-accountassignmentcategory         .
+**            es_resb-commitmentitem                     = ls_resb-commitmentitem                    .
+*            es_resb-commitmentitemshortid              = ls_resb-commitmentitemshortid             .
+*            es_resb-fundscenter                        = ls_resb-fundscenter                       .
+*            es_resb-materialcompisvariablesized        = ls_resb-materialcompisvariablesized       .
+**            es_resb-numberofvariablesizecomponents     = ls_resb-numberofvariablesizecomponents    .
+*            es_resb-variablesizeitemunit               = ls_resb-variablesizeitemunit              .
+*            es_resb-variablesizeitemquantity           = ls_resb-variablesizeitemquantity          .
+*            es_resb-variablesizecomponentunit          = ls_resb-variablesizecomponentunit         .
+*            es_resb-variablesizecomponentquantity      = ls_resb-variablesizecomponentquantity     .
+*            es_resb-variablesizedimensionunit          = ls_resb-variablesizedimensionunit         .
+*            es_resb-variablesizedimension1             = ls_resb-variablesizedimension1            .
+*            es_resb-variablesizedimension2             = ls_resb-variablesizedimension2            .
+*            es_resb-variablesizedimension3             = ls_resb-variablesizedimension3            .
+*            es_resb-formulakey                         = ls_resb-formulakey                        .
+*            es_resb-materialcompisalternativeitem      = ls_resb-materialcompisalternativeitem     .
+*            es_resb-alternativeitemgroup               = ls_resb-alternativeitemgroup              .
+*            es_resb-alternativeitemstrategy            = ls_resb-alternativeitemstrategy           .
+*            es_resb-alternativeitempriority            = ls_resb-alternativeitempriority           .
+*            es_resb-usageprobabilitypercent            = ls_resb-usageprobabilitypercent           .
+*            es_resb-alternativemstrreservationitem     = ls_resb-alternativemstrreservationitem    .
+*            es_resb-materialcomponentisphantomitem     = ls_resb-materialcomponentisphantomitem    .
+*            es_resb-orderpathvalue                     = ls_resb-orderpathvalue                    .
+*            es_resb-orderlevelvalue                    = ls_resb-orderlevelvalue                   .
+*            es_resb-assembly                           = ls_resb-assembly                          .
+*            es_resb-assemblyorderpathvalue             = ls_resb-assemblyorderpathvalue            .
+*            es_resb-assemblyorderlevelvalue            = ls_resb-assemblyorderlevelvalue           .
+*            es_resb-discontinuationgroup               = ls_resb-discontinuationgroup              .
+*            es_resb-matlcompdiscontinuationtype        = ls_resb-matlcompdiscontinuationtype       .
+*            es_resb-matlcompisfollowupmaterial         = ls_resb-matlcompisfollowupmaterial        .
+*            es_resb-followupgroup                      = ls_resb-followupgroup                     .
+*            es_resb-followupmaterial                   = ls_resb-followupmaterial                  .
+**            es_resb-followupmaterialisnotactive        = ls_resb-followupmaterialisnotactive       .
+*            es_resb-followupmaterialisactive           = ls_resb-followupmaterialisactive          .
+*            es_resb-discontinuationmasterresvnitem     = ls_resb-discontinuationmasterresvnitem    .
+*            es_resb-materialprovisiontype              = ls_resb-materialprovisiontype             .
+*            es_resb-matlcomponentspareparttype         = ls_resb-matlcomponentspareparttype        .
+*            es_resb-leadtimeoffset                     = ls_resb-leadtimeoffset                    .
+*            es_resb-operationleadtimeoffsetunit        = ls_resb-operationleadtimeoffsetunit       .
+*            es_resb-operationleadtimeoffset            = ls_resb-operationleadtimeoffset           .
+*            es_resb-quantityisfixed                    = ls_resb-quantityisfixed                   .
+*            es_resb-isnetscrap                         = ls_resb-isnetscrap                        .
+*            es_resb-componentscrapinpercent            = ls_resb-componentscrapinpercent           .
+*            es_resb-operationscrapinpercent            = ls_resb-operationscrapinpercent           .
+*            es_resb-materialqtytobaseqtynmrtr          = ls_resb-materialqtytobaseqtynmrtr         .
+*            es_resb-materialqtytobaseqtydnmntr         = ls_resb-materialqtytobaseqtydnmntr        .
+*            es_resb-baseunit                           = ls_resb-baseunit                          .
+*            es_resb-requiredquantity                   = ls_resb-requiredquantity                  .
+*            es_resb-withdrawnquantity                  = ls_resb-withdrawnquantity                 .
+*            es_resb-confirmedavailablequantity         = ls_resb-confirmedavailablequantity        .
+*            es_resb-materialcomporiginalquantity       = ls_resb-materialcomporiginalquantity      .
+*            es_resb-entryunit                          = ls_resb-entryunit                         .
+*            es_resb-goodsmovemententryqty              = ls_resb-goodsmovemententryqty             .
+*            es_resb-currency                           = ls_resb-currency                          .
+*            es_resb-withdrawnquantityamount            = ls_resb-withdrawnquantityamount           .
+*            es_resb-criticalcomponenttype              = ls_resb-criticalcomponenttype             .
+*            es_resb-criticalcomponentlevel             = ls_resb-criticalcomponentlevel            .
+*            .
+*
+*            CONDENSE es_resb-reservation                       .
+*            CONDENSE es_resb-reservationitem                   .
+*            CONDENSE es_resb-recordtype                        .
+*            CONDENSE es_resb-materialgroup                     .
+*            CONDENSE es_resb-material                          .
+*            CONDENSE es_resb-plant                             .
+*            CONDENSE es_resb-manufacturingordercategory        .
+*            CONDENSE es_resb-manufacturingordertype            .
+*            CONDENSE es_resb-manufacturingorder                .
+*            CONDENSE es_resb-manufacturingordersequence        .
+*            CONDENSE es_resb-mfgordersequencecategory          .
+*            CONDENSE es_resb-manufacturingorderoperation       .
+*            CONDENSE es_resb-manufacturingorderoperation_2     .
+*            CONDENSE es_resb-productionplant                   .
+*            CONDENSE es_resb-orderinternalbillofoperations     .
+*            CONDENSE es_resb-orderintbillofoperationsitem      .
+*            CONDENSE es_resb-assemblymrpcontroller             .
+*            CONDENSE es_resb-productionsupervisor              .
+*            CONDENSE es_resb-orderobjectinternalid             .
+*            CONDENSE es_resb-matlcomprequirementdate           .
+*            CONDENSE es_resb-matlcomprequirementtime           .
+*            CONDENSE es_resb-latestrequirementdate             .
+*            CONDENSE es_resb-mfgorderactualreleasedate         .
+*            CONDENSE es_resb-reservationitemcreationcode       .
+*            CONDENSE es_resb-reservationisfinallyissued        .
+*            CONDENSE es_resb-matlcompismarkedfordeletion       .
+*            CONDENSE es_resb-materialcomponentismissing        .
+*            CONDENSE es_resb-isbulkmaterialcomponent           .
+*            CONDENSE es_resb-matlcompismarkedforbackflush      .
+*            CONDENSE es_resb-matlcompistextitem                .
+*            CONDENSE es_resb-materialplanningrelevance         .
+*            CONDENSE es_resb-matlcompisconfigurable            .
+*            CONDENSE es_resb-materialcomponentisclassified     .
+*            CONDENSE es_resb-materialcompisintramaterial       .
+*            CONDENSE es_resb-materialisdirectlyproduced        .
+*            CONDENSE es_resb-materialisdirectlyprocured        .
+*            CONDENSE es_resb-longtextlanguagecode              .
+*            CONDENSE es_resb-longtextexists                    .
+*            CONDENSE es_resb-requirementtype                   .
+*            CONDENSE es_resb-salesorder                        .
+*            CONDENSE es_resb-salesorderitem                    .
+*            CONDENSE es_resb-wbselementinternalid              .
+*            CONDENSE es_resb-wbselementinternalid_2            .
+*            CONDENSE es_resb-productconfiguration              .
+*            CONDENSE es_resb-changenumber                      .
+*            CONDENSE es_resb-materialrevisionlevel             .
+*            CONDENSE es_resb-effectivityparametervariant       .
+*            CONDENSE es_resb-sortfield                         .
+*            CONDENSE es_resb-materialcomponentsorttext         .
+*            CONDENSE es_resb-objectinternalid                  .
+*            CONDENSE es_resb-billofmaterialcategory            .
+*            CONDENSE es_resb-billofmaterialinternalid          .
+*            CONDENSE es_resb-billofmaterialinternalid_2        .
+*            CONDENSE es_resb-billofmaterialvariantusage        .
+*            CONDENSE es_resb-billofmaterialvariant             .
+*            CONDENSE es_resb-billofmaterial                    .
+*            CONDENSE es_resb-bomitem                           .
+*            CONDENSE es_resb-billofmaterialversion             .
+*            CONDENSE es_resb-bomiteminternalchangecount        .
+*            CONDENSE es_resb-inheritedbomitemnode              .
+*            CONDENSE es_resb-bomitemcategory                   .
+*            CONDENSE es_resb-billofmaterialitemnumber          .
+*            CONDENSE es_resb-billofmaterialitemnumber_2        .
+*            CONDENSE es_resb-bomitemdescription                .
+*            CONDENSE es_resb-bomitemtext2                      .
+*            CONDENSE es_resb-bomexplosiondateid                .
+*            CONDENSE es_resb-purchasinginforecord              .
+*            CONDENSE es_resb-purchasinggroup                   .
+*            CONDENSE es_resb-purchaserequisition               .
+*            CONDENSE es_resb-purchaserequisitionitem           .
+*            CONDENSE es_resb-purchaseorder                     .
+*            CONDENSE es_resb-purchaseorderitem                 .
+*            CONDENSE es_resb-purchaseorderscheduleline         .
+*            CONDENSE es_resb-supplier                          .
+*            CONDENSE es_resb-deliverydurationindays            .
+*            CONDENSE es_resb-materialgoodsreceiptduration      .
+*            CONDENSE es_resb-externalprocessingprice           .
+*            CONDENSE es_resb-numberofoperationpriceunits       .
+*            CONDENSE es_resb-goodsmovementisallowed            .
+*            CONDENSE es_resb-storagelocation                   .
+*            CONDENSE es_resb-debitcreditcode                   .
+*            CONDENSE es_resb-goodsmovementtype                 .
+*            CONDENSE es_resb-inventoryspecialstocktype         .
+*            CONDENSE es_resb-inventoryspecialstockvalntype     .
+*            CONDENSE es_resb-consumptionposting                .
+*            CONDENSE es_resb-supplyarea                        .
+*            CONDENSE es_resb-goodsrecipientname                .
+*            CONDENSE es_resb-unloadingpointname                .
+*            CONDENSE es_resb-stocksegment                      .
+*            CONDENSE es_resb-requirementsegment                .
+*            CONDENSE es_resb-batch                             .
+*            CONDENSE es_resb-batchentrydeterminationcode       .
+*            CONDENSE es_resb-batchsplittype                    .
+*            CONDENSE es_resb-batchmasterreservationitem        .
+*            CONDENSE es_resb-batchclassification               .
+*            CONDENSE es_resb-materialstaging                   .
+*            CONDENSE es_resb-warehouse                         .
+*            CONDENSE es_resb-storagetype                       .
+*            CONDENSE es_resb-storagebin                        .
+*            CONDENSE es_resb-materialcompiscostrelevant        .
+*            CONDENSE es_resb-businessarea                      .
+*            CONDENSE es_resb-companycode                       .
+*            CONDENSE es_resb-glaccount                         .
+*            CONDENSE es_resb-functionalarea                    .
+*            CONDENSE es_resb-controllingarea                   .
+*            CONDENSE es_resb-accountassignmentcategory         .
+*            CONDENSE es_resb-commitmentitem                    .
+*            CONDENSE es_resb-commitmentitemshortid             .
+*            CONDENSE es_resb-fundscenter                       .
+*            CONDENSE es_resb-materialcompisvariablesized       .
+*            CONDENSE es_resb-numberofvariablesizecomponents    .
+*            CONDENSE es_resb-variablesizeitemunit              .
+*            CONDENSE es_resb-variablesizeitemquantity          .
+*            CONDENSE es_resb-variablesizecomponentunit         .
+*            CONDENSE es_resb-variablesizecomponentquantity     .
+*            CONDENSE es_resb-variablesizedimensionunit         .
+*            CONDENSE es_resb-variablesizedimension1            .
+*            CONDENSE es_resb-variablesizedimension2            .
+*            CONDENSE es_resb-variablesizedimension3            .
+*            CONDENSE es_resb-formulakey                        .
+*            CONDENSE es_resb-materialcompisalternativeitem     .
+*            CONDENSE es_resb-alternativeitemgroup              .
+*            CONDENSE es_resb-alternativeitemstrategy           .
+*            CONDENSE es_resb-alternativeitempriority           .
+*            CONDENSE es_resb-usageprobabilitypercent           .
+*            CONDENSE es_resb-alternativemstrreservationitem    .
+*            CONDENSE es_resb-materialcomponentisphantomitem    .
+*            CONDENSE es_resb-orderpathvalue                    .
+*            CONDENSE es_resb-orderlevelvalue                   .
+*            CONDENSE es_resb-assembly                          .
+*            CONDENSE es_resb-assemblyorderpathvalue            .
+*            CONDENSE es_resb-assemblyorderlevelvalue           .
+*            CONDENSE es_resb-discontinuationgroup              .
+*            CONDENSE es_resb-matlcompdiscontinuationtype       .
+*            CONDENSE es_resb-matlcompisfollowupmaterial        .
+*            CONDENSE es_resb-followupgroup                     .
+*            CONDENSE es_resb-followupmaterial                  .
+*            CONDENSE es_resb-followupmaterialisnotactive       .
+*            CONDENSE es_resb-followupmaterialisactive          .
+*            CONDENSE es_resb-discontinuationmasterresvnitem    .
+*            CONDENSE es_resb-materialprovisiontype             .
+*            CONDENSE es_resb-matlcomponentspareparttype        .
+*            CONDENSE es_resb-leadtimeoffset                    .
+*            CONDENSE es_resb-operationleadtimeoffsetunit       .
+*            CONDENSE es_resb-operationleadtimeoffset           .
+*            CONDENSE es_resb-quantityisfixed                   .
+*            CONDENSE es_resb-isnetscrap                        .
+*            CONDENSE es_resb-componentscrapinpercent           .
+*            CONDENSE es_resb-operationscrapinpercent           .
+*            CONDENSE es_resb-materialqtytobaseqtynmrtr         .
+*            CONDENSE es_resb-materialqtytobaseqtydnmntr        .
+*            CONDENSE es_resb-baseunit                          .
+*            CONDENSE es_resb-requiredquantity                  .
+*            CONDENSE es_resb-withdrawnquantity                 .
+*            CONDENSE es_resb-confirmedavailablequantity        .
+*            CONDENSE es_resb-materialcomporiginalquantity      .
+*            CONDENSE es_resb-entryunit                         .
+*            CONDENSE es_resb-goodsmovemententryqty             .
+*            CONDENSE es_resb-currency                          .
+*            CONDENSE es_resb-withdrawnquantityamount           .
+*            CONDENSE es_resb-criticalcomponenttype             .
+*            CONDENSE es_resb-criticalcomponentlevel            .
 
             APPEND es_resb TO es_response_resb-items.
 
@@ -5185,22 +5524,23 @@ DATA:
         ELSE.
           lv_error = 'X'.
           lv_text = 'There is no data in table'.
+
         ENDIF.
 
 
       WHEN OTHERS.
-        lv_error = 'X'.
+        lv_error1 = 'X'.
         lv_text = 'The table entry was not found'.
 
     ENDCASE.
 
     IF lv_error IS NOT INITIAL.
       "propagate any errors raised
-      response->set_status( '500' )."500
+      response->set_status( '204' ).
+
+    elseif lv_error1 is NOT INITIAL.
+      response->set_status( '404' ).
       response->set_text( lv_text ).
-
-    ELSE.
-
     ENDIF.
 
   ENDMETHOD.

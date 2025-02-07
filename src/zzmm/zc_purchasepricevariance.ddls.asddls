@@ -55,13 +55,13 @@ define root view entity ZC_PURCHASEPRICEVARIANCE
            @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_PURCHASEPRICEVARIANCE'
   virtual  ConditionQuantityUnit      : abap.unit(3),
            @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_PURCHASEPRICEVARIANCE'
-  virtual  CurrentPrice               : abap.dec(11,5),
+  virtual  CurrentPrice               : abap.dec(23,5),
            @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_PURCHASEPRICEVARIANCE'
-  virtual  ConditionRateValue         : abap.dec(11,5),
+  virtual  ConditionRateValue         : abap.dec(23,5),
            @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_PURCHASEPRICEVARIANCE'
-  virtual  NewPrice                   : abap.dec(11,5),
+  virtual  NewPrice                   : abap.dec(23,5),
            @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_PURCHASEPRICEVARIANCE'
-  virtual  Difference                 : abap.dec(11,5),
+  virtual  Difference                 : abap.dec(23,5),
 
            /* Associations */
            _PurOrdScheduleLine,

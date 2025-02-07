@@ -10,7 +10,10 @@ CLASS zcl_query_pickinglist_std DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_query_pickinglist_std IMPLEMENTATION.
+
+
+CLASS ZCL_QUERY_PICKINGLIST_STD IMPLEMENTATION.
+
 
   METHOD if_rap_query_provider~select.
     TYPES: BEGIN OF lty_detail.
@@ -432,5 +435,4 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
 
     io_response->set_data( lt_data ).
   ENDMETHOD.
-
 ENDCLASS.

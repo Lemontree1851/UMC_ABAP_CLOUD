@@ -43,7 +43,7 @@ CLASS lhc_zr_productionplan DEFINITION INHERITING FROM cl_abap_behavior_handler.
       BEGIN OF ts_planorder_i,
         _planned_order                 TYPE c LENGTH 10,
         _planned_order_profile         TYPE c LENGTH 4,
-        _material                      TYPE c LENGTH 18,
+        _material                      TYPE c LENGTH 40,
         _production_plant              TYPE c LENGTH 4,
         _m_r_p_area                    TYPE c LENGTH 10,
         _production_version            TYPE c LENGTH 4,

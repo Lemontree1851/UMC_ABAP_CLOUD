@@ -1,4 +1,10 @@
 @Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: '納受領書出力',
+    typeNamePlural: '納受領書出力'
+  }
+}
 annotate entity ZC_DeliveryReceipt
   with 
 {

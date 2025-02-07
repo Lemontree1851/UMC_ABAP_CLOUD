@@ -9,7 +9,9 @@ CLASS zcl_salesdocumentreport DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_salesdocumentreport IMPLEMENTATION.
+
+
+CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -67,6 +69,11 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
 
     DATA:lt_version3 TYPE STANDARD TABLE OF ty_planversion,
          ls_version3 TYPE ty_planversion.
+
+    DATA:lv_version0 TYPE   sales_plan_version.
+    DATA:lv_version1 TYPE   sales_plan_version.
+    DATA:lv_version2 TYPE   sales_plan_version.
+    DATA:lv_version3 TYPE   sales_plan_version.
 
     DATA: lv_grossprofit           TYPE p DECIMALS 0,
           lv_contributionprofit    TYPE p DECIMALS 0,
@@ -206,10 +213,10 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
             MOVE-CORRESPONDING str_rec_l_range TO ls_product.
             APPEND ls_product TO lr_product.
             CLEAR ls_product.
-          WHEN 'PLANTYPE'.
-            DATA(lr_plantype) = ls_filter_cond-range.
-            READ TABLE lr_plantype INTO DATA(lrs_plantype) INDEX 1.
-            DATA(lv_ztype1) = lrs_plantype-low.
+*          WHEN 'PLANTYPE'.
+*            DATA(lr_plantype) = ls_filter_cond-range.
+*            READ TABLE lr_plantype INTO DATA(lrs_plantype) INDEX 1.
+*            DATA(lv_ztype1) = lrs_plantype-low.
           WHEN 'SPLITRANGE'.
             DATA(r_splitrange) = ls_filter_cond-range.
             READ TABLE r_splitrange INTO DATA(rs_splitrange) INDEX 1.
@@ -220,6 +227,22 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
             MOVE-CORRESPONDING str_rec_l_range TO ls_conditioncurrency.
             APPEND ls_conditioncurrency TO lr_conditioncurrency.
             CLEAR ls_conditioncurrency.
+          WHEN 'SALESPLANVERSION0'.
+            DATA(lr_version0) = ls_filter_cond-range.
+            READ TABLE lr_version0 INTO DATA(lrs_version0) INDEX 1.
+            lv_version0 = lrs_version0-low.
+          WHEN 'SALESPLANVERSION1'.
+            DATA(lr_version1) = ls_filter_cond-range.
+            READ TABLE lr_version1 INTO DATA(lrs_version1) INDEX 1.
+            lv_version1 = lrs_version1-low.
+          WHEN 'SALESPLANVERSION2'.
+            DATA(lr_version2) = ls_filter_cond-range.
+            READ TABLE lr_version2 INTO DATA(lrs_version2) INDEX 1.
+            lv_version2 = lrs_version2-low.
+          WHEN 'SALESPLANVERSION3'.
+            DATA(lr_version3) = ls_filter_cond-range.
+            READ TABLE lr_version3 INTO DATA(lrs_version3) INDEX 1.
+            lv_version3 = lrs_version3-low.
           WHEN OTHERS.
 
         ENDCASE.
@@ -275,6 +298,17 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
         "handle exception
     ENDTRY.
 
+    IF lv_version0 IS NOT INITIAL.
+
+      DATA(lv_ztype1) = lv_version0+0(1).
+
+    ELSEIF lv_version1 IS NOT INITIAL.
+
+      lv_ztype1 = lv_version1+0(1).
+
+    ENDIF.
+
+
     DATA(lv_typeab) = lv_ztype1 && '%'.
 
     SELECT
@@ -283,6 +317,8 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       salesplanversion
     FROM c_salesplanvaluehelp WITH PRIVILEGED ACCESS
     WHERE salesplanversion LIKE @lv_typeab
+    AND ( salesplanversion = @lv_version0 OR salesplanversion = @lv_version1 OR
+    salesplanversion = @lv_version2 OR salesplanversion = @lv_version3 )
     INTO TABLE @lt_planversion.
 
     "计算两位之后最大的和以0、1、2、3开头的各自最大的

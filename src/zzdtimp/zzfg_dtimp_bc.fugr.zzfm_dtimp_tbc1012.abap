@@ -54,16 +54,18 @@ FUNCTION zzfm_dtimp_tbc1012.
       CONTINUE.
     ENDIF.
 
-    IF ls_data-function_id IS INITIAL.
-      MESSAGE e006(zbc_001) WITH TEXT-006 INTO <line>-('Message').
-      <line>-('Type') = 'E'.
-      CONTINUE.
-    ENDIF.
+    IF ls_data-updateflag = lc_updateflag_insert OR ls_data-updateflag = lc_updateflag_delete.
+      IF ls_data-function_id IS INITIAL.
+        MESSAGE e006(zbc_001) WITH TEXT-006 INTO <line>-('Message').
+        <line>-('Type') = 'E'.
+        CONTINUE.
+      ENDIF.
 
-    IF ls_data-access_id IS INITIAL.
-      MESSAGE e006(zbc_001) WITH TEXT-007 INTO <line>-('Message').
-      <line>-('Type') = 'E'.
-      CONTINUE.
+      IF ls_data-access_id IS INITIAL.
+        MESSAGE e006(zbc_001) WITH TEXT-007 INTO <line>-('Message').
+        <line>-('Type') = 'E'.
+        CONTINUE.
+      ENDIF.
     ENDIF.
 
     "Obtain Role information
@@ -73,7 +75,7 @@ FUNCTION zzfm_dtimp_tbc1012.
     SELECT SINGLE * FROM ztbc_1016 WHERE role_id     = @ls_data-role_id
                                      AND function_id = @ls_data-function_id
                                      AND access_id   = @ls_data-access_id
-                                    INTO @ls_ztbc_1016.                     "#EC CI_ALL_FIELDS_NEEDED
+                                    INTO @ls_ztbc_1016. "#EC CI_ALL_FIELDS_NEEDED
 
 *   Insert data
     IF ls_data-updateflag = lc_updateflag_insert.
@@ -119,10 +121,10 @@ FUNCTION zzfm_dtimp_tbc1012.
 
 *     Insert Role funtion data
       TRY.
-        ls_ztbc_1016-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
-        ##NO_HANDLER
-      CATCH cx_uuid_error.
-        " handle exception
+          ls_ztbc_1016-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+          ##NO_HANDLER
+        CATCH cx_uuid_error.
+          " handle exception
       ENDTRY.
 
       ls_ztbc_1016-role_id     = ls_data-role_id.

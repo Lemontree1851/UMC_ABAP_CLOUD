@@ -201,10 +201,14 @@ CLASS zcl_bi005_job IMPLEMENTATION.
           APPEND ls_plant TO lr_plant.
 *     Parameterの会計年度
         WHEN 'P_GJAHR'.
-          lv_gjahr = ls_parameters-low.
+          IF ls_parameters-low IS NOT INITIAL.
+            lv_gjahr = ls_parameters-low.
+          ENDIF.
 *     Parameterの会計期間
         WHEN 'P_POPER'.
-          lv_poper = ls_parameters-low.
+          IF ls_parameters-low IS NOT INITIAL.
+            lv_poper = ls_parameters-low.
+          ENDIF.
         WHEN OTHERS.
       ENDCASE.
     ENDLOOP.
@@ -245,9 +249,9 @@ CLASS zcl_bi005_job IMPLEMENTATION.
            lv_datetime   TYPE string.
       GET TIME STAMP FIELD DATA(lv_timestamp_local).
       lv_datetime       = lv_timestamp_local.
-      lv_poper     = lv_datetime+4(2).
-      lv_gjahr     = lv_datetime+0(4).
-
+      zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date   = |{ lv_datetime+0(6) }01|
+                                                        IMPORTING ev_year   = lv_gjahr
+                                                                  ev_period = lv_poper  ).
     ENDIF.
 
 *   前会計期間の編集
@@ -272,6 +276,26 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 
     DATA(lv_next_start) = zzcl_common_utils=>calc_date_add( EXPORTING date = lv_now_start month = 11 ).
     DATA(lv_next_end) = zzcl_common_utils=>get_enddate_of_month( EXPORTING iv_date = lv_next_start ).
+
+*&--ADD BEGIN BY XINLEI XU 2025/01/14 CR#4046
+    " 頭2桁固定値「B0」、後は最大値
+    SELECT salesplanuuid,
+           salesplan,
+           salesplanversion,
+           createdbyuser
+      FROM c_salesplanversionvaluehelp WITH PRIVILEGED ACCESS
+     WHERE salesplanversion LIKE 'B0%'
+      INTO TABLE @DATA(lt_salesplanversion).
+    SORT lt_salesplanversion BY salesplanversion DESCENDING.
+    READ TABLE lt_salesplanversion INTO DATA(ls_salesplanversion) INDEX 1.
+    IF sy-subrc <> 0.
+      TRY.
+          add_message_to_log( i_text = |販売計画データは取得できません。| i_type = 'E' ).
+        CATCH cx_bali_runtime ##NO_HANDLER.
+      ENDTRY.
+      RETURN.
+    ENDIF.
+*&--ADD END BY XINLEI XU 2025/01/14 CR#4046
 
 *   前月の在庫実績を抽出
     SELECT a~companycode,           "会社コード
@@ -413,15 +437,15 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     ENDLOOP.
 
     TRY.
-      DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
-      " Get UWMS Access configuration
-      SELECT SINGLE *
-        FROM zc_tbc1001
-       WHERE zid = 'ZBC005'
-        INTO @DATA(ls_config).
-      ##NO_HANDLER
-    CATCH cx_abap_context_info_error.
-      "handle exception
+        DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
+        " Get UWMS Access configuration
+        SELECT SINGLE *
+          FROM zc_tbc1001
+         WHERE zid = 'ZBC005'
+          INTO @DATA(ls_config).              "#EC CI_ALL_FIELDS_NEEDED
+        ##NO_HANDLER
+      CATCH cx_abap_context_info_error.
+        "handle exception
     ENDTRY.
 
     CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
@@ -473,19 +497,50 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     DELETE lt_material_zfrt WHERE materialtype <> 'ZFRT'.    "製品の品目
     DELETE ADJACENT DUPLICATES FROM lt_material_zfrt COMPARING material.
 
-*   得意先内示データから製品の所要量を取得
-    SELECT a~material,
-           a~requirement_date,
-           a~plant,
-           a~customer,
-           a~requirement_qty
-      FROM ztpp_1012 AS a
-      INNER JOIN @lt_material_zfrt AS b ON b~material = a~material
-*                                       AND b~businesspartner = a~customer
-     WHERE a~plant IN @lr_plant
-       AND a~requirement_date >= @lv_now_start
-       AND a~requirement_date <= @lv_next_end
-      INTO TABLE @DATA(lt_1012).
+*&--DEL BEGIN BY XINLEI XU 2025/01/14 CR#4046
+**   得意先内示データから製品の所要量を取得
+*    SELECT a~material,
+*           a~requirement_date,
+*           a~plant,
+*           a~customer,
+*           a~requirement_qty
+*      FROM ztpp_1012 AS a
+*      INNER JOIN @lt_material_zfrt AS b ON b~material = a~material
+**                                       AND b~businesspartner = a~customer
+*     WHERE a~plant IN @lr_plant
+*       AND a~requirement_date >= @lv_now_start
+*       AND a~requirement_date <= @lv_next_end
+*      INTO TABLE @DATA(lt_1012).
+*&--DEL END BY XINLEI XU 2025/01/14 CR#4046
+
+*&--ADD BEGIN BY XINLEI XU 2025/01/14 CR#4046
+    DATA(lt_currency) = lt_material_zfrt.
+    SORT lt_currency BY displaycurrency.
+    DELETE ADJACENT DUPLICATES FROM lt_currency COMPARING displaycurrency.
+
+    LOOP AT lt_currency INTO DATA(ls_currency).
+      SELECT a~product AS material,
+             a~salesperformancedate AS requirement_date,
+             a~salesorganization AS plant,
+             d~businesspartner AS customer,
+             a~salesplanquantity AS requirement_qty
+        FROM i_slsperformanceplanactualcube( p_exchangeratetype = '0',
+                                             p_displaycurrency  = @ls_currency-displaycurrency,
+                                             p_salesplan        = @ls_salesplanversion-salesplan,
+                                             p_salesplanversion = @ls_salesplanversion-salesplanversion,
+                                             p_createdbyuser    = @ls_salesplanversion-createdbyuser )
+        WITH PRIVILEGED ACCESS AS a
+        LEFT JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS c ON  c~plant   = a~salesorganization
+                                                                  AND c~product = a~product
+                                                                  AND c~mrpresponsible IS NOT INITIAL
+        LEFT JOIN i_businesspartner WITH PRIVILEGED ACCESS AS d ON d~searchterm2 = right( c~mrpresponsible,2 )
+        FOR ALL ENTRIES IN @lt_material_zfrt
+       WHERE a~salesorganization = @lt_material_zfrt-plant
+         AND a~product = @lt_material_zfrt-material
+         AND a~sddocument = '0000000000'
+        INTO TABLE @DATA(lt_1012).
+    ENDLOOP.
+*&--ADD END BY XINLEI XU 2025/01/14 CR#4046
 
     IF sy-subrc = 0.
       LOOP AT lt_1012 ASSIGNING FIELD-SYMBOL(<fs_l_1012>).
@@ -791,6 +846,11 @@ CLASS zcl_bi005_job IMPLEMENTATION.
          product   ASCENDING.
 
     LOOP AT lt_1016_tmp ASSIGNING <fs_l_1016>.
+*&--ADD BEGIN BY XINLEI XU 2025/01/15
+      CLEAR ls_bi1003.
+      UNASSIGN <fs_l_bi1003>.
+*&--ADD END BY XINLEI XU 2025/01/15
+
       ls_bi1003-type               = '在庫予測'.
       ls_bi1003-created_by         = sy-uname.
       ls_bi1003-created_at         = lv_timestamp.
@@ -826,6 +886,12 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                    plant     = ls_bi1003-plant
                    product   = ls_bi1003-product.
         IF sy-subrc <> 0.
+*&--ADD BEGIN BY XINLEI XU 2025/01/15
+          " Balance（期首）= 上个月的 Balance（期末）
+          IF <fs_l_bi1003> IS ASSIGNED.
+            ls_bi1003-balanceopenning = <fs_l_bi1003>-balanceclosing.
+          ENDIF.
+*&--ADD BEGIN BY XINLEI XU 2025/01/15
 *         原材料のSupplyの数字を取得する
           READ TABLE lt_supply INTO ls_supply
             WITH KEY yearmonth = ls_bi1003-yearmonth
@@ -833,11 +899,19 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                      material  = ls_bi1003-product
                      BINARY SEARCH.
           IF sy-subrc = 0.
-            ls_bi1003-supply          = ls_supply-supplyquantity.
-            ls_bi1003-balanceclosing  = ls_bi1003-balanceclosing + ls_bi1003-supply.     "Balance（期末）
+            ls_bi1003-supply = ls_supply-supplyquantity.
+*&--DEL BEGIN BY XINLEI XU 2025/01/15
+*            ls_bi1003-balanceclosing = ls_bi1003-balanceclosing + ls_bi1003-supply.     "Balance（期末）
+*&--DEL END BY XINLEI XU 2025/01/15
           ELSE.
             ls_bi1003-supply = 0.
           ENDIF.
+
+          ls_bi1003-demand = 0.
+
+*&--ADD BEGIN BY XINLEI XU 2025/01/15
+          ls_bi1003-balanceclosing = ls_bi1003-balanceopenning + ls_bi1003-supply.     "Balance（期末）
+*&--ADD END BY XINLEI XU 2025/01/15
 
 *         期末在庫金額
           IF ls_bi1003-actualprice IS NOT INITIAL.
@@ -845,20 +919,22 @@ CLASS zcl_bi005_job IMPLEMENTATION.
           ELSE.
             ls_bi1003-closinginventorytotal = ls_bi1003-standardprice * ls_bi1003-balanceclosing.
           ENDIF.
-          ls_bi1003-demand = 0.         "Demand
+
           APPEND ls_bi1003 TO lt_bi1003.
-          DATA(lv_flag) = abap_on.
-        ELSEIF lv_flag IS NOT INITIAL.
-          <fs_l_bi1003>-balanceopenning = ls_bi1003-balanceclosing.     "Balance（期首）
-          <fs_l_bi1003>-balanceclosing  = <fs_l_bi1003>-balanceopenning + <fs_l_bi1003>-supply - <fs_l_bi1003>-demand.  "Balance（期末）
-*         期末在庫金額
-          IF <fs_l_bi1003>-actualprice IS NOT INITIAL.
-            <fs_l_bi1003>-closinginventorytotal = <fs_l_bi1003>-actualprice * <fs_l_bi1003>-balanceclosing.
-          ELSE.
-            <fs_l_bi1003>-closinginventorytotal = <fs_l_bi1003>-standardprice * <fs_l_bi1003>-balanceclosing.
-          ENDIF.
-          ls_bi1003 = <fs_l_bi1003>.
-          ls_bi1003-balanceopenning = <fs_l_bi1003>-balanceclosing.
+*&--DEL BEGIN BY XINLEI XU 2025/01/15
+*          DATA(lv_flag) = abap_on.
+*        ELSEIF lv_flag IS NOT INITIAL.
+*          <fs_l_bi1003>-balanceopenning = ls_bi1003-balanceclosing.     "Balance（期首）
+*          <fs_l_bi1003>-balanceclosing  = <fs_l_bi1003>-balanceopenning + <fs_l_bi1003>-supply - <fs_l_bi1003>-demand.  "Balance（期末）
+**         期末在庫金額
+*          IF <fs_l_bi1003>-actualprice IS NOT INITIAL.
+*            <fs_l_bi1003>-closinginventorytotal = <fs_l_bi1003>-actualprice * <fs_l_bi1003>-balanceclosing.
+*          ELSE.
+*            <fs_l_bi1003>-closinginventorytotal = <fs_l_bi1003>-standardprice * <fs_l_bi1003>-balanceclosing.
+*          ENDIF.
+*          ls_bi1003 = <fs_l_bi1003>.
+*          ls_bi1003-balanceopenning = <fs_l_bi1003>-balanceclosing.
+*&--DEL END BY XINLEI XU 2025/01/15
         ENDIF.
         IF ls_bi1003-yearmonth = |{ lv_gjahr }012|.
           ls_bi1003-yearmonth = |{ lv_gjahr + 1 }001|.
@@ -866,7 +942,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
           ls_bi1003-yearmonth = ls_bi1003-yearmonth + 1.
         ENDIF.
       ENDDO.
-      CLEAR lv_flag.
+*      CLEAR lv_flag.
     ENDLOOP.
 
     IF lt_bi1003 IS NOT INITIAL.
@@ -899,21 +975,21 @@ CLASS zcl_bi005_job IMPLEMENTATION.
                                sign    = 'I'
                                option  = 'EQ'
                                low     = '1100' )
-                               ( selname = 'P_BUKRS'
-                               kind    = if_apj_dt_exec_object=>select_option
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '1400' )
+*                               ( selname = 'P_BUKRS'
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1400' )
                                ( selname = 'P_PLANT'
                                kind    = if_apj_dt_exec_object=>select_option
                                sign    = 'I'
                                option  = 'EQ'
                                low     = '1100' )
-                               ( selname = 'P_PLANT'
-                               kind    = if_apj_dt_exec_object=>select_option
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '1400' )
+*                               ( selname = 'P_PLANT'
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1400' )
 *                               ( selname = 'P_GJAHR'
 *                               kind    = if_apj_dt_exec_object=>parameter
 *                               sign    = 'I'

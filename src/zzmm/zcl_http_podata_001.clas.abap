@@ -63,6 +63,7 @@ CLASS zcl_http_podata_001 DEFINITION
 
     DATA:
       lt_req            TYPE STANDARD TABLE OF ty_inputs,
+      ls_insert_req     TYPE ty_inputs,
       ls_req1           TYPE ty_inputs,
       lt_req1           TYPE STANDARD TABLE OF ty_inputs,
       ls_output         TYPE ty_output,
@@ -195,6 +196,32 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
         CLEAR:lv_newdn,lv_dno.
         lv_index = 0.
 
+          "ADD BY STANLEY 20250120
+          SELECT purchaseorder,
+                 purchaseorderitem,
+                 sequentialnmbrofsuplrconf,
+                 deliverydate,
+                 mrprelevantquantity
+            FROM I_POSupplierConfirmationAPI01 WITH PRIVILEGED ACCESS
+           WHERE purchaseorder = @lw_req1-pono
+             AND mrprelevantquantity > 0
+            INTO TABLE @data(lt_already_confirm).
+          SORT lt_already_confirm BY purchaseorder purchaseorderitem sequentialnmbrofsuplrconf.
+          LOOP AT lt_already_confirm INTO DATA(ls_already_confirm).
+            CLEAR:ls_insert_req.
+            ls_insert_req-pono = ls_already_confirm-purchaseorder.
+            ls_insert_req-dno = ls_already_confirm-purchaseorderitem.
+            ls_insert_req-seq = ls_already_confirm-sequentialnmbrofsuplrconf.
+            ls_insert_req-deliverydate = ls_already_confirm-deliverydate+0(4) && '-' &&
+            ls_already_confirm-deliverydate+4(2) && '-' && ls_already_confirm-deliverydate+6(2).
+            ls_insert_req-delflag = 'A'."Already Confirmed
+            ls_insert_req-quantity = ls_already_confirm-mrprelevantquantity.
+            APPEND ls_insert_req TO lt_req.
+          ENDLOOP.
+
+          SORT lt_req BY pono dno seq deliverydate.
+         "END ADD
+
         LOOP AT lt_req INTO DATA(ls_req) WHERE pono = lw_req1-pono  .
 
           "判断是否有新行需要item标签结尾
@@ -212,6 +239,8 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
           lv_index = lv_index + 1.
 
           lv_length  = 0.
+
+
 
           LOOP AT lt_req INTO DATA(ls_req3) WHERE pono = lw_req1-pono.
 
@@ -404,6 +433,14 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
               ENDTRY.
               "=====================================change by wz
 
+              "ADD BY STANLEY 20250120
+              DATA:LV_ACTION TYPE CHAR1.
+              IF ls_req-delflag = 'A'.
+                LV_ACTION = '2'.
+              ELSE.
+                lv_action = '1'.
+              ENDIF.
+
               " 开始新的 OrderConfRequest
               lv_current_request = |<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:edi="http://sap.com/xi/EDI">| &&
                                    |<soap:Header/>| &&
@@ -417,12 +454,14 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
                                    |<PurchaseOrderID>{ ls_req-pono }</PurchaseOrderID>| &&
 *                                       |<SalesOrderID>{ ls_req-extnumber }</SalesOrderID>| &&
                                    |<Item>| &&
+                                   |<ActionCode>{ lv_action }</ActionCode>| &&
                                    |<PurchaseOrderItemID>{ ls_req-dno }</PurchaseOrderItemID>|.
 
             ELSE.
                 if lv_newdn = 'X'.
                  lv_current_request = lv_current_request &&
                                       |</Item>| && |<Item>| &&
+                                      |<ActionCode>{ lv_action }</ActionCode>| &&
                                       |<PurchaseOrderItemID>{ ls_req-dno }</PurchaseOrderItemID>|.
                 endif.
             ENDIF.
@@ -442,11 +481,10 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
                 lv_converted_unit = ls_unit-purchaseorderquantityunit.
               ENDIF.
 
-
               " 正确拼接 <ScheduleLine> 标签
               lv_current_request = lv_current_request &&
                                    |<ScheduleLine>| &&
-*                                       |<PurchaseOrderScheduleLine>{ ls_req-seq }</PurchaseOrderScheduleLine>| &&
+                                   |<PurchaseOrderScheduleLine>{ ls_req-seq }</PurchaseOrderScheduleLine>| &&
                                    |<ConfirmedDeliveryDate>{ ls_req-deliverydate }</ConfirmedDeliveryDate>| &&
                                    |<ConfirmedDeliveryTime>{ lv_confirmed_delivery_time }</ConfirmedDeliveryTime>| &&
                                    |<ConfirmedOrderQuantityByMaterialAvailableCheck unitCode="{ lv_converted_unit }">{ ls_req-quantity }</ConfirmedOrderQuantityByMaterialAvailableCheck>| &&

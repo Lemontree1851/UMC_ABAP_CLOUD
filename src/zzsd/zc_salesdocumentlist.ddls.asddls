@@ -123,6 +123,8 @@ define root custom entity ZC_SALESDOCUMENTLIST
       YY1_ManagementNo_1_SDI         : abap.char(18);
       YY1_ManagementNo_2_SDI         : abap.char(18);
       YY1_ManagementNo_3_SDI         : abap.char(18);
+      TotalCountSo                   : abap.int8;
+      TotalCountSoItem               : abap.int8;
 
       //filter field
       RequestedDeliveryDate          : abap.dats;

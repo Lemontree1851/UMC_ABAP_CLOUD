@@ -9,7 +9,11 @@ CLASS zcl_creditmantable DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_creditmantable IMPLEMENTATION.
+
+
+CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
+
+
   METHOD if_rap_query_provider~select.
 
     DATA:
@@ -956,5 +960,4 @@ CLASS zcl_creditmantable IMPLEMENTATION.
     io_response->set_data( lt_data ).
 
   ENDMETHOD.
-
 ENDCLASS.

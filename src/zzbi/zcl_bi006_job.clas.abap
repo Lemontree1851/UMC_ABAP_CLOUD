@@ -20,7 +20,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_bi006_job IMPLEMENTATION.
+CLASS ZCL_BI006_JOB IMPLEMENTATION.
 
 
   METHOD if_apj_dt_exec_object~get_parameters.
@@ -60,10 +60,18 @@ CLASS zcl_bi006_job IMPLEMENTATION.
       DATA:lv_datetime   TYPE string.
       DATA:lmr_year      LIKE LINE OF mr_year.
       DATA:lmr_monat     LIKE LINE OF mr_monat.
+      DATA:lv_poper      TYPE poper.
+      DATA:lv_popern2    TYPE n LENGTH 2.
+      DATA:lv_gjahr TYPE gjahr.
 
       GET TIME STAMP FIELD DATA(lv_timestamp_local).
       lv_datetime     = lv_timestamp_local.
-      lv_date_local   = lv_datetime+0(6) && '01'.
+      lv_date_local   = lv_datetime+0(8).
+      zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date = lv_date_local
+                                         IMPORTING ev_year   = lv_gjahr
+                                                   ev_period = lv_poper ).
+      lv_popern2      = lv_poper.
+      lv_date_local   = lv_gjahr && lv_popern2 && '01'.
       lv_date_local   = lv_date_local - 1.
 
       CLEAR lmr_year.
@@ -122,7 +130,9 @@ CLASS zcl_bi006_job IMPLEMENTATION.
       MODIFY ztbi_bi006_j01 FROM TABLE @lt_save_data.
     ENDIF.
   ENDMETHOD.
-    METHOD if_oo_adt_classrun~main.
+
+
+  METHOD if_oo_adt_classrun~main.
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
     lt_parameters = VALUE #( ( selname = 'P_BUKRS'
                                kind    = if_apj_dt_exec_object=>select_option

@@ -307,11 +307,23 @@ CLASS zzcl_common_utils DEFINITION
 
       get_purchorg_by_user IMPORTING iv_email           TYPE i_workplaceaddress-defaultemailaddress
                            RETURNING VALUE(rv_purchorg) TYPE string,
-      get_shippingpoint_by_user IMPORTING iv_email           TYPE i_workplaceaddress-defaultemailaddress
-                                RETURNING VALUE(rv_shippingpoint) TYPE string.
 
+      get_shippingpoint_by_user IMPORTING iv_email                TYPE i_workplaceaddress-defaultemailaddress
+                                RETURNING VALUE(rv_shippingpoint) TYPE string,
 *&--End use for Authorization Check
 
+      add_interface_log IMPORTING iv_interface_id   TYPE ztbc_1019-interface_id
+                                  iv_interface_desc TYPE ztbc_1019-interface_desc
+                                  iv_request_method TYPE ztbc_1019-request_method
+                                  iv_request_url    TYPE ztbc_1019-request_url
+                                  iv_request_body   TYPE ztbc_1019-request_body
+                                  iv_status_code    TYPE ztbc_1019-status_code
+                                  iv_response       TYPE ztbc_1019-response_body
+                                  iv_record_count   TYPE ztbc_1019-record_count
+                                  iv_run_start_time TYPE ztbc_1019-run_start_time
+                                  iv_run_end_time   TYPE ztbc_1019-run_end_time
+                                  iv_remark         TYPE ztbc_1019-remark
+                        EXPORTING ev_log_uuid       TYPE ztbc_1019-uuid.
   PROTECTED SECTION.
   PRIVATE SECTION.
 
@@ -1393,4 +1405,32 @@ CLASS zzcl_common_utils IMPLEMENTATION.
     ENDLOOP.
   ENDMETHOD.
 
+  METHOD add_interface_log.
+    TRY.
+        DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
+        ##NO_HANDLER
+      CATCH cx_uuid_error.
+        "handle exception
+    ENDTRY.
+
+    INSERT INTO ztbc_1019 VALUES @( VALUE #( uuid            = lv_uuid
+                                             interface_id    = iv_interface_id
+                                             interface_desc  = iv_interface_desc
+                                             request_method  = iv_request_method
+                                             request_url     = iv_request_url
+                                             request_body    = iv_request_body
+                                             status_code     = iv_status_code
+                                             response_body   = iv_response
+                                             record_count    = iv_record_count
+                                             run_start_time  = iv_run_start_time
+                                             run_end_time    = iv_run_end_time
+                                             remark          = iv_remark
+                                             created_by      = sy-uname
+                                             created_at      = iv_run_end_time
+                                             last_changed_by = sy-uname
+                                             last_changed_at = iv_run_end_time
+                                             local_last_changed_at = iv_run_end_time ) ).
+
+    ev_log_uuid = lv_uuid.
+  ENDMETHOD.
 ENDCLASS.

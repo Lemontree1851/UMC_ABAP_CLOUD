@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_ofsocomparison IMPLEMENTATION.
+CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

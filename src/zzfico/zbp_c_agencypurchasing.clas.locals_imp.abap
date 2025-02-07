@@ -126,6 +126,10 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
        AND zvalue1 = 'SELF'
       INTO ( @lv_username, @lv_password ).
 
+    zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date   = cl_abap_context_info=>get_system_date( )
+                                               IMPORTING ev_year   = DATA(lv_fiscalyear)
+                                                         ev_period = DATA(lv_period)  ).
+
     LOOP AT cs_data-items ASSIGNING FIELD-SYMBOL(<lfs_item>).
 
       IF <lfs_item>-accountingdocument1 IS NOT INITIAL
@@ -276,7 +280,7 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
           ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
           ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
           ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
-          ls_ztfi_1014-fiscalyear1         = <lfs_item>-postingdate+0(4).
+          ls_ztfi_1014-fiscalyear1         = lv_fiscalyear.
           ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
           MODIFY ztfi_1014 FROM @ls_ztfi_1014.
         ELSE.
@@ -425,9 +429,9 @@ CLASS lhc_zc_agencypurchasing IMPLEMENTATION.
             ls_ztfi_1014-companycode2        = <lfs_item>-companycode2.
             ls_ztfi_1014-companycodecurrency = <lfs_item>-companycodecurrency.
             ls_ztfi_1014-taxcode             = <lfs_item>-taxcode.
-            ls_ztfi_1014-fiscalyear1         = <lfs_item>-postingdate+0(4).
+            ls_ztfi_1014-fiscalyear1         = lv_fiscalyear.
             ls_ztfi_1014-accountingdocument1 = <lfs_item>-accountingdocument1.
-            ls_ztfi_1014-fiscalyear2         = <lfs_item>-postingdate+0(4).
+            ls_ztfi_1014-fiscalyear2         = lv_fiscalyear.
             ls_ztfi_1014-accountingdocument2 = <lfs_item>-accountingdocument2.
             ls_ztfi_1014-amount              = zzcl_common_utils=>conversion_amount(
                                                  iv_alpha    = zzcl_common_utils=>lc_alpha_in

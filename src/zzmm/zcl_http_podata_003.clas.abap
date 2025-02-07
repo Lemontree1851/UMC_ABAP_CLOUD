@@ -84,12 +84,12 @@ CLASS zcl_http_podata_003 DEFINITION
         plainlongtext                  TYPE string,
         schedulelinedeliverydate       TYPE c LENGTH  8,
         suppliermaterialnumber         TYPE c LENGTH 18,
-        internationalarticlenumber     TYPE c LENGTH 12,
+        internationalarticlenumber     TYPE string,
         requisitionername              TYPE c LENGTH 12,
         correspncinternalreference     TYPE c LENGTH 12,
         approvedate                    TYPE string,
         purchasingorganization         TYPE c LENGTH 4,
-
+        sap_cd_by_text                 TYPE c LENGTH 50,
         _confirmation                  TYPE STANDARD TABLE OF  ty_confirmation WITH EMPTY KEY,
 
       END OF ty_response,
@@ -130,7 +130,10 @@ CLASS zcl_http_podata_003 DEFINITION
 
 ENDCLASS.
 
-CLASS zcl_http_podata_003 IMPLEMENTATION.
+
+
+CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
+
 
   METHOD if_http_service_extension~handle_request.
 
@@ -172,6 +175,7 @@ CLASS zcl_http_podata_003 IMPLEMENTATION.
 
     lv_plant     = ls_req-plant.
     lv_timestamp = ls_req-time_stamp.
+    lv_timestamp = '20250207000000'.
 
     data:lv_where type String.
 
@@ -225,9 +229,16 @@ CLASS zcl_http_podata_003 IMPLEMENTATION.
       LEFT JOIN i_purordschedulelineapi01 WITH PRIVILEGED ACCESS AS e
         ON b~purchaseorder = e~purchaseorder
        AND b~purchaseorderitem = e~purchaseorderitem
+      LEFT JOIN i_businessuserbasic WITH PRIVILEGED ACCESS AS f
+        ON a~CreatedByUser = f~BusinessPartner
      WHERE (lv_where)
       INTO TABLE @DATA(lt_poitem).
 
+      SELECT BusinessPartner,
+             LASTNAME,
+             FIRSTNAME
+          FROM i_businessuserbasic
+          INTO TABLE @DATA(LT_USERNAME).
 *--------------------------------------------------------------just for test
 
 *DELETE lt_poitem WHERE purchaseorder <> '3100000000'.
@@ -387,6 +398,13 @@ CLASS zcl_http_podata_003 IMPLEMENTATION.
 
         MOVE-CORRESPONDING lw_poitems TO lw_result.
 
+        "ADD BY STANLEY 20250207
+        READ TABLE LT_USERNAME INTO DATA(LS_USERNAME) WITH KEY BusinessPartner = LW_POITEMS-CreatedByUser+2.
+        IF SY-SUBRC EQ 0.
+            lw_result-sap_cd_by_text = LS_USERNAME-LastName && LS_USERNAME-FirstName.
+        ENDIF.
+
+
         READ TABLE lt_note INTO DATA(lw_note) WITH KEY purchaseorder = lw_poitems-purchaseorder purchaseorderitem = lw_poitems-purchaseorderitem BINARY SEARCH.
         IF  sy-subrc = 0.
           lw_result-plainlongtext = lw_note-plainlongtext .
@@ -434,7 +452,7 @@ CLASS zcl_http_podata_003 IMPLEMENTATION.
       ls_response-purchaseorderquantityunit          = lw_result-purchaseorderquantityunit      .
       ls_response-netpricequantity                   = lw_result-netpricequantity               .
       ls_response-purchasingorganization             = lw_result-purchasingorganization         .
-
+      ls_response-sap_cd_by_text                     = lw_result-sap_cd_by_text.
       ls_response-netamount = zzcl_common_utils=>conversion_amount(
         EXPORTING
           iv_alpha    = 'OUT'
@@ -594,8 +612,8 @@ CLASS zcl_http_podata_003 IMPLEMENTATION.
     IF lt_result IS INITIAL.
       lv_text = 'there is no data to send'.
       "propagate any errors raised
-      response->set_status( '500' )."500
-      response->set_text( lv_text ).
+      response->set_status( '204' )."204
+
     ELSE.
 
       "respond with success payload

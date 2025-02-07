@@ -633,10 +633,13 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         account_assignment_number  TYPE i_purordaccountassignmenttp_2-accountassignmentnumber,
         cost_center                TYPE i_purordaccountassignmenttp_2-costcenter,
         g_l_account                TYPE i_purordaccountassignmenttp_2-glaccount,
-        w_b_s_element_internal_i_d TYPE i_purordaccountassignmenttp_2-wbselementinternalid,
+*&--MOD BEGIN BY XINLEI XU 2025/01/17 WBSElementInternalID Obsolete
+*        w_b_s_element_internal_i_d TYPE i_purordaccountassignmenttp_2-wbselementinternalid,
+        w_b_s_element_external_i_d TYPE i_purordaccountassignmenttp_2-wbselementexternalid,
+*&--MOD END BY XINLEI XU 2025/01/17
         master_fixed_asset         TYPE i_purordaccountassignmenttp_2-masterfixedasset,
         tax_code                   TYPE i_purordaccountassignmenttp_2-taxcode,
-        order_i_d                   TYPE i_purordaccountassignmenttp_2-OrderID,
+        order_i_d                  TYPE i_purordaccountassignmenttp_2-orderid,
       END OF ty_account_assignment,
       "PO行项目长文本
       BEGIN OF ty_item_note,
@@ -765,7 +768,10 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                                             account_assignment_number = 1
                                                             cost_center = record_temp-costcenter
                                                             g_l_account = record_temp-glaccount
-                                                            w_b_s_element_internal_i_d = record_temp-wbselemnt
+                                                            " MOD BEGIN BY XINLEI XU 2025/01/17 WBSElementInternalID Obsolete
+                                                            " w_b_s_element_internal_i_d = record_temp-wbselemnt
+                                                            w_b_s_element_external_i_d = record_temp-wbselemnt
+                                                            " MOD BEGIN BY XINLEI XU 2025/01/17
                                                             order_i_d = record_temp-orderid
                                                             master_fixed_asset = record_temp-assetno
                                                             tax_code = record_temp-tax ) )

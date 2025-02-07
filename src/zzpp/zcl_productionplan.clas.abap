@@ -11,7 +11,9 @@ ENDCLASS.
 
 
 
-CLASS zcl_productionplan IMPLEMENTATION.
+CLASS ZCL_PRODUCTIONPLAN IMPLEMENTATION.
+
+
   METHOD if_rap_query_provider~select.
     TYPES:
       BEGIN OF ts_matnr,
@@ -1450,5 +1452,4 @@ CLASS zcl_productionplan IMPLEMENTATION.
 
 
                     ENDMETHOD.
-
 ENDCLASS.

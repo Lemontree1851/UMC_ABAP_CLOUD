@@ -297,7 +297,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
         "Alpha in
         LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
           <lfs_data>-customer = |{ <lfs_data>-customer ALPHA = IN }|.
-          <lfs_data>-supplier = |{ <lfs_data>-customer ALPHA = IN }|.
+          <lfs_data>-supplier = |{ <lfs_data>-supplier ALPHA = IN }|.
         ENDLOOP.
 
         IF ct_data IS NOT INITIAL.
@@ -327,7 +327,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
           IF ls_data-paidmaterialcost <= ls_data-customerrevenue.
             lv_less = ls_data-paidmaterialcost.
           ELSE.
-            lv_less = ls_data-chargeableamount.
+            lv_less = ls_data-customerrevenue.
           ENDIF.
           ls_item_a-chargeable = zzcl_common_utils=>conversion_amount(
                                             iv_alpha = 'IN'
@@ -463,7 +463,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
         "Alpha in
         LOOP AT ct_data ASSIGNING <lfs_data>.
           <lfs_data>-customer = |{ <lfs_data>-customer ALPHA = IN }|.
-          <lfs_data>-supplier = |{ <lfs_data>-customer ALPHA = IN }|.
+          <lfs_data>-supplier = |{ <lfs_data>-supplier ALPHA = IN }|.
         ENDLOOP.
 
         IF ct_data IS NOT INITIAL.
@@ -659,7 +659,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
         "Alpha in
         LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
           <lfs_data>-customer = |{ <lfs_data>-customer ALPHA = IN }|.
-          <lfs_data>-supplier = |{ <lfs_data>-customer ALPHA = IN }|.
+          <lfs_data>-supplier = |{ <lfs_data>-supplier ALPHA = IN }|.
         ENDLOOP.
 
         IF ct_data IS NOT INITIAL.

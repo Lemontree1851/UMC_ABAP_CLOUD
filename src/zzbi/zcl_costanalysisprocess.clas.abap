@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_costanalysisprocess IMPLEMENTATION.
+CLASS ZCL_COSTANALYSISPROCESS IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

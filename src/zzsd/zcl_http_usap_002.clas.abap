@@ -6,8 +6,8 @@ CLASS zcl_http_usap_002 DEFINITION
 * input data type
     TYPES:
       BEGIN OF ts_input_item1,
-        delivery   TYPE c LENGTH 10,
-        actualdate TYPE budat,
+        delivery     TYPE c LENGTH 10,
+        actualdate   TYPE budat,
       END OF ts_input_item1,
       tt_item1 TYPE STANDARD TABLE OF ts_input_item1 WITH DEFAULT KEY,
 
@@ -71,6 +71,7 @@ CLASS zcl_http_usap_002 DEFINITION
 
       BEGIN OF ts_outbound,
         _actual_goods_movement_date TYPE string,
+        _bill_of_lading             TYPE string,
       END OF ts_outbound.
 
     INTERFACES if_http_service_extension.
@@ -92,9 +93,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_USAP_002 IMPLEMENTATION.
-
-
+CLASS zcl_http_usap_002 IMPLEMENTATION.
   METHOD if_http_service_extension~handle_request.
     DATA:
       ls_outbound TYPE ts_outbound,
@@ -147,7 +146,8 @@ CLASS ZCL_HTTP_USAP_002 IMPLEMENTATION.
           lv_datum = ls_post-actualdate.
         ENDIF.
         ls_outbound-_actual_goods_movement_date = |{ lv_datum+0(4) }-{ lv_datum+4(2) }-{ lv_datum+6(2) }T00:00:00|.
-        DATA(lv_reqbody_api) = /ui2/cl_json=>serialize( data = ls_outbound
+        ls_outbound-_bill_of_lading = 'UWMS'.
+        data(lv_reqbody_api) = /ui2/cl_json=>serialize( data = ls_outbound
                                                     compress = 'X'
                                                     pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
         zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader({ lv_parameter })|

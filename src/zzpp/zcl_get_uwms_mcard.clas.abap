@@ -12,7 +12,8 @@ ENDCLASS.
 
 
 
-CLASS zcl_get_uwms_mcard IMPLEMENTATION.
+CLASS ZCL_GET_UWMS_MCARD IMPLEMENTATION.
+
 
   METHOD if_sadl_exit_calc_element_read~calculate.
     TYPES: BEGIN OF ty_response_res,
@@ -79,7 +80,7 @@ CLASS zcl_get_uwms_mcard IMPLEMENTATION.
 
   ENDMETHOD.
 
+
   METHOD if_sadl_exit_calc_element_read~get_calculation_info.
   ENDMETHOD.
-
 ENDCLASS.

@@ -542,6 +542,15 @@
       <TYPE_TEXT>OData V2</TYPE_TEXT>
      </item>
      <item>
+      <REL_NAME>ZUI_BI003_UPLOAD_O2                0001</REL_NAME>
+      <REL_TYPE>IWSV</REL_TYPE>
+      <APP_ID>ZIAM_ODATA_SERVICE_EXT</APP_ID>
+      <SRVC_NAME>A0E74D48D08B4182BB268E44A37050</SRVC_NAME>
+      <SRVC_TYPE>HT</SRVC_TYPE>
+      <TEXT>回収残データ一括アップロード</TEXT>
+      <TYPE_TEXT>OData V2</TYPE_TEXT>
+     </item>
+     <item>
       <REL_NAME>ZUI_BI006_LONGTERM_INV_O2          0001</REL_NAME>
       <REL_TYPE>IWSV</REL_TYPE>
       <APP_ID>ZIAM_ODATA_SERVICE_EXT</APP_ID>

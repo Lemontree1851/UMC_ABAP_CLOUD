@@ -65,7 +65,11 @@ CLASS zcl_bom_where_used DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_bom_where_used IMPLEMENTATION.
+
+
+CLASS ZCL_BOM_WHERE_USED IMPLEMENTATION.
+
+
   METHOD get_data.
 
     DATA:
@@ -164,6 +168,7 @@ CLASS zcl_bom_where_used IMPLEMENTATION.
 
   ENDMETHOD.
 
+
   METHOD get_data_boi.
 
     DATA:
@@ -239,5 +244,4 @@ CLASS zcl_bom_where_used IMPLEMENTATION.
     ENDIF.
 
   ENDMETHOD.
-
 ENDCLASS.

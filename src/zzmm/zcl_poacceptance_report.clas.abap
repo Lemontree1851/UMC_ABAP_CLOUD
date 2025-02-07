@@ -189,6 +189,15 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
         DELETE lt_po WHERE plant NOT IN lr_werks.
       ENDIF.
 
+      DATA(lv_ekorg) = zzcl_common_utils=>get_purchorg_by_user( lv_user_email ).
+      IF lv_ekorg IS INITIAL.
+        CLEAR lt_po.
+      ELSE.
+        SPLIT lv_ekorg AT '&' INTO TABLE DATA(lt_ekorg_check).
+        CLEAR lr_ekorg.
+        lr_ekorg = VALUE #( FOR ekorg IN lt_ekorg_check ( sign = 'I' option = 'EQ' low = ekorg ) ).
+        DELETE lt_po WHERE purchasingorganization NOT IN lr_ekorg.
+      ENDIF.
 
       IF lt_po IS NOT INITIAL.
 * Get Product

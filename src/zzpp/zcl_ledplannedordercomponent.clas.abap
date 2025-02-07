@@ -9,7 +9,11 @@ CLASS zcl_ledplannedordercomponent DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_ledplannedordercomponent IMPLEMENTATION.
+
+
+CLASS ZCL_LEDPLANNEDORDERCOMPONENT IMPLEMENTATION.
+
+
   METHOD if_rap_query_provider~select.
 
     DATA:

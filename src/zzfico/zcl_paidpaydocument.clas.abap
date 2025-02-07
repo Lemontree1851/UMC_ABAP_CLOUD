@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_paidpaydocument IMPLEMENTATION.
+CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

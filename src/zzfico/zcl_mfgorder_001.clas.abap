@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_mfgorder_001 IMPLEMENTATION.
+CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -66,6 +66,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
       END OF ty_results,
       tt_results TYPE STANDARD TABLE OF ty_results WITH DEFAULT KEY,
       BEGIN OF ty_res_api,
+        count TYPE i,
         value TYPE tt_results,
       END OF ty_res_api,
 
@@ -91,6 +92,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
       tt_results1 TYPE STANDARD TABLE OF ty_results1 WITH DEFAULT KEY,
 
       BEGIN OF ty_res_api1,
+        count TYPE i,
         value TYPE tt_results1,
       END OF ty_res_api1.
     TYPES:
@@ -116,11 +118,11 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
       lv_select_string  TYPE string.
     "select options
     DATA:
-      lr_plant        TYPE RANGE OF zc_mfgorder_001-plant,
-      lrs_plant       LIKE LINE OF lr_plant,
-      lr_companycode  TYPE RANGE OF zc_mfgorder_001-companycode,
-      lr_companycode_auth            TYPE RANGE OF zc_mfgorder_001-companycode,
-      lrs_companycode LIKE LINE OF lr_companycode.
+      lr_plant            TYPE RANGE OF zc_mfgorder_001-plant,
+      lrs_plant           LIKE LINE OF lr_plant,
+      lr_companycode      TYPE RANGE OF zc_mfgorder_001-companycode,
+      lr_companycode_auth TYPE RANGE OF zc_mfgorder_001-companycode,
+      lrs_companycode     LIKE LINE OF lr_companycode.
     DATA:
       lv_calendaryear  TYPE calendaryear,
       lv_calendarmonth TYPE calendarmonth.
@@ -135,7 +137,11 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
       ls_mfgorder_001     TYPE zc_mfgorder_001.
     DATA:lv_path     TYPE string.
     DATA:ls_res_api  TYPE ty_res_api.
+    DATA:ls_res_api_temp  TYPE ty_res_api.
+    DATA:ls_res_api_sum  TYPE ty_res_api.
     DATA:ls_res_api1 TYPE ty_res_api1.
+    DATA:ls_res_api1_temp TYPE ty_res_api1.
+    DATA:ls_res_api1_sum TYPE ty_res_api1.
     DATA:lc_alpha_out     TYPE string        VALUE 'OUT'.
 
     DATA:lv_zero TYPE i_manufacturingorder-mfgorderconfirmedyieldqty.
@@ -147,8 +153,8 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
         CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option) ##NO_HANDLER.
 
       ENDTRY.
-      DATA(lv_top)     = io_request->get_paging( )->get_page_size( ).
-      DATA(lv_skip)    = io_request->get_paging( )->get_offset( ).
+      "DATA(lv_top)     = io_request->get_paging( )->get_page_size( ).
+      "DATA(lv_skip)    = io_request->get_paging( )->get_offset( ).
       DATA(lt_fields)  = io_request->get_requested_elements( ).
       DATA(lt_sort)    = io_request->get_sort_elements( ).
 *****************************************************************
@@ -179,7 +185,7 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
       IF sy-subrc EQ 0.
         LOOP AT ls_companycode_cond-range INTO DATA(ls_sel_opt_companycode).
           MOVE-CORRESPONDING ls_sel_opt_companycode TO lrs_companycode.
-          IF lrs_companycode-low IN lr_companycode_auth AND lr_companycode_auth IS not INITIAL.
+          IF lrs_companycode-low IN lr_companycode_auth AND lr_companycode_auth IS NOT INITIAL.
             INSERT lrs_companycode INTO TABLE lr_companycode.
           ENDIF.
         ENDLOOP.
@@ -421,96 +427,335 @@ CLASS zcl_mfgorder_001 IMPLEMENTATION.
         "提取月末时的实际工资率和计划工资率
         lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$filter=ValidityStartFiscalYear%20eq%20'{ lv_calendaryear }'%20and%20ValidityStartFiscalPeriod%20eq%20'{ lv_calendarmonth_s }'&$top=5000|.
         "Call API
-        zzcl_common_utils=>request_api_v4(
-          EXPORTING
-            iv_path        = lv_path
-            iv_method      = if_web_http_client=>get
-          IMPORTING
-            ev_status_code = DATA(lv_stat_code)
-            ev_response    = DATA(lv_resbody_api) ).
-        TRY.
-            "JSON->ABAP
-            "xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
-            "   ( xco_cp_json=>transformation->boolean_to_abap_bool ) ) )->write_to( REF #( ls_res_api ) ).
-            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
-                               CHANGING  data = ls_res_api ).
-
-          CATCH cx_root INTO DATA(lx_root1) ##NO_HANDLER.
-        ENDTRY.
+*        zzcl_common_utils=>request_api_v4(
+*          EXPORTING
+*            iv_path        = lv_path
+*            iv_method      = if_web_http_client=>get
+*          IMPORTING
+*            ev_status_code = DATA(lv_stat_code)
+*            ev_response    = DATA(lv_resbody_api) ).
+*        TRY.
+*            "JSON->ABAP
+*            "xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
+*            "   ( xco_cp_json=>transformation->boolean_to_abap_bool ) ) )->write_to( REF #( ls_res_api ) ).
+*            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+*                               CHANGING  data = ls_res_api ).
+*
+*          CATCH cx_root INTO DATA(lx_root1) ##NO_HANDLER.
+*        ENDTRY.
 
         lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$filter=ValidityStartFiscalYear%20eq%20'{ lv_calendaryear }'%20and%20ValidityStartFiscalPeriod%20eq%20'{ lv_calendarmonth_s }'&$top=5000|.
         "Call API
-        zzcl_common_utils=>request_api_v4(
-          EXPORTING
-            iv_path        = lv_path
-            iv_method      = if_web_http_client=>get
-            iv_format      = 'json'
-          IMPORTING
-            ev_status_code = DATA(lv_stat_code1)
-            ev_response    = DATA(lv_resbody_api1) ).
-        TRY.
-            "JSON->ABAP
-            "xco_cp_json=>data->from_string( lv_resbody_api1 )->apply( VALUE #(
-            "   ( xco_cp_json=>transformation->boolean_to_abap_bool ) ) )->write_to( REF #( ls_res_api1 ) ).
+*        zzcl_common_utils=>request_api_v4(
+*          EXPORTING
+*            iv_path        = lv_path
+*            iv_method      = if_web_http_client=>get
+*            iv_format      = 'json'
+*          IMPORTING
+*            ev_status_code = DATA(lv_stat_code1)
+*            ev_response    = DATA(lv_resbody_api1) ).
+*        TRY.
+*            "JSON->ABAP
+*            "xco_cp_json=>data->from_string( lv_resbody_api1 )->apply( VALUE #(
+*            "   ( xco_cp_json=>transformation->boolean_to_abap_bool ) ) )->write_to( REF #( ls_res_api1 ) ).
+*            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
+*                     CHANGING  data = ls_res_api1 ).
+*
+*          CATCH cx_root INTO DATA(lx_root2) ##NO_HANDLER.
+*        ENDTRY.
+
+
+************************************************************************
+*    Actual cost START
+************************************************************************
+
+        DATA(lv_top) = 5000.
+        DATA(lv_skip) = 0.
+        DATA(lv_while) = abap_on.
+        DATA:lv_filter TYPE string.
+        DATA(lv_index_max) = 20.
+* first case start&end的year等于输入year
+        CLEAR ls_res_api_sum.
+        WHILE lv_while IS NOT INITIAL.
+          CLEAR lv_while.
+          IF sy-index > lv_index_max.
+            EXIT.
+          ENDIF.
+          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+          lv_filter = | ValidityStartFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalYear eq '{ lv_calendaryear }' and ValidityStartFiscalPeriod le '{ lv_calendarmonth_s }' and ValidityEndFiscalPeriod ge '{ lv_calendarmonth_s }'|.
+          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+                                                       iv_method      = if_web_http_client=>get
+                                                       "iv_select      = lv_select
+                                                       iv_filter      = lv_filter
+                                                       iv_format      = 'json'
+                                             IMPORTING ev_status_code = DATA(lv_stat_code)
+                                                       ev_response    = DATA(lv_resbody_api) ).
+          IF lv_stat_code = 200.
+            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api WITH `count`.
+            CLEAR ls_res_api_temp.
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+                               CHANGING  data = ls_res_api_temp ).
+
+            APPEND LINES OF ls_res_api_temp-value TO ls_res_api-value.
+            APPEND LINES OF ls_res_api_temp-value TO ls_res_api_sum-value.
+            IF lines( ls_res_api_sum-value ) < ls_res_api_temp-count.
+              lv_while = abap_on.
+              lv_top = ls_res_api_temp-count - lines( ls_res_api_temp-value ).
+              lv_skip = 5000 * sy-index.
+            ENDIF.
+          ENDIF.
+        ENDWHILE.
+
+* second case start的year小于输入的year，end的year等于输入year
+        CLEAR ls_res_api_sum.
+        lv_while = abap_on.
+                lv_skip = 0.
+        lv_top = 5000.
+        WHILE lv_while IS NOT INITIAL.
+          CLEAR lv_while.
+          IF sy-index > lv_index_max.
+            EXIT.
+          ENDIF.
+          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+         lv_filter = | ValidityStartFiscalYear lt '{ lv_calendaryear }' and ValidityEndFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalPeriod ge '{ lv_calendarmonth_s }'|.
+          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+                                                       iv_method      = if_web_http_client=>get
+                                                       "iv_select      = lv_select
+                                                       iv_filter      = lv_filter
+                                                       iv_format      = 'json'
+                                             IMPORTING ev_status_code = lv_stat_code
+                                                       ev_response    = lv_resbody_api ).
+          IF lv_stat_code = 200.
+            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api WITH `count`.
+            CLEAR ls_res_api_temp.
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+                               CHANGING  data = ls_res_api_temp ).
+
+            APPEND LINES OF ls_res_api_temp-value TO ls_res_api-value.
+            APPEND LINES OF ls_res_api_temp-value TO ls_res_api_sum-value.
+            IF lines( ls_res_api_sum-value ) < ls_res_api_temp-count.
+              lv_while = abap_on.
+              lv_top = ls_res_api_temp-count - lines( ls_res_api_temp-value ).
+              lv_skip = 5000 * sy-index.
+            ENDIF.
+          ENDIF.
+        ENDWHILE.
+* third case start的year等于输入的year，end的year大于输入year
+        CLEAR ls_res_api_sum.
+        lv_while = abap_on.
+                        lv_skip = 0.
+        lv_top = 5000.
+        WHILE lv_while IS NOT INITIAL.
+          CLEAR lv_while.
+          IF sy-index > lv_index_max.
+            EXIT.
+          ENDIF.
+          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+          lv_filter = | ValidityStartFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalYear gt '{ lv_calendaryear }' and ValidityStartFiscalPeriod le '{ lv_calendarmonth_s }'|.
+          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+                                                       iv_method      = if_web_http_client=>get
+                                                       "iv_select      = lv_select
+                                                       iv_filter      = lv_filter
+                                                       iv_format      = 'json'
+                                             IMPORTING ev_status_code = lv_stat_code
+                                                       ev_response    = lv_resbody_api ).
+          IF lv_stat_code = 200.
+            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api WITH `count`.
+            CLEAR ls_res_api_temp.
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+                               CHANGING  data = ls_res_api_temp ).
+
+            APPEND LINES OF ls_res_api_temp-value TO ls_res_api-value.
+            APPEND LINES OF ls_res_api_temp-value TO ls_res_api_sum-value.
+            IF lines( ls_res_api_sum-value ) < ls_res_api_temp-count.
+              lv_while = abap_on.
+              lv_top = ls_res_api_temp-count - lines( ls_res_api_temp-value ).
+              lv_skip = 5000 * sy-index.
+            ENDIF.
+          ENDIF.
+        ENDWHILE.
+* fourth case start的year小于输入的year end的year大于输入year
+        CLEAR ls_res_api_sum.
+        lv_while = abap_on.
+                        lv_skip = 0.
+        lv_top = 5000.
+        WHILE lv_while IS NOT INITIAL.
+          CLEAR lv_while.
+          IF sy-index > lv_index_max.
+            EXIT.
+          ENDIF.
+          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+          lv_filter = | ValidityStartFiscalYear lt '{ lv_calendaryear }' and ValidityEndFiscalYear gt '{ lv_calendaryear }'|.
+          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+                                                       iv_method      = if_web_http_client=>get
+                                                       "iv_select      = lv_select
+                                                       iv_filter      = lv_filter
+                                                       iv_format      = 'json'
+                                             IMPORTING ev_status_code = lv_stat_code
+                                                       ev_response    = lv_resbody_api ).
+          IF lv_stat_code = 200.
+            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api WITH `count`.
+            CLEAR ls_res_api_temp.
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+                               CHANGING  data = ls_res_api_temp ).
+
+            APPEND LINES OF ls_res_api_temp-value TO ls_res_api-value.
+            APPEND LINES OF ls_res_api_temp-value TO ls_res_api_sum-value.
+            IF lines( ls_res_api_sum-value ) < ls_res_api_temp-count.
+              lv_while = abap_on.
+              lv_top = ls_res_api_temp-count - lines( ls_res_api_temp-value ).
+              lv_skip = 5000 * sy-index.
+            ENDIF.
+          ENDIF.
+        ENDWHILE.
+************************************************************************
+*    Actual cost END
+************************************************************************
+************************************************************************
+*    Plan cost START
+************************************************************************
+
+
+* first case start&end的year等于输入year
+        CLEAR ls_res_api1_sum.
+        lv_while = abap_on.
+                        lv_skip = 0.
+        lv_top = 5000.
+        WHILE lv_while IS NOT INITIAL.
+          CLEAR lv_while.
+          IF sy-index > lv_index_max.
+            EXIT.
+          ENDIF.
+          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+          lv_filter = | ValidityStartFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalYear eq '{ lv_calendaryear }' and ValidityStartFiscalPeriod le '{ lv_calendarmonth_s }' and ValidityEndFiscalPeriod ge '{ lv_calendarmonth_s }'|.
+          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+                                                       iv_method      = if_web_http_client=>get
+                                                       "iv_select      = lv_select
+                                                       iv_filter      = lv_filter
+                                                       iv_format      = 'json'
+                                             IMPORTING ev_status_code = DATA(lv_stat_code1)
+                                                       ev_response    = DATA(lv_resbody_api1) ).
+          IF lv_stat_code = 200.
+            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api1 WITH `count`.
+            CLEAR ls_res_api1_temp.
             /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
-                     CHANGING  data = ls_res_api1 ).
+                               CHANGING  data = ls_res_api1_temp ).
 
-          CATCH cx_root INTO DATA(lx_root2) ##NO_HANDLER.
-        ENDTRY.
+            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1-value.
+            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1_sum-value.
+            IF lines( ls_res_api1_sum-value ) < ls_res_api1_temp-count.
+              lv_while = abap_on.
+              lv_top = ls_res_api1_temp-count - lines( ls_res_api1_temp-value ).
+              lv_skip = 5000 * sy-index.
+            ENDIF.
+          ENDIF.
+        ENDWHILE.
+* second case start的year小于输入的year，end的year等于输入year
+        CLEAR ls_res_api1_sum.
+        lv_while = abap_on.
+                        lv_skip = 0.
+        lv_top = 5000.
+        WHILE lv_while IS NOT INITIAL.
+          CLEAR lv_while.
+          IF sy-index > lv_index_max.
+            EXIT.
+          ENDIF.
+          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+          lv_filter = | ValidityStartFiscalYear lt '{ lv_calendaryear }' and ValidityEndFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalPeriod ge '{ lv_calendarmonth_s }'|.
+          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+                                                       iv_method      = if_web_http_client=>get
+                                                       "iv_select      = lv_select
+                                                       iv_filter      = lv_filter
+                                                       iv_format      = 'json'
+                                             IMPORTING ev_status_code = lv_stat_code1
+                                                       ev_response    = lv_resbody_api1 ).
+          IF lv_stat_code = 200.
+            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api1 WITH `count`.
+            CLEAR ls_res_api1_temp.
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
+                               CHANGING  data = ls_res_api1_temp ).
 
-*        LOOP AT ls_res_api-value INTO DATA(ls_data1).
-*
-*          lv_calendarmonth_s =  |{ ls_data1-validitystartfiscalperiod ALPHA = OUT }|.
-*          CONDENSE lv_calendarmonth_s.
-*          IF lv_calendarmonth_s < 10.
-*            lv_calendarmonth_s = '0' && lv_calendarmonth_s.
-*          ENDIF.
-*          lv_date_s = ls_data1-validitystartfiscalyear && lv_calendarmonth_s && '01'.
-*
-*          lv_calendarmonth_s =  |{ ls_data1-validityendfiscalperiod  ALPHA = OUT }|.
-*          CONDENSE lv_calendarmonth_s.
-*          IF lv_calendarmonth_s < 10.
-*            lv_calendarmonth_s = '0' && lv_calendarmonth_s.
-*          ENDIF.
-*          lv_date_e = ls_data1-validityendfiscalyear && lv_calendarmonth_s && '31'.
-*
-*
-*          IF lv_date_s <=  lv_date_f
-*          AND lv_date_f <=  lv_date_e.
-*          ELSE.
-*
-*            DELETE ls_res_api-value.
-*
-*          ENDIF.
-*
-*        ENDLOOP.
-*
-*        LOOP AT ls_res_api1-value INTO DATA(ls_data2).
-*
-*          lv_calendarmonth_s =  |{ ls_data2-validitystartfiscalperiod ALPHA = OUT }|.
-*          CONDENSE lv_calendarmonth_s.
-*          IF lv_calendarmonth_s < 10.
-*            lv_calendarmonth_s = '0' && lv_calendarmonth_s.
-*          ENDIF.
-*          lv_date_s = ls_data2-validitystartfiscalyear && lv_calendarmonth_s && '01'.
-*
-*          lv_calendarmonth_s =  |{ ls_data2-validityendfiscalperiod  ALPHA = OUT }|.
-*          CONDENSE lv_calendarmonth_s.
-*          IF lv_calendarmonth_s < 10.
-*            lv_calendarmonth_s = '0' && lv_calendarmonth_s.
-*          ENDIF.
-*          lv_date_e = ls_data2-validityendfiscalyear && lv_calendarmonth_s && '31'.
-*
-*
-*          IF lv_date_s <=  lv_date_f
-*          AND lv_date_f <=  lv_date_e.
-*          ELSE.
-*
-*            DELETE ls_res_api1-value.
-*
-*          ENDIF.
-*
-*        ENDLOOP.
+            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1-value.
+            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1_sum-value.
+            IF lines( ls_res_api1_sum-value ) < ls_res_api1_temp-count.
+              lv_while = abap_on.
+              lv_top = ls_res_api1_temp-count - lines( ls_res_api1_temp-value ).
+              lv_skip = 5000 * sy-index.
+            ENDIF.
+          ENDIF.
+        ENDWHILE.
+* third case start的year等于输入的year，end的year大于输入year
+        CLEAR ls_res_api1_sum.
+        lv_while = abap_on.
+                        lv_skip = 0.
+        lv_top = 5000.
+        WHILE lv_while IS NOT INITIAL.
+          CLEAR lv_while.
+          IF sy-index > lv_index_max.
+            EXIT.
+          ENDIF.
+          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+          lv_filter = | ValidityStartFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalYear gt '{ lv_calendaryear }' and ValidityStartFiscalPeriod le '{ lv_calendarmonth_s }'|.
+          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+                                                       iv_method      = if_web_http_client=>get
+                                                       "iv_select      = lv_select
+                                                       iv_filter      = lv_filter
+                                                       iv_format      = 'json'
+                                             IMPORTING ev_status_code = lv_stat_code1
+                                                       ev_response    = lv_resbody_api1 ).
+          IF lv_stat_code = 200.
+            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api1 WITH `count`.
+            CLEAR ls_res_api1_temp.
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
+                               CHANGING  data = ls_res_api1_temp ).
+
+            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1-value.
+            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1_sum-value.
+            IF lines( ls_res_api1_sum-value ) < ls_res_api1_temp-count.
+              lv_while = abap_on.
+              lv_top = ls_res_api1_temp-count - lines( ls_res_api1_temp-value ).
+              lv_skip = 5000 * sy-index.
+            ENDIF.
+          ENDIF.
+        ENDWHILE.
+* fourth case start的year小于输入的year end的year大于输入year
+        CLEAR ls_res_api1_sum.
+        lv_while = abap_on.
+                        lv_skip = 0.
+        lv_top = 5000.
+        WHILE lv_while IS NOT INITIAL.
+          CLEAR lv_while.
+          IF sy-index > lv_index_max.
+            EXIT.
+          ENDIF.
+          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+          lv_filter = | ValidityStartFiscalYear lt '{ lv_calendaryear }' and ValidityEndFiscalYear gt '{ lv_calendaryear }'|.
+          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+                                                       iv_method      = if_web_http_client=>get
+                                                       "iv_select      = lv_select
+                                                       iv_filter      = lv_filter
+                                                       iv_format      = 'json'
+                                             IMPORTING ev_status_code = lv_stat_code1
+                                                       ev_response    = lv_resbody_api1 ).
+          IF lv_stat_code = 200.
+            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api1 WITH `count`.
+            CLEAR ls_res_api1_temp.
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
+                               CHANGING  data = ls_res_api1_temp ).
+
+            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1-value.
+            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1_sum-value.
+            IF lines( ls_res_api1_sum-value ) < ls_res_api1_temp-count.
+              lv_while = abap_on.
+              lv_top = ls_res_api1_temp-count - lines( ls_res_api1_temp-value ).
+              lv_skip = 5000 * sy-index.
+            ENDIF.
+          ENDIF.
+        ENDWHILE.
+************************************************************************
+*   Plan cost END
+************************************************************************
+
 
         "CostCenter 范围
         DATA(lt_costc) = lt_data.

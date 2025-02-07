@@ -71,7 +71,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_job_daystocktrans IMPLEMENTATION.
+CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
 
 
   METHOD add_message_to_log.
@@ -220,6 +220,26 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       RETURN.
     ENDIF.
 
+*&--ADD BEGIN BY XINLEI XU 2025/01/13 CR#4046
+    " 頭2桁固定値「B0」、後は最大値
+    SELECT salesplanuuid,
+           salesplan,
+           salesplanversion,
+           createdbyuser
+      FROM c_salesplanversionvaluehelp WITH PRIVILEGED ACCESS
+     WHERE salesplanversion LIKE 'B0%'
+      INTO TABLE @DATA(lt_salesplanversion).
+    SORT lt_salesplanversion BY salesplanversion DESCENDING.
+    READ TABLE lt_salesplanversion INTO DATA(ls_salesplanversion) INDEX 1.
+    IF sy-subrc <> 0.
+      TRY.
+          add_message_to_log( i_text = |販売計画データは取得できません。| i_type = 'E' ).
+        CATCH cx_bali_runtime ##NO_HANDLER.
+      ENDTRY.
+      RETURN.
+    ENDIF.
+*&--ADD END BY XINLEI XU 2025/01/13 CR#4046
+
 *   日別、得意先別、品目タイプ別の在庫金額の抽出
     SELECT a~companycode,                             "会社コード
            a~material AS product,                     "品目
@@ -314,19 +334,6 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
     DELETE ADJACENT DUPLICATES FROM lt_tmpsql COMPARING product plant businesspartner.
 *    DELETE ADJACENT DUPLICATES FROM lt_tmpsql COMPARING product plant.
 
-*&--ADD BEGIN BY XINLEI XU 2025/01/13 CR#4046
-    " 頭2桁固定値「B0」、後は最大値
-    SELECT salesplanuuid,
-           salesplan,
-           salesplanversion,
-           createdbyuser
-      FROM c_salesplanversionvaluehelp WITH PRIVILEGED ACCESS
-     WHERE salesplanversion LIKE 'B0%'
-      INTO TABLE @DATA(lt_salesplanversion).
-    SORT lt_salesplanversion BY salesplanversion DESCENDING.
-    READ TABLE lt_salesplanversion INTO DATA(ls_salesplanversion) INDEX 1.
-*&--ADD END BY XINLEI XU 2025/01/13 CR#4046
-
 *&--DEL BEGIN BY XINLEI XU 2025/01/13 CR#4046
 *    SELECT a~material,
 *           b~producttype,
@@ -350,7 +357,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
     LOOP AT lt_currency INTO DATA(ls_currency).
       SELECT a~product AS material,
              b~producttype,
-             a~plant,
+             a~salesorganization AS plant,
              d~businesspartner AS customer,
              a~salesplanquantity AS requirement_qty
         FROM i_slsperformanceplanactualcube( p_exchangeratetype = '0',
@@ -360,14 +367,14 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
                                              p_createdbyuser    = @ls_salesplanversion-createdbyuser )
         WITH PRIVILEGED ACCESS AS a
         LEFT JOIN i_product WITH PRIVILEGED ACCESS AS b ON b~product = a~product
-        LEFT JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS c ON  c~plant   = a~plant
+        LEFT JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS c ON  c~plant   = a~salesorganization
                                                                   AND c~product = a~product
                                                                   AND c~mrpresponsible IS NOT INITIAL
         LEFT JOIN i_businesspartner WITH PRIVILEGED ACCESS AS d ON d~searchterm2 = right( c~mrpresponsible,2 )
         FOR ALL ENTRIES IN @lt_productplant
        WHERE a~product = @lt_productplant-product
-         AND a~plant = @lt_productplant-plant
-         AND a~sddocument IS INITIAL
+         AND a~salesorganization = @lt_productplant-plant
+         AND a~sddocument = '0000000000'
          AND a~salesplanperiodname = @lv_next_start+0(6)
        APPENDING TABLE @lt_next.
     ENDLOOP.
@@ -503,7 +510,6 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       GROUP BY ( companycode     = <fs_l_group2>-companycode
                  plant           = <fs_l_group2>-plant
                  businesspartner = <fs_l_group2>-businesspartner ).
-*                 producttype     = <fs_l_group2>-producttype ).
 
 *      TRY.
 *          DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
@@ -513,12 +519,12 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
 
       MOVE-CORRESPONDING <fs_l_group2> TO ls_1015.
 
-      CLEAR:
-        lv_price,
-        lv_valuationquantity,
-        lv_zfrt_price,
-        lv_zhlb_price,
-        lv_zroh_price.
+      CLEAR: lv_price,
+             lv_valuationquantity,
+             lv_zfrt_price,
+             lv_zhlb_price,
+             lv_zroh_price.
+
       LOOP AT GROUP <fs_l_group2> ASSIGNING FIELD-SYMBOL(<fs_l_productplant>).
 *         製品
         IF <fs_l_productplant>-producttype = 'ZFRT'.
@@ -544,11 +550,10 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       ls_1015-semifinishedgoods = lv_zhlb_price.             "半製品
       ls_1015-material          = lv_zroh_price.             "原材料
 
-*       売上実績（先月）
+*     売上実績（先月）
       READ TABLE lt_last INTO DATA(ls_last) WITH KEY companycode = <fs_l_group2>-companycode
                                                      plant       = <fs_l_group2>-plant
                                                      soldtoparty = <fs_l_group2>-businesspartner.
-*                                                     producttype = <fs_l_group2>-producttype.
       IF sy-subrc = 0.
         ls_1015-salesperfactlamtindspcurrency = ls_last-netamount.
         ls_1015-salesperformanceactualquantity = ls_last-billingquantity.
@@ -557,9 +562,9 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
 
 *     売上予測（翌月）
       CLEAR ls_next.
-      READ TABLE lt_next INTO ls_next WITH KEY plant    = <fs_l_group2>-plant
-                                                     producttype = <fs_l_group2>-producttype
-                                                     customer = <fs_l_group2>-businesspartner.
+      READ TABLE lt_next INTO ls_next WITH KEY plant       = <fs_l_group2>-plant
+                                               producttype = <fs_l_productplant>-producttype
+                                               customer    = <fs_l_group2>-businesspartner.
       IF sy-subrc = 0.
         ls_1015-necessraryquantity = ls_next-requirement_qty.
         ls_1015-salesprice = ls_next-salesprice.
@@ -567,13 +572,12 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       ENDIF.
 
       GET TIME STAMP FIELD lv_timestamp.
-      ls_1015-displaycurrency = <fs_l_group2>-currency.  "照会通貨
-*      ls_1015-uuid = lv_uuid.
-      ls_1015-unit = <fs_l_group2>-unitofmeasure.
-      ls_1015-created_by         = sy-uname.
-      ls_1015-created_at         = lv_timestamp.
-      ls_1015-last_changed_by    = sy-uname.
-      ls_1015-last_changed_at    = lv_timestamp.
+      ls_1015-displaycurrency = <fs_l_productplant>-currency.  "照会通貨
+      ls_1015-unit = <fs_l_productplant>-unitofmeasure.
+      ls_1015-created_by = sy-uname.
+      ls_1015-created_at = lv_timestamp.
+      ls_1015-last_changed_by = sy-uname.
+      ls_1015-last_changed_at = lv_timestamp.
       ls_1015-local_last_changed_at = lv_date.
       APPEND ls_1015 TO lt_1015.
       CLEAR ls_1015.
@@ -584,7 +588,6 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
                      plant           = <fs_l_group_m>-plant
                      businesspartner = <fs_l_group_m>-businesspartner
                      product         = <fs_l_group_m>-product ).
-*                 producttype     = <fs_l_group2>-producttype ).
 
 *      TRY.
 *          lv_uuid = cl_system_uuid=>create_uuid_x16_static(  ).
@@ -594,9 +597,9 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
 
       MOVE-CORRESPONDING <fs_l_group_m> TO ls_1016.
 
-      CLEAR:
-        lv_price,
-        ls_1016-valuationquantity.
+      CLEAR: lv_price,
+             ls_1016-valuationquantity.
+
       LOOP AT GROUP <fs_l_group_m> ASSIGNING <fs_l_productplant>.
 *       評価数量
         ls_1016-valuationquantity = ls_1016-valuationquantity + <fs_l_productplant>-valuationquantity.
@@ -604,18 +607,18 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
 
 *     合計
       ls_1016-total = ls_1016-valuationquantity * <fs_l_productplant>-averageprice.
-      ls_1016-yearmonth         = |{ lv_gjahr } { lv_poper }|."会計期間
-      ls_1016-type              = |在庫実績|.                  "タイプ
+      ls_1016-yearmonth = |{ lv_gjahr } { lv_poper }|."会計期間
+      ls_1016-type = |在庫実績|.                        "タイプ
 
 *      GET TIME STAMP FIELD lv_timestamp.
-      ls_1016-unit = <fs_l_group_m>-unitofmeasure.
-      ls_1016-displaycurrency    = <fs_l_group_m>-currency.  "照会通貨
-      ls_1016-material           = <fs_l_group_m>-product.
-      ls_1016-materialtype       = <fs_l_group_m>-producttype.
-      ls_1016-created_by         = sy-uname.
-      ls_1016-created_at         = lv_timestamp.
-      ls_1016-last_changed_by    = sy-uname.
-      ls_1016-last_changed_at    = lv_timestamp.
+      ls_1016-unit            = <fs_l_productplant>-unitofmeasure.
+      ls_1016-displaycurrency = <fs_l_productplant>-currency.  "照会通貨
+      ls_1016-material        = <fs_l_productplant>-product.
+      ls_1016-materialtype    = <fs_l_productplant>-producttype.
+      ls_1016-created_by      = sy-uname.
+      ls_1016-created_at      = lv_timestamp.
+      ls_1016-last_changed_by = sy-uname.
+      ls_1016-last_changed_at = lv_timestamp.
       ls_1016-local_last_changed_at = lv_date.
       APPEND ls_1016 TO lt_1016.
       CLEAR ls_1016.
@@ -666,26 +669,27 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
 
   METHOD if_oo_adt_classrun~main.
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
-*    lt_parameters = VALUE #( ( selname = 'P_COMPAN'
-*                               kind    = if_apj_dt_exec_object=>select_option
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '1100' )
+    lt_parameters = VALUE #( ( selname = 'P_COMPAN'
+                               kind    = if_apj_dt_exec_object=>select_option
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1100' )
 *                               ( selname = 'P_COMPAN'
 *                               kind    = if_apj_dt_exec_object=>select_option
 *                               sign    = 'I'
 *                               option  = 'EQ'
 *                               low     = '1400' )
+                               ( selname = 'P_PLANT'
+                               kind    = if_apj_dt_exec_object=>select_option
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1100' )
 *                               ( selname = 'P_PLANT'
 *                               kind    = if_apj_dt_exec_object=>select_option
 *                               sign    = 'I'
 *                               option  = 'EQ'
-*                               low     = '1100' )
-*                               ( selname = 'P_PLANT'
-*                               kind    = if_apj_dt_exec_object=>select_option
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '1400' ) ).
+*                               low     = '1400' )
+                               ).
     TRY.
         if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
 

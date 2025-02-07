@@ -262,17 +262,17 @@ CLASS ZZCL_DTIMP_PROCESS IMPLEMENTATION.
 
   METHOD if_oo_adt_classrun~main.
 *    " for debugger => 请使用类 zcl_debug_job
-*    DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
-*    lt_parameters = VALUE #( ( selname = 'P_ID'
-*                               kind    = if_apj_dt_exec_object=>parameter
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = 'A1405D901B3B1EEFA9E82B9A5D1A95E1' ) ).
-*    TRY.
-*        if_apj_rt_exec_object~execute( it_parameters = lt_parameters ).
-*      CATCH cx_root INTO DATA(lo_root).
-*        out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
-*    ENDTRY.
+    DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
+    lt_parameters = VALUE #( ( selname = 'P_ID'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '47289E53E03F1EEFB6F9FF17A1FA1691' ) ).
+    TRY.
+        if_apj_rt_exec_object~execute( it_parameters = lt_parameters ).
+      CATCH cx_root INTO DATA(lo_root).
+        out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
+    ENDTRY.
   ENDMETHOD.
 
 

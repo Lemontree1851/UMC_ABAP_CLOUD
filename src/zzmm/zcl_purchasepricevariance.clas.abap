@@ -11,7 +11,9 @@ CLASS zcl_purchasepricevariance DEFINITION
 ENDCLASS.
 
 
-CLASS zcl_purchasepricevariance IMPLEMENTATION.
+
+CLASS ZCL_PURCHASEPRICEVARIANCE IMPLEMENTATION.
+
 
   METHOD if_sadl_exit_calc_element_read~calculate.
     TYPES: BEGIN OF ty_record,
@@ -324,7 +326,7 @@ CLASS zcl_purchasepricevariance IMPLEMENTATION.
     ct_calculated_data = CORRESPONDING #( lt_original_data ).
   ENDMETHOD.
 
+
   METHOD if_sadl_exit_calc_element_read~get_calculation_info.
   ENDMETHOD.
-
 ENDCLASS.

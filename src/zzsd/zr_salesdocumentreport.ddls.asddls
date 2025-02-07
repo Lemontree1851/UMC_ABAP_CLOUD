@@ -25,6 +25,15 @@ define root custom entity ZR_SALESDOCUMENTREPORT
   key plantype                       : abap.char(10);
   key YearDate                       : abap.char(6);
 
+      @Consumption.filter            : {selectionType: #SINGLE, multipleSelections: false }
+      SalesPlanVersion0              : sales_plan_version;
+      @Consumption.filter            : {selectionType: #SINGLE, multipleSelections: false }
+      SalesPlanVersion1              : sales_plan_version;
+      @Consumption.filter            : {selectionType: #SINGLE, multipleSelections: false }
+      SalesPlanVersion2              : sales_plan_version;
+      @Consumption.filter            : {selectionType: #SINGLE, multipleSelections: false }
+      SalesPlanVersion3              : sales_plan_version;
+
       CustomerName                   : abap.char(80);
       PlantName                      : abap.char(30);
       MatlAccountAssignmentGroup     : abap.char(2);
@@ -63,9 +72,9 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       GLAccountName1                 : abap.char(30);
       GLAccountName2                 : abap.char(30);
       GLAccountName3                 : abap.char(30);
-      
+
       SalesPlanUnit_c                : abap.char(10);
-      CompanyCode :bukrs;
+      CompanyCode                    : bukrs;
 
       @Semantics.amount.currencyCode : 'currency'
       materialcost2000_n             : abap.curr(15,2); //材料费

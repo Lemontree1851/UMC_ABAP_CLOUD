@@ -19,6 +19,7 @@ define root custom entity ZR_SALESACCEPTANCE_RESULT
       @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Customer_VH', element: 'Customer' } }]
   key Customer               : kunnr; //得意先BPコード
   key PeriodType             : abap.char(1);  //時期区分
+  key AcceptYear             : gjahr;
   key AcceptPeriod           : abap.char(2);  //検収期間
   key SalesDocument          : vbeln_va;      //受注伝票番号
   key SalesDocumentItem      : abap.char(6);      //受注明細番号

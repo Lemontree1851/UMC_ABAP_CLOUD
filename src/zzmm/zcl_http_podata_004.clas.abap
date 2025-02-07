@@ -38,6 +38,7 @@ CLASS zcl_http_podata_004 DEFINITION
         debitcreditcode             TYPE c LENGTH 1,    "借方/貸方フラグ"
         purchaseorderitemmaterial   TYPE c LENGTH 40,   "品目"
         documentcurrency            TYPE c LENGTH 5,    "通貨"
+        SuplrInvcItmUnplndDelivCost type c length 15,
 
 "=======begin change by wz 20241219==========================================================================
         supplierinvoiceitemamount   TYPE i_suplrinvcitempurordrefapi01-supplierinvoiceitemamount,   "金額"
@@ -119,7 +120,9 @@ PROTECTED SECTION.
 
     DATA:lv_rate TYPE p DECIMALS 2.
 
-  ENDCLASS.
+ENDCLASS.
+
+
 
 CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
@@ -127,6 +130,10 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
   METHOD if_http_service_extension~handle_request.
 
     DATA: lv_latest_date TYPE d.
+
+
+    DATA: LV_AMT TYPE i_supplierinvoicetaxapi01-taxamount.
+
 
     DATA(lv_sy_datum) = cl_abap_context_info=>get_system_date( ).
 
@@ -159,6 +166,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
              c~purchaseorderquantityunit,
              c~quantityinpurchaseorderunit,
 *             c~documentcurrency,
+             c~SuplrInvcItmUnplndDelivCost,
              c~supplierinvoiceitemamount,
              d~postingdate AS postingdate_item,
              e~purchasinggroup,
@@ -317,6 +325,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         lw_result1-lastchangedbyuser           = lw_supplier_invoice1-lastchangedbyuser.
         lw_result1-documentheadertext          = lw_supplier_invoice1-documentheadertext.
         lw_result1-companycode                 = lw_supplier_invoice1-companycode.
+        lw_result1-SuplrInvcItmUnplndDelivCost = lw_supplier_invoice1-SuplrInvcItmUnplndDelivCost.
 
         SORT lt_tax1 BY supplierinvoice fiscalyear DESCENDING.
         READ TABLE lt_tax1 INTO DATA(lw_tax1) WITH KEY supplierinvoice = lw_result1-supplierinvoice
@@ -342,7 +351,21 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
                                                                   fiscalyear = lw_result1-fiscalyear
                                                                   BINARY SEARCH.
         IF sy-subrc = 0.
-          lw_result1-taxamount                   = ls_supplier_invoice1-supplierinvoiceitemamount * lv_rate.
+           "add by stanley 20250124
+            clear:lv_amt.
+
+           if ls_supplier_invoice1-supplierinvoiceitemamount = 0.
+            lv_amt = ls_supplier_invoice1-SuplrInvcItmUnplndDelivCost.
+           else.
+            lv_amt = ls_supplier_invoice1-supplierinvoiceitemamount.
+           endif.
+           "end add
+          "lw_result1-taxamount                   =  ls_supplier_invoice1-supplierinvoiceitemamount *  lv_rate  . "DEL by stanley 20250124
+          IF   lw_result1-documentcurrency = 'JPY'. "ADD BY STANLEY 20250124
+            lw_result1-taxamount                   = ( lv_amt * 100 ) * lv_rate .
+          ELSE.
+            lw_result1-taxamount                   = lv_amt * lv_rate .
+          ENDIF.
           lw_result1-totalamount                 = ls_supplier_invoice1-supplierinvoiceitemamount + lw_result1-taxamount.
         ENDIF.
 
@@ -510,10 +533,13 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
             "change by wz 20241219
 
 
+            ls_response-SuplrInvcItmUnplndDelivCost =  lw_result1-SuplrInvcItmUnplndDelivCost * 100.
+
 
             "taxamount 日元时舍去小数部分，取整数。=====================
 
-            lv_taxamount1 = lw_result1-taxamount * 100.       "日元扩大一百倍
+            "lv_taxamount1 = lw_result1-taxamount * 100.       "日元扩大一百倍 del by stanley 20250124
+            lv_taxamount1 = lw_result1-taxamount. "add by stanley 20250124
             ls_response-taxamount = TRUNC( lv_taxamount1 ).
 
 *            lv_taxamount_jpy1 = floor( lv_taxamount1 ).
@@ -524,44 +550,70 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
 
             ls_response-supplierinvoiceitemamount = lw_result1-supplierinvoiceitemamount * 100.
+            "ADD BY STANLEY 20250124
+                IF lw_result1-supplierinvoiceitemamount = 0.
+                    ls_response-supplierinvoiceitemamount = ls_response-suplrinvcitmunplnddelivcost .
+                ENDIF.
+            "END ADD
             ls_response-totalamount  = lw_result1-totalamount * 100.
             ls_response-invoicegrossamount  = lw_result1-invoicegrossamount * 100.
             ls_response-taxamountheader     = lw_result1-taxamountheader * 100.
 
             ls_response-totalamount        = ls_response-supplierinvoiceitemamount + ls_response-taxamount.
 
-
-          WHEN 'USD'.
+          "add by stanley 20250124
+          WHEN others.
             " 保留 5 位小数，四舍五入
-            DATA(lv_unit_price_usd1) = round( val = lw_result1-unitprice dec = 5 ).
-            ls_response-unitprice = lv_unit_price_usd1.
-
-            " 保留 2 位小数，舍弃其他位数
-            lv_taxamount1 = floor( lw_result1-taxamount * 100 ) / 100.
-            ls_response-taxamount = lv_taxamount1.
-
-            " 保留 2 位小数，四舍五入
-            lv_totalamount1 = floor( lw_result1-totalamount * 100 ) / 100.
-            ls_response-totalamount = lv_totalamount1.
-
-          WHEN 'EUR'.
-            " 保留 5 位小数，四舍五入
-            DATA(lv_unit_price_eur1) = round( val = lw_result1-unitprice dec = 5 ).
-            ls_response-unitprice = lv_unit_price_eur1.
+            DATA(lv_unit_oth_price) = round( val = lw_result1-unitprice dec = 5 ).
+            ls_response-unitprice = lv_unit_oth_price.
 
             " 乘以 100，取整后再除以 100，保留 2 位小数
             lv_taxamount1 = floor( lw_result1-taxamount * 100 ) / 100.
             " 保留 2 位小数，舍弃其他位数
             ls_response-taxamount = lv_taxamount1.
 
+            "ADD BY STANLEY 20250124
+                IF lw_result1-supplierinvoiceitemamount = 0.
+                    ls_response-supplierinvoiceitemamount = ls_response-suplrinvcitmunplnddelivcost .
+                ENDIF.
+            "END ADD
+
             " 保留 2 位小数，四舍五入
             lv_totalamount1 = floor( lw_result1-totalamount * 100 ) / 100.
             ls_response-totalamount = lv_totalamount1.
-
-          WHEN OTHERS.
-            ls_response-taxamount   = lw_result1-taxamount.
-            ls_response-totalamount = lw_result1-totalamount.
-            ls_response-unitprice   = lw_result1-unitprice.
+***DEL BY STANLEY 20250124
+*          WHEN 'USD'.
+*            " 保留 5 位小数，四舍五入
+*            DATA(lv_unit_price_usd1) = round( val = lw_result1-unitprice dec = 5 ).
+*            ls_response-unitprice = lv_unit_price_usd1.
+*
+*            " 保留 2 位小数，舍弃其他位数
+*            lv_taxamount1 = floor( lw_result1-taxamount * 100 ) / 100.
+*            ls_response-taxamount = lv_taxamount1.
+*
+*            " 保留 2 位小数，四舍五入
+*            lv_totalamount1 = floor( lw_result1-totalamount * 100 ) / 100.
+*            ls_response-totalamount = lv_totalamount1.
+*
+*          WHEN 'EUR'.
+*            " 保留 5 位小数，四舍五入
+*            DATA(lv_unit_price_eur1) = round( val = lw_result1-unitprice dec = 5 ).
+*            ls_response-unitprice = lv_unit_price_eur1.
+*
+*            " 乘以 100，取整后再除以 100，保留 2 位小数
+*            lv_taxamount1 = floor( lw_result1-taxamount * 100 ) / 100.
+*            " 保留 2 位小数，舍弃其他位数
+*            ls_response-taxamount = lv_taxamount1.
+*
+*            " 保留 2 位小数，四舍五入
+*            lv_totalamount1 = floor( lw_result1-totalamount * 100 ) / 100.
+*            ls_response-totalamount = lv_totalamount1.
+*
+*          WHEN OTHERS.
+*            ls_response-taxamount   = lw_result1-taxamount.
+*            ls_response-totalamount = lw_result1-totalamount.
+*            ls_response-unitprice   = lw_result1-unitprice.
+*** END DEL
         ENDCASE.
 
         CONDENSE ls_response-suppliername.
@@ -611,6 +663,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         CONDENSE ls_response-sendflag.
         CONDENSE ls_response-documentheadertext.
         CONDENSE ls_response-taxamountheader.
+        condense ls_response-SuplrInvcItmUnplndDelivCost .
         APPEND   ls_response TO es_response-items.
 
       ENDLOOP.
@@ -659,6 +712,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
              c~purchaseorderitemmaterial,
              c~purchaseorderquantityunit,
              c~quantityinpurchaseorderunit,
+             c~SuplrInvcItmUnplndDelivCost,
 *             c~documentcurrency,
              c~supplierinvoiceitemamount,
              d~postingdate AS postingdate_item,
@@ -678,6 +732,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         LEFT JOIN i_purchasinggroup WITH PRIVILEGED ACCESS AS f
         ON f~purchasinggroup = e~purchasinggroup
         INTO TABLE @DATA(lt_supplier_invoice3).
+
 
       DATA(lt_supplier_invoice4) = lt_supplier_invoice3[].
       IF lt_supplier_invoice4 IS NOT INITIAL.
@@ -796,6 +851,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         lw_result-lastchangedbyuser           = lw_supplier_invoice3-lastchangedbyuser.
         lw_result-documentheadertext          = lw_supplier_invoice3-documentheadertext.
         lw_result-companycode                 = lw_supplier_invoice3-companycode.
+        lw_result-SuplrInvcItmUnplndDelivCost = lw_supplier_invoice3-SuplrInvcItmUnplndDelivCost.
 
         SORT lt_tax2 BY supplierinvoice fiscalyear DESCENDING.
         READ TABLE lt_tax2 INTO DATA(lw_tax2) WITH KEY supplierinvoice = lw_result-supplierinvoice
@@ -824,7 +880,21 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
                                                                                  supplierinvoiceitem = lw_result-supplierinvoiceitem
                                                                                  BINARY SEARCH.
         IF sy-subrc = 0.
-          lw_result-taxamount                   = ls_supplier_invoice3-supplierinvoiceitemamount * lv_rate.
+           "add by stanley 20250124
+            clear:lv_amt.
+
+           if ls_supplier_invoice3-supplierinvoiceitemamount = 0.
+            lv_amt = ls_supplier_invoice3-SuplrInvcItmUnplndDelivCost.
+           else.
+            lv_amt = ls_supplier_invoice3-supplierinvoiceitemamount.
+           endif.
+           "end add
+          IF   lw_result-documentcurrency = 'JPY'. "CHANGE
+
+            lw_result-taxamount                   = ( lv_amt * 100 ) * lv_rate .
+          ELSE.
+            lw_result-taxamount                   = lv_amt * lv_rate .
+          ENDIF.
           lw_result-totalamount                 = ls_supplier_invoice3-supplierinvoiceitemamount + lw_result-taxamount.
         ENDIF.
 
@@ -982,6 +1052,8 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ls_response-sendflag                             = '1'.
         ls_response-taxamountheader                      = lw_result-taxamountheader.
 
+
+
         DATA lv_taxamount2        TYPE p LENGTH 15 DECIMALS 2.
         DATA lv_totalamount2      TYPE p LENGTH 15 DECIMALS 2.
         DATA lv_netpriceamount2   TYPE p LENGTH 15 DECIMALS 5.
@@ -996,13 +1068,15 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
             lv_unit_price_jpy2 = round( val = lv_netpriceamount2 dec = 3 ).
             ls_response-unitprice = lv_unit_price_jpy2.
 
+            ls_response-suplrinvcitmunplnddelivcost          = lw_result-suplrinvcitmunplnddelivcost * 100.
+
             " 舍弃小数部分，取整
             "change by wz 20241219
 *            CONDENSE lw_result-taxamount.
              "change by wz 20241219
 
-            lv_taxamount2 = lw_result-taxamount * 100.
-
+            "lv_taxamount2 = lw_result-taxamount * 100. del by stanley 20250124
+            lv_taxamount2 = lw_result-taxamount."add by stanley 20250124
             lv_taxamount_i = floor( lv_taxamount2 ).
 
             ls_response-taxamount = lv_taxamount_i.
@@ -1011,43 +1085,68 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 *           ls_response-taxamount = lv_taxamount_jpy2.
 
             ls_response-supplierinvoiceitemamount = lw_result-supplierinvoiceitemamount * 100.
+            "ADD BY STANLEY 20250124
+                IF lw_result-supplierinvoiceitemamount = 0.
+                    ls_response-supplierinvoiceitemamount = ls_response-suplrinvcitmunplnddelivcost .
+                ENDIF.
+            "END ADD
             ls_response-totalamount  = lw_result-totalamount * 100.
             ls_response-invoicegrossamount  = lw_result-invoicegrossamount * 100.
             ls_response-taxamountheader     = lw_result-taxamountheader * 100.
 
             ls_response-totalamount        = ls_response-supplierinvoiceitemamount + ls_response-taxamount.
-
-          WHEN 'USD'.
+          WHEN OTHERS."add by stanley 20250124
             " 保留 5 位小数，四舍五入
-            DATA(lv_unit_price_usd2) = round( val = lw_result-unitprice dec = 5 ).
-            ls_response-unitprice = lv_unit_price_usd2.
-
-            " 保留 2 位小数，舍弃其他位数
-            lv_taxamount2 = floor( lw_result-taxamount * 100 ) / 100.
-            ls_response-taxamount = lv_taxamount2.
-
-            " 保留 2 位小数，四舍五入
-            lv_totalamount2 = floor( lw_result-totalamount * 100 ) / 100.
-            ls_response-totalamount = lv_totalamount2.
-
-          WHEN 'EUR'.
-            " 保留 5 位小数，四舍五入
-            DATA(lv_unit_price_eur2) = round( val = lw_result-unitprice dec = 5 ).
-            ls_response-unitprice = lv_unit_price_eur2.
+            DATA(lv_unit_othr_price) = round( val = lw_result-unitprice dec = 5 ).
+            ls_response-unitprice = lv_unit_othr_price.
 
             " 乘以 100，取整后再除以 100，保留 2 位小数
             lv_taxamount2 = floor( lw_result-taxamount * 100 ) / 100.
             " 保留 2 位小数，舍弃其他位数
             ls_response-taxamount = lv_taxamount2.
 
+            "ADD BY STANLEY 20250124
+                IF lw_result-supplierinvoiceitemamount = 0.
+                    ls_response-supplierinvoiceitemamount = ls_response-suplrinvcitmunplnddelivcost .
+                ENDIF.
+            "END ADD
+
             " 保留 2 位小数，四舍五入
             lv_totalamount2 = floor( lw_result-totalamount * 100 ) / 100.
             ls_response-totalamount = lv_totalamount2.
-
-          WHEN OTHERS.
-            ls_response-taxamount   = lw_result-taxamount.
-            ls_response-totalamount = lw_result-totalamount.
-            ls_response-unitprice   = lw_result-unitprice.
+***Del by stanley 20250124
+*          WHEN 'USD'.
+*            " 保留 5 位小数，四舍五入
+*            DATA(lv_unit_price_usd2) = round( val = lw_result-unitprice dec = 5 ).
+*            ls_response-unitprice = lv_unit_price_usd2.
+*
+*            " 保留 2 位小数，舍弃其他位数
+*            lv_taxamount2 = floor( lw_result-taxamount * 100 ) / 100.
+*            ls_response-taxamount = lv_taxamount2.
+*
+*            " 保留 2 位小数，四舍五入
+*            lv_totalamount2 = floor( lw_result-totalamount * 100 ) / 100.
+*            ls_response-totalamount = lv_totalamount2.
+*
+*          WHEN 'EUR'.
+*            " 保留 5 位小数，四舍五入
+*            DATA(lv_unit_price_eur2) = round( val = lw_result-unitprice dec = 5 ).
+*            ls_response-unitprice = lv_unit_price_eur2.
+*
+*            " 乘以 100，取整后再除以 100，保留 2 位小数
+*            lv_taxamount2 = floor( lw_result-taxamount * 100 ) / 100.
+*            " 保留 2 位小数，舍弃其他位数
+*            ls_response-taxamount = lv_taxamount2.
+*
+*            " 保留 2 位小数，四舍五入
+*            lv_totalamount2 = floor( lw_result-totalamount * 100 ) / 100.
+*            ls_response-totalamount = lv_totalamount2.
+*
+*          WHEN OTHERS.
+*            ls_response-taxamount   = lw_result-taxamount.
+*            ls_response-totalamount = lw_result-totalamount.
+*            ls_response-unitprice   = lw_result-unitprice.
+***end del
         ENDCASE.
 
         CONDENSE ls_response-suppliername.
@@ -1097,6 +1196,8 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         CONDENSE ls_response-sendflag.
         CONDENSE ls_response-documentheadertext.
         CONDENSE ls_response-taxamountheader.
+        condense ls_response-SuplrInvcItmUnplndDelivCost .
+
         APPEND   ls_response TO es_response-items.
 
       ENDLOOP.

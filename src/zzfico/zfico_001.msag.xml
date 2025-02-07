@@ -284,6 +284,18 @@
      <MSGNR>045</MSGNR>
      <TEXT>明細 &amp;1:項目 YY1_F_FINS2Z01_COB の値 &amp;2 は無効です</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZFICO_001</ARBGB>
+     <MSGNR>046</MSGNR>
+     <TEXT>この補助内訳コードは会社コード&amp;1に属します&amp;2ではありません。</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZFICO_001</ARBGB>
+     <MSGNR>047</MSGNR>
+     <TEXT>補助内訳コードを入力ください。</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

@@ -10,7 +10,10 @@ CLASS zcl_agencypurchasing DEFINITION
 ENDCLASS.
 
 
+
 CLASS zcl_agencypurchasing IMPLEMENTATION.
+
+
   METHOD if_rap_query_provider~select.
     DATA: lt_data    TYPE STANDARD TABLE OF zc_agencypurchasing,
           lt_sumdata TYPE STANDARD TABLE OF zc_agencypurchasing.
@@ -327,7 +330,11 @@ CLASS zcl_agencypurchasing IMPLEMENTATION.
                                                            taxcode = <lfs_sumdata>-taxcode
                                                            BINARY SEARCH.
         IF sy-subrc = 0.
-          READ TABLE lt_document1 TRANSPORTING NO FIELDS WITH KEY fiscalyear = <lfs_sumdata>-postingdate+0(4)
+          zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date   = CONV #( |{ <lfs_sumdata>-postingdate }01| )
+                                                     IMPORTING ev_year   = DATA(lv_fiscalyear)
+                                                               ev_period = DATA(lv_period)  ).
+
+          READ TABLE lt_document1 TRANSPORTING NO FIELDS WITH KEY fiscalyear = lv_fiscalyear
                                                                   companycode = <lfs_sumdata>-companycode
                                                                   accountingdocument = ls_fi1014-accountingdocument1
                                                                   BINARY SEARCH.
@@ -335,7 +342,7 @@ CLASS zcl_agencypurchasing IMPLEMENTATION.
             <lfs_sumdata>-accountingdocument1 = ls_fi1014-accountingdocument1.
           ENDIF.
 
-          READ TABLE lt_document2 TRANSPORTING NO FIELDS WITH KEY fiscalyear = <lfs_sumdata>-postingdate+0(4)
+          READ TABLE lt_document2 TRANSPORTING NO FIELDS WITH KEY fiscalyear = lv_fiscalyear
                                                                   companycode = <lfs_sumdata>-companycode2
                                                                   accountingdocument = ls_fi1014-accountingdocument2
                                                                   BINARY SEARCH.
@@ -390,5 +397,4 @@ CLASS zcl_agencypurchasing IMPLEMENTATION.
     io_response->set_data( lt_sumdata ).
 
   ENDMETHOD.
-
 ENDCLASS.

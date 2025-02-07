@@ -1,0 +1,5 @@
+@EndUserText.label: '回収残データ一括アップロード'
+define service ZUI_BI003_UPLOAD_O2 {
+  expose ZC_BI003_UPLOAD        as BI003Upload;
+  expose ZC_BI003_REPORT_UPLOAD as BI003UploadReport;
+}

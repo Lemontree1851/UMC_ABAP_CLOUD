@@ -20,7 +20,7 @@ annotate entity ZC_INVOICEREPORT with
   @UI.lineItem: [{ position: 40 }]
   @Consumption.filter.selectionType: #INTERVAL
   BillingDocumentDate;
-//  BillingDocumentItemText;
+  //  BillingDocumentItemText;
   @UI.selectionField: [{ position: 20 }]
   @UI.lineItem: [{ position: 30 }]
   SoldToParty;
@@ -38,8 +38,8 @@ annotate entity ZC_INVOICEREPORT with
   @UI.selectionField: [{ position: 60 }]
   @UI.lineItem: [{ position: 50 }]
   Product;
-//  BillingQuantity;
-//  BillingQuantityUnit;
+  //  BillingQuantity;
+  //  BillingQuantityUnit;
   @UI.selectionField: [{ position: 35 }]
   @UI.lineItem: [{ position: 45 }]
   @Consumption.valueHelpDefinition: [{ entity:{name:'I_OverallSDProcessStatus', element:'OverallSDProcessStatus'} }]
@@ -52,8 +52,8 @@ annotate entity ZC_INVOICEREPORT with
   @UI.lineItem: [{ position: 55 }]
   @Consumption.filter.selectionType: #INTERVAL
   CreationDate;
-//  NetAmount;
-//  TransactionCurrency;
+  //  NetAmount;
+  //  TransactionCurrency;
   @UI.selectionField: [{ position: 65 }]
   @UI.lineItem: [{ position: 57 }]
   SalesDocument;
@@ -65,17 +65,20 @@ annotate entity ZC_INVOICEREPORT with
   NetAmountIncludeTax10;
   @UI.lineItem: [{ position: 67 }]
   NetAmountExclude;
-//  SalesDocumentItem;
-//  TotalNetAmount;
-//  MaterialByCustomer;
-//  CompanyCodeParameterValue;
-//  PostalCode;
-//  CityName;
-//  CustomerName;
-//  FaxNumber;
-//  TelephoneNumber1;
-//  UnitPrice;
-//  ConditionQuantity;
-//  ConditionQuantityUnit;
-//  TaxRate;
+  //  SalesDocumentItem;
+  //  TotalNetAmount;
+  //  MaterialByCustomer;
+  //  CompanyCodeParameterValue;
+  //  PostalCode;
+  //  CityName;
+  //  CustomerName;
+  //  FaxNumber;
+  //  TelephoneNumber1;
+  //  UnitPrice;
+  //  ConditionQuantity;
+  //  ConditionQuantityUnit;
+  //  TaxRate;
+
+  @UI.lineItem: [{ cssDefault.width: '10rem' }]
+  InvoiceItemNo;
 }

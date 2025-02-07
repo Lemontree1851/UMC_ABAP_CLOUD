@@ -20,7 +20,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_bdglaccount IMPLEMENTATION.
+CLASS ZCL_BDGLACCOUNT IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

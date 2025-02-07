@@ -125,7 +125,7 @@ CLASS lhc_invoicereport IMPLEMENTATION.
       INTO TABLE @DATA(lt_print).
 
       IF lt_print IS NOT INITIAL.
-        SELECT "#EC CI_NO_TRANSFORM
+        SELECT                                     "#EC CI_NO_TRANSFORM
           *
         FROM zc_invoicereport
         FOR ALL ENTRIES IN @lt_print
@@ -152,9 +152,11 @@ CLASS lhc_invoicereport IMPLEMENTATION.
 
       "将新的编号记录在自建表中
       DATA lt_ztsd_1008 TYPE TABLE OF ztsd_1008.
-      lt_ztsd_1008 = VALUE #( FOR record IN records ( billing_document = record-billingdocument
+      lt_ztsd_1008 = VALUE #( FOR record IN records
+                                INDEX INTO lv_index ( billing_document = record-billingdocument
                                                       billing_document_item = record-billingdocumentitem
-                                                      invoice_no = invoice_no ) ).
+                                                      invoice_no = invoice_no
+                                                      invoice_item_no = lv_index ) ).
       MODIFY ztsd_1008 FROM TABLE @lt_ztsd_1008.
     ENDIF.
 
@@ -164,6 +166,7 @@ CLASS lhc_invoicereport IMPLEMENTATION.
 
     "返回结果
     DATA ls_result LIKE LINE OF result.
+    SORT print_records BY invoiceno invoiceitemno.
     LOOP AT print_records INTO DATA(print_record).
       ls_result-%cid =  keys[ 1 ]-%cid.
       "本想在此处添加长文本，但对于返回类型是 $self的action 值来源是cds无法覆盖，
@@ -213,9 +216,11 @@ CLASS lhc_invoicereport IMPLEMENTATION.
 
       "将新的编号记录在自建表中
       DATA lt_ztsd_1008 TYPE TABLE OF ztsd_1008.
-      lt_ztsd_1008 = VALUE #( FOR record IN records ( billing_document = record-billingdocument
+      lt_ztsd_1008 = VALUE #( FOR record IN records
+                                INDEX INTO lv_index ( billing_document = record-billingdocument
                                                       billing_document_item = record-billingdocumentitem
-                                                      invoice_no = invoice_no ) ).
+                                                      invoice_no = invoice_no
+                                                      invoice_item_no = lv_index ) ).
       MODIFY ztsd_1008 FROM TABLE @lt_ztsd_1008.
 
       IF records IS NOT INITIAL.
@@ -230,6 +235,7 @@ CLASS lhc_invoicereport IMPLEMENTATION.
 
       "返回结果
       DATA ls_result LIKE LINE OF result.
+      SORT print_records BY invoiceno invoiceitemno.
       LOOP AT print_records INTO DATA(print_record).
         ls_result-%cid =  keys[ 1 ]-%cid.
         MOVE-CORRESPONDING print_record TO ls_result-%param.

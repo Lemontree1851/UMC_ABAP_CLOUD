@@ -110,6 +110,83 @@ ENDCLASS.
 
 CLASS zzcl_wf_utils IMPLEMENTATION.
 
+
+  METHOD add_approval_history.
+
+    SELECT MAX( zseq )
+      FROM zc_wf_approvalhistory
+     WHERE workflowid = @iv_workflowid
+       AND instanceid = @iv_instanceid
+      INTO @DATA(lv_zseq).
+
+    lv_zseq += 1.
+    GET TIME STAMP FIELD DATA(lv_timestamp).
+    INSERT INTO ztbc_1011 VALUES @( VALUE #( workflow_id     = iv_workflowid
+                                             instance_id     = iv_instanceid
+                                             zseq            = lv_zseq
+                                             application_id  = iv_applicationid
+                                             current_node    = iv_currentnode
+                                             next_node       = iv_nextnode
+                                             operator        = iv_operator
+                                             approval_status = iv_approvalstatus
+                                             remark          = iv_remark
+                                             created_by      = sy-uname
+                                             created_at      = lv_timestamp
+                                             last_changed_by = sy-uname
+                                             last_changed_at = lv_timestamp
+                                             local_last_changed_at = lv_timestamp ) ).
+    "修改订单状态
+    IF iv_approvalstatus IS NOT INITIAL.
+      UPDATE ztmm_1006
+       SET approve_status = @iv_approvalstatus
+      WHERE workflow_id = @iv_workflowid
+      AND application_id = @iv_applicationid
+      AND instance_id = @iv_instanceid.
+    ENDIF.
+    "承认撤回 标记删除过往审批历史
+    IF iv_reject = abap_true.
+      UPDATE ztmm_1006
+       SET apply_date = '',
+           apply_time = ''
+      WHERE workflow_id = @iv_workflowid
+      AND application_id = @iv_applicationid
+      AND instance_id = @iv_instanceid.
+
+      UPDATE ztbc_1011
+       SET del = @abap_true
+      WHERE workflow_id = @iv_workflowid
+      AND application_id = @iv_applicationid
+      AND instance_id = @iv_instanceid.
+
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD check_current_node_email.
+
+    CLEAR :ev_error,ev_errortext.
+
+    SELECT *
+      FROM zc_wf_approvaluser
+     WHERE workflowid    = @iv_workflowid
+       AND applicationid = @iv_applicationid
+       AND node        = @iv_currentnode
+       AND emailaddress = @iv_email
+      INTO TABLE @DATA(lt_approvaluser).
+
+    IF lt_approvaluser IS INITIAL.
+      SELECT SINGLE nodename
+    FROM zc_wf_approvalnode
+   WHERE workflowid    = @iv_workflowid
+     AND applicationid = @iv_applicationid
+     AND node          = @iv_currentnode
+    INTO @DATA(lv_nodename).
+      ev_error = 'X'.
+      MESSAGE s012(zbc_001) WITH iv_currentnode lv_nodename INTO ev_errortext.
+    ENDIF.
+  ENDMETHOD.
+
+
   METHOD check_plant_access.
 
     CLEAR :ev_error,ev_errortext.
@@ -206,7 +283,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
             FROM ztbc_1001
           WHERE  zid   = @lc_costcenter_zid
             AND zvalue1 = @ls_ztmm_1006-cost_center
-          INTO @DATA(ls_costcenter). "#EC CI_ALL_FIELDS_NEEDED
+          INTO @DATA(ls_costcenter).          "#EC CI_ALL_FIELDS_NEEDED
           IF sy-subrc = 0.
             "固定成本中心忽略金额范围
 
@@ -222,7 +299,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
             FROM zr_prworkflow_sum
             WHERE applydepart_sum = @ls_ztmm_1006-apply_depart
             AND   prno_sum        = @ls_ztmm_1006-pr_no
-            INTO @DATA(ls_prworkflow_sum). "#EC CI_ALL_FIELDS_NEEDED
+            INTO @DATA(ls_prworkflow_sum).    "#EC CI_ALL_FIELDS_NEEDED
 
             DATA:lv_curr TYPE p LENGTH 16 DECIMALS 2.
             lv_curr    = ls_prworkflow_sum-amount_sum.
@@ -238,7 +315,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
                  AND knttp       = @ls_ztmm_1006-account_type
                  AND costcenter  = @ls_ztmm_1006-cost_center
                  AND amountfrom <= @lv_curr
-                 AND amountto   >= @lv_curr
+                 AND ( amountto   >= @lv_curr OR amountto IS INITIAL )
                 INTO @lv_applicationid.
                 "如果等于K 优先找能对应costcenter的 找不到 找costcenter为空的
                 IF sy-subrc <> 0 AND ls_ztmm_1006-account_type = 'K'.
@@ -248,9 +325,11 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
                    AND knttp       = @ls_ztmm_1006-account_type
                    AND costcenter  = ''
                    AND amountfrom <= @lv_curr
-                   AND amountto   >= @lv_curr
+                   AND ( amountto   >= @lv_curr OR amountto IS INITIAL )
                   INTO @lv_applicationid.
+
                 ENDIF.
+
                 ev_applicationid = lv_applicationid.
               CATCH cx_root INTO lx_root.
                 " handle exception
@@ -273,78 +352,6 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
 
   ENDMETHOD.
 
-  METHOD add_approval_history.
-
-    SELECT MAX( zseq )
-      FROM zc_wf_approvalhistory
-     WHERE workflowid = @iv_workflowid
-       AND instanceid = @iv_instanceid
-      INTO @DATA(lv_zseq).
-
-    lv_zseq += 1.
-    GET TIME STAMP FIELD DATA(lv_timestamp).
-    INSERT INTO ztbc_1011 VALUES @( VALUE #( workflow_id     = iv_workflowid
-                                             instance_id     = iv_instanceid
-                                             zseq            = lv_zseq
-                                             application_id  = iv_applicationid
-                                             current_node    = iv_currentnode
-                                             next_node       = iv_nextnode
-                                             operator        = iv_operator
-                                             approval_status = iv_approvalstatus
-                                             remark          = iv_remark
-                                             created_by      = sy-uname
-                                             created_at      = lv_timestamp
-                                             last_changed_by = sy-uname
-                                             last_changed_at = lv_timestamp
-                                             local_last_changed_at = lv_timestamp ) ).
-    "修改订单状态
-    IF iv_approvalstatus IS NOT INITIAL.
-      UPDATE ztmm_1006
-       SET approve_status = @iv_approvalstatus
-      WHERE workflow_id = @iv_workflowid
-      AND application_id = @iv_applicationid
-      AND instance_id = @iv_instanceid.
-    ENDIF.
-    "承认撤回 标记删除过往审批历史
-    IF iv_reject = abap_true.
-      UPDATE ztmm_1006
-       SET apply_date = '',
-           apply_time = ''
-      WHERE workflow_id = @iv_workflowid
-      AND application_id = @iv_applicationid
-      AND instance_id = @iv_instanceid.
-
-      UPDATE ztbc_1011
-       SET del = @abap_true
-      WHERE workflow_id = @iv_workflowid
-      AND application_id = @iv_applicationid
-      AND instance_id = @iv_instanceid.
-
-    ENDIF.
-  ENDMETHOD.
-  METHOD check_current_node_email.
-
-    CLEAR :ev_error,ev_errortext.
-
-    SELECT *
-      FROM zc_wf_approvaluser
-     WHERE workflowid    = @iv_workflowid
-       AND applicationid = @iv_applicationid
-       AND node        = @iv_currentnode
-       AND emailaddress = @iv_email
-      INTO TABLE @DATA(lt_approvaluser).
-
-    IF lt_approvaluser IS INITIAL.
-      SELECT SINGLE nodename
-    FROM zc_wf_approvalnode
-   WHERE workflowid    = @iv_workflowid
-     AND applicationid = @iv_applicationid
-     AND node          = @iv_currentnode
-    INTO @DATA(lv_nodename).
-      ev_error = 'X'.
-      MESSAGE s012(zbc_001) WITH iv_currentnode lv_nodename INTO ev_errortext.
-    ENDIF.
-  ENDMETHOD.
 
   METHOD get_approved_user.
     CLEAR :ev_users.
@@ -367,6 +374,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
 
+
   METHOD get_current_node.
     CLEAR :ev_currentnode.
     SELECT *
@@ -385,6 +393,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
       ENDIF.
     ENDIF.
   ENDMETHOD.
+
 
   METHOD get_nextnode.
     CLEAR :ev_nextnode,ev_approvalend .
@@ -413,6 +422,7 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
       ev_approvalend = abap_true.
     ENDIF.
   ENDMETHOD.
+
 
   METHOD get_next_node.
     CLEAR :ev_nextnode,ev_approvalend,ev_auto .
@@ -486,43 +496,6 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
 
-  METHOD get_pr_by.
-    CLEAR :ev_error ,ev_errortext,ev_users .
-    "get info
-    SELECT SINGLE *
-      FROM ztmm_1006
-    WHERE  workflow_id    = @iv_workflowid
-      AND application_id = @iv_applicationid
-      AND instance_id    = @iv_instanceid
-    INTO @DATA(ls_ztmm_1006).                 "#EC CI_ALL_FIELDS_NEEDED
-    IF ls_ztmm_1006-pr_by IS INITIAL.
-      ev_error = 'X'.
-      MESSAGE s013(zbc_001) WITH ls_ztmm_1006-pr_no INTO ev_errortext.
-      RETURN.
-    ENDIF.
-    CONDENSE ls_ztmm_1006-pr_by.
-
-    "get PR_BY setting
-    SELECT SINGLE *
-      FROM ztbc_1001
-    WHERE  zid   = @lc_prby_zid
-      AND zkey1  = @lc_zkey3
-      AND zkey2  = @lc_zkey5
-      AND zvalue1 = @ls_ztmm_1006-pr_by
-    INTO @DATA(ls_ztbc_1001).                 "#EC CI_ALL_FIELDS_NEEDED
-
-    IF ls_ztbc_1001-zvalue2 IS NOT INITIAL.
-
-      DATA:ls_wf_approvaluser TYPE zc_wf_approvaluser.
-      ls_wf_approvaluser-emailaddress = ls_ztbc_1001-zvalue2.
-      ls_wf_approvaluser-username     = ls_ztmm_1006-pr_by.
-      APPEND ls_wf_approvaluser TO ev_users.
-    ELSE.
-      ev_error = 'X'.
-      MESSAGE s014(zbc_001) WITH ls_ztmm_1006-pr_no ls_ztmm_1006-pr_by INTO ev_errortext.
-    ENDIF.
-
-  ENDMETHOD.
 
   METHOD get_polink_by.
     CLEAR :ev_error ,ev_errortext,ev_users .
@@ -562,6 +535,123 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     ENDIF.
 
   ENDMETHOD.
+
+
+  METHOD get_pr_by.
+    CLEAR :ev_error ,ev_errortext,ev_users .
+    "get info
+    SELECT SINGLE *
+      FROM ztmm_1006
+    WHERE  workflow_id    = @iv_workflowid
+      AND application_id = @iv_applicationid
+      AND instance_id    = @iv_instanceid
+    INTO @DATA(ls_ztmm_1006).                 "#EC CI_ALL_FIELDS_NEEDED
+    IF ls_ztmm_1006-pr_by IS INITIAL.
+      ev_error = 'X'.
+      MESSAGE s013(zbc_001) WITH ls_ztmm_1006-pr_no INTO ev_errortext.
+      RETURN.
+    ENDIF.
+    CONDENSE ls_ztmm_1006-pr_by.
+
+    "get PR_BY setting
+    SELECT SINGLE *
+      FROM ztbc_1001
+    WHERE  zid   = @lc_prby_zid
+      AND zkey1  = @lc_zkey3
+      AND zkey2  = @lc_zkey5
+      AND zvalue1 = @ls_ztmm_1006-pr_by
+    INTO @DATA(ls_ztbc_1001).                 "#EC CI_ALL_FIELDS_NEEDED
+
+    IF ls_ztbc_1001-zvalue2 IS NOT INITIAL.
+
+      DATA:ls_wf_approvaluser TYPE zc_wf_approvaluser.
+      ls_wf_approvaluser-emailaddress = ls_ztbc_1001-zvalue2.
+      ls_wf_approvaluser-username     = ls_ztmm_1006-pr_by.
+      APPEND ls_wf_approvaluser TO ev_users.
+    ELSE.
+      ev_error = 'X'.
+      MESSAGE s014(zbc_001) WITH ls_ztmm_1006-pr_no ls_ztmm_1006-pr_by INTO ev_errortext.
+    ENDIF.
+
+  ENDMETHOD.
+
+
+  METHOD if_oo_adt_classrun~main.
+**********************************************************************
+* DEMO
+**********************************************************************
+    TRY.
+        DATA(lv_instanceid) = cl_system_uuid=>create_uuid_x16_static(  ).
+        ##NO_HANDLER
+      CATCH cx_uuid_error.
+        "handle exception
+    ENDTRY.
+
+
+*&--发起人提交
+*    get_next_node( EXPORTING iv_workflowid    = 'purchaserequisition'
+*                             iv_applicationid = 1001
+*                             iv_instanceid    = lv_instanceid
+*                   IMPORTING ev_nextnode      = DATA(lv_next_node)
+*                             ev_approvalend   = DATA(lv_approvalend) ).
+*
+*    add_approval_history(
+*      iv_workflowid     = 'purchaserequisition'
+*      iv_instanceid     = lv_instanceid
+*      iv_applicationid  = 1001
+*      iv_nextnode       = lv_next_node
+*      iv_operator       = 'XINLEI.XU(xinlei.xu@sh.shin-china.com)'
+*      iv_email          = 'xinlei.xu@sh.shin-china.com'
+*      iv_approvalstatus = '2'
+*      iv_remark         = '提交审批'
+*    ).
+*
+*    DATA:lv_1006 TYPE ztmm_1006.
+*    lv_1006-workflow_id    = 'purchaserequisition'.
+*    lv_1006-application_id = 1001.
+*    lv_1006-instance_id    = lv_instanceid.
+*
+*    UPDATE ztmm_1006
+*       SET workflow_id = @lv_1006-workflow_id
+*         , application_id = @lv_1006-application_id
+*         , instance_id = @lv_1006-instance_id
+*    WHERE pr_no = '1000005'.
+
+**&--审批中
+*    get_next_node( EXPORTING iv_workflowid    = 'purchaserequisition'
+*                             iv_applicationid = 1001
+*                             iv_currentnode   = 10
+*                   IMPORTING ev_nextnode      = lv_next_node
+*                             ev_approvalend   = lv_approvalend ).
+*
+*    add_approval_history(
+*      iv_workflowid     = 'purchaserequisition'
+*      iv_instanceid     = lv_instanceid
+*      iv_applicationid  = 1001
+*      iv_currentnode    = 10
+*      iv_nextnode       = lv_next_node
+*      iv_operator       = 'XINLEI.XU(xinlei.xu@sh.shin-china.com)'
+*      iv_remark         = '审批通过，无意见'
+*    ).
+**********************************************************************
+    SELECT SINGLE
+      *
+    FROM ztmm_1006
+    WHERE pr_no = '1000040'
+    INTO  @DATA(ls_mm1006).                   "#EC CI_ALL_FIELDS_NEEDED
+
+    ls_mm1006-workflow_id = 'purchaserequisition'.
+
+    zzcl_wf_utils=>get_application_id(
+              EXPORTING iv_workflowid    = ls_mm1006-workflow_id
+                        iv_uuid          = ls_mm1006-uuid
+              IMPORTING ev_error         = DATA(lv_ev_error)
+                        ev_errortext     = DATA(lv_error_text)
+                        ev_applicationid = ls_mm1006-application_id ).
+
+
+  ENDMETHOD.
+
 
   METHOD send_emails.
     CLEAR :ev_error ,ev_errortext .
@@ -730,65 +820,4 @@ CLASS zzcl_wf_utils IMPLEMENTATION.
     ENDTRY.
 
   ENDMETHOD.
-
-  METHOD if_oo_adt_classrun~main.
-**********************************************************************
-* DEMO
-**********************************************************************
-    TRY.
-        DATA(lv_instanceid) = cl_system_uuid=>create_uuid_x16_static(  ).
-        ##NO_HANDLER
-      CATCH cx_uuid_error.
-        "handle exception
-    ENDTRY.
-
-
-*&--发起人提交
-*    get_next_node( EXPORTING iv_workflowid    = 'purchaserequisition'
-*                             iv_applicationid = 1001
-*                             iv_instanceid    = lv_instanceid
-*                   IMPORTING ev_nextnode      = DATA(lv_next_node)
-*                             ev_approvalend   = DATA(lv_approvalend) ).
-*
-*    add_approval_history(
-*      iv_workflowid     = 'purchaserequisition'
-*      iv_instanceid     = lv_instanceid
-*      iv_applicationid  = 1001
-*      iv_nextnode       = lv_next_node
-*      iv_operator       = 'XINLEI.XU(xinlei.xu@sh.shin-china.com)'
-*      iv_email          = 'xinlei.xu@sh.shin-china.com'
-*      iv_approvalstatus = '2'
-*      iv_remark         = '提交审批'
-*    ).
-*
-*    DATA:lv_1006 TYPE ztmm_1006.
-*    lv_1006-workflow_id    = 'purchaserequisition'.
-*    lv_1006-application_id = 1001.
-*    lv_1006-instance_id    = lv_instanceid.
-*
-*    UPDATE ztmm_1006
-*       SET workflow_id = @lv_1006-workflow_id
-*         , application_id = @lv_1006-application_id
-*         , instance_id = @lv_1006-instance_id
-*    WHERE pr_no = '1000005'.
-
-**&--审批中
-*    get_next_node( EXPORTING iv_workflowid    = 'purchaserequisition'
-*                             iv_applicationid = 1001
-*                             iv_currentnode   = 10
-*                   IMPORTING ev_nextnode      = lv_next_node
-*                             ev_approvalend   = lv_approvalend ).
-*
-*    add_approval_history(
-*      iv_workflowid     = 'purchaserequisition'
-*      iv_instanceid     = lv_instanceid
-*      iv_applicationid  = 1001
-*      iv_currentnode    = 10
-*      iv_nextnode       = lv_next_node
-*      iv_operator       = 'XINLEI.XU(xinlei.xu@sh.shin-china.com)'
-*      iv_remark         = '审批通过，无意见'
-*    ).
-**********************************************************************
-  ENDMETHOD.
-
 ENDCLASS.

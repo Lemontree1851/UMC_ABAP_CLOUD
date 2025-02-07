@@ -43,7 +43,7 @@ CLASS zcl_http_purchase_001 DEFINITION
         netpriceamount               TYPE c    LENGTH 11,           "正味価格
         pricevalidityenddate         TYPE c    LENGTH 8,            "有効終了日
         materialplanneddeliverydurn  TYPE c    LENGTH 5,            "納入予定日
-        currency                     TYPE c    LENGTH 3,            "通貨
+        currency                     TYPE waers,                    "通貨
       END OF ty_response,
 
       BEGIN OF ty_output1,
@@ -97,7 +97,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_purchase_001 IMPLEMENTATION.
+CLASS ZCL_HTTP_PURCHASE_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -195,7 +195,7 @@ CLASS zcl_http_purchase_001 IMPLEMENTATION.
           IF ls_porecord02-pricevalidityenddate >= sy-datum.
             ls_response-netpriceamount = ls_porecord02-netpriceamount / ls_porecord02-materialpriceunitqty.
           ELSE.
-            ls_response-netpriceamount = ''. " 单价为空
+            ls_response-netpriceamount = '0'. " 单价为空
           ENDIF.
 
           ls_response-minimumpurchaseorderquantity   = ls_porecord02-minimumpurchaseorderquantity.
@@ -205,6 +205,13 @@ CLASS zcl_http_purchase_001 IMPLEMENTATION.
           ls_response-pricevalidityenddate           = ls_porecord02-pricevalidityenddate.
           ls_response-materialplanneddeliverydurn    = ls_porecord02-materialplanneddeliverydurn.
           ls_response-currency                       = ls_porecord02-currency.
+
+*&--ADD BEGIN BY XINLEI XU 2025/01/16 外部変換
+          ls_response-netpriceamount = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
+                                                                             iv_currency = ls_response-currency
+                                                                             iv_input = ls_response-netpriceamount ).
+*&--ADD END BY XINLEI XU 2025/01/16
+
           CONDENSE ls_response-baseunit.
           CONDENSE ls_response-suppliercertorigincountry.
           CONDENSE ls_response-purchasinginforecord.

@@ -3,11 +3,9 @@
 define root view entity ZR_INVOICEREPORT
   as select from ZR_INVOICEOUTPUT     as _main
   //权限控制
-    inner join   ZR_TBC1013           as _AssignSalesOrg  on _AssignSalesOrg.SalesOrganization = _main.SalesOrganization
-    inner join   ZR_TBC1018           as _AssignShipPoint on _AssignShipPoint.ShippingPoint = _main.ShippingPoint
-    inner join   ZC_BusinessUserEmail as _User            on  _User.Email  = _AssignSalesOrg.Mail
-                                                          and _User.Email  = _AssignShipPoint.Mail
-                                                          and _User.UserID = $session.user
+    inner join   ZR_TBC1013           as _AssignSalesOrg on _AssignSalesOrg.SalesOrganization = _main.SalesOrganization
+    inner join   ZC_BusinessUserEmail as _User           on  _User.Email  = _AssignSalesOrg.Mail
+                                                         and _User.UserID = $session.user
 {
   key _main.BillingDocument,
   key _main.BillingDocumentItem,
@@ -54,10 +52,10 @@ define root view entity ZR_INVOICEREPORT
       //消费税对象外
       _main.NetAmountExclude,
       _main._SD1008.invoice_no                                                                      as InvoiceNo,
-      
+
       // ADD BEGIN BY XINLEI XU 2025/01/10
       _main._SD1008.invoice_item_no                                                                 as InvoiceItemNo,
       // ADD END BY XINLEI XU 2025/01/10
-      
+
       _main._BC1001
 }

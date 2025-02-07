@@ -12,7 +12,8 @@ ENDCLASS.
 
 
 
-CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
+CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
+
 
   METHOD if_rap_query_provider~select.
     TYPES: BEGIN OF ty_metadata,
@@ -2191,5 +2192,4 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
     ENDIF.
 
   ENDMETHOD.
-
 ENDCLASS.

@@ -283,9 +283,9 @@ CLASS lhc_pochange IMPLEMENTATION.
         ls_purchaseorder_update-%control-purchasinggroup = if_abap_behv=>mk-on.
       ENDIF.
 
-      IF ls_data-Currency IS NOT INITIAL.
-        ls_purchaseorder_update-DocumentCurrency = ls_data-Currency.
-        ls_purchaseorder_update-%control-DocumentCurrency = if_abap_behv=>mk-on.
+      IF ls_data-currency IS NOT INITIAL.
+        ls_purchaseorder_update-documentcurrency = ls_data-currency.
+        ls_purchaseorder_update-%control-documentcurrency = if_abap_behv=>mk-on.
       ENDIF.
 
 * --PO Item
@@ -405,11 +405,21 @@ CLASS lhc_pochange IMPLEMENTATION.
       ENDIF.
       "DiscountInKindEligibility
       IF ls_data-discountinkindeligibility IS NOT INITIAL.
-        ls_purchaseorderitem_update-discountinkindeligibility = ls_data-discountinkindeligibility.
-        ls_purchaseorderitem_update-%control-discountinkindeligibility = if_abap_behv=>mk-on.
+        CLEAR: ls_purchaseorderitem_update-invoiceisexpected.
+        ls_purchaseorderitem_update-%control-invoiceisexpected = if_abap_behv=>mk-on.
+        CLEAR: ls_purchaseorderitem_update-invoiceisgoodsreceiptbased.
+        ls_purchaseorderitem_update-%control-invoiceisgoodsreceiptbased = if_abap_behv=>mk-on.
+        CLEAR: ls_purchaseorderitem_update-evaldrcptsettlmtisallowed.
+        ls_purchaseorderitem_update-%control-evaldrcptsettlmtisallowed = if_abap_behv=>mk-on.
+        ls_purchaseorderitem_update-netpriceamount = 0.
+        ls_purchaseorderitem_update-%control-netpriceamount = if_abap_behv=>mk-on.
         IF ls_data-discountinkindeligibility = lc_null.
-          CLEAR ls_purchaseorderitem_update-discountinkindeligibility.
-          ls_purchaseorderitem_update-%control-discountinkindeligibility = if_abap_behv=>mk-on.
+            ls_purchaseorderitem_update-invoiceisexpected = 'X'.
+            ls_purchaseorderitem_update-%control-invoiceisexpected = if_abap_behv=>mk-on.
+            ls_purchaseorderitem_update-invoiceisgoodsreceiptbased = 'X'.
+            ls_purchaseorderitem_update-%control-invoiceisgoodsreceiptbased = if_abap_behv=>mk-on.
+            ls_purchaseorderitem_update-evaldrcptsettlmtisallowed = 'X'.
+            ls_purchaseorderitem_update-%control-evaldrcptsettlmtisallowed = if_abap_behv=>mk-on.
         ENDIF.
       ENDIF.
       "Tax Code

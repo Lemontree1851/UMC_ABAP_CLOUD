@@ -11,7 +11,9 @@ CLASS zcl_purchaseorderapi DEFINITION
 ENDCLASS.
 
 
-CLASS zcl_purchaseorderapi IMPLEMENTATION.
+
+CLASS ZCL_PURCHASEORDERAPI IMPLEMENTATION.
+
 
   METHOD if_sadl_exit_calc_element_read~calculate.
     TYPES: BEGIN OF ts_workflow_overview,
@@ -108,7 +110,7 @@ CLASS zcl_purchaseorderapi IMPLEMENTATION.
 
   ENDMETHOD.
 
+
   METHOD if_sadl_exit_calc_element_read~get_calculation_info.
   ENDMETHOD.
-
 ENDCLASS.

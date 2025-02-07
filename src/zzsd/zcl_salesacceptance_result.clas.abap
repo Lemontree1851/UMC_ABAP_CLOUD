@@ -20,12 +20,16 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       lrs_vkorg LIKE LINE OF lr_vkorg.
 
     DATA:
-      lv_year      TYPE c LENGTH 4,
-      lv_month     TYPE monat,
-      lv_nextmonth TYPE budat,
-      lv_from      TYPE budat,
-      lv_to        TYPE budat,
-      lv_netpr(8)  TYPE p DECIMALS 2.
+      lv_year             TYPE c LENGTH 4,
+      lv_month            TYPE monat,
+      lv_nextmonth        TYPE budat,
+      lv_from             TYPE budat,
+      lv_to               TYPE budat,
+      lv_netpr(8)         TYPE p DECIMALS 2,
+      lv_accceptamount    TYPE wrbtr,
+      lv_netamount        TYPE wrbtr,
+      lv_acccepttaxamount TYPE wrbtr,
+      lv_taxamount        TYPE wrbtr.
 
 * Get filter range
     TRY.
@@ -703,10 +707,20 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
           ENDIF.
           CLEAR: lv_first.
           APPEND ls_mem TO lt_output.
-
+          lv_accceptamount = lv_accceptamount + ls_mem-accceptamount.
+          lv_netamount = lv_netamount + ls_mem-netamount.
+          lv_acccepttaxamount = lv_acccepttaxamount + ls_mem-acccepttaxamount.
+          lv_taxamount = lv_taxamount + ls_mem-taxamount.
         ENDLOOP.
         lv_first = 'X'.
       ENDLOOP.
+      "合计
+      CLEAR: ls_output.
+      ls_output-AccceptAmount = lv_accceptamount.
+      ls_output-NetAmount = lv_netamount.
+      ls_output-AccceptTaxAmount = lv_acccepttaxamount.
+      ls_output-TaxAmount = lv_taxamount.
+      APPEND ls_output TO lt_output.
     ENDIF.
 
 

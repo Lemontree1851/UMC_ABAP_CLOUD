@@ -76,10 +76,18 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
       DATA:lv_datetime   TYPE string.
       DATA:lmr_year      LIKE LINE OF mr_year.
       DATA:lmr_monat     LIKE LINE OF mr_monat.
+      DATA:lv_poper      TYPE poper.
+      DATA:lv_popern2    TYPE n LENGTH 2.
+      DATA:lv_gjahr TYPE gjahr.
 
       GET TIME STAMP FIELD DATA(lv_timestamp_local).
       lv_datetime     = lv_timestamp_local.
-      lv_date_local   = lv_datetime+0(6) && '01'.
+      lv_date_local   = lv_datetime+0(8).
+      zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date = lv_date_local
+                                         IMPORTING ev_year   = lv_gjahr
+                                                   ev_period = lv_poper ).
+      lv_popern2      = lv_poper.
+      lv_date_local   = lv_gjahr && lv_popern2 && '01'.
       lv_date_local   = lv_date_local - 1.
 
       CLEAR lmr_year.
@@ -93,6 +101,7 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
       lmr_monat-option = 'EQ'.
       lmr_monat-low    = lv_date_local+4(2).
       APPEND lmr_monat TO mr_monat.
+
 
     ENDIF.
 

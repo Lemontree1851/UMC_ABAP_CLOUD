@@ -886,6 +886,17 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
       DELETE lt_data WHERE confirmeddeliverydate NOT IN lr_confirmeddeliverydate.
     ENDIF.
 
+    "Calculate counts of so and so item
+    DATA(lt_data_tmp) = lt_data.
+    DELETE ADJACENT DUPLICATES FROM lt_data_tmp COMPARING salesdocument.
+    DATA(lv_totalcountso)     = lines( lt_data_tmp ).
+    DATA(lv_totalcountsoitem) = lines( lt_data ).
+
+    LOOP AT lt_data ASSIGNING FIELD-SYMBOL(<fs_data>).
+      <fs_data>-totalcountso     = lv_totalcountso.
+      <fs_data>-totalcountsoitem = lv_totalcountsoitem.
+    ENDLOOP.
+
     io_response->set_total_number_of_records( lines( lt_data ) ).
 
     "Sort

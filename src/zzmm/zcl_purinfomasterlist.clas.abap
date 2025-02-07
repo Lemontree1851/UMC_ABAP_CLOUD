@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_purinfomasterlist IMPLEMENTATION.
+CLASS ZCL_PURINFOMASTERLIST IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
