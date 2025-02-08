@@ -322,7 +322,7 @@ CLASS zzcl_common_utils DEFINITION
                                   iv_record_count   TYPE ztbc_1019-record_count
                                   iv_run_start_time TYPE ztbc_1019-run_start_time
                                   iv_run_end_time   TYPE ztbc_1019-run_end_time
-                                  iv_remark         TYPE ztbc_1019-remark
+                                  iv_remark         TYPE ztbc_1019-remark OPTIONAL
                         EXPORTING ev_log_uuid       TYPE ztbc_1019-uuid.
   PROTECTED SECTION.
   PRIVATE SECTION.

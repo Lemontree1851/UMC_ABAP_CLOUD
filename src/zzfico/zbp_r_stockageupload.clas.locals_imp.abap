@@ -81,7 +81,7 @@ CLASS lhc_stageupload IMPLEMENTATION.
       APPEND INITIAL LINE TO result ASSIGNING FIELD-SYMBOL(<lfs_result>).
       <lfs_result>-%tky = ls_data-%tky.
 
-      IF lv_plant CS ls_data-plant.
+      IF lv_plant CS ls_data-plant OR ls_data-InventoryType = 'B'.
         <lfs_result>-%delete = if_abap_behv=>auth-allowed.
         <lfs_result>-%action-edit = if_abap_behv=>auth-allowed.
       ELSE.
@@ -107,7 +107,7 @@ CLASS lhc_stageupload IMPLEMENTATION.
       APPEND INITIAL LINE TO result ASSIGNING FIELD-SYMBOL(<lfs_result1>).
       <lfs_result1>-%tky = ls_data1-%tky.
 
-      IF lv_company CS ls_data1-companycode.
+      IF lv_company CS ls_data1-companycode .
         <lfs_result1>-%delete = if_abap_behv=>auth-allowed.
         <lfs_result1>-%action-edit = if_abap_behv=>auth-allowed.
       ELSE.
@@ -285,14 +285,14 @@ calendaryear = <lfs_data>-calendaryear calendarmonth = <lfs_data>-calendarmonth 
       IF <lfs_data>-companycode IS INITIAL.
         MESSAGE s038(zfico_001) INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
-      ELSEIF NOT lv_companycode CS <lfs_data>-companycode.
+      ELSEIF NOT lv_companycode CS <lfs_data>-companycode .
         MESSAGE e028(zbc_001) WITH <lfs_data>-companycode INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
       ENDIF.
       IF <lfs_data>-plant IS INITIAL.
         MESSAGE s011(zfico_001) INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
-      ELSEIF NOT lv_plant CS <lfs_data>-plant.
+      ELSEIF NOT lv_plant CS <lfs_data>-plant AND <lfs_data>-inventorytype NE 'B'.
         MESSAGE e027(zbc_001) WITH <lfs_data>-plant INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '\' ).
       ENDIF.

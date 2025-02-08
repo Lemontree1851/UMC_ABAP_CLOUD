@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
+CLASS zcl_http_checkmfgordermdoc_002 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -112,6 +112,7 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
       lc_gmtype_531      TYPE i_materialdocumentitemtp-goodsmovementtype VALUE '531',
       lc_stocktype_01    TYPE i_materialstock_2-inventorystocktype       VALUE '01'.
 
+    GET TIME STAMP FIELD DATA(lv_timestamp_start).
 
     "Obtain request data
     DATA(lv_req_body) = request->get_text( ).
@@ -418,5 +419,32 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
 
     "Set request data
     response->set_text( lv_res_body ).
+
+*&--ADD BEGIN BY XINLEI XU 2025/02/08
+    GET TIME STAMP FIELD DATA(lv_timestamp_end).
+    TRY.
+        DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
+        DATA(lv_request_url) = |https://{ lv_system_url }/sap/bc/http/sap/z_http_checkmfgordermdoc_002|.
+        ##NO_HANDLER
+      CATCH cx_abap_context_info_error.
+        "handle exception
+    ENDTRY.
+
+    DATA(lv_request_body) = xco_cp_json=>data->from_abap( ls_req )->apply( VALUE #(
+    ( xco_cp_json=>transformation->underscore_to_pascal_case )
+    ) )->to_string( ).
+
+    zzcl_common_utils=>add_interface_log( EXPORTING iv_interface_id   = |IF031|
+                                                    iv_interface_desc = |生産実績取消のチェック|
+                                                    iv_request_method = CONV #( if_web_http_client=>get )
+                                                    iv_request_url    = lv_request_url
+                                                    iv_request_body   = lv_request_body
+                                                    iv_status_code    = CONV #( response->get_status( )-code )
+                                                    iv_response       = response->get_text( )
+                                                    iv_record_count   = 1
+                                                    iv_run_start_time = CONV #( lv_timestamp_start )
+                                                    iv_run_end_time   = CONV #( lv_timestamp_end )
+                                          IMPORTING ev_log_uuid       = DATA(lv_log_uuid) ).
+*&--ADD END BY XINLEI XU 2025/02/08
   ENDMETHOD.
 ENDCLASS.

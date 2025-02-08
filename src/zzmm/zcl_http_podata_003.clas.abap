@@ -175,7 +175,6 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
 
     lv_plant     = ls_req-plant.
     lv_timestamp = ls_req-time_stamp.
-    lv_timestamp = '20250207000000'.
 
     data:lv_where type String.
 
@@ -238,7 +237,7 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
              LASTNAME,
              FIRSTNAME
           FROM i_businessuserbasic
-          INTO TABLE @DATA(LT_USERNAME).
+          INTO TABLE @DATA(LT_USERNAME)."#EC CI_NOWHERE
 *--------------------------------------------------------------just for test
 
 *DELETE lt_poitem WHERE purchaseorder <> '3100000000'.

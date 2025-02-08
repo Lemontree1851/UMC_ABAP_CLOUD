@@ -48,7 +48,7 @@ CLASS lhc_inventoryaging DEFINITION INHERITING FROM cl_abap_behavior_handler.
         issgorrcvgmaterial          TYPE i_materialdocumentitem_2-issgorrcvgmaterial,
         issuingorreceivingplant     TYPE i_materialdocumentitem_2-issuingorreceivingplant,
         debitcreditcode             TYPE i_materialdocumentitem_2-debitcreditcode,
-        rvslofgoodsreceiptisallowed TYPE i_materialdocumentitem_2-rvslofgoodsreceiptisallowed,
+*        rvslofgoodsreceiptisallowed TYPE i_materialdocumentitem_2-rvslofgoodsreceiptisallowed,
       END OF ty_materialdocumentitem,
 
       BEGIN OF ty_goosreceipt,
@@ -130,6 +130,7 @@ CLASS lhc_inventoryaging DEFINITION INHERITING FROM cl_abap_behavior_handler.
       lc_fiscalyear_init         TYPE string VALUE '2025',
       lc_fiscalperiod_init       TYPE string VALUE '002',
       lc_invspecialstocktype_t   TYPE string VALUE 'T',
+      lc_invspecialstocktype_k   TYPE string VALUE 'K',
       lc_invspecialstocktype_e   TYPE string VALUE 'E',
       lc_currencyrole_10         TYPE string VALUE '10',
       lc_purhistorycategory_q    TYPE string VALUE 'Q',
@@ -376,6 +377,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
          AND material = @lt_productplantbasic-product
          AND ledger = @lv_ledger
          AND invtryvalnspecialstocktype <> @lc_invspecialstocktype_t
+         AND invtryvalnspecialstocktype <> @lc_invspecialstocktype_k
          AND invtryvalnspecialstocktype <> @lc_invspecialstocktype_e
          AND valuationquantity <> 0
          AND amountincompanycodecurrency <> 0
@@ -648,17 +650,44 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
            AND material = @lt_productplantbasic-product
            AND companycode = @lv_companycode
            AND debitcreditcode = @lc_debitcreditcode_s
-           AND rvslofgoodsreceiptisallowed = @abap_false
+*           AND rvslofgoodsreceiptisallowed = @abap_false
            AND goodsmovementtype IN @lr_mvtype
-           AND inventoryspecialstocktype = @space
+*           AND inventoryspecialstocktype = @space
+           AND inventoryspecialstocktype <> @lc_invspecialstocktype_t
+           AND inventoryspecialstocktype <> @lc_invspecialstocktype_k
+           AND inventoryspecialstocktype <> @lc_invspecialstocktype_e
            AND postingdate IN @lr_postingdate
           INTO TABLE @lt_materialdocumentitem.
+        IF sy-subrc = 0.
+          "Obtain material document of reverse
+          SELECT materialdocumentyear,
+                 materialdocument,
+                 materialdocumentitem,
+                 reversedmaterialdocumentyear,
+                 reversedmaterialdocument,
+                 reversedmaterialdocumentitem
+            FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
+             FOR ALL ENTRIES IN @lt_materialdocumentitem
+           WHERE reversedmaterialdocumentyear = @lt_materialdocumentitem-materialdocumentyear
+             AND reversedmaterialdocument = @lt_materialdocumentitem-materialdocument
+             AND reversedmaterialdocumentitem = @lt_materialdocumentitem-materialdocumentitem
+            INTO TABLE @DATA(lt_materialdocumentitem_rev).
+        ENDIF.
       ENDIF.
 
       SORT lt_ztbc_1001_zfi003 BY goodsmovementtype.
       SORT lt_ztbc_1001_zfi004 BY supplier.
+      SORT lt_materialdocumentitem_rev BY reversedmaterialdocumentyear reversedmaterialdocument reversedmaterialdocumentitem.
 
       LOOP AT lt_materialdocumentitem INTO DATA(ls_materialdocumentitem).
+        "Read material document of reversing
+        READ TABLE lt_materialdocumentitem_rev TRANSPORTING NO FIELDS WITH KEY reversedmaterialdocumentyear = ls_materialdocumentitem-materialdocumentyear
+                                                                               reversedmaterialdocument = ls_materialdocumentitem-materialdocument
+                                                                               reversedmaterialdocumentitem = ls_materialdocumentitem-materialdocumentitem
+                                                                      BINARY SEARCH.
+        "No reversing for material document
+        CHECK sy-subrc <> 0.
+
         ls_receipt-plant              = ls_materialdocumentitem-plant.
         ls_receipt-material           = ls_materialdocumentitem-material.
         ls_receipt-postingdate        = ls_materialdocumentitem-postingdate.
@@ -709,8 +738,10 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
          AND ledger = @lv_ledger
         INTO TABLE @DATA(lt_ztfi_1004_tmp).
 
+
       LOOP AT lt_ztfi_1004_tmp INTO DATA(ls_ztfi_1004_tmp).
-        lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && ls_ztfi_1004_tmp-calendarmonth.
+        lv_fiscalperiod_tmp = ls_ztfi_1004_tmp-calendarmonth.
+        lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && lv_fiscalperiod_tmp.
         lr_fiscalyearperiod = VALUE #( BASE lr_fiscalyearperiod sign = lc_sign_i option = lc_option_eq ( low = lv_fiscalyearperiod ) ).
       ENDLOOP.
 
@@ -728,12 +759,13 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
 
         "期初数据转化为入库记录
         LOOP AT lt_ztfi_1004_tmp INTO ls_ztfi_1004_tmp.
-          lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && ls_ztfi_1004_tmp-calendarmonth.
+          lv_fiscalperiod_tmp = ls_ztfi_1004_tmp-calendarmonth.
+          lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && lv_fiscalperiod_tmp.
 
           READ TABLE lt_fiscalyearperiodforvariant INTO DATA(ls_fiscalyearperiodforvariant) WITH KEY fiscalyearperiod = lv_fiscalyearperiod
                                                                                             BINARY SEARCH.
           IF sy-subrc = 0.
-            lv_age = ls_ztfi_1004_tmp-age.
+            lv_age = ls_ztfi_1004_tmp-age - 1.
 
             "获取当前日期指定月数前的日期
             zzcl_common_utils=>calc_date_subtract(
@@ -801,8 +833,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
                supplier,
                issgorrcvgmaterial,
                issuingorreceivingplant,
-               debitcreditcode,
-               rvslofgoodsreceiptisallowed
+               debitcreditcode
+*               rvslofgoodsreceiptisallowed
           FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
            FOR ALL ENTRIES IN @lt_receipt_309
          WHERE plant = @lt_receipt_309-issuingorreceivingplant
@@ -810,13 +842,34 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
            AND postingdate < @lt_receipt_309-postingdate
            AND companycode = @lv_companycode
 *           AND rvslofgoodsreceiptisallowed = @abap_false
-           AND inventoryspecialstocktype = @space
+*           AND inventoryspecialstocktype = @space
+           AND inventoryspecialstocktype <> @lc_invspecialstocktype_t
+           AND inventoryspecialstocktype <> @lc_invspecialstocktype_k
+           AND inventoryspecialstocktype <> @lc_invspecialstocktype_e
           INTO TABLE @lt_materialdocumentitem.
+        IF sy-subrc = 0.
+          CLEAR lt_materialdocumentitem_rev.
+
+          "Obtain material document of reverse
+          SELECT materialdocumentyear,
+                 materialdocument,
+                 materialdocumentitem,
+                 reversedmaterialdocumentyear,
+                 reversedmaterialdocument,
+                 reversedmaterialdocumentitem
+            FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
+             FOR ALL ENTRIES IN @lt_materialdocumentitem
+           WHERE reversedmaterialdocumentyear = @lt_materialdocumentitem-materialdocumentyear
+             AND reversedmaterialdocument = @lt_materialdocumentitem-materialdocument
+             AND reversedmaterialdocumentitem = @lt_materialdocumentitem-materialdocumentitem
+            INTO TABLE @lt_materialdocumentitem_rev.
+        ENDIF.
 
         CLEAR lt_receipt_tmp.
 
         SORT lt_materialdocumentitem BY plant material.
         SORT lt_receipt_309 BY plant material postingdate DESCENDING.
+        SORT lt_materialdocumentitem_rev BY reversedmaterialdocumentyear reversedmaterialdocument reversedmaterialdocumentitem.
 
         LOOP AT lt_receipt_309 INTO DATA(ls_receipt_309).
           READ TABLE lt_materialdocumentitem TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_309-issuingorreceivingplant
@@ -854,15 +907,23 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
                 IF ls_materialdocumentitem-postingdate >= lv_date_36m.
 *                   Goods Receipt
                   IF lr_mvtype IS NOT INITIAL AND ls_materialdocumentitem-goodsmovementtype IN lr_mvtype.
-                    IF  ls_materialdocumentitem-debitcreditcode = lc_debitcreditcode_s
-                    AND ls_materialdocumentitem-rvslofgoodsreceiptisallowed = abap_false.
-                      ls_receipt-plant              = ls_receipt_309-issuingorreceivingplant.
-                      ls_receipt-material           = ls_receipt_309-issgorrcvgmaterial.
-                      ls_receipt-postingdate        = ls_receipt_309-postingdate.
-                      ls_receipt-postingdate_receipt = ls_materialdocumentitem-postingdate.
-                      ls_receipt-quantityinbaseunit = ls_materialdocumentitem-quantityinbaseunit.
-                      COLLECT ls_receipt INTO lt_receipt_tmp.
-                      CLEAR ls_receipt.
+                    IF ls_materialdocumentitem-debitcreditcode = lc_debitcreditcode_s.
+*                    AND ls_materialdocumentitem-rvslofgoodsreceiptisallowed = abap_false.
+                      "Read material document of reversing
+                      READ TABLE lt_materialdocumentitem_rev TRANSPORTING NO FIELDS WITH KEY reversedmaterialdocumentyear = ls_materialdocumentitem-materialdocumentyear
+                                                                                             reversedmaterialdocument = ls_materialdocumentitem-materialdocument
+                                                                                             reversedmaterialdocumentitem = ls_materialdocumentitem-materialdocumentitem
+                                                                                    BINARY SEARCH.
+                      "No reversing for material document
+                      IF sy-subrc <> 0.
+                        ls_receipt-plant              = ls_receipt_309-issuingorreceivingplant.
+                        ls_receipt-material           = ls_receipt_309-issgorrcvgmaterial.
+                        ls_receipt-postingdate        = ls_receipt_309-postingdate.
+                        ls_receipt-postingdate_receipt = ls_materialdocumentitem-postingdate.
+                        ls_receipt-quantityinbaseunit = ls_materialdocumentitem-quantityinbaseunit.
+                        COLLECT ls_receipt INTO lt_receipt_tmp.
+                        CLEAR ls_receipt.
+                      ENDIF.
                     ENDIF.
                   ENDIF.
                 ENDIF.
@@ -935,7 +996,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
           CLEAR lr_fiscalyearperiod.
 
           LOOP AT lt_ztfi_1004_tmp INTO ls_ztfi_1004_tmp.
-            lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && ls_ztfi_1004_tmp-calendarmonth.
+            lv_fiscalperiod_tmp = ls_ztfi_1004_tmp-calendarmonth.
+            lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && lv_fiscalperiod_tmp.
             lr_fiscalyearperiod = VALUE #( BASE lr_fiscalyearperiod sign = lc_sign_i option = lc_option_eq ( low = lv_fiscalyearperiod ) ).
           ENDLOOP.
 
@@ -957,12 +1019,13 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
 
             "期初数据转化为入库记录
             LOOP AT lt_ztfi_1004_tmp INTO ls_ztfi_1004_tmp.
-              lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && ls_ztfi_1004_tmp-calendarmonth.
+              lv_fiscalperiod_tmp = ls_ztfi_1004_tmp-calendarmonth.
+              lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && lv_fiscalperiod_tmp.
 
               READ TABLE lt_fiscalyearperiodforvariant INTO ls_fiscalyearperiodforvariant WITH KEY fiscalyearperiod = lv_fiscalyearperiod
                                                                                           BINARY SEARCH.
               IF sy-subrc = 0.
-                lv_age = ls_ztfi_1004_tmp-age.
+                lv_age = ls_ztfi_1004_tmp-age - 1.
 
                 "获取当前日期指定月数前的日期
                 zzcl_common_utils=>calc_date_subtract(
@@ -1156,8 +1219,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
                supplier,
                issgorrcvgmaterial,
                issuingorreceivingplant,
-               debitcreditcode,
-               rvslofgoodsreceiptisallowed
+               debitcreditcode
+*               rvslofgoodsreceiptisallowed
           FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
            FOR ALL ENTRIES IN @lt_receipt_vendor
          WHERE plant = @lt_receipt_vendor-issuingorreceivingplant
@@ -1165,8 +1228,28 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
            AND postingdate < @lt_receipt_vendor-postingdate
            AND companycode = @lv_companycode
 *           AND rvslofgoodsreceiptisallowed = @abap_false
-           AND inventoryspecialstocktype = @space
+*           AND inventoryspecialstocktype = @space
+           AND inventoryspecialstocktype <> @lc_invspecialstocktype_t
+           AND inventoryspecialstocktype <> @lc_invspecialstocktype_k
+           AND inventoryspecialstocktype <> @lc_invspecialstocktype_e
           INTO TABLE @lt_materialdocumentitem.
+        IF sy-subrc = 0.
+          CLEAR lt_materialdocumentitem_rev.
+
+          "Obtain material document of reverse
+          SELECT materialdocumentyear,
+                 materialdocument,
+                 materialdocumentitem,
+                 reversedmaterialdocumentyear,
+                 reversedmaterialdocument,
+                 reversedmaterialdocumentitem
+            FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
+             FOR ALL ENTRIES IN @lt_materialdocumentitem
+           WHERE reversedmaterialdocumentyear = @lt_materialdocumentitem-materialdocumentyear
+             AND reversedmaterialdocument = @lt_materialdocumentitem-materialdocument
+             AND reversedmaterialdocumentitem = @lt_materialdocumentitem-materialdocumentitem
+            INTO TABLE @lt_materialdocumentitem_rev.
+        ENDIF.
 
         CLEAR:
           lt_stock,
@@ -1174,6 +1257,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
 
         SORT lt_fiscalyearperiod_last BY nextfiscalperiod nextfiscalperiodfiscalyear.
         SORT lt_materialdocumentitem BY plant material.
+        SORT lt_materialdocumentitem_rev BY reversedmaterialdocumentyear reversedmaterialdocument reversedmaterialdocumentitem.
 
         LOOP AT lt_receipt_vendor INTO DATA(ls_receipt_vendor).
           READ TABLE lt_materialdocumentitem TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_vendor-issuingorreceivingplant
@@ -1211,15 +1295,23 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
                 IF ls_materialdocumentitem-postingdate >= lv_date_36m.
                   "Goods Receipt
                   IF lr_mvtype IS NOT INITIAL AND ls_materialdocumentitem-goodsmovementtype IN lr_mvtype.
-                    IF  ls_materialdocumentitem-debitcreditcode = lc_debitcreditcode_s
-                    AND ls_materialdocumentitem-rvslofgoodsreceiptisallowed = abap_false.
-                      ls_receipt-plant              = ls_receipt_vendor-issuingorreceivingplant.
-                      ls_receipt-material           = ls_receipt_vendor-issgorrcvgmaterial.
-                      ls_receipt-postingdate        = ls_receipt_vendor-postingdate.
-                      ls_receipt-postingdate_receipt = ls_materialdocumentitem-postingdate.
-                      ls_receipt-quantityinbaseunit = ls_materialdocumentitem-quantityinbaseunit.
-                      COLLECT ls_receipt INTO lt_receipt_tmp.
-                      CLEAR ls_receipt.
+                    IF ls_materialdocumentitem-debitcreditcode = lc_debitcreditcode_s.
+*                    AND ls_materialdocumentitem-rvslofgoodsreceiptisallowed = abap_false.
+                      "Read material document of reversing
+                      READ TABLE lt_materialdocumentitem_rev TRANSPORTING NO FIELDS WITH KEY reversedmaterialdocumentyear = ls_materialdocumentitem-materialdocumentyear
+                                                                                             reversedmaterialdocument = ls_materialdocumentitem-materialdocument
+                                                                                             reversedmaterialdocumentitem = ls_materialdocumentitem-materialdocumentitem
+                                                                                    BINARY SEARCH.
+                      "No reversing for material document
+                      IF sy-subrc <> 0.
+                        ls_receipt-plant              = ls_receipt_vendor-issuingorreceivingplant.
+                        ls_receipt-material           = ls_receipt_vendor-issgorrcvgmaterial.
+                        ls_receipt-postingdate        = ls_receipt_vendor-postingdate.
+                        ls_receipt-postingdate_receipt = ls_materialdocumentitem-postingdate.
+                        ls_receipt-quantityinbaseunit = ls_materialdocumentitem-quantityinbaseunit.
+                        COLLECT ls_receipt INTO lt_receipt_tmp.
+                        CLEAR ls_receipt.
+                      ENDIF.
                     ENDIF.
                   ENDIF.
                 ENDIF.
@@ -1273,7 +1365,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         CLEAR lr_fiscalyearperiod.
 
         LOOP AT lt_ztfi_1004_tmp INTO ls_ztfi_1004_tmp.
-          lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && ls_ztfi_1004_tmp-calendarmonth.
+          lv_fiscalperiod_tmp = ls_ztfi_1004_tmp-calendarmonth.
+          lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && lv_fiscalperiod_tmp.
           lr_fiscalyearperiod = VALUE #( BASE lr_fiscalyearperiod sign = lc_sign_i option = lc_option_eq ( low = lv_fiscalyearperiod ) ).
         ENDLOOP.
 
@@ -1295,12 +1388,13 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
 
           "期初数据转化为入库记录
           LOOP AT lt_ztfi_1004_tmp INTO ls_ztfi_1004_tmp.
-            lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && ls_ztfi_1004_tmp-calendarmonth.
+            lv_fiscalperiod_tmp = ls_ztfi_1004_tmp-calendarmonth.
+            lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && lv_fiscalperiod_tmp.
 
             READ TABLE lt_fiscalyearperiodforvariant INTO ls_fiscalyearperiodforvariant WITH KEY fiscalyearperiod = lv_fiscalyearperiod
                                                                                         BINARY SEARCH.
             IF sy-subrc = 0.
-              lv_age = ls_ztfi_1004_tmp-age.
+              lv_age = ls_ztfi_1004_tmp-age - 1.
 
               "获取当前日期指定月数前的日期
               zzcl_common_utils=>calc_date_subtract(
@@ -1444,7 +1538,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         CLEAR lr_fiscalyearperiod.
 
         LOOP AT lt_ztfi_1004_tmp INTO ls_ztfi_1004_tmp.
-          lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && ls_ztfi_1004_tmp-calendarmonth.
+          lv_fiscalperiod_tmp = ls_ztfi_1004_tmp-calendarmonth.
+          lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && lv_fiscalperiod_tmp.
           lr_fiscalyearperiod = VALUE #( BASE lr_fiscalyearperiod sign = lc_sign_i option = lc_option_eq ( low = lv_fiscalyearperiod ) ).
         ENDLOOP.
 
@@ -1471,7 +1566,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
             READ TABLE lt_fiscalyearperiodforvariant INTO ls_fiscalyearperiodforvariant WITH KEY fiscalyearperiod = lv_fiscalyearperiod
                                                                                         BINARY SEARCH.
             IF sy-subrc = 0.
-              lv_age = ls_ztfi_1004_tmp-age.
+              lv_age = ls_ztfi_1004_tmp-age - 1.
 
               "获取当前日期指定月数前的日期
               zzcl_common_utils=>calc_date_subtract(

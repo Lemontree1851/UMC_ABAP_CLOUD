@@ -434,7 +434,7 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
               "=====================================change by wz
 
               "ADD BY STANLEY 20250120
-              DATA:LV_ACTION TYPE CHAR1.
+              DATA:LV_ACTION(1) TYPE C.
               IF ls_req-delflag = 'A'.
                 LV_ACTION = '2'.
               ELSE.

@@ -10,7 +10,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_QUERYWC_001 IMPLEMENTATION.
+CLASS zcl_http_querywc_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -58,6 +58,8 @@ CLASS ZCL_HTTP_QUERYWC_001 IMPLEMENTATION.
       lc_msgty      TYPE string        VALUE 'E',
       lc_month_3    TYPE i             VALUE '3'.
 
+    GET TIME STAMP FIELD DATA(lv_timestamp_start).
+
     "Obtain request data
     DATA(lv_req_body) = request->get_text( ).
 
@@ -88,9 +90,9 @@ CLASS ZCL_HTTP_QUERYWC_001 IMPLEMENTATION.
 
         "Obtain language and time zone of plant
         SELECT SINGLE
-               zvalue2 as language,
-               zvalue3 as zonlo_in,
-               zvalue4 as zonlo_out
+               zvalue2 AS language,
+               zvalue3 AS zonlo_in,
+               zvalue4 AS zonlo_out
           FROM ztbc_1001
          WHERE zid = @lc_zid_zpp005
            AND zvalue1 = @lv_plant
@@ -203,5 +205,34 @@ CLASS ZCL_HTTP_QUERYWC_001 IMPLEMENTATION.
       "Only save data of 3 months recently
       DELETE FROM ztpp_1001 WHERE sentdate < @lv_date.
     ENDIF.
+
+*&--ADD BEGIN BY XINLEI XU 2025/02/08
+    GET TIME STAMP FIELD DATA(lv_timestamp_end).
+    TRY.
+        DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
+        DATA(lv_request_url) = |https://{ lv_system_url }/sap/bc/http/sap/z_http_querywc_001|.
+        ##NO_HANDLER
+      CATCH cx_abap_context_info_error.
+        "handle exception
+    ENDTRY.
+
+    DATA(lv_request_body) = xco_cp_json=>data->from_abap( ls_req )->apply( VALUE #(
+    ( xco_cp_json=>transformation->underscore_to_pascal_case )
+    ) )->to_string( ).
+
+    DATA(lv_count) = lines( ls_res-_data-_work_center ).
+
+    zzcl_common_utils=>add_interface_log( EXPORTING iv_interface_id   = |IF025|
+                                                    iv_interface_desc = |作業区マスタ連携|
+                                                    iv_request_method = CONV #( if_web_http_client=>get )
+                                                    iv_request_url    = lv_request_url
+                                                    iv_request_body   = lv_request_body
+                                                    iv_status_code    = CONV #( response->get_status( )-code )
+                                                    iv_response       = response->get_text( )
+                                                    iv_record_count   = lv_count
+                                                    iv_run_start_time = CONV #( lv_timestamp_start )
+                                                    iv_run_end_time   = CONV #( lv_timestamp_end )
+                                          IMPORTING ev_log_uuid       = DATA(lv_log_uuid) ).
+*&--ADD END BY XINLEI XU 2025/02/08
   ENDMETHOD.
 ENDCLASS.

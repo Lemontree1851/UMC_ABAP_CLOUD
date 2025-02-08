@@ -1,14 +1,13 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'Inventory Aging Upload'
-
 define root view entity ZR_STOCKAGEUPLOAD
-  as select from ztfi_1004 as StockAge
-    inner join   ZR_TBC1006           as _AssignPlant on _AssignPlant.Plant = StockAge.plant
-    inner join   ZC_BusinessUserEmail as _User        on  _User.Email  = _AssignPlant.Mail
-                                                      and _User.UserID = $session.user
+  as select from ztfi_1004            as StockAge
+    left outer join   ZR_TBC1006           as _AssignPlant   on _AssignPlant.Plant = StockAge.plant 
+    left outer join   ZC_BusinessUserEmail as _User          on  _User.Email  = _AssignPlant.Mail
+                                                        and _User.UserID = $session.user
     inner join   ZR_TBC1012           as _AssignCompany on _AssignCompany.CompanyCode = StockAge.companycode
     inner join   ZC_BusinessUserEmail as _UserCompany   on  _UserCompany.Email  = _AssignCompany.Mail
-                                                       and _UserCompany.UserID = $session.user                                                      
+                                                        and _UserCompany.UserID = $session.user
   association [0..1] to I_BusinessUserVH as _CreateUser  on  $projection.CreatedBy = _CreateUser.UserID
   association [0..1] to I_BusinessUserVH as _UpdateUser  on  $projection.LastChangedBy = _UpdateUser.UserID
   association [0..1] to I_Product        as _Product     on  $projection.Material = _Product.Product
@@ -46,4 +45,4 @@ define root view entity ZR_STOCKAGEUPLOAD
       _Plant,
       _CreateUser,
       _UpdateUser
-}
+}where _User.UserID is not initial or StockAge.inventorytype = 'B'
