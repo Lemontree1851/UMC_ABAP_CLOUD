@@ -704,6 +704,54 @@ CLASS lhc_purchasereq IMPLEMENTATION.
     SORT records_key BY ordertype supplier companycode purchaseorg purchasegrp currency.
     DELETE ADJACENT DUPLICATES FROM records_key COMPARING ordertype supplier companycode purchaseorg purchasegrp currency.
 
+*&--ADD BEGIN BY XINLEI XU 2025/02/13
+    IF records IS NOT INITIAL.
+      DATA(lt_records_temp) = records.
+      LOOP AT lt_records_temp ASSIGNING FIELD-SYMBOL(<lfs_records_temp>).
+        <lfs_records_temp>-matid = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = <lfs_records_temp>-matid ).
+        <lfs_records_temp>-supplier = |{ <lfs_records_temp>-supplier ALPHA = IN }|.
+      ENDLOOP.
+      SELECT i_product~product,
+             i_product~productgroup,
+             i_producttext~productname
+        FROM i_product WITH PRIVILEGED ACCESS
+        LEFT OUTER JOIN i_producttext WITH PRIVILEGED ACCESS ON i_producttext~product  = i_product~product
+                                                            AND i_producttext~language = @sy-langu
+         FOR ALL ENTRIES IN @lt_records_temp
+       WHERE i_product~product = @lt_records_temp-matid
+        INTO TABLE @DATA(lt_product).
+      SORT lt_product BY product.
+
+      SELECT product,
+             plant,
+             dfltstoragelocationextprocmt AS storagelocation " 外部調達の保管場所
+        FROM i_productsupplyplanning WITH PRIVILEGED ACCESS
+         FOR ALL ENTRIES IN @lt_records_temp
+       WHERE product = @lt_records_temp-matid
+         AND plant = @lt_records_temp-plant
+        INTO TABLE @DATA(lt_product_location).
+      SORT lt_product_location BY product plant.
+
+      SELECT a~purchasinginforecord,
+             a~material,
+             a~supplier,
+             b~plant,
+             b~purchasingorganization,
+             b~taxcode
+        FROM i_purchasinginforecordapi01 WITH PRIVILEGED ACCESS AS a
+        LEFT OUTER JOIN i_purginforecdorgplntdataapi01 WITH PRIVILEGED ACCESS AS b
+                     ON b~purchasinginforecord = a~purchasinginforecord
+         FOR ALL ENTRIES IN @lt_records_temp
+       WHERE a~material = @lt_records_temp-matid
+         AND a~supplier = @lt_records_temp-supplier
+         AND a~isdeleted IS INITIAL
+         AND b~plant = @lt_records_temp-plant
+         AND b~purchasingorganization = @lt_records_temp-purchaseorg
+         AND b~ismarkedfordeletion IS INITIAL
+        INTO TABLE @DATA(lt_purinfo_record).
+      SORT lt_purinfo_record BY material supplier plant purchasingorganization.
+    ENDIF.
+*&--ADD BEGIN BY XINLEI XU 2025/02/13
 
     DATA is_returns_item(5) TYPE c.
     DATA is_free_of_charge(5) TYPE c.
@@ -736,6 +784,37 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         ELSE.
           is_free_of_charge = 'false'.
         ENDIF.
+
+*&--ADD BEGIN BY XINLEI XU 2025/02/13
+        DATA(lv_matid) = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = record_temp-matid ).
+        DATA(lv_supplier) = |{ record_temp-supplier ALPHA = IN }|.
+
+        IF record_temp-matdesc IS INITIAL
+        OR record_temp-materialgroup IS INITIAL.
+          READ TABLE lt_product INTO DATA(ls_product) WITH KEY product = lv_matid BINARY SEARCH.
+          IF sy-subrc = 0.
+            record_temp-matdesc = COND #( WHEN record_temp-matdesc IS NOT INITIAL THEN record_temp-matdesc ELSE ls_product-productname ).
+            record_temp-materialgroup = COND #( WHEN record_temp-materialgroup IS NOT INITIAL THEN record_temp-materialgroup ELSE ls_product-productgroup ).
+          ENDIF.
+        ENDIF.
+        IF record_temp-location IS INITIAL.
+          READ TABLE lt_product_location INTO DATA(ls_product_location) WITH KEY product = lv_matid
+                                                                                 plant   = record_temp-plant BINARY SEARCH.
+          IF sy-subrc = 0.
+            record_temp-location = ls_product_location-storagelocation.
+          ENDIF.
+        ENDIF.
+        IF record_temp-tax IS INITIAL.
+          READ TABLE lt_purinfo_record INTO DATA(ls_purinfo_record) WITH KEY material = lv_matid
+                                                                             supplier = lv_supplier
+                                                                             plant    = record_temp-plant
+                                                                             purchasingorganization = record_temp-purchaseorg BINARY SEARCH.
+          IF sy-subrc = 0.
+            record_temp-tax = ls_purinfo_record-taxcode.
+          ENDIF.
+        ENDIF.
+*&--ADD BEGIN BY XINLEI XU 2025/02/13
+
         "行项目数据
         APPEND VALUE #( purchase_order_item           = lv_order_item
                         material                      = record_temp-matid

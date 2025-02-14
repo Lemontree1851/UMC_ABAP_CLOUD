@@ -45,4 +45,4 @@ define root view entity ZR_STOCKAGEUPLOAD
       _Plant,
       _CreateUser,
       _UpdateUser
-}where _User.UserID is not initial or StockAge.inventorytype = 'B'
+}where ( _User.UserID is not initial ) or ( _User.UserID is null and StockAge.inventorytype = 'B' )

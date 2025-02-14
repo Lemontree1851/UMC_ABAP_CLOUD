@@ -266,7 +266,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
      WHERE fiscalyearvariant = 'V3'
        AND fiscalyearperiod = @lv_fiscalyearperiod
-      INTO @DATA(ls_v3).
+      INTO @DATA(ls_v3).                      "#EC CI_ALL_FIELDS_NEEDED
     lv_budat = cv_gjahr && '01' && '01'.
 
 * Delete DB
@@ -441,7 +441,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
      WHERE zid = 'ZFI005'
        AND zvalue1 = @cv_bukrs
        AND zvalue2 = @cv_gjahr
-      INTO @DATA(ls_1001).
+      INTO @DATA(ls_1001).                    "#EC CI_ALL_FIELDS_NEEDED
 
     lv_previousperiod = ls_1001-zvalue3 - 1.
     IF lv_previousperiod <> 0.
@@ -1575,7 +1575,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       ENDIF.
 
       "会社レベルの総売上高begin
-      READ TABLE lt_ztfi_1009 INTO ls_1009 INDEX 1.        "#EC CI_SORTED
+      READ TABLE lt_ztfi_1009 INTO ls_1009 INDEX 1.      "#EC CI_SORTED
       ls_1010-revenue1 = ls_1009-begrev.
       "会社レベルの総売上高
       ls_1010-revenue = lv_amt_bukrs.

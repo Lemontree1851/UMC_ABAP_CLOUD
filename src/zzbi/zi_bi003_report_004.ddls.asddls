@@ -201,3 +201,50 @@ union select from ZI_BI003_REPORT_004_BILLING
                                       target_currency=>_Companycode.Currency
                              )           as RecoveryAmount //BillingTotalAmount
 }
+// ADD BEGIN BY XINLEI XU 2025/02/10
+union select from ztbi_bi003_j04 as _table
+{
+  key purchase_order             as PurchaseOrder,
+  key purchase_order_item        as PurchaseOrderItem,
+  key billing_document           as BillingDocument,
+  key billing_document_item      as BillingDocumentItem,
+      company_code               as CompanyCode,
+      fiscal_year_period         as FiscalYearPeriod,
+      fiscal_year                as FiscalYear,
+      fiscal_month               as FiscalMonth,
+      recovery_management_number as RecoveryManagementNumber,
+      company_code_name          as CompanyCodeName,
+      material                   as Material,
+      material_text              as MaterialText,
+      product_group              as ProductGroup,
+      product_group_name         as ProductGroupName,
+      order_quantity             as OrderQuantity,
+      base_unit                  as BaseUnit,
+      net_price_amount           as NetPriceAmount,
+      company_currency           as CompanyCurrency,
+      recovery_necessary_amount  as RecoveryNecessaryAmount,
+      gl_account                 as GlAccount,
+      gl_account_name            as GlAccountName,
+      fixed_asset                as FixedAsset,
+      fixed_asset_description    as FixedAssetDescription,
+      sales_order_document       as SalesOrderDocument,
+      sales_order_document_item  as SalesOrderDocumentItem,
+      customer                   as Customer,
+      customer_name              as CustomerName,
+      transaction_currency       as TransactionCurrency,
+      billing_product            as BillingProduct,
+      billing_product_text       as BillingProductText,
+      billing_document_date      as BillingDocumentDate,
+      profit_center              as ProfitCenter,
+      profit_center_name         as ProfitCenterName,
+      billing_quantity_unit      as BillingQuantityUnit,
+      billing_quantity           as BillingQuantity,
+      billing_currency           as BillingCurrency,
+      billing_price              as BillingPrice,
+      condition_type             as ConditionType,
+      condition_rate_amount      as ConditionRateAmount,
+      recovery_amount            as RecoveryAmount
+}
+where
+  job_run_by = 'UPLOAD'
+// ADD END BY XINLEI XU 2025/02/10

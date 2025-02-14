@@ -12,8 +12,7 @@ CLASS lhc_bi003upload DEFINITION INHERITING FROM cl_abap_behavior_handler.
             recoverymanagementnumber TYPE ze_recycle_no, " 回収管理番号
             companycode              TYPE bukrs,
             companyname              TYPE bktxt,
-            customer                 TYPE kunnr,
-            customername             TYPE string,
+            currency                 TYPE i_companycodecurrencyrole-currency,
           END OF lty_check_table,
           lty_check_table_t TYPE TABLE OF lty_check_table.
 
@@ -179,9 +178,10 @@ CLASS lhc_bi003upload IMPLEMENTATION.
     SELECT recovery_management_number AS recoverymanagementnumber,
            company_code AS companycode,
            company_name AS companyname,
-           customer AS customer,
-           customer_name AS customername
+           _currency~currency
       FROM ztbi_recy_info
+      LEFT JOIN i_companycodecurrencyrole AS _currency ON  _currency~companycode  = ztbi_recy_info~company_code
+                                                       AND _currency~currencyrole = '10'
        FOR ALL ENTRIES IN @is_request-jsondata
      WHERE recovery_management_number = @is_request-jsondata-recoverymanagementnumber
       APPENDING TABLE @ct_check_table.
@@ -237,8 +237,7 @@ CLASS lhc_bi003upload IMPLEMENTATION.
               ls_update_sb-company_code = ls_check_data-companycode.
               ls_update_sb-company_code_name = ls_check_data-companyname.
               ls_update_sb-recovery_management_number = <lfs_upload_sb>-recoverymanagementnumber.
-              ls_update_sb-customer = ls_check_data-customer.
-              ls_update_sb-customer_name = ls_check_data-customername.
+              ls_update_sb-company_currency = ls_check_data-currency.
             ELSE.
               lv_msg = |回収管理番号は登録されていません。|.
               lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
@@ -274,7 +273,9 @@ CLASS lhc_bi003upload IMPLEMENTATION.
           ENDIF.
 
           IF <lfs_upload_sb>-spotbuymaterialprice IS NOT INITIAL.
-            ls_update_sb-net_price_amount = <lfs_upload_sb>-spotbuymaterialprice.
+            ls_update_sb-net_price_amount = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_in
+                                                                                  iv_currency = ls_update_sb-company_currency
+                                                                                  iv_input = <lfs_upload_sb>-spotbuymaterialprice ).
           ELSE.
             lv_msg = |必須項目「スポットバイ品目単価」は入力されていません。|.
             lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
@@ -302,7 +303,9 @@ CLASS lhc_bi003upload IMPLEMENTATION.
           ENDIF.
 
           IF <lfs_upload_sb>-generalmaterialprice IS NOT INITIAL.
-            ls_update_sb-old_material_price = <lfs_upload_sb>-generalmaterialprice.
+            ls_update_sb-old_material_price = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_in
+                                                                                    iv_currency = ls_update_sb-company_currency
+                                                                                    iv_input = <lfs_upload_sb>-generalmaterialprice ).
           ELSE.
             lv_msg = |必須項目「通常品目最新発注単価」は入力されていません。|.
             lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
@@ -362,8 +365,7 @@ CLASS lhc_bi003upload IMPLEMENTATION.
               ls_update_in-company_code = ls_check_data-companycode.
               ls_update_in-company_code_name = ls_check_data-companyname.
               ls_update_in-recovery_management_number = <lfs_upload_in>-recoverymanagementnumber.
-              ls_update_in-customer = ls_check_data-customer.
-              ls_update_in-customer_name = ls_check_data-customername.
+              ls_update_in-company_currency = ls_check_data-currency.
             ELSE.
               lv_msg = |回収管理番号は登録されていません。|.
               lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
@@ -399,7 +401,9 @@ CLASS lhc_bi003upload IMPLEMENTATION.
           ENDIF.
 
           IF <lfs_upload_in>-recoverynecessaryamount IS NOT INITIAL.
-            ls_update_in-recovery_necessary_amount = <lfs_upload_in>-recoverynecessaryamount.
+            ls_update_in-recovery_necessary_amount = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_in
+                                                                                           iv_currency = ls_update_in-company_currency
+                                                                                           iv_input = <lfs_upload_in>-recoverynecessaryamount ).
           ELSE.
             lv_msg = |必須項目「回収必要金額」は入力されていません。|.
             lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
@@ -417,7 +421,9 @@ CLASS lhc_bi003upload IMPLEMENTATION.
             ls_update_in-fixed_asset = |{ <lfs_upload_in>-fixedasset ALPHA = IN }|.
             ls_update_in-fixed_asset_description = <lfs_upload_in>-fixedassettext.
             ls_update_in-order_quantity = <lfs_upload_in>-poquantity.
-            ls_update_in-net_price_amount = <lfs_upload_in>-netamount.
+            ls_update_in-net_price_amount = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_in
+                                                                                  iv_currency = ls_update_in-company_currency
+                                                                                  iv_input = <lfs_upload_in>-netamount ).
             ls_update_in-job_run_by = 'UPLOAD'.
             ls_update_in-job_run_date = cl_abap_context_info=>get_system_date( ).
             ls_update_in-job_run_time = cl_abap_context_info=>get_system_time( ).
@@ -464,8 +470,7 @@ CLASS lhc_bi003upload IMPLEMENTATION.
               ls_update_st-company_code = ls_check_data-companycode.
               ls_update_st-company_code_name = ls_check_data-companyname.
               ls_update_st-recovery_management_number = <lfs_upload_st>-recoverymanagementnumber.
-              ls_update_st-customer = ls_check_data-customer.
-              ls_update_st-customer_name = ls_check_data-customername.
+              ls_update_st-company_currency = ls_check_data-currency.
             ELSE.
               lv_msg = |回収管理番号は登録されていません。|.
               lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
@@ -487,7 +492,9 @@ CLASS lhc_bi003upload IMPLEMENTATION.
           ENDIF.
 
           IF <lfs_upload_st>-recoverynecessaryamount IS NOT INITIAL.
-            ls_update_st-recovery_necessary_amount = <lfs_upload_st>-recoverynecessaryamount.
+            ls_update_st-recovery_necessary_amount = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_in
+                                                                                           iv_currency = ls_update_st-company_currency
+                                                                                           iv_input = <lfs_upload_st>-recoverynecessaryamount ).
           ELSE.
             lv_msg = |必須項目「回収必要金額」は入力されていません。|.
             lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
@@ -500,7 +507,9 @@ CLASS lhc_bi003upload IMPLEMENTATION.
             ls_update_st-material = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = <lfs_upload_st>-transportexpensematerial ).
             ls_update_st-material_text = <lfs_upload_st>-transportexpensematerialtext.
             ls_update_st-order_quantity = <lfs_upload_st>-poquantity.
-            ls_update_st-net_price_amount = <lfs_upload_st>-netamount.
+            ls_update_st-net_price_amount = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_in
+                                                                                  iv_currency = ls_update_st-company_currency
+                                                                                  iv_input = <lfs_upload_st>-netamount ).
             ls_update_st-job_run_by = 'UPLOAD'.
             ls_update_st-job_run_date = cl_abap_context_info=>get_system_date( ).
             ls_update_st-job_run_time = cl_abap_context_info=>get_system_time( ).
@@ -547,8 +556,7 @@ CLASS lhc_bi003upload IMPLEMENTATION.
               ls_update_ss-company_code = ls_check_data-companycode.
               ls_update_ss-company_code_name = ls_check_data-companyname.
               ls_update_ss-recovery_management_number = <lfs_upload_ss>-recoverymanagementnumber.
-              ls_update_ss-customer = ls_check_data-customer.
-              ls_update_ss-customer_name = ls_check_data-customername.
+              ls_update_ss-company_currency = ls_check_data-currency.
             ELSE.
               lv_msg = |回収管理番号は登録されていません。|.
               lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
@@ -570,7 +578,9 @@ CLASS lhc_bi003upload IMPLEMENTATION.
           ENDIF.
 
           IF <lfs_upload_ss>-recoverynecessaryamount IS NOT INITIAL.
-            ls_update_ss-recovery_necessary_amount = <lfs_upload_ss>-recoverynecessaryamount.
+            ls_update_ss-recovery_necessary_amount = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_in
+                                                                                           iv_currency = ls_update_ss-company_currency
+                                                                                           iv_input = <lfs_upload_ss>-recoverynecessaryamount ).
           ELSE.
             lv_msg = |必須項目「回収必要金額」は入力されていません。|.
             lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).

@@ -1,0 +1,68 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: {
+    typeName: 'Data Import Configuration',
+    typeNamePlural: 'Configurations',
+    title: { type: #STANDARD , value: 'Object'},
+    description: { type: #STANDARD, value: 'ObjectName' }
+  },
+  presentationVariant: [{
+    sortOrder: [ { by: 'Object', direction: #ASC } ],
+    visualizations: [ { type: #AS_LINEITEM } ]
+  }]
+}
+annotate view ZZC_DTIMP_CONF_VH with
+{
+  @UI.lineItem: [ { position: 10 , importance: #MEDIUM } ]
+  @Consumption.filter.hidden: true
+  @EndUserText.label: 'Configuration UUID'
+  UuidConf;
+
+  @UI.lineItem: [ { position: 20 , importance: #MEDIUM, cssDefault.width: '15rem' } ]
+  @EndUserText.label: 'Import Object'
+  Object;
+
+  @UI.lineItem: [ { position: 30 , importance: #MEDIUM, cssDefault.width: '18rem' } ]
+  @EndUserText.label: 'Import Object Name'
+  ObjectName;
+
+  @UI.lineItem: [ { position: 40 , importance: #MEDIUM, cssDefault.width: '14rem' } ]
+  CreatedBy;
+
+  @UI.lineItem: [ { position: 50 , importance: #MEDIUM } ]
+  CreatedAt;
+
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  FunctionName;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  StructureName;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  TemplateMimeType;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  TemplateName;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  TemplateContent;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  SheetName;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  StartRow;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  StartColumn;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  LastChangedBy;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  LastChangedAt;
+  @UI.hidden: true
+  @Consumption.filter.hidden: true
+  LocalLastChangedAt;
+}

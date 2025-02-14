@@ -3,7 +3,7 @@
 @EndUserText.label: 'Projection View for ZZR_DTIMP_CONF'
 define root view entity ZZC_DTIMP_CONF_VH
   provider contract transactional_query
-  as projection on ZZR_DTIMP_CONF
+  as projection on ZZR_DTIMP_CONF_VH
 {
   key UuidConf,
       Object,

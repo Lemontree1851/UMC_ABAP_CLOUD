@@ -121,7 +121,7 @@ define root view entity ZI_BI003_REPORT_003
       cast('0.00' as dmbtr)               as RecoveryAmount, //BillingTotalAmount,
 
       @EndUserText: { label:  'Percentage Of AP', quickInfo: 'Percentage Of AP' }
-      cast('0.00' as abap.dec(17, 4))     as PercentageOfAp,
+      cast('0.00' as abap.dec(18, 5))     as PercentageOfAp,
 
       @Semantics.amount.currencyCode: 'BillingCurrency'
       @EndUserText: { label:  'Accounting Posting Amount', quickInfo: 'Accounting Posting Amount' }
@@ -310,7 +310,60 @@ union select from ZI_BI003_REPORT_003_ACCOUTING( p_recover_type: 'IN' )
 
       cast('0.00' as dmbtr)               as RecoveryAmount,                                              //BillingTotalAmount,
 
-      cast('0.00' as abap.dec(17, 4))     as PercentageOfAp,
+      cast('0.00' as abap.dec(17, 5))     as PercentageOfAp,
 
       cast('0.00' as dmbtr)               as AccountingPostingAmount
 }
+// ADD BEGIN BY XINLEI XU 2025/02/10
+union select from ztbi_bi003_j03 as _table
+{
+  key purchase_order             as PurchaseOrder,
+  key purchase_order_item        as PurchaseOrderItem,
+  key source_ledger              as SourceLedger,
+  key company_code               as CompanyCode,
+  key fiscal_year                as FiscalYear,
+  key accounting_document        as AccountingDocument,
+  key ledger_gl_line_item        as LedgerGLLineItem,
+  key ledger                     as Ledger,
+  key billing_document           as BillingDocument,
+  key billing_document_item      as BillingDocumentItem,
+      fiscal_year_period         as FiscalYearPeriod,
+      fiscal_month               as FiscalMonth,
+      recovery_management_number as RecoveryManagementNumber,
+      company_code_name          as CompanyCodeName,
+      material                   as Material,
+      material_text              as MaterialText,
+      product_group              as ProductGroup,
+      product_group_name         as ProductGroupName,
+      order_quantity             as OrderQuantity,
+      base_unit                  as BaseUnit,
+      net_price_amount           as NetPriceAmount,
+      company_currency           as CompanyCurrency,
+      recovery_necessary_amount  as RecoveryNecessaryAmount,
+      gl_account                 as GLAccount,
+      gl_account_name            as GLAccountName,
+      fixed_asset                as FixedAsset,
+      fixed_asset_description    as FixedAssetDescription,
+      sales_order_document       as SalesOrderDocument,
+      sales_order_document_item  as SalesOrderDocumentItem,
+      customer                   as Customer,
+      customer_name              as CustomerName,
+      transaction_currency       as TransactionCurrency,
+      billing_product            as BillingProduct,
+      billing_product_text       as BillingProductText,
+      billing_document_date      as BillingDocumentDate,
+      profit_center              as ProfitCenter,
+      profit_center_name         as ProfitCenterName,
+      billing_quantity_unit      as BillingQuantityUnit,
+      billing_quantity           as BillingQuantity,
+      billing_currency           as BillingCurrency,
+      billing_price              as BillingPrice,
+      condition_type             as ConditionType,
+      condition_rate_amount      as ConditionRateAmount,
+      recovery_amount            as RecoveryAmount,
+      percentage_of_ap           as PercentageOfAp,
+      accounting_posting_amount  as AccountingPostingAmount
+}
+where
+  job_run_by = 'UPLOAD'
+// ADD END BY XINLEI XU 2025/02/10

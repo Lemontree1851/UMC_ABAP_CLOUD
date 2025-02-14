@@ -102,7 +102,9 @@ CLASS zcl_http_podata_001 DEFINITION
 
 ENDCLASS.
 
-CLASS zcl_http_podata_001 IMPLEMENTATION.
+
+
+CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -491,20 +493,24 @@ CLASS zcl_http_podata_001 IMPLEMENTATION.
                                    |</ScheduleLine>|.
 
 
-              " ADD BY STANLEY 20250108
-              if ls_unit-NetAmount = 0.
-                  lv_current_request = lv_current_request &&
-                                       |<NetPrice>| &&
-                                       |<Amount currencyCode="{ ls_unit-DocumentCurrency }"> { ls_unit-NetAmount }</Amount>| &&
-                                       |<BaseQuantity unitCode="{ lv_converted_unit }">{ ls_req-quantity }</BaseQuantity>| &&
-                                       |</NetPrice>|.
-              endif.
-              " END ADD
 
             ENDLOOP.
 
             "如果是最后一条
             IF lv_index = lv_length.
+
+              " ADD BY STANLEY 20250108
+              READ TABLE  lt_deletecode INTO DATA(ls_quantity) WITH KEY purchaseorder     = ls_req-pono
+                                                                        purchaseorderitem = ls_req-dno .
+              if ls_unit-NetAmount = 0.
+                  lv_current_request = lv_current_request &&
+                                       |<NetPrice>| &&
+                                       |<Amount currencyCode="{ ls_unit-DocumentCurrency }"> { ls_unit-NetAmount }</Amount>| &&
+                                       |<BaseQuantity unitCode="{ lv_converted_unit }">{ ls_quantity-OrderQuantity }</BaseQuantity>| &&
+                                       |</NetPrice>|.
+              endif.
+              " END ADD
+
               lv_current_request = lv_current_request &&
                                     '</Item>' &&
                                     '</OrderConfirmation>' &&

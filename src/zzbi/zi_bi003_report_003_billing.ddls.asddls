@@ -12,7 +12,10 @@ define view entity ZI_BI003_REPORT_003_BILLING
     left outer join I_FiscCalendarDateForCompCode                                                    as FiscalCalendarDate on  FiscalCalendarDate.CalendarDate = billing.BillingDocumentDate
                                                                                                                            and FiscalCalendarDate.CompanyCode  = billing.CompanyCode
     left outer join ZI_BI003_REPORT_REC_NEC_AMT_S                                                    as TOTALAMT           on  billing.RecoveryManagementNumber    =  TOTALAMT.RecoveryManagementNumber
-                                                                                                                           and FiscalCalendarDate.FiscalYearPeriod <= TOTALAMT.FiscalYearPeriod
+                                                                                                                           // MOD BEGIN BY XINLEI XU 2025/02/11
+                                                                                                                           // and FiscalCalendarDate.FiscalYearPeriod <= TOTALAMT.FiscalYearPeriod
+                                                                                                                           and FiscalCalendarDate.FiscalYearPeriod = TOTALAMT.FiscalYearPeriod
+                                                                                                                           // MOD  BY XINLEI XU 2025/02/11
     left outer join ZI_BI003_REPORT_REC_NEC_AMT_GS( p_product_group:'400' )                          as GRPTOTAL           on  billing.RecoveryManagementNumber    = GRPTOTAL.RecoveryManagementNumber
                                                                                                                            and FiscalCalendarDate.FiscalYearPeriod = GRPTOTAL.FiscalYearPeriod
 {
@@ -51,10 +54,16 @@ define view entity ZI_BI003_REPORT_003_BILLING
       billing._ProductText,
       billing._ProfitCetnerText,
 
+// MOD BEGIN BY XINLEI XU 2025/02/11
+//      case when TOTALAMT.TotalAmount <> 0
+//      then round( cast( ( cast( GRPTOTAL.TotalGroupAmount as abap.dec(16, 2) ) /
+//                   cast( TOTALAMT.TotalAmount as abap.dec(16, 2) )
+//               ) as abap.dec( 16, 4 ) ), 4)
+//      else 0 end as PercentageOfAp
       case when TOTALAMT.TotalAmount <> 0
       then round( cast( ( cast( GRPTOTAL.TotalGroupAmount as abap.dec(16, 2) ) /
                    cast( TOTALAMT.TotalAmount as abap.dec(16, 2) )
-               ) as abap.dec( 16, 4 ) ), 4)
+               ) as abap.dec( 17, 5 ) ), 4)
       else 0 end as PercentageOfAp
-
+// MOD BEGIN BY XINLEI XU 2025/02/11
 }

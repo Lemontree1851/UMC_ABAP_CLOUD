@@ -11,9 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_QUERY_COMPONENTUSAGELIST IMPLEMENTATION.
-
-
+CLASS zcl_query_componentusagelist IMPLEMENTATION.
   METHOD if_rap_query_provider~select.
     TYPES:
       BEGIN OF ty_finalproductinfo,
@@ -50,7 +48,7 @@ CLASS ZCL_QUERY_COMPONENTUSAGELIST IMPLEMENTATION.
       lv_nodisplaynonproduct       TYPE abap_boolean.
 
     CONSTANTS:
-      lc_sign_i           TYPE string VALUE 'I',
+      lc_sign_e           TYPE string VALUE 'E',
       lc_option_eq        TYPE string VALUE 'EQ',
       lc_producttype_zfrt TYPE string VALUE 'ZFRT',
       lc_profilecode_z5   TYPE string VALUE 'Z5',
@@ -98,7 +96,7 @@ CLASS ZCL_QUERY_COMPONENTUSAGELIST IMPLEMENTATION.
     ENDLOOP.
 
     IF lv_nodisplaynonproduct = abap_true.
-      lr_profilecode = VALUE #( sign = lc_sign_i option = lc_option_eq ( low = lc_profilecode_z5 ) ).
+      lr_profilecode = VALUE #( sign = lc_sign_e option = lc_option_eq ( low = lc_profilecode_z5 ) ).
     ENDIF.
 
     "Obtain data of bill of material component

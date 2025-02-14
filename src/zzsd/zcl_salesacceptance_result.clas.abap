@@ -7,6 +7,11 @@ CLASS zcl_salesacceptance_result DEFINITION
     INTERFACES if_rap_query_provider.
   PROTECTED SECTION.
   PRIVATE SECTION.
+    TYPES:
+      lv_output TYPE c LENGTH 20.
+    METHODS convert_amount CHANGING cv_currency TYPE i_currency-currency
+                                    cv_input    TYPE any
+                                    cv_output   TYPE lv_output.
 ENDCLASS.
 
 
@@ -20,16 +25,18 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       lrs_vkorg LIKE LINE OF lr_vkorg.
 
     DATA:
-      lv_year             TYPE c LENGTH 4,
-      lv_month            TYPE monat,
-      lv_nextmonth        TYPE budat,
-      lv_from             TYPE budat,
-      lv_to               TYPE budat,
-      lv_netpr(8)         TYPE p DECIMALS 2,
-      lv_accceptamount    TYPE wrbtr,
-      lv_netamount        TYPE wrbtr,
-      lv_acccepttaxamount TYPE wrbtr,
-      lv_taxamount        TYPE wrbtr.
+      lv_year                 TYPE c LENGTH 4,
+      lv_month                TYPE monat,
+      lv_nextmonth            TYPE budat,
+      lv_from                 TYPE budat,
+      lv_to                   TYPE budat,
+      lv_netpr(12)            TYPE p DECIMALS 5,
+      lv_actamt(12)           TYPE p DECIMALS 5,
+      lv_acttax(12)           TYPE p DECIMALS 5,
+      lv_accceptamount(12)    TYPE p DECIMALS 5,
+      lv_netamount            TYPE wrbtr,
+      lv_acccepttaxamount(12) TYPE p DECIMALS 5,
+      lv_taxamount            TYPE wrbtr.
 
 * Get filter range
     TRY.
@@ -43,6 +50,10 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
               DATA(lr_periodtype) = ls_filter_cond-range.
               READ TABLE lr_periodtype INTO DATA(lrs_periodtype) INDEX 1.
               DATA(lv_periodtype) = lrs_periodtype-low.
+            WHEN 'ACCEPTYEAR'.
+              DATA(lr_acceptyear) = ls_filter_cond-range.
+              READ TABLE lr_acceptyear INTO DATA(lrs_acceptyear) INDEX 1.
+              DATA(lv_acceptyear) = lrs_acceptyear-low.
             WHEN 'ACCEPTPERIOD'.
               DATA(lr_acceptperiod) = ls_filter_cond-range.
               READ TABLE lr_acceptperiod INTO DATA(lrs_acceptperiod) INDEX 1.
@@ -72,9 +83,9 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         OR zid = 'ZSD010'
       INTO TABLE @DATA(lt_1001).
 
+    lv_year = lv_acceptyear.
     CASE lv_periodtype.
       WHEN 'A'.  "1日~月末
-        lv_year = xco_cp=>sy->date( )->year.
         lv_from = lv_year && lv_acceptperiod && '01'.
         IF lv_acceptperiod = 12.
           lv_year = lv_year + 1.
@@ -85,7 +96,6 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ENDIF.
         lv_to = lv_nextmonth - 1.
       WHEN 'B'.  "16日~次月15日
-        lv_year = xco_cp=>sy->date( )->year.
         lv_from = lv_year && lv_acceptperiod && '16'.
         IF lv_acceptperiod = 12.
           lv_year = lv_year + 1.
@@ -95,7 +105,6 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ENDIF.
         lv_to = lv_year && lv_month && '15'.
       WHEN 'C'.  "21日~次月20日
-        lv_year = xco_cp=>sy->date( )->year.
         lv_from = lv_year && lv_acceptperiod && '21'.
         IF lv_acceptperiod = 12.
           lv_year = lv_year + 1.
@@ -106,7 +115,6 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         lv_to = lv_year && lv_month && '20'.
 
       WHEN 'D'.  "26日~次月25日
-        lv_year = xco_cp=>sy->date( )->year.
         lv_from = lv_year && lv_acceptperiod && '26'.
         IF lv_acceptperiod = 12.
           lv_year = lv_year + 1.
@@ -126,6 +134,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
             FROM ztsd_1003 WITH PRIVILEGED ACCESS
            WHERE customer IN @lr_kunnr
              AND periodtype = @lv_periodtype
+             AND acceptyear = @lv_acceptyear
              AND acceptperiod = @lv_acceptperiod
              AND ( finishstatus = '0'
                 OR finishstatus = @space )
@@ -136,8 +145,9 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
             FOR ALL ENTRIES IN @lt_1003
            WHERE salesorganization = @lt_1003-salesorganization
              AND customer = @lt_1003-customer
-             AND periodtype = @lt_1003-periodtype
-             AND acceptperiod = @lt_1003-acceptperiod
+             AND periodtype = @lv_periodtype
+             AND acceptyear = @lv_acceptyear
+             AND acceptperiod = @lv_acceptperiod
              AND customerpo = @lt_1003-customerpo
             INTO TABLE @DATA(lt_1012).
           ENDIF.
@@ -146,6 +156,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
             FROM ztsd_1003 WITH PRIVILEGED ACCESS
            WHERE customer IN @lr_kunnr
              AND periodtype = @lv_periodtype
+             AND acceptyear = @lv_acceptyear
              AND acceptperiodto < @lv_from
              AND ( finishstatus = '0'
                 OR finishstatus = @space )
@@ -156,8 +167,9 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
             FOR ALL ENTRIES IN @lt_1003_t
            WHERE salesorganization = @lt_1003_t-salesorganization
              AND customer = @lt_1003_t-customer
-             AND periodtype = @lt_1003_t-periodtype
-             AND acceptperiod = @lt_1003_t-acceptperiod
+             AND periodtype = @lv_periodtype
+             AND acceptyear = @lv_acceptyear
+             AND acceptperiod = @lv_acceptperiod
              AND customerpo = @lt_1003_t-customerpo
              AND processstatus = '4'
             INTO TABLE @DATA(lt_1012_t).
@@ -169,6 +181,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
                  WITH KEY salesorganization = ls_1003_t-salesorganization
                           customer = ls_1003_t-customer
                           periodtype = ls_1003_t-periodtype
+                          acceptyear = ls_1003_t-acceptyear
                           acceptperiod = ls_1003_t-acceptperiod
                           customerpo = ls_1003_t-customerpo BINARY SEARCH.
             IF sy-subrc <> 0.
@@ -190,6 +203,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
             FROM ztsd_1003 WITH PRIVILEGED ACCESS
            WHERE customer IN @lr_kunnr
              AND periodtype = @lv_periodtype
+             AND acceptyear = @lv_acceptyear
              AND acceptperiod = @lv_acceptperiod
              AND finishstatus = '1'
             INTO TABLE @lt_1003.
@@ -199,8 +213,9 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
             FOR ALL ENTRIES IN @lt_1003
            WHERE salesorganization = @lt_1003-salesorganization
              AND customer = @lt_1003-customer
-             AND periodtype = @lt_1003-periodtype
-             AND acceptperiod = @lt_1003-acceptperiod
+             AND periodtype = @lv_periodtype
+             AND acceptyear = @lv_acceptyear
+             AND acceptperiod = @lv_acceptperiod
              AND customerpo = @lt_1003-customerpo
             INTO TABLE @lt_1012.
           ENDIF.
@@ -215,6 +230,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
             FROM ztsd_1003 WITH PRIVILEGED ACCESS
            WHERE customer IN @lr_kunnr
              AND periodtype = @lv_periodtype
+             AND acceptyear = @lv_acceptyear
              AND acceptperiod = @lv_acceptperiod
              AND ( finishstatus = '0'
                 OR finishstatus = @space )
@@ -225,8 +241,9 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
                FOR ALL ENTRIES IN @lt_1003
              WHERE salesorganization = @lt_1003-salesorganization
                AND customer = @lt_1003-customer
-               AND periodtype = @lt_1003-periodtype
-               AND acceptperiod = @lt_1003-acceptperiod
+               AND periodtype = @lv_periodtype
+               AND acceptyear = @lv_acceptyear
+               AND acceptperiod = @lv_acceptperiod
                AND customerpo = @lt_1003-customerpo
               INTO TABLE @lt_1012.
           ENDIF.
@@ -235,6 +252,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
             FROM ztsd_1003 WITH PRIVILEGED ACCESS
            WHERE customer IN @lr_kunnr
              AND periodtype = @lv_periodtype
+             AND acceptyear = @lv_acceptyear
              AND acceptperiodfrom < @lv_from
              AND ( finishstatus = '0'
                 OR finishstatus = @space )
@@ -246,8 +264,9 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
               FOR ALL ENTRIES IN @lt_1003_t
              WHERE salesorganization = @lt_1003_t-salesorganization
                AND customer = @lt_1003_t-customer
-               AND periodtype = @lt_1003_t-periodtype
-               AND acceptperiod = @lt_1003_t-acceptperiod
+               AND periodtype = @lv_periodtype
+               AND acceptyear = @lv_acceptyear
+               AND acceptperiod = @lv_acceptperiod
                AND customerpo = @lt_1003_t-customerpo
                AND old_status = '4'
               INTO TABLE @lt_1012_t.
@@ -259,6 +278,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
                  WITH KEY salesorganization = ls_1003_t-salesorganization
                           customer = ls_1003_t-customer
                           periodtype = ls_1003_t-periodtype
+                          acceptyear = ls_1003_t-acceptyear
                           acceptperiod = ls_1003_t-acceptperiod
                           customerpo = ls_1003_t-customerpo BINARY SEARCH.
             IF sy-subrc <> 0.
@@ -279,6 +299,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
             FROM ztsd_1003 WITH PRIVILEGED ACCESS
            WHERE customer IN @lr_kunnr
              AND periodtype = @lv_periodtype
+             AND acceptyear = @lv_acceptyear
              AND acceptperiod = @lv_acceptperiod
              AND finishstatus = '1'
             INTO TABLE @lt_1003.
@@ -289,6 +310,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
              WHERE salesorganization = @lt_1003-salesorganization
                AND customer = @lt_1003-customer
                AND periodtype = @lt_1003-periodtype
+               AND acceptyear = @lt_1003-acceptyear
                AND acceptperiod = @lt_1003-acceptperiod
                AND customerpo = @lt_1003-customerpo
               INTO TABLE @lt_1012.
@@ -425,6 +447,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       IF sy-subrc = 0.
         ls_output-customer = ls_1003-customer.          "得意先
         ls_output-periodtype = ls_1003-periodtype.      "期間区分
+        ls_output-acceptyear = ls_1003-acceptyear.
         ls_output-acceptperiod = ls_1003-acceptperiod.  "検収期間
         ls_output-customerpo = ls_1003-customerpo.      "得意先PO番号
         ls_output-acceptperiodfrom = ls_1003-acceptperiodfrom.
@@ -432,16 +455,14 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         ls_output-acceptdate = ls_1003-acceptdate.   "検収日付
         ls_output-acceptqty = ls_1003-acceptqty.     "検収数
         "検収単価
-        ls_output-acceptprice = zzcl_common_utils=>conversion_amount(
-                                                         iv_alpha = 'OUT'
-                                                         iv_currency = ls_1003-currency
-                                                         iv_input = ls_1003-acceptprice ).
+        convert_amount( CHANGING  cv_currency = ls_1003-currency
+                                cv_input    = ls_1003-acceptprice
+                                cv_output   = ls_output-acceptprice ).
         CONDENSE ls_output-acceptprice NO-GAPS.
         "検収金額
-        ls_output-accceptamount = zzcl_common_utils=>conversion_amount(
-                                                         iv_alpha = 'OUT'
-                                                         iv_currency = ls_1003-currency
-                                                         iv_input = ls_1003-accceptamount ).
+        convert_amount( CHANGING  cv_currency = ls_1003-currency
+                                  cv_input    = ls_1003-accceptamount
+                                  cv_output   = ls_output-accceptamount ).
         CONDENSE ls_output-accceptamount NO-GAPS.
         "検収税額
         ls_output-acccepttaxamount = ls_1003-accceptamount * ls_1003-taxrate.
@@ -484,6 +505,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
           CONDENSE ls_output-conditionratevalue NO-GAPS.
           ls_output-conditioncurrency = ls_prcd-conditioncurrency.   "単価通貨
           ls_output-conditionquantity = ls_prcd-conditionquantity.   "単価数量単位
+          CONDENSE ls_output-conditionquantity NO-GAPS.
         ENDIF.
 
         READ TABLE lt_bkpf INTO DATA(ls_bkpf)
@@ -508,10 +530,12 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
             IF ls_output-conditionquantity <> 0.
               lv_netpr = ls_output-conditionratevalue / ls_output-conditionquantity.
             ENDIF.
+            lv_actamt = ls_output-netamount.
+            lv_acttax = ls_output-taxamount.
             IF ls_output-acceptqty = ls_output-billingquantity
            AND ls_output-acceptprice = lv_netpr
-           AND ls_output-accceptamount = ls_output-netamount
-           AND ls_output-acccepttaxamount = ls_output-taxamount.
+           AND ls_output-accceptamount = lv_actamt
+           AND ls_output-acccepttaxamount = lv_acttax.
               ls_output-processstatus = '0'.  "内部编码
             ELSE.
               ls_output-processstatus = '2'.
@@ -622,6 +646,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
           ls_output-finishstatus = lv_finish.
           ls_output-customer = ls_1003-customer.          "得意先
           ls_output-periodtype = ls_1003-periodtype.      "期間区分
+          ls_output-acceptyear = ls_1003-acceptyear.
           ls_output-acceptperiod = ls_1003-acceptperiod.  "検収期間
           ls_output-customerpo = ls_1003-customerpo.      "得意先PO番号
           ls_output-acceptperiodfrom = ls_1003-acceptperiodfrom.
@@ -629,16 +654,14 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
           ls_output-acceptdate = ls_1003-acceptdate.   "検収日付
           ls_output-acceptqty = ls_1003-acceptqty.     "検収数
           "検収単価
-          ls_output-acceptprice = zzcl_common_utils=>conversion_amount(
-                                                           iv_alpha = 'OUT'
-                                                           iv_currency = ls_1003-currency
-                                                           iv_input = ls_1003-acceptprice ).
+          convert_amount( CHANGING  cv_currency = ls_1003-currency
+                                  cv_input    = ls_1003-acceptprice
+                                  cv_output   = ls_output-acceptprice ).
           CONDENSE ls_output-acceptprice NO-GAPS.
           "検収金額
-          ls_output-accceptamount = zzcl_common_utils=>conversion_amount(
-                                                           iv_alpha = 'OUT'
-                                                           iv_currency = ls_1003-currency
-                                                           iv_input = ls_1003-accceptamount ).
+          convert_amount( CHANGING  cv_currency = ls_1003-currency
+                                  cv_input    = ls_1003-accceptamount
+                                  cv_output   = ls_output-accceptamount ).
           CONDENSE ls_output-accceptamount NO-GAPS.
           "検収税額
           ls_output-acccepttaxamount = ls_1003-accceptamount * ls_1003-taxrate.
@@ -695,7 +718,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       DATA:
         lv_first TYPE c VALUE 'X'.
       DATA(lt_tmp) = lt_output[].
-      CLEAR: lt_output.
+      CLEAR: lt_output, ls_output.
       LOOP AT lt_tmp INTO DATA(ls_tmp)
                         GROUP BY ( processstatus = ls_tmp-processstatus )
                         REFERENCE INTO DATA(member).
@@ -716,10 +739,10 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       ENDLOOP.
       "合计
       CLEAR: ls_output.
-      ls_output-AccceptAmount = lv_accceptamount.
-      ls_output-NetAmount = lv_netamount.
-      ls_output-AccceptTaxAmount = lv_acccepttaxamount.
-      ls_output-TaxAmount = lv_taxamount.
+      ls_output-accceptamount = lv_accceptamount.
+      ls_output-netamount = lv_netamount.
+      ls_output-acccepttaxamount = lv_acccepttaxamount.
+      ls_output-taxamount = lv_taxamount.
       APPEND ls_output TO lt_output.
     ENDIF.
 
@@ -744,4 +767,26 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
 
     io_response->set_data( lt_output ).
   ENDMETHOD.
+
+  METHOD convert_amount.
+    DATA: int_shift          TYPE i,
+          dec_amount_int(12) TYPE p DECIMALS 5,
+          struct_tcurx       TYPE i_currency,
+          lv_output(12)      TYPE p DECIMALS 5.
+
+    SELECT SINGLE * FROM i_currency WHERE currency = @cv_currency INTO @struct_tcurx. "#EC CI_ALL_FIELDS_NEEDED
+
+    IF sy-subrc = 0. "Currency has a number of decimals not equal two
+      int_shift = 2 - struct_tcurx-decimals.
+    ELSE. "Currency is no exceptional currency. It has two decimals
+      int_shift = 0.
+    ENDIF.
+
+    " Fill AMOUNT_EXTERNAL and shift decimal point depending on CURRENCY
+    dec_amount_int = cv_input.
+    lv_output = 10 ** int_shift.
+    lv_output = lv_output * dec_amount_int.
+    cv_output = lv_output.
+  ENDMETHOD.
+
 ENDCLASS.

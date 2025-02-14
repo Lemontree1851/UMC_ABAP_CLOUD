@@ -6,7 +6,8 @@ CLASS lhc_zr_salesacceptance_result DEFINITION INHERITING FROM cl_abap_behavior_
           END OF lty_request,
           lty_request_t TYPE TABLE OF lty_request.
 
-    TYPES: lt_salesaccept TYPE TABLE OF zr_salesacceptance_result.
+    TYPES: lt_salesaccept TYPE TABLE OF zr_salesacceptance_result,
+           lv_output(8)   TYPE p DECIMALS 5.
 
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
       IMPORTING keys REQUEST requested_authorizations FOR zr_salesacceptance_result RESULT result.
@@ -32,11 +33,16 @@ CLASS lhc_zr_salesacceptance_result DEFINITION INHERITING FROM cl_abap_behavior_
     METHODS save_1012 CHANGING ct_accept       TYPE lt_salesaccept
                                ct_data         TYPE lty_request_t
                                cv_periodtype   TYPE c
+                               cv_acceptyear   TYPE gjahr
                                cv_acceptperiod TYPE monat.
     METHODS save_1003 CHANGING ct_accept       TYPE lt_salesaccept
                                ct_data         TYPE lty_request_t
                                cv_periodtype   TYPE c
+                               cv_acceptyear   TYPE gjahr
                                cv_acceptperiod TYPE monat.
+    METHODS convert_amount CHANGING cv_currency TYPE i_currency-currency
+                                    cv_input    TYPE any
+                                    cv_output   TYPE lv_output.
 
 ENDCLASS.
 
@@ -65,13 +71,15 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       lt_request     TYPE TABLE OF lty_request,
       lt_salesaccept TYPE TABLE OF zr_salesacceptance_result.
     DATA:
-      lv_acceptperiod TYPE monat.
+      lv_acceptperiod TYPE monat,
+      lv_acceptyear   TYPE gjahr.
 
     CHECK keys IS NOT INITIAL.
     DATA(lv_event) = keys[ 1 ]-%param-event.
     DATA(lv_ztype) = keys[ 1 ]-%param-ztype.
     DATA(lv_periodtype) = keys[ 1 ]-%param-periodtype.
     lv_acceptperiod = keys[ 1 ]-%param-acceptperiod.
+    lv_acceptyear = keys[ 1 ]-%param-acceptyear.
 
     LOOP AT keys INTO DATA(key).
       CLEAR lt_salesaccept.
@@ -83,11 +91,13 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
           save_1012( CHANGING ct_accept       = lt_salesaccept
                               ct_data         = lt_request
                               cv_periodtype   = lv_periodtype
+                              cv_acceptyear   = lv_acceptyear
                               cv_acceptperiod = lv_acceptperiod ).
         WHEN '2'.
           save_1003( CHANGING ct_accept       = lt_salesaccept
                               ct_data         = lt_request
                               cv_periodtype   = lv_periodtype
+                              cv_acceptyear   = lv_acceptyear
                               cv_acceptperiod = lv_acceptperiod ).
       ENDCASE.
     ENDLOOP.
@@ -148,6 +158,7 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       ENDIF.
 
       ls_1012-periodtype = cv_periodtype.
+      ls_1012-acceptyear = cv_acceptyear.
       ls_1012-acceptperiod = ls_accept-acceptperiod.
       ls_1012-salesdocument = ls_accept-salesdocument.
       ls_1012-salesdocumentitem = ls_accept-salesdocumentitem.
@@ -162,28 +173,25 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       ls_1012-acceptdate = ls_accept-acceptdate.
       ls_1012-acceptqty = ls_accept-acceptdate.
       ls_1012-billingquantity = ls_accept-billingquantity.
-      ls_1012-acceptprice = zzcl_common_utils=>conversion_amount(
-                                                         iv_alpha = 'IN'
-                                                         iv_currency = ls_accept-currency
-                                                         iv_input = ls_accept-acceptprice ).
+      convert_amount( CHANGING  cv_currency = ls_accept-currency
+                                cv_input    = ls_accept-acceptprice
+                                cv_output   = ls_1012-acceptprice ).
       ls_1012-conditionratevalue = zzcl_common_utils=>conversion_amount(
                                                          iv_alpha = 'IN'
                                                          iv_currency = ls_accept-currency
                                                          iv_input = ls_accept-conditionratevalue ).
       ls_1012-conditioncurrency = ls_accept-conditioncurrency.
       ls_1012-conditionquantity = ls_accept-conditionquantity.
-      ls_1012-accceptamount = zzcl_common_utils=>conversion_amount(
-                                                         iv_alpha = 'IN'
-                                                         iv_currency = ls_accept-currency
-                                                         iv_input = ls_accept-accceptamount ).
+      convert_amount( CHANGING  cv_currency = ls_accept-currency
+                                cv_input    = ls_accept-accceptamount
+                                cv_output   = ls_1012-accceptamount ).
       ls_1012-netamount = zzcl_common_utils=>conversion_amount(
                                                          iv_alpha = 'IN'
                                                          iv_currency = ls_accept-currency
                                                          iv_input = ls_accept-netamount ).
-      ls_1012-acccepttaxamount = zzcl_common_utils=>conversion_amount(
-                                                         iv_alpha = 'IN'
-                                                         iv_currency = ls_accept-currency
-                                                         iv_input = ls_accept-acccepttaxamount ).
+      convert_amount( CHANGING  cv_currency = ls_accept-currency
+                                cv_input    = ls_accept-acccepttaxamount
+                                cv_output   = ls_1012-acccepttaxamount ).
       ls_1012-taxamount = zzcl_common_utils=>conversion_amount(
                                                          iv_alpha = 'IN'
                                                          iv_currency = ls_accept-currency
@@ -321,6 +329,27 @@ CLASS lhc_zr_salesacceptance_result IMPLEMENTATION.
       ls_request-message = TEXT-002.
       APPEND ls_request TO ct_data.
     ENDIF.
+  ENDMETHOD.
+
+  METHOD convert_amount.
+    DATA: int_shift          TYPE i,
+          dec_amount_int(12) TYPE p DECIMALS 5,
+          struct_tcurx       TYPE i_currency.
+
+    SELECT SINGLE * FROM i_currency WHERE currency = @cv_currency INTO @struct_tcurx. "#EC CI_ALL_FIELDS_NEEDED
+
+    IF sy-subrc = 0. "Currency has a number of decimals not equal two
+      int_shift = 2 - struct_tcurx-decimals.
+    ELSE. "Currency is no exceptional currency. It has two decimals
+      int_shift = 0.
+    ENDIF.
+
+    " Fill AMOUNT_EXTERNAL and shift decimal point depending on CURRENCY
+    dec_amount_int = cv_input.
+    DO int_shift TIMES.
+      dec_amount_int = dec_amount_int / 10.
+    ENDDO.
+    cv_output = dec_amount_int.
   ENDMETHOD.
 
 ENDCLASS.

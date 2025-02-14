@@ -233,3 +233,50 @@ union select from ZI_BI003_REPORT_002_BILLING(p_condition_type: 'ZPSB', p_recove
                )
          end                                as RecoveryAmount //BillingTotalAmount
 }
+// ADD BEGIN BY XINLEI XU 2025/02/10
+union select from ztbi_bi003_j02 as _table
+{
+  key purchase_order                as PurchaseOrder,
+  key purchase_order_item           as PurchaseOrderItem,
+  key billing_document              as BillingDocument,
+  key billing_document_item         as BillingDocumentItem,
+      recovery_management_number    as RecoveryManagementNumber,
+      document_currency             as DocumentCurrency,
+      base_unit                     as BaseUnit,
+      cast('00000000' as abap.dats) as CreationDate,
+      company_currency              as CompanyCurrency,
+      order_quantity                as OrderQuantity,
+      net_price_amount              as NetPriceAmount,
+      company_code                  as CompanyCode,
+      spotbuy_material              as SpotbuyMaterial,
+      spotbuy_material_text         as SpotbuyMaterialText,
+      product_old_id                as ProductOldId,
+      product_old_text              as ProductOldText,
+      fiscal_year_period            as FiscalYearPeriod,
+      fiscal_year                   as FiscalYear,
+      fiscal_month                  as FiscalMonth,
+      old_material_price            as OldMaterialPrice,
+      net_price_diff                as NetPriceDiff,
+      recovery_necessary_amount     as RecoveryNecessaryAmount,
+      company_code_name             as CompanyCodeName,
+      sales_order_document          as SalesOrderDocument,
+      sales_order_document_item     as SalesOrderDocumentItem,
+      customer                      as Customer,
+      customer_name                 as CustomerName,
+      transaction_currency          as TransactionCurrency,
+      billing_product               as BillingProduct,
+      billing_product_text          as BillingProductText,
+      billing_document_date         as BillingDocumentDate,
+      profit_center                 as ProfitCenter,
+      profit_center_name            as ProfitCenterName,
+      billing_quantity_unit         as BillingQuantityUnit,
+      billing_quantity              as BillingQuantity,
+      billing_currency              as BillingCurrency,
+      billing_price                 as BillingPrice,
+      condition_type                as ConditionType,
+      condition_rate_amount         as ConditionRateAmount,
+      recovery_amount               as RecoveryAmount
+}
+where
+  job_run_by = 'UPLOAD'
+// ADD END BY XINLEI XU 2025/02/10

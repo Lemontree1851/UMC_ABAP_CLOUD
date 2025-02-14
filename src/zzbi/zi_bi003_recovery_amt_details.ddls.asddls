@@ -19,7 +19,8 @@ define view entity ZI_BI003_RECOVERY_AMT_DETAILS
       @Semantics.amount.currencyCode: 'CompanyCurrency'
       RecoveryAmount
 }
-union select from ZI_BI003_REPORT_003
+//union select from ZI_BI003_REPORT_003
+union all select from ZI_BI003_REPORT_003 // MOD BY XINLEI XU 2025/02/10
 {
   key RecoveryManagementNumber,
 
@@ -28,7 +29,8 @@ union select from ZI_BI003_REPORT_003
 
       RecoveryAmount
 }
-union select from ZI_BI003_REPORT_004
+//union select from ZI_BI003_REPORT_004
+union all select from ZI_BI003_REPORT_004 // MOD BY XINLEI XU 2025/02/10
 {
   key RecoveryManagementNumber,
 
@@ -37,7 +39,8 @@ union select from ZI_BI003_REPORT_004
 
       RecoveryAmount
 }
-union select from ZI_BI003_REPORT_005
+//union select from ZI_BI003_REPORT_005
+union all select from ZI_BI003_REPORT_005 // MOD BY XINLEI XU 2025/02/10
 {
   key RecoveryManagementNumber,
 

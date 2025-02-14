@@ -156,7 +156,7 @@
      <SPRSL>E</SPRSL>
      <ARBGB>ZMM_001</ARBGB>
      <MSGNR>024</MSGNR>
-     <TEXT>没有需要处理的顾客VMI</TEXT>
+     <TEXT>未処理のデータがありません</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>

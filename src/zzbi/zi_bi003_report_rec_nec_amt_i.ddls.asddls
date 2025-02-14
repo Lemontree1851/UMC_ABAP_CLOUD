@@ -19,10 +19,23 @@ define view entity ZI_BI003_REPORT_REC_NEC_AMT_I
              as dmbtr
            )                   as TotalAmount
 }
-union select from ZI_BI003_REPORT_003_ACCOUTING(p_recover_type: 'IN')
+//union select from ZI_BI003_REPORT_003_ACCOUTING(p_recover_type: 'IN')
+union all select from ZI_BI003_REPORT_003_ACCOUTING(p_recover_type: 'IN') // MOD BY XINLEI XU 2025/02/11
 {
   key RecoveryManagementNumber,
   key FiscalYearPeriod,
       CompanyCodeCurrency         as CompanyCurrency,
       AmountInCompanyCodeCurrency as TotalAmount
 }
+// ADD BEGIN BY XINLEI XU 2025/02/11
+union all select from ztbi_bi003_j03 as _table
+{
+
+  key recovery_management_number as RecoveryManagementNumber,
+  key fiscal_year_period         as FiscalYearPeriod,
+      company_currency           as CompanyCurrency,
+      recovery_necessary_amount  as TotalAmount
+}
+where
+  job_run_by = 'UPLOAD'
+// ADD END BY XINLEI XU 2025/02/10

@@ -8,10 +8,7 @@ CLASS zcl_query_inventory_aging DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-
-
-CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
-
+CLASS zcl_query_inventory_aging IMPLEMENTATION.
 
   METHOD if_rap_query_provider~select.
 
@@ -25,6 +22,7 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
       lv_ledger       TYPE zc_inventory_aging-ledger,
       lv_searchterm2  TYPE i_businesspartner-searchterm2,
       lv_totalamount  TYPE zc_inventory_aging-inventoryamount,
+      lv_totalqty     TYPE zc_inventory_aging-valuationquantity,
       lv_age          TYPE ztfi_1019-age,
       lv_actualprice  TYPE p DECIMALS 6.
 
@@ -409,7 +407,13 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
           ENDCASE.
 
           lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * lv_actualprice.
+          lv_totalqty    = lv_totalqty + ls_ztfi_1019-qty.
         ENDLOOP.
+
+        "未確定-数量 & 未確定-金額
+        ls_data-quantityunspecified = ls_data-valuationquantity - lv_totalqty.
+        ls_data-amountunspecified   = ls_data-quantityunspecified * lv_actualprice.
+        lv_totalamount              = lv_totalamount + ls_data-quantityunspecified * lv_actualprice.
 
         "尾差
         lv_totalamount = ls_data-inventoryamount - lv_totalamount.
@@ -491,7 +495,9 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
           ENDCASE.
         ENDIF.
 
-        CLEAR lv_totalamount.
+        CLEAR:
+          lv_totalamount,
+          lv_totalqty.
       ENDIF.
 
       APPEND ls_data TO lt_data.
@@ -520,4 +526,5 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
 
     io_response->set_data( lt_data ).
   ENDMETHOD.
+
 ENDCLASS.

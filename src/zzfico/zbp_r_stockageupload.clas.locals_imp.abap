@@ -181,7 +181,7 @@ CLASS lhc_stageupload IMPLEMENTATION.
            END OF ty_matnr.
     DATA: lv_message TYPE string,
           lv_msg     TYPE string.
-    DATA: lv_matnr(18) TYPE c.
+    DATA: lv_matnr  TYPE matnr.
     DATA: ls_matnr TYPE ty_matnr.
     DATA: lt_matnr TYPE STANDARD TABLE OF ty_matnr.
     DATA: lv_temp     TYPE string.
@@ -417,7 +417,7 @@ calendaryear = <lfs_data>-calendaryear calendarmonth = <lfs_data>-calendarmonth 
     DATA lv_timestamp TYPE tzntstmpl.
     DATA: lv_message TYPE string,
           lv_msg     TYPE string.
-    DATA: lv_matnr(18) TYPE c.
+    DATA: lv_matnr TYPE matnr.
     DATA:lv_check_succ TYPE string.
     DATA:lv_check_warn TYPE string.
 

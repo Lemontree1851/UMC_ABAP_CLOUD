@@ -4,15 +4,15 @@
 define root view entity ZI_BI003_REPORT_005
   as select from ZI_BI003_REPORT_005_MATDOC( p_recover_type:'SS' )
 {
-  key MaterialDocument                    as MaterialDocument,
-  key MaterialDocumentYear                as MaterialDocumentYear,
-  key MaterialDocumentItem                as MaterialDocumentItem,
+  key MaterialDocument                                 as MaterialDocument,
+  key MaterialDocumentYear                             as MaterialDocumentYear,
+  key MaterialDocumentItem                             as MaterialDocumentItem,
 
       @EndUserText: { label:  'Billing Document', quickInfo: 'Billing Document' }
-  key cast('' as vbeln_va)                as BillingDocument,
+  key cast('' as vbeln_va)                             as BillingDocument,
 
       @EndUserText: { label:  'Billing Document Item', quickInfo: 'Billing Document Item' }
-  key cast('000000' as posnr_va)          as BillingDocumentItem,
+  key cast('000000' as posnr_va)                       as BillingDocumentItem,
 
 
       @ObjectModel.text.element: [ 'ProductName' ]
@@ -39,7 +39,7 @@ define root view entity ZI_BI003_REPORT_005
 
       @Semantics.amount.currencyCode: 'CompanyCurrency'
       @EndUserText: { label:  'Recovery Necessary Amount', quickInfo: 'Recovery Necessary Amount' }
-      RecoveryNecessaryAmount,
+      cast(RecoveryNecessaryAmount as abap.curr(23,2)) as RecoveryNecessaryAmount,
 
       CompanyCurrency,
 
@@ -47,48 +47,48 @@ define root view entity ZI_BI003_REPORT_005
       GLAccount,
       _GLAccountText.GLAccountName,
 
-      cast('' as vbeln_va)                as SalesOrderDocument,
-      cast('000000' as posnr_va)          as SalesOrderDocumentItem,
+      cast('' as vbeln_va)                             as SalesOrderDocument,
+      cast('000000' as posnr_va)                       as SalesOrderDocumentItem,
 
       @ObjectModel.text.element: [ 'CustomerName' ]
-      cast('' as kunnr)                   as Customer,
-      cast('' as abap.char(80))           as CustomerName,
+      cast('' as kunnr)                                as Customer,
+      cast('' as abap.char(80))                        as CustomerName,
 
-      cast('' as waers)                   as TransactionCurrency,
+      cast('' as waers)                                as TransactionCurrency,
 
       @ObjectModel.text.element: [ 'BillingProductText' ]
       @EndUserText: { label:  'Billing Product', quickInfo: 'Billing Product' }
-      cast('' as matnr)                   as BillingProduct,
+      cast('' as matnr)                                as BillingProduct,
 
       @EndUserText: { label:  'Billing Product Text', quickInfo: 'Billing Product Text' }
-      cast('' as maktx)                   as BillingProductText,
+      cast('' as maktx)                                as BillingProductText,
 
-      cast('00000000' as fkdat)           as BillingDocumentDate,
+      cast('00000000' as fkdat)                        as BillingDocumentDate,
 
       @ObjectModel.text.element: [ 'ProfitCenterName' ]
-      cast('' as prctr)                   as ProfitCenter,
+      cast('' as prctr)                                as ProfitCenter,
 
-      cast('' as abap.char(40))           as ProfitCenterName,
+      cast('' as abap.char(40))                        as ProfitCenterName,
 
-      cast('' as vrkme)                   as BillingQuantityUnit,
+      cast('' as vrkme)                                as BillingQuantityUnit,
 
       @Semantics.quantity.unitOfMeasure: 'BillingQuantityUnit'
-      cast('0.000' as abap.quan( 13, 3 )) as BillingQuantity,
+      cast('0.000' as abap.quan( 13, 3 ))              as BillingQuantity,
 
-      cast('' as waers)                   as BillingCurrency,
+      cast('' as waers)                                as BillingCurrency,
 
       @Semantics.amount.currencyCode: 'BillingCurrency'
-      cast('0.00' as abap.curr(16, 2))    as BillingPrice,
+      cast('0.00' as abap.curr(16, 2))                 as BillingPrice,
 
-      cast('' as kscha)                   as ConditionType,
+      cast('' as kscha)                                as ConditionType,
 
       @Semantics.amount.currencyCode: 'BillingCurrency'
       @EndUserText: { label:  'Condition Amount', quickInfo: 'Condition Amount' }
-      cast('0.00' as dmbtr)               as ConditionRateAmount,
+      cast('0.00' as dmbtr)                            as ConditionRateAmount,
 
       @Semantics.amount.currencyCode: 'BillingCurrency'
       @EndUserText: { label:  'Recovery Amount', quickInfo: 'Recovery Amount' }
-      cast('0.00' as dmbtr)               as RecoveryAmount
+      cast('0.00' as dmbtr)                            as RecoveryAmount
 }
 union select from ZI_BI003_REPORT_005_BILLING
 {
@@ -117,7 +117,7 @@ union select from ZI_BI003_REPORT_005_BILLING
          CompanyCode,
          _Companycode.CompanyCodeName,
 
-         cast('0.00' as abap.curr(13,2))     as RecoveryNecessaryAmount,
+         cast('0.00' as abap.curr(23,2))     as RecoveryNecessaryAmount,
 
 
          _Companycode.Currency               as CompanyCurrency,
@@ -179,3 +179,46 @@ union select from ZI_BI003_REPORT_005_BILLING
                              )               as RecoveryAmount //BillingTotalAmount
 
 }
+// ADD BEGIN BY XINLEI XU 2025/02/10
+union select from ztbi_bi003_j05 as _table
+{
+  key material_document          as MaterialDocument,
+  key material_document_year     as MaterialDocumentYear,
+  key material_document_item     as MaterialDocumentItem,
+  key billing_document           as BillingDocument,
+  key billing_document_item      as BillingDocumentItem,
+      material                   as Material,
+      product_name               as ProductName,
+      recovery_management_number as RecoveryManagementNumber,
+      quantity_in_entry_unit     as QuantityInEntryUnit,
+      entry_unit                 as EntryUnit,
+      fiscal_year_period         as FiscalYearPeriod,
+      fiscal_year                as FiscalYear,
+      fiscal_month               as FiscalMonth,
+      company_code               as CompanyCode,
+      company_code_name          as CompanyCodeName,
+      recovery_necessary_amount  as RecoveryNecessaryAmount,
+      company_currency           as CompanyCurrency,
+      gl_account                 as GlAccount,
+      gl_account_name            as GlAccountName,
+      sales_order_document       as SalesOrderDocument,
+      sales_order_document_item  as SalesOrderDocumentItem,
+      customer                   as Customer,
+      customer_name              as CustomerName,
+      transaction_currency       as TransactionCurrency,
+      billing_product            as BillingProduct,
+      billing_product_text       as BillingProductText,
+      billing_document_date      as BillingDocumentDate,
+      profit_center              as ProfitCenter,
+      profit_center_name         as ProfitCenterName,
+      billing_quantity_unit      as BillingQuantityUnit,
+      billing_quantity           as BillingQuantity,
+      billing_currency           as BillingCurrency,
+      billing_price              as BillingPrice,
+      condition_type             as ConditionType,
+      condition_rate_amount      as ConditionRateAmount,
+      recovery_amount            as RecoveryAmount
+}
+where
+  job_run_by = 'UPLOAD'
+// ADD END BY XINLEI XU 2025/02/10

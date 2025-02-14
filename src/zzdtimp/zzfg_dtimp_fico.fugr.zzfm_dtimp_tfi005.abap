@@ -14,11 +14,18 @@ FUNCTION zzfm_dtimp_tfi005.
   DATA: lv_uuid1 TYPE sysuuid_x16.
   DATA lv_message TYPE string.
   DATA: ls_run TYPE zr_paymethod_sum.
+  DATA:lv_housebank(5) TYPE c .
+  DATA:lv_housebankaccount(5) TYPE c .
 
   CLEAR ls_run .
   CREATE DATA eo_data TYPE TABLE OF (iv_struc).
 
   eo_data->* = io_data->*.
+
+  SELECT *
+    FROM ztbc_1001
+  WHERE  zid   = 'ZFI010'
+  INTO TABLE @DATA(lt_ztbc).                  "#EC CI_ALL_FIELDS_NEEDED
 
   LOOP AT eo_data->* ASSIGNING FIELD-SYMBOL(<line>).
 
@@ -73,6 +80,7 @@ FUNCTION zzfm_dtimp_tfi005.
     "  MESSAGE s006(zbc_001) WITH TEXT-001 INTO <line>-('Message').
     "ENDIF.
 
+
     IF ls_data-accountingclerkfaxnumber = ls_data-paymentterms.
       MESSAGE s025(zfico_001) WITH ls_data-fiscalyear ls_data-companycode ls_data-accountingdocument INTO lv_message .
       ls_data-message = lv_message.
@@ -93,6 +101,14 @@ FUNCTION zzfm_dtimp_tfi005.
       DATA ls_aparitem LIKE LINE OF lt_aparitem.
       DATA ls_aparitem_control LIKE ls_aparitem-%control.
       ls_aparitem_control-paymentterms = if_abap_behv=>mk-on.
+
+      READ TABLE lt_ztbc INTO DATA(ls_ztbc) WITH KEY zvalue1 = ls_data-companycode.
+      IF sy-subrc = 0 AND ls_data-paymentmethod = ls_ztbc-zvalue2 AND ls_data-paymentmethod_a = ls_ztbc-zvalue3.
+        ls_aparitem_control-housebank        = if_abap_behv=>mk-on.
+        ls_aparitem_control-housebankaccount = if_abap_behv=>mk-on.
+        lv_housebank        = ls_ztbc-zvalue4.
+        lv_housebankaccount = ls_ztbc-zvalue5.
+      ENDIF.
 
       IF ls_data-paymentmethod_a NE 'A'.
         ls_aparitem_control-bpbankaccountinternalid = if_abap_behv=>mk-on.
@@ -121,6 +137,8 @@ FUNCTION zzfm_dtimp_tfi005.
        glaccountlineitem = ls_data-accountingdocumentitem
        paymentterms = ls_data-accountingclerkphonenumber
        bpbankaccountinternalid = lv_bpbankaccountinternalid
+       housebank               = lv_housebank
+       housebankaccount        = lv_housebankaccount
        %control = ls_aparitem_control )
        )
        ) .

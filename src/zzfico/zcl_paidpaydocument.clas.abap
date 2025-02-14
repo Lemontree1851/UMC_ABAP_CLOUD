@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
+CLASS zcl_paidpaydocument IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -230,7 +230,7 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
           FROM ztbc_1001
          WHERE ( zid = 'ZFI008' OR zid = 'ZFI009' )
            AND zvalue1 = @lv_bukrs
-          INTO TABLE @DATA(lt_1001).
+          INTO TABLE @DATA(lt_1001).          "#EC CI_ALL_FIELDS_NEEDED
         LOOP AT lt_1001 INTO DATA(ls_1001).
           IF ls_1001-zid = 'ZFI008'.  "customer
             lrs_blart_kunnr-sign = 'I'.
@@ -273,7 +273,10 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
                  OR fiscalyear < @lv_gjahr )
              AND ledger = '0L'
              AND customer = @lt_kunnr-customer
-            INTO TABLE @DATA(lt_bseg_ar).
+            INTO TABLE @DATA(lt_bseg_ar).          "#EC CI_NO_TRANSFORM
+        ENDIF.
+
+        IF lt_lifnr IS NOT INITIAL.
 * 買掛金の金額
           SELECT sourceledger,
                  companycode,
@@ -297,7 +300,7 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
                  OR fiscalyear < @lv_gjahr )
              AND ledger = '0L'
              AND supplier = @lt_lifnr-supplier
-            INTO TABLE @DATA(lt_bseg_ap).
+            INTO TABLE @DATA(lt_bseg_ap).          "#EC CI_NO_TRANSFORM
         ENDIF.
 
         SORT lt_bseg_ar BY companycode fiscalyear customer.

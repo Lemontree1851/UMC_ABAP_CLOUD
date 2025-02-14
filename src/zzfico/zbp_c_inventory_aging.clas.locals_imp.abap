@@ -35,19 +35,19 @@ CLASS lhc_inventoryaging DEFINITION INHERITING FROM cl_abap_behavior_handler.
       END OF ty_finalproductinfo,
 
       BEGIN OF ty_materialdocumentitem,
-        materialdocumentyear        TYPE i_materialdocumentitem_2-materialdocumentyear,
-        materialdocument            TYPE i_materialdocumentitem_2-materialdocument,
-        materialdocumentitem        TYPE i_materialdocumentitem_2-materialdocumentitem,
-        postingdate                 TYPE i_materialdocumentitem_2-postingdate,
-        goodsmovementtype           TYPE i_materialdocumentitem_2-goodsmovementtype,
-        plant                       TYPE i_materialdocumentitem_2-plant,
-        material                    TYPE i_materialdocumentitem_2-material,
+        materialdocumentyear    TYPE i_materialdocumentitem_2-materialdocumentyear,
+        materialdocument        TYPE i_materialdocumentitem_2-materialdocument,
+        materialdocumentitem    TYPE i_materialdocumentitem_2-materialdocumentitem,
+        postingdate             TYPE i_materialdocumentitem_2-postingdate,
+        goodsmovementtype       TYPE i_materialdocumentitem_2-goodsmovementtype,
+        plant                   TYPE i_materialdocumentitem_2-plant,
+        material                TYPE i_materialdocumentitem_2-material,
 *        isautomaticallycreated    TYPE i_materialdocumentitem_2-isautomaticallycreated,
-        quantityinbaseunit          TYPE i_materialdocumentitem_2-quantityinbaseunit,
-        supplier                    TYPE i_materialdocumentitem_2-supplier,
-        issgorrcvgmaterial          TYPE i_materialdocumentitem_2-issgorrcvgmaterial,
-        issuingorreceivingplant     TYPE i_materialdocumentitem_2-issuingorreceivingplant,
-        debitcreditcode             TYPE i_materialdocumentitem_2-debitcreditcode,
+        quantityinbaseunit      TYPE i_materialdocumentitem_2-quantityinbaseunit,
+        supplier                TYPE i_materialdocumentitem_2-supplier,
+        issgorrcvgmaterial      TYPE i_materialdocumentitem_2-issgorrcvgmaterial,
+        issuingorreceivingplant TYPE i_materialdocumentitem_2-issuingorreceivingplant,
+        debitcreditcode         TYPE i_materialdocumentitem_2-debitcreditcode,
 *        rvslofgoodsreceiptisallowed TYPE i_materialdocumentitem_2-rvslofgoodsreceiptisallowed,
       END OF ty_materialdocumentitem,
 
@@ -1046,7 +1046,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
           ENDIF.
         ENDIF.
 
-        SORT lt_receipt_qc BY plant material postingdate_receipt.
+        SORT lt_receipt_qc BY plant material postingdate_receipt DESCENDING.
 
         "只保留累计入库数量>=期末库存数量的数据(期初库存扣减)
         LOOP AT lt_stock ASSIGNING <fs_stock>.
@@ -1075,7 +1075,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
               ls_receipt-postingdate = <fs_stock>-postingdate.
               ls_receipt-postingdate_receipt = <fs_receipt>-postingdate_receipt.
               ls_receipt-quantityinbaseunit = lv_qty.
-              APPEND ls_receipt TO lt_receipt3.
+*              APPEND ls_receipt TO lt_receipt3.
+              COLLECT ls_receipt INTO lt_receipt2.
               CLEAR ls_receipt.
 
               IF <fs_stock>-quantityinbaseunit = 0.
@@ -1088,7 +1089,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         ENDLOOP.
       ENDIF.
 
-      SORT lt_receipt3 BY plant material postingdate postingdate_receipt.
+*      SORT lt_receipt3 BY plant material postingdate postingdate_receipt.
+      SORT lt_receipt2 BY plant material postingdate postingdate_receipt.
 
       LOOP AT lt_receipt_309 INTO ls_receipt_309.
         READ TABLE lt_receipt2 TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_309-issuingorreceivingplant
@@ -1132,49 +1134,49 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
           ENDLOOP.
         ENDIF.
 
-        "不够，扣减期初库存
-        IF ls_receipt_309-quantityinbaseunit > 0.
-          READ TABLE lt_receipt3 TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_309-issuingorreceivingplant
-                                                                 material = ls_receipt_309-issgorrcvgmaterial
-                                                                 postingdate = ls_receipt_309-postingdate
-                                                        BINARY SEARCH.
-          IF sy-subrc = 0.
-            LOOP AT lt_receipt3 INTO DATA(ls_receipt3) FROM sy-tabix.
-              IF ls_receipt3-plant <> ls_receipt_309-plant
-              OR ls_receipt3-material <> ls_receipt_309-material
-              OR ls_receipt3-postingdate <> ls_receipt_309-postingdate.
-                EXIT.
-              ENDIF.
-
-              IF ls_receipt_309-quantityinbaseunit >= ls_receipt3-quantityinbaseunit.
-                ls_receipt_309-quantityinbaseunit = ls_receipt_309-quantityinbaseunit - ls_receipt3-quantityinbaseunit.
-
-                ls_receipt_309new-plant = ls_receipt3-quantityinbaseunit.
-                ls_receipt_309new-material = ls_receipt3-material.
-                ls_receipt_309new-postingdate = ls_receipt3-postingdate.
-                ls_receipt_309new-quantityinbaseunit = ls_receipt3-quantityinbaseunit.
-                ls_receipt_309new-postingdate_receipt = ls_receipt3-postingdate_receipt.
-                APPEND ls_receipt_309new TO lt_receipt_309new.
-                CLEAR ls_receipt_309new.
-              ELSE.
-                ls_receipt_309new-plant = ls_receipt3-quantityinbaseunit.
-                ls_receipt_309new-material = ls_receipt3-material.
-                ls_receipt_309new-postingdate = ls_receipt3-postingdate.
-                ls_receipt_309new-quantityinbaseunit = ls_receipt_309-quantityinbaseunit.
-                ls_receipt_309new-postingdate_receipt = ls_receipt3-postingdate_receipt.
-                APPEND ls_receipt_309new TO lt_receipt_309new.
-                CLEAR ls_receipt_309new.
-
-                CLEAR ls_receipt_309-quantityinbaseunit.
-              ENDIF.
-
-              "扣减完毕
-              IF ls_receipt_309-quantityinbaseunit = 0.
-                EXIT.
-              ENDIF.
-            ENDLOOP.
-          ENDIF.
-        ENDIF.
+*        "不够，扣减期初库存
+*        IF ls_receipt_309-quantityinbaseunit > 0.
+*          READ TABLE lt_receipt3 TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_309-issuingorreceivingplant
+*                                                                 material = ls_receipt_309-issgorrcvgmaterial
+*                                                                 postingdate = ls_receipt_309-postingdate
+*                                                        BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            LOOP AT lt_receipt3 INTO DATA(ls_receipt3) FROM sy-tabix.
+*              IF ls_receipt3-plant <> ls_receipt_309-plant
+*              OR ls_receipt3-material <> ls_receipt_309-material
+*              OR ls_receipt3-postingdate <> ls_receipt_309-postingdate.
+*                EXIT.
+*              ENDIF.
+*
+*              IF ls_receipt_309-quantityinbaseunit >= ls_receipt3-quantityinbaseunit.
+*                ls_receipt_309-quantityinbaseunit = ls_receipt_309-quantityinbaseunit - ls_receipt3-quantityinbaseunit.
+*
+*                ls_receipt_309new-plant = ls_receipt3-quantityinbaseunit.
+*                ls_receipt_309new-material = ls_receipt3-material.
+*                ls_receipt_309new-postingdate = ls_receipt3-postingdate.
+*                ls_receipt_309new-quantityinbaseunit = ls_receipt3-quantityinbaseunit.
+*                ls_receipt_309new-postingdate_receipt = ls_receipt3-postingdate_receipt.
+*                APPEND ls_receipt_309new TO lt_receipt_309new.
+*                CLEAR ls_receipt_309new.
+*              ELSE.
+*                ls_receipt_309new-plant = ls_receipt3-quantityinbaseunit.
+*                ls_receipt_309new-material = ls_receipt3-material.
+*                ls_receipt_309new-postingdate = ls_receipt3-postingdate.
+*                ls_receipt_309new-quantityinbaseunit = ls_receipt_309-quantityinbaseunit.
+*                ls_receipt_309new-postingdate_receipt = ls_receipt3-postingdate_receipt.
+*                APPEND ls_receipt_309new TO lt_receipt_309new.
+*                CLEAR ls_receipt_309new.
+*
+*                CLEAR ls_receipt_309-quantityinbaseunit.
+*              ENDIF.
+*
+*              "扣减完毕
+*              IF ls_receipt_309-quantityinbaseunit = 0.
+*                EXIT.
+*              ENDIF.
+*            ENDLOOP.
+*          ENDIF.
+*        ENDIF.
       ENDLOOP.
 
       "关联公司
@@ -1587,7 +1589,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         ENDIF.
       ENDIF.
 
-      SORT lt_receipt_qc BY plant material postingdate_receipt.
+      SORT lt_receipt_qc BY plant material postingdate_receipt DESCENDING.
 
       "只保留累计入库数量>=期末库存数量的数据(期初库存扣减)
       LOOP AT lt_stock ASSIGNING <fs_stock>.
@@ -1616,7 +1618,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
             ls_receipt-postingdate = <fs_stock>-postingdate.
             ls_receipt-postingdate_receipt = <fs_receipt>-postingdate_receipt.
             ls_receipt-quantityinbaseunit = lv_qty.
-            APPEND ls_receipt TO lt_receipt5.
+*            APPEND ls_receipt TO lt_receipt5.
+            COLLECT ls_receipt INTO lt_receipt4.
             CLEAR ls_receipt.
 
             IF <fs_stock>-quantityinbaseunit = 0.
@@ -1628,7 +1631,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         ENDIF.
       ENDLOOP.
 
-      SORT lt_receipt5 BY plant material postingdate postingdate_receipt.
+*      SORT lt_receipt5 BY plant material postingdate postingdate_receipt.
+      SORT lt_receipt4 BY plant material postingdate postingdate_receipt.
 
       LOOP AT lt_receipt_vendor INTO ls_receipt_vendor.
         READ TABLE lt_receipt4 TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_vendor-issuingorreceivingplant
@@ -1673,48 +1677,48 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         ENDIF.
 
         "不够，扣减期初库存
-        IF ls_receipt_vendor-quantityinbaseunit > 0.
-          READ TABLE lt_receipt5 TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_vendor-issuingorreceivingplant
-                                                                 material = ls_receipt_vendor-issgorrcvgmaterial
-                                                                 postingdate = ls_receipt_vendor-postingdate
-                                                        BINARY SEARCH.
-          IF sy-subrc = 0.
-            LOOP AT lt_receipt5 INTO DATA(ls_receipt5) FROM sy-tabix.
-              IF ls_receipt5-plant <> ls_receipt_vendor-plant
-              OR ls_receipt5-material <> ls_receipt_vendor-material
-              OR ls_receipt5-postingdate <> ls_receipt_vendor-postingdate.
-                EXIT.
-              ENDIF.
-
-              IF ls_receipt_vendor-quantityinbaseunit >= ls_receipt5-quantityinbaseunit.
-                ls_receipt_vendor-quantityinbaseunit = ls_receipt_vendor-quantityinbaseunit - ls_receipt5-quantityinbaseunit.
-
-                ls_receipt_vennew-plant = ls_receipt5-quantityinbaseunit.
-                ls_receipt_vennew-material = ls_receipt5-material.
-                ls_receipt_vennew-postingdate = ls_receipt5-postingdate.
-                ls_receipt_vennew-quantityinbaseunit = ls_receipt5-quantityinbaseunit.
-                ls_receipt_vennew-postingdate_receipt = ls_receipt5-postingdate_receipt.
-                APPEND ls_receipt_vennew TO lt_receipt_vennew.
-                CLEAR ls_receipt_vennew.
-              ELSE.
-                ls_receipt_vennew-plant = ls_receipt5-quantityinbaseunit.
-                ls_receipt_vennew-material = ls_receipt5-material.
-                ls_receipt_vennew-postingdate = ls_receipt5-postingdate.
-                ls_receipt_vennew-quantityinbaseunit = ls_receipt_vendor-quantityinbaseunit.
-                ls_receipt_vennew-postingdate_receipt = ls_receipt5-postingdate_receipt.
-                APPEND ls_receipt_vennew TO lt_receipt_vennew.
-                CLEAR ls_receipt_vennew.
-
-                CLEAR ls_receipt_vendor-quantityinbaseunit.
-              ENDIF.
-
-              "扣减完毕
-              IF ls_receipt_vendor-quantityinbaseunit = 0.
-                EXIT.
-              ENDIF.
-            ENDLOOP.
-          ENDIF.
-        ENDIF.
+*        IF ls_receipt_vendor-quantityinbaseunit > 0.
+*          READ TABLE lt_receipt5 TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_vendor-issuingorreceivingplant
+*                                                                 material = ls_receipt_vendor-issgorrcvgmaterial
+*                                                                 postingdate = ls_receipt_vendor-postingdate
+*                                                        BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            LOOP AT lt_receipt5 INTO DATA(ls_receipt5) FROM sy-tabix.
+*              IF ls_receipt5-plant <> ls_receipt_vendor-plant
+*              OR ls_receipt5-material <> ls_receipt_vendor-material
+*              OR ls_receipt5-postingdate <> ls_receipt_vendor-postingdate.
+*                EXIT.
+*              ENDIF.
+*
+*              IF ls_receipt_vendor-quantityinbaseunit >= ls_receipt5-quantityinbaseunit.
+*                ls_receipt_vendor-quantityinbaseunit = ls_receipt_vendor-quantityinbaseunit - ls_receipt5-quantityinbaseunit.
+*
+*                ls_receipt_vennew-plant = ls_receipt5-quantityinbaseunit.
+*                ls_receipt_vennew-material = ls_receipt5-material.
+*                ls_receipt_vennew-postingdate = ls_receipt5-postingdate.
+*                ls_receipt_vennew-quantityinbaseunit = ls_receipt5-quantityinbaseunit.
+*                ls_receipt_vennew-postingdate_receipt = ls_receipt5-postingdate_receipt.
+*                APPEND ls_receipt_vennew TO lt_receipt_vennew.
+*                CLEAR ls_receipt_vennew.
+*              ELSE.
+*                ls_receipt_vennew-plant = ls_receipt5-quantityinbaseunit.
+*                ls_receipt_vennew-material = ls_receipt5-material.
+*                ls_receipt_vennew-postingdate = ls_receipt5-postingdate.
+*                ls_receipt_vennew-quantityinbaseunit = ls_receipt_vendor-quantityinbaseunit.
+*                ls_receipt_vennew-postingdate_receipt = ls_receipt5-postingdate_receipt.
+*                APPEND ls_receipt_vennew TO lt_receipt_vennew.
+*                CLEAR ls_receipt_vennew.
+*
+*                CLEAR ls_receipt_vendor-quantityinbaseunit.
+*              ENDIF.
+*
+*              "扣减完毕
+*              IF ls_receipt_vendor-quantityinbaseunit = 0.
+*                EXIT.
+*              ENDIF.
+*            ENDLOOP.
+*          ENDIF.
+*        ENDIF.
       ENDLOOP.
 
       "类309和关联公司数据
