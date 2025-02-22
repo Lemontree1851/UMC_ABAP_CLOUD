@@ -50,10 +50,8 @@ define root custom entity ZR_PAIDPAYDOCUMENT
       @Semantics.amount.currencyCode : 'Currency'
       Revenue             : abap.curr(16,2); //会社レベルの総売上高
       RevenueRate         : abap.dec(9,5); //"総売上金額占有率
-      @Semantics.amount.currencyCode : 'Currency'
-      AP                  : abap.curr(16,2);  //買掛金金額
-      @Semantics.amount.currencyCode : 'Currency'
-      AR                  : abap.curr(16,2);  //売掛金金額
+      AP                  : abap.char(23);  //買掛金金額
+      AR                  : abap.char(23);  //売掛金金額
       Currency            : abap.cuky;
 
       //売上仕入仕訳生成

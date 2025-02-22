@@ -71,7 +71,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
+CLASS zcl_job_daystocktrans IMPLEMENTATION.
 
 
   METHOD add_message_to_log.
@@ -402,6 +402,9 @@ CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
       CATCH cx_abap_context_info_error ##NO_HANDLER.
     ENDTRY.
 
+    DATA lt_results_h TYPE TABLE OF ty_response_h.
+    DATA(lv_top) = 1000.
+
     IF ls_config IS NOT INITIAL.
       lv_next_start_c = lv_next_start+0(4) && '-' && lv_next_start+4(2) && '-' && lv_next_start+6(2) && 'T00:00:00'.
       lv_next_end_c   = lv_next_end+0(4) && '-' && lv_next_end+4(2) && '-' && lv_next_end+6(2)  && 'T00:00:00'.
@@ -413,34 +416,44 @@ CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
       CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
       CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
       CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
-      zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T01_QUO_H?sap-language={ zzcl_common_utils=>get_current_language(  ) }|
-                                                              iv_odata_filter  = lv_filter
-                                                              iv_token_url     = CONV #( ls_config-zvalue3 )
-                                                              iv_client_id     = CONV #( ls_config-zvalue4 )
-                                                              iv_client_secret = CONV #( ls_config-zvalue5 )
-                                                              iv_authtype      = 'OAuth2.0'
-                                                    IMPORTING ev_status_code   = DATA(lv_status_code)
-                                                              ev_response      = DATA(lv_response) ).
-      IF lv_status_code = 200.
-        REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_response  WITH ``.
-        REPLACE ALL OCCURRENCES OF `)\/` IN lv_response  WITH ``.
 
-        xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
-*          ( xco_cp_json=>transformation->pascal_case_to_underscore )
-*          ( xco_cp_json=>transformation->boolean_to_abap_bool )
-        ) )->write_to( REF #( ls_response_h ) ).
+      DATA(lv_skip) = -1000.
+      DO.
+        lv_skip += 1000.
+        zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T01_QUO_H?$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|
+                                                                iv_odata_filter  = lv_filter
+                                                                iv_token_url     = CONV #( ls_config-zvalue3 )
+                                                                iv_client_id     = CONV #( ls_config-zvalue4 )
+                                                                iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                                iv_authtype      = 'OAuth2.0'
+                                                      IMPORTING ev_status_code   = DATA(lv_status_code)
+                                                                ev_response      = DATA(lv_response) ).
+        IF lv_status_code = 200.
+          REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_response  WITH ``.
+          REPLACE ALL OCCURRENCES OF `)\/` IN lv_response  WITH ``.
 
-        IF ls_response_h-d-results IS NOT INITIAL.
-          DATA(lt_results_h) = ls_response_h-d-results.
-          SORT lt_results_h BY valid_t DESCENDING valid_f DESCENDING.
+*          xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
+**          ( xco_cp_json=>transformation->pascal_case_to_underscore )
+**          ( xco_cp_json=>transformation->boolean_to_abap_bool )
+*          ) )->write_to( REF #( ls_response_h ) ).
+
+          /ui2/cl_json=>deserialize( EXPORTING json = lv_response
+                                     CHANGING  data = ls_response_h ).
+
+          IF ls_response_h-d-results IS NOT INITIAL.
+            APPEND LINES OF ls_response_h-d-results TO lt_results_h.
+          ELSE.
+            EXIT.
+          ENDIF.
+        ELSE.
+          TRY.
+              add_message_to_log( i_text = CONV cl_bali_free_text_setter=>ty_text( lv_response )  i_type = 'E' ).
+            CATCH cx_bali_runtime ##NO_HANDLER.
+          ENDTRY.
+          RETURN.
         ENDIF.
-      ELSE.
-        TRY.
-            add_message_to_log( i_text = CONV cl_bali_free_text_setter=>ty_text( lv_response )  i_type = 'E' ).
-          CATCH cx_bali_runtime ##NO_HANDLER.
-        ENDTRY.
-        RETURN.
-      ENDIF.
+      ENDDO.
+      SORT lt_results_h BY valid_t DESCENDING valid_f DESCENDING.
     ENDIF.
 
 *     売上予測の編集

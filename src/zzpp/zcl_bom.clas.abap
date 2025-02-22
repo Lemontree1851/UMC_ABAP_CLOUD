@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BOM IMPLEMENTATION.
+CLASS zcl_bom IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -178,7 +178,7 @@ CLASS ZCL_BOM IMPLEMENTATION.
            AND bomexplosionapplication = @lv_appid
            AND b~headervaliditystartdate <= @lv_startdate
            AND b~headervalidityenddate >= @lv_startdate
-           AND c~mrpresponsible IN @lr_mrpresponsible
+*           AND c~mrpresponsible IN @lr_mrpresponsible
          GROUP BY a~billofmaterial,
                   a~material,
                   a~plant,
@@ -206,7 +206,7 @@ CLASS ZCL_BOM IMPLEMENTATION.
            AND bomexplosionapplication = @lv_appid
            AND b~headervaliditystartdate <= @lv_startdate
            AND b~headervalidityenddate >= @lv_startdate
-           AND c~mrpresponsible IN @lr_mrpresponsible
+*           AND c~mrpresponsible IN @lr_mrpresponsible
           INTO TABLE @lt_materialbomlink.
       ENDIF.
 
@@ -239,16 +239,16 @@ CLASS ZCL_BOM IMPLEMENTATION.
         DELETE ADJACENT DUPLICATES FROM lt_bomlist_tmp
                               COMPARING headermaterial plant.
 
-        "Obtain data of product plant(header material)
-        SELECT product,
-               plant,
-               mrpresponsible
-          FROM i_productplantbasic WITH PRIVILEGED ACCESS
-           FOR ALL ENTRIES IN @lt_bomlist_tmp
-         WHERE product = @lt_bomlist_tmp-headermaterial
-           AND plant = @lt_bomlist_tmp-plant
-           AND mrpresponsible IN @lr_mrpresponsible
-          INTO TABLE @DATA(lt_productplantbasic).
+*        "Obtain data of product plant(header material)
+*        SELECT product,
+*               plant,
+*               mrpresponsible
+*          FROM i_productplantbasic WITH PRIVILEGED ACCESS
+*           FOR ALL ENTRIES IN @lt_bomlist_tmp
+*         WHERE product = @lt_bomlist_tmp-headermaterial
+*           AND plant = @lt_bomlist_tmp-plant
+*           AND mrpresponsible IN @lr_mrpresponsible
+*          INTO TABLE @DATA(lt_productplantbasic).
 
         LOOP AT lt_bomlist_tmp INTO DATA(ls_bomlist).
 *          ls_changemaster_ent-objmgmtrecdobject+0(40) = ls_bomlist-headermaterial.
@@ -296,6 +296,7 @@ CLASS ZCL_BOM IMPLEMENTATION.
         "Obtain data of product plant(component)
         SELECT product,
                plant,
+               mrpresponsible,
                profilecode
           FROM i_productplantbasic WITH PRIVILEGED ACCESS
            FOR ALL ENTRIES IN @lt_bomlist_tmp
@@ -409,7 +410,7 @@ CLASS ZCL_BOM IMPLEMENTATION.
       SORT lt_billofmaterialheaderdex_2 BY billofmaterialcategory billofmaterial billofmaterialvariant.
       SORT lt_billofmaterialitemdex_3 BY billofmaterialcategory billofmaterial billofmaterialvariant billofmaterialitemnumber.
       SORT lt_product BY product.
-      SORT lt_productplantbasic BY product plant.
+*      SORT lt_productplantbasic BY product plant.
       SORT lt_productplantbasic_com BY product plant.
       SORT lt_purgprcgcndnrecdvalidity BY material plant.
       SORT lt_billofmaterialsubitemsbasic BY billofmaterialcategory billofmaterial billofmaterialitemnodenumber bomsubitemnumbervalue.
@@ -446,26 +447,30 @@ CLASS ZCL_BOM IMPLEMENTATION.
             ls_data-billofmaterialitembaseunit = ls_bomlist-billofmaterialitembaseunit.
         ENDTRY.
 
-        "Read data of product plant(header material)
-        READ TABLE lt_productplantbasic INTO DATA(ls_productplantbasic) WITH KEY product = ls_bomlist-headermaterial
-                                                                                 plant = ls_bomlist-plant
-                                                                        BINARY SEARCH.
-        IF sy-subrc = 0.
-          ls_data-mrpresponsible = ls_productplantbasic-mrpresponsible.
-        ELSE.
-          CONTINUE.
-        ENDIF.
+*        "Read data of product plant(header material)
+*        READ TABLE lt_productplantbasic INTO DATA(ls_productplantbasic) WITH KEY product = ls_bomlist-headermaterial
+*                                                                                 plant = ls_bomlist-plant
+*                                                                        BINARY SEARCH.
+*        IF sy-subrc = 0.
+*          ls_data-mrpresponsible = ls_productplantbasic-mrpresponsible.
+*        ELSE.
+*          CONTINUE.
+*        ENDIF.
 
         "Read data of product plant(component)
         READ TABLE lt_productplantbasic_com INTO DATA(ls_productplantbasic_com) WITH KEY product = ls_bomlist-billofmaterialcomponent
                                                                                          plant = ls_bomlist-plant
                                                                                 BINARY SEARCH.
         IF sy-subrc = 0.
+          ls_data-mrpresponsible = ls_productplantbasic_com-mrpresponsible.
+
           IF ls_productplantbasic_com-profilecode = lc_profilecode_z0
           OR ls_productplantbasic_com-profilecode = lc_profilecode_z2
           OR ls_productplantbasic_com-profilecode = lc_profilecode_z3.
             ls_data-profilecode = lc_profilecode_lock.
           ENDIF.
+        ELSE.
+          CONTINUE.
         ENDIF.
 
 *        IF ls_bomlist-alternativeitempriority = lc_priority_01 AND ls_bomlist-alternativeitemgroup IS NOT INITIAL.

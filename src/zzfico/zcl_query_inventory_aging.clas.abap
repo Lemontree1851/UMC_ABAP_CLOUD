@@ -8,7 +8,10 @@ CLASS zcl_query_inventory_aging DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_query_inventory_aging IMPLEMENTATION.
+
+
+CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
+
 
   METHOD if_rap_query_provider~select.
 
@@ -526,5 +529,4 @@ CLASS zcl_query_inventory_aging IMPLEMENTATION.
 
     io_response->set_data( lt_data ).
   ENDMETHOD.
-
 ENDCLASS.

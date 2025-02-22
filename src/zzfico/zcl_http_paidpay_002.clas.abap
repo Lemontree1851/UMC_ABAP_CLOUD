@@ -89,6 +89,8 @@ CLASS zcl_http_paidpay_002 DEFINITION
   PROTECTED SECTION.
   PRIVATE SECTION.
     DATA:
+      lv_ap(12)         TYPE p DECIMALS 4,
+      lv_ar(12)         TYPE p DECIMALS 4,
       ls_create_in      TYPE ts_create,
       ls_cancel_in      TYPE ts_cancel,
       lv_msg(220)       TYPE c,
@@ -206,12 +208,14 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
     IF lv_header = 'CREATE'.
       DATA(lt_create) = ls_create_in-to_create-items.
       LOOP AT lt_create INTO DATA(ls_create).
+         lv_ap = ls_create-ap.
+         lv_ar = ls_create-ar.
 *        ls_create-customer = | { ls_create-customer ALPHA = IN } |.
 *        ls_create-supplier = | { ls_create-supplier ALPHA = IN } |.
-        IF ls_create-ap >= ls_create-ar.
-          lv_dr = ls_create-ap.
+        IF lv_ap >= lv_ar.
+          lv_dr = lv_ar.
         ELSE.
-          lv_dr = ls_create-ar.
+          lv_dr = lv_ap.
         ENDIF.
         lv_cr = -1 * lv_dr.
 * 1st document
@@ -253,8 +257,8 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
 
           ls_deep-%param-companycode = ls_create-companycode.
           ls_deep-%param-accountingdocumenttype = 'Z2'.
-          ls_deep-%param-documentdate = ls_create-postingdate1.
-          ls_deep-%param-postingdate = ls_create-postingdate1.
+          ls_deep-%param-documentdate = ls_create-postingdate2.
+          ls_deep-%param-postingdate = ls_create-postingdate2.
           ls_deep-%param-createdbyuser = sy-uname.
           ls_deep-%param-_aritems =
             VALUE #(
@@ -280,8 +284,8 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
           CLEAR: ls_deep, lt_deep.
         ENDIF.
 * 3rd document
-        IF ls_create-ap > ls_create-ar.
-          lv_dr = ls_create-ap - ls_create-ar.
+        IF lv_ap > lv_ar.
+          lv_dr = lv_ap - lv_ar.
           lv_cr = -1 * lv_dr.
         ENDIF.
 
@@ -290,8 +294,8 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
 
         ls_deep-%param-companycode = ls_create-companycode.
         ls_deep-%param-accountingdocumenttype = 'Z2'.
-        ls_deep-%param-documentdate = ls_create-postingdate2.
-        ls_deep-%param-postingdate = ls_create-postingdate2.
+        ls_deep-%param-documentdate = ls_create-postingdate1.
+        ls_deep-%param-postingdate = ls_create-postingdate1.
         ls_deep-%param-createdbyuser = sy-uname.
         ls_deep-%param-_apitems =
           VALUE #(

@@ -65,7 +65,7 @@ define root custom entity ZR_BOM
       @UI                           : { selectionField: [ { position: 81 } ] }
       @Consumption.filter           : { selectionType: #SINGLE, multipleSelections: false, defaultValue: '1'  }
       @Consumption.valueHelpDefinition: [ { entity: { element: 'value_low', name: 'ZC_ExplodeTypeVH' } } ]
-      @EndUserText.label            : '展开类型'
+      @EndUserText.label            : '展開方式'
       BOMExplosionType              : ze_explodetype;
 
       //      @UI                           : { selectionField: [ { position: 90 } ] }

@@ -9,7 +9,10 @@ CLASS zcl_query_salesdocumentlist DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
+
+
+CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
+
 
   METHOD if_rap_query_provider~select.
     TYPES:
@@ -917,5 +920,4 @@ CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
 
     io_response->set_data( lt_data ).
   ENDMETHOD.
-
 ENDCLASS.

@@ -11,7 +11,9 @@ ENDCLASS.
 
 
 
-CLASS zcl_poacceptance_report IMPLEMENTATION.
+CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
+
+
   METHOD if_rap_query_provider~select.
     TYPES:
       BEGIN OF ts_dimension,
@@ -954,5 +956,4 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
       io_response->set_data( lt_output ).
     ENDIF.
   ENDMETHOD.
-
 ENDCLASS.

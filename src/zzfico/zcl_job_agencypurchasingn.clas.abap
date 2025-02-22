@@ -25,7 +25,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_job_agencypurchasingn IMPLEMENTATION.
+CLASS ZCL_JOB_AGENCYPURCHASINGN IMPLEMENTATION.
 
 
   METHOD add_message_to_log.

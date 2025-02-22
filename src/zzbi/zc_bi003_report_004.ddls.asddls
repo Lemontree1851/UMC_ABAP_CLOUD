@@ -96,5 +96,8 @@ define root view entity ZC_BI003_REPORT_004
 
       @Semantics.amount.currencyCode: 'BillingCurrency'
       @EndUserText: { label:  'Recovery Amount', quickInfo: 'Recovery Amount' }
-      RecoveryAmount
+      RecoveryAmount,
+      
+      AccountingDocument,
+      AccountingDocumentItem
 }

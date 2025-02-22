@@ -8,4 +8,5 @@ define behavior for ZC_TMM_1006 alias PurchaseReq
   use delete;
   use action batchProcess;
   use action createPurchaseOrder;
+  use action uploadFile;
 }

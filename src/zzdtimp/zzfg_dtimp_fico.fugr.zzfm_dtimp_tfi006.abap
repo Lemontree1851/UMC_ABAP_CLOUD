@@ -14,6 +14,7 @@ FUNCTION zzfm_dtimp_tfi006.
 
   DATA lv_message TYPE string.
   DATA:lv_path     TYPE string.
+         DATA:lv_requestbody TYPE string.
   TYPES:
     BEGIN OF ty_inventory,
       inventory TYPE string,
@@ -62,9 +63,9 @@ FUNCTION zzfm_dtimp_tfi006.
       ls_change-_inventory-inventory = ls_data-inventory .
       lv_path = |/api_fixedasset/srvd_a2x/sap/fixedasset/0001/FixedAsset/{ ls_data-companycode }/{ ls_data-masterfixedasset }/{ ls_data-fixedasset }/SAP__self.Change|.
 
-      DATA(lv_requestbody) = xco_cp_json=>data->from_abap( ls_change )->apply( VALUE #(
-                 " ( xco_cp_json=>transformation->camel_case_to_underscore )
-                ) )->to_string( ).
+
+      lv_requestbody = '{"_Inventory": {"Inventory":"' && ls_data-inventory && '"}}'.
+
       zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
                                                    iv_method      = if_web_http_client=>post
                                                     "iv_select      = lv_select

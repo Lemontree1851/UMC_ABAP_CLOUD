@@ -124,7 +124,7 @@ define custom entity ZR_PODATAANALYSIS
       @Consumption                  : {valueHelpDefinition: [{ entity:{ element: 'Product', name: 'I_ProductStdVH'}}],
                   filter            : { multipleSelections: true, selectionType: #SINGLE } }
       @EndUserText.label            : '品目コード'
-      Material                      : abap.char(18);
+      Material                      : abap.char(40);
       
       @UI                           : { lineItem: [ { position: 260, label: '品目テキスト' } ]}
       @EndUserText.label            : '品目テキスト'

@@ -31,9 +31,16 @@ define view entity ZI_BI003_REPORT_REC_NEC_AMT_GI
 where
   _Product.ProductGroup = $parameters.p_product_group
 
+union all select from ZI_BI003_REPORT_002_BILLING_F3( p_recover_type: 'IN', p_condition_type: 'ZPIN' )
+{
+  key RecoveryManagementNumber,
+  key _FiscalCalendarDate.FiscalYearPeriod,
+      _Companycode.Currency   as CompanyCurrency,
+      cast( '0.00' as dmbtr ) as TotalGroupAmount
+}
+
 union all select from ztbi_bi003_j03 as _table
 {
-
   key recovery_management_number as RecoveryManagementNumber,
   key fiscal_year_period         as FiscalYearPeriod,
       company_currency           as CompanyCurrency,

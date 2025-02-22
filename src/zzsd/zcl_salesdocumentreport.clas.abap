@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
+CLASS zcl_salesdocumentreport IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -160,11 +160,14 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
       END OF ty_res_api1.
     TYPES:
       BEGIN OF ty_productcost,
-        material                   TYPE matnr,
-        plant                      TYPE werks_d,
-        ztype(10)                  TYPE c,
-        controllingareacurrency    TYPE i_productcostestimateitem-controllingareacurrency,
-        totalamountinctrlgareacrcy TYPE i_productcostestimateitem-totalamountinctrlgareacrcy,
+        material                    TYPE matnr,
+        plant                       TYPE werks_d,
+        ztype(10)                   TYPE c,
+        controllingareacurrency     TYPE i_productcostestimateitem-controllingareacurrency,
+        " MOD BEGIN BY XINLEI XU 2025/02/18
+        " totalamountinctrlgareacrcy  TYPE i_productcostestimateitem-totalamountinctrlgareacrcy,
+        totalpriceininctrlgareacrcy TYPE i_productcostestimateitem-totalpriceininctrlgareacrcy,
+        " MOD END BY XINLEI XU 2025/02/18
       END OF ty_productcost.
     DATA:lt_productcost TYPE STANDARD TABLE OF ty_productcost.
     DATA:ls_productcost TYPE ty_productcost.
@@ -642,7 +645,7 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
         conditioncurrency,
         conditionscaleamountcurrency
       FROM i_slsprcgconditionrecord WITH PRIVILEGED ACCESS
-      WHERE conditiontype = 'ZYP0'
+      WHERE conditiontype = 'ZYR0' " 'ZYP0' MOD BY XINLEI XU 2025/02/16
         AND conditionisdeleted = @space
         AND conditionvaliditystartdate LE @lv_endda
         AND conditionvalidityenddate   GE @lv_begda
@@ -742,117 +745,173 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
       ENDDO.
     ENDIF.
 
-    "获取加工费
+*&--MOD BEGIN BY XINLEI XU 2025/02/19
+*    "获取加工费
+*    IF lt_result IS NOT INITIAL.
+*
+*      lv_path = |/YY1_PRODUCTCOSTESTIMATED_CDS/YY1_ProductCostEstimateD|.
+*      "lv_path = |/YY1_PRODUCTCOSTESTIMATED_CDS/YY1_ProductCostEstimateD?$filter=CostingDate%20eq%20datetime'{ lv_local_begda_s }T00:00:00'|.
+*
+*      "Call API
+*      zzcl_common_utils=>request_api_v2(
+*        EXPORTING
+*          iv_path        = lv_path
+*          iv_method      = if_web_http_client=>get
+*          iv_format      = 'json'
+*        IMPORTING
+*          ev_status_code = DATA(lv_stat_code1)
+*          ev_response    = DATA(lv_resbody_api1) ).
+*      TRY.
+*          /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
+*                  CHANGING  data = ls_res_api1 ).
+*
+*        CATCH cx_root INTO DATA(lx_root4) ##NO_HANDLER.
+*      ENDTRY.
+*
+*      "只保留符合条件的成本估算
+*      LOOP AT ls_res_api1-d-results INTO DATA(ls_result_p1).
+*        READ TABLE lt_result TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result_p1-plant
+*                                                             product           = ls_result_p1-material.
+*        IF sy-subrc <> 0.
+*          DELETE ls_res_api1-d-results.
+*          CONTINUE.
+*        ENDIF.
+*        "时间戳格式转换成日期格式
+*        ls_result_p1-costingdate_d = CONV string( ls_result_p1-costingdate DIV 1000000 ).
+*        MODIFY ls_res_api1-d-results  FROM ls_result_p1 TRANSPORTING costingdate_d .
+*
+*      ENDLOOP.
+*
+*      "保留日期最大的
+*      SORT ls_res_api1-d-results BY plant material costingdate DESCENDING.
+*      DELETE ADJACENT DUPLICATES FROM ls_res_api1-d-results COMPARING plant material .
+*
+*
+*      SORT ls_res_api1-d-results BY costestimate.
+*
+*      IF ls_res_api1-d-results IS NOT INITIAL.
+*        "取成本估算号码 取全部主键 防止去重
+*        SELECT
+*         costingreferenceobject,
+*         costestimate,
+*         costingtype,
+*         costingdate,
+*         costingversion,
+*         valuationvariant,
+*         costisenteredmanually,
+*         costingitem,
+*
+*         costcomponent,
+*         controllingareacurrency,
+*         " MOD BEGIN BY XINLEI XU 2025/02/18
+*         " totalamountinctrlgareacrcy,
+*         totalpriceininctrlgareacrcy,
+*         " MOD END BY XINLEI XU 2025/02/18
+*         costingpriceunitqty
+*        FROM i_productcostestimateitem WITH PRIVILEGED ACCESS "#EC CI_FAE_LINES_ENSURED
+*        FOR ALL ENTRIES IN @ls_res_api1-d-results
+*       WHERE costestimate = @ls_res_api1-d-results-costestimate
+*        INTO TABLE  @DATA(lt_productcostestimateitem).
+*        SORT lt_productcostestimateitem BY costestimate costcomponent.
+*
+*      ENDIF.
+*      LOOP AT lt_productcostestimateitem INTO DATA(ls_productcostestimateitem).
+*
+*        READ TABLE ls_res_api1-d-results INTO ls_result_p1 WITH KEY costestimate = ls_productcostestimateitem-costestimate BINARY SEARCH.
+*        IF sy-subrc = 0.
+*          ls_productcost-material = ls_result_p1-material.
+*          ls_productcost-plant = ls_result_p1-plant .
+*          ls_productcost-controllingareacurrency  = ls_productcostestimateitem-controllingareacurrency  .
+*          " MOD BEGIN BY XINLEI XU 2025/02/18
+*          " ls_productcost-totalamountinctrlgareacrcy = ls_productcostestimateitem-totalamountinctrlgareacrcy / ls_productcostestimateitem-costingpriceunitqty .
+*          ls_productcost-totalpriceininctrlgareacrcy = ls_productcostestimateitem-totalpriceininctrlgareacrcy.
+*          " MOD END BY XINLEI XU 2025/02/18
+*
+*          IF ls_productcostestimateitem-costcomponent = '101'
+*          OR ls_productcostestimateitem-costcomponent = '102'
+*          OR ls_productcostestimateitem-costcomponent = '103' .
+*            " MOD BEGIN BY XINLEI XU 2025/02/18
+*            " 加工费
+*            " ls_productcost-ztype = 'PROCESS'.
+*            " 材料费
+*            ls_productcost-ztype = 'RAW'.
+*            " MOD END BY XINLEI XU 2025/02/18
+*          ELSEIF ls_productcostestimateitem-costcomponent = '201'
+*              OR ls_productcostestimateitem-costcomponent = '202'
+*              OR ls_productcostestimateitem-costcomponent = '203'
+*              OR ls_productcostestimateitem-costcomponent = '204'
+*              OR ls_productcostestimateitem-costcomponent = '205'
+*              OR ls_productcostestimateitem-costcomponent = '206'
+*              OR ls_productcostestimateitem-costcomponent = '207'
+*              OR ls_productcostestimateitem-costcomponent = '208'
+*              OR ls_productcostestimateitem-costcomponent = '209'.
+*            " MOD BEGIN BY XINLEI XU 2025/02/18
+*            " 材料费
+*            " ls_productcost-ztype = 'RAW'.
+*            " 加工费
+*            ls_productcost-ztype = 'PROCESS'.
+*            " MOD END BY XINLEI XU 2025/02/18
+*          ELSE.
+*            ls_productcost-ztype = ''.
+*          ENDIF.
+*        ENDIF.
+*        COLLECT ls_productcost INTO lt_productcost.
+*      ENDLOOP.
+*    SORT lt_productcost BY material plant ztype.
+
     IF lt_result IS NOT INITIAL.
+      DATA(lv_system_date) = cl_abap_context_info=>get_system_date( ).
+      SELECT costingreferenceobject,
+             costestimate,
+             costingtype,
+             costingdate,
+             costingversion,
+             valuationvariant,
+             costisenteredmanually,
+             product,
+             plant,
+             controllingareacurrency,
+             costinglotsize
+        FROM i_productcostestimate WITH PRIVILEGED ACCESS "#EC CI_FAE_LINES_ENSURED
+         FOR ALL ENTRIES IN @lt_result
+       WHERE product = @lt_result-product
+         AND plant = @lt_result-salesorganization
+         AND costestimatestatus = 'FR'
+         AND costingdate < @lv_system_date
+        INTO TABLE @DATA(lt_productcostestimate).
 
-      lv_path = |/YY1_PRODUCTCOSTESTIMATED_CDS/YY1_ProductCostEstimateD|.
-      "lv_path = |/YY1_PRODUCTCOSTESTIMATED_CDS/YY1_ProductCostEstimateD?$filter=CostingDate%20eq%20datetime'{ lv_local_begda_s }T00:00:00'|.
+      " 保留 操作当時の日付に最大値
+      SORT lt_productcostestimate BY product plant costingdate DESCENDING.
+      DELETE ADJACENT DUPLICATES FROM lt_productcostestimate COMPARING product plant.
 
-      "Call API
-      zzcl_common_utils=>request_api_v2(
-        EXPORTING
-          iv_path        = lv_path
-          iv_method      = if_web_http_client=>get
-          iv_format      = 'json'
-        IMPORTING
-          ev_status_code = DATA(lv_stat_code1)
-          ev_response    = DATA(lv_resbody_api1) ).
-      TRY.
-          /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
-                  CHANGING  data = ls_res_api1 ).
-
-        CATCH cx_root INTO DATA(lx_root4) ##NO_HANDLER.
-      ENDTRY.
-
-      "只保留符合条件的成本估算
-      LOOP AT ls_res_api1-d-results INTO DATA(ls_result_p1).
-        READ TABLE lt_result TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result_p1-plant
-                                                             product           = ls_result_p1-material.
-        IF sy-subrc <> 0.
-          DELETE ls_res_api1-d-results.
-          CONTINUE.
-        ENDIF.
-        "时间戳格式转换成日期格式
-        ls_result_p1-costingdate_d = CONV string( ls_result_p1-costingdate DIV 1000000 ).
-        MODIFY ls_res_api1-d-results  FROM ls_result_p1 TRANSPORTING costingdate_d .
-
-      ENDLOOP.
-
-      "保留日期最大的
-      SORT ls_res_api1-d-results BY plant material costingdate DESCENDING.
-      DELETE ADJACENT DUPLICATES FROM ls_res_api1-d-results COMPARING plant material .
-
-
-      SORT ls_res_api1-d-results BY costestimate.
-
-      IF ls_res_api1-d-results IS NOT INITIAL.
-        "取成本估算号码 取全部主键 防止去重
-        SELECT
-         costingreferenceobject,
-         costestimate,
-         costingtype,
-         costingdate,
-         costingversion,
-         valuationvariant,
-         costisenteredmanually,
-         costingitem,
-
-         costcomponent,
-         controllingareacurrency,
-         totalamountinctrlgareacrcy,
-         costingpriceunitqty
-        FROM i_productcostestimateitem WITH PRIVILEGED ACCESS "#EC CI_FAE_LINES_ENSURED
-        FOR ALL ENTRIES IN @ls_res_api1-d-results
-       WHERE costestimate = @ls_res_api1-d-results-costestimate
-        INTO TABLE  @DATA(lt_productcostestimateitem).
-        SORT lt_productcostestimateitem BY costestimate costcomponent.
-
+      IF lt_productcostestimate IS NOT INITIAL.
+        SELECT costestimate,
+               costingdate,
+               SUM( costcomponentcostfield1amt +
+                    costcomponentcostfield3amt +
+                    costcomponentcostfield5amt ) AS raw_amount,
+               SUM( costcomponentcostfield11amt +
+                    costcomponentcostfield13amt +
+                    costcomponentcostfield15amt +
+                    costcomponentcostfield17amt +
+                    costcomponentcostfield23amt +
+                    costcomponentcostfield25amt ) AS process_amount
+          FROM i_prodcostestcostcomprawdex WITH PRIVILEGED ACCESS "#EC CI_FAE_LINES_ENSURED
+         WHERE iscostcomponentsplitlowerlevel = ''
+           AND costisinctrlgareacrcy = ''
+           AND costingdate < @lv_system_date
+         GROUP BY costestimate,
+                  costingdate
+          INTO TABLE @DATA(lt_productcostcom).
+        SORT lt_productcostcom BY costestimate costingdate.
       ENDIF.
-      LOOP AT lt_productcostestimateitem INTO DATA(ls_productcostestimateitem).
-
-        READ TABLE ls_res_api1-d-results INTO ls_result_p1 WITH KEY costestimate = ls_productcostestimateitem-costestimate BINARY SEARCH.
-        IF sy-subrc = 0.
-          ls_productcost-material = ls_result_p1-material.
-          ls_productcost-plant = ls_result_p1-plant .
-          ls_productcost-controllingareacurrency  = ls_productcostestimateitem-controllingareacurrency  .
-          ls_productcost-totalamountinctrlgareacrcy = ls_productcostestimateitem-totalamountinctrlgareacrcy / ls_productcostestimateitem-costingpriceunitqty .
-
-          IF ls_productcostestimateitem-costcomponent = '101'
-          OR ls_productcostestimateitem-costcomponent = '102'
-          OR ls_productcostestimateitem-costcomponent = '103' .
-            "加工费
-            ls_productcost-ztype = 'PROCESS'.
-
-          ELSEIF ls_productcostestimateitem-costcomponent = '201'
-              OR ls_productcostestimateitem-costcomponent = '202'
-              OR ls_productcostestimateitem-costcomponent = '203'
-              OR ls_productcostestimateitem-costcomponent = '204'
-              OR ls_productcostestimateitem-costcomponent = '205'
-              OR ls_productcostestimateitem-costcomponent = '206'
-              OR ls_productcostestimateitem-costcomponent = '207'
-              OR ls_productcostestimateitem-costcomponent = '208'
-              OR ls_productcostestimateitem-costcomponent = '209'.
-            "材料费
-            ls_productcost-ztype = 'RAW'.
-          ELSE.
-
-            ls_productcost-ztype = ''.
-          ENDIF.
-
-        ENDIF.
-        COLLECT ls_productcost INTO lt_productcost.
-
-      ENDLOOP.
-
-      SORT lt_productcost BY material plant ztype.
+*&--MOD END BY XINLEI XU 2025/02/19
 
       SELECT *
         FROM ztbc_1001 WITH PRIVILEGED ACCESS
        WHERE zid   = 'ZSD017'
          AND zkey1 = 'GL_ACCOUNT'
         INTO TABLE @DATA(lt_ztbc_1001).       "#EC CI_ALL_FIELDS_NEEDED
-
-*
 *
 *      "BOM 展开
 *      DATA: lt_bomlist_tmp TYPE STANDARD TABLE OF zcl_explodebom=>ty_bomlist,
@@ -965,9 +1024,8 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
 *        SORT lt_costitem BY product plant costingdate DESCENDING.
 *
 *      ENDIF.
-
-
     ENDIF.
+
     "拼接出结果
     DATA: ls_output TYPE zr_salesdocumentreport.
     LOOP AT lt_months INTO ls_months.
@@ -999,18 +1057,17 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
 
         READ TABLE lt_plant INTO DATA(ls_plant) WITH KEY plant = ls_result-salesorganization BINARY SEARCH.
         IF sy-subrc = 0.
+          ls_output-plant = ls_plant-plant. " ADD BY XINLEI XU 2025/02/17
           ls_output-plantname = ls_plant-plantname.
           ls_output-companycode = ls_plant-valuationarea.
         ENDIF.
 
         ls_output-salesoffice = ls_result-salesoffice.
 
-
         READ TABLE lt_userdescription INTO DATA(ls_userdescription) WITH KEY userid = ls_result-username .
         IF sy-subrc = 0.
           ls_output-createdbyuser = ls_userdescription-userdescription.
         ENDIF.
-
 
         ls_output-salesgroup = ls_result-salesgroup.
 
@@ -1043,7 +1100,6 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
 
         "ls_output-productgroup = ls_result-productgroup.
 
-
         READ TABLE lt_producttext INTO DATA(ls_producttext) WITH KEY product = ls_result-product BINARY SEARCH.
         IF sy-subrc = 0.
           ls_output-productname = ls_producttext-productname.
@@ -1053,7 +1109,6 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
         IF sy-subrc = 0.
           ls_output-customeraccountassignmentgroup = ls_customersalesarea-customeraccountassignmentgroup.
         ENDIF.
-
 
 *        DATA:lv_mcost TYPE zr_salesdocumentreport-manufacturingcost_n.
 *        CLEAR lv_mcost .
@@ -1089,23 +1144,52 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
 *
 *        ENDLOOP.
 
-        "加工费
-        READ TABLE lt_productcost INTO ls_productcost WITH KEY material          = ls_result-product
-                                                               plant             = ls_result-salesorganization
-                                                               ztype             = 'PROCESS' BINARY SEARCH.
-        IF sy-subrc = 0.
-          ls_output-manufacturingcost_n = ls_productcost-totalamountinctrlgareacrcy.
-          ls_output-currency1           = ls_productcost-controllingareacurrency.
-        ENDIF.
-        "材料费
-        READ TABLE lt_productcost INTO ls_productcost WITH KEY material          = ls_result-product
-                                                               plant             = ls_result-salesorganization
-                                                               ztype             = 'RAW' BINARY SEARCH.
-        IF sy-subrc = 0.
-          ls_output-materialcost2000_n = ls_productcost-totalamountinctrlgareacrcy.
-          ls_output-currency           = ls_productcost-controllingareacurrency.
-        ENDIF.
+*&--MOD BEGIN BY XINLEI XU 2025/02/19
+*        "加工费
+*        READ TABLE lt_productcost INTO ls_productcost WITH KEY material          = ls_result-product
+*                                                               plant             = ls_result-salesorganization
+*                                                               ztype             = 'PROCESS' BINARY SEARCH.
+*        IF sy-subrc = 0.
+*          " MOD BEGIN BY XINLEI XU 2025/02/18
+*          " ls_output-manufacturingcost_n = ls_productcost-totalamountinctrlgareacrcy.
+*          ls_output-manufacturingcost_n = ls_productcost-totalpriceininctrlgareacrcy.
+*          " MOD END BY XINLEI XU 2025/02/18
+*          ls_output-currency1           = ls_productcost-controllingareacurrency.
+*        ENDIF.
+*        "材料费
+*        READ TABLE lt_productcost INTO ls_productcost WITH KEY material          = ls_result-product
+*                                                               plant             = ls_result-salesorganization
+*                                                               ztype             = 'RAW' BINARY SEARCH.
+*        IF sy-subrc = 0.
+*          " MOD BEGIN BY XINLEI XU 2025/02/18
+*          " ls_output-materialcost2000_n = ls_productcost-totalamountinctrlgareacrcy.
+*          ls_output-materialcost2000_n = ls_productcost-totalpriceininctrlgareacrcy.
+*          " MOD END BY XINLEI XU 2025/02/18
+*          ls_output-currency           = ls_productcost-controllingareacurrency.
+*        ENDIF.
 
+        READ TABLE lt_productcostestimate INTO DATA(ls_productcostestimate) WITH KEY product = ls_result-product
+                                                                                     plant   = ls_result-salesorganization
+                                                                                     BINARY SEARCH.
+        IF sy-subrc = 0.
+          READ TABLE lt_productcostcom INTO DATA(ls_productcostcom) WITH KEY costestimate = ls_productcostestimate-costestimate
+                                                                             costingdate = ls_productcostestimate-costingdate
+                                                                             BINARY SEARCH.
+          IF sy-subrc = 0.
+            " 加工费
+            IF ls_productcostestimate-costinglotsize IS NOT INITIAL.
+              ls_output-manufacturingcost_n = ls_productcostcom-process_amount / ls_productcostestimate-costinglotsize.
+            ENDIF.
+            ls_output-currency1 = ls_productcostestimate-controllingareacurrency.
+
+            " 材料费
+            IF ls_productcostestimate-costinglotsize IS NOT INITIAL.
+              ls_output-materialcost2000_n = ls_productcostcom-raw_amount / ls_productcostestimate-costinglotsize.
+            ENDIF.
+            ls_output-currency = ls_productcostestimate-controllingareacurrency.
+          ENDIF.
+        ENDIF.
+*&--MOD END BY XINLEI XU 2025/02/19
 
         READ TABLE lt_result1 INTO DATA(ls_result1) WITH KEY salesorganization   = ls_result-salesorganization
                                                              salesoffice         = ls_result-salesoffice
@@ -1331,12 +1415,24 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
           ENDIF.
         ENDIF.
 
+*&--ADD BEGIN BY XINLEI XU 2025/02/19
+        DATA(lv_conditionratevalue_n) = zzcl_common_utils=>conversion_amount(
+                                         iv_alpha = 'IN'
+                                         iv_currency = ls_output-displaycurrency1
+                                         iv_input = ls_output-conditionratevalue_n ).
+*&--ADD END BY XINLEI XU 2025/02/19
+
+*&--MOD BEGIN BY XINLEI XU 2025/02/19
+*        "贡献利润(单价):单价 - 材料费
+*        ls_output-materialcost2000per_n = ls_output-conditionratevalue_n - ls_output-materialcost2000_n.
+*        "销售总利润(单价)：单价 - 材料费 - 加工费
+*        ls_output-manufacturingcostper_n = ls_output-conditionratevalue_n - ls_output-materialcost2000_n - ls_output-manufacturingcost_n.
+
         "贡献利润(单价):单价 - 材料费
-        ls_output-materialcost2000per_n = ls_output-conditionratevalue_n - ls_output-materialcost2000_n.
-
+        ls_output-materialcost2000per_n = lv_conditionratevalue_n - ls_output-materialcost2000_n.
         "销售总利润(单价)：单价 - 材料费 - 加工费
-        ls_output-manufacturingcostper_n = ls_output-conditionratevalue_n - ls_output-materialcost2000_n - ls_output-manufacturingcost_n.
-
+        ls_output-manufacturingcostper_n = lv_conditionratevalue_n - ls_output-materialcost2000_n - ls_output-manufacturingcost_n.
+*&--MOD END BY XINLEI XU 2025/02/19
 
         READ TABLE lt_result0 INTO DATA(ls_result0) WITH KEY salesorganization   = ls_result-salesorganization
                                                              salesoffice         = ls_result-salesoffice
@@ -1363,7 +1459,7 @@ CLASS ZCL_SALESDOCUMENTREPORT IMPLEMENTATION.
 
           "销售总利润
           ls_output-grossprofittotal_n = ls_result0-salesplanquantity * ls_output-manufacturingcostper_n.
-          ls_output-displaycurrency2   = ls_output-currency1.
+          ls_output-displaycurrency3   = ls_output-currency1.
 
         ENDIF.
 

@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
+CLASS zcl_podataanalysis IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -771,42 +771,63 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
         SORT lt_mrp_api BY mrpelement mrpelementitem mrpelementscheduleline mrpelementcategory.
       ENDIF.
 
+*&--MOD BEGIN BY XINLEI XU 2025/02/21
       TRY.
           DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
-          " Get UWMS Access configuration
-          SELECT SINGLE *
+          " Get UWEB Access configuration
+          SELECT *
             FROM zc_tbc1001
            WHERE zid = 'ZBC005'
-            INTO @DATA(ls_config).            "#EC CI_ALL_FIELDS_NEEDED
+             AND zvalue1 = @lv_system_url     "ADD BY XINLEI XU 2025/02/21
+            INTO TABLE @DATA(lt_config).      "#EC CI_ALL_FIELDS_NEEDED
           ##NO_HANDLER
         CATCH cx_abap_context_info_error.
           "handle exception
       ENDTRY.
 
-      CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
-      CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
-      CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
-      CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
+      SORT lt_config BY zvalue2.
+      DELETE ADJACENT DUPLICATES FROM lt_config COMPARING zvalue2.
 
-      zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/T02_PO_D|
-*                                                                    iv_odata_filter  = lv_filter
-                                                                    iv_token_url     = CONV #( ls_config-zvalue3 )
-                                                                    iv_client_id     = CONV #( ls_config-zvalue4 )
-                                                                    iv_client_secret = CONV #( ls_config-zvalue5 )
-                                                                    iv_authtype      = 'OAuth2.0'
-                                                          IMPORTING ev_status_code   = DATA(lv_status_code_uweb)
-                                                                    ev_response      = DATA(lv_response_uweb) ).
+      LOOP AT lt_config INTO DATA(ls_config).
+        CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
+        CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
+        CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
+        CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
 
-      IF lv_status_code_uweb = 200.
-        xco_cp_json=>data->from_string( lv_response_uweb )->apply( VALUE #(
-          ( xco_cp_json=>transformation->boolean_to_abap_bool )
-        ) )->write_to( REF #( ls_response ) ).
+        DATA(lv_top)  = 1000.
+        DATA(lv_skip) = -1000.
+        DO.
+          lv_skip += 1000.
+          zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/T02_PO_D?$top={ lv_top }&$skip={ lv_skip }|
+                                                                  iv_token_url     = CONV #( ls_config-zvalue3 )
+                                                                  iv_client_id     = CONV #( ls_config-zvalue4 )
+                                                                  iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                                  iv_authtype      = 'OAuth2.0'
+                                                        IMPORTING ev_status_code   = DATA(lv_status_code_uweb)
+                                                                  ev_response      = DATA(lv_response_uweb) ).
 
-        IF ls_response-d-results IS NOT INITIAL.
-          APPEND LINES OF ls_response-d-results TO lt_uweb_api.
-        ENDIF.
-        SORT lt_uweb_api BY po_no d_no.
-      ENDIF.
+          IF lv_status_code_uweb = 200.
+            CLEAR ls_response.
+*            xco_cp_json=>data->from_string( lv_response_uweb )->apply( VALUE #(
+*              ( xco_cp_json=>transformation->boolean_to_abap_bool )
+*            ) )->write_to( REF #( ls_response ) ).
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_response_uweb
+                                       CHANGING  data = ls_response ).
+
+            IF ls_response-d-results IS NOT INITIAL.
+              APPEND LINES OF ls_response-d-results TO lt_uweb_api.
+            ELSE.
+              EXIT.
+            ENDIF.
+
+            CLEAR: lv_status_code_uweb, lv_response_uweb.
+          ELSE.
+            EXIT.
+          ENDIF.
+        ENDDO.
+      ENDLOOP.
+      SORT lt_uweb_api BY po_no d_no.
+*&--MOD END BY XINLEI XU 2025/02/21
 
 *      " UWEB接口，打印次数
 *      zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |http://220.248.121.53:11380/srv/odata/v2/TableService/T02_PO_D|

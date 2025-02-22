@@ -2,6 +2,44 @@ CLASS lhc_zce_createpir DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
     TYPES tt_ofpartition TYPE TABLE FOR HIERARCHY zd_orderforecastitem.
 
+    TYPES:
+      BEGIN OF ty_results,
+        _product                 TYPE string,
+        _plant                   TYPE string,
+        _plnd_indep_rqmt_version TYPE string,
+        _requirement_plan        TYPE string,
+        _plnd_indep_rqmt_period  TYPE string,
+        _period_type             TYPE string,
+        _working_day_date        TYPE string,
+        _planned_quantity        TYPE string,
+      END OF ty_results,
+      tt_results TYPE STANDARD TABLE OF ty_results WITH DEFAULT KEY,
+
+      BEGIN OF ty_plndindeprqmtitem,
+        results TYPE tt_results,
+      END OF ty_plndindeprqmtitem,
+
+      BEGIN OF ty_req,
+        _product                   TYPE string,
+        _plant                     TYPE string,
+        _plnd_indep_rqmt_version   TYPE string,
+        _requirement_plan          TYPE string,
+        _plnd_indep_rqmt_is_active TYPE string,
+        toplndindeprqmtitem        TYPE ty_plndindeprqmtitem,
+      END OF ty_req,
+
+      BEGIN OF ty_message,
+        value TYPE string,
+      END OF ty_message,
+
+      BEGIN OF ty_error,
+        message TYPE ty_message,
+      END OF ty_error,
+
+      BEGIN OF ty_res,
+        error TYPE ty_error,
+      END OF ty_res.
+
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
       IMPORTING keys REQUEST requested_authorizations FOR zce_createpir RESULT result.
 
@@ -38,6 +76,7 @@ CLASS lhc_zce_createpir DEFINITION INHERITING FROM cl_abap_behavior_handler.
       RETURNING VALUE(rt_supply_demand_items) TYPE zttpp_1002.
     METHODS createpir
       IMPORTING iv_type          TYPE string DEFAULT 'OF'
+      EXPORTING ev_msg           TYPE bapi_msg
       CHANGING  ct_plndindeprqmt TYPE tt_ofpartition
                 !failed          TYPE data OPTIONAL
                 !reported        TYPE data OPTIONAL.
@@ -84,16 +123,19 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
         createpir(
           EXPORTING
             iv_type = 'OF'
+          IMPORTING
+            ev_msg  = DATA(lv_msg)
           CHANGING
             ct_plndindeprqmt = lt_ofpartition
             failed    = failed
             reported  = reported ).
 
         " 拼接BO返回的消息
-        DATA lv_msg TYPE string.
+*        DATA lv_msg TYPE string.
         DATA lv_type TYPE c.
         " 如果有返回消息则视为失败
-        IF reported-zce_createpir IS NOT INITIAL.
+*        IF reported-zce_createpir IS NOT INITIAL.
+        IF lv_msg IS NOT INITIAL.
           lv_type = 'E'.
         ENDIF.
         IF lv_type <> 'E'.
@@ -108,24 +150,27 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
           createpir(
             EXPORTING
               iv_type = 'PIR'
+            IMPORTING
+              ev_msg  = lv_msg
             CHANGING
               ct_plndindeprqmt = lt_ofpartition
-              failed    = failed
-              reported  = reported ).
+              failed           = failed
+              reported         = reported ).
         ENDIF.
         " 如果没有返回消息则视为成功
-        IF reported-zce_createpir IS INITIAL.
+*        IF reported-zce_createpir IS INITIAL.
+        IF lv_msg IS INITIAL.
           lv_type = 'S'.
           MESSAGE s090(zpp_001) INTO lv_msg.
         ELSE.
           lv_type = 'E'.
-          " 将所有错误消息拼接在一起
-          LOOP AT reported-zce_createpir INTO DATA(ls_message).
-            lv_msg = zzcl_common_utils=>merge_message(
-                                          iv_message1 = lv_msg
-                                          iv_message2 = cl_message_helper=>get_text_for_message( ls_message-%msg )
-                                          iv_symbol = ';' ).
-          ENDLOOP.
+*          " 将所有错误消息拼接在一起
+*          LOOP AT reported-zce_createpir INTO DATA(ls_message).
+*            lv_msg = zzcl_common_utils=>merge_message(
+*                                          iv_message1 = lv_msg
+*                                          iv_message2 = cl_message_helper=>get_text_for_message( ls_message-%msg )
+*                                          iv_symbol = ';' ).
+*          ENDLOOP.
         ENDIF.
       ELSE.
         lv_type = 'E'.
@@ -141,15 +186,16 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
         APPEND ls_item TO lt_item.
       ENDLOOP.
 
-
       APPEND VALUE #( %cid    = key-%cid
-                        %param  =
-                        VALUE #(  customer  = ls_request-customer
-                                  plant     = ls_request-plant
-                                  material  = ls_request-material
-                                  type      = lv_type
-                                  message   = lv_msg
-                                  _item     = lt_item ) ) TO result.
+                      %param  =
+                      VALUE #(  customer  = ls_request-customer
+                                plant     = ls_request-plant
+                                material  = ls_request-material
+                                type      = lv_type
+                                message   = lv_msg
+                                _item     = lt_item ) ) TO result.
+
+      CLEAR lv_msg.
     ENDLOOP.
   ENDMETHOD.
   METHOD get_shipping_data.
@@ -208,7 +254,7 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
     DATA: ls_response_api      TYPE ty_response_api,
           ls_supplydemanditems TYPE zspp_1002,
           lt_supplydemanditems TYPE TABLE OF zspp_1002.
-    DATA(lv_param1) = |(%20MRPElementCategory%20eq%20'VC'%20or%20MRPElementCategory%20eq%20'VJ'%20)|.
+    DATA(lv_param1) = |(%20MRPElementCategory%20eq%20'VC'%20or%20MRPElementCategory%20eq%20'VJ'%20or%20MRPElementCategory%20eq%20'VI'%20)|.
     DATA(lv_path) = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?$filter=Material%20eq%20'{ iv_material }'%20and%20MRPPlant%20eq%20'{ iv_plant }'%20and%20{ lv_param1 }|.
 *    lv_path = CL_WEB_HTTP_UTILITY=>escape_url( lv_path ).
     "Call API
@@ -249,6 +295,13 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
           lv_plant           TYPE werks_d,
           lv_tabix           TYPE i,
           lv_date            TYPE datum.
+
+    DATA:
+      ls_results TYPE ty_results,
+      ls_req     TYPE ty_req,
+      ls_res     TYPE ty_res,
+      lv_path    TYPE string.
+
     "有些日期不是工作日，sap会自动变成节日的前一个工作日，但业务需求要后一个工作日，所以需要手动更改为后一个工作日
     LOOP AT ct_plndindeprqmt INTO cs_plndindeprqmt.
       lv_requirementdate = cs_plndindeprqmt-requirementdate.
@@ -287,98 +340,182 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
     ENDWHILE.
     SORT ct_plndindeprqmt BY customer plant material requirementdate.
 
-    LOOP AT ct_plndindeprqmt ASSIGNING FIELD-SYMBOL(<is_plndindeprqmt>).
-      lv_tabix = sy-tabix.
-      lv_customer = |{ <is_plndindeprqmt>-customer ALPHA = OUT }|.
-      IF lv_tabix = 1.
-        ls_plndindeprqmt-%cid = sy-tabix.
-        ls_plndindeprqmt-product = <is_plndindeprqmt>-material.
-        ls_plndindeprqmt-plant = <is_plndindeprqmt>-plant.
-        ls_plndindeprqmt-requirementplan = lv_customer.
-        IF iv_type = 'OF'.
-          DATA(lv_version) = '02'.
-          DATA(lv_isactive) = ''.
-        ELSE.
-          lv_version = '00'.
-          lv_isactive = 'X'.
-        ENDIF.
-        ls_plndindeprqmt-plndindeprqmtversion = lv_version.
-        ls_plndindeprqmt-plndindeprqmtisactive = lv_isactive.
-        APPEND ls_plndindeprqmt TO lt_plndindeprqmt.
-        CLEAR ls_plndindeprqmt.
-        ls_plndindeprqmtitem-%cid_ref = sy-tabix.
-        ls_plndindeprqmtitem-product = <is_plndindeprqmt>-material.
-        ls_plndindeprqmtitem-plant = <is_plndindeprqmt>-plant.
-        ls_plndindeprqmtitem-requirementplan = lv_customer.
-        ls_plndindeprqmtitem-plndindeprqmtversion = lv_version.
+*    LOOP AT ct_plndindeprqmt ASSIGNING FIELD-SYMBOL(<is_plndindeprqmt>).
+*      lv_tabix = sy-tabix.
+*      lv_customer = |{ <is_plndindeprqmt>-customer ALPHA = OUT }|.
+*      IF lv_tabix = 1.
+*        ls_plndindeprqmt-%cid = sy-tabix.
+*        ls_plndindeprqmt-product = <is_plndindeprqmt>-material.
+*        ls_plndindeprqmt-plant = <is_plndindeprqmt>-plant.
+*        ls_plndindeprqmt-requirementplan = lv_customer.
+*        IF iv_type = 'OF'.
+*          DATA(lv_version) = '02'.
+*          DATA(lv_isactive) = ''.
+*        ELSE.
+*          lv_version = '00'.
+*          lv_isactive = 'X'.
+*        ENDIF.
+*        ls_plndindeprqmt-plndindeprqmtversion = lv_version.
+*        ls_plndindeprqmt-plndindeprqmtisactive = lv_isactive.
+*        APPEND ls_plndindeprqmt TO lt_plndindeprqmt.
+*        CLEAR ls_plndindeprqmt.
+*        ls_plndindeprqmtitem-%cid_ref = sy-tabix.
+*        ls_plndindeprqmtitem-product = <is_plndindeprqmt>-material.
+*        ls_plndindeprqmtitem-plant = <is_plndindeprqmt>-plant.
+*        ls_plndindeprqmtitem-requirementplan = lv_customer.
+*        ls_plndindeprqmtitem-plndindeprqmtversion = lv_version.
+*      ENDIF.
+*
+*      ls_plndindeprqmtitem-%target = VALUE #( BASE ls_plndindeprqmtitem-%target (
+*                                              %cid = |I{ lv_tabix }|
+*                                              product = <is_plndindeprqmt>-material
+*                                              plant = <is_plndindeprqmt>-plant
+*                                              requirementplan = lv_customer
+*                                              periodtype      = 'D'
+*                                              plndindeprqmtperiod = <is_plndindeprqmt>-requirementdate
+*                                              workingdaydate  = <is_plndindeprqmt>-requirementdate
+*                                              plannedquantity = <is_plndindeprqmt>-requirementqty ) ).
+*    ENDLOOP.
+*    IF sy-subrc = 0.
+*      APPEND ls_plndindeprqmtitem TO lt_plndindeprqmtitem.
+*    ENDIF.
+*
+*    MODIFY ENTITIES OF i_plndindeprqmttp PRIVILEGED
+*      ENTITY plannedindependentrequirement
+*      CREATE FROM lt_plndindeprqmt
+*      CREATE BY \_plndindeprqmtitem
+*      FROM lt_plndindeprqmtitem
+*      MAPPED DATA(mapped)
+*      FAILED DATA(bo_failed)
+*      REPORTED DATA(bo_reported).
+*
+*
+*    DATA repo TYPE RESPONSE FOR REPORTED EARLY zce_createpir.
+*    ASSIGN reported TO FIELD-SYMBOL(<reported>).
+*    repo-zce_createpir = <reported>-('zce_createpir').
+*
+*    " 处理抬头消息
+*    IF bo_failed-plannedindependentrequirement IS NOT INITIAL.
+*      LOOP AT bo_reported-plannedindependentrequirement INTO DATA(ls_message).
+*        DATA(lv_msgobj) = cl_message_helper=>get_t100_for_object( ls_message-%msg ).
+*        " 对于已经存在的PIR创建时抬头会报错，但是行项目可以正常修改，所以会略此消息
+*        IF lv_msgobj-msgid = 'PPH_FCDM' AND lv_msgobj-msgno = '025'.
+*          CONTINUE.
+*        ENDIF.
+*        IF ls_message-%msg->m_severity = cl_abap_behv=>ms-error.
+*          " 新增一个空行，通过往空行中添加达到使用FIELD-SYMBOL新增行的目的
+*          APPEND INITIAL LINE TO repo-zce_createpir ASSIGNING FIELD-SYMBOL(<repo_line>).
+*          <repo_line>-('%msg') = ls_message-%msg.
+*        ENDIF.
+*      ENDLOOP.
+*    ENDIF.
+*
+*    " 处理行项目消息
+*    DATA lt_msg_obj TYPE TABLE OF symsg .
+*    CLEAR lt_msg_obj.
+*    IF bo_failed-plannedindependentrqmtitem IS NOT INITIAL.
+*      LOOP AT bo_reported-plannedindependentrqmtitem INTO DATA(ls_message_item).
+*        IF ls_message_item-%msg->m_severity = cl_abap_behv=>ms-error.
+*          DATA(lv_msg) = cl_message_helper=>get_text_for_message( ls_message_item-%msg ).
+*          DATA(ls_msg_obj) = cl_message_helper=>get_t100_for_object( ls_message_item-%msg ).
+*          " 重复消息只显示一次
+*          READ TABLE lt_msg_obj TRANSPORTING NO FIELDS WITH KEY msgid = ls_msg_obj-msgid msgno = ls_msg_obj-msgno.
+*          IF sy-subrc = 0.
+*            CONTINUE.
+*          ENDIF.
+*          APPEND ls_msg_obj TO lt_msg_obj.
+*          CLEAR ls_msg_obj.
+*          " 新增一个空行，通过往空行中添加达到使用FIELD-SYMBOL新增行的目的
+*          APPEND INITIAL LINE TO repo-zce_createpir ASSIGNING <repo_line>.
+*          <repo_line>-('%msg') = ls_message_item-%msg.
+*        ENDIF.
+*      ENDLOOP.
+*    ENDIF.
+*    <reported>-('zce_createpir') = repo-zce_createpir.
+
+    LOOP AT ct_plndindeprqmt ASSIGNING FIELD-SYMBOL(<is_plndindeprqmt>) GROUP BY ( customer = <is_plndindeprqmt>-customer
+                                                                                   plant = <is_plndindeprqmt>-plant
+                                                                                   material = <is_plndindeprqmt>-material )
+                                                                             INTO DATA(group).
+      lv_customer = |{ group-customer ALPHA = OUT }|.
+
+      IF iv_type = 'OF'.
+        DATA(lv_version) = '02'.
+        DATA(lv_isactive) = ''.
+      ELSE.
+        lv_version = '00'.
+        lv_isactive = 'X'.
       ENDIF.
 
-      ls_plndindeprqmtitem-%target = VALUE #( BASE ls_plndindeprqmtitem-%target (
-                                              %cid = |I{ lv_tabix }|
-                                              product = <is_plndindeprqmt>-material
-                                              plant = <is_plndindeprqmt>-plant
-                                              requirementplan = lv_customer
-                                              periodtype      = 'D'
-                                              plndindeprqmtperiod = <is_plndindeprqmt>-requirementdate
-                                              workingdaydate  = <is_plndindeprqmt>-requirementdate
-                                              plannedquantity = <is_plndindeprqmt>-requirementqty ) ).
+      "/API_PLND_INDEP_RQMT_SRV/PlannedIndepRqmt
+      lv_path = '/API_PLND_INDEP_RQMT_SRV/PlannedIndepRqmt'.
+
+      ls_req-_product                   = group-material.
+      ls_req-_plant                     = group-plant.
+      ls_req-_plnd_indep_rqmt_version   = lv_version.
+      ls_req-_requirement_plan          = lv_customer.
+      ls_req-_plnd_indep_rqmt_is_active = lv_isactive.
+
+      LOOP AT GROUP group INTO DATA(members).
+        ls_results-_working_day_date = members-requirementdate.
+        DATA(lv_timestamp) = xco_cp_time=>moment( iv_year   = CONV #( ls_results-_working_day_date+0(4) )
+                                                  iv_month  = CONV #( ls_results-_working_day_date+4(2) )
+                                                  iv_day    = CONV #( ls_results-_working_day_date+6(2) )
+                                                  iv_hour   = '08'
+                                                  iv_minute = '00'
+                                                  iv_second = '00'
+                                                )->get_unix_timestamp( )->value * 1000.
+
+        ls_results-_product                 = members-material.
+        ls_results-_plant                   = members-plant.
+        ls_results-_plnd_indep_rqmt_version = lv_version.
+        ls_results-_requirement_plan        = lv_customer.
+        ls_results-_plnd_indep_rqmt_period  = members-requirementdate..
+        ls_results-_period_type             = 'D'.
+        ls_results-_working_day_date        = |/Date({ lv_timestamp })/|.
+        ls_results-_planned_quantity        = members-requirementqty.
+        CONDENSE ls_results-_planned_quantity.
+
+        APPEND ls_results TO ls_req-toplndindeprqmtitem-results.
+        CLEAR ls_results.
+      ENDLOOP.
+
+      DATA(lv_reqbody) = /ui2/cl_json=>serialize( data = ls_req
+                                                  compress = 'X'
+                                                  pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+
+      REPLACE ALL OCCURRENCES OF 'toplndindeprqmtitem' IN lv_reqbody WITH 'to_PlndIndepRqmtItem'.
+
+      "Call API of creating a planned independent requirement
+      zzcl_common_utils=>request_api_v2(
+        EXPORTING
+          iv_path        = lv_path
+          iv_method      = if_web_http_client=>post
+          iv_body        = lv_reqbody
+        IMPORTING
+          ev_status_code = DATA(lv_stat_code)
+          ev_response    = DATA(lv_resbody) ).
+
+      "Could not fetch SCRF token
+      IF lv_stat_code = '500'.
+        ev_msg = lv_resbody.
+        EXIT.
+      ELSE.
+        IF lv_stat_code <> '201'.
+          "JSON->ABAP
+          xco_cp_json=>data->from_string( lv_resbody )->apply( VALUE #(
+              ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_res ) ).
+
+          ev_msg = ls_res-error-message-value.
+          EXIT.
+        ENDIF.
+      ENDIF.
+
+      CLEAR:
+        ls_req,
+        ls_res.
     ENDLOOP.
-    IF sy-subrc = 0.
-      APPEND ls_plndindeprqmtitem TO lt_plndindeprqmtitem.
-    ENDIF.
 
-    MODIFY ENTITIES OF i_plndindeprqmttp PRIVILEGED
-      ENTITY plannedindependentrequirement
-      CREATE FROM lt_plndindeprqmt
-      CREATE BY \_plndindeprqmtitem
-      FROM lt_plndindeprqmtitem
-      MAPPED DATA(mapped)
-      FAILED DATA(bo_failed)
-      REPORTED DATA(bo_reported).
-
-
-    DATA repo TYPE RESPONSE FOR REPORTED EARLY zce_createpir.
-    ASSIGN reported TO FIELD-SYMBOL(<reported>).
-    repo-zce_createpir = <reported>-('zce_createpir').
-
-    " 处理抬头消息
-    IF bo_failed-plannedindependentrequirement IS NOT INITIAL.
-      LOOP AT bo_reported-plannedindependentrequirement INTO DATA(ls_message).
-        DATA(lv_msgobj) = cl_message_helper=>get_t100_for_object( ls_message-%msg ).
-        " 对于已经存在的PIR创建时抬头会报错，但是行项目可以正常修改，所以会略此消息
-        IF lv_msgobj-msgid = 'PPH_FCDM' AND lv_msgobj-msgno = '025'.
-          CONTINUE.
-        ENDIF.
-        IF ls_message-%msg->m_severity = cl_abap_behv=>ms-error.
-          " 新增一个空行，通过往空行中添加达到使用FIELD-SYMBOL新增行的目的
-          APPEND INITIAL LINE TO repo-zce_createpir ASSIGNING FIELD-SYMBOL(<repo_line>).
-          <repo_line>-('%msg') = ls_message-%msg.
-        ENDIF.
-      ENDLOOP.
-    ENDIF.
-
-    " 处理行项目消息
-    DATA lt_msg_obj TYPE TABLE OF symsg .
-    CLEAR lt_msg_obj.
-    IF bo_failed-plannedindependentrqmtitem IS NOT INITIAL.
-      LOOP AT bo_reported-plannedindependentrqmtitem INTO DATA(ls_message_item).
-        IF ls_message_item-%msg->m_severity = cl_abap_behv=>ms-error.
-          DATA(lv_msg) = cl_message_helper=>get_text_for_message( ls_message_item-%msg ).
-          DATA(ls_msg_obj) = cl_message_helper=>get_t100_for_object( ls_message_item-%msg ).
-          " 重复消息只显示一次
-          READ TABLE lt_msg_obj TRANSPORTING NO FIELDS WITH KEY msgid = ls_msg_obj-msgid msgno = ls_msg_obj-msgno.
-          IF sy-subrc = 0.
-            CONTINUE.
-          ENDIF.
-          APPEND ls_msg_obj TO lt_msg_obj.
-          CLEAR ls_msg_obj.
-          " 新增一个空行，通过往空行中添加达到使用FIELD-SYMBOL新增行的目的
-          APPEND INITIAL LINE TO repo-zce_createpir ASSIGNING <repo_line>.
-          <repo_line>-('%msg') = ls_message_item-%msg.
-        ENDIF.
-      ENDLOOP.
-    ENDIF.
-    <reported>-('zce_createpir') = repo-zce_createpir.
   ENDMETHOD.
   METHOD processpir.
     DATA ls_request TYPE STRUCTURE FOR HIERARCHY zd_orderforecasthead.

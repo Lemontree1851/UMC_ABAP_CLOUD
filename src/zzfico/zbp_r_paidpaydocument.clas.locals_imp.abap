@@ -487,9 +487,14 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
           ls_item_b-supplier = ls_data-supplier.
           ls_item_b-currency = ls_data-currency.
           ls_item_b-ztype = cv_ztype.
-          ls_item_b-ap = ls_data-ap.
-          ls_item_b-ar = ls_data-ar.
-
+          ls_item_b-ap = zzcl_common_utils=>conversion_amount(
+                                            iv_alpha = 'IN'
+                                            iv_currency = ls_data-currency
+                                            iv_input = ls_data-ap ).
+          ls_item_b-ar = zzcl_common_utils=>conversion_amount(
+                                            iv_alpha = 'IN'
+                                            iv_currency = ls_data-currency
+                                            iv_input = ls_data-ar ).
           APPEND ls_item_b TO lt_item_b.
           CLEAR: ls_item_b.
         ENDLOOP.

@@ -13,6 +13,8 @@ CLASS lhc_purchasereq DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys FOR ACTION purchasereq~batchprocess RESULT result.
     METHODS createpurchaseorder FOR MODIFY
       IMPORTING keys FOR ACTION purchasereq~createpurchaseorder RESULT result.
+    METHODS uploadfile FOR MODIFY
+      IMPORTING keys FOR ACTION purchasereq~uploadfile RESULT result.
     METHODS mandotarycheck
       CHANGING
         records   TYPE data
@@ -737,7 +739,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
              a~supplier,
              b~plant,
              b~purchasingorganization,
-             b~taxcode
+             b~taxcode,
+             b~currency
         FROM i_purchasinginforecordapi01 WITH PRIVILEGED ACCESS AS a
         LEFT OUTER JOIN i_purginforecdorgplntdataapi01 WITH PRIVILEGED ACCESS AS b
                      ON b~purchasinginforecord = a~purchasinginforecord
@@ -804,13 +807,19 @@ CLASS lhc_purchasereq IMPLEMENTATION.
             record_temp-location = ls_product_location-storagelocation.
           ENDIF.
         ENDIF.
-        IF record_temp-tax IS INITIAL.
-          READ TABLE lt_purinfo_record INTO DATA(ls_purinfo_record) WITH KEY material = lv_matid
-                                                                             supplier = lv_supplier
-                                                                             plant    = record_temp-plant
-                                                                             purchasingorganization = record_temp-purchaseorg BINARY SEARCH.
-          IF sy-subrc = 0.
+
+        READ TABLE lt_purinfo_record INTO DATA(ls_purinfo_record) WITH KEY material = lv_matid
+                                                                           supplier = lv_supplier
+                                                                           plant    = record_temp-plant
+                                                                           purchasingorganization = record_temp-purchaseorg BINARY SEARCH.
+        IF sy-subrc = 0.
+          IF record_temp-tax IS INITIAL.
             record_temp-tax = ls_purinfo_record-taxcode.
+          ENDIF.
+          IF record_temp-currency IS INITIAL.
+            record_temp-currency = ls_purinfo_record-currency.
+            record_key-currency = ls_purinfo_record-currency.
+            ls_request-document_currency = ls_purinfo_record-currency.
           ENDIF.
         ENDIF.
 *&--ADD BEGIN BY XINLEI XU 2025/02/13
@@ -926,4 +935,109 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                     %param  = VALUE #( zzkey = lv_json ) ) TO result.
 
   ENDMETHOD.
+
+  METHOD uploadfile.
+    TYPES:BEGIN OF lty_input,
+            uuid      TYPE sysuuid_x16,
+            seq       TYPE int4,
+            file_name TYPE zze_filename,
+            mime_type TYPE zze_mimetype,
+            file_type TYPE string,
+            file_size TYPE int4,
+            data      TYPE zze_filecontent,
+          END OF lty_input,
+          BEGIN OF lty_file_object,
+            object      TYPE string,
+            object_type TYPE string,
+            file_name   TYPE zze_filename,
+            file_type   TYPE string,
+            value       TYPE zze_filecontent,
+          END OF lty_file_object,
+          BEGIN OF lty_file,
+            attachmentjson TYPE lty_file_object,
+          END OF lty_file,
+          BEGIN OF lty_response,
+            value TYPE string,
+          END OF lty_response.
+
+    DATA: ls_input       TYPE lty_input,
+          ls_file        TYPE lty_file,
+          ls_response    TYPE lty_response,
+          ls_file_record TYPE ztmm_1012.
+
+    LOOP AT keys INTO DATA(key).
+      CLEAR: ls_input, ls_file.
+      /ui2/cl_json=>deserialize(  EXPORTING json = key-%param-zzkey
+                                  CHANGING  data = ls_input ).
+      " POST BODY
+      ls_file-attachmentjson = VALUE #( object      = 'MM-011'
+                                        object_type = 'MM-011'
+                                        file_name   = ls_input-file_name
+                                        file_type   = ls_input-file_type
+                                        value       = ls_input-data ).
+
+      DATA(lv_request_body) = /ui2/cl_json=>serialize( data = ls_file
+                                                       pretty_name = /ui2/cl_json=>pretty_mode-low_case ).
+
+      REPLACE ALL OCCURRENCES OF `attachmentjson` IN lv_request_body WITH `attachmentJson`.
+
+      zzcl_common_utils=>s3uploadattachment(
+        EXPORTING
+          iv_body        = lv_request_body
+        IMPORTING
+          ev_status_code = DATA(ev_status_code)
+          ev_response    = DATA(ev_response) ).
+
+      IF ev_status_code = 200.
+        /ui2/cl_json=>deserialize( EXPORTING json = ev_response
+                                   CHANGING  data = ls_response ).
+        TRY.
+            DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
+            ##NO_HANDLER
+          CATCH cx_uuid_error.
+            "handle exception
+        ENDTRY.
+
+        GET TIME STAMP FIELD DATA(lv_timestamp).
+
+        CLEAR ls_file_record.
+        ls_file_record = VALUE #( pr_uuid     = ls_input-uuid
+                                  file_uuid   = lv_uuid
+                                  file_seq    = ls_input-seq
+                                  file_type   = ls_input-mime_type
+                                  file_name   = ls_input-file_name
+                                  file_size   = ls_input-file_size
+                                  s3_filename = ls_response-value
+                                  created_by  = sy-uname
+                                  created_at  = lv_timestamp
+                                  last_changed_by = sy-uname
+                                  last_changed_at = lv_timestamp
+                                  local_last_changed_at = lv_timestamp ).
+        TRY.
+            cl_system_uuid=>convert_uuid_x16_static( EXPORTING uuid = ls_file_record-pr_uuid
+                                                     IMPORTING uuid_c36 = ls_file_record-pr_uuid_c36 ).
+            cl_system_uuid=>convert_uuid_x16_static( EXPORTING uuid = ls_file_record-file_uuid
+                                                     IMPORTING uuid_c36 = ls_file_record-file_uuid_c36 ).
+            ##NO_HANDLER
+          CATCH cx_uuid_error.
+            " handle exception
+        ENDTRY.
+
+        INSERT INTO ztmm_1012 VALUES @ls_file_record.
+        IF sy-subrc = 0.
+          DATA(lv_type) = 'S'.
+        ENDIF.
+      ENDIF.
+
+      IF lv_type = 'S'.
+        DATA(lv_record) = /ui2/cl_json=>serialize( ls_file_record ).
+        APPEND VALUE #( %cid   = key-%cid
+                        %param = VALUE #( zzkey = lv_record ) ) TO result.
+      ELSE.
+        APPEND VALUE #( %cid   = key-%cid
+                                %param = VALUE #( zzkey = lv_type ) ) TO result.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
 ENDCLASS.

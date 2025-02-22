@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_bom_001 IMPLEMENTATION.
+CLASS ZCL_HTTP_BOM_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.

@@ -438,59 +438,76 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 
     TRY.
         DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
-        " Get UWMS Access configuration
-        SELECT SINGLE *
+        " Get UWEB Access configuration
+        SELECT *
           FROM zc_tbc1001
          WHERE zid = 'ZBC005'
-          INTO @DATA(ls_config).              "#EC CI_ALL_FIELDS_NEEDED
+           AND zvalue1 = @lv_system_url       "ADD BY XINLEI XU 2025/02/21
+          INTO TABLE @DATA(lt_config).        "#EC CI_ALL_FIELDS_NEEDED
         ##NO_HANDLER
       CATCH cx_abap_context_info_error.
         "handle exception
     ENDTRY.
 
-    CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
-    CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
-    CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
-    CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
+    SORT lt_config BY zvalue2.
+    DELETE ADJACENT DUPLICATES FROM lt_config COMPARING zvalue2.
+
+    LOOP AT lt_config INTO DATA(ls_config).
+      CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
+      CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
+      CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
+      CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
 
 *   PO登録されない原材料のSupplyの数字を取得する（ZMM06）
-    DATA(lv_start_c) = lv_now_start+0(4) && '-' && lv_now_start+4(2) && '-' && lv_now_start+6(2) && 'T00:00:00'.
-    DATA(lv_next_end_c)   = lv_next_end+0(4) && '-' && lv_next_end+4(2) && '-' && lv_next_end+6(2)  && 'T00:00:00'.
-    lv_filter2 = |{ lv_filter2 } and ARRANGE_END_DATE be datetime'{ lv_start_c }' and ARRANGE_END_DATE le datetime'{ lv_next_end_c }'|.
-    zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/PCH09_LIST?sap-language={ zzcl_common_utils=>get_current_language(  ) }|
-                                                            iv_token_url     = CONV #( ls_config-zvalue3 )
-                                                            iv_client_id     = CONV #( ls_config-zvalue4 )
-                                                            iv_client_secret = CONV #( ls_config-zvalue5 )
-                                                            iv_authtype      = 'OAuth2.0'
-                                                  IMPORTING ev_status_code   = DATA(lv_status_code_uweb)
-                                                            ev_response      = DATA(lv_response_uweb) ).
-    IF lv_status_code_uweb = 200.
-      REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_response_uweb  WITH ``.
-      REPLACE ALL OCCURRENCES OF `)\/` IN lv_response_uweb  WITH ``.
+      DATA(lv_start_c) = lv_now_start+0(4) && '-' && lv_now_start+4(2) && '-' && lv_now_start+6(2) && 'T00:00:00'.
+      DATA(lv_next_end_c)   = lv_next_end+0(4) && '-' && lv_next_end+4(2) && '-' && lv_next_end+6(2)  && 'T00:00:00'.
+      lv_filter2 = |{ lv_filter2 } and ARRANGE_END_DATE be datetime'{ lv_start_c }' and ARRANGE_END_DATE le datetime'{ lv_next_end_c }'|.
 
-      /ui2/cl_json=>deserialize( EXPORTING json = lv_response_uweb
-                                 CHANGING  data = ls_response ).
+      DATA(lv_top1)  = 1000.
+      DATA(lv_skip1) = -1000.
+      DO.
+        lv_skip1 += 1000.
+        zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/PCH09_LIST?$top={ lv_top1 }&$skip={ lv_skip1 }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|
+                                                                iv_token_url     = CONV #( ls_config-zvalue3 )
+                                                                iv_client_id     = CONV #( ls_config-zvalue4 )
+                                                                iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                                iv_authtype      = 'OAuth2.0'
+                                                      IMPORTING ev_status_code   = DATA(lv_status_code_uweb)
+                                                                ev_response      = DATA(lv_response_uweb) ).
+        IF lv_status_code_uweb = 200.
+          REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_response_uweb  WITH ``.
+          REPLACE ALL OCCURRENCES OF `)\/` IN lv_response_uweb  WITH ``.
 
-      IF ls_response-d-results IS NOT INITIAL.
-        APPEND LINES OF ls_response-d-results TO lt_uweb_api.
-        LOOP AT lt_uweb_api ASSIGNING FIELD-SYMBOL(<fs_l_uweb_api>).
-          IF <fs_l_uweb_api>-arrange_end_date < 0.
-            ls_supply-yearmonth = '190001'.
-          ELSEIF <fs_l_uweb_api>-arrange_end_date = '253402214400000'.
-            ls_supply-yearmonth = '999912'.
+          /ui2/cl_json=>deserialize( EXPORTING json = lv_response_uweb
+                                     CHANGING  data = ls_response ).
+
+          IF ls_response-d-results IS NOT INITIAL.
+            APPEND LINES OF ls_response-d-results TO lt_uweb_api.
           ELSE.
-            ls_supply-yearmonth = xco_cp_time=>unix_timestamp(
-                        iv_unix_timestamp = <fs_l_uweb_api>-arrange_end_date / 1000
-                     )->get_moment( )->as( xco_cp_time=>format->abap )->value+0(6).
+            EXIT.
           ENDIF.
-          ls_supply-supplyquantity = <fs_l_uweb_api>-arrange_qty_sum.
-          ls_supply-material = <fs_l_uweb_api>-material.
-          ls_supply-plant    = <fs_l_uweb_api>-plant.
-          COLLECT ls_supply INTO lt_supply.
-          CLEAR ls_supply.
-        ENDLOOP.
+        ELSE.
+          EXIT.
+        ENDIF.
+      ENDDO.
+    ENDLOOP.
+
+    LOOP AT lt_uweb_api ASSIGNING FIELD-SYMBOL(<fs_l_uweb_api>).
+      IF <fs_l_uweb_api>-arrange_end_date < 0.
+        ls_supply-yearmonth = '190001'.
+      ELSEIF <fs_l_uweb_api>-arrange_end_date = '253402214400000'.
+        ls_supply-yearmonth = '999912'.
+      ELSE.
+        ls_supply-yearmonth = xco_cp_time=>unix_timestamp(
+                    iv_unix_timestamp = <fs_l_uweb_api>-arrange_end_date / 1000
+                 )->get_moment( )->as( xco_cp_time=>format->abap )->value+0(6).
       ENDIF.
-    ENDIF.
+      ls_supply-supplyquantity = <fs_l_uweb_api>-arrange_qty_sum.
+      ls_supply-material = <fs_l_uweb_api>-material.
+      ls_supply-plant    = <fs_l_uweb_api>-plant.
+      COLLECT ls_supply INTO lt_supply.
+      CLEAR ls_supply.
+    ENDLOOP.
 
     DATA(lt_material_zfrt) = lt_1016.
     SORT lt_material_zfrt BY material.

@@ -109,7 +109,9 @@ define root view entity ZI_BI003_REPORT_004
 
       @Semantics.amount.currencyCode: 'BillingCurrency'
       @EndUserText: { label:  'Recovery Amount', quickInfo: 'Recovery Amount' }
-      cast('0.00' as dmbtr)               as RecoveryAmount //BillingTotalAmount
+      cast('0.00' as dmbtr)               as RecoveryAmount, //BillingTotalAmount
+      cast( '' as belnr_d )               as AccountingDocument,
+      cast( '' as abap.char(6))           as AccountingDocumentItem
 }
 union select from ZI_BI003_REPORT_004_BILLING
 {
@@ -199,7 +201,9 @@ union select from ZI_BI003_REPORT_004_BILLING
                                       exchange_rate_date=>BillingDocumentDate,
                                       source_currency=>TransactionCurrency,
                                       target_currency=>_Companycode.Currency
-                             )           as RecoveryAmount //BillingTotalAmount
+                             )           as RecoveryAmount, //BillingTotalAmount
+         cast( '' as belnr_d )           as AccountingDocument,
+         cast( '' as abap.char(6))       as AccountingDocumentItem
 }
 // ADD BEGIN BY XINLEI XU 2025/02/10
 union select from ztbi_bi003_j04 as _table
@@ -243,8 +247,62 @@ union select from ztbi_bi003_j04 as _table
       billing_price              as BillingPrice,
       condition_type             as ConditionType,
       condition_rate_amount      as ConditionRateAmount,
-      recovery_amount            as RecoveryAmount
+      recovery_amount            as RecoveryAmount,
+      cast( '' as belnr_d )      as AccountingDocument,
+      cast( '' as abap.char(6))  as AccountingDocumentItem
 }
 where
   job_run_by = 'UPLOAD'
 // ADD END BY XINLEI XU 2025/02/10
+
+// ADD BEGIN BY XINLEI XU 2025/02/20
+union select from ZI_BI003_REPORT_003_ACCOUTING( p_recover_type: 'ST' )
+{
+  key cast('' as ebeln)                   as PurchaseOrder,
+  key cast('00000' as ebelp)              as PurchaseOrderItem,
+  key cast('' as vbeln_va)                as BillingDocument,
+  key cast('000000' as posnr_va)          as BillingDocumentItem,
+      CompanyCode,
+      FiscalYearPeriod,
+      FiscalYear,
+      case FiscalPeriod when '000' then '00'
+               else cast( substring(FiscalPeriod, 2, 2) as monat )
+               end                        as FiscalMonth,
+
+      RecoveryManagementNumber,
+      _CompanyCode.CompanyCodeName,
+
+      cast('' as matnr)                   as Material,
+      cast('' as maktx)                   as MaterialText,
+      cast('' as abap.char(9))            as ProductGroup,
+      cast('' as abap.char(20))           as ProductGroupName,
+      cast('0' as abap.quan( 13, 3 ))     as OrderQuantity,
+      cast('' as vrkme)                   as BaseUnit,
+      cast( '0.00' as dmbtr )             as NetPriceAmount,
+      CompanyCodeCurrency                 as CompanyCurrency,
+      AmountInCompanyCodeCurrency         as RecoveryNecessaryAmount,
+      GLAccount,
+      GLAccountName,
+      FixedAsset,
+      FixedAssetDescription,
+      cast('' as vbeln_va)                as SalesOrderDocument,
+      cast('000000' as posnr_va)          as SalesOrderDocumentItem,
+      cast('' as kunnr)                   as Customer,
+      cast('' as abap.char(80))           as CustomerName,
+      cast('' as waers)                   as TransactionCurrency,
+      cast('' as matnr)                   as BillingProduct,
+      cast('' as maktx)                   as BillingProductText,
+      cast('00000000' as fkdat)           as BillingDocumentDate,
+      cast('' as prctr)                   as ProfitCenter,
+      cast('' as abap.char(40))           as ProfitCenterName,
+      cast('' as vrkme)                   as BillingQuantityUnit,
+      cast('0.000' as abap.quan( 13, 3 )) as BillingQuantity,
+      cast('' as waers)                   as BillingCurrency,
+      cast('0.00' as abap.curr(16, 2))    as BillingPrice,
+      cast('' as kscha)                   as ConditionType,
+      cast('0.00' as dmbtr)               as ConditionRateAmount,
+      cast('0.00' as dmbtr)               as RecoveryAmount,
+      AccountingDocument,
+      LedgerGLLineItem                    as AccountingDocumentItem
+}
+// ADD END BY XINLEI XU 2025/02/20

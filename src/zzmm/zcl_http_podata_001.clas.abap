@@ -155,18 +155,20 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
           AND purchaseorderitem = @lt_req-dno
         INTO TABLE @DATA(lt_unit).
 
+
+
       IF lt_unit IS NOT INITIAL.
 
         SELECT unitofmeasure, unitofmeasureisocode
            FROM i_unitofmeasure WITH PRIVILEGED ACCESS
-           FOR ALL ENTRIES IN @lt_unit
+           FOR ALL ENTRIES IN @lt_unit "#EC CI_NO_TRANSFORM
            WHERE unitofmeasure = @lt_unit-purchaseorderquantityunit
            INTO TABLE @DATA(lt_unit1).
 
       ENDIF.
 
     ENDIF.
-
+      DATA:ls_unit LIKE LINE OF lt_unit.
     " 检查删除标志
     LOOP AT lt_deletecode INTO DATA(ls_deletecode).
       IF ls_deletecode-purchasingdocumentdeletioncode = 'L'.
@@ -183,7 +185,7 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
 
     DATA: lv_newdn type c,
           lv_dno          TYPE n    LENGTH 5.
-
+    DATA: ls_quantity LIKE LINE OF lt_deletecode.
     " 如果没有删除标志的错误，进行数量总和比较
     IF lv_error IS INITIAL.
 
@@ -224,6 +226,8 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
           SORT lt_req BY pono dno seq deliverydate.
          "END ADD
 
+
+        DATA:LV_FREE(1) TYPE C.
         LOOP AT lt_req INTO DATA(ls_req) WHERE pono = lw_req1-pono  .
 
           "判断是否有新行需要item标签结尾
@@ -417,7 +421,7 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
               lv_free_charge_xml TYPE string,
               lv_current_request TYPE string.        " 当前SOAP请求，逐条拼接
 *                lv_request         TYPE string.        " 最终的完整请求
-
+            DATA:lv_converted_unit TYPE string.
             CLEAR lv_request.  " 初始化请求字符串
             CLEAR lv_previous_pono.
             CLEAR lv_previous_dno.
@@ -461,19 +465,35 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
 
             ELSE.
                 if lv_newdn = 'X'.
+
+                  "ADD BY STANLEY 20250218
+                  if lv_free = 'X'.
+                      lv_current_request = lv_current_request &&
+                                           |<NetPrice>| &&
+                                           |<Amount currencyCode="{ ls_unit-DocumentCurrency }"> { ls_unit-NetAmount }</Amount>| &&
+                                           |<BaseQuantity unitCode="{ lv_converted_unit }">{ ls_quantity-OrderQuantity }</BaseQuantity>| &&
+                                           |</NetPrice>|.
+                  endif.
+                  " END ADD
                  lv_current_request = lv_current_request &&
                                       |</Item>| && |<Item>| &&
                                       |<ActionCode>{ lv_action }</ActionCode>| &&
                                       |<PurchaseOrderItemID>{ ls_req-dno }</PurchaseOrderItemID>|.
                 endif.
             ENDIF.
-
+             " ADD BY STANLEY 20250108
+             READ TABLE  lt_deletecode INTO ls_quantity WITH KEY purchaseorder     = ls_req-pono
+                                                                 purchaseorderitem = ls_req-dno .
             " 假设获取到的单位信息包含在 lt_unit 中，取第一个单位信息
-            LOOP AT lt_unit INTO DATA(ls_unit) WHERE purchaseorder = ls_req-pono AND purchaseorderitem = ls_req-dno.
+            LOOP AT lt_unit INTO ls_unit  WHERE purchaseorder = ls_req-pono AND purchaseorderitem = ls_req-dno.
 
-              DATA:lv_converted_unit TYPE string.
+
               CLEAR lv_converted_unit.
-
+              if ls_unit-NetAmount = 0.
+                lv_free ='X'.
+              else.
+                CLEAR:lv_free.
+              endif.
               READ TABLE lt_unit1 WITH KEY unitofmeasure  = ls_unit-purchaseorderquantityunit INTO DATA(ls_unit1).
 
               IF sy-subrc = 0.
@@ -500,9 +520,10 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
             IF lv_index = lv_length.
 
               " ADD BY STANLEY 20250108
-              READ TABLE  lt_deletecode INTO DATA(ls_quantity) WITH KEY purchaseorder     = ls_req-pono
+              READ TABLE  lt_deletecode INTO ls_quantity WITH KEY purchaseorder     = ls_req-pono
                                                                         purchaseorderitem = ls_req-dno .
               if ls_unit-NetAmount = 0.
+
                   lv_current_request = lv_current_request &&
                                        |<NetPrice>| &&
                                        |<Amount currencyCode="{ ls_unit-DocumentCurrency }"> { ls_unit-NetAmount }</Amount>| &&

@@ -8,12 +8,12 @@ CLASS zcl_job_costanalysis_n DEFINITION
           mo_out   TYPE REF TO if_oo_adt_classrun_out.
 
     DATA:
-      lv_currency          TYPE i_companycode-currency,
-      lr_plant             TYPE RANGE OF werks_d,
-      ls_plant             LIKE LINE OF lr_plant,
-      lv_yearmonth   TYPE c LENGTH 6,
-      mv_year        TYPE c LENGTH 4,
-      mv_month       TYPE n LENGTH 2.
+      lv_currency  TYPE i_companycode-currency,
+      lr_plant     TYPE RANGE OF werks_d,
+      ls_plant     LIKE LINE OF lr_plant,
+      lv_yearmonth TYPE c LENGTH 6,
+      mv_year      TYPE c LENGTH 4,
+      mv_month     TYPE n LENGTH 2.
 
     DATA:
       ls_ztbi_1001 TYPE ztbi_1001,
@@ -107,7 +107,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
+CLASS zcl_job_costanalysis_n IMPLEMENTATION.
 
 
   METHOD add_message_to_log.
@@ -190,26 +190,26 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
     ENDLOOP.
 
     DATA:
-      lv_datum             TYPE datum,
-      lv_gjahr             TYPE gjahr,
-      lv_poper             TYPE poper,
-      lv_popern2           TYPE n LENGTH 2.
+      lv_datum   TYPE datum,
+      lv_gjahr   TYPE gjahr,
+      lv_poper   TYPE poper,
+      lv_popern2 TYPE n LENGTH 2.
 
 *   Parameterの実行日付
     GET TIME STAMP FIELD DATA(lv_timestamp).
     lv_datetime = lv_timestamp.
     lv_date     = lv_datetime+0(8).
 
-    if mv_year is INITIAL.
+    IF mv_year IS INITIAL.
 
-        zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date = lv_date
-                                                 IMPORTING ev_year   = lv_gjahr
-                                                           ev_period = lv_poper ).
-        lv_popern2 = lv_poper.
-        lv_datum = lv_gjahr && lv_popern2 && '01'.
-        lv_datum = lv_datum - 1.
-        mv_year  = lv_datum+0(4).
-        mv_month = lv_datum+4(2).
+      zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date = lv_date
+                                               IMPORTING ev_year   = lv_gjahr
+                                                         ev_period = lv_poper ).
+      lv_popern2 = lv_poper.
+      lv_datum = lv_gjahr && lv_popern2 && '01'.
+      lv_datum = lv_datum - 1.
+      mv_year  = lv_datum+0(4).
+      mv_month = lv_datum+4(2).
     ENDIF.
 
 
@@ -218,11 +218,11 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
 
 *    プラント Parameterの存在Check
     SELECT i_plant~plant,
-           i_ValuationArea~\_CompanyCode-CompanyCode as CompanyCode
+           i_valuationarea~\_companycode-companycode AS companycode
       FROM i_plant
-      INNER JOIN i_ValuationArea on I_Plant~ValuationArea = i_ValuationArea~ValuationArea
-     WHERE i_plant~plant in @lr_plant
-     into TABLE @DATA(lt_plant).
+      INNER JOIN i_valuationarea ON i_plant~valuationarea = i_valuationarea~valuationarea
+     WHERE i_plant~plant IN @lr_plant
+     INTO TABLE @DATA(lt_plant).
 
     IF sy-subrc <> 0.
       CLEAR lv_msg.
@@ -231,22 +231,22 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'E' ).
         CATCH cx_bali_runtime INTO DATA(cx_erro).
-        DATA ls_msg TYPE scx_t100key.
-        DATA(lv_msge) = cx_erro->get_text( ).
+          DATA ls_msg TYPE scx_t100key.
+          DATA(lv_msge) = cx_erro->get_text( ).
       ENDTRY.
       RETURN.
 
     ENDIF.
-    SORT lt_plant by plant.
+    SORT lt_plant BY plant.
 
 *   会社コード Parameterの存在Check
     SELECT i_companycode~companycode,
            i_companycode~currency
       FROM i_companycode
-      INNER JOIN @lt_plant as plant
-        on plant~companycode = i_companycode~companycode
+      INNER JOIN @lt_plant AS plant
+        ON plant~companycode = i_companycode~companycode
      INTO TABLE @DATA(lt_currency).
-    SORT lt_currency by companycode.
+    SORT lt_currency BY companycode.
 
     IF sy-subrc <> 0.
       CLEAR lv_msg.
@@ -255,8 +255,8 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'E' ).
         CATCH cx_bali_runtime  INTO cx_erro.
-        DATA ls_msgm TYPE scx_t100key.
-        DATA(lv_msgm) = cx_erro->get_text( ).
+          DATA ls_msgm TYPE scx_t100key.
+          DATA(lv_msgm) = cx_erro->get_text( ).
       ENDTRY.
       RETURN.
     ENDIF.
@@ -269,6 +269,11 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
          WHERE zid = 'ZBC003'
            AND zvalue1 = @lv_system_url
           INTO @DATA(ls_config).
+
+        CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
+        CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
+        CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
+        CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
       CATCH cx_abap_context_info_error INTO DATA(cx_erra).
 
         DATA(lv_msga) = cx_erra->get_text( ).
@@ -310,210 +315,221 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
                         |or (VALID_T ge datetime'{ lv_next_start_c }' and VALID_T le datetime'{ lv_next_end_c }') | &&
                         |or (VALID_F le datetime'{ lv_next_start_c }' and VALID_T ge datetime'{ lv_next_end_c }')|.
 
-      CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
-      CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
-      CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
-      CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
-      zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T01_QUO_H|
-                                                              iv_odata_filter  = lv_filter
-                                                              iv_token_url     = CONV #( ls_config-zvalue3 )
-                                                              iv_client_id     = CONV #( ls_config-zvalue4 )
-                                                              iv_client_secret = CONV #( ls_config-zvalue5 )
-                                                              iv_authtype      = 'OAuth2.0'
-                                                    IMPORTING ev_status_code   = DATA(lv_status_code)
-                                                              ev_response      = DATA(lv_response) ).
+      DATA(lv_top)  = 1000.
+      DATA(lv_skip) = -1000.
+      DO.
+        lv_skip += 1000.
+        zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T01_QUO_H?$top={ lv_top }&$skip={ lv_skip }|
+                                                                iv_odata_filter  = lv_filter
+                                                                iv_token_url     = CONV #( ls_config-zvalue3 )
+                                                                iv_client_id     = CONV #( ls_config-zvalue4 )
+                                                                iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                                iv_authtype      = 'OAuth2.0'
+                                                      IMPORTING ev_status_code   = DATA(lv_status_code)
+                                                                ev_response      = DATA(lv_response) ).
 
-      IF lv_status_code = 200.
-        REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_response  WITH ``.
-        REPLACE ALL OCCURRENCES OF `)\/` IN lv_response  WITH ``.
+        IF lv_status_code = 200.
+          REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_response  WITH ``.
+          REPLACE ALL OCCURRENCES OF `)\/` IN lv_response  WITH ``.
 
-        xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
-*          ( xco_cp_json=>transformation->pascal_case_to_underscore )
-*          ( xco_cp_json=>transformation->boolean_to_abap_bool )
-        ) )->write_to( REF #( ls_response ) ).
+*          xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
+**          ( xco_cp_json=>transformation->pascal_case_to_underscore )
+**          ( xco_cp_json=>transformation->boolean_to_abap_bool )
+*          ) )->write_to( REF #( ls_response ) ).
 
-        IF ls_response-d-results IS NOT INITIAL.
-          lt_qms_t01_quo_h = ls_response-d-results.
-          SORT lt_qms_t01_quo_h BY project_no requisition_version.
+          /ui2/cl_json=>deserialize( EXPORTING json = lv_response
+                                     CHANGING  data = ls_response ).
+
+          IF ls_response-d-results IS NOT INITIAL.
+            APPEND LINES OF ls_response-d-results TO lt_qms_t01_quo_h.
+          ELSE.
+            EXIT.
+          ENDIF.
+        ELSE.
+          TRY.
+              add_message_to_log( i_text = 'データはQMS_T01_QUO_Hで存在していません' i_type = 'E' ).
+            CATCH cx_bali_runtime INTO DATA(cx_errb).
+              DATA ls_msgb TYPE scx_t100key.
+              DATA(lv_msgb) = cx_errb->get_text( ).
+          ENDTRY.
+          RETURN.
         ENDIF.
-      ELSE.
-        TRY.
-            add_message_to_log( i_text = 'データはQMS_T01_QUO_Hで存在していません' i_type = 'E' ).
-          CATCH cx_bali_runtime INTO DATA(cx_errb).
-        DATA ls_msgb TYPE scx_t100key.
-        DATA(lv_msgb) = cx_errb->get_text( ).
-        ENDTRY.
-        RETURN.
-      ENDIF.
+        CLEAR ls_response.
+      ENDDO.
+      SORT lt_qms_t01_quo_h BY project_no requisition_version.
 
-*      DATA(lv_filtert02) = |PLANT in '{ lr_plant }'|.
-      CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
-      CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
-      CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
-      CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
-      zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T02_QUO_D|
-*                                                              iv_odata_filter  = lv_filtert02
-                                                              iv_token_url     = CONV #( ls_config-zvalue3 )
-                                                              iv_client_id     = CONV #( ls_config-zvalue4 )
-                                                              iv_client_secret = CONV #( ls_config-zvalue5 )
-                                                              iv_authtype      = 'OAuth2.0'
-                                                    IMPORTING ev_status_code   = DATA(lv_status_codet02)
-                                                              ev_response      = DATA(lv_responset02) ).
-      IF lv_status_codet02 = 200.
+      DATA(lv_skip2) = -1000.
+      DO.
+        lv_skip2 += 1000.
+        zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T02_QUO_D?$top={ lv_top }&$skip={ lv_skip2 }|
+                                                                iv_token_url     = CONV #( ls_config-zvalue3 )
+                                                                iv_client_id     = CONV #( ls_config-zvalue4 )
+                                                                iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                                iv_authtype      = 'OAuth2.0'
+                                                      IMPORTING ev_status_code   = DATA(lv_status_codet02)
+                                                                ev_response      = DATA(lv_responset02) ).
+        IF lv_status_codet02 = 200.
+          REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_responset02  WITH ``.
+          REPLACE ALL OCCURRENCES OF `)\/` IN lv_responset02  WITH ``.
 
-        REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_responset02  WITH ``.
-        REPLACE ALL OCCURRENCES OF `)\/` IN lv_responset02  WITH ``.
+*          xco_cp_json=>data->from_string( lv_responset02 )->apply( VALUE #(
+*          ) )->write_to( REF #( ls_responset02 ) ).
 
-        xco_cp_json=>data->from_string( lv_responset02 )->apply( VALUE #(
-        ) )->write_to( REF #( ls_responset02 ) ).
+          /ui2/cl_json=>deserialize( EXPORTING json = lv_responset02
+                                     CHANGING  data = ls_responset02 ).
 
-        IF ls_responset02-d-results IS NOT INITIAL.
-          LOOP AT ls_responset02-d-results ASSIGNING FIELD-SYMBOL(<lfs_responset02>).
-            READ TABLE lt_qms_t01_quo_h TRANSPORTING NO FIELDS
-              WITH KEY project_no          = <lfs_responset02>-project_no
-                       requisition_version = <lfs_responset02>-requisition_version
-                       BINARY SEARCH.
-            IF sy-subrc = 0.
-              IF  <lfs_responset02>-sap_mat_id IS NOT INITIAL
-              and <lfs_responset02>-plant in lr_plant.
+          IF ls_responset02-d-results IS NOT INITIAL.
+            LOOP AT ls_responset02-d-results ASSIGNING FIELD-SYMBOL(<lfs_responset02>).
+              READ TABLE lt_qms_t01_quo_h TRANSPORTING NO FIELDS
+                WITH KEY project_no          = <lfs_responset02>-project_no
+                         requisition_version = <lfs_responset02>-requisition_version
+                         BINARY SEARCH.
+              IF sy-subrc = 0.
+                IF  <lfs_responset02>-sap_mat_id IS NOT INITIAL
+                AND <lfs_responset02>-plant IN lr_plant.
 
-                READ TABLE lt_plant INto DATA(ls_plantc)
-                  WITH KEY plant = <lfs_responset02>-plant BINARY SEARCH.
-                READ TABLE lt_currency INTO DATA(ls_currency)
-                  WITH KEY companycode = ls_plantc-companycode.
+                  READ TABLE lt_plant INTO DATA(ls_plantc)
+                    WITH KEY plant = <lfs_responset02>-plant BINARY SEARCH.
+                  READ TABLE lt_currency INTO DATA(ls_currency)
+                    WITH KEY companycode = ls_plantc-companycode.
 
-                <lfs_responset02>-companycode = ls_plantc-companycode.
-                <lfs_responset02>-currency    = ls_currency-Currency.
-                APPEND <lfs_responset02> TO lt_qms_t02_quo_d.
+                  <lfs_responset02>-companycode = ls_plantc-companycode.
+                  <lfs_responset02>-currency    = ls_currency-currency.
+                  APPEND <lfs_responset02> TO lt_qms_t02_quo_d.
+                ENDIF.
               ENDIF.
-            ENDIF.
-          ENDLOOP.
-          SORT lt_qms_t02_quo_d BY project_no requisition_version item_no sap_mat_id.
-        ENDIF.
-      ELSE.
-        TRY.
-            add_message_to_log( i_text = 'データはQMS_T02_QUO_Dで存在していません' i_type = 'E' ).
-          CATCH cx_bali_runtime INTO DATA(cx_errc).
-        DATA ls_msgc TYPE scx_t100key.
-        DATA(lv_msgc) = cx_errc->get_text( ).
-        ENDTRY.
-        RETURN.
-      ENDIF.
-
-*        DATA(lv_filtert07) = |Plant eq '{ mv_plant }'|.
-      CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
-      CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
-      CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
-      CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
-      zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T07_QUOTATION_D?sap-language={ zzcl_common_utils=>get_current_language(  ) }|
-*                                                             iv_odata_filter  = lv_filtert07
-                                                              iv_token_url     = CONV #( ls_config-zvalue3 )
-                                                              iv_client_id     = CONV #( ls_config-zvalue4 )
-                                                              iv_client_secret = CONV #( ls_config-zvalue5 )
-                                                              iv_authtype      = 'OAuth2.0'
-                                                    IMPORTING ev_status_code   = DATA(lv_status_codet07)
-                                                              ev_response      = DATA(lv_responset07) ).
-      IF lv_status_codet07 = 200.
-        REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_responset07  WITH ``.
-        REPLACE ALL OCCURRENCES OF `)\/` IN lv_responset07  WITH ``.
-
-        xco_cp_json=>data->from_string( lv_responset07 )->apply( VALUE #(
-        ) )->write_to( REF #( ls_responset07 ) ).
-
-        IF ls_responset07-d-results IS NOT INITIAL.
-          DELETE ls_responset07-d-results WHERE material_number IS INITIAL.
-
-          LOOP AT ls_responset07-d-results ASSIGNING FIELD-SYMBOL(<fs_responset07>).
-            READ TABLE lt_qms_t02_quo_d INTO DATA(lv_t02)
-              WITH KEY project_no           = <fs_responset07>-sales_number
-                       requisition_version  = <fs_responset07>-quo_version
-                       item_no              = <fs_responset07>-sales_d_no
-                       sap_mat_id           = <fs_responset07>-sap_mat_id
-                       BINARY SEARCH.
-            IF sy-subrc = 0.
-              <fs_responset07>-plant       = lv_t02-plant.
-              <fs_responset07>-companycode = lv_t02-companycode.
-              <fs_responset07>-currency    = lv_t02-currency.
-              APPEND <fs_responset07> TO lt_qms_t07_all.
-            ENDIF.
-          ENDLOOP.
-
-          SORT lt_qms_t07_all BY sap_mat_id quo_version.
-
-          LOOP AT lt_qms_t07_all ASSIGNING FIELD-SYMBOL(<lfs_qms_t07>)
-                              GROUP BY ( sap_mat_id  = <lfs_qms_t07>-sap_mat_id
-                                         quo_version = <lfs_qms_t07>-quo_version ).
-            CLEAR ls_qms_t07_sum .
-            ls_qms_t07_sum  = <lfs_qms_t07>.
-            CLEAR ls_qms_t07_sum-submit_price.
-            LOOP AT GROUP <lfs_qms_t07> ASSIGNING FIELD-SYMBOL(<lfs_qms_t07g>).
-              ls_qms_t07_sum-submit_price = ls_qms_t07_sum-submit_price + <lfs_qms_t07g>-submit_price.
             ENDLOOP.
-            APPEND ls_qms_t07_sum TO lt_qms_t07_sum.
-          ENDLOOP.
-
-          SORT lt_qms_t07_sum BY sap_mat_id   ASCENDING
-                                 quo_version  ASCENDING
-                                 submit_price ASCENDING.
-          DELETE ADJACENT DUPLICATES FROM lt_qms_t07_sum COMPARING sap_mat_id.
-
-          LOOP AT lt_qms_t07_all ASSIGNING FIELD-SYMBOL(<lfs_t07_all>).
-
-            lv_currency = <lfs_t07_all>-currency.
-            READ TABLE lt_qms_t07_sum TRANSPORTING NO FIELDS
-              WITH KEY sap_mat_id  = <lfs_t07_all>-sap_mat_id
-                       quo_version = <lfs_t07_all>-quo_version
-                       BINARY SEARCH.
-            IF sy-subrc = 0.
-
-              IF <lfs_t07_all>-submit_curr NE lv_currency.
-                TRY.
-                    lv_currencyold = <lfs_t07_all>-submit_curr.
-                    cl_exchange_rates=>convert_to_local_currency(
-                      EXPORTING
-                        date              = lv_date
-                        foreign_amount    = <lfs_t07_all>-submit_price
-                        foreign_currency  = lv_currencyold
-                        local_currency    = lv_currency
-                      IMPORTING
-                        local_amount      = <lfs_t07_all>-submit_price
-                    ).
-                  CATCH cx_exchange_rates INTO DATA(cx_errd).
-                    DATA ls_msgd TYPE scx_t100key.
-                    DATA(lv_msgd) = cx_errd->get_text( ).
-                ENDTRY.
-                <lfs_t07_all>-submit_curr = lv_currency.
-              ENDIF.
-
-              APPEND <lfs_t07_all> TO lt_qms_t07_quotation_d.
-            ENDIF.
-          ENDLOOP.
-
+          ELSE.
+            EXIT.
+          ENDIF.
+        ELSE.
+          TRY.
+              add_message_to_log( i_text = 'データはQMS_T02_QUO_Dで存在していません' i_type = 'E' ).
+            CATCH cx_bali_runtime INTO DATA(cx_errc).
+              DATA ls_msgc TYPE scx_t100key.
+              DATA(lv_msgc) = cx_errc->get_text( ).
+          ENDTRY.
+          RETURN.
         ENDIF.
-      ELSE.
-        TRY.
-            add_message_to_log( i_text = 'データはQQMS_T07_QUOTATION_Dで存在していません' i_type = 'E' ).
-          CATCH cx_bali_runtime INTO DATA(cx_errf).
-            DATA ls_msgf TYPE scx_t100key.
-            DATA(lv_msgf) = cx_errf->get_text( ).
-        ENDTRY.
-        RETURN.
-      ENDIF.
+        CLEAR ls_responset02.
+      ENDDO.
+      SORT lt_qms_t02_quo_d BY project_no requisition_version item_no sap_mat_id.
+
+      DATA(lv_skip3) = -1000.
+      DO.
+        lv_skip3 += 1000.
+        zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/QMS_T07_QUOTATION_D?$top={ lv_top }&$skip={ lv_skip3 }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|
+                                                                iv_token_url     = CONV #( ls_config-zvalue3 )
+                                                                iv_client_id     = CONV #( ls_config-zvalue4 )
+                                                                iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                                iv_authtype      = 'OAuth2.0'
+                                                      IMPORTING ev_status_code   = DATA(lv_status_codet07)
+                                                                ev_response      = DATA(lv_responset07) ).
+        IF lv_status_codet07 = 200.
+          REPLACE ALL OCCURRENCES OF `\/Date(` IN lv_responset07  WITH ``.
+          REPLACE ALL OCCURRENCES OF `)\/` IN lv_responset07  WITH ``.
+
+*          xco_cp_json=>data->from_string( lv_responset07 )->apply( VALUE #(
+*          ) )->write_to( REF #( ls_responset07 ) ).
+          /ui2/cl_json=>deserialize( EXPORTING json = lv_responset07
+                                     CHANGING  data = ls_responset07 ).
+
+          IF ls_responset07-d-results IS NOT INITIAL.
+            DELETE ls_responset07-d-results WHERE material_number IS INITIAL.
+            LOOP AT ls_responset07-d-results ASSIGNING FIELD-SYMBOL(<fs_responset07>).
+              READ TABLE lt_qms_t02_quo_d INTO DATA(lv_t02)
+                WITH KEY project_no           = <fs_responset07>-sales_number
+                         requisition_version  = <fs_responset07>-quo_version
+                         item_no              = <fs_responset07>-sales_d_no
+                         sap_mat_id           = <fs_responset07>-sap_mat_id
+                         BINARY SEARCH.
+              IF sy-subrc = 0.
+                <fs_responset07>-plant       = lv_t02-plant.
+                <fs_responset07>-companycode = lv_t02-companycode.
+                <fs_responset07>-currency    = lv_t02-currency.
+                APPEND <fs_responset07> TO lt_qms_t07_all.
+              ENDIF.
+            ENDLOOP.
+          ELSE.
+            EXIT.
+          ENDIF.
+        ELSE.
+          TRY.
+              add_message_to_log( i_text = 'データはQQMS_T07_QUOTATION_Dで存在していません' i_type = 'E' ).
+            CATCH cx_bali_runtime INTO DATA(cx_errf).
+              DATA ls_msgf TYPE scx_t100key.
+              DATA(lv_msgf) = cx_errf->get_text( ).
+          ENDTRY.
+          RETURN.
+        ENDIF.
+        CLEAR lv_responset07.
+      ENDDO.
+
+      SORT lt_qms_t07_all BY sap_mat_id quo_version.
+
+      LOOP AT lt_qms_t07_all ASSIGNING FIELD-SYMBOL(<lfs_qms_t07>)
+                          GROUP BY ( sap_mat_id  = <lfs_qms_t07>-sap_mat_id
+                                     quo_version = <lfs_qms_t07>-quo_version ).
+        CLEAR ls_qms_t07_sum .
+        ls_qms_t07_sum  = <lfs_qms_t07>.
+        CLEAR ls_qms_t07_sum-submit_price.
+        LOOP AT GROUP <lfs_qms_t07> ASSIGNING FIELD-SYMBOL(<lfs_qms_t07g>).
+          ls_qms_t07_sum-submit_price = ls_qms_t07_sum-submit_price + <lfs_qms_t07g>-submit_price.
+        ENDLOOP.
+        APPEND ls_qms_t07_sum TO lt_qms_t07_sum.
+      ENDLOOP.
+
+      SORT lt_qms_t07_sum BY sap_mat_id   ASCENDING
+                             quo_version  ASCENDING
+                             submit_price ASCENDING.
+      DELETE ADJACENT DUPLICATES FROM lt_qms_t07_sum COMPARING sap_mat_id.
+
+      LOOP AT lt_qms_t07_all ASSIGNING FIELD-SYMBOL(<lfs_t07_all>).
+
+        lv_currency = <lfs_t07_all>-currency.
+        READ TABLE lt_qms_t07_sum TRANSPORTING NO FIELDS
+          WITH KEY sap_mat_id  = <lfs_t07_all>-sap_mat_id
+                   quo_version = <lfs_t07_all>-quo_version
+                   BINARY SEARCH.
+        IF sy-subrc = 0.
+
+          IF <lfs_t07_all>-submit_curr NE lv_currency.
+            TRY.
+                lv_currencyold = <lfs_t07_all>-submit_curr.
+                cl_exchange_rates=>convert_to_local_currency(
+                  EXPORTING
+                    date              = lv_date
+                    foreign_amount    = <lfs_t07_all>-submit_price
+                    foreign_currency  = lv_currencyold
+                    local_currency    = lv_currency
+                  IMPORTING
+                    local_amount      = <lfs_t07_all>-submit_price
+                ).
+              CATCH cx_exchange_rates INTO DATA(cx_errd).
+                DATA ls_msgd TYPE scx_t100key.
+                DATA(lv_msgd) = cx_errd->get_text( ).
+            ENDTRY.
+            <lfs_t07_all>-submit_curr = lv_currency.
+          ENDIF.
+
+          APPEND <lfs_t07_all> TO lt_qms_t07_quotation_d.
+        ENDIF.
+      ENDLOOP.
     ENDIF.
 
 *   品目マスタから製品が属される利益センタを抽出
     SELECT product~plant,
            product~product,
            product~profitcenter,
-           ptext~ProfitCenterName
-      FROM i_productplantbasic WITH PRIVILEGED ACCESS as product
-     INNER JOIN @lt_qms_t07_quotation_d as t07
-             on ( t07~SAP_MAT_ID      = product~product
-             or   t07~MATERIAL_NUMBER = product~product )
-            and t07~plant = product~plant
-      LEFT JOIN i_profitcentertext WITH PRIVILEGED ACCESS as ptext
-             on ptext~ProfitCenter = product~profitcenter
-            and ptext~Language     = 'J'
+           ptext~profitcentername
+      FROM i_productplantbasic WITH PRIVILEGED ACCESS AS product
+     INNER JOIN @lt_qms_t07_quotation_d AS t07
+             ON ( t07~sap_mat_id      = product~product
+             OR   t07~material_number = product~product )
+            AND t07~plant = product~plant
+      LEFT JOIN i_profitcentertext WITH PRIVILEGED ACCESS AS ptext
+             ON ptext~profitcenter = product~profitcenter
+            AND ptext~language     = 'J'
      INTO TABLE @DATA(lt_productplantbasic).
     SORT lt_productplantbasic BY plant product.
 
@@ -529,32 +545,32 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
       SELECT  companycodet~companycodename,
               aplant~plantname,
               suplrinvc~supplierinvoice, "仕入先請求書番号
-              suplrinvc~Purchaseorderitemmaterial as material,       "構成部品
-              suplrinvc~Quantityinpurchaseorderunit as quantity,       "数量
+              suplrinvc~purchaseorderitemmaterial AS material,       "構成部品
+              suplrinvc~quantityinpurchaseorderunit AS quantity,       "数量
               suplrinvc~plant,          "プラント
 
               supplier~postingdate,     "転記日付
               supplier~companycode,     "会社コード
-              supplier~Invoicegrossamount as supplierinvoiceitemamount, "請求書金額
-              supplier~DocumentCurrency as currency,  "通貨
+              supplier~invoicegrossamount AS supplierinvoiceitemamount, "請求書金額
+              supplier~documentcurrency AS currency,  "通貨
 
 *              suplrinvc~supplierinvoiceitemamount, "請求書金額
 *              suplrinvc~\_currency-currency,  "通貨
 
               itempurord~purchaseorder, "発注伝票
               t07~material_number,
-              t07~currency as currencyold,
+              t07~currency AS currencyold,
               product1~productdescription AS materialdescription,
               product2~productdescription AS productdescription,
               t07~sap_mat_id,
               purchase~supplier         "最終受入仕入先
         FROM @lt_qms_t07 AS t07
-   inner JOIN I_SuplrInvcItemPurOrdRefAPI01 WITH PRIVILEGED ACCESS AS suplrinvc
-          ON t07~material_number       = suplrinvc~Purchaseorderitemmaterial
+   INNER JOIN i_suplrinvcitempurordrefapi01 WITH PRIVILEGED ACCESS AS suplrinvc
+          ON t07~material_number       = suplrinvc~purchaseorderitemmaterial
          AND suplrinvc~plant           = t07~plant
-  INNER JOIN I_SupplierInvoiceAPI01 WITH PRIVILEGED ACCESS AS supplier
-          on supplier~supplierinvoice = suplrinvc~supplierinvoice
-         and supplier~companycode      = t07~companycode
+  INNER JOIN i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS AS supplier
+          ON supplier~supplierinvoice = suplrinvc~supplierinvoice
+         AND supplier~companycode      = t07~companycode
   INNER JOIN i_suplrinvcitempurordrefapi01 WITH PRIVILEGED ACCESS AS itempurord
           ON itempurord~supplierinvoice = supplier~supplierinvoice
 
@@ -661,7 +677,7 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
            basic~product AS material,             "部品
            basic~standardprice,       "標準原価
            basic~movingaverageprice,  "実際原価
-           basic~PriceUnitQty,
+           basic~priceunitqty,
            basic~currency             "会社コード通貨
       FROM i_productvaluationbasic WITH PRIVILEGED ACCESS AS basic
       JOIN @lt_qms_t07_quotation_d AS t07
@@ -739,9 +755,9 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
       READ TABLE lt_productplantbasic ASSIGNING FIELD-SYMBOL(<lfs_productplantbasic>)
         WITH KEY product = ls_data-material
                  plant   = ls_data-plant BINARY SEARCH.
-      if sy-subrc = 0.
-        ls_data-Profitcenter            = <lfs_productplantbasic>-ProfitCenter.
-        ls_data-ProfitCenterName        = <lfs_productplantbasic>-ProfitCenterName.
+      IF sy-subrc = 0.
+        ls_data-profitcenter            = <lfs_productplantbasic>-profitcenter.
+        ls_data-profitcentername        = <lfs_productplantbasic>-profitcentername.
       ENDIF.
 
       ls_data-quantity            = <lfs_qmst07>-person_no1.
@@ -786,13 +802,13 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
         WITH KEY plant    = <lfs_qmst07>-plant
                  material = <lfs_qmst07>-material_number BINARY SEARCH.
       IF sy-subrc = 0.
-          clear:lv_price1,lv_price2.
-          try.
+        CLEAR:lv_price1,lv_price2.
+        TRY.
 
 
 
-            lv_price1 = <lfs_basic>-standardprice / <lfs_basic>-PriceUnitQty.
-            lv_price2 = <lfs_basic>-movingaverageprice / <lfs_basic>-PriceUnitQty.
+            lv_price1 = <lfs_basic>-standardprice / <lfs_basic>-priceunitqty.
+            lv_price2 = <lfs_basic>-movingaverageprice / <lfs_basic>-priceunitqty.
 
             lv_price1 = zzcl_common_utils=>conversion_amount(
                                           iv_alpha = 'OUT'
@@ -808,9 +824,9 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
           CATCH cx_root  INTO DATA(xexc).
             ls_data-standardprice       = lv_price1.
             ls_data-movingaverageprice  = lv_price2.
-          ENDTRY.
-          ls_data-standardprice      = CONDENSE( ls_data-standardprice ).
-          ls_data-movingaverageprice = CONDENSE( ls_data-movingaverageprice ).
+        ENDTRY.
+        ls_data-standardprice      = condense( ls_data-standardprice ).
+        ls_data-movingaverageprice = condense( ls_data-movingaverageprice ).
         IF <lfs_basic>-currency NE lv_currency.
           TRY.
               cl_exchange_rates=>convert_to_local_currency(
@@ -882,11 +898,11 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
 
 *     工程別加工費実績から各製品の加工費実績を取得
     SELECT mfgorder~product,
-           mfgorder~Producedproduct,
+           mfgorder~producedproduct,
            mfgorder~productionsupervisor,
            mfgorder~companycode,
            mfgorder~totalactualcost,
-           mfgorder~MFGORDERCONFIRMEDYIELDQTY as YIELDQTY
+           mfgorder~mfgorderconfirmedyieldqty AS yieldqty
       FROM ztfi_1020 AS mfgorder
       JOIN @lt_qms_t02_quo_d AS t02
         ON mfgorder~product = t02~sap_mat_id
@@ -941,7 +957,7 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
            companycodet~companycodename
       FROM i_companycode WITH PRIVILEGED ACCESS AS companycodet
       JOIN @lt_qms_t02_quo_d AS t02
-        on companycodet~companycode  = t02~companycode
+        ON companycodet~companycode  = t02~companycode
      WHERE companycodet~language     = 'J'
       INTO TABLE @DATA(lt_companycodet).
     SORT lt_companycodet BY companycode.
@@ -974,9 +990,9 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
       READ TABLE lt_productplantbasic ASSIGNING <lfs_productplantbasic>
         WITH KEY product = ls_dataj-product
                  plant   = ls_dataj-plant BINARY SEARCH.
-      if sy-subrc = 0.
-        ls_dataj-Profitcenter            = <lfs_productplantbasic>-ProfitCenter.
-        ls_dataj-ProfitCenterName        = <lfs_productplantbasic>-ProfitCenterName.
+      IF sy-subrc = 0.
+        ls_dataj-profitcenter            = <lfs_productplantbasic>-profitcenter.
+        ls_dataj-profitcentername        = <lfs_productplantbasic>-profitcentername.
       ENDIF.
 
       ls_dataj-estimatedprice_smt = <lfs_t02>-smt_prod_cost.
@@ -994,19 +1010,19 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
             ls_dataj-actualprice_fat = ls_dataj-actualprice_fat + <lfs_mfgorder>-totalactualcost.
         ENDCASE.
 
-        if <lfs_mfgorder>-Product = <lfs_mfgorder>-Producedproduct.
-          ls_dataj-YIELDQTY = ls_dataj-YIELDQTY + <lfs_mfgorder>-yieldqty.
+        IF <lfs_mfgorder>-product = <lfs_mfgorder>-producedproduct.
+          ls_dataj-yieldqty = ls_dataj-yieldqty + <lfs_mfgorder>-yieldqty.
         ENDIF.
       ENDLOOP.
 
-      try.
-        ls_dataj-actualprice_smt = ls_dataj-actualprice_smt / ls_dataj-YIELDQTY.
-        ls_dataj-actualprice_ai  = ls_dataj-actualprice_ai  / ls_dataj-YIELDQTY.
-        ls_dataj-actualprice_fat = ls_dataj-actualprice_fat / ls_dataj-YIELDQTY.
-      CATCH cx_root  INTO DATA(exc).
-        ls_dataj-actualprice_smt = 0.
-        ls_dataj-actualprice_ai  = 0.
-        ls_dataj-actualprice_fat = 0.
+      TRY.
+          ls_dataj-actualprice_smt = ls_dataj-actualprice_smt / ls_dataj-yieldqty.
+          ls_dataj-actualprice_ai  = ls_dataj-actualprice_ai  / ls_dataj-yieldqty.
+          ls_dataj-actualprice_fat = ls_dataj-actualprice_fat / ls_dataj-yieldqty.
+        CATCH cx_root  INTO DATA(exc).
+          ls_dataj-actualprice_smt = 0.
+          ls_dataj-actualprice_ai  = 0.
+          ls_dataj-actualprice_fat = 0.
       ENDTRY.
 
       READ TABLE lt_basic2 ASSIGNING FIELD-SYMBOL(<lfs_basic2>)

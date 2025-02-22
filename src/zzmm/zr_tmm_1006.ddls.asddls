@@ -17,6 +17,10 @@ define root view entity ZR_TMM_1006
                                                                        and _BuyPurposeText.zid     = 'ZMM002'
   association [0..1] to ZC_WF_Location_VH       as _KyotenText         on  $projection.Kyoten = _KyotenText.Zvalue1
   association [0..1] to ZC_WF_ApprovalStatus_VH as _ApprovalStatusText on  $projection.ApproveStatus = _ApprovalStatusText.Zvalue1
+
+  // ADD BEGIN BY XINLEI XU 2025/02/21
+  association [0..*] to ZC_TMM_1012             as _Attachment         on  $projection.UUID = _Attachment.PrUuid
+  // ADD END BY XINLEI XU 2025/02/21
 {
   key _main.uuid                             as UUID,
       _main.apply_depart                     as ApplyDepart,
@@ -95,6 +99,7 @@ define root view entity ZR_TMM_1006
       _OrderTypeText.zvalue3                 as OrderTypeText,
       _BuyPurposeText.zvalue3                as BuyPurposeText,
       _KyotenText.Zvalue2                    as KyotenText,
-      _ApprovalStatusText.Zvalue2            as ApproveStatusText
+      _ApprovalStatusText.Zvalue2            as ApproveStatusText,
 
+      _Attachment
 }

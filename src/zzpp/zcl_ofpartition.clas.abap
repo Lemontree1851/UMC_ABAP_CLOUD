@@ -25,7 +25,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_OFPARTITION IMPLEMENTATION.
+CLASS zcl_ofpartition IMPLEMENTATION.
 
 
   METHOD get_process_date_range.
@@ -118,6 +118,10 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
           CASE ls_ranges-name.
             WHEN 'CUSTOMER'.
               DATA(r_customer) = ls_ranges-range.
+*&--ADD BEGIN BY XINLEI XU 2025/02/18
+            WHEN 'MATERIALBYCUSTOMER'.
+              DATA(r_materialbycustomer) = ls_ranges-range.
+*&--ADD END BY XINLEI XU 2025/02/18
             WHEN 'PLANT'.
               DATA(r_plant) = ls_ranges-range.
             WHEN 'MATERIAL'.
@@ -432,6 +436,12 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
             ls_split_of-materialbycustomer = ls_additional-materialbycustomer.
             ls_split_of-materialname = ls_additional-productname.
           ENDIF.
+
+*&--ADD BEGIN BY XINLEI XU 2025/02/18
+          IF ls_split_of-materialbycustomer NOT IN r_materialbycustomer.
+            CONTINUE.
+          ENDIF.
+*&--ADD END BY XINLEI XU 2025/02/18
 
           READ TABLE lt_split_date INTO ls_split_date WITH KEY customer = ls_of_key-customer
             plant = ls_of_key-plant material = ls_of_key-material BINARY SEARCH.

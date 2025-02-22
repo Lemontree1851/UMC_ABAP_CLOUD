@@ -1,19 +1,19 @@
-class ZCL_HTTP_PODATA_002 definition
-  public
-  create public .
+CLASS zcl_http_podata_002 DEFINITION
+  PUBLIC
+  CREATE PUBLIC .
 
-public section.
+  PUBLIC SECTION.
 
-"　T024D、T001L、MARC、MKAL、AFKO、AFPO、PLPO、RESB、AFVC、ZPLAF
-" 20241010 MBEW
+    "　T024D、T001L、MARC、MKAL、AFKO、AFPO、PLPO、RESB、AFVC、ZPLAF
+    " 20241010 MBEW
     TYPES:
       BEGIN OF ty_item,
-        tablename         TYPE c    LENGTH 10,
-        prametername      TYPE c    LENGTH 10,
-        value             type      string,
+        tablename    TYPE c    LENGTH 10,
+        prametername TYPE c    LENGTH 10,
+        value        TYPE      string,
       END OF ty_item,
 
-        tt_item TYPE STANDARD TABLE OF ty_item WITH EMPTY KEY,
+      tt_item TYPE STANDARD TABLE OF ty_item WITH EMPTY KEY,
 
 
       BEGIN OF ty_header,
@@ -23,375 +23,375 @@ public section.
       tt_header TYPE STANDARD TABLE OF ty_header WITH EMPTY KEY,
 
       "NO.1 購買発注
-      BEGIN OF TY_EKKO,
-        PurchaseOrder                             TYPE C LENGTH  10  ,
-        PurchaseOrderType                         TYPE C LENGTH  4  ,
-        PurchaseOrderSubtype                      TYPE C LENGTH  1  ,
-        PurchasingDocumentOrigin                  TYPE C LENGTH  1  ,
-        CreatedByUser                             TYPE C LENGTH  12  ,
-        CreationDate                              TYPE C LENGTH  8  ,
-        PurchaseOrderDate                         TYPE C LENGTH  8  ,
-        Language                                  TYPE C LENGTH  1  ,
-        CorrespncExternalReference                TYPE C LENGTH  12  ,
-        CorrespncInternalReference                TYPE C LENGTH  12  ,
-        PurchasingDocumentDeletionCode            TYPE C LENGTH  1  ,
-        ReleaseIsNotCompleted                     TYPE C LENGTH  1  ,
-        PurchasingCompletenessStatus              TYPE C LENGTH  1  ,
-        PurchasingProcessingStatus                TYPE C LENGTH  2  ,
-        PurgReleaseSequenceStatus                 TYPE C LENGTH  8  ,
-        ReleaseCode                               TYPE C LENGTH  1  ,
-        CompanyCode                               TYPE C LENGTH  4  ,
-        PurchasingOrganization                    TYPE C LENGTH  4  ,
-        PurchasingGroup                           TYPE C LENGTH  3  ,
-        Supplier                                  TYPE C LENGTH  10  ,
-        ManualSupplierAddressID                   TYPE C LENGTH  10  ,
-        SupplierRespSalesPersonName               TYPE C LENGTH  30  ,
-        SupplierPhoneNumber                       TYPE C LENGTH  16  ,
-        SupplyingSupplier                         TYPE C LENGTH  10  ,
-        SupplyingPlant                            TYPE C LENGTH  4  ,
-        InvoicingParty                            TYPE C LENGTH  10  ,
-        Customer                                  TYPE C LENGTH  10  ,
-        SupplierQuotationExternalID               TYPE C LENGTH  10  ,
-        PaymentTerms                              TYPE C LENGTH  4  ,
-        CashDiscount1Days                         TYPE C LENGTH  3  ,
-        CashDiscount2Days                         TYPE C LENGTH  3  ,
-        NetPaymentDays                            TYPE C LENGTH  3  ,
-        CashDiscount1Percent                      TYPE C LENGTH  5  ,
-        CashDiscount2Percent                      TYPE C LENGTH  5  ,
-        DownPaymentType                           TYPE C LENGTH  4  ,
-        DownPaymentPercentageOfTotAmt             TYPE C LENGTH  5  ,
-        DownPaymentAmount                         TYPE C LENGTH  11  ,
-        DownPaymentDueDate                        TYPE C LENGTH  8  ,
-        IncotermsClassification                   TYPE C LENGTH  3  ,
-        IncotermsTransferLocation                 TYPE C LENGTH  28  ,
-        IncotermsVersion                          TYPE C LENGTH  4  ,
-        IncotermsLocation1                        TYPE C LENGTH  70  ,
-        IncotermsLocation2                        TYPE C LENGTH  70  ,
-        IsIntrastatReportingRelevant              TYPE C LENGTH  1  ,
-        IsIntrastatReportingExcluded              TYPE C LENGTH  1  ,
-        PricingDocument                           TYPE C LENGTH  10  ,
-        PricingProcedure                          TYPE C LENGTH  6  ,
-        DocumentCurrency                          TYPE C LENGTH  5  ,
-        ValidityStartDate                         TYPE C LENGTH  8  ,
-        ValidityEndDate                           TYPE C LENGTH  8  ,
-        ExchangeRate                              TYPE C LENGTH  9  ,
-        ExchangeRateIsFixed                       TYPE C LENGTH  1  ,
-        LastChangeDateTime                        TYPE C LENGTH  21  ,
-        TaxReturnCountry                          TYPE C LENGTH  3  ,
-        VATRegistrationCountry                    TYPE C LENGTH  3  ,
-        PurgReasonForDocCancellation              TYPE C LENGTH  2  ,
-        PurgReleaseTimeTotalAmount                TYPE C LENGTH  15  ,
-        PurgAggrgdProdCmplncSuplrSts              TYPE C LENGTH  1  ,
-        PurgAggrgdProdMarketabilitySts            TYPE C LENGTH  1  ,
-        PurgAggrgdSftyDataSheetStatus             TYPE C LENGTH  1  ,
-        PurgProdCmplncTotDngrsGoodsSts            TYPE C LENGTH  1  ,
+      BEGIN OF ty_ekko,
+        purchaseorder                  TYPE c LENGTH  10,
+        purchaseordertype              TYPE c LENGTH  4,
+        purchaseordersubtype           TYPE c LENGTH  1,
+        purchasingdocumentorigin       TYPE c LENGTH  1,
+        createdbyuser                  TYPE c LENGTH  12,
+        creationdate                   TYPE c LENGTH  8,
+        purchaseorderdate              TYPE c LENGTH  8,
+        language                       TYPE c LENGTH  1,
+        correspncexternalreference     TYPE c LENGTH  12,
+        correspncinternalreference     TYPE c LENGTH  12,
+        purchasingdocumentdeletioncode TYPE c LENGTH  1,
+        releaseisnotcompleted          TYPE c LENGTH  1,
+        purchasingcompletenessstatus   TYPE c LENGTH  1,
+        purchasingprocessingstatus     TYPE c LENGTH  2,
+        purgreleasesequencestatus      TYPE c LENGTH  8,
+        releasecode                    TYPE c LENGTH  1,
+        companycode                    TYPE c LENGTH  4,
+        purchasingorganization         TYPE c LENGTH  4,
+        purchasinggroup                TYPE c LENGTH  3,
+        supplier                       TYPE c LENGTH  10,
+        manualsupplieraddressid        TYPE c LENGTH  10,
+        supplierrespsalespersonname    TYPE c LENGTH  30,
+        supplierphonenumber            TYPE c LENGTH  16,
+        supplyingsupplier              TYPE c LENGTH  10,
+        supplyingplant                 TYPE c LENGTH  4,
+        invoicingparty                 TYPE c LENGTH  10,
+        customer                       TYPE c LENGTH  10,
+        supplierquotationexternalid    TYPE c LENGTH  10,
+        paymentterms                   TYPE c LENGTH  4,
+        cashdiscount1days              TYPE c LENGTH  3,
+        cashdiscount2days              TYPE c LENGTH  3,
+        netpaymentdays                 TYPE c LENGTH  3,
+        cashdiscount1percent           TYPE c LENGTH  5,
+        cashdiscount2percent           TYPE c LENGTH  5,
+        downpaymenttype                TYPE c LENGTH  4,
+        downpaymentpercentageoftotamt  TYPE c LENGTH  5,
+        downpaymentamount              TYPE c LENGTH  11,
+        downpaymentduedate             TYPE c LENGTH  8,
+        incotermsclassification        TYPE c LENGTH  3,
+        incotermstransferlocation      TYPE c LENGTH  28,
+        incotermsversion               TYPE c LENGTH  4,
+        incotermslocation1             TYPE c LENGTH  70,
+        incotermslocation2             TYPE c LENGTH  70,
+        isintrastatreportingrelevant   TYPE c LENGTH  1,
+        isintrastatreportingexcluded   TYPE c LENGTH  1,
+        pricingdocument                TYPE c LENGTH  10,
+        pricingprocedure               TYPE c LENGTH  6,
+        documentcurrency               TYPE c LENGTH  5,
+        validitystartdate              TYPE c LENGTH  8,
+        validityenddate                TYPE c LENGTH  8,
+        exchangerate                   TYPE c LENGTH  9,
+        exchangerateisfixed            TYPE c LENGTH  1,
+        lastchangedatetime             TYPE c LENGTH  21,
+        taxreturncountry               TYPE c LENGTH  3,
+        vatregistrationcountry         TYPE c LENGTH  3,
+        purgreasonfordoccancellation   TYPE c LENGTH  2,
+        purgreleasetimetotalamount     TYPE c LENGTH  15,
+        purgaggrgdprodcmplncsuplrsts   TYPE c LENGTH  1,
+        purgaggrgdprodmarketabilitysts TYPE c LENGTH  1,
+        purgaggrgdsftydatasheetstatus  TYPE c LENGTH  1,
+        purgprodcmplnctotdngrsgoodssts TYPE c LENGTH  1,
 
-      END OF TY_EKKO,
+      END OF ty_ekko,
 
       "NO.2 購買発注明細
-      BEGIN OF TY_EKPO,
-        PurchaseOrder                                type c length                   10    ,
-        PurchaseOrderItem                            type c length                   5     ,
-        PurchaseOrderItemUniqueID                    type c length                   15    ,
-        PurchaseOrderCategory                        type c length                   1     ,
-        DocumentCurrency                             type c length                   5     ,
-        PurchasingDocumentDeletionCode               type c length                   1     ,
-        PurchasingDocumentItemOrigin                 type c length                   1     ,
-        MaterialGroup                                type c length                   9     ,
-        Material                                     type c length                   40    ,
-        MaterialType                                 type c length                   4     ,
-        SupplierMaterialNumber                       type c length                   35    ,
-        SupplierSubrange                             type c length                   6     ,
-        ManufacturerPartNmbr                         type c length                   40    ,
-        Manufacturer                                 type c length                   10    ,
-        ManufacturerMaterial                         type c length                   40    ,
-        PurchaseOrderItemText                        type c length                   40    ,
-        ProductType                                  type c length                   2     ,
-        CompanyCode                                  type c length                   4     ,
-        Plant                                        type c length                   4     ,
-        ManualDeliveryAddressID                      type c length                   10    ,
-        ReferenceDeliveryAddressID                   type c length                   10    ,
-        Customer                                     type c length                   10    ,
-        Subcontractor                                type c length                   10    ,
-        SupplierIsSubcontractor                      type c length                   1     ,
-        CrossPlantConfigurableProduct                type c length                   40    ,
-        ArticleCategory                              type c length                   2     ,
-        PlndOrderReplnmtElmntType                    type c length                   1     ,
-        ProductPurchasePointsQtyUnit                 type c length                   3     ,
-        ProductPurchasePointsQty                     type c length                   13    ,
-        StorageLocation                              type c length                   4     ,
-        PurchaseOrderQuantityUnit                    type c length                   3     ,
-        OrderItemQtyToBaseQtyNmrtr                   type c length                   5     ,
-        OrderItemQtyToBaseQtyDnmntr                  type c length                   5     ,
-        NetPriceQuantity                             type c length                   5     ,
-        IsCompletelyDelivered                        type c length                   1     ,
-        IsFinallyInvoiced                            type c length                   1     ,
-        GoodsReceiptIsExpected                       type c length                   1     ,
-        InvoiceIsExpected                            type c length                   1     ,
-        InvoiceIsGoodsReceiptBased                   type c length                   1     ,
-        PurchaseContractItem                         type c length                   5     ,
-        PurchaseContract                             type c length                   10    ,
-        PurchaseRequisition                          type c length                   10    ,
-        RequirementTracking                          type c length                   10    ,
-        PurchaseRequisitionItem                      type c length                   5     ,
-        EvaldRcptSettlmtIsAllowed                    type c length                   1     ,
-        UnlimitedOverdeliveryIsAllowed               type c length                   1     ,
-        OverdelivTolrtdLmtRatioInPct                 type c length                   3     ,
-        UnderdelivTolrtdLmtRatioInPct                type c length                   3     ,
-        RequisitionerName                            type c length                   12    ,
-        PlannedDeliveryDurationInDays                type c length                   3     ,
-        GoodsReceiptDurationInDays                   type c length                   3     ,
-        PartialDeliveryIsAllowed                     type c length                   1     ,
-        ConsumptionPosting                           type c length                   1     ,
-        ServicePerformer                             type c length                   10    ,
-        BaseUnit                                     type c length                   3     ,
-        PurchaseOrderItemCategory                    type c length                   1     ,
-        ProfitCenter                                 type c length                   10    ,
-        OrderPriceUnit                               type c length                   3     ,
-        ItemVolumeUnit                               type c length                   3     ,
-        ItemWeightUnit                               type c length                   3     ,
-        MultipleAcctAssgmtDistribution               type c length                   1     ,
-        PartialInvoiceDistribution                   type c length                   1     ,
-        PricingDateControl                           type c length                   1     ,
-        IsStatisticalItem                            type c length                   1     ,
-        PurchasingParentItem                         type c length                   5     ,
-        GoodsReceiptLatestCreationDate               type c length                   8     ,
-        IsReturnsItem                                type c length                   1     ,
-        PurchasingOrderReason                        type c length                   3     ,
-        IncotermsClassification                      type c length                   3     ,
-        IncotermsTransferLocation                    type c length                   28    ,
-        IncotermsLocation1                           type c length                   70    ,
-        IncotermsLocation2                           type c length                   70    ,
-        PriorSupplier                                type c length                   10    ,
-        InternationalArticleNumber                   type c length                   18    ,
-        IntrastatServiceCode                         type c length                   30    ,
-        CommodityCode                                type c length                   30    ,
-        MaterialFreightGroup                         type c length                   8     ,
-        DiscountInKindEligibility                    type c length                   1     ,
-        PurgItemIsBlockedForDelivery                 type c length                   1     ,
-        SupplierConfirmationControlKey               type c length                   4     ,
-        PriceIsToBePrinted                           type c length                   1     ,
-        AccountAssignmentCategory                    type c length                   1     ,
-        PurchasingInfoRecord                         type c length                   10    ,
-        NetAmount                                    type c length                   13    ,
-        GrossAmount                                  type c length                   13    ,
-        EffectiveAmount                              type c length                   13    ,
-        Subtotal1Amount                              type c length                   13    ,
-        Subtotal2Amount                              type c length                   13    ,
-        Subtotal3Amount                              type c length                   13    ,
-        Subtotal4Amount                              type c length                   13    ,
-        Subtotal5Amount                              type c length                   13    ,
-        Subtotal6Amount                              type c length                   13    ,
-        OrderQuantity                                type c length                   13    ,
-        NetPriceAmount                               type c length                   11    ,
-        ItemVolume                                   type c length                   13    ,
-        ItemGrossWeight                              type c length                   13    ,
-        ItemNetWeight                                type c length                   13    ,
-        OrderPriceUnitToOrderUnitNmrtr               type c length                   5     ,
-        OrdPriceUnitToOrderUnitDnmntr                type c length                   5     ,
-        GoodsReceiptIsNonValuated                    type c length                   1     ,
-        TaxCode                                      type c length                   2     ,
-        TaxJurisdiction                              type c length                   15    ,
-        ShippingInstruction                          type c length                   2     ,
-        ShippingType                                 type c length                   2     ,
-        NonDeductibleInputTaxAmount                  type c length                   13    ,
-        StockType                                    type c length                   1     ,
-        ValuationType                                type c length                   10    ,
-        ValuationCategory                            type c length                   1     ,
-        ItemIsRejectedBySupplier                     type c length                   1     ,
-        PurgDocPriceDate                             type c length                   8     ,
-        PurgDocReleaseOrderQuantity                  type c length                   13    ,
-        EarmarkedFunds                               type c length                   10    ,
-        EarmarkedFundsDocument                       type c length                   10    ,
-        EarmarkedFundsItem                           type c length                   3     ,
-        EarmarkedFundsDocumentItem                   type c length                   3     ,
-        PartnerReportedBusinessArea                  type c length                   4     ,
-        InventorySpecialStockType                    type c length                   1     ,
-        DeliveryDocumentType                         type c length                   4     ,
-        IssuingStorageLocation                       type c length                   4     ,
-        AllocationTable                              type c length                   10    ,
-        AllocationTableItem                          type c length                   5     ,
-        RetailPromotion                              type c length                   10    ,
-        DownPaymentType                              type c length                   4     ,
-        DownPaymentPercentageOfTotAmt                type c length                   5     ,
-        DownPaymentAmount                            type c length                   11    ,
-        DownPaymentDueDate                           type c length                   8     ,
-        ExpectedOverallLimitAmount                   type c length                   13    ,
-        OverallLimitAmount                           type c length                   13    ,
-        RequirementSegment                           type c length                   40    ,
-        PurgProdCmplncDngrsGoodsStatus               type c length                   1     ,
-        PurgProdCmplncSupplierStatus                 type c length                   1     ,
-        PurgProductMarketabilityStatus               type c length                   1     ,
-        PurgSafetyDataSheetStatus                    type c length                   1     ,
-        SubcontrgCompIsRealTmeCnsmd                  type c length                   1     ,
-        BR_MaterialOrigin                            type c length                   1     ,
-        BR_MaterialUsage                             type c length                   1     ,
-        BR_CFOPCategory                              type c length                   2     ,
-        BR_NCM                                       type c length                   16    ,
-        BR_IsProducedInHouse                         type c length                   1     ,
+      BEGIN OF ty_ekpo,
+        purchaseorder                  TYPE c LENGTH                   10,
+        purchaseorderitem              TYPE c LENGTH                   5,
+        purchaseorderitemuniqueid      TYPE c LENGTH                   15,
+        purchaseordercategory          TYPE c LENGTH                   1,
+        documentcurrency               TYPE c LENGTH                   5,
+        purchasingdocumentdeletioncode TYPE c LENGTH                   1,
+        purchasingdocumentitemorigin   TYPE c LENGTH                   1,
+        materialgroup                  TYPE c LENGTH                   9,
+        material                       TYPE c LENGTH                   40,
+        materialtype                   TYPE c LENGTH                   4,
+        suppliermaterialnumber         TYPE c LENGTH                   35,
+        suppliersubrange               TYPE c LENGTH                   6,
+        manufacturerpartnmbr           TYPE c LENGTH                   40,
+        manufacturer                   TYPE c LENGTH                   10,
+        manufacturermaterial           TYPE c LENGTH                   40,
+        purchaseorderitemtext          TYPE c LENGTH                   40,
+        producttype                    TYPE c LENGTH                   2,
+        companycode                    TYPE c LENGTH                   4,
+        plant                          TYPE c LENGTH                   4,
+        manualdeliveryaddressid        TYPE c LENGTH                   10,
+        referencedeliveryaddressid     TYPE c LENGTH                   10,
+        customer                       TYPE c LENGTH                   10,
+        subcontractor                  TYPE c LENGTH                   10,
+        supplierissubcontractor        TYPE c LENGTH                   1,
+        crossplantconfigurableproduct  TYPE c LENGTH                   40,
+        articlecategory                TYPE c LENGTH                   2,
+        plndorderreplnmtelmnttype      TYPE c LENGTH                   1,
+        productpurchasepointsqtyunit   TYPE c LENGTH                   3,
+        productpurchasepointsqty       TYPE c LENGTH                   13,
+        storagelocation                TYPE c LENGTH                   4,
+        purchaseorderquantityunit      TYPE c LENGTH                   3,
+        orderitemqtytobaseqtynmrtr     TYPE c LENGTH                   5,
+        orderitemqtytobaseqtydnmntr    TYPE c LENGTH                   5,
+        netpricequantity               TYPE c LENGTH                   5,
+        iscompletelydelivered          TYPE c LENGTH                   1,
+        isfinallyinvoiced              TYPE c LENGTH                   1,
+        goodsreceiptisexpected         TYPE c LENGTH                   1,
+        invoiceisexpected              TYPE c LENGTH                   1,
+        invoiceisgoodsreceiptbased     TYPE c LENGTH                   1,
+        purchasecontractitem           TYPE c LENGTH                   5,
+        purchasecontract               TYPE c LENGTH                   10,
+        purchaserequisition            TYPE c LENGTH                   10,
+        requirementtracking            TYPE c LENGTH                   10,
+        purchaserequisitionitem        TYPE c LENGTH                   5,
+        evaldrcptsettlmtisallowed      TYPE c LENGTH                   1,
+        unlimitedoverdeliveryisallowed TYPE c LENGTH                   1,
+        overdelivtolrtdlmtratioinpct   TYPE c LENGTH                   3,
+        underdelivtolrtdlmtratioinpct  TYPE c LENGTH                   3,
+        requisitionername              TYPE c LENGTH                   12,
+        planneddeliverydurationindays  TYPE c LENGTH                   3,
+        goodsreceiptdurationindays     TYPE c LENGTH                   3,
+        partialdeliveryisallowed       TYPE c LENGTH                   1,
+        consumptionposting             TYPE c LENGTH                   1,
+        serviceperformer               TYPE c LENGTH                   10,
+        baseunit                       TYPE c LENGTH                   3,
+        purchaseorderitemcategory      TYPE c LENGTH                   1,
+        profitcenter                   TYPE c LENGTH                   10,
+        orderpriceunit                 TYPE c LENGTH                   3,
+        itemvolumeunit                 TYPE c LENGTH                   3,
+        itemweightunit                 TYPE c LENGTH                   3,
+        multipleacctassgmtdistribution TYPE c LENGTH                   1,
+        partialinvoicedistribution     TYPE c LENGTH                   1,
+        pricingdatecontrol             TYPE c LENGTH                   1,
+        isstatisticalitem              TYPE c LENGTH                   1,
+        purchasingparentitem           TYPE c LENGTH                   5,
+        goodsreceiptlatestcreationdate TYPE c LENGTH                   8,
+        isreturnsitem                  TYPE c LENGTH                   1,
+        purchasingorderreason          TYPE c LENGTH                   3,
+        incotermsclassification        TYPE c LENGTH                   3,
+        incotermstransferlocation      TYPE c LENGTH                   28,
+        incotermslocation1             TYPE c LENGTH                   70,
+        incotermslocation2             TYPE c LENGTH                   70,
+        priorsupplier                  TYPE c LENGTH                   10,
+        internationalarticlenumber     TYPE c LENGTH                   18,
+        intrastatservicecode           TYPE c LENGTH                   30,
+        commoditycode                  TYPE c LENGTH                   30,
+        materialfreightgroup           TYPE c LENGTH                   8,
+        discountinkindeligibility      TYPE c LENGTH                   1,
+        purgitemisblockedfordelivery   TYPE c LENGTH                   1,
+        supplierconfirmationcontrolkey TYPE c LENGTH                   4,
+        priceistobeprinted             TYPE c LENGTH                   1,
+        accountassignmentcategory      TYPE c LENGTH                   1,
+        purchasinginforecord           TYPE c LENGTH                   10,
+        netamount                      TYPE c LENGTH                   13,
+        grossamount                    TYPE c LENGTH                   13,
+        effectiveamount                TYPE c LENGTH                   13,
+        subtotal1amount                TYPE c LENGTH                   13,
+        subtotal2amount                TYPE c LENGTH                   13,
+        subtotal3amount                TYPE c LENGTH                   13,
+        subtotal4amount                TYPE c LENGTH                   13,
+        subtotal5amount                TYPE c LENGTH                   13,
+        subtotal6amount                TYPE c LENGTH                   13,
+        orderquantity                  TYPE c LENGTH                   13,
+        netpriceamount                 TYPE c LENGTH                   11,
+        itemvolume                     TYPE c LENGTH                   13,
+        itemgrossweight                TYPE c LENGTH                   13,
+        itemnetweight                  TYPE c LENGTH                   13,
+        orderpriceunittoorderunitnmrtr TYPE c LENGTH                   5,
+        ordpriceunittoorderunitdnmntr  TYPE c LENGTH                   5,
+        goodsreceiptisnonvaluated      TYPE c LENGTH                   1,
+        taxcode                        TYPE c LENGTH                   2,
+        taxjurisdiction                TYPE c LENGTH                   15,
+        shippinginstruction            TYPE c LENGTH                   2,
+        shippingtype                   TYPE c LENGTH                   2,
+        nondeductibleinputtaxamount    TYPE c LENGTH                   13,
+        stocktype                      TYPE c LENGTH                   1,
+        valuationtype                  TYPE c LENGTH                   10,
+        valuationcategory              TYPE c LENGTH                   1,
+        itemisrejectedbysupplier       TYPE c LENGTH                   1,
+        purgdocpricedate               TYPE c LENGTH                   8,
+        purgdocreleaseorderquantity    TYPE c LENGTH                   13,
+        earmarkedfunds                 TYPE c LENGTH                   10,
+        earmarkedfundsdocument         TYPE c LENGTH                   10,
+        earmarkedfundsitem             TYPE c LENGTH                   3,
+        earmarkedfundsdocumentitem     TYPE c LENGTH                   3,
+        partnerreportedbusinessarea    TYPE c LENGTH                   4,
+        inventoryspecialstocktype      TYPE c LENGTH                   1,
+        deliverydocumenttype           TYPE c LENGTH                   4,
+        issuingstoragelocation         TYPE c LENGTH                   4,
+        allocationtable                TYPE c LENGTH                   10,
+        allocationtableitem            TYPE c LENGTH                   5,
+        retailpromotion                TYPE c LENGTH                   10,
+        downpaymenttype                TYPE c LENGTH                   4,
+        downpaymentpercentageoftotamt  TYPE c LENGTH                   5,
+        downpaymentamount              TYPE c LENGTH                   11,
+        downpaymentduedate             TYPE c LENGTH                   8,
+        expectedoveralllimitamount     TYPE c LENGTH                   13,
+        overalllimitamount             TYPE c LENGTH                   13,
+        requirementsegment             TYPE c LENGTH                   40,
+        purgprodcmplncdngrsgoodsstatus TYPE c LENGTH                   1,
+        purgprodcmplncsupplierstatus   TYPE c LENGTH                   1,
+        purgproductmarketabilitystatus TYPE c LENGTH                   1,
+        purgsafetydatasheetstatus      TYPE c LENGTH                   1,
+        subcontrgcompisrealtmecnsmd    TYPE c LENGTH                   1,
+        br_materialorigin              TYPE c LENGTH                   1,
+        br_materialusage               TYPE c LENGTH                   1,
+        br_cfopcategory                TYPE c LENGTH                   2,
+        br_ncm                         TYPE c LENGTH                   16,
+        br_isproducedinhouse           TYPE c LENGTH                   1,
 
-      END OF TY_EKPO,
+      END OF ty_ekpo,
 
       "NO.3 納入日程行
-      BEGIN OF TY_EKET,
-        PurchaseOrder                        type c length       10,
-        PurchaseOrderItem                    type c length       5 ,
-        PurchaseOrderScheduleLine            type c length       4 ,
-        PerformancePeriodStartDate           type c length       8 ,
-        PerformancePeriodEndDate             type c length       8 ,
-        DelivDateCategory                    type c length       1 ,
-        ScheduleLineDeliveryDate             type c length       8 ,
-        ScheduleLineDeliveryTime             type c length       6 ,
-        ScheduleLineOrderQuantity            type c length       13,
-        RoughGoodsReceiptQty                 type c length       13,
-        PurchaseOrderQuantityUnit            type c length       3 ,
-        PurchaseRequisition                  type c length       10,
-        PurchaseRequisitionItem              type c length       5 ,
-        SourceOfCreation                     type c length       1 ,
-        PrevDelivQtyOfScheduleLine           type c length       13,
-        NoOfRemindersOfScheduleLine          type c length       3 ,
-        ScheduleLineIsFixed                  type c length       1 ,
-        ScheduleLineCommittedQuantity        type c length       13,
-        Reservation                          type c length       10,
-        ProductAvailabilityDate              type c length       8 ,
-        MaterialStagingTime                  type c length       6 ,
-        TransportationPlanningDate           type c length       8 ,
-        TransportationPlanningTime           type c length       6 ,
-        LoadingDate                          type c length      8 ,
-        LoadingTime                          type c length      6 ,
-        GoodsIssueDate                       type c length      8 ,
-        GoodsIssueTime                       type c length      6 ,
-        STOLatestPossibleGRDate              type c length      8 ,
-        STOLatestPossibleGRTime              type c length      6 ,
-        StockTransferDeliveredQuantity       type c length      13,
-        ScheduleLineIssuedQuantity           type c length      13,
-        Batch                                type c length      10,
+      BEGIN OF ty_eket,
+        purchaseorder                  TYPE c LENGTH       10,
+        purchaseorderitem              TYPE c LENGTH       5,
+        purchaseorderscheduleline      TYPE c LENGTH       4,
+        performanceperiodstartdate     TYPE c LENGTH       8,
+        performanceperiodenddate       TYPE c LENGTH       8,
+        delivdatecategory              TYPE c LENGTH       1,
+        schedulelinedeliverydate       TYPE c LENGTH       8,
+        schedulelinedeliverytime       TYPE c LENGTH       6,
+        schedulelineorderquantity      TYPE c LENGTH       13,
+        roughgoodsreceiptqty           TYPE c LENGTH       13,
+        purchaseorderquantityunit      TYPE c LENGTH       3,
+        purchaserequisition            TYPE c LENGTH       10,
+        purchaserequisitionitem        TYPE c LENGTH       5,
+        sourceofcreation               TYPE c LENGTH       1,
+        prevdelivqtyofscheduleline     TYPE c LENGTH       13,
+        noofremindersofscheduleline    TYPE c LENGTH       3,
+        schedulelineisfixed            TYPE c LENGTH       1,
+        schedulelinecommittedquantity  TYPE c LENGTH       13,
+        reservation                    TYPE c LENGTH       10,
+        productavailabilitydate        TYPE c LENGTH       8,
+        materialstagingtime            TYPE c LENGTH       6,
+        transportationplanningdate     TYPE c LENGTH       8,
+        transportationplanningtime     TYPE c LENGTH       6,
+        loadingdate                    TYPE c LENGTH      8,
+        loadingtime                    TYPE c LENGTH      6,
+        goodsissuedate                 TYPE c LENGTH      8,
+        goodsissuetime                 TYPE c LENGTH      6,
+        stolatestpossiblegrdate        TYPE c LENGTH      8,
+        stolatestpossiblegrtime        TYPE c LENGTH      6,
+        stocktransferdeliveredquantity TYPE c LENGTH      13,
+        schedulelineissuedquantity     TYPE c LENGTH      13,
+        batch                          TYPE c LENGTH      10,
 
-      END OF TY_EKET,
+      END OF ty_eket,
 
       "NO.4 購買発注履歴
       BEGIN OF ty_ekbe,
-        PurchaseOrder                               type c length   10,
-        PurchaseOrderItem                           type c length   5 ,
-        AccountAssignmentNumber                     type c length   2 ,
-        PurchasingHistoryDocumentType               type c length   1 ,
-        PurchasingHistoryDocumentYear               type c length   4 ,
-        PurchasingHistoryDocument                   type c length   10,
-        PurchasingHistoryDocumentItem               type c length   4 ,
-        PurchasingHistoryCategory                   type c length   1 ,
-        GoodsMovementType                           type c length   3 ,
-        PostingDate                                 type c length   8 ,
-        Currency                                    type c length   5 ,
-        DebitCreditCode                             type c length   1 ,
-        IsCompletelyDelivered                       type c length   1 ,
-        ReferenceDocumentFiscalYear                 type c length   4 ,
-        ReferenceDocument                           type c length   10,
-        ReferenceDocumentItem                       type c length   4 ,
-        Material                                    type c length   40,
-        Plant                                       type c length   4 ,
-        RvslOfGoodsReceiptIsAllowed                 type c length   1 ,
-        PricingDocument                             type c length   10,
-        TaxCode                                     type c length   2 ,
-        DocumentDate                                type c length   8 ,
-        InventoryValuationType                      type c length   10,
-        DocumentReferenceID                         type c length   16,
-        DeliveryQuantityUnit                        type c length   3 ,
-        ManufacturerMaterial                        type c length   40,
-        AccountingDocumentCreationDate              type c length   8 ,
-        PurgHistDocumentCreationTime                type c length   6 ,
-        Quantity                                    type c length   13,
-        PurOrdAmountInCompanyCodeCrcy               type c length   13,
-        PurchaseOrderAmount                         type c length   13,
-        QtyInPurchaseOrderPriceUnit                 type c length   13,
-        GRIRAcctClrgAmtInCoCodeCrcy                 type c length   13,
-        GdsRcptBlkdStkQtyInOrdQtyUnit               type c length   13,
-        GdsRcptBlkdStkQtyInOrdPrcUnit               type c length   13,
-        InvoiceAmtInCoCodeCrcy                      type c length   13,
-        ShipgInstrnSupplierCompliance               type c length   2 ,
-        InvoiceAmountInFrgnCurrency                 type c length   13,
-        QuantityInDeliveryQtyUnit                   type c length   13,
-        GRIRAcctClrgAmtInTransacCrcy                type c length   13,
-        QuantityInBaseUnit                          type c length   13,
-        Batch                                       type c length   10,
-        GRIRAcctClrgAmtInOrdTrnsacCrcy              type c length   13,
-        InvoiceAmtInPurOrdTransacCrcy               type c length   13,
-        VltdGdsRcptBlkdStkQtyInOrdUnit              type c length   13,
-        VltdGdsRcptBlkdQtyInOrdPrcUnit              type c length   13,
-        IsToBeAcceptedAtOrigin                      type c length   1 ,
-        ExchangeRateDifferenceAmount                type c length   13,
-        ExchangeRate                                type c length   9 ,
-        DeliveryDocument                            type c length   10,
-        DeliveryDocumentItem                        type c length   6 ,
-        OrderPriceUnit                              type c length   3 ,
-        PurchaseOrderQuantityUnit                   type c length   3 ,
-        BaseUnit                                    type c length   3 ,
-        DocumentCurrency                            type c length   5 ,
-        CompanyCodeCurrency                         type c length   5 ,
+        purchaseorder                  TYPE c LENGTH   10,
+        purchaseorderitem              TYPE c LENGTH   5,
+        accountassignmentnumber        TYPE c LENGTH   2,
+        purchasinghistorydocumenttype  TYPE c LENGTH   1,
+        purchasinghistorydocumentyear  TYPE c LENGTH   4,
+        purchasinghistorydocument      TYPE c LENGTH   10,
+        purchasinghistorydocumentitem  TYPE c LENGTH   4,
+        purchasinghistorycategory      TYPE c LENGTH   1,
+        goodsmovementtype              TYPE c LENGTH   3,
+        postingdate                    TYPE c LENGTH   8,
+        currency                       TYPE c LENGTH   5,
+        debitcreditcode                TYPE c LENGTH   1,
+        iscompletelydelivered          TYPE c LENGTH   1,
+        referencedocumentfiscalyear    TYPE c LENGTH   4,
+        referencedocument              TYPE c LENGTH   10,
+        referencedocumentitem          TYPE c LENGTH   4,
+        material                       TYPE c LENGTH   40,
+        plant                          TYPE c LENGTH   4,
+        rvslofgoodsreceiptisallowed    TYPE c LENGTH   1,
+        pricingdocument                TYPE c LENGTH   10,
+        taxcode                        TYPE c LENGTH   2,
+        documentdate                   TYPE c LENGTH   8,
+        inventoryvaluationtype         TYPE c LENGTH   10,
+        documentreferenceid            TYPE c LENGTH   16,
+        deliveryquantityunit           TYPE c LENGTH   3,
+        manufacturermaterial           TYPE c LENGTH   40,
+        accountingdocumentcreationdate TYPE c LENGTH   8,
+        purghistdocumentcreationtime   TYPE c LENGTH   6,
+        quantity                       TYPE c LENGTH   13,
+        purordamountincompanycodecrcy  TYPE c LENGTH   13,
+        purchaseorderamount            TYPE c LENGTH   13,
+        qtyinpurchaseorderpriceunit    TYPE c LENGTH   13,
+        griracctclrgamtincocodecrcy    TYPE c LENGTH   13,
+        gdsrcptblkdstkqtyinordqtyunit  TYPE c LENGTH   13,
+        gdsrcptblkdstkqtyinordprcunit  TYPE c LENGTH   13,
+        invoiceamtincocodecrcy         TYPE c LENGTH   13,
+        shipginstrnsuppliercompliance  TYPE c LENGTH   2,
+        invoiceamountinfrgncurrency    TYPE c LENGTH   13,
+        quantityindeliveryqtyunit      TYPE c LENGTH   13,
+        griracctclrgamtintransaccrcy   TYPE c LENGTH   13,
+        quantityinbaseunit             TYPE c LENGTH   13,
+        batch                          TYPE c LENGTH   10,
+        griracctclrgamtinordtrnsaccrcy TYPE c LENGTH   13,
+        invoiceamtinpurordtransaccrcy  TYPE c LENGTH   13,
+        vltdgdsrcptblkdstkqtyinordunit TYPE c LENGTH   13,
+        vltdgdsrcptblkdqtyinordprcunit TYPE c LENGTH   13,
+        istobeacceptedatorigin         TYPE c LENGTH   1,
+        exchangeratedifferenceamount   TYPE c LENGTH   13,
+        exchangerate                   TYPE c LENGTH   9,
+        deliverydocument               TYPE c LENGTH   10,
+        deliverydocumentitem           TYPE c LENGTH   6,
+        orderpriceunit                 TYPE c LENGTH   3,
+        purchaseorderquantityunit      TYPE c LENGTH   3,
+        baseunit                       TYPE c LENGTH   3,
+        documentcurrency               TYPE c LENGTH   5,
+        companycodecurrency            TYPE c LENGTH   5,
 
-      END OF TY_EKBE,
+      END OF ty_ekbe,
 
       "NO.5 購買発注の勘定設定
-      BEGIN OF TY_EKKN,
-        PurchaseOrder                      type c length    10   ,
-        PurchaseOrderItem                  type c length    5    ,
-        AccountAssignmentNumber            type c length    2    ,
-        CostCenter                         type c length    10   ,
-        MasterFixedAsset                   type c length    12   ,
-        ProjectNetwork                     type c length    12   ,
-        Quantity                           type c length    13   ,
-        PurchaseOrderQuantityUnit          type c length    3    ,
-        MultipleAcctAssgmtDistrPercent     type c length    3    ,
-        PurgDocNetAmount                   type c length    13   ,
-        DocumentCurrency                   type c length    5    ,
-        IsDeleted                          type c length    1    ,
-        GLAccount                          type c length    10   ,
-        BusinessArea                       type c length    4    ,
-        SalesOrder                         type c length    10   ,
-        SalesOrderItem                     type c length    6    ,
-        SalesOrderScheduleLine             type c length    4    ,
-        FixedAsset                         type c length    4    ,
-        OrderID                            type c length    12   ,
-        UnloadingPointName                 type c length    25   ,
-        ControllingArea                    type c length    4    ,
-        CostObject                         type c length    12   ,
-        ProfitabilitySegment               type c length    10   ,
-        ProfitabilitySegment_2             type c length    10   ,
-        ProfitCenter                       type c length    10   ,
-        WBSElementInternalID               type c length    8    ,
-        WBSElementInternalID_2             type c length    8    ,
-        ProjectNetworkInternalID           type c length    10   ,
-        CommitmentItem                     type c length    14   ,
-        CommitmentItemShortID              type c length    14   ,
-        FundsCenter                         type c length   16   ,
-        Fund                                type c length   10   ,
-        FunctionalArea                      type c length   16   ,
-        GoodsRecipientName                  type c length   12   ,
-        IsFinallyInvoiced                   type c length   1    ,
-        RealEstateObject                    type c length   8    ,
-        REInternalFinNumber                 type c length   8    ,
-        NetworkActivityInternalID           type c length   8    ,
-        PartnerAccountNumber                type c length   10   ,
-        JointVentureRecoveryCode            type c length   2    ,
-        SettlementReferenceDate             type c length   8    ,
-        OrderInternalID                     type c length   10   ,
-        OrderIntBillOfOperationsItem        type c length   8    ,
-        TaxCode                             type c length   2    ,
-        TaxJurisdiction                     type c length   15   ,
-        NonDeductibleInputTaxAmount         type c length   13   ,
-        CostCtrActivityType                 type c length   6    ,
-        BusinessProcess                     type c length   12   ,
-        GrantID                             type c length   20   ,
-        BudgetPeriod                        type c length   10   ,
-        EarmarkedFundsDocument              type c length   10   ,
-        EarmarkedFundsItem                  type c length   3    ,
-        EarmarkedFundsDocumentItem          type c length   3    ,
-        ServiceDocumentType                 type c length   4    ,
-        ServiceDocument                     type c length   10   ,
-        ServiceDocumentItem                 type c length   6    ,
-      END OF TY_EKKN,
+      BEGIN OF ty_ekkn,
+        purchaseorder                  TYPE c LENGTH    10,
+        purchaseorderitem              TYPE c LENGTH    5,
+        accountassignmentnumber        TYPE c LENGTH    2,
+        costcenter                     TYPE c LENGTH    10,
+        masterfixedasset               TYPE c LENGTH    12,
+        projectnetwork                 TYPE c LENGTH    12,
+        quantity                       TYPE c LENGTH    13,
+        purchaseorderquantityunit      TYPE c LENGTH    3,
+        multipleacctassgmtdistrpercent TYPE c LENGTH    3,
+        purgdocnetamount               TYPE c LENGTH    13,
+        documentcurrency               TYPE c LENGTH    5,
+        isdeleted                      TYPE c LENGTH    1,
+        glaccount                      TYPE c LENGTH    10,
+        businessarea                   TYPE c LENGTH    4,
+        salesorder                     TYPE c LENGTH    10,
+        salesorderitem                 TYPE c LENGTH    6,
+        salesorderscheduleline         TYPE c LENGTH    4,
+        fixedasset                     TYPE c LENGTH    4,
+        orderid                        TYPE c LENGTH    12,
+        unloadingpointname             TYPE c LENGTH    25,
+        controllingarea                TYPE c LENGTH    4,
+        costobject                     TYPE c LENGTH    12,
+        profitabilitysegment           TYPE c LENGTH    10,
+        profitabilitysegment_2         TYPE c LENGTH    10,
+        profitcenter                   TYPE c LENGTH    10,
+        wbselementinternalid           TYPE c LENGTH    8,
+        wbselementinternalid_2         TYPE c LENGTH    8,
+        projectnetworkinternalid       TYPE c LENGTH    10,
+        commitmentitem                 TYPE c LENGTH    14,
+        commitmentitemshortid          TYPE c LENGTH    14,
+        fundscenter                    TYPE c LENGTH   16,
+        fund                           TYPE c LENGTH   10,
+        functionalarea                 TYPE c LENGTH   16,
+        goodsrecipientname             TYPE c LENGTH   12,
+        isfinallyinvoiced              TYPE c LENGTH   1,
+        realestateobject               TYPE c LENGTH   8,
+        reinternalfinnumber            TYPE c LENGTH   8,
+        networkactivityinternalid      TYPE c LENGTH   8,
+        partneraccountnumber           TYPE c LENGTH   10,
+        jointventurerecoverycode       TYPE c LENGTH   2,
+        settlementreferencedate        TYPE c LENGTH   8,
+        orderinternalid                TYPE c LENGTH   10,
+        orderintbillofoperationsitem   TYPE c LENGTH   8,
+        taxcode                        TYPE c LENGTH   2,
+        taxjurisdiction                TYPE c LENGTH   15,
+        nondeductibleinputtaxamount    TYPE c LENGTH   13,
+        costctractivitytype            TYPE c LENGTH   6,
+        businessprocess                TYPE c LENGTH   12,
+        grantid                        TYPE c LENGTH   20,
+        budgetperiod                   TYPE c LENGTH   10,
+        earmarkedfundsdocument         TYPE c LENGTH   10,
+        earmarkedfundsitem             TYPE c LENGTH   3,
+        earmarkedfundsdocumentitem     TYPE c LENGTH   3,
+        servicedocumenttype            TYPE c LENGTH   4,
+        servicedocument                TYPE c LENGTH   10,
+        servicedocumentitem            TYPE c LENGTH   6,
+      END OF ty_ekkn,
 
       "NO.6 製品
-      BEGIN OF TY_MARA,
+      BEGIN OF ty_mara,
 *        Product                                     type c length   40  ,
 *        ProductExternalID                           type c length   40  ,
 *        ProductOID                                  type c length   128  ,
@@ -536,50 +536,50 @@ public section.
 
         "add by wang.z 20250207-------
 
-        Product type I_Product-Product,
-        CreationDate type I_Product-CreationDate,
-        IsMarkedForDeletion type I_Product-IsMarkedForDeletion,
-        ProductType type I_Product-ProductType,
-        ProductGroup type I_Product-ProductGroup,
-        ProductOldID type I_Product-ProductOldID,
-        BaseUnit type I_Product-BaseUnit,
-        PurchaseOrderQuantityUnit type I_Product-PurchaseOrderQuantityUnit,
-        ProductDocumentVersion type I_Product-ProductDocumentVersion,
-        ProductDocumentChangeNumber type I_Product-ProductDocumentChangeNumber,
-        ProductionOrInspectionMemoTxt type I_Product-ProductionOrInspectionMemoTxt,
-        SizeOrDimensionText type I_Product-SizeOrDimensionText,
-        LaboratoryOrDesignOffice type I_Product-LaboratoryOrDesignOffice,
-        GrossWeight type I_Product-GrossWeight,
-        NetWeight type I_Product-NetWeight,
-        WeightUnit type I_Product-WeightUnit,
-        TransportationGroup type I_Product-TransportationGroup,
-        Division type I_Product-Division,
-        IsBatchManagementRequired type I_Product-IsBatchManagementRequired,
-        PackagingMaterialGroup type I_Product-PackagingMaterialGroup,
-        ExternalProductGroup type I_Product-ExternalProductGroup,
-        ProductManufacturerNumber type I_Product-ProductManufacturerNumber,
-        ManufacturerNumber type I_Product-ManufacturerNumber,
-        YY1_BPCODE_PRD_PRD type I_Product-YY1_BPCODE_PRD_PRD,
-        YY1_CUSTOMERMATERIAL_PRD type I_Product-YY1_CUSTOMERMATERIAL_PRD,
+        product                       TYPE i_product-product,
+        creationdate                  TYPE i_product-creationdate,
+        ismarkedfordeletion           TYPE i_product-ismarkedfordeletion,
+        producttype                   TYPE i_product-producttype,
+        productgroup                  TYPE i_product-productgroup,
+        productoldid                  TYPE i_product-productoldid,
+        baseunit                      TYPE i_product-baseunit,
+        purchaseorderquantityunit     TYPE i_product-purchaseorderquantityunit,
+        productdocumentversion        TYPE i_product-productdocumentversion,
+        productdocumentchangenumber   TYPE i_product-productdocumentchangenumber,
+        productionorinspectionmemotxt TYPE i_product-productionorinspectionmemotxt,
+        sizeordimensiontext           TYPE i_product-sizeordimensiontext,
+        laboratoryordesignoffice      TYPE i_product-laboratoryordesignoffice,
+        grossweight                   TYPE i_product-grossweight,
+        netweight                     TYPE i_product-netweight,
+        weightunit                    TYPE i_product-weightunit,
+        transportationgroup           TYPE i_product-transportationgroup,
+        division                      TYPE i_product-division,
+        isbatchmanagementrequired     TYPE i_product-isbatchmanagementrequired,
+        packagingmaterialgroup        TYPE i_product-packagingmaterialgroup,
+        externalproductgroup          TYPE i_product-externalproductgroup,
+        productmanufacturernumber     TYPE i_product-productmanufacturernumber,
+        manufacturernumber            TYPE i_product-manufacturernumber,
+        yy1_bpcode_prd_prd            TYPE i_product-yy1_bpcode_prd_prd,
+        yy1_customermaterial_prd      TYPE i_product-yy1_customermaterial_prd,
 
-        PackagingMaterialType type I_ProductSales-PackagingMaterialType,
+        packagingmaterialtype         TYPE i_productsales-packagingmaterialtype,
 
         "end add by wang.z 20250207---------
 
-      END OF TY_MARA,
+      END OF ty_mara,
 
       "NO.7 製品テキスト
       BEGIN OF ty_makt,
-        Product         type c length   40,
-        Language        type c length   1,
-        ProductName     type c length   40,
-      END OF TY_MAKT,
+        product     TYPE c LENGTH   40,
+        language    TYPE c LENGTH   1,
+        productname TYPE c LENGTH   40,
+      END OF ty_makt,
 
       "N0.8 製品保管場所
-      BEGIN OF TY_MARD,
-        Material                                            type c length   40    ,
-        Plant                                              type c length   4     ,
-        StorageLocation                                    type c length   4     ,
+      BEGIN OF ty_mard,
+        material        TYPE c LENGTH   40,
+        plant           TYPE c LENGTH   4,
+        storagelocation TYPE c LENGTH   4,
 *        WarehouseStorageBin                                type c length   10    ,
 *        MaintenanceStatus                                  type c length   15    ,
 *        IsMarkedForDeletion                                type c length   1     ,
@@ -598,39 +598,39 @@ public section.
 *        FiscalYearCurrentInvtryPeriod                      type c length   4     ,
 *        LeanWrhsManagementPickingArea                      type c length   3     ,
 *        IsActiveEntity                                     type c length   1     ,
-        KLABS                                              type I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit ,
-        KINSM                                              type I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit ,
-        INSME                                              type I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit ,
-        LABST                                              type I_MaterialStock_2-MatlWrhsStkQtyInMatlBaseUnit ,
-      END OF TY_MARD,
+        klabs           TYPE i_materialstock_2-matlwrhsstkqtyinmatlbaseunit,
+        kinsm           TYPE i_materialstock_2-matlwrhsstkqtyinmatlbaseunit,
+        insme           TYPE i_materialstock_2-matlwrhsstkqtyinmatlbaseunit,
+        labst           TYPE i_materialstock_2-matlwrhsstkqtyinmatlbaseunit,
+      END OF ty_mard,
 
       "NO.9 MRP 管理者
       BEGIN OF ty_t024d,
-        Plant                          TYPE C LENGTH    4  ,
-        MRPController                  TYPE C LENGTH    3  ,
-        MRPControllerName              TYPE C LENGTH    18 ,
-        MRPControllerPhoneNumber       TYPE C LENGTH    12 ,
-        PurchasingGroup                TYPE C LENGTH    3  ,
-        BusinessArea                   TYPE C LENGTH    4  ,
-        ProfitCenter                   TYPE C LENGTH    10 ,
-        UserID                         TYPE C LENGTH    70 ,
-      END OF TY_T024D,
+        plant                    TYPE c LENGTH    4,
+        mrpcontroller            TYPE c LENGTH    3,
+        mrpcontrollername        TYPE c LENGTH    18,
+        mrpcontrollerphonenumber TYPE c LENGTH    12,
+        purchasinggroup          TYPE c LENGTH    3,
+        businessarea             TYPE c LENGTH    4,
+        profitcenter             TYPE c LENGTH    10,
+        userid                   TYPE c LENGTH    70,
+      END OF ty_t024d,
 
       "NO.10 保管場所
-      BEGIN OF ty_T001L,
-        Plant                          TYPE C LENGTH    4  ,
-        StorageLocation                TYPE C LENGTH    4  ,
-        StorageLocationName            TYPE C LENGTH    16 ,
-        SalesOrganization              TYPE C LENGTH    4  ,
-        DistributionChannel            TYPE C LENGTH    2  ,
-        Division                       TYPE C LENGTH    2  ,
-        IsStorLocAuthznCheckActive     TYPE C LENGTH    1  ,
-        HandlingUnitIsRequired         TYPE C LENGTH    1  ,
-        ConfigDeprecationCode          TYPE C LENGTH    1  ,
-      END OF TY_T001L,
+      BEGIN OF ty_t001l,
+        plant                      TYPE c LENGTH    4,
+        storagelocation            TYPE c LENGTH    4,
+        storagelocationname        TYPE c LENGTH    16,
+        salesorganization          TYPE c LENGTH    4,
+        distributionchannel        TYPE c LENGTH    2,
+        division                   TYPE c LENGTH    2,
+        isstorlocauthzncheckactive TYPE c LENGTH    1,
+        handlingunitisrequired     TYPE c LENGTH    1,
+        configdeprecationcode      TYPE c LENGTH    1,
+      END OF ty_t001l,
 
       "NO.11 製品プラント
-      BEGIN OF ty_MARC,
+      BEGIN OF ty_marc,
 *        Product                        TYPE C LENGTH   40   ,
 *        Plant                          TYPE C LENGTH   4    ,
 *        PurchasingGroup                TYPE C LENGTH   3    ,
@@ -699,390 +699,390 @@ public section.
 *        ExtAllocOfItmUnqIdtIsRelevant  TYPE C LENGTH   1    ,
 
 
-"add by wang.z 20250207 -----------------
+        "add by wang.z 20250207 -----------------
 
-        Product type I_ProductPlantBasic-Product,
-        Plant type I_ProductPlantBasic-Plant,
-        IsMarkedForDeletion type I_ProductPlantBasic-IsMarkedForDeletion,
-        ProfileCode type I_ProductPlantBasic-ProfileCode,
-        ProductIsCriticalPrt type I_ProductPlantBasic-ProductIsCriticalPrt,
-        PurchasingGroup type I_ProductPlantBasic-PurchasingGroup,
-        GoodsIssueUnit type I_ProductPlantBasic-GoodsIssueUnit,
-        MRPType type I_ProductPlantBasic-MRPType,
-        MRPResponsible type I_ProductPlantBasic-MRPResponsible,
-        PlannedDeliveryDurationInDays type I_ProductPlantBasic-PlannedDeliveryDurationInDays,
-        GoodsReceiptDuration type I_ProductPlantBasic-GoodsReceiptDuration,
-        ProcurementType type I_ProductPlantBasic-ProcurementType,
-        SpecialProcurementType type I_ProductPlantBasic-SpecialProcurementType,
-        SafetyStockQuantity type I_ProductPlantBasic-SafetyStockQuantity,
-        MinimumLotSizeQuantity type I_ProductPlantBasic-MinimumLotSizeQuantity,
-        MaximumLotSizeQuantity type I_ProductPlantBasic-MaximumLotSizeQuantity,
-        FixedLotSizeQuantity type I_ProductPlantBasic-FixedLotSizeQuantity,
-        ProductionSupervisor type I_ProductPlantBasic-ProductionSupervisor,
-        HasPostToInspectionStock type I_ProductPlantBasic-HasPostToInspectionStock,
-        IsBatchManagementRequired type I_ProductPlantBasic-IsBatchManagementRequired,
-        AvailabilityCheckType type I_ProductPlantBasic-AvailabilityCheckType,
-        ProfitCenter type I_ProductPlantBasic-ProfitCenter,
-        ProductionInvtryManagedLoc type I_ProductPlantBasic-ProductionInvtryManagedLoc,
+        product                        TYPE i_productplantbasic-product,
+        plant                          TYPE i_productplantbasic-plant,
+        ismarkedfordeletion            TYPE i_productplantbasic-ismarkedfordeletion,
+        profilecode                    TYPE i_productplantbasic-profilecode,
+        productiscriticalprt           TYPE i_productplantbasic-productiscriticalprt,
+        purchasinggroup                TYPE i_productplantbasic-purchasinggroup,
+        goodsissueunit                 TYPE i_productplantbasic-goodsissueunit,
+        mrptype                        TYPE i_productplantbasic-mrptype,
+        mrpresponsible                 TYPE i_productplantbasic-mrpresponsible,
+        planneddeliverydurationindays  TYPE i_productplantbasic-planneddeliverydurationindays,
+        goodsreceiptduration           TYPE i_productplantbasic-goodsreceiptduration,
+        procurementtype                TYPE i_productplantbasic-procurementtype,
+        specialprocurementtype         TYPE i_productplantbasic-specialprocurementtype,
+        safetystockquantity            TYPE i_productplantbasic-safetystockquantity,
+        minimumlotsizequantity         TYPE i_productplantbasic-minimumlotsizequantity,
+        maximumlotsizequantity         TYPE i_productplantbasic-maximumlotsizequantity,
+        fixedlotsizequantity           TYPE i_productplantbasic-fixedlotsizequantity,
+        productionsupervisor           TYPE i_productplantbasic-productionsupervisor,
+        hasposttoinspectionstock       TYPE i_productplantbasic-hasposttoinspectionstock,
+        isbatchmanagementrequired      TYPE i_productplantbasic-isbatchmanagementrequired,
+        availabilitychecktype          TYPE i_productplantbasic-availabilitychecktype,
+        profitcenter                   TYPE i_productplantbasic-profitcenter,
+        productioninvtrymanagedloc     TYPE i_productplantbasic-productioninvtrymanagedloc,
 
-        ProductProductionQuantityUnit type I_ProductWorkScheduling-ProductProductionQuantityUnit,
-        ProductionSchedulingProfile type I_ProductWorkScheduling-ProductionSchedulingProfile,
+        productproductionquantityunit  TYPE i_productworkscheduling-productproductionquantityunit,
+        productionschedulingprofile    TYPE i_productworkscheduling-productionschedulingprofile,
 
-        AssemblyScrapPercent type I_PRODUCTPLANTSUPPLYPLANNING-AssemblyScrapPercent,
-        LotSizingProcedure type I_PRODUCTPLANTSUPPLYPLANNING-LotSizingProcedure,
-        LotSizeRoundingQuantity type I_PRODUCTPLANTSUPPLYPLANNING-LotSizeRoundingQuantity,
-        DependentRequirementsType type I_PRODUCTPLANTSUPPLYPLANNING-DependentRequirementsType,
-        SchedulingFloatProfile type I_PRODUCTPLANTSUPPLYPLANNING-SchedulingFloatProfile,
-        ProductComponentBackflushCode type I_PRODUCTPLANTSUPPLYPLANNING-ProductComponentBackflushCode,
-        ProdInhProdnDurationInWorkDays type I_PRODUCTPLANTSUPPLYPLANNING-ProdInhProdnDurationInWorkDays,
-        MRPPlanningCalendar type I_PRODUCTPLANTSUPPLYPLANNING-MRPPlanningCalendar,
-        PlanningTimeFence type I_PRODUCTPLANTSUPPLYPLANNING-PlanningTimeFence,
-        ProdRqmtsConsumptionMode type I_PRODUCTPLANTSUPPLYPLANNING-ProdRqmtsConsumptionMode,
-        BackwardCnsmpnPeriodInWorkDays type I_PRODUCTPLANTSUPPLYPLANNING-BackwardCnsmpnPeriodInWorkDays,
-        FwdConsumptionPeriodInWorkDays type I_PRODUCTPLANTSUPPLYPLANNING-FwdConsumptionPeriodInWorkDays,
-        MRPGroup type I_PRODUCTPLANTSUPPLYPLANNING-MRPGroup,
-        ComponentScrapInPercent type I_PRODUCTPLANTSUPPLYPLANNING-ComponentScrapInPercent,
-        PlanningStrategyGroup type I_PRODUCTPLANTSUPPLYPLANNING-PlanningStrategyGroup,
-        DfltStorageLocationExtProcmt type I_PRODUCTPLANTSUPPLYPLANNING-DfltStorageLocationExtProcmt,
-        ProductIsBulkComponent type I_PRODUCTPLANTSUPPLYPLANNING-ProductIsBulkComponent,
-        ProductSafetyTimeMRPRelevance type I_PRODUCTPLANTSUPPLYPLANNING-ProductSafetyTimeMRPRelevance,
-        SafetySupplyDurationInDays type I_PRODUCTPLANTSUPPLYPLANNING-SafetySupplyDurationInDays,
+        assemblyscrappercent           TYPE i_productplantsupplyplanning-assemblyscrappercent,
+        lotsizingprocedure             TYPE i_productplantsupplyplanning-lotsizingprocedure,
+        lotsizeroundingquantity        TYPE i_productplantsupplyplanning-lotsizeroundingquantity,
+        dependentrequirementstype      TYPE i_productplantsupplyplanning-dependentrequirementstype,
+        schedulingfloatprofile         TYPE i_productplantsupplyplanning-schedulingfloatprofile,
+        productcomponentbackflushcode  TYPE i_productplantsupplyplanning-productcomponentbackflushcode,
+        prodinhprodndurationinworkdays TYPE i_productplantsupplyplanning-prodinhprodndurationinworkdays,
+        mrpplanningcalendar            TYPE i_productplantsupplyplanning-mrpplanningcalendar,
+        planningtimefence              TYPE i_productplantsupplyplanning-planningtimefence,
+        prodrqmtsconsumptionmode       TYPE i_productplantsupplyplanning-prodrqmtsconsumptionmode,
+        backwardcnsmpnperiodinworkdays TYPE i_productplantsupplyplanning-backwardcnsmpnperiodinworkdays,
+        fwdconsumptionperiodinworkdays TYPE i_productplantsupplyplanning-fwdconsumptionperiodinworkdays,
+        mrpgroup                       TYPE i_productplantsupplyplanning-mrpgroup,
+        componentscrapinpercent        TYPE i_productplantsupplyplanning-componentscrapinpercent,
+        planningstrategygroup          TYPE i_productplantsupplyplanning-planningstrategygroup,
+        dfltstoragelocationextprocmt   TYPE i_productplantsupplyplanning-dfltstoragelocationextprocmt,
+        productisbulkcomponent         TYPE i_productplantsupplyplanning-productisbulkcomponent,
+        productsafetytimemrprelevance  TYPE i_productplantsupplyplanning-productsafetytimemrprelevance,
+        safetysupplydurationindays     TYPE i_productplantsupplyplanning-safetysupplydurationindays,
 
-        LoadingGroup type I_Productplantsales-LoadingGroup,
+        loadinggroup                   TYPE i_productplantsales-loadinggroup,
 
-        IsAutoPurOrdCreationAllowed type I_Productplantprocurement-IsAutoPurOrdCreationAllowed,
-        IsSourceListRequired type I_Productplantprocurement-IsSourceListRequired,
+        isautopurordcreationallowed    TYPE i_productplantprocurement-isautopurordcreationallowed,
+        issourcelistrequired           TYPE i_productplantprocurement-issourcelistrequired,
 
-        CostingLotSize type I_PRODUCTPLANTCOSTING-CostingLotSize,
-        ProductIsCostingRelevant type I_PRODUCTPLANTCOSTING-ProductIsCostingRelevant,
+        costinglotsize                 TYPE i_productplantcosting-costinglotsize,
+        productiscostingrelevant       TYPE i_productplantcosting-productiscostingrelevant,
 
-"end add by wang.z 20250207--------------
+        "end add by wang.z 20250207--------------
 
-      END OF ty_MARC,
+      END OF ty_marc,
 
       "NO.12 製造バージョン
-      BEGIN OF ty_MKAL,
-        Material                          type c length    40 ,
-        Plant                             type c length    4  ,
-        ProductionVersion                 type c length    4  ,
-        ProductionVersionText             type c length    40 ,
-        ChangeHistoryCount                type c length    4  ,
-        ChangeNumber                      type c length    12 ,
-        CreationDate                      type c length    8  ,
-        CreatedByUser                     type c length    12 ,
-        LastChangeDate                    type c length    8  ,
-        LastChangedByUser                 type c length    12 ,
-        BillOfOperationsType              type c length    1  ,
-        BillOfOperationsGroup             type c length    8  ,
-        BillOfOperationsVariant           type c length    2  ,
-        BillOfMaterialVariantUsage        type c length    1  ,
-        BillOfMaterialVariant             type c length    2  ,
-        ProductionLine                    type c length    8  ,
-        ProductionSupplyArea              type c length    10 ,
-        ProductionVersionGroup            type c length    8  ,
-        MainProduct                       type c length    40 ,
-        MaterialCostApportionmentStruc    type c length    4  ,
-        IssuingStorageLocation            type c length    4  ,
-        ReceivingStorageLocation          type c length    4  ,
-        OriginalBatchReferenceMaterial    type c length    40 ,
-        QuantityDistributionKey           type c length    4  ,
-        ProductionVersionStatus           type c length    1  ,
-        ProductionVersionLastCheckDate    type c length    8  ,
-        RateBasedPlanningStatus           type c length    1  ,
-        PreliminaryPlanningStatus         type c length    1  ,
-        BOMCheckStatus                    type c length    1  ,
-        ValidityStartDate                 type c length    8  ,
-        ValidityEndDate                   type c length    8  ,
-        ProductionVersionIsLocked         type c length    1  ,
-        ProdnVersIsAllowedForRptvMfg      type c length    1  ,
-        HasVersionCtrldBOMAndRouting      type c length    1  ,
-        PlanningAndExecutionBOMIsDiff     type c length    1  ,
-        ExecBillOfMaterialVariantUsage    type c length    1  ,
-        ExecBillOfMaterialVariant         type c length    2  ,
-        ExecBillOfOperationsType          type c length    1  ,
-        ExecBillOfOperationsGroup         type c length    8  ,
-        ExecBillOfOperationsVariant       type c length    2  ,
-        Warehouse                         type c length    4  ,
-        DestinationStorageBin             type c length    18 ,
-        ProcurementType                   type c length    1  ,
-        MaterialProcurementProfile        type c length    2  ,
-        UsgeProbltyWthVersCtrlInPct       type c length    3  ,
-        MaterialBaseUnit                  type c length    3  ,
-        MaterialMinLotSizeQuantity        type c length    13 ,
-        MaterialMaxLotSizeQuantity        type c length    13 ,
-        CostingLotSize                    type c length    13 ,
-        DistributionKey                   type c length    4  ,
-        TargetProductionSupplyArea        type c length    10 ,
+      BEGIN OF ty_mkal,
+        material                       TYPE c LENGTH    40,
+        plant                          TYPE c LENGTH    4,
+        productionversion              TYPE c LENGTH    4,
+        productionversiontext          TYPE c LENGTH    40,
+        changehistorycount             TYPE c LENGTH    4,
+        changenumber                   TYPE c LENGTH    12,
+        creationdate                   TYPE c LENGTH    8,
+        createdbyuser                  TYPE c LENGTH    12,
+        lastchangedate                 TYPE c LENGTH    8,
+        lastchangedbyuser              TYPE c LENGTH    12,
+        billofoperationstype           TYPE c LENGTH    1,
+        billofoperationsgroup          TYPE c LENGTH    8,
+        billofoperationsvariant        TYPE c LENGTH    2,
+        billofmaterialvariantusage     TYPE c LENGTH    1,
+        billofmaterialvariant          TYPE c LENGTH    2,
+        productionline                 TYPE c LENGTH    8,
+        productionsupplyarea           TYPE c LENGTH    10,
+        productionversiongroup         TYPE c LENGTH    8,
+        mainproduct                    TYPE c LENGTH    40,
+        materialcostapportionmentstruc TYPE c LENGTH    4,
+        issuingstoragelocation         TYPE c LENGTH    4,
+        receivingstoragelocation       TYPE c LENGTH    4,
+        originalbatchreferencematerial TYPE c LENGTH    40,
+        quantitydistributionkey        TYPE c LENGTH    4,
+        productionversionstatus        TYPE c LENGTH    1,
+        productionversionlastcheckdate TYPE c LENGTH    8,
+        ratebasedplanningstatus        TYPE c LENGTH    1,
+        preliminaryplanningstatus      TYPE c LENGTH    1,
+        bomcheckstatus                 TYPE c LENGTH    1,
+        validitystartdate              TYPE c LENGTH    8,
+        validityenddate                TYPE c LENGTH    8,
+        productionversionislocked      TYPE c LENGTH    1,
+        prodnversisallowedforrptvmfg   TYPE c LENGTH    1,
+        hasversionctrldbomandrouting   TYPE c LENGTH    1,
+        planningandexecutionbomisdiff  TYPE c LENGTH    1,
+        execbillofmaterialvariantusage TYPE c LENGTH    1,
+        execbillofmaterialvariant      TYPE c LENGTH    2,
+        execbillofoperationstype       TYPE c LENGTH    1,
+        execbillofoperationsgroup      TYPE c LENGTH    8,
+        execbillofoperationsvariant    TYPE c LENGTH    2,
+        warehouse                      TYPE c LENGTH    4,
+        destinationstoragebin          TYPE c LENGTH    18,
+        procurementtype                TYPE c LENGTH    1,
+        materialprocurementprofile     TYPE c LENGTH    2,
+        usgeprobltywthversctrlinpct    TYPE c LENGTH    3,
+        materialbaseunit               TYPE c LENGTH    3,
+        materialminlotsizequantity     TYPE c LENGTH    13,
+        materialmaxlotsizequantity     TYPE c LENGTH    13,
+        costinglotsize                 TYPE c LENGTH    13,
+        distributionkey                TYPE c LENGTH    4,
+        targetproductionsupplyarea     TYPE c LENGTH    10,
 
-      END OF TY_MKAL,
+      END OF ty_mkal,
 
       "NO.13 製造指図
       BEGIN OF ty_afko,
-        ManufacturingOrder                  TYPE C LENGTH   12   ,
-        ManufacturingOrderItem              TYPE C LENGTH   4    ,
-        ManufacturingOrderCategory          TYPE C LENGTH   2    ,
-        ManufacturingOrderType              TYPE C LENGTH   4    ,
-        ManufacturingOrderText              TYPE C LENGTH   40   ,
-        ManufacturingOrderHasLongText       TYPE C LENGTH   1    ,
-        LongTextLanguageCode                TYPE C LENGTH   1    ,
-        ManufacturingOrderImportance        TYPE C LENGTH   1    ,
-        IsMarkedForDeletion                 TYPE C LENGTH   1    ,
-        IsCompletelyDelivered               TYPE C LENGTH   1    ,
-        MfgOrderHasMultipleItems            TYPE C LENGTH   1    ,
-        MfgOrderIsPartOfCollvOrder          TYPE C LENGTH   1    ,
-        MfgOrderHierarchyLevel              TYPE C LENGTH   2    ,
-        MfgOrderHierarchyLevelValue         TYPE C LENGTH   2    ,
-        MfgOrderHierarchyPathValue          TYPE C LENGTH   4    ,
-        OrderIsNotCostedAutomatically       TYPE C LENGTH   1    ,
-        OrdIsNotSchedldAutomatically        TYPE C LENGTH   1    ,
-        ProdnProcgIsFlexible                TYPE C LENGTH   1    ,
-        CreationDate                        TYPE C LENGTH   8    ,
-        CreationTime                        TYPE C LENGTH   6    ,
-        CreatedByUser                       TYPE C LENGTH   12   ,
-        LastChangeDate                      TYPE C LENGTH   8    ,
-        LastChangeTime                      TYPE C LENGTH   6    ,
-        LastChangedByUser                   TYPE C LENGTH   12   ,
-        Material                            TYPE C LENGTH   40   ,
-        Product                             TYPE C LENGTH   40   ,
-        StorageLocation                     TYPE C LENGTH   4    ,
-        Batch                               TYPE C LENGTH   10   ,
-        GoodsRecipientName                  TYPE C LENGTH   12   ,
-        UnloadingPointName                  TYPE C LENGTH   25   ,
-        InventoryUsabilityCode              TYPE C LENGTH   1    ,
-        MaterialGoodsReceiptDuration        TYPE C LENGTH   3    ,
-        QuantityDistributionKey             TYPE C LENGTH   4    ,
-        StockSegment                        TYPE C LENGTH   40   ,
-        MfgOrderInternalID                  TYPE C LENGTH   10   ,
-        ReferenceOrder                      TYPE C LENGTH   12   ,
-        LeadingOrder                        TYPE C LENGTH   12   ,
-        SuperiorOrder                       TYPE C LENGTH   12   ,
-        Currency                            TYPE C LENGTH   5    ,
-        ProductionPlant                     TYPE C LENGTH   4    ,
-        PlanningPlant                       TYPE C LENGTH   4    ,
-        MRPArea                             TYPE C LENGTH   10   ,
-        MRPController                       TYPE C LENGTH   3    ,
-        ProductionSupervisor                TYPE C LENGTH   3    ,
-        ProductionSchedulingProfile         TYPE C LENGTH   6    ,
-        ResponsiblePlannerGroup             TYPE C LENGTH   3    ,
-        ProductionVersion                   TYPE C LENGTH   4    ,
-        SalesOrder                          TYPE C LENGTH   10   ,
-        SalesOrderItem                      TYPE C LENGTH   6    ,
-        WBSElementInternalID                TYPE C LENGTH   8    ,
-        WBSElementInternalID_2              TYPE C LENGTH   8    ,
-        Reservation                         TYPE C LENGTH   10   ,
-        SettlementReservation               TYPE C LENGTH   10   ,
-        MfgOrderConfirmation                TYPE C LENGTH   10   ,
-        NumberOfMfgOrderConfirmations       TYPE C LENGTH   8    ,
-        PlannedOrder                        TYPE C LENGTH   10   ,
-        CapacityRequirement                 TYPE C LENGTH   12   ,
-        InspectionLot                       TYPE C LENGTH   12   ,
-        ChangeNumber                        TYPE C LENGTH   12   ,
-        MaterialRevisionLevel               TYPE C LENGTH   2    ,
-        MaterialRevisionLevel_2             TYPE C LENGTH   2    ,
-        BasicSchedulingType                 TYPE C LENGTH   1    ,
-        ForecastSchedulingType              TYPE C LENGTH   1    ,
-        ObjectInternalID                    TYPE C LENGTH   22   ,
-        ProductConfiguration                TYPE C LENGTH   18   ,
-        EffectivityParameterVariant         TYPE C LENGTH   12   ,
-        ConditionApplication                TYPE C LENGTH   2    ,
-        CapacityActiveVersion               TYPE C LENGTH   2    ,
-        CapacityRqmtHasNotToBeCreated       TYPE C LENGTH   1    ,
-        OrderSequenceNumber                 TYPE C LENGTH   14   ,
-        MfgOrderSplitStatus                 TYPE C LENGTH   1    ,
-        BillOfOperationsMaterial            TYPE C LENGTH   40   ,
-        BillOfOperationsType                TYPE C LENGTH   1    ,
-        BillOfOperations                    TYPE C LENGTH   8    ,
-        BillOfOperationsGroup               TYPE C LENGTH   8    ,
-        BillOfOperationsVariant             TYPE C LENGTH   2    ,
-        BOOInternalVersionCounter           TYPE C LENGTH   8    ,
-        BillOfOperationsApplication         TYPE C LENGTH   1    ,
-        BillOfOperationsUsage               TYPE C LENGTH   3    ,
-        BillOfOperationsVersion             TYPE C LENGTH   4    ,
-        BOOExplosionDate                    TYPE C LENGTH   8    ,
-        BOOValidityStartDate                TYPE C LENGTH   8    ,
-        BillOfMaterialCategory              TYPE C LENGTH   1    ,
-        BillOfMaterial                      TYPE C LENGTH   8    ,
-        BillOfMaterialInternalID            TYPE C LENGTH   8    ,
-        BillOfMaterialVariant               TYPE C LENGTH   2    ,
-        BillOfMaterialVariantUsage          TYPE C LENGTH   1    ,
-        BillOfMaterialVersion               TYPE C LENGTH   4    ,
-        BOMExplosionDate                    TYPE C LENGTH   8    ,
-        BOMValidityStartDate                TYPE C LENGTH   8    ,
-        BusinessArea                        TYPE C LENGTH   4    ,
-        CompanyCode                         TYPE C LENGTH   4    ,
-        ControllingArea                     TYPE C LENGTH   4    ,
-        ProfitCenter                        TYPE C LENGTH   10   ,
-        CostCenter                          TYPE C LENGTH   10   ,
-        ResponsibleCostCenter               TYPE C LENGTH   10   ,
-        CostElement                         TYPE C LENGTH   10   ,
-        CostingSheet                        TYPE C LENGTH   6    ,
-        GLAccount                           TYPE C LENGTH   10   ,
-        ProductCostCollector                TYPE C LENGTH   12   ,
-        ActualCostsCostingVariant           TYPE C LENGTH   4    ,
-        PlannedCostsCostingVariant          TYPE C LENGTH   4    ,
-        ControllingObjectClass              TYPE C LENGTH   2    ,
-        FunctionalArea                      TYPE C LENGTH   16   ,
-        OrderIsEventBasedPosting            TYPE C LENGTH   1    ,
-        EventBasedPostingMethod             TYPE C LENGTH   1    ,
-        EventBasedProcessingKey             TYPE C LENGTH   6    ,
-        SchedulingFloatProfile              TYPE C LENGTH   3    ,
-        FloatBeforeProductionInWrkDays      TYPE C LENGTH   3    ,
-        FloatAfterProductionInWorkDays      TYPE C LENGTH   3    ,
-        ReleasePeriodInWorkDays             TYPE C LENGTH   3    ,
-        ChangeToScheduledDatesIsMade        TYPE C LENGTH   1    ,
-        MfgOrderPlannedStartDate            TYPE C LENGTH   8    ,
-        MfgOrderPlannedStartTime            TYPE C LENGTH   6    ,
-        MfgOrderPlannedEndDate              TYPE C LENGTH   8    ,
-        MfgOrderPlannedEndTime              TYPE C LENGTH   6    ,
-        MfgOrderPlannedReleaseDate          TYPE C LENGTH   8    ,
-        MfgOrderScheduledStartDate          TYPE C LENGTH   8    ,
-        MfgOrderScheduledStartTime          TYPE C LENGTH   6    ,
-        MfgOrderScheduledEndDate            TYPE C LENGTH   8    ,
-        MfgOrderScheduledEndTime            TYPE C LENGTH   6    ,
-        MfgOrderScheduledReleaseDate        TYPE C LENGTH   8    ,
-        MfgOrderActualStartDate             TYPE C LENGTH   8    ,
-        MfgOrderActualStartTime             TYPE C LENGTH   6    ,
-        MfgOrderConfirmedEndDate            TYPE C LENGTH   8    ,
-        MfgOrderConfirmedEndTime            TYPE C LENGTH   6    ,
-        MfgOrderActualEndDate               TYPE C LENGTH   8    ,
-        MfgOrderActualReleaseDate           TYPE C LENGTH   8    ,
-        MfgOrderTotalCommitmentDate         TYPE C LENGTH   8    ,
-        MfgOrderActualCompletionDate        TYPE C LENGTH   8    ,
-        MfgOrderItemActualDeliveryDate      TYPE C LENGTH   8    ,
-        ProductionUnit                      TYPE C LENGTH   3    ,
-        MfgOrderPlannedTotalQty             TYPE C LENGTH   13   ,
-        MfgOrderPlannedScrapQty             TYPE C LENGTH   13   ,
-        MfgOrderConfirmedYieldQty           TYPE C LENGTH   13   ,
-        MfgOrderConfirmedScrapQty           TYPE C LENGTH   13   ,
-        MfgOrderConfirmedReworkQty          TYPE C LENGTH   13   ,
-        ExpectedDeviationQuantity           TYPE C LENGTH   13   ,
-        ActualDeliveredQuantity             TYPE C LENGTH   13   ,
-        MasterProductionOrder               TYPE C LENGTH   12   ,
-        ProductSeasonYear                   TYPE C LENGTH   4    ,
-        ProductSeason                       TYPE C LENGTH   10   ,
-        ProductCollection                   TYPE C LENGTH   10   ,
-        ProductTheme                        TYPE C LENGTH   10   ,
+        manufacturingorder             TYPE c LENGTH   12,
+        manufacturingorderitem         TYPE c LENGTH   4,
+        manufacturingordercategory     TYPE c LENGTH   2,
+        manufacturingordertype         TYPE c LENGTH   4,
+        manufacturingordertext         TYPE c LENGTH   40,
+        manufacturingorderhaslongtext  TYPE c LENGTH   1,
+        longtextlanguagecode           TYPE c LENGTH   1,
+        manufacturingorderimportance   TYPE c LENGTH   1,
+        ismarkedfordeletion            TYPE c LENGTH   1,
+        iscompletelydelivered          TYPE c LENGTH   1,
+        mfgorderhasmultipleitems       TYPE c LENGTH   1,
+        mfgorderispartofcollvorder     TYPE c LENGTH   1,
+        mfgorderhierarchylevel         TYPE c LENGTH   2,
+        mfgorderhierarchylevelvalue    TYPE c LENGTH   2,
+        mfgorderhierarchypathvalue     TYPE c LENGTH   4,
+        orderisnotcostedautomatically  TYPE c LENGTH   1,
+        ordisnotschedldautomatically   TYPE c LENGTH   1,
+        prodnprocgisflexible           TYPE c LENGTH   1,
+        creationdate                   TYPE c LENGTH   8,
+        creationtime                   TYPE c LENGTH   6,
+        createdbyuser                  TYPE c LENGTH   12,
+        lastchangedate                 TYPE c LENGTH   8,
+        lastchangetime                 TYPE c LENGTH   6,
+        lastchangedbyuser              TYPE c LENGTH   12,
+        material                       TYPE c LENGTH   40,
+        product                        TYPE c LENGTH   40,
+        storagelocation                TYPE c LENGTH   4,
+        batch                          TYPE c LENGTH   10,
+        goodsrecipientname             TYPE c LENGTH   12,
+        unloadingpointname             TYPE c LENGTH   25,
+        inventoryusabilitycode         TYPE c LENGTH   1,
+        materialgoodsreceiptduration   TYPE c LENGTH   3,
+        quantitydistributionkey        TYPE c LENGTH   4,
+        stocksegment                   TYPE c LENGTH   40,
+        mfgorderinternalid             TYPE c LENGTH   10,
+        referenceorder                 TYPE c LENGTH   12,
+        leadingorder                   TYPE c LENGTH   12,
+        superiororder                  TYPE c LENGTH   12,
+        currency                       TYPE c LENGTH   5,
+        productionplant                TYPE c LENGTH   4,
+        planningplant                  TYPE c LENGTH   4,
+        mrparea                        TYPE c LENGTH   10,
+        mrpcontroller                  TYPE c LENGTH   3,
+        productionsupervisor           TYPE c LENGTH   3,
+        productionschedulingprofile    TYPE c LENGTH   6,
+        responsibleplannergroup        TYPE c LENGTH   3,
+        productionversion              TYPE c LENGTH   4,
+        salesorder                     TYPE c LENGTH   10,
+        salesorderitem                 TYPE c LENGTH   6,
+        wbselementinternalid           TYPE c LENGTH   8,
+        wbselementinternalid_2         TYPE c LENGTH   8,
+        reservation                    TYPE c LENGTH   10,
+        settlementreservation          TYPE c LENGTH   10,
+        mfgorderconfirmation           TYPE c LENGTH   10,
+        numberofmfgorderconfirmations  TYPE c LENGTH   8,
+        plannedorder                   TYPE c LENGTH   10,
+        capacityrequirement            TYPE c LENGTH   12,
+        inspectionlot                  TYPE c LENGTH   12,
+        changenumber                   TYPE c LENGTH   12,
+        materialrevisionlevel          TYPE c LENGTH   2,
+        materialrevisionlevel_2        TYPE c LENGTH   2,
+        basicschedulingtype            TYPE c LENGTH   1,
+        forecastschedulingtype         TYPE c LENGTH   1,
+        objectinternalid               TYPE c LENGTH   22,
+        productconfiguration           TYPE c LENGTH   18,
+        effectivityparametervariant    TYPE c LENGTH   12,
+        conditionapplication           TYPE c LENGTH   2,
+        capacityactiveversion          TYPE c LENGTH   2,
+        capacityrqmthasnottobecreated  TYPE c LENGTH   1,
+        ordersequencenumber            TYPE c LENGTH   14,
+        mfgordersplitstatus            TYPE c LENGTH   1,
+        billofoperationsmaterial       TYPE c LENGTH   40,
+        billofoperationstype           TYPE c LENGTH   1,
+        billofoperations               TYPE c LENGTH   8,
+        billofoperationsgroup          TYPE c LENGTH   8,
+        billofoperationsvariant        TYPE c LENGTH   2,
+        boointernalversioncounter      TYPE c LENGTH   8,
+        billofoperationsapplication    TYPE c LENGTH   1,
+        billofoperationsusage          TYPE c LENGTH   3,
+        billofoperationsversion        TYPE c LENGTH   4,
+        booexplosiondate               TYPE c LENGTH   8,
+        boovaliditystartdate           TYPE c LENGTH   8,
+        billofmaterialcategory         TYPE c LENGTH   1,
+        billofmaterial                 TYPE c LENGTH   8,
+        billofmaterialinternalid       TYPE c LENGTH   8,
+        billofmaterialvariant          TYPE c LENGTH   2,
+        billofmaterialvariantusage     TYPE c LENGTH   1,
+        billofmaterialversion          TYPE c LENGTH   4,
+        bomexplosiondate               TYPE c LENGTH   8,
+        bomvaliditystartdate           TYPE c LENGTH   8,
+        businessarea                   TYPE c LENGTH   4,
+        companycode                    TYPE c LENGTH   4,
+        controllingarea                TYPE c LENGTH   4,
+        profitcenter                   TYPE c LENGTH   10,
+        costcenter                     TYPE c LENGTH   10,
+        responsiblecostcenter          TYPE c LENGTH   10,
+        costelement                    TYPE c LENGTH   10,
+        costingsheet                   TYPE c LENGTH   6,
+        glaccount                      TYPE c LENGTH   10,
+        productcostcollector           TYPE c LENGTH   12,
+        actualcostscostingvariant      TYPE c LENGTH   4,
+        plannedcostscostingvariant     TYPE c LENGTH   4,
+        controllingobjectclass         TYPE c LENGTH   2,
+        functionalarea                 TYPE c LENGTH   16,
+        orderiseventbasedposting       TYPE c LENGTH   1,
+        eventbasedpostingmethod        TYPE c LENGTH   1,
+        eventbasedprocessingkey        TYPE c LENGTH   6,
+        schedulingfloatprofile         TYPE c LENGTH   3,
+        floatbeforeproductioninwrkdays TYPE c LENGTH   3,
+        floatafterproductioninworkdays TYPE c LENGTH   3,
+        releaseperiodinworkdays        TYPE c LENGTH   3,
+        changetoscheduleddatesismade   TYPE c LENGTH   1,
+        mfgorderplannedstartdate       TYPE c LENGTH   8,
+        mfgorderplannedstarttime       TYPE c LENGTH   6,
+        mfgorderplannedenddate         TYPE c LENGTH   8,
+        mfgorderplannedendtime         TYPE c LENGTH   6,
+        mfgorderplannedreleasedate     TYPE c LENGTH   8,
+        mfgorderscheduledstartdate     TYPE c LENGTH   8,
+        mfgorderscheduledstarttime     TYPE c LENGTH   6,
+        mfgorderscheduledenddate       TYPE c LENGTH   8,
+        mfgorderscheduledendtime       TYPE c LENGTH   6,
+        mfgorderscheduledreleasedate   TYPE c LENGTH   8,
+        mfgorderactualstartdate        TYPE c LENGTH   8,
+        mfgorderactualstarttime        TYPE c LENGTH   6,
+        mfgorderconfirmedenddate       TYPE c LENGTH   8,
+        mfgorderconfirmedendtime       TYPE c LENGTH   6,
+        mfgorderactualenddate          TYPE c LENGTH   8,
+        mfgorderactualreleasedate      TYPE c LENGTH   8,
+        mfgordertotalcommitmentdate    TYPE c LENGTH   8,
+        mfgorderactualcompletiondate   TYPE c LENGTH   8,
+        mfgorderitemactualdeliverydate TYPE c LENGTH   8,
+        productionunit                 TYPE c LENGTH   3,
+        mfgorderplannedtotalqty        TYPE c LENGTH   13,
+        mfgorderplannedscrapqty        TYPE c LENGTH   13,
+        mfgorderconfirmedyieldqty      TYPE c LENGTH   13,
+        mfgorderconfirmedscrapqty      TYPE c LENGTH   13,
+        mfgorderconfirmedreworkqty     TYPE c LENGTH   13,
+        expecteddeviationquantity      TYPE c LENGTH   13,
+        actualdeliveredquantity        TYPE c LENGTH   13,
+        masterproductionorder          TYPE c LENGTH   12,
+        productseasonyear              TYPE c LENGTH   4,
+        productseason                  TYPE c LENGTH   10,
+        productcollection              TYPE c LENGTH   10,
+        producttheme                   TYPE c LENGTH   10,
 
         "add by wang.z 20250207-----------------------------------------------------------
 
-        BillOfMaterialStatus  type I_BillOfMaterialHeaderDEX_2-BillOfMaterialStatus,
-        BOMHeaderQuantityInBaseUnit  type I_BillOfMaterialHeaderDEX_2-BOMHeaderQuantityInBaseUnit,
-        BOMHeaderBaseUnit  type I_BillOfMaterialHeaderDEX_2-BOMHeaderBaseUnit,
+        billofmaterialstatus           TYPE i_billofmaterialheaderdex_2-billofmaterialstatus,
+        bomheaderquantityinbaseunit    TYPE i_billofmaterialheaderdex_2-bomheaderquantityinbaseunit,
+        bomheaderbaseunit              TYPE i_billofmaterialheaderdex_2-bomheaderbaseunit,
 
         "end add by wang.z 20250207-------------------------------------------------------
-      END OF TY_afko,
+      END OF ty_afko,
 
       "NO.14製造指図明細
-      BEGIN OF TY_afpo,
-        ManufacturingOrder                TYPE C LENGTH  12     ,
-        ManufacturingOrderItem            TYPE C LENGTH  4      ,
-        ManufacturingOrderCategory        TYPE C LENGTH  2      ,
-        ManufacturingOrderType            TYPE C LENGTH  4      ,
-        OrderIsReleased                   TYPE C LENGTH  1      ,
-        IsMarkedForDeletion               TYPE C LENGTH  1      ,
-        OrderItemIsNotRelevantForMRP      TYPE C LENGTH  1      ,
-        Material                          TYPE C LENGTH  40     ,
-        Product                           TYPE C LENGTH  40     ,
-        ProductionPlant                   TYPE C LENGTH  4      ,
-        PlanningPlant                     TYPE C LENGTH  4      ,
-        MRPController                     TYPE C LENGTH  3       ,
-        ProductionSupervisor              TYPE C LENGTH  3       ,
-        Reservation                       TYPE C LENGTH  10      ,
-        ProductionVersion                 TYPE C LENGTH  4       ,
-        MRPArea                           TYPE C LENGTH  10      ,
-        SalesOrder                        TYPE C LENGTH  10      ,
-        SalesOrderItem                    TYPE C LENGTH  6       ,
-        SalesOrderScheduleLine            TYPE C LENGTH  4       ,
-        WBSElementInternalID              TYPE C LENGTH  8       ,
-        WBSElementInternalID_2            TYPE C LENGTH  8       ,
-        QuotaArrangement                  TYPE C LENGTH  10      ,
-        QuotaArrangementItem              TYPE C LENGTH  3        ,
-        SettlementReservation             TYPE C LENGTH  10       ,
-        SettlementReservationItem         TYPE C LENGTH  4        ,
-        CoProductReservation              TYPE C LENGTH  10       ,
-        CoProductReservationItem          TYPE C LENGTH  4        ,
-        MaterialProcurementCategory       TYPE C LENGTH  1        ,
-        MaterialProcurementType           TYPE C LENGTH  1        ,
-        SerialNumberAssgmtProfile         TYPE C LENGTH  4        ,
-        NumberOfSerialNumbers             TYPE C LENGTH  10       ,
-        MfgOrderItemReplnmtElmntType      TYPE C LENGTH  1        ,
-        ProductConfiguration              TYPE C LENGTH  18       ,
-        ObjectInternalID                  TYPE C LENGTH  22       ,
-        ManufacturingObject               TYPE C LENGTH  22       ,
-        QuantityDistributionKey           TYPE C LENGTH  4        ,
-        EffectivityParameterVariant       TYPE C LENGTH  12       ,
-        GoodsReceiptIsExpected            TYPE C LENGTH  1        ,
-        GoodsReceiptIsNonValuated         TYPE C LENGTH  1        ,
-        IsCompletelyDelivered             TYPE C LENGTH  1        ,
-        MaterialGoodsReceiptDuration      TYPE C LENGTH  3        ,
-        UnderdelivTolrtdLmtRatioInPct     TYPE C LENGTH  3        ,
-        OverdelivTolrtdLmtRatioInPct      TYPE C LENGTH  3        ,
-        UnlimitedOverdeliveryIsAllowed    TYPE C LENGTH  1        ,
-        StorageLocation                   TYPE C LENGTH  4         ,
-        Batch                             TYPE C LENGTH  10        ,
-        InventoryValuationType            TYPE C LENGTH  10        ,
-        InventoryValuationCategory        TYPE C LENGTH  1         ,
-        InventoryUsabilityCode            TYPE C LENGTH  1         ,
-        InventorySpecialStockType         TYPE C LENGTH  1         ,
-        InventorySpecialStockValnType     TYPE C LENGTH  1         ,
-        ConsumptionPosting                TYPE C LENGTH  1         ,
-        GoodsRecipientName                TYPE C LENGTH  12        ,
-        UnloadingPointName                TYPE C LENGTH  25        ,
-        StockSegment                      TYPE C LENGTH  40        ,
-        MfgOrderPlannedStartDate          TYPE C LENGTH  8        ,
-        MfgOrderPlannedStartTime          TYPE C LENGTH  6        ,
-        MfgOrderScheduledStartDate        TYPE C LENGTH  8        ,
-        MfgOrderScheduledStartTime        TYPE C LENGTH  6        ,
-        MfgOrderActualStartDate           TYPE C LENGTH  8        ,
-        MfgOrderActualStartTime           TYPE C LENGTH  6        ,
-        MfgOrderPlannedEndDate            TYPE C LENGTH  8        ,
-        MfgOrderPlannedEndTime            TYPE C LENGTH  6        ,
-        MfgOrderScheduledEndDate          TYPE C LENGTH  8        ,
-        MfgOrderScheduledEndTime          TYPE C LENGTH  6        ,
-        MfgOrderConfirmedEndDate          TYPE C LENGTH  8        ,
-        MfgOrderConfirmedEndTime          TYPE C LENGTH  6        ,
-        MfgOrderActualEndDate             TYPE C LENGTH  8        ,
-        MfgOrderScheduledReleaseDate      TYPE C LENGTH  8        ,
-        MfgOrderActualReleaseDate         TYPE C LENGTH  8        ,
-        MfgOrderItemPlannedEndDate        TYPE C LENGTH  8        ,
-        MfgOrderItemScheduledEndDate      TYPE C LENGTH  8        ,
-        MfgOrderItemPlndDeliveryDate      TYPE C LENGTH  8        ,
-        MfgOrderItemActualDeliveryDate    TYPE C LENGTH  8        ,
-        MfgOrderItemTotalCmtmtDate        TYPE C LENGTH  8        ,
-        ProductionUnit                    TYPE C LENGTH  3        ,
-        MfgOrderItemPlannedTotalQty       TYPE C LENGTH  13       ,
-        MfgOrderItemPlannedScrapQty       TYPE C LENGTH  13        ,
-        MfgOrderItemPlannedYieldQty       TYPE C LENGTH  13        ,
-        MfgOrderItemGoodsReceiptQty       TYPE C LENGTH  13        ,
-        MfgOrderItemActualDeviationQty    TYPE C LENGTH  13        ,
-        MfgOrderItemOpenYieldQty          TYPE C LENGTH  16        ,
-        MfgOrderConfirmedYieldQty         TYPE C LENGTH  13        ,
-        MfgOrderConfirmedScrapQty         TYPE C LENGTH  13        ,
-        MfgOrderConfirmedReworkQty        TYPE C LENGTH  13        ,
-        MfgOrderConfirmedTotalQty         TYPE C LENGTH  13        ,
-        MfgOrderPlannedTotalQty           TYPE C LENGTH  13        ,
-        MfgOrderPlannedScrapQty           TYPE C LENGTH  13        ,
-        PlannedOrder                      TYPE C LENGTH  10       ,
-        PlndOrderPlannedStartDate         TYPE C LENGTH  8        ,
-        PlannedOrderOpeningDate           TYPE C LENGTH  8        ,
-        BaseUnit                          TYPE C LENGTH  3        ,
-        PlndOrderPlannedTotalQty          TYPE C LENGTH  13       ,
-        PlndOrderPlannedScrapQty          TYPE C LENGTH  13       ,
-        CompanyCode                       TYPE C LENGTH  4        ,
-        BusinessArea                      TYPE C LENGTH  4        ,
-        AccountAssignmentCategory         TYPE C LENGTH  1        ,
-        CompanyCodeCurrency               TYPE C LENGTH  5        ,
-        GoodsReceiptAmountInCoCodeCrcy    TYPE C LENGTH  13       ,
-        MasterProductionOrder             TYPE C LENGTH  12        ,
-        ProductSeasonYear                 TYPE C LENGTH  4         ,
-        ProductSeason                     TYPE C LENGTH  10        ,
-        ProductCollection                 TYPE C LENGTH  10        ,
-        ProductTheme                      TYPE C LENGTH  10        ,
+      BEGIN OF ty_afpo,
+        manufacturingorder             TYPE c LENGTH  12,
+        manufacturingorderitem         TYPE c LENGTH  4,
+        manufacturingordercategory     TYPE c LENGTH  2,
+        manufacturingordertype         TYPE c LENGTH  4,
+        orderisreleased                TYPE c LENGTH  1,
+        ismarkedfordeletion            TYPE c LENGTH  1,
+        orderitemisnotrelevantformrp   TYPE c LENGTH  1,
+        material                       TYPE c LENGTH  40,
+        product                        TYPE c LENGTH  40,
+        productionplant                TYPE c LENGTH  4,
+        planningplant                  TYPE c LENGTH  4,
+        mrpcontroller                  TYPE c LENGTH  3,
+        productionsupervisor           TYPE c LENGTH  3,
+        reservation                    TYPE c LENGTH  10,
+        productionversion              TYPE c LENGTH  4,
+        mrparea                        TYPE c LENGTH  10,
+        salesorder                     TYPE c LENGTH  10,
+        salesorderitem                 TYPE c LENGTH  6,
+        salesorderscheduleline         TYPE c LENGTH  4,
+        wbselementinternalid           TYPE c LENGTH  8,
+        wbselementinternalid_2         TYPE c LENGTH  8,
+        quotaarrangement               TYPE c LENGTH  10,
+        quotaarrangementitem           TYPE c LENGTH  3,
+        settlementreservation          TYPE c LENGTH  10,
+        settlementreservationitem      TYPE c LENGTH  4,
+        coproductreservation           TYPE c LENGTH  10,
+        coproductreservationitem       TYPE c LENGTH  4,
+        materialprocurementcategory    TYPE c LENGTH  1,
+        materialprocurementtype        TYPE c LENGTH  1,
+        serialnumberassgmtprofile      TYPE c LENGTH  4,
+        numberofserialnumbers          TYPE c LENGTH  10,
+        mfgorderitemreplnmtelmnttype   TYPE c LENGTH  1,
+        productconfiguration           TYPE c LENGTH  18,
+        objectinternalid               TYPE c LENGTH  22,
+        manufacturingobject            TYPE c LENGTH  22,
+        quantitydistributionkey        TYPE c LENGTH  4,
+        effectivityparametervariant    TYPE c LENGTH  12,
+        goodsreceiptisexpected         TYPE c LENGTH  1,
+        goodsreceiptisnonvaluated      TYPE c LENGTH  1,
+        iscompletelydelivered          TYPE c LENGTH  1,
+        materialgoodsreceiptduration   TYPE c LENGTH  3,
+        underdelivtolrtdlmtratioinpct  TYPE c LENGTH  3,
+        overdelivtolrtdlmtratioinpct   TYPE c LENGTH  3,
+        unlimitedoverdeliveryisallowed TYPE c LENGTH  1,
+        storagelocation                TYPE c LENGTH  4,
+        batch                          TYPE c LENGTH  10,
+        inventoryvaluationtype         TYPE c LENGTH  10,
+        inventoryvaluationcategory     TYPE c LENGTH  1,
+        inventoryusabilitycode         TYPE c LENGTH  1,
+        inventoryspecialstocktype      TYPE c LENGTH  1,
+        inventoryspecialstockvalntype  TYPE c LENGTH  1,
+        consumptionposting             TYPE c LENGTH  1,
+        goodsrecipientname             TYPE c LENGTH  12,
+        unloadingpointname             TYPE c LENGTH  25,
+        stocksegment                   TYPE c LENGTH  40,
+        mfgorderplannedstartdate       TYPE c LENGTH  8,
+        mfgorderplannedstarttime       TYPE c LENGTH  6,
+        mfgorderscheduledstartdate     TYPE c LENGTH  8,
+        mfgorderscheduledstarttime     TYPE c LENGTH  6,
+        mfgorderactualstartdate        TYPE c LENGTH  8,
+        mfgorderactualstarttime        TYPE c LENGTH  6,
+        mfgorderplannedenddate         TYPE c LENGTH  8,
+        mfgorderplannedendtime         TYPE c LENGTH  6,
+        mfgorderscheduledenddate       TYPE c LENGTH  8,
+        mfgorderscheduledendtime       TYPE c LENGTH  6,
+        mfgorderconfirmedenddate       TYPE c LENGTH  8,
+        mfgorderconfirmedendtime       TYPE c LENGTH  6,
+        mfgorderactualenddate          TYPE c LENGTH  8,
+        mfgorderscheduledreleasedate   TYPE c LENGTH  8,
+        mfgorderactualreleasedate      TYPE c LENGTH  8,
+        mfgorderitemplannedenddate     TYPE c LENGTH  8,
+        mfgorderitemscheduledenddate   TYPE c LENGTH  8,
+        mfgorderitemplnddeliverydate   TYPE c LENGTH  8,
+        mfgorderitemactualdeliverydate TYPE c LENGTH  8,
+        mfgorderitemtotalcmtmtdate     TYPE c LENGTH  8,
+        productionunit                 TYPE c LENGTH  3,
+        mfgorderitemplannedtotalqty    TYPE c LENGTH  13,
+        mfgorderitemplannedscrapqty    TYPE c LENGTH  13,
+        mfgorderitemplannedyieldqty    TYPE c LENGTH  13,
+        mfgorderitemgoodsreceiptqty    TYPE c LENGTH  13,
+        mfgorderitemactualdeviationqty TYPE c LENGTH  13,
+        mfgorderitemopenyieldqty       TYPE c LENGTH  16,
+        mfgorderconfirmedyieldqty      TYPE c LENGTH  13,
+        mfgorderconfirmedscrapqty      TYPE c LENGTH  13,
+        mfgorderconfirmedreworkqty     TYPE c LENGTH  13,
+        mfgorderconfirmedtotalqty      TYPE c LENGTH  13,
+        mfgorderplannedtotalqty        TYPE c LENGTH  13,
+        mfgorderplannedscrapqty        TYPE c LENGTH  13,
+        plannedorder                   TYPE c LENGTH  10,
+        plndorderplannedstartdate      TYPE c LENGTH  8,
+        plannedorderopeningdate        TYPE c LENGTH  8,
+        baseunit                       TYPE c LENGTH  3,
+        plndorderplannedtotalqty       TYPE c LENGTH  13,
+        plndorderplannedscrapqty       TYPE c LENGTH  13,
+        companycode                    TYPE c LENGTH  4,
+        businessarea                   TYPE c LENGTH  4,
+        accountassignmentcategory      TYPE c LENGTH  1,
+        companycodecurrency            TYPE c LENGTH  5,
+        goodsreceiptamountincocodecrcy TYPE c LENGTH  13,
+        masterproductionorder          TYPE c LENGTH  12,
+        productseasonyear              TYPE c LENGTH  4,
+        productseason                  TYPE c LENGTH  10,
+        productcollection              TYPE c LENGTH  10,
+        producttheme                   TYPE c LENGTH  10,
 
-      END OF TY_AFPO,
+      END OF ty_afpo,
 
       "NO.15 品質検査計画作業のバージョン
-      BEGIN OF ty_PLPO,
+      BEGIN OF ty_plpo,
 *        InspectionPlanGroup             type c length     8     ,
 *        BOOOperationInternalID          type c length     8     ,
 *        BOOOpInternalVersionCounter     type c length     8     ,
@@ -1115,802 +1115,809 @@ public section.
 *        ChangeNumber                    type c length     12    ,
 *        ValidityStartDate               type c length     8     ,
 *        ValidityEndDate                 type c length     8     ,
-"change by wang.z 20250207----------------------------------------------------------------
-        BillOfOperationsType type I_MfgBOOOperationChangeState-BillOfOperationsType,
-        BillOfOperationsGroup type I_MfgBOOOperationChangeState-BillOfOperationsGroup,
-        BillOfOperationsVariant type I_MfgBOOOperationChangeState-BillOfOperationsVariant,
-        BillOfOperationsSequence type I_MfgBOOOperationChangeState-BillOfOperationsSequence,
-        BOOOperationInternalID type I_MfgBOOOperationChangeState-BOOOperationInternalID,
-        BOOSqncOpAssgmtIntVersionCntr type I_MfgBOOOperationChangeState-BOOSqncOpAssgmtIntVersionCntr,
-        BOOOpInternalVersionCounter type I_MfgBOOOperationChangeState-BOOOpInternalVersionCounter,
-        OperationExternalID type I_MfgBOOOperationChangeState-OperationExternalID,
-        Operation type I_MfgBOOOperationChangeState-Operation,
-        Operation_2 type I_MfgBOOOperationChangeState-Operation_2,
-        CreationDate type I_MfgBOOOperationChangeState-CreationDate,
-        CreatedByUser type I_MfgBOOOperationChangeState-CreatedByUser,
-        LastChangeDate type I_MfgBOOOperationChangeState-LastChangeDate,
-        LastChangedByUser type I_MfgBOOOperationChangeState-LastChangedByUser,
-        ChangeNumber type I_MfgBOOOperationChangeState-ChangeNumber,
-        ValidityStartDate type I_MfgBOOOperationChangeState-ValidityStartDate,
-        ValidityEndDate type I_MfgBOOOperationChangeState-ValidityEndDate,
-        IsDeleted type I_MfgBOOOperationChangeState-IsDeleted,
-        IsImplicitlyDeleted type I_MfgBOOOperationChangeState-IsImplicitlyDeleted,
-        OperationText type I_MfgBOOOperationChangeState-OperationText,
-        LongTextLanguageCode type I_MfgBOOOperationChangeState-LongTextLanguageCode,
-        Plant type I_MfgBOOOperationChangeState-Plant,
-        OperationControlProfile type I_MfgBOOOperationChangeState-OperationControlProfile,
-        OperationStandardTextCode type I_MfgBOOOperationChangeState-OperationStandardTextCode,
-        WorkCenterInternalID type I_MfgBOOOperationChangeState-WorkCenterInternalID,
-        WorkCenterTypeCode type I_MfgBOOOperationChangeState-WorkCenterTypeCode,
-        FactoryCalendar type I_MfgBOOOperationChangeState-FactoryCalendar,
-        CapacityCategoryCode type I_MfgBOOOperationChangeState-CapacityCategoryCode,
-        CostElement type I_MfgBOOOperationChangeState-CostElement,
-        CompanyCode type I_MfgBOOOperationChangeState-CompanyCode,
-        OperationCostingRelevancyType type I_MfgBOOOperationChangeState-OperationCostingRelevancyType,
-        NumberOfTimeTickets type I_MfgBOOOperationChangeState-NumberOfTimeTickets,
-        NumberOfConfirmationSlips type I_MfgBOOOperationChangeState-NumberOfConfirmationSlips,
-        EmployeeWageGroup type I_MfgBOOOperationChangeState-EmployeeWageGroup,
-        EmployeeWageType type I_MfgBOOOperationChangeState-EmployeeWageType,
-        EmployeeSuitability type I_MfgBOOOperationChangeState-EmployeeSuitability,
-        NumberOfEmployees type I_MfgBOOOperationChangeState-NumberOfEmployees,
-        BillOfOperationsRefType type I_MfgBOOOperationChangeState-BillOfOperationsRefType,
-        BillOfOperationsRefGroup type I_MfgBOOOperationChangeState-BillOfOperationsRefGroup,
-        BillOfOperationsRefVariant type I_MfgBOOOperationChangeState-BillOfOperationsRefVariant,
-        LineSegmentTakt type I_MfgBOOOperationChangeState-LineSegmentTakt,
-        OperationStdWorkQtyGrpgCat type I_MfgBOOOperationChangeState-OperationStdWorkQtyGrpgCat,
-        OrderHasNoSubOperations type I_MfgBOOOperationChangeState-OrderHasNoSubOperations,
-        OperationSetupType type I_MfgBOOOperationChangeState-OperationSetupType,
-        OperationSetupGroupCategory type I_MfgBOOOperationChangeState-OperationSetupGroupCategory,
-        OperationSetupGroup type I_MfgBOOOperationChangeState-OperationSetupGroup,
-        BOOOperationIsPhase type I_MfgBOOOperationChangeState-BOOOperationIsPhase,
-        BOOPhaseSuperiorOpInternalID type I_MfgBOOOperationChangeState-BOOPhaseSuperiorOpInternalID,
-        ControlRecipeDestination type I_MfgBOOOperationChangeState-ControlRecipeDestination,
-        OpIsExtlyProcdWithSubcontrg type I_MfgBOOOperationChangeState-OpIsExtlyProcdWithSubcontrg,
-        PurchasingInfoRecord type I_MfgBOOOperationChangeState-PurchasingInfoRecord,
-        PurchasingOrganization type I_MfgBOOOperationChangeState-PurchasingOrganization,
-        PurchaseContract type I_MfgBOOOperationChangeState-PurchaseContract,
-        PurchaseContractItem type I_MfgBOOOperationChangeState-PurchaseContractItem,
-        PurchasingInfoRecdAddlGrpgName type I_MfgBOOOperationChangeState-PurchasingInfoRecdAddlGrpgName,
-        MaterialGroup type I_MfgBOOOperationChangeState-MaterialGroup,
-        PurchasingGroup type I_MfgBOOOperationChangeState-PurchasingGroup,
-        Supplier type I_MfgBOOOperationChangeState-Supplier,
-        PlannedDeliveryDuration type I_MfgBOOOperationChangeState-PlannedDeliveryDuration,
-        NumberOfOperationPriceUnits type I_MfgBOOOperationChangeState-NumberOfOperationPriceUnits,
-        OpExternalProcessingCurrency type I_MfgBOOOperationChangeState-OpExternalProcessingCurrency,
-        OpExternalProcessingPrice type I_MfgBOOOperationChangeState-OpExternalProcessingPrice,
-        InspectionLotType type I_MfgBOOOperationChangeState-InspectionLotType,
-        InspResultRecordingView type I_MfgBOOOperationChangeState-InspResultRecordingView,
-        InspSbstCompletionConfirmation type I_MfgBOOOperationChangeState-InspSbstCompletionConfirmation,
-        InspSbstHasNoTimeOrQuantity type I_MfgBOOOperationChangeState-InspSbstHasNoTimeOrQuantity,
-        OperationReferenceQuantity type I_MfgBOOOperationChangeState-OperationReferenceQuantity,
-        OperationUnit type I_MfgBOOOperationChangeState-OperationUnit,
-        OperationScrapPercent type I_MfgBOOOperationChangeState-OperationScrapPercent,
-        OpQtyToBaseQtyNmrtr type I_MfgBOOOperationChangeState-OpQtyToBaseQtyNmrtr,
-        OpQtyToBaseQtyDnmntr type I_MfgBOOOperationChangeState-OpQtyToBaseQtyDnmntr,
-        StandardWorkFormulaParam1 type I_MfgBOOOperationChangeState-StandardWorkFormulaParam1,
-        StandardWorkQuantity1 type I_MfgBOOOperationChangeState-StandardWorkQuantity1,
-        StandardWorkQuantityUnit1 type I_MfgBOOOperationChangeState-StandardWorkQuantityUnit1,
-        CostCtrActivityType1 type I_MfgBOOOperationChangeState-CostCtrActivityType1,
-        PerfEfficiencyRatioCode1 type I_MfgBOOOperationChangeState-PerfEfficiencyRatioCode1,
-        StandardWorkFormulaParam2 type I_MfgBOOOperationChangeState-StandardWorkFormulaParam2,
-        StandardWorkQuantity2 type I_MfgBOOOperationChangeState-StandardWorkQuantity2,
-        StandardWorkQuantityUnit2 type I_MfgBOOOperationChangeState-StandardWorkQuantityUnit2,
-        CostCtrActivityType2 type I_MfgBOOOperationChangeState-CostCtrActivityType2,
-        PerfEfficiencyRatioCode2 type I_MfgBOOOperationChangeState-PerfEfficiencyRatioCode2,
-        StandardWorkFormulaParam3 type I_MfgBOOOperationChangeState-StandardWorkFormulaParam3,
-        StandardWorkQuantity3 type I_MfgBOOOperationChangeState-StandardWorkQuantity3,
-        StandardWorkQuantityUnit3 type I_MfgBOOOperationChangeState-StandardWorkQuantityUnit3,
-        CostCtrActivityType3 type I_MfgBOOOperationChangeState-CostCtrActivityType3,
-        PerfEfficiencyRatioCode3 type I_MfgBOOOperationChangeState-PerfEfficiencyRatioCode3,
-        StandardWorkFormulaParam4 type I_MfgBOOOperationChangeState-StandardWorkFormulaParam4,
-        StandardWorkQuantity4 type I_MfgBOOOperationChangeState-StandardWorkQuantity4,
-        StandardWorkQuantityUnit4 type I_MfgBOOOperationChangeState-StandardWorkQuantityUnit4,
-        CostCtrActivityType4 type I_MfgBOOOperationChangeState-CostCtrActivityType4,
-        PerfEfficiencyRatioCode4 type I_MfgBOOOperationChangeState-PerfEfficiencyRatioCode4,
-        StandardWorkFormulaParam5 type I_MfgBOOOperationChangeState-StandardWorkFormulaParam5,
-        StandardWorkQuantity5 type I_MfgBOOOperationChangeState-StandardWorkQuantity5,
-        StandardWorkQuantityUnit5 type I_MfgBOOOperationChangeState-StandardWorkQuantityUnit5,
-        CostCtrActivityType5 type I_MfgBOOOperationChangeState-CostCtrActivityType5,
-        PerfEfficiencyRatioCode5 type I_MfgBOOOperationChangeState-PerfEfficiencyRatioCode5,
-        StandardWorkFormulaParam6 type I_MfgBOOOperationChangeState-StandardWorkFormulaParam6,
-        StandardWorkQuantity6 type I_MfgBOOOperationChangeState-StandardWorkQuantity6,
-        StandardWorkQuantityUnit6 type I_MfgBOOOperationChangeState-StandardWorkQuantityUnit6,
-        CostCtrActivityType6 type I_MfgBOOOperationChangeState-CostCtrActivityType6,
-        PerfEfficiencyRatioCode6 type I_MfgBOOOperationChangeState-PerfEfficiencyRatioCode6,
-        BusinessProcess type I_MfgBOOOperationChangeState-BusinessProcess,
-        LeadTimeReductionStrategy type I_MfgBOOOperationChangeState-LeadTimeReductionStrategy,
-        TeardownAndWaitIsParallel type I_MfgBOOOperationChangeState-TeardownAndWaitIsParallel,
-        BillOfOperationsBreakDuration type I_MfgBOOOperationChangeState-BillOfOperationsBreakDuration,
-        BreakDurationUnit type I_MfgBOOOperationChangeState-BreakDurationUnit,
-        MaximumWaitDuration type I_MfgBOOOperationChangeState-MaximumWaitDuration,
-        MaximumWaitDurationUnit type I_MfgBOOOperationChangeState-MaximumWaitDurationUnit,
-        MinimumWaitDuration type I_MfgBOOOperationChangeState-MinimumWaitDuration,
-        MinimumWaitDurationUnit type I_MfgBOOOperationChangeState-MinimumWaitDurationUnit,
-        StandardQueueDuration type I_MfgBOOOperationChangeState-StandardQueueDuration,
-        StandardQueueDurationUnit type I_MfgBOOOperationChangeState-StandardQueueDurationUnit,
-        MinimumQueueDuration type I_MfgBOOOperationChangeState-MinimumQueueDuration,
-        MinimumQueueDurationUnit type I_MfgBOOOperationChangeState-MinimumQueueDurationUnit,
-        StandardMoveDuration type I_MfgBOOOperationChangeState-StandardMoveDuration,
-        StandardMoveDurationUnit type I_MfgBOOOperationChangeState-StandardMoveDurationUnit,
-        MinimumMoveDuration type I_MfgBOOOperationChangeState-MinimumMoveDuration,
-        MinimumMoveDurationUnit type I_MfgBOOOperationChangeState-MinimumMoveDurationUnit,
-        OperationSplitIsRequired type I_MfgBOOOperationChangeState-OperationSplitIsRequired,
-        MaximumNumberOfSplits type I_MfgBOOOperationChangeState-MaximumNumberOfSplits,
-        MinProcessingDurationPerSplit type I_MfgBOOOperationChangeState-MinProcessingDurationPerSplit,
-        MinProcessingDurnPerSplitUnit type I_MfgBOOOperationChangeState-MinProcessingDurnPerSplitUnit,
-        OperationOverlappingIsRequired type I_MfgBOOOperationChangeState-OperationOverlappingIsRequired,
-        OperationOverlappingIsPossible type I_MfgBOOOperationChangeState-OperationOverlappingIsPossible,
-        OperationsIsAlwaysOverlapping type I_MfgBOOOperationChangeState-OperationsIsAlwaysOverlapping,
-        OperationHasNoOverlapping type I_MfgBOOOperationChangeState-OperationHasNoOverlapping,
-        OverlapMinimumDuration type I_MfgBOOOperationChangeState-OverlapMinimumDuration,
-        OverlapMinimumDurationUnit type I_MfgBOOOperationChangeState-OverlapMinimumDurationUnit,
-        OverlapMinimumTransferQty type I_MfgBOOOperationChangeState-OverlapMinimumTransferQty,
-        OverlapMinimumTransferQtyUnit type I_MfgBOOOperationChangeState-OverlapMinimumTransferQtyUnit,
-"end change by wang.z 20250207----------------------------------------------------
-      END OF TY_PLPO,
+        "change by wang.z 20250207----------------------------------------------------------------
+        billofoperationstype           TYPE i_mfgboooperationchangestate-billofoperationstype,
+        billofoperationsgroup          TYPE i_mfgboooperationchangestate-billofoperationsgroup,
+        billofoperationsvariant        TYPE i_mfgboooperationchangestate-billofoperationsvariant,
+        billofoperationssequence       TYPE i_mfgboooperationchangestate-billofoperationssequence,
+        boooperationinternalid         TYPE i_mfgboooperationchangestate-boooperationinternalid,
+        boosqncopassgmtintversioncntr  TYPE i_mfgboooperationchangestate-boosqncopassgmtintversioncntr,
+        booopinternalversioncounter    TYPE i_mfgboooperationchangestate-booopinternalversioncounter,
+        operationexternalid            TYPE i_mfgboooperationchangestate-operationexternalid,
+        operation                      TYPE i_mfgboooperationchangestate-operation_2, " Operation,
+        operation_2                    TYPE i_mfgboooperationchangestate-operation_2,
+        creationdate                   TYPE i_mfgboooperationchangestate-creationdate,
+        createdbyuser                  TYPE i_mfgboooperationchangestate-createdbyuser,
+        lastchangedate                 TYPE i_mfgboooperationchangestate-lastchangedate,
+        lastchangedbyuser              TYPE i_mfgboooperationchangestate-lastchangedbyuser,
+        changenumber                   TYPE i_mfgboooperationchangestate-changenumber,
+        validitystartdate              TYPE i_mfgboooperationchangestate-validitystartdate,
+        validityenddate                TYPE i_mfgboooperationchangestate-validityenddate,
+        isdeleted                      TYPE i_mfgboooperationchangestate-isdeleted,
+        isimplicitlydeleted            TYPE i_mfgboooperationchangestate-isimplicitlydeleted,
+        operationtext                  TYPE i_mfgboooperationchangestate-operationtext,
+        longtextlanguagecode           TYPE i_mfgboooperationchangestate-longtextlanguagecode,
+        plant                          TYPE i_mfgboooperationchangestate-plant,
+        operationcontrolprofile        TYPE i_mfgboooperationchangestate-operationcontrolprofile,
+        operationstandardtextcode      TYPE i_mfgboooperationchangestate-operationstandardtextcode,
+        workcenterinternalid           TYPE i_mfgboooperationchangestate-workcenterinternalid,
+        workcentertypecode             TYPE i_mfgboooperationchangestate-workcentertypecode,
+        factorycalendar                TYPE i_mfgboooperationchangestate-factorycalendar,
+        capacitycategorycode           TYPE i_mfgboooperationchangestate-capacitycategorycode,
+        costelement                    TYPE i_mfgboooperationchangestate-costelement,
+        companycode                    TYPE i_mfgboooperationchangestate-companycode,
+        operationcostingrelevancytype  TYPE i_mfgboooperationchangestate-operationcostingrelevancytype,
+        numberoftimetickets            TYPE i_mfgboooperationchangestate-numberoftimetickets,
+        numberofconfirmationslips      TYPE i_mfgboooperationchangestate-numberofconfirmationslips,
+        employeewagegroup              TYPE i_mfgboooperationchangestate-employeewagegroup,
+        employeewagetype               TYPE i_mfgboooperationchangestate-employeewagetype,
+        employeesuitability            TYPE i_mfgboooperationchangestate-employeesuitability,
+        numberofemployees              TYPE i_mfgboooperationchangestate-numberofemployees,
+        billofoperationsreftype        TYPE i_mfgboooperationchangestate-billofoperationsreftype,
+        billofoperationsrefgroup       TYPE i_mfgboooperationchangestate-billofoperationsrefgroup,
+        billofoperationsrefvariant     TYPE i_mfgboooperationchangestate-billofoperationsrefvariant,
+        linesegmenttakt                TYPE i_mfgboooperationchangestate-linesegmenttakt,
+        operationstdworkqtygrpgcat     TYPE i_mfgboooperationchangestate-operationstdworkqtygrpgcat,
+        orderhasnosuboperations        TYPE i_mfgboooperationchangestate-orderhasnosuboperations,
+        operationsetuptype             TYPE i_mfgboooperationchangestate-operationsetuptype,
+        operationsetupgroupcategory    TYPE i_mfgboooperationchangestate-operationsetupgroupcategory,
+        operationsetupgroup            TYPE i_mfgboooperationchangestate-operationsetupgroup,
+        boooperationisphase            TYPE i_mfgboooperationchangestate-boooperationisphase,
+        boophasesuperioropinternalid   TYPE i_mfgboooperationchangestate-boophasesuperioropinternalid,
+        controlrecipedestination       TYPE i_mfgboooperationchangestate-controlrecipedestination,
+        opisextlyprocdwithsubcontrg    TYPE i_mfgboooperationchangestate-opisextlyprocdwithsubcontrg,
+        purchasinginforecord           TYPE i_mfgboooperationchangestate-purchasinginforecord,
+        purchasingorganization         TYPE i_mfgboooperationchangestate-purchasingorganization,
+        purchasecontract               TYPE i_mfgboooperationchangestate-purchasecontract,
+        purchasecontractitem           TYPE i_mfgboooperationchangestate-purchasecontractitem,
+        purchasinginforecdaddlgrpgname TYPE i_mfgboooperationchangestate-purchasinginforecdaddlgrpgname,
+        materialgroup                  TYPE i_mfgboooperationchangestate-materialgroup,
+        purchasinggroup                TYPE i_mfgboooperationchangestate-purchasinggroup,
+        supplier                       TYPE i_mfgboooperationchangestate-supplier,
+        planneddeliveryduration        TYPE i_mfgboooperationchangestate-planneddeliveryduration,
+        numberofoperationpriceunits    TYPE i_mfgboooperationchangestate-numberofoperationpriceunits,
+        opexternalprocessingcurrency   TYPE i_mfgboooperationchangestate-opexternalprocessingcurrency,
+        opexternalprocessingprice      TYPE i_mfgboooperationchangestate-opexternalprocessingprice,
+        inspectionlottype              TYPE i_mfgboooperationchangestate-inspectionlottype,
+        inspresultrecordingview        TYPE i_mfgboooperationchangestate-inspresultrecordingview,
+        inspsbstcompletionconfirmation TYPE i_mfgboooperationchangestate-inspsbstcompletionconfirmation,
+        inspsbsthasnotimeorquantity    TYPE i_mfgboooperationchangestate-inspsbsthasnotimeorquantity,
+        operationreferencequantity     TYPE i_mfgboooperationchangestate-operationreferencequantity,
+        operationunit                  TYPE i_mfgboooperationchangestate-operationunit,
+        operationscrappercent          TYPE i_mfgboooperationchangestate-operationscrappercent,
+        opqtytobaseqtynmrtr            TYPE i_mfgboooperationchangestate-opqtytobaseqtynmrtr,
+        opqtytobaseqtydnmntr           TYPE i_mfgboooperationchangestate-opqtytobaseqtydnmntr,
+        standardworkformulaparam1      TYPE i_mfgboooperationchangestate-standardworkformulaparam1,
+        standardworkquantity1          TYPE i_mfgboooperationchangestate-standardworkquantity1,
+        standardworkquantityunit1      TYPE i_mfgboooperationchangestate-standardworkquantityunit1,
+        costctractivitytype1           TYPE i_mfgboooperationchangestate-costctractivitytype1,
+        perfefficiencyratiocode1       TYPE i_mfgboooperationchangestate-perfefficiencyratiocode1,
+        standardworkformulaparam2      TYPE i_mfgboooperationchangestate-standardworkformulaparam2,
+        standardworkquantity2          TYPE i_mfgboooperationchangestate-standardworkquantity2,
+        standardworkquantityunit2      TYPE i_mfgboooperationchangestate-standardworkquantityunit2,
+        costctractivitytype2           TYPE i_mfgboooperationchangestate-costctractivitytype2,
+        perfefficiencyratiocode2       TYPE i_mfgboooperationchangestate-perfefficiencyratiocode2,
+        standardworkformulaparam3      TYPE i_mfgboooperationchangestate-standardworkformulaparam3,
+        standardworkquantity3          TYPE i_mfgboooperationchangestate-standardworkquantity3,
+        standardworkquantityunit3      TYPE i_mfgboooperationchangestate-standardworkquantityunit3,
+        costctractivitytype3           TYPE i_mfgboooperationchangestate-costctractivitytype3,
+        perfefficiencyratiocode3       TYPE i_mfgboooperationchangestate-perfefficiencyratiocode3,
+        standardworkformulaparam4      TYPE i_mfgboooperationchangestate-standardworkformulaparam4,
+        standardworkquantity4          TYPE i_mfgboooperationchangestate-standardworkquantity4,
+        standardworkquantityunit4      TYPE i_mfgboooperationchangestate-standardworkquantityunit4,
+        costctractivitytype4           TYPE i_mfgboooperationchangestate-costctractivitytype4,
+        perfefficiencyratiocode4       TYPE i_mfgboooperationchangestate-perfefficiencyratiocode4,
+        standardworkformulaparam5      TYPE i_mfgboooperationchangestate-standardworkformulaparam5,
+        standardworkquantity5          TYPE i_mfgboooperationchangestate-standardworkquantity5,
+        standardworkquantityunit5      TYPE i_mfgboooperationchangestate-standardworkquantityunit5,
+        costctractivitytype5           TYPE i_mfgboooperationchangestate-costctractivitytype5,
+        perfefficiencyratiocode5       TYPE i_mfgboooperationchangestate-perfefficiencyratiocode5,
+        standardworkformulaparam6      TYPE i_mfgboooperationchangestate-standardworkformulaparam6,
+        standardworkquantity6          TYPE i_mfgboooperationchangestate-standardworkquantity6,
+        standardworkquantityunit6      TYPE i_mfgboooperationchangestate-standardworkquantityunit6,
+        costctractivitytype6           TYPE i_mfgboooperationchangestate-costctractivitytype6,
+        perfefficiencyratiocode6       TYPE i_mfgboooperationchangestate-perfefficiencyratiocode6,
+        businessprocess                TYPE i_mfgboooperationchangestate-businessprocess,
+        leadtimereductionstrategy      TYPE i_mfgboooperationchangestate-leadtimereductionstrategy,
+        teardownandwaitisparallel      TYPE i_mfgboooperationchangestate-teardownandwaitisparallel,
+        billofoperationsbreakduration  TYPE i_mfgboooperationchangestate-billofoperationsbreakduration,
+        breakdurationunit              TYPE i_mfgboooperationchangestate-breakdurationunit,
+        maximumwaitduration            TYPE i_mfgboooperationchangestate-maximumwaitduration,
+        maximumwaitdurationunit        TYPE i_mfgboooperationchangestate-maximumwaitdurationunit,
+        minimumwaitduration            TYPE i_mfgboooperationchangestate-minimumwaitduration,
+        minimumwaitdurationunit        TYPE i_mfgboooperationchangestate-minimumwaitdurationunit,
+        standardqueueduration          TYPE i_mfgboooperationchangestate-standardqueueduration,
+        standardqueuedurationunit      TYPE i_mfgboooperationchangestate-standardqueuedurationunit,
+        minimumqueueduration           TYPE i_mfgboooperationchangestate-minimumqueueduration,
+        minimumqueuedurationunit       TYPE i_mfgboooperationchangestate-minimumqueuedurationunit,
+        standardmoveduration           TYPE i_mfgboooperationchangestate-standardmoveduration,
+        standardmovedurationunit       TYPE i_mfgboooperationchangestate-standardmovedurationunit,
+        minimummoveduration            TYPE i_mfgboooperationchangestate-minimummoveduration,
+        minimummovedurationunit        TYPE i_mfgboooperationchangestate-minimummovedurationunit,
+        operationsplitisrequired       TYPE i_mfgboooperationchangestate-operationsplitisrequired,
+        maximumnumberofsplits          TYPE i_mfgboooperationchangestate-maximumnumberofsplits,
+        minprocessingdurationpersplit  TYPE i_mfgboooperationchangestate-minprocessingdurationpersplit,
+        minprocessingdurnpersplitunit  TYPE i_mfgboooperationchangestate-minprocessingdurnpersplitunit,
+        operationoverlappingisrequired TYPE i_mfgboooperationchangestate-operationoverlappingisrequired,
+        operationoverlappingispossible TYPE i_mfgboooperationchangestate-operationoverlappingispossible,
+        operationsisalwaysoverlapping  TYPE i_mfgboooperationchangestate-operationsisalwaysoverlapping,
+        operationhasnooverlapping      TYPE i_mfgboooperationchangestate-operationhasnooverlapping,
+        overlapminimumduration         TYPE i_mfgboooperationchangestate-overlapminimumduration,
+        overlapminimumdurationunit     TYPE i_mfgboooperationchangestate-overlapminimumdurationunit,
+        overlapminimumtransferqty      TYPE i_mfgboooperationchangestate-overlapminimumtransferqty,
+        overlapminimumtransferqtyunit  TYPE i_mfgboooperationchangestate-overlapminimumtransferqtyunit,
+        "end change by wang.z 20250207----------------------------------------------------
+      END OF ty_plpo,
 
       "NO.16 入出庫予定伝票明細
-      BEGIN OF ty_RESB,
-        Reservation                        type c length   10 ,
-        ReservationItem                    type c length   4 ,
-        RecordType                         type c length   1 ,
-        MaterialGroup                      type c length   9 ,
-        Material                           type c length   40 ,
-        Plant                              type c length   4 ,
-        ManufacturingOrderCategory         type c length   2 ,
-        ManufacturingOrderType             type c length   4 ,
-        ManufacturingOrder                 type c length   12 ,
-        ManufacturingOrderSequence         type c length   6 ,
-        MfgOrderSequenceCategory           type c length   1 ,
-        ManufacturingOrderOperation        type c length   4 ,
-        ManufacturingOrderOperation_2      type c length   4 ,
-        ProductionPlant                    type c length   4 ,
-        OrderInternalBillOfOperations      type c length   10 ,
-        OrderIntBillOfOperationsItem       type c length   8 ,
-        AssemblyMRPController              type c length   3 ,
-        ProductionSupervisor               type c length   3 ,
-        OrderObjectInternalID              type c length   22 ,
-        MatlCompRequirementDate            type c length   8 ,
-        MatlCompRequirementTime            type c length   6 ,
-        LatestRequirementDate              type c length   8 ,
-        MfgOrderActualReleaseDate          type c length   8 ,
-        ReservationItemCreationCode        type c length   1 ,
-        ReservationIsFinallyIssued         type c length   1 ,
-        MatlCompIsMarkedForDeletion        type c length   1 ,
-        MaterialComponentIsMissing         type c length   1 ,
-        IsBulkMaterialComponent            type c length   1 ,
-        MatlCompIsMarkedForBackflush       type c length   1 ,
-        MatlCompIsTextItem                 type c length   1 ,
-        MaterialPlanningRelevance          type c length   1 ,
-        MatlCompIsConfigurable             type c length   1 ,
-        MaterialComponentIsClassified      type c length   1 ,
-        MaterialCompIsIntraMaterial        type c length   1 ,
-        MaterialIsDirectlyProduced         type c length   1 ,
-        MaterialIsDirectlyProcured         type c length   1 ,
-        LongTextLanguageCode               type c length   1 ,
-        LongTextExists                     type c length   1 ,
-        RequirementType                    type c length   2 ,
-        SalesOrder                         type c length   10 ,
-        SalesOrderItem                     type c length   6 ,
-        WBSElementInternalID               type c length   8 ,
-        WBSElementInternalID_2             type c length   8 ,
-        ProductConfiguration               type c length   18 ,
-        ChangeNumber                       type c length   12 ,
-        MaterialRevisionLevel              type c length   2 ,
-        EffectivityParameterVariant        type c length   12 ,
-        SortField                          type c length   10 ,
-        MaterialComponentSortText          type c length   10 ,
-        ObjectInternalID                   type c length   22 ,
-        BillOfMaterialCategory             type c length   1 ,
-        BillOfMaterialInternalID           type c length   8 ,
-        BillOfMaterialInternalID_2         type c length   8 ,
-        BillOfMaterialVariantUsage         type c length   1 ,
-        BillOfMaterialVariant              type c length   2 ,
-        BillOfMaterial                     type c length   8 ,
-        BOMItem                            type c length   8 ,
-        BillOfMaterialVersion              type c length   4 ,
-        BOMItemInternalChangeCount         type c length   8 ,
-        InheritedBOMItemNode               type c length   8 ,
-        BOMItemCategory                    type c length   1 ,
-        BillOfMaterialItemNumber           type c length   4 ,
-        BillOfMaterialItemNumber_2         type c length   4 ,
-        BOMItemDescription                 type c length   40 ,
-        BOMItemText2                       type c length   40 ,
-        BOMExplosionDateID                 type c length   8 ,
-        PurchasingInfoRecord               type c length   10 ,
-        PurchasingGroup                    type c length   3 ,
-        PurchaseRequisition                type c length   10 ,
-        PurchaseRequisitionItem            type c length   5 ,
-        PurchaseOrder                      type c length   10 ,
-        PurchaseOrderItem                  type c length   5 ,
-        PurchaseOrderScheduleLine          type c length   4 ,
-        Supplier                           type c length   10 ,
-        DeliveryDurationInDays             type c length   3 ,
-        MaterialGoodsReceiptDuration       type c length   3 ,
-        ExternalProcessingPrice            type c length   15 ,
-        NumberOfOperationPriceUnits        type c length   5 ,
-        GoodsMovementIsAllowed             type c length   1 ,
-        StorageLocation                    type c length   4 ,
-        DebitCreditCode                    type c length   1 ,
-        GoodsMovementType                  type c length   3 ,
-        InventorySpecialStockType          type c length   1 ,
-        InventorySpecialStockValnType      type c length   1 ,
-        ConsumptionPosting                 type c length   1 ,
-        SupplyArea                         type c length   10 ,
-        GoodsRecipientName                 type c length   12 ,
-        UnloadingPointName                 type c length   25 ,
-        StockSegment                       type c length   40 ,
-        RequirementSegment                 type c length   40 ,
-        Batch                              type c length   10 ,
-        BatchEntryDeterminationCode        type c length   1 ,
-        BatchSplitType                     type c length   1 ,
-        BatchMasterReservationItem         type c length   4 ,
-        BatchClassification                type c length   18 ,
-        MaterialStaging                    type c length   1 ,
-        Warehouse                          type c length   3 ,
-        StorageType                        type c length   3 ,
-        StorageBin                         type c length   10 ,
-        MaterialCompIsCostRelevant         type c length   1 ,
-        BusinessArea                       type c length   4 ,
-        CompanyCode                        type c length   4 ,
-        GLAccount                          type c length   10 ,
-        FunctionalArea                     type c length   16 ,
-        ControllingArea                    type c length   4 ,
-        AccountAssignmentCategory          type c length   1 ,
-        CommitmentItem                     type c length   14 ,
-        CommitmentItemShortID              type c length   14 ,
-        FundsCenter                        type c length   16 ,
-        MaterialCompIsVariableSized        type c length   1 ,
-        NumberOfVariableSizeComponents     type c length   13 ,
-        VariableSizeItemUnit               type c length   3 ,
-        VariableSizeItemQuantity           type c length   13 ,
-        VariableSizeComponentUnit          type c length   3 ,
-        VariableSizeComponentQuantity      type c length   13 ,
-        VariableSizeDimensionUnit          type c length   3 ,
-        VariableSizeDimension1             type c length   13 ,
-        VariableSizeDimension2             type c length   13 ,
-        VariableSizeDimension3             type c length   13 ,
-        FormulaKey                         type c length   2 ,
-        MaterialCompIsAlternativeItem      type c length   1 ,
-        AlternativeItemGroup               type c length   2 ,
-        AlternativeItemStrategy            type c length   1 ,
-        AlternativeItemPriority            type c length   2 ,
-        UsageProbabilityPercent            type c length   3 ,
-        AlternativeMstrReservationItem     type c length   4 ,
-        MaterialComponentIsPhantomItem     type c length   1 ,
-        OrderPathValue                     type c length   2 ,
-        OrderLevelValue                    type c length   2 ,
-        Assembly                           type c length   40 ,
-        AssemblyOrderPathValue             type c length   2 ,
-        AssemblyOrderLevelValue            type c length   2 ,
-        DiscontinuationGroup               type c length   2 ,
-        MatlCompDiscontinuationType        type c length   1 ,
-        MatlCompIsFollowUpMaterial         type c length   1 ,
-        FollowUpGroup                      type c length   2 ,
-        FollowUpMaterial                   type c length   40 ,
-        FollowUpMaterialIsNotActive        type c length   1 ,
-        FollowUpMaterialIsActive           type c length   1 ,
-        DiscontinuationMasterResvnItem     type c length   4 ,
-        MaterialProvisionType              type c length   1 ,
-        MatlComponentSparePartType         type c length   1 ,
-        LeadTimeOffset                     type c length   3 ,
-        OperationLeadTimeOffsetUnit        type c length   3 ,
-        OperationLeadTimeOffset            type c length   3 ,
-        QuantityIsFixed                    type c length   1 ,
-        IsNetScrap                         type c length   1 ,
-        ComponentScrapInPercent            type c length   5 ,
-        OperationScrapInPercent            type c length   5 ,
-        MaterialQtyToBaseQtyNmrtr          type c length   5 ,
-        MaterialQtyToBaseQtyDnmntr         type c length   5 ,
-        BaseUnit                           type c length   3 ,
-        RequiredQuantity                   type c length   13 ,
-        WithdrawnQuantity                  type c length   13 ,
-        ConfirmedAvailableQuantity         type c length   15 ,
-        MaterialCompOriginalQuantity       type c length   13 ,
-        EntryUnit                          type c length   3 ,
-        GoodsMovementEntryQty              type c length   13 ,
-        Currency                           type c length   5 ,
-        WithdrawnQuantityAmount            type c length   13 ,
-        CriticalComponentType              type c length   1 ,
-        CriticalComponentLevel             type c length   2 ,
+      BEGIN OF ty_resb,
+        reservation                    TYPE c LENGTH   10,
+        reservationitem                TYPE c LENGTH   4,
+        recordtype                     TYPE c LENGTH   1,
+        materialgroup                  TYPE c LENGTH   9,
+        material                       TYPE c LENGTH   40,
+        plant                          TYPE c LENGTH   4,
+        manufacturingordercategory     TYPE c LENGTH   2,
+        manufacturingordertype         TYPE c LENGTH   4,
+        manufacturingorder             TYPE c LENGTH   12,
+        manufacturingordersequence     TYPE c LENGTH   6,
+        mfgordersequencecategory       TYPE c LENGTH   1,
+        manufacturingorderoperation    TYPE c LENGTH   4,
+        manufacturingorderoperation_2  TYPE c LENGTH   4,
+        productionplant                TYPE c LENGTH   4,
+        orderinternalbillofoperations  TYPE c LENGTH   10,
+        orderintbillofoperationsitem   TYPE c LENGTH   8,
+        assemblymrpcontroller          TYPE c LENGTH   3,
+        productionsupervisor           TYPE c LENGTH   3,
+        orderobjectinternalid          TYPE c LENGTH   22,
+        matlcomprequirementdate        TYPE c LENGTH   8,
+        matlcomprequirementtime        TYPE c LENGTH   6,
+        latestrequirementdate          TYPE c LENGTH   8,
+        mfgorderactualreleasedate      TYPE c LENGTH   8,
+        reservationitemcreationcode    TYPE c LENGTH   1,
+        reservationisfinallyissued     TYPE c LENGTH   1,
+        matlcompismarkedfordeletion    TYPE c LENGTH   1,
+        materialcomponentismissing     TYPE c LENGTH   1,
+        isbulkmaterialcomponent        TYPE c LENGTH   1,
+        matlcompismarkedforbackflush   TYPE c LENGTH   1,
+        matlcompistextitem             TYPE c LENGTH   1,
+        materialplanningrelevance      TYPE c LENGTH   1,
+        matlcompisconfigurable         TYPE c LENGTH   1,
+        materialcomponentisclassified  TYPE c LENGTH   1,
+        materialcompisintramaterial    TYPE c LENGTH   1,
+        materialisdirectlyproduced     TYPE c LENGTH   1,
+        materialisdirectlyprocured     TYPE c LENGTH   1,
+        longtextlanguagecode           TYPE c LENGTH   1,
+        longtextexists                 TYPE c LENGTH   1,
+        requirementtype                TYPE c LENGTH   2,
+        salesorder                     TYPE c LENGTH   10,
+        salesorderitem                 TYPE c LENGTH   6,
+        wbselementinternalid           TYPE c LENGTH   8,
+        wbselementinternalid_2         TYPE c LENGTH   8,
+        productconfiguration           TYPE c LENGTH   18,
+        changenumber                   TYPE c LENGTH   12,
+        materialrevisionlevel          TYPE c LENGTH   2,
+        effectivityparametervariant    TYPE c LENGTH   12,
+        sortfield                      TYPE c LENGTH   10,
+        materialcomponentsorttext      TYPE c LENGTH   10,
+        objectinternalid               TYPE c LENGTH   22,
+        billofmaterialcategory         TYPE c LENGTH   1,
+        billofmaterialinternalid       TYPE c LENGTH   8,
+        billofmaterialinternalid_2     TYPE c LENGTH   8,
+        billofmaterialvariantusage     TYPE c LENGTH   1,
+        billofmaterialvariant          TYPE c LENGTH   2,
+        billofmaterial                 TYPE c LENGTH   8,
+        bomitem                        TYPE c LENGTH   8,
+        billofmaterialversion          TYPE c LENGTH   4,
+        bomiteminternalchangecount     TYPE c LENGTH   8,
+        inheritedbomitemnode           TYPE c LENGTH   8,
+        bomitemcategory                TYPE c LENGTH   1,
+        billofmaterialitemnumber       TYPE c LENGTH   4,
+        billofmaterialitemnumber_2     TYPE c LENGTH   4,
+        bomitemdescription             TYPE c LENGTH   40,
+        bomitemtext2                   TYPE c LENGTH   40,
+        bomexplosiondateid             TYPE c LENGTH   8,
+        purchasinginforecord           TYPE c LENGTH   10,
+        purchasinggroup                TYPE c LENGTH   3,
+        purchaserequisition            TYPE c LENGTH   10,
+        purchaserequisitionitem        TYPE c LENGTH   5,
+        purchaseorder                  TYPE c LENGTH   10,
+        purchaseorderitem              TYPE c LENGTH   5,
+        purchaseorderscheduleline      TYPE c LENGTH   4,
+        supplier                       TYPE c LENGTH   10,
+        deliverydurationindays         TYPE c LENGTH   3,
+        materialgoodsreceiptduration   TYPE c LENGTH   3,
+        externalprocessingprice        TYPE c LENGTH   15,
+        numberofoperationpriceunits    TYPE c LENGTH   5,
+        goodsmovementisallowed         TYPE c LENGTH   1,
+        storagelocation                TYPE c LENGTH   4,
+        debitcreditcode                TYPE c LENGTH   1,
+        goodsmovementtype              TYPE c LENGTH   3,
+        inventoryspecialstocktype      TYPE c LENGTH   1,
+        inventoryspecialstockvalntype  TYPE c LENGTH   1,
+        consumptionposting             TYPE c LENGTH   1,
+        supplyarea                     TYPE c LENGTH   10,
+        goodsrecipientname             TYPE c LENGTH   12,
+        unloadingpointname             TYPE c LENGTH   25,
+        stocksegment                   TYPE c LENGTH   40,
+        requirementsegment             TYPE c LENGTH   40,
+        batch                          TYPE c LENGTH   10,
+        batchentrydeterminationcode    TYPE c LENGTH   1,
+        batchsplittype                 TYPE c LENGTH   1,
+        batchmasterreservationitem     TYPE c LENGTH   4,
+        batchclassification            TYPE c LENGTH   18,
+        materialstaging                TYPE c LENGTH   1,
+        warehouse                      TYPE c LENGTH   3,
+        storagetype                    TYPE c LENGTH   3,
+        storagebin                     TYPE c LENGTH   10,
+        materialcompiscostrelevant     TYPE c LENGTH   1,
+        businessarea                   TYPE c LENGTH   4,
+        companycode                    TYPE c LENGTH   4,
+        glaccount                      TYPE c LENGTH   10,
+        functionalarea                 TYPE c LENGTH   16,
+        controllingarea                TYPE c LENGTH   4,
+        accountassignmentcategory      TYPE c LENGTH   1,
+        commitmentitem                 TYPE c LENGTH   14,
+        commitmentitemshortid          TYPE c LENGTH   14,
+        fundscenter                    TYPE c LENGTH   16,
+        materialcompisvariablesized    TYPE c LENGTH   1,
+        numberofvariablesizecomponents TYPE c LENGTH   13,
+        variablesizeitemunit           TYPE c LENGTH   3,
+        variablesizeitemquantity       TYPE c LENGTH   13,
+        variablesizecomponentunit      TYPE c LENGTH   3,
+        variablesizecomponentquantity  TYPE c LENGTH   13,
+        variablesizedimensionunit      TYPE c LENGTH   3,
+        variablesizedimension1         TYPE c LENGTH   13,
+        variablesizedimension2         TYPE c LENGTH   13,
+        variablesizedimension3         TYPE c LENGTH   13,
+        formulakey                     TYPE c LENGTH   2,
+        materialcompisalternativeitem  TYPE c LENGTH   1,
+        alternativeitemgroup           TYPE c LENGTH   2,
+        alternativeitemstrategy        TYPE c LENGTH   1,
+        alternativeitempriority        TYPE c LENGTH   2,
+        usageprobabilitypercent        TYPE c LENGTH   3,
+        alternativemstrreservationitem TYPE c LENGTH   4,
+        materialcomponentisphantomitem TYPE c LENGTH   1,
+        orderpathvalue                 TYPE c LENGTH   2,
+        orderlevelvalue                TYPE c LENGTH   2,
+        assembly                       TYPE c LENGTH   40,
+        assemblyorderpathvalue         TYPE c LENGTH   2,
+        assemblyorderlevelvalue        TYPE c LENGTH   2,
+        discontinuationgroup           TYPE c LENGTH   2,
+        matlcompdiscontinuationtype    TYPE c LENGTH   1,
+        matlcompisfollowupmaterial     TYPE c LENGTH   1,
+        followupgroup                  TYPE c LENGTH   2,
+        followupmaterial               TYPE c LENGTH   40,
+        followupmaterialisnotactive    TYPE c LENGTH   1,
+        followupmaterialisactive       TYPE c LENGTH   1,
+        discontinuationmasterresvnitem TYPE c LENGTH   4,
+        materialprovisiontype          TYPE c LENGTH   1,
+        matlcomponentspareparttype     TYPE c LENGTH   1,
+        leadtimeoffset                 TYPE c LENGTH   3,
+        operationleadtimeoffsetunit    TYPE c LENGTH   3,
+        operationleadtimeoffset        TYPE c LENGTH   3,
+        quantityisfixed                TYPE c LENGTH   1,
+        isnetscrap                     TYPE c LENGTH   1,
+        componentscrapinpercent        TYPE c LENGTH   5,
+        operationscrapinpercent        TYPE c LENGTH   5,
+        materialqtytobaseqtynmrtr      TYPE c LENGTH   5,
+        materialqtytobaseqtydnmntr     TYPE c LENGTH   5,
+        baseunit                       TYPE c LENGTH   3,
+        requiredquantity               TYPE c LENGTH   13,
+        withdrawnquantity              TYPE c LENGTH   13,
+        confirmedavailablequantity     TYPE c LENGTH   15,
+        materialcomporiginalquantity   TYPE c LENGTH   13,
+        entryunit                      TYPE c LENGTH   3,
+        goodsmovemententryqty          TYPE c LENGTH   13,
+        currency                       TYPE c LENGTH   5,
+        withdrawnquantityamount        TYPE c LENGTH   13,
+        criticalcomponenttype          TYPE c LENGTH   1,
+        criticalcomponentlevel         TYPE c LENGTH   2,
 
         "add by wang.z 20250207
 
-        PlannedOrder type I_ManufacturingOrderItem-PlannedOrder,
+        plannedorder                   TYPE i_manufacturingorderitem-plannedorder,
 
         "end add by wang.z 20250207
 
-      END OF TY_RESB,
+      END OF ty_resb,
 
       "N0.17 指図内作業.
-      begin of ty_afvc,
-        MfgOrderInternalID                 type c length 10  ,
-        OrderOperationInternalID           type c length 8   ,
-        ManufacturingOrder                 type c length 12  ,
-        ManufacturingOrderSequence         type c length 6   ,
-        ManufacturingOrderOperation        type c length 4   ,
-        ManufacturingOrderOperation_2      type c length 4   ,
-        ManufacturingOrderSubOperation     type c length 4   ,
-        ManufacturingOrdSubOperation_2     type c length 4   ,
-        MfgOrderOperationOrSubOp           type c length 4   ,
-        MfgOrderOperationOrSubOp_2         type c length 4   ,
-        MfgOrderOperationIsPhase           type c length 1   ,
-        OrderIntBillOfOpItemOfPhase        type c length 8   ,
-        MfgOrderPhaseSuperiorOperation     type c length 4   ,
-        SuperiorOperation_2                type c length 4   ,
-        ManufacturingOrderCategory         type c length 2   ,
-        ManufacturingOrderType             type c length 4   ,
-        ProductionSupervisor               type c length 3   ,
-        MRPController                      type c length 3   ,
-        ResponsiblePlannerGroup            type c length 3   ,
-        ProductConfiguration               type c length 18  ,
-        InspectionLot                      type c length 12  ,
-        ManufacturingOrderImportance       type c length 1   ,
-        MfgOrderOperationText              type c length 40  ,
-        OperationStandardTextCode          type c length 7   ,
-        OperationHasLongText               type c length 1   ,
-        Language                           type c length 1   ,
-        OperationIsToBeDeleted             type c length 1   ,
-        NumberOfCapacities                 type c length 3   ,
-        NumberOfConfirmationSlips          type c length 3   ,
-        OperationImportance                type c length 1   ,
-        SuperiorOperationInternalID        type c length 8   ,
-        Plant                              type c length 4   ,
-        WorkCenterInternalID               type c length 8   ,
-        WorkCenterTypeCode                 type c length 1   ,
+      BEGIN OF ty_afvc,
+        mfgorderinternalid             TYPE c LENGTH 10,
+        orderoperationinternalid       TYPE c LENGTH 8,
+        manufacturingorder             TYPE c LENGTH 12,
+        manufacturingordersequence     TYPE c LENGTH 6,
+        manufacturingorderoperation    TYPE c LENGTH 4,
+        manufacturingorderoperation_2  TYPE c LENGTH 4,
+        manufacturingordersuboperation TYPE c LENGTH 4,
+        manufacturingordsuboperation_2 TYPE c LENGTH 4,
+        mfgorderoperationorsubop       TYPE c LENGTH 4,
+        mfgorderoperationorsubop_2     TYPE c LENGTH 4,
+        mfgorderoperationisphase       TYPE c LENGTH 1,
+        orderintbillofopitemofphase    TYPE c LENGTH 8,
+        mfgorderphasesuperioroperation TYPE c LENGTH 4,
+        superioroperation_2            TYPE c LENGTH 4,
+        manufacturingordercategory     TYPE c LENGTH 2,
+        manufacturingordertype         TYPE c LENGTH 4,
+        productionsupervisor           TYPE c LENGTH 3,
+        mrpcontroller                  TYPE c LENGTH 3,
+        responsibleplannergroup        TYPE c LENGTH 3,
+        productconfiguration           TYPE c LENGTH 18,
+        inspectionlot                  TYPE c LENGTH 12,
+        manufacturingorderimportance   TYPE c LENGTH 1,
+        mfgorderoperationtext          TYPE c LENGTH 40,
+        operationstandardtextcode      TYPE c LENGTH 7,
+        operationhaslongtext           TYPE c LENGTH 1,
+        language                       TYPE c LENGTH 1,
+        operationistobedeleted         TYPE c LENGTH 1,
+        numberofcapacities             TYPE c LENGTH 3,
+        numberofconfirmationslips      TYPE c LENGTH 3,
+        operationimportance            TYPE c LENGTH 1,
+        superioroperationinternalid    TYPE c LENGTH 8,
+        plant                          TYPE c LENGTH 4,
+        workcenterinternalid           TYPE c LENGTH 8,
+        workcentertypecode             TYPE c LENGTH 1,
 
-        WorkCenterTypeCode_2               type c length 2   ,
-        OperationControlProfile            type c length 4   ,
-        ControlRecipeDestination           type c length 2   ,
-        OperationConfirmation              type c length 10  ,
-        NumberOfOperationConfirmations     type c length 8   ,
-        FactoryCalendar                    type c length 2   ,
-        CapacityRequirement                type c length 12  ,
-        CapacityRequirementItem            type c length 8   ,
-        ChangeNumber                       type c length 12  ,
-        ObjectInternalID                   type c length 22  ,
-        OperationTrackingNumber            type c length 10  ,
-        BillOfOperationsType               type c length 1   ,
-        BillOfOperationsGroup              type c length 8   ,
-        BillOfOperationsVariant            type c length 2   ,
-        BillOfOperationsSequence           type c length 6   ,
-        BOOOperationInternalID             type c length 8   ,
-        BillOfOperationsVersion            type c length 4   ,
-        BillOfMaterialCategory             type c length 1   ,
-        BillOfMaterialInternalID           type c length 8   ,
-        BillOfMaterialInternalID_2         type c length 8   ,
-        BillOfMaterialItemNodeNumber       type c length 8   ,
-        BOMItemNodeCount                   type c length 8   ,
-        ExtProcgOperationHasSubcontrg      type c length 1   ,
-        PurchasingOrganization             type c length 4   ,
-        PurchasingGroup                    type c length 3   ,
-        PurchaseRequisition                type c length 10  ,
-        PurchaseRequisitionItem            type c length 5   ,
-        PurchaseOrder                      type c length 10  ,
-        PurchaseOrderItem                  type c length 5   ,
-        PurchasingInfoRecord               type c length 10  ,
-        PurgInfoRecdDataIsFixed            type c length 1  ,
-        PurchasingInfoRecordCategory       type c length 1  ,
-        Supplier                           type c length 10 ,
-        GoodsRecipientName                 type c length 12 ,
-        UnloadingPointName                 type c length 25 ,
-        MaterialGroup                      type c length 9  ,
-        OpExternalProcessingCurrency       type c length 5  ,
-        OpExternalProcessingPrice          type c length 11 ,
-        NumberOfOperationPriceUnits        type c length 5  ,
-        CompanyCode                        type c length 4  ,
-        BusinessArea                       type c length 4  ,
-        ControllingArea                    type c length 4  ,
+        workcentertypecode_2           TYPE c LENGTH 2,
+        operationcontrolprofile        TYPE c LENGTH 4,
+        controlrecipedestination       TYPE c LENGTH 2,
+        operationconfirmation          TYPE c LENGTH 10,
+        numberofoperationconfirmations TYPE c LENGTH 8,
+        factorycalendar                TYPE c LENGTH 2,
+        capacityrequirement            TYPE c LENGTH 12,
+        capacityrequirementitem        TYPE c LENGTH 8,
+        changenumber                   TYPE c LENGTH 12,
+        objectinternalid               TYPE c LENGTH 22,
+        operationtrackingnumber        TYPE c LENGTH 10,
+        billofoperationstype           TYPE c LENGTH 1,
+        billofoperationsgroup          TYPE c LENGTH 8,
+        billofoperationsvariant        TYPE c LENGTH 2,
+        billofoperationssequence       TYPE c LENGTH 6,
+        boooperationinternalid         TYPE c LENGTH 8,
+        billofoperationsversion        TYPE c LENGTH 4,
+        billofmaterialcategory         TYPE c LENGTH 1,
+        billofmaterialinternalid       TYPE c LENGTH 8,
+        billofmaterialinternalid_2     TYPE c LENGTH 8,
+        billofmaterialitemnodenumber   TYPE c LENGTH 8,
+        bomitemnodecount               TYPE c LENGTH 8,
+        extprocgoperationhassubcontrg  TYPE c LENGTH 1,
+        purchasingorganization         TYPE c LENGTH 4,
+        purchasinggroup                TYPE c LENGTH 3,
+        purchaserequisition            TYPE c LENGTH 10,
+        purchaserequisitionitem        TYPE c LENGTH 5,
+        purchaseorder                  TYPE c LENGTH 10,
+        purchaseorderitem              TYPE c LENGTH 5,
+        purchasinginforecord           TYPE c LENGTH 10,
+        purginforecddataisfixed        TYPE c LENGTH 1,
+        purchasinginforecordcategory   TYPE c LENGTH 1,
+        supplier                       TYPE c LENGTH 10,
+        goodsrecipientname             TYPE c LENGTH 12,
+        unloadingpointname             TYPE c LENGTH 25,
+        materialgroup                  TYPE c LENGTH 9,
+        opexternalprocessingcurrency   TYPE c LENGTH 5,
+        opexternalprocessingprice      TYPE c LENGTH 11,
+        numberofoperationpriceunits    TYPE c LENGTH 5,
+        companycode                    TYPE c LENGTH 4,
+        businessarea                   TYPE c LENGTH 4,
+        controllingarea                TYPE c LENGTH 4,
 
-        ProfitCenter                       type c length 10 ,
-        RequestingCostCenter               type c length 10 ,
-        CostElement                        type c length 10 ,
-        CostingVariant                     type c length 4  ,
-        CostingSheet                       type c length 6 ,
-        CostEstimate                       type c length 12,
-        ControllingObjectCurrency          type c length 5 ,
-        ControllingObjectClass             type c length 2 ,
-        FunctionalArea                     type c length 16,
-        TaxJurisdiction                    type c length 15,
-        EmployeeWageType                   type c length 4 ,
-        EmployeeWageGroup                  type c length 3 ,
-        EmployeeSuitability                type c length 2 ,
-        NumberOfTimeTickets                type c length 3 ,
-        Personnel                          type c length 8 ,
-        NumberOfEmployees                  type c length 5 ,
-        OperationSetupGroupCategory        type c length 10,
-        OperationSetupGroup                type c length 10,
-        OperationSetupType                 type c length 2 ,
-        OperationOverlappingIsRequired     type c length 1 ,
-        OperationOverlappingIsPossible     type c length 1 ,
-        OperationsIsAlwaysOverlapping      type c length 1 ,
-        OperationSplitIsRequired           type c length 1 ,
-        MaximumNumberOfSplits              type c length 3 ,
-        LeadTimeReductionStrategy          type c length 2 ,
-        OpSchedldReductionLevel            type c length 1 ,
-        OpErlstSchedldExecStrtDte          type c length 8 ,
-        OpErlstSchedldExecStrtTme          type c length 6 ,
-        OpErlstSchedldProcgStrtDte         type c length 8 ,
-        OpErlstSchedldProcgStrtTme         type c length 6 ,
-        OpErlstSchedldTrdwnStrtDte         type c length 8 ,
-        OpErlstSchedldTrdwnStrtTme         type c length 6 ,
-        OpErlstSchedldExecEndDte           type c length 8 ,
-        OpErlstSchedldExecEndTme           type c length 6 ,
-        OpLtstSchedldExecStrtDte           type c length 8 ,
-        OpLtstSchedldExecStrtTme           type c length 6 ,
-        OpLtstSchedldProcgStrtDte          type c length 8 ,
-        OpLtstSchedldProcgStrtTme          type c length 6 ,
-        OpLtstSchedldTrdwnStrtDte          type c length 8 ,
+        profitcenter                   TYPE c LENGTH 10,
+        requestingcostcenter           TYPE c LENGTH 10,
+        costelement                    TYPE c LENGTH 10,
+        costingvariant                 TYPE c LENGTH 4,
+        costingsheet                   TYPE c LENGTH 6,
+        costestimate                   TYPE c LENGTH 12,
+        controllingobjectcurrency      TYPE c LENGTH 5,
+        controllingobjectclass         TYPE c LENGTH 2,
+        functionalarea                 TYPE c LENGTH 16,
+        taxjurisdiction                TYPE c LENGTH 15,
+        employeewagetype               TYPE c LENGTH 4,
+        employeewagegroup              TYPE c LENGTH 3,
+        employeesuitability            TYPE c LENGTH 2,
+        numberoftimetickets            TYPE c LENGTH 3,
+        personnel                      TYPE c LENGTH 8,
+        numberofemployees              TYPE c LENGTH 5,
+        operationsetupgroupcategory    TYPE c LENGTH 10,
+        operationsetupgroup            TYPE c LENGTH 10,
+        operationsetuptype             TYPE c LENGTH 2,
+        operationoverlappingisrequired TYPE c LENGTH 1,
+        operationoverlappingispossible TYPE c LENGTH 1,
+        operationsisalwaysoverlapping  TYPE c LENGTH 1,
+        operationsplitisrequired       TYPE c LENGTH 1,
+        maximumnumberofsplits          TYPE c LENGTH 3,
+        leadtimereductionstrategy      TYPE c LENGTH 2,
+        opschedldreductionlevel        TYPE c LENGTH 1,
+        operlstschedldexecstrtdte      TYPE c LENGTH 8,
+        operlstschedldexecstrttme      TYPE c LENGTH 6,
+        operlstschedldprocgstrtdte     TYPE c LENGTH 8,
+        operlstschedldprocgstrttme     TYPE c LENGTH 6,
+        operlstschedldtrdwnstrtdte     TYPE c LENGTH 8,
+        operlstschedldtrdwnstrttme     TYPE c LENGTH 6,
+        operlstschedldexecenddte       TYPE c LENGTH 8,
+        operlstschedldexecendtme       TYPE c LENGTH 6,
+        opltstschedldexecstrtdte       TYPE c LENGTH 8,
+        opltstschedldexecstrttme       TYPE c LENGTH 6,
+        opltstschedldprocgstrtdte      TYPE c LENGTH 8,
+        opltstschedldprocgstrttme      TYPE c LENGTH 6,
+        opltstschedldtrdwnstrtdte      TYPE c LENGTH 8,
 
-        OpLtstSchedldTrdwnStrtTme         type c length 6 ,
-        OpLtstSchedldExecEndDte           type c length 8 ,
-        OpLtstSchedldExecEndTme           type c length 6 ,
-        SchedldFcstdEarliestStartDate     type c length 8 ,
-        SchedldFcstdEarliestStartTime     type c length 6 ,
-        SchedldFcstdEarliestEndDate       type c length 8 ,
-        SchedldFcstdEarliestEndTime       type c length 6 ,
-        LatestSchedldFcstdStartDate       type c length 8 ,
-        SchedldFcstdLatestStartTime       type c length 6 ,
-        LatestSchedldFcstdEndDate         type c length 8 ,
-        SchedldFcstdLatestEndTime         type c length 6 ,
-        OperationConfirmedStartDate       type c length 8 ,
-        OperationConfirmedEndDate         type c length 8 ,
-        OpActualExecutionStartDate        type c length 8 ,
-        OpActualExecutionStartTime        type c length 6 ,
-        OpActualSetupEndDate              type c length 8 ,
-        OpActualSetupEndTime              type c length 6 ,
-        OpActualProcessingStartDate       type c length 8 ,
-        OpActualProcessingStartTime       type c length 6 ,
-        OpActualProcessingEndDate         type c length 8 ,
-        OpActualProcessingEndTime         type c length 6 ,
-        OpActualTeardownStartDate         type c length 8 ,
-        OpActualTeardownStartTme          type c length 6 ,
-        OpActualExecutionEndDate          type c length 8 ,
-        OpActualExecutionEndTime          type c length 6 ,
-        ActualForecastEndDate             type c length 8 ,
-        ActualForecastEndTime             type c length 6 ,
-        EarliestScheduledWaitStartDate    type c length 8 ,
-        EarliestScheduledWaitStartTime    type c length 6 ,
-        EarliestScheduledWaitEndDate      type c length 8 ,
-        EarliestScheduledWaitEndTime      type c length 6 ,
-        LatestScheduledWaitStartDate      type c length 8 ,
-        LatestScheduledWaitStartTime      type c length 6 ,
-        LatestScheduledWaitEndDate        type c length 8 ,
-        LatestScheduledWaitEndTime        type c length 6 ,
-        BreakDurationUnit                 type c length 3 ,
-        PlannedBreakDuration              type c length 9 ,
-        ConfirmedBreakDuration            type c length 9 ,
-        OverlapMinimumDurationUnit        type c length 3 ,
-        OverlapMinimumDuration            type c length 9 ,
-        MaximumWaitDurationUnit           type c length 3 ,
-        MaximumWaitDuration               type c length 9 ,
-        MinimumWaitDurationUnit           type c length 3 ,
-        MinimumWaitDuration               type c length 9 ,
-        StandardMoveDurationUnit          type c length 3 ,
-        StandardMoveDuration              type c length 9 ,
-        StandardQueueDurationUnit         type c length 3 ,
+        opltstschedldtrdwnstrttme      TYPE c LENGTH 6,
+        opltstschedldexecenddte        TYPE c LENGTH 8,
+        opltstschedldexecendtme        TYPE c LENGTH 6,
+        schedldfcstdearlieststartdate  TYPE c LENGTH 8,
+        schedldfcstdearlieststarttime  TYPE c LENGTH 6,
+        schedldfcstdearliestenddate    TYPE c LENGTH 8,
+        schedldfcstdearliestendtime    TYPE c LENGTH 6,
+        latestschedldfcstdstartdate    TYPE c LENGTH 8,
+        schedldfcstdlateststarttime    TYPE c LENGTH 6,
+        latestschedldfcstdenddate      TYPE c LENGTH 8,
+        schedldfcstdlatestendtime      TYPE c LENGTH 6,
+        operationconfirmedstartdate    TYPE c LENGTH 8,
+        operationconfirmedenddate      TYPE c LENGTH 8,
+        opactualexecutionstartdate     TYPE c LENGTH 8,
+        opactualexecutionstarttime     TYPE c LENGTH 6,
+        opactualsetupenddate           TYPE c LENGTH 8,
+        opactualsetupendtime           TYPE c LENGTH 6,
+        opactualprocessingstartdate    TYPE c LENGTH 8,
+        opactualprocessingstarttime    TYPE c LENGTH 6,
+        opactualprocessingenddate      TYPE c LENGTH 8,
+        opactualprocessingendtime      TYPE c LENGTH 6,
+        opactualteardownstartdate      TYPE c LENGTH 8,
+        opactualteardownstarttme       TYPE c LENGTH 6,
+        opactualexecutionenddate       TYPE c LENGTH 8,
+        opactualexecutionendtime       TYPE c LENGTH 6,
+        actualforecastenddate          TYPE c LENGTH 8,
+        actualforecastendtime          TYPE c LENGTH 6,
+        earliestscheduledwaitstartdate TYPE c LENGTH 8,
+        earliestscheduledwaitstarttime TYPE c LENGTH 6,
+        earliestscheduledwaitenddate   TYPE c LENGTH 8,
+        earliestscheduledwaitendtime   TYPE c LENGTH 6,
+        latestscheduledwaitstartdate   TYPE c LENGTH 8,
+        latestscheduledwaitstarttime   TYPE c LENGTH 6,
+        latestscheduledwaitenddate     TYPE c LENGTH 8,
+        latestscheduledwaitendtime     TYPE c LENGTH 6,
+        breakdurationunit              TYPE c LENGTH 3,
+        plannedbreakduration           TYPE c LENGTH 9,
+        confirmedbreakduration         TYPE c LENGTH 9,
+        overlapminimumdurationunit     TYPE c LENGTH 3,
+        overlapminimumduration         TYPE c LENGTH 9,
+        maximumwaitdurationunit        TYPE c LENGTH 3,
+        maximumwaitduration            TYPE c LENGTH 9,
+        minimumwaitdurationunit        TYPE c LENGTH 3,
+        minimumwaitduration            TYPE c LENGTH 9,
+        standardmovedurationunit       TYPE c LENGTH 3,
+        standardmoveduration           TYPE c LENGTH 9,
+        standardqueuedurationunit      TYPE c LENGTH 3,
 
-        StandardQueueDuration              type c length 9 ,
-        MinimumQueueDurationUnit           type c length 3 ,
-        MinimumQueueDuration               type c length 9 ,
-        MinimumMoveDurationUnit            type c length 3 ,
-        MinimumMoveDuration                type c length 9 ,
-        OperationStandardDuration          type c length 5 ,
-        OperationStandardDurationUnit      type c length 3 ,
-        MinimumDuration                    type c length 5 ,
-        MinimumDurationUnit                type c length 3 ,
-        MinimumProcessingDuration          type c length 9 ,
-        MinimumProcessingDurationUnit      type c length 3 ,
-        ScheduledMoveDuration              type c length 16 ,
-        ScheduledMoveDurationUnit          type c length 3 ,
-        ScheduledQueueDuration             type c length 16 ,
-        ScheduledQueueDurationUnit         type c length 3 ,
-        ScheduledWaitDuration              type c length 16 ,
-        ScheduledWaitDurationUnit          type c length 3 ,
-        PlannedDeliveryDuration            type c length 3 ,
-        OpPlannedSetupDurn                 type c length 16 ,
-        OpPlannedSetupDurnUnit             type c length 3 ,
-        OpPlannedProcessingDurn            type c length 16 ,
-        OpPlannedProcessingDurnUnit        type c length 3 ,
-        OpPlannedTeardownDurn              type c length 16 ,
-        OpPlannedTeardownDurnUnit          type c length 3 ,
-        ActualForecastDuration             type c length 5 ,
-        ActualForecastDurationUnit         type c length 3 ,
-        ForecastProcessingDuration         type c length 16 ,
-        ForecastProcessingDurationUnit     type c length 3 ,
-        StartDateOffsetReferenceCode       type c length 2 ,
-        StartDateOffsetDurationUnit        type c length 3  ,
-        StartDateOffsetDuration            type c length 5  ,
-        EndDateOffsetReferenceCode         type c length 2  ,
-        EndDateOffsetDurationUnit          type c length 3  ,
-        EndDateOffsetDuration              type c length 5  ,
-        StandardWorkFormulaParamGroup      type c length 4  ,
-        OperationUnit                      type c length 3  ,
-        OpQtyToBaseQtyDnmntr               type c length 5  ,
-        OpQtyToBaseQtyNmrtr                type c length 5  ,
-        OperationScrapPercent              type c length 5  ,
-        OperationReferenceQuantity         type c length 13 ,
-        OpPlannedTotalQuantity             type c length 13 ,
-        OpPlannedScrapQuantity             type c length 13 ,
-        OpPlannedYieldQuantity             type c length 14 ,
-        OpTotalConfirmedYieldQty           type c length 13 ,
+        standardqueueduration          TYPE c LENGTH 9,
+        minimumqueuedurationunit       TYPE c LENGTH 3,
+        minimumqueueduration           TYPE c LENGTH 9,
+        minimummovedurationunit        TYPE c LENGTH 3,
+        minimummoveduration            TYPE c LENGTH 9,
+        operationstandardduration      TYPE c LENGTH 5,
+        operationstandarddurationunit  TYPE c LENGTH 3,
+        minimumduration                TYPE c LENGTH 5,
+        minimumdurationunit            TYPE c LENGTH 3,
+        minimumprocessingduration      TYPE c LENGTH 9,
+        minimumprocessingdurationunit  TYPE c LENGTH 3,
+        scheduledmoveduration          TYPE c LENGTH 16,
+        scheduledmovedurationunit      TYPE c LENGTH 3,
+        scheduledqueueduration         TYPE c LENGTH 16,
+        scheduledqueuedurationunit     TYPE c LENGTH 3,
+        scheduledwaitduration          TYPE c LENGTH 16,
+        scheduledwaitdurationunit      TYPE c LENGTH 3,
+        planneddeliveryduration        TYPE c LENGTH 3,
+        opplannedsetupdurn             TYPE c LENGTH 16,
+        opplannedsetupdurnunit         TYPE c LENGTH 3,
+        opplannedprocessingdurn        TYPE c LENGTH 16,
+        opplannedprocessingdurnunit    TYPE c LENGTH 3,
+        opplannedteardowndurn          TYPE c LENGTH 16,
+        opplannedteardowndurnunit      TYPE c LENGTH 3,
+        actualforecastduration         TYPE c LENGTH 5,
+        actualforecastdurationunit     TYPE c LENGTH 3,
+        forecastprocessingduration     TYPE c LENGTH 16,
+        forecastprocessingdurationunit TYPE c LENGTH 3,
+        startdateoffsetreferencecode   TYPE c LENGTH 2,
+        startdateoffsetdurationunit    TYPE c LENGTH 3,
+        startdateoffsetduration        TYPE c LENGTH 5,
+        enddateoffsetreferencecode     TYPE c LENGTH 2,
+        enddateoffsetdurationunit      TYPE c LENGTH 3,
+        enddateoffsetduration          TYPE c LENGTH 5,
+        standardworkformulaparamgroup  TYPE c LENGTH 4,
+        operationunit                  TYPE c LENGTH 3,
+        opqtytobaseqtydnmntr           TYPE c LENGTH 5,
+        opqtytobaseqtynmrtr            TYPE c LENGTH 5,
+        operationscrappercent          TYPE c LENGTH 5,
+        operationreferencequantity     TYPE c LENGTH 13,
+        opplannedtotalquantity         TYPE c LENGTH 13,
+        opplannedscrapquantity         TYPE c LENGTH 13,
+        opplannedyieldquantity         TYPE c LENGTH 14,
+        optotalconfirmedyieldqty       TYPE c LENGTH 13,
 
-        OpTotalConfirmedScrapQty           type c length 13 ,
-        OperationConfirmedReworkQty        type c length 13 ,
-        ProductionUnit                     type c length 3  ,
-        OpTotConfdYieldQtyInOrdQtyUnit     type c length 13 ,
-        OpWorkQuantityUnit1                type c length 3  ,
-        OpConfirmedWorkQuantity1           type c length 13 ,
-        NoFurtherOpWorkQuantity1IsExpd     type c length 1  ,
-        OpWorkQuantityUnit2                type c length 3  ,
-        OpConfirmedWorkQuantity2           type c length 13 ,
-        NoFurtherOpWorkQuantity2IsExpd     type c length 1  ,
-        OpWorkQuantityUnit3                type c length 3  ,
-        OpConfirmedWorkQuantity3           type c length 13 ,
-        NoFurtherOpWorkQuantity3IsExpd     type c length 1  ,
-        OpWorkQuantityUnit4                type c length 3  ,
-        OpConfirmedWorkQuantity4           type c length 13 ,
-        NoFurtherOpWorkQuantity4IsExpd     type c length 1  ,
-        OpWorkQuantityUnit5                type c length 3  ,
-        OpConfirmedWorkQuantity5           type c length 13 ,
-        NoFurtherOpWorkQuantity5IsExpd     type c length 1  ,
-        OpWorkQuantityUnit6                type c length 3  ,
-        OpConfirmedWorkQuantity6           type c length 13 ,
-        NoFurtherOpWorkQuantity6IsExpd     type c length 1  ,
-        WorkCenterStandardWorkQtyUnit1     type c length 3  ,
-        WorkCenterStandardWorkQty1         type c length 9  ,
-        CostCtrActivityType1               type c length 6  ,
-        WorkCenterStandardWorkQtyUnit2     type c length 3  ,
-        WorkCenterStandardWorkQty2         type c length 9  ,
-        CostCtrActivityType2               type c length 6  ,
-        WorkCenterStandardWorkQtyUnit3     type c length 3  ,
-        WorkCenterStandardWorkQty3         type c length 9  ,
-        CostCtrActivityType3               type c length 6  ,
-        WorkCenterStandardWorkQtyUnit4     type c length 3  ,
-        WorkCenterStandardWorkQty4         type c length 9  ,
-        CostCtrActivityType4               type c length 6  ,
-        WorkCenterStandardWorkQtyUnit5     type c length 3  ,
-        WorkCenterStandardWorkQty5         type c length 9  ,
-        CostCtrActivityType5               type c length 6  ,
-        WorkCenterStandardWorkQtyUnit6     type c length 3  ,
-        WorkCenterStandardWorkQty6         type c length 9  ,
-        CostCtrActivityType6               type c length 6  ,
-        ForecastWorkQuantity1              type c length 9  ,
-        ForecastWorkQuantity2              type c length 9  ,
-        ForecastWorkQuantity3              type c length 9  ,
-        ForecastWorkQuantity4              type c length 9  ,
-        ForecastWorkQuantity5              type c length 9  ,
-        ForecastWorkQuantity6              type c length 9  ,
+        optotalconfirmedscrapqty       TYPE c LENGTH 13,
+        operationconfirmedreworkqty    TYPE c LENGTH 13,
+        productionunit                 TYPE c LENGTH 3,
+        optotconfdyieldqtyinordqtyunit TYPE c LENGTH 13,
+        opworkquantityunit1            TYPE c LENGTH 3,
+        opconfirmedworkquantity1       TYPE c LENGTH 13,
+        nofurtheropworkquantity1isexpd TYPE c LENGTH 1,
+        opworkquantityunit2            TYPE c LENGTH 3,
+        opconfirmedworkquantity2       TYPE c LENGTH 13,
+        nofurtheropworkquantity2isexpd TYPE c LENGTH 1,
+        opworkquantityunit3            TYPE c LENGTH 3,
+        opconfirmedworkquantity3       TYPE c LENGTH 13,
+        nofurtheropworkquantity3isexpd TYPE c LENGTH 1,
+        opworkquantityunit4            TYPE c LENGTH 3,
+        opconfirmedworkquantity4       TYPE c LENGTH 13,
+        nofurtheropworkquantity4isexpd TYPE c LENGTH 1,
+        opworkquantityunit5            TYPE c LENGTH 3,
+        opconfirmedworkquantity5       TYPE c LENGTH 13,
+        nofurtheropworkquantity5isexpd TYPE c LENGTH 1,
+        opworkquantityunit6            TYPE c LENGTH 3,
+        opconfirmedworkquantity6       TYPE c LENGTH 13,
+        nofurtheropworkquantity6isexpd TYPE c LENGTH 1,
+        workcenterstandardworkqtyunit1 TYPE c LENGTH 3,
+        workcenterstandardworkqty1     TYPE c LENGTH 9,
+        costctractivitytype1           TYPE c LENGTH 6,
+        workcenterstandardworkqtyunit2 TYPE c LENGTH 3,
+        workcenterstandardworkqty2     TYPE c LENGTH 9,
+        costctractivitytype2           TYPE c LENGTH 6,
+        workcenterstandardworkqtyunit3 TYPE c LENGTH 3,
+        workcenterstandardworkqty3     TYPE c LENGTH 9,
+        costctractivitytype3           TYPE c LENGTH 6,
+        workcenterstandardworkqtyunit4 TYPE c LENGTH 3,
+        workcenterstandardworkqty4     TYPE c LENGTH 9,
+        costctractivitytype4           TYPE c LENGTH 6,
+        workcenterstandardworkqtyunit5 TYPE c LENGTH 3,
+        workcenterstandardworkqty5     TYPE c LENGTH 9,
+        costctractivitytype5           TYPE c LENGTH 6,
+        workcenterstandardworkqtyunit6 TYPE c LENGTH 3,
+        workcenterstandardworkqty6     TYPE c LENGTH 9,
+        costctractivitytype6           TYPE c LENGTH 6,
+        forecastworkquantity1          TYPE c LENGTH 9,
+        forecastworkquantity2          TYPE c LENGTH 9,
+        forecastworkquantity3          TYPE c LENGTH 9,
+        forecastworkquantity4          TYPE c LENGTH 9,
+        forecastworkquantity5          TYPE c LENGTH 9,
+        forecastworkquantity6          TYPE c LENGTH 9,
 
-        BusinessProcess                    type c length 12 ,
-        BusinessProcessEntryUnit           type c length 3  ,
-        BusinessProcessConfirmedQty        type c length 13 ,
-        NoFurtherBusinessProcQtyIsExpd     type c length 1  ,
-        BusinessProcRemainingQtyUnit       type c length 3  ,
-        BusinessProcessRemainingQty        type c length 13 ,
-        SetupOpActyNtwkInstance            type c length 10 ,
-        ProduceOpActyNtwkInstance          type c length 10 ,
-        TeardownOpActyNtwkInstance         type c length 10 ,
-        FreeDefinedTableFieldSemantic      type c length 7  ,
-        FreeDefinedAttribute01             type c length 20 ,
-        FreeDefinedAttribute02             type c length 20 ,
-        FreeDefinedAttribute03             type c length 10 ,
-        FreeDefinedAttribute04             type c length 10 ,
-        FreeDefinedQuantity1Unit           type c length 3  ,
-        FreeDefinedQuantity1               type c length 13 ,
-        FreeDefinedQuantity2Unit           type c length 3  ,
-        FreeDefinedQuantity2               type c length 13 ,
-        FreeDefinedAmount1Currency         type c length 5  ,
-        FreeDefinedAmount1                 type c length 13 ,
-        FreeDefinedAmount2Currency         type c length 5  ,
-        FreeDefinedAmount2                 type c length 13 ,
-        FreeDefinedDate1                   type c length 8  ,
-        FreeDefinedDate2                   type c length 8  ,
-        FreeDefinedIndicator1              type c length 1  ,
-        FreeDefinedIndicator2              type c length 1  ,
+        businessprocess                TYPE c LENGTH 12,
+        businessprocessentryunit       TYPE c LENGTH 3,
+        businessprocessconfirmedqty    TYPE c LENGTH 13,
+        nofurtherbusinessprocqtyisexpd TYPE c LENGTH 1,
+        businessprocremainingqtyunit   TYPE c LENGTH 3,
+        businessprocessremainingqty    TYPE c LENGTH 13,
+        setupopactyntwkinstance        TYPE c LENGTH 10,
+        produceopactyntwkinstance      TYPE c LENGTH 10,
+        teardownopactyntwkinstance     TYPE c LENGTH 10,
+        freedefinedtablefieldsemantic  TYPE c LENGTH 7,
+        freedefinedattribute01         TYPE c LENGTH 20,
+        freedefinedattribute02         TYPE c LENGTH 20,
+        freedefinedattribute03         TYPE c LENGTH 10,
+        freedefinedattribute04         TYPE c LENGTH 10,
+        freedefinedquantity1unit       TYPE c LENGTH 3,
+        freedefinedquantity1           TYPE c LENGTH 13,
+        freedefinedquantity2unit       TYPE c LENGTH 3,
+        freedefinedquantity2           TYPE c LENGTH 13,
+        freedefinedamount1currency     TYPE c LENGTH 5,
+        freedefinedamount1             TYPE c LENGTH 13,
+        freedefinedamount2currency     TYPE c LENGTH 5,
+        freedefinedamount2             TYPE c LENGTH 13,
+        freedefineddate1               TYPE c LENGTH 8,
+        freedefineddate2               TYPE c LENGTH 8,
+        freedefinedindicator1          TYPE c LENGTH 1,
+        freedefinedindicator2          TYPE c LENGTH 1,
 
-      end of ty_afvc,
+      END OF ty_afvc,
 
-      BEGIN OF TY_MBEW,
-        Product                           type c length      40       ,
-        ValuationArea                     type c length      4        ,
-        ValuationType                     type c length      10       ,
-        ValuationClass                    type c length      4        ,
-        PriceDeterminationControl         type c length      1        ,
-        FiscalMonthCurrentPeriod          type c length      2        ,
-        FiscalYearCurrentPeriod           type c length      4        ,
-        StandardPrice                     type c length      11       ,
-        PriceUnitQty                      type c length      5        ,
-        InventoryValuationProcedure       type c length      1        ,
-        FuturePriceValidityStartDate      type c length      8        ,
-        PrevInvtryPriceInCoCodeCrcy       type c length      11       ,
-        MovingAveragePrice                type c length      11       ,
-        ValuationCategory                 type c length      1        ,
-        ProductUsageType                  type c length      1        ,
-        ProductOriginType                 type c length      1        ,
-        IsProducedInhouse                 type c length      1        ,
-        ProdCostEstNumber                 type c length      12       ,
-        IsMarkedForDeletion               type c length      1        ,
-        ValuationMargin                   type c length      6        ,
-        IsActiveEntity                    type c length      1        ,
-        CompanyCode                       type c length      4        ,
-        ValuationClassSalesOrderStock     type c length      4        ,
-        ProjectStockValuationClass        type c length      4        ,
-        TaxBasedPricesPriceUnitQty        type c length      5        ,
-        PriceLastChangeDate               type c length      8        ,
-        FuturePrice                       type c length      11       ,
-        MaintenanceStatus                 type c length      15       ,
-        Currency                          type c length      5        ,
-        BaseUnit                          type c length      3        ,
-        MLIsActiveAtProductLevel          type c length      1        ,
-
-      END OF TY_MBEW.
+      BEGIN OF ty_mbew,
+        product                       TYPE c LENGTH      40,
+        valuationarea                 TYPE c LENGTH      4,
+        valuationtype                 TYPE c LENGTH      10,
+        valuationclass                TYPE c LENGTH      4,
+        pricedeterminationcontrol     TYPE c LENGTH      1,
+        fiscalmonthcurrentperiod      TYPE c LENGTH      2,
+        fiscalyearcurrentperiod       TYPE c LENGTH      4,
+        standardprice                 TYPE c LENGTH      11,
+        priceunitqty                  TYPE c LENGTH      5,
+        inventoryvaluationprocedure   TYPE c LENGTH      1,
+        futurepricevaliditystartdate  TYPE c LENGTH      8,
+        previnvtrypriceincocodecrcy   TYPE c LENGTH      11,
+        movingaverageprice            TYPE c LENGTH      11,
+        valuationcategory             TYPE c LENGTH      1,
+        productusagetype              TYPE c LENGTH      1,
+        productorigintype             TYPE c LENGTH      1,
+        isproducedinhouse             TYPE c LENGTH      1,
+        prodcostestnumber             TYPE c LENGTH      12,
+        ismarkedfordeletion           TYPE c LENGTH      1,
+        valuationmargin               TYPE c LENGTH      6,
+        isactiveentity                TYPE c LENGTH      1,
+        companycode                   TYPE c LENGTH      4,
+        valuationclasssalesorderstock TYPE c LENGTH      4,
+        projectstockvaluationclass    TYPE c LENGTH      4,
+        taxbasedpricespriceunitqty    TYPE c LENGTH      5,
+        pricelastchangedate           TYPE c LENGTH      8,
+        futureprice                   TYPE c LENGTH      11,
+        maintenancestatus             TYPE c LENGTH      15,
+        currency                      TYPE c LENGTH      5,
+        baseunit                      TYPE c LENGTH      3,
+        mlisactiveatproductlevel      TYPE c LENGTH      1,
+      END OF ty_mbew.
 
     "传入参数（表名）
     TYPES:
       BEGIN OF ty_inputs,
-        tablename type c LENGTH 10,
-        sql type string,
+        tablename TYPE c LENGTH 10,
+        sql       TYPE string,
       END OF ty_inputs,
 
       "EKKO   購買発注
-      BEGIN OF ty_output_EKKO,
-        message type string,
-        items TYPE STANDARD TABLE OF ty_EKKO WITH EMPTY KEY,
+      BEGIN OF ty_output_ekko,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_ekko WITH EMPTY KEY,
 
-      END OF ty_output_EKKO,
+      END OF ty_output_ekko,
 
       "EKPO   購買発注明細
-      BEGIN OF ty_output_EKPO,
-      message type string,
-        items TYPE STANDARD TABLE OF ty_EKPO WITH EMPTY KEY,
+      BEGIN OF ty_output_ekpo,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_ekpo WITH EMPTY KEY,
 
-      END OF ty_output_EKPO,
+      END OF ty_output_ekpo,
 
       "EKET   納入日程行
-      BEGIN OF ty_output_EKET,
-      message type string,
-        items TYPE STANDARD TABLE OF ty_EKET WITH EMPTY KEY,
+      BEGIN OF ty_output_eket,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_eket WITH EMPTY KEY,
 
-      END OF ty_output_EKET,
+      END OF ty_output_eket,
 
       "EKBE 購買発注履歴
-      BEGIN OF ty_output_EKBE,
-      message type string,
-        items TYPE STANDARD TABLE OF ty_EKBE WITH EMPTY KEY,
+      BEGIN OF ty_output_ekbe,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_ekbe WITH EMPTY KEY,
 
-      END OF ty_output_EKBE,
+      END OF ty_output_ekbe,
 
       "EKKN 購買発注の勘定設定
-      BEGIN OF ty_output_EKKN,
-      message type string,
-        items TYPE STANDARD TABLE OF ty_EKKN WITH EMPTY KEY,
+      BEGIN OF ty_output_ekkn,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_ekkn WITH EMPTY KEY,
 
-      END OF ty_output_EKKN,
+      END OF ty_output_ekkn,
 
       "MARA 製品
-      BEGIN OF ty_output_MARA,
-              message type string,
-        items TYPE STANDARD TABLE OF ty_MARA WITH EMPTY KEY,
+      BEGIN OF ty_output_mara,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_mara WITH EMPTY KEY,
 
-      END OF ty_output_MARA,
+      END OF ty_output_mara,
 
       "MAKT 製品テキスト
-      BEGIN OF ty_output_MAKT,
-              message type string,
-        items TYPE STANDARD TABLE OF ty_MAKT WITH EMPTY KEY,
+      BEGIN OF ty_output_makt,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_makt WITH EMPTY KEY,
 
-      END OF ty_output_MAKT,
+      END OF ty_output_makt,
 
       "MARD 製品保管場所
-      BEGIN OF ty_output_MARD,
-              message type string,
-        items TYPE STANDARD TABLE OF ty_MARD WITH EMPTY KEY,
+      BEGIN OF ty_output_mard,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_mard WITH EMPTY KEY,
 
-      END OF ty_output_MARD,
+      END OF ty_output_mard,
 
       "T024D MRP 管理者
-      BEGIN OF ty_output_T024D,
-              message type string,
-        items TYPE STANDARD TABLE OF ty_T024D WITH EMPTY KEY,
+      BEGIN OF ty_output_t024d,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_t024d WITH EMPTY KEY,
 
-      END OF ty_output_T024D,
+      END OF ty_output_t024d,
 
       "T001L 保管場所
-      BEGIN OF ty_output_T001L,
-              message type string,
-        items TYPE STANDARD TABLE OF ty_T001L WITH EMPTY KEY,
+      BEGIN OF ty_output_t001l,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_t001l WITH EMPTY KEY,
 
-      END OF ty_output_T001L,
+      END OF ty_output_t001l,
 
       "MARC 製品プラント
-      BEGIN OF ty_output_MARC,
-              message type string,
-        items TYPE STANDARD TABLE OF ty_MARC WITH EMPTY KEY,
+      BEGIN OF ty_output_marc,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_marc WITH EMPTY KEY,
 
-      END OF ty_output_MARC,
+      END OF ty_output_marc,
 
       "MKAL 製造バージョン
-      BEGIN OF ty_output_MKAL,
-              message type string,
-        items TYPE STANDARD TABLE OF ty_MKAL WITH EMPTY KEY,
+      BEGIN OF ty_output_mkal,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_mkal WITH EMPTY KEY,
 
-      END OF ty_output_MKAL,
+      END OF ty_output_mkal,
 
       "AFKO 製造指図
-      BEGIN OF ty_output_AFKO,
-              message type string,
-        items TYPE STANDARD TABLE OF ty_AFKO WITH EMPTY KEY,
+      BEGIN OF ty_output_afko,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_afko WITH EMPTY KEY,
 
-      END OF ty_output_AFKO,
+      END OF ty_output_afko,
 
       "AFPO 製造指図明細
-      BEGIN OF ty_output_AFPO,
-              message type string,
-        items TYPE STANDARD TABLE OF ty_AFPO WITH EMPTY KEY,
+      BEGIN OF ty_output_afpo,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_afpo WITH EMPTY KEY,
 
-      END OF ty_output_AFPO,
+      END OF ty_output_afpo,
 
       "PLPO 品質検査計画作業のバージョン
-      BEGIN OF ty_output_PLPO,
-              message type string,
-        items TYPE STANDARD TABLE OF ty_PLPO WITH EMPTY KEY,
+      BEGIN OF ty_output_plpo,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_plpo WITH EMPTY KEY,
 
-      END OF ty_output_PLPO,
+      END OF ty_output_plpo,
 
       "RESB 入出庫予定伝票明細
-      BEGIN OF ty_output_RESB,
-              message type string,
-        items TYPE STANDARD TABLE OF ty_RESB WITH EMPTY KEY,
+      BEGIN OF ty_output_resb,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_resb WITH EMPTY KEY,
 
-      END OF ty_output_RESB,
+      END OF ty_output_resb,
 
       "AFVC 指図内作業
-      BEGIN OF ty_output_AFVC,
-              message type string,
-        items TYPE STANDARD TABLE OF ty_AFVC WITH EMPTY KEY,
+      BEGIN OF ty_output_afvc,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_afvc WITH EMPTY KEY,
 
-      END OF ty_output_AFVC,
+      END OF ty_output_afvc,
 
       "MBEW製品評価
-      BEGIN OF ty_output_MBEW,
-              message type string,
-        items TYPE STANDARD TABLE OF ty_MBEW WITH EMPTY KEY,
+      BEGIN OF ty_output_mbew,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF ty_mbew WITH EMPTY KEY,
 
-      END OF ty_output_MBEW.
+      END OF ty_output_mbew,
 
-  interfaces IF_HTTP_SERVICE_EXTENSION .
-protected section.
-private section.
+*&--ADD BEGIN BY XINLEI XU 2025/02/17
+      "MARM単位換算マスタ
+      BEGIN OF ty_output_marm,
+        message TYPE string,
+        items   TYPE STANDARD TABLE OF i_productunitsofmeasure WITH EMPTY KEY,
+      END OF ty_output_marm.
+*&--ADD END BY XINLEI XU 2025/02/17
 
-  DATA:
-    "lt_req            TYPE tt_header,
-    lt_req            TYPE tt_ITEM,
-    ls_req            type ty_inputs,
-    LR_EBELN  TYPE RANGE OF EBELN,
-    LRS_EBELN LIKE LINE OF LR_EBELN,
-    lv_tablename(10)  type c,
-    lv_error(1)       TYPE c,
-    lv_error1(1)      type c,
-    lv_text           TYPE string,
-    lc_header_content TYPE string VALUE 'content-type',
-    lc_content_type   TYPE string VALUE 'text/json',
-    lv_where type string.
-  DATA:
-    lv_start_time TYPE sy-uzeit,
-    lv_start_date TYPE sy-datum,
-    lv_end_time   TYPE sy-uzeit,
-    lv_end_date   TYPE sy-datum,
-    lv_temp(14)   TYPE c,
-    lv_starttime  TYPE p LENGTH 16 DECIMALS 0,
-    lv_endtime    TYPE p LENGTH 16 DECIMALS 0,
-    lv_count      type i.
+    INTERFACES if_http_service_extension .
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+
+    DATA:
+      "lt_req            TYPE tt_header,
+      lt_req            TYPE tt_item,
+      ls_req            TYPE ty_inputs,
+      lr_ebeln          TYPE RANGE OF ebeln,
+      lrs_ebeln         LIKE LINE OF lr_ebeln,
+      lv_tablename(10)  TYPE c,
+      lv_error(1)       TYPE c,
+      lv_error1(1)      TYPE c,
+      lv_text           TYPE string,
+      lc_header_content TYPE string VALUE 'content-type',
+      lc_content_type   TYPE string VALUE 'text/json',
+      lv_where          TYPE string.
+    DATA:
+      lv_start_time TYPE sy-uzeit,
+      lv_start_date TYPE sy-datum,
+      lv_end_time   TYPE sy-uzeit,
+      lv_end_date   TYPE sy-datum,
+      lv_temp(14)   TYPE c,
+      lv_starttime  TYPE p LENGTH 16 DECIMALS 0,
+      lv_endtime    TYPE p LENGTH 16 DECIMALS 0,
+      lv_count      TYPE i.
 
 ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
+CLASS zcl_http_podata_002 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -1973,6 +1980,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
       es_response_resb  TYPE ty_output_resb,
       es_response_afvc  TYPE ty_output_afvc,
       es_response_mbew  TYPE ty_output_mbew,
+      es_response_marm  TYPE ty_output_marm, " ADD BY XINLEI XU 2025/02/17
       es_ekko           TYPE ty_ekko,
       es_ekpo           TYPE ty_ekpo,
       es_eket           TYPE ty_eket,
@@ -1990,7 +1998,8 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
       es_plpo           TYPE ty_plpo,
       es_resb           TYPE ty_resb,
       es_afvc           TYPE ty_afvc,
-      es_mbew           TYPE ty_mbew.
+      es_mbew           TYPE ty_mbew,
+      es_marm           TYPE i_productunitsofmeasure. " ADD BY XINLEI XU 2025/02/17
 
     CASE lv_tablename.
 ******************************************************************************************************
@@ -2023,21 +2032,21 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 ******************************************************************************************************
       WHEN `EKKO` OR 'ekko'.
 
-      data:lv_error_message_ekko type string.
+        DATA:lv_error_message_ekko TYPE string.
 
 
-        try.
+        TRY.
 
-         SELECT * FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS
-         WHERE (lv_where)
-         INTO TABLE @DATA(lt_ekko).
+            SELECT * FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_ekko).
 
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_ekko).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_ekko).
 
             lv_error = 'X'.
             lv_error_message_ekko = lo_sql_error_ekko->get_text( ).    " 获取错误描述
 
-         ENDTRY.
+        ENDTRY.
 
         IF lt_ekko IS NOT INITIAL.
           LOOP  AT lt_ekko INTO DATA(ls_ekko).
@@ -2184,11 +2193,11 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
         ELSE.
           lv_error = 'X'.
 
-          if lv_error_message_ekko is NOT INITIAL.
+          IF lv_error_message_ekko IS NOT INITIAL.
 
             lv_text = lv_error_message_ekko .
 
-          else.
+          ELSE.
             lv_text = 'There is no data in table'.
 
           ENDIF.
@@ -2197,20 +2206,20 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
       WHEN `EKPO` OR 'ekpo'.
 
-      data: lv_error_message_ekpo type String.
+        DATA: lv_error_message_ekpo TYPE string.
 
-       try.
+        TRY.
 
-        SELECT * FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_ekpo).
+            SELECT * FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_ekpo).
 
-       catch cx_sy_dynamic_osql_error into data(lo_sql_error_ekpo).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_ekpo).
 
             lv_error = 'X'.
             lv_error_message_ekpo = lo_sql_error_ekpo->get_text( ).    " 获取错误描述
 
-       ENDTRY.
+        ENDTRY.
 
         IF lt_ekpo IS NOT INITIAL.
           LOOP  AT lt_ekpo INTO DATA(ls_ekpo).
@@ -2513,9 +2522,9 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
           lv_error = 'X'.
 
-          if lv_error_message_ekpo is NOT INITIAL.
+          IF lv_error_message_ekpo IS NOT INITIAL.
             lv_text = lv_error_message_ekpo.
-          else.
+          ELSE.
             lv_text = 'There is no data in table'.
           ENDIF.
         ENDIF.
@@ -2892,19 +2901,19 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
         ENDIF.
 
       WHEN 'MARA'  OR 'mara' .
-        SELECT a~*,
-               b~PackagingMaterialType
-        FROM i_product WITH PRIVILEGED ACCESS as a
-        left join I_ProductSales WITH PRIVILEGED ACCESS as b
-        on a~product = b~product
+        SELECT i_product~*,
+               i_productsales~packagingmaterialtype
+        FROM i_product WITH PRIVILEGED ACCESS
+        LEFT JOIN i_productsales WITH PRIVILEGED ACCESS
+        ON i_product~product = i_productsales~product
         WHERE (lv_where)
         INTO TABLE @DATA(lt_mara).
 
         IF lt_mara IS NOT INITIAL.
           LOOP AT lt_mara INTO DATA(ls_mara).
-          lv_count = lv_count + 1.
-          MOVE-CORRESPONDING ls_mara-a to es_mara.
-          es_mara-PackagingMaterialType = ls_mara-PackagingMaterialType .
+            lv_count = lv_count + 1.
+            MOVE-CORRESPONDING ls_mara-i_product TO es_mara.
+            es_mara-packagingmaterialtype = ls_mara-packagingmaterialtype .
 *            es_mara-product                           = ls_mara-product.
 *            es_mara-productexternalid                 = ls_mara-productexternalid.
 *            es_mara-productoid                        = ls_mara-productoid.
@@ -3214,7 +3223,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         IF lt_makt IS NOT INITIAL.
           LOOP  AT lt_makt INTO DATA(ls_makt).
-          lv_count = lv_count + 1.
+            lv_count = lv_count + 1.
 
             es_makt-product                                     = ls_makt-product                         .
             es_makt-language                                    = ls_makt-language                        .
@@ -3245,25 +3254,25 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
       WHEN 'MARD'  OR 'mard' .
 
 
-DATA:
-      lv_error_message TYPE string,                   " 错误信息
-      lv_sql_statement TYPE string,                   " SQL 语句
-      lt_mardbase type STANDARD TABLE OF ty_mard.
+        DATA:
+          lv_error_message TYPE string,                   " 错误信息
+          lv_sql_statement TYPE string,                   " SQL 语句
+          lt_mardbase      TYPE STANDARD TABLE OF ty_mard.
 
-        try.
-             SELECT     Material,
-                        Plant,
-                        StorageLocation,
-                        InventoryStockType,
-                        InventorySpecialStockType,
-                        sum( MatlWrhsStkQtyInMatlBaseUnit ) as unit
+        TRY.
+            SELECT     material,
+                       plant,
+                       storagelocation,
+                       inventorystocktype,
+                       inventoryspecialstocktype,
+                       SUM( matlwrhsstkqtyinmatlbaseunit ) AS unit
 
-             FROM I_MaterialStock_2 WITH PRIVILEGED ACCESS
-             WHERE (lv_where)
-             GROUP BY Material, Plant, StorageLocation, InventoryStockType, InventorySpecialStockType
-             into table @data(lt_mard).
+            FROM i_materialstock_2 WITH PRIVILEGED ACCESS
+            WHERE (lv_where)
+            GROUP BY material, plant, storagelocation, inventorystocktype, inventoryspecialstocktype
+            INTO TABLE @DATA(lt_mard).
 
-         catch cx_sy_dynamic_osql_error into data(lo_sql_error).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error).
 
 
             lv_error = 'X'.
@@ -3271,71 +3280,71 @@ DATA:
 
             lv_error_message = lo_sql_error->get_text( ).    " 获取错误描述
 
-         ENDTRY.
+        ENDTRY.
 
 
 
-         if lt_mard is not INITIAL.
+        IF lt_mard IS NOT INITIAL.
 
-             data(lt_mard1) = lt_mard .
+          DATA(lt_mard1) = lt_mard .
 
-             SORT lt_mard1 by Material Plant StorageLocation.
-             DELETE ADJACENT DUPLICATES FROM lt_mard1 COMPARING Material Plant StorageLocation.
+          SORT lt_mard1 BY material plant storagelocation.
+          DELETE ADJACENT DUPLICATES FROM lt_mard1 COMPARING material plant storagelocation.
 
-             move-CORRESPONDING lt_mard1 to lt_mardbase.
+          MOVE-CORRESPONDING lt_mard1 TO lt_mardbase.
 
-             loop at lt_mardbase ASSIGNING FIELD-SYMBOL(<fs_mardbase>).
+          LOOP AT lt_mardbase ASSIGNING FIELD-SYMBOL(<fs_mardbase>).
 
-                  loop at lt_mard into data(lw_mard) where material = <fs_mardbase>-material
-                                                     and   plant = <fs_mardbase>-plant
-                                                     and   storagelocation = <fs_mardbase>-storagelocation.
+            LOOP AT lt_mard INTO DATA(lw_mard) WHERE material = <fs_mardbase>-material
+                                               AND   plant = <fs_mardbase>-plant
+                                               AND   storagelocation = <fs_mardbase>-storagelocation.
 
-                    case lw_mard-InventoryStockType.
+              CASE lw_mard-inventorystocktype.
 *
-                    when '01'.
+                WHEN '01'.
 
-                        if lw_mard-InventorySpecialStockType = 'K'.
+                  IF lw_mard-inventoryspecialstocktype = 'K'.
 
-                        <fs_mardbase>-klabs = lw_mard-unit.
+                    <fs_mardbase>-klabs = lw_mard-unit.
 
-                        ELSEIF lw_mard-InventorySpecialStockType = ''.
+                  ELSEIF lw_mard-inventoryspecialstocktype = ''.
 
-                         <fs_mardbase>-LABST = lw_mard-unit..
-                        ENDIF.
+                    <fs_mardbase>-labst = lw_mard-unit..
+                  ENDIF.
 
-                    when '02'.
+                WHEN '02'.
 
-                        if lw_mard-InventorySpecialStockType = 'K'.
+                  IF lw_mard-inventoryspecialstocktype = 'K'.
 
-                             <fs_mardbase>-KINSM = lw_mard-Unit.
+                    <fs_mardbase>-kinsm = lw_mard-unit.
 
-                        elseif lw_mard-InventorySpecialStockType = ''.
+                  ELSEIF lw_mard-inventoryspecialstocktype = ''.
 
-                             <fs_mardbase>-INSME = lw_mard-Unit.
+                    <fs_mardbase>-insme = lw_mard-unit.
 
-                        endif.
+                  ENDIF.
 
-                    when OTHERS.
+                WHEN OTHERS.
 
-                    ENDCASE.
-                  ENDLOOP.
+              ENDCASE.
+            ENDLOOP.
 
-             ENDLOOP.
+          ENDLOOP.
 
-         ENDIF.
+        ENDIF.
 
 
         IF lt_mardbase IS NOT INITIAL.
           LOOP  AT lt_mardbase INTO DATA(ls_mard1).
 
-          lv_count = lv_count + 1.
+            lv_count = lv_count + 1.
             es_mard-material                           = ls_mard1-material                              .
             es_mard-plant                              = ls_mard1-plant                                .
             es_mard-storagelocation                    = ls_mard1-storagelocation                      .
             es_mard-klabs                              = ls_mard1-klabs.
-            es_mard-LABST                              = ls_mard1-LABST.
-            es_mard-KINSM                              = ls_mard1-KINSM.
-            es_mard-INSME                              = ls_mard1-INSME.
+            es_mard-labst                              = ls_mard1-labst.
+            es_mard-kinsm                              = ls_mard1-kinsm.
+            es_mard-insme                              = ls_mard1-insme.
 
 
             APPEND es_mard TO es_response_mard-items.
@@ -3354,10 +3363,10 @@ DATA:
         ELSE.
           lv_error = 'X'.
 
-          if lv_error_message is NOT INITIAL.
-          lv_text = lv_error_message.
-          else.
-          lv_text = 'There is no data in table'.
+          IF lv_error_message IS NOT INITIAL.
+            lv_text = lv_error_message.
+          ELSE.
+            lv_text = 'There is no data in table'.
           ENDIF.
 
         ENDIF.
@@ -3371,7 +3380,7 @@ DATA:
 
         IF lt_t024d IS NOT INITIAL.
           LOOP  AT lt_t024d INTO DATA(ls_t024d).
-          lv_count = lv_count + 1.
+            lv_count = lv_count + 1.
             es_t024d-plant                        = ls_t024d-plant                              .
             es_t024d-mrpcontroller                = ls_t024d-mrpcontroller                      .
             es_t024d-mrpcontrollername            = ls_t024d-mrpcontrollername                  .
@@ -3415,7 +3424,7 @@ DATA:
 
         IF lt_t001l IS NOT INITIAL.
           LOOP  AT lt_t001l INTO DATA(ls_t001l).
-          lv_count = lv_count + 1.
+            lv_count = lv_count + 1.
             es_t001l-plant                        = ls_t001l-plant                      .
             es_t001l-storagelocation               = ls_t001l-storagelocation             .
             es_t001l-storagelocationname           = ls_t001l-storagelocationname         .
@@ -3455,41 +3464,50 @@ DATA:
         ENDIF.
 
       WHEN 'MARC'  OR 'marc' .
-        SELECT a~*,
-               b~ProductProductionQuantityUnit,
-               b~ProductionSchedulingProfile,
-               c~*,
-               d~LoadingGroup,
-               e~IsAutoPurOrdCreationAllowed,
-               e~IsSourceListRequired,
-               f~CostingLotSize,
-               f~ProductIsCostingRelevant
+        SELECT i_productplantbasic~*,
 
-        FROM i_productplantbasic WITH PRIVILEGED ACCESS as a
-        LEFT JOIN I_ProductWorkScheduling WITH PRIVILEGED ACCESS as b
-          on a~Product = b~product
-         and a~plant = b~plant
-        LEFT JOIN I_PRODUCTPLANTSUPPLYPLANNING WITH PRIVILEGED ACCESS as c
-          on a~product = c~product
-         and a~plant = c~Plant
-        LEFT JOIN I_Productplantsales WITH PRIVILEGED ACCESS as d
-          on a~product = d~product
-         and a~plant = d~Plant
-        LEFT JOIN I_Productplantprocurement WITH PRIVILEGED ACCESS as e
-          on a~product = e~product
-         and a~plant = e~Plant
-        LEFT JOIN I_PRODUCTPLANTCOSTING WITH PRIVILEGED ACCESS as f
-          on a~product = f~product
-         and a~plant = f~Plant
+*               \_GoodsMovementQuantity-productproductionquantityunit,
+*               \_GoodsMovementQuantity-productionschedulingprofile,
+               i_productworkscheduling~productproductionquantityunit,
+               i_productworkscheduling~productionschedulingprofile,
+               i_productplantsupplyplanning~*,
+               i_productplantsales~loadinggroup,
+               i_productplantprocurement~isautopurordcreationallowed,
+               i_productplantprocurement~issourcelistrequired,
+               i_productplantcosting~costinglotsize,
+               i_productplantcosting~productiscostingrelevant
+
+        FROM i_productplantbasic WITH PRIVILEGED ACCESS
+
+        ##SELECT_WITH_PRIVILEGED_ACCESS[_GOODSMOVEMENTQUANTITY]
+
+
+        LEFT JOIN i_productworkscheduling WITH PRIVILEGED ACCESS
+          ON i_productplantbasic~product = i_productworkscheduling~product
+         AND i_productplantbasic~plant = i_productworkscheduling~plant
+        LEFT JOIN i_productplantsupplyplanning WITH PRIVILEGED ACCESS
+          ON i_productplantbasic~product = i_productplantsupplyplanning~product
+         AND i_productplantbasic~plant = i_productplantsupplyplanning~plant
+        LEFT JOIN i_productplantsales WITH PRIVILEGED ACCESS
+          ON i_productplantbasic~product = i_productplantsales~product
+         AND i_productplantbasic~plant = i_productplantsales~plant
+        LEFT JOIN i_productplantprocurement WITH PRIVILEGED ACCESS
+          ON i_productplantbasic~product = i_productplantprocurement~product
+         AND i_productplantbasic~plant = i_productplantprocurement~plant
+        LEFT JOIN i_productplantcosting WITH PRIVILEGED ACCESS
+          ON i_productplantbasic~product = i_productplantcosting~product
+         AND i_productplantbasic~plant = i_productplantcosting~plant
 
         WHERE (lv_where)
+*        where i_productplantbasic~product = 'ZTEST_FG001'
+
         INTO TABLE @DATA(lt_marc).
 
         IF lt_marc IS NOT INITIAL.
           LOOP  AT lt_marc INTO DATA(ls_marc).
-          lv_count = lv_count + 1.
-          MOVE-CORRESPONDING ls_marc-c to es_marc.
-          MOVE-CORRESPONDING ls_marc-a to es_marc.
+            lv_count = lv_count + 1.
+            MOVE-CORRESPONDING ls_marc-i_productplantsupplyplanning TO es_marc.
+            MOVE-CORRESPONDING ls_marc-i_productplantbasic TO es_marc.
 
 *          es_marc-ProductProductionQuantityUnit = ls_marc-ProductProductionQuantityUnit.
 *          es_marc-ProductionSchedulingProfile = ls_marc-ProductionSchedulingProfile.
@@ -3657,7 +3675,7 @@ DATA:
 
         IF lt_mkal IS NOT INITIAL.
           LOOP  AT lt_mkal INTO DATA(ls_mkal).
-          lv_count = lv_count + 1.
+            lv_count = lv_count + 1.
             es_mkal-material                                        = ls_mkal-material                           .
             es_mkal-plant                                           = ls_mkal-plant                              .
             es_mkal-productionversion                               = ls_mkal-productionversion                  .
@@ -3781,23 +3799,24 @@ DATA:
         ENDIF.
 
       WHEN 'AFKO'  OR 'afko' .
-        SELECT a~*,
-               b~*
-          FROM i_manufacturingorder WITH PRIVILEGED ACCESS as a
-          LEFT JOIN I_BillOfMaterialHeaderDEX_2 WITH PRIVILEGED ACCESS as b
-            on a~BillOfMaterialCategory = b~BillOfMaterialCategory
-           and a~BillOfMaterial = b~BillOfMaterial
-           and a~BillOfMaterialVariant = b~BillOfMaterialVariant
-           and a~BillOfMaterialVariantUsage = b~BillOfMaterialVariantUsage
+        SELECT i_manufacturingorder~*,
+               i_billofmaterialheaderdex_2~*
+          FROM i_manufacturingorder WITH PRIVILEGED ACCESS
+          LEFT JOIN i_billofmaterialheaderdex_2 WITH PRIVILEGED ACCESS
+            ON i_manufacturingorder~billofmaterialcategory = i_billofmaterialheaderdex_2~billofmaterialcategory
+         " and i_manufacturingorder~BillOfMaterial = i_billofmaterialheaderdex_2~BillOfMaterial
+           AND i_manufacturingorder~billofmaterialinternalid = i_billofmaterialheaderdex_2~billofmaterial
+           AND i_manufacturingorder~billofmaterialvariant = i_billofmaterialheaderdex_2~billofmaterialvariant
+           AND i_manufacturingorder~billofmaterialvariantusage = i_billofmaterialheaderdex_2~billofmaterialvariantusage
         WHERE (lv_where)
         INTO TABLE @DATA(lt_afko).
 
         IF lt_afko IS NOT INITIAL.
           LOOP  AT lt_afko INTO DATA(ls_afko).
 
-          lv_count = lv_count + 1.
-          MOVE-CORRESPONDING ls_afko-a to es_afko.
-          MOVE-CORRESPONDING ls_afko-b to es_afko.
+            lv_count = lv_count + 1.
+            MOVE-CORRESPONDING ls_afko-i_manufacturingorder TO es_afko.
+            MOVE-CORRESPONDING ls_afko-i_billofmaterialheaderdex_2 TO es_afko.
 *            es_afko-manufacturingorder                   = ls_afko-manufacturingorder                 .
 *            es_afko-manufacturingorderitem               = ls_afko-manufacturingorderitem             .
 *            es_afko-manufacturingordercategory           = ls_afko-manufacturingordercategory         .
@@ -4091,7 +4110,7 @@ DATA:
             CONDENSE es_afko-producttheme                        .
 
             APPEND es_afko TO es_response_afko-items.
-            clear es_afko.
+            CLEAR es_afko.
 
           ENDLOOP.
 
@@ -4116,7 +4135,7 @@ DATA:
 
         IF lt_afpo IS NOT INITIAL.
           LOOP  AT lt_afpo INTO DATA(ls_afpo).
-          lv_count = lv_count + 1.
+            lv_count = lv_count + 1.
             es_afpo-manufacturingorder                = ls_afpo-manufacturingorder               .
             es_afpo-manufacturingorderitem            = ls_afpo-manufacturingorderitem           .
             es_afpo-manufacturingordercategory        = ls_afpo-manufacturingordercategory       .
@@ -4380,14 +4399,14 @@ DATA:
 *           i_inspplanoperationversion_2~validitystartdate,
 *           i_inspplanoperationversion_2~validityenddate
 
-        FROM I_MfgBOOOperationChangeState WITH PRIVILEGED ACCESS
+        FROM i_mfgboooperationchangestate WITH PRIVILEGED ACCESS
         WHERE (lv_where)
         INTO TABLE @DATA(lt_plpo).
 
         IF lt_plpo IS NOT INITIAL.
           LOOP  AT lt_plpo INTO DATA(ls_plpo).
-          lv_count = lv_count + 1.
-             MOVE-CORRESPONDING ls_plpo to es_plpo.
+            lv_count = lv_count + 1.
+            MOVE-CORRESPONDING ls_plpo TO es_plpo.
 *            es_plpo-inspectionplangroup             = ls_plpo-inspectionplangroup             .
 *            es_plpo-boooperationinternalid          = ls_plpo-boooperationinternalid          .
 *            es_plpo-booopinternalversioncounter     = ls_plpo-booopinternalversioncounter     .
@@ -4455,7 +4474,7 @@ DATA:
 *            CONDENSE es_plpo-validityenddate                .
 
             APPEND es_plpo TO es_response_plpo-items.
-            clear es_plpo.
+            CLEAR es_plpo.
 
           ENDLOOP.
 
@@ -4475,18 +4494,18 @@ DATA:
 
       WHEN 'RESB'  OR 'resb' .
         SELECT i_mfgorderoperationcomponent~*,
-               I_ManufacturingOrderItem~PlannedOrder
+               i_manufacturingorderitem~plannedorder
         FROM i_mfgorderoperationcomponent WITH PRIVILEGED ACCESS
-        LEFT JOIN I_ManufacturingOrderItem WITH PRIVILEGED ACCESS
-        on i_mfgorderoperationcomponent~ManufacturingOrder = I_ManufacturingOrderItem~ManufacturingOrder
+        LEFT JOIN i_manufacturingorderitem WITH PRIVILEGED ACCESS
+        ON i_mfgorderoperationcomponent~manufacturingorder = i_manufacturingorderitem~manufacturingorder
         WHERE (lv_where)
         INTO TABLE @DATA(lt_resb).
 
         IF lt_resb IS NOT INITIAL.
           LOOP  AT lt_resb INTO DATA(ls_resb).
-          lv_count = lv_count + 1.
-          MOVE-CORRESPONDING ls_resb-i_mfgorderoperationcomponent to es_resb.
-          es_resb-PlannedOrder = ls_resb-PlannedOrder  .
+            lv_count = lv_count + 1.
+            MOVE-CORRESPONDING ls_resb-i_mfgorderoperationcomponent TO es_resb.
+            es_resb-plannedorder = ls_resb-plannedorder  .
 *            es_resb-reservation                        = ls_resb-reservation                       .
 *            es_resb-reservationitem                    = ls_resb-reservationitem                   .
 *            es_resb-recordtype                         = ls_resb-recordtype                        .
@@ -4834,587 +4853,587 @@ DATA:
 
       WHEN 'AFVC'  OR 'afvc' .
 *
-      SELECT *
-        from i_manufacturingorderoperation WITH PRIVILEGED ACCESS
-       WHERE (lv_where)
-        INTO TABLE @DATA(lt_afvc).
+        SELECT *
+          FROM i_manufacturingorderoperation WITH PRIVILEGED ACCESS
+         WHERE (lv_where)
+          INTO TABLE @DATA(lt_afvc).
 
         IF lt_afvc IS NOT INITIAL.
 
           LOOP  AT lt_afvc INTO DATA(ls_afvc).
-             lv_count = lv_count + 1.
+            lv_count = lv_count + 1.
 
-        es_afvc-MfgOrderInternalID                 =    ls_afvc-MfgOrderInternalID             .
-        es_afvc-OrderOperationInternalID           =    ls_afvc-OrderOperationInternalID       .
-        es_afvc-ManufacturingOrder                 =    ls_afvc-ManufacturingOrder             .
-        es_afvc-ManufacturingOrderSequence         =    ls_afvc-ManufacturingOrderSequence     .
+            es_afvc-mfgorderinternalid                 =    ls_afvc-mfgorderinternalid             .
+            es_afvc-orderoperationinternalid           =    ls_afvc-orderoperationinternalid       .
+            es_afvc-manufacturingorder                 =    ls_afvc-manufacturingorder             .
+            es_afvc-manufacturingordersequence         =    ls_afvc-manufacturingordersequence     .
 *        es_afvc-ManufacturingOrderOperation        =    ls_afvc-ManufacturingOrderOperation    .
-        es_afvc-ManufacturingOrderOperation_2      =    ls_afvc-ManufacturingOrderOperation_2  .
+            es_afvc-manufacturingorderoperation_2      =    ls_afvc-manufacturingorderoperation_2  .
 *        es_afvc-ManufacturingOrderSubOperation     =    ls_afvc-ManufacturingOrderSubOperation .
-        es_afvc-ManufacturingOrdSubOperation_2     =    ls_afvc-ManufacturingOrdSubOperation_2 .
+            es_afvc-manufacturingordsuboperation_2     =    ls_afvc-manufacturingordsuboperation_2 .
 *        es_afvc-MfgOrderOperationOrSubOp           =    ls_afvc-MfgOrderOperationOrSubOp       .
-        es_afvc-MfgOrderOperationOrSubOp_2         =    ls_afvc-MfgOrderOperationOrSubOp_2     .
-        es_afvc-MfgOrderOperationIsPhase           =    ls_afvc-MfgOrderOperationIsPhase       .
-        es_afvc-OrderIntBillOfOpItemOfPhase        =    ls_afvc-OrderIntBillOfOpItemOfPhase    .
+            es_afvc-mfgorderoperationorsubop_2         =    ls_afvc-mfgorderoperationorsubop_2     .
+            es_afvc-mfgorderoperationisphase           =    ls_afvc-mfgorderoperationisphase       .
+            es_afvc-orderintbillofopitemofphase        =    ls_afvc-orderintbillofopitemofphase    .
 *        es_afvc-MfgOrderPhaseSuperiorOperation     =    ls_afvc-MfgOrderPhaseSuperiorOperation .
-        es_afvc-SuperiorOperation_2                =    ls_afvc-SuperiorOperation_2            .
-        es_afvc-ManufacturingOrderCategory         =    ls_afvc-ManufacturingOrderCategory     .
-        es_afvc-ManufacturingOrderType             =    ls_afvc-ManufacturingOrderType         .
-        es_afvc-ProductionSupervisor               =    ls_afvc-ProductionSupervisor           .
-        es_afvc-MRPController                      =    ls_afvc-MRPController                  .
-        es_afvc-ResponsiblePlannerGroup            =    ls_afvc-ResponsiblePlannerGroup        .
-        es_afvc-ProductConfiguration               =    ls_afvc-ProductConfiguration           .
-        es_afvc-InspectionLot                      =    ls_afvc-InspectionLot                  .
-        es_afvc-ManufacturingOrderImportance       =    ls_afvc-ManufacturingOrderImportance   .
-        es_afvc-MfgOrderOperationText              =    ls_afvc-MfgOrderOperationText          .
-        es_afvc-OperationStandardTextCode          =    ls_afvc-OperationStandardTextCode      .
-        es_afvc-OperationHasLongText               =    ls_afvc-OperationHasLongText           .
-        es_afvc-Language                           =    ls_afvc-Language                       .
-        es_afvc-OperationIsToBeDeleted             =    ls_afvc-OperationIsToBeDeleted         .
-        es_afvc-NumberOfCapacities                 =    ls_afvc-NumberOfCapacities             .
-        es_afvc-NumberOfConfirmationSlips          =    ls_afvc-NumberOfConfirmationSlips      .
-        es_afvc-OperationImportance                =    ls_afvc-OperationImportance            .
-        es_afvc-SuperiorOperationInternalID        =    ls_afvc-SuperiorOperationInternalID    .
-        es_afvc-Plant                              =    ls_afvc-Plant                          .
-        es_afvc-WorkCenterInternalID               =    ls_afvc-WorkCenterInternalID           .
+            es_afvc-superioroperation_2                =    ls_afvc-superioroperation_2            .
+            es_afvc-manufacturingordercategory         =    ls_afvc-manufacturingordercategory     .
+            es_afvc-manufacturingordertype             =    ls_afvc-manufacturingordertype         .
+            es_afvc-productionsupervisor               =    ls_afvc-productionsupervisor           .
+            es_afvc-mrpcontroller                      =    ls_afvc-mrpcontroller                  .
+            es_afvc-responsibleplannergroup            =    ls_afvc-responsibleplannergroup        .
+            es_afvc-productconfiguration               =    ls_afvc-productconfiguration           .
+            es_afvc-inspectionlot                      =    ls_afvc-inspectionlot                  .
+            es_afvc-manufacturingorderimportance       =    ls_afvc-manufacturingorderimportance   .
+            es_afvc-mfgorderoperationtext              =    ls_afvc-mfgorderoperationtext          .
+            es_afvc-operationstandardtextcode          =    ls_afvc-operationstandardtextcode      .
+            es_afvc-operationhaslongtext               =    ls_afvc-operationhaslongtext           .
+            es_afvc-language                           =    ls_afvc-language                       .
+            es_afvc-operationistobedeleted             =    ls_afvc-operationistobedeleted         .
+            es_afvc-numberofcapacities                 =    ls_afvc-numberofcapacities             .
+            es_afvc-numberofconfirmationslips          =    ls_afvc-numberofconfirmationslips      .
+            es_afvc-operationimportance                =    ls_afvc-operationimportance            .
+            es_afvc-superioroperationinternalid        =    ls_afvc-superioroperationinternalid    .
+            es_afvc-plant                              =    ls_afvc-plant                          .
+            es_afvc-workcenterinternalid               =    ls_afvc-workcenterinternalid           .
 *        es_afvc-WorkCenterTypeCode                 =    ls_afvc-WorkCenterTypeCode             .
 
-        es_afvc-WorkCenterTypeCode_2               =  ls_afvc-WorkCenterTypeCode_2               .
-        es_afvc-OperationControlProfile            =  ls_afvc-OperationControlProfile            .
-        es_afvc-ControlRecipeDestination           =  ls_afvc-ControlRecipeDestination           .
-        es_afvc-OperationConfirmation              =  ls_afvc-OperationConfirmation              .
-        es_afvc-NumberOfOperationConfirmations     =  ls_afvc-NumberOfOperationConfirmations     .
-        es_afvc-FactoryCalendar                    =  ls_afvc-FactoryCalendar                    .
-        es_afvc-CapacityRequirement                =  ls_afvc-CapacityRequirement                .
-        es_afvc-CapacityRequirementItem            =  ls_afvc-CapacityRequirementItem            .
-        es_afvc-ChangeNumber                       =  ls_afvc-ChangeNumber                       .
-        es_afvc-ObjectInternalID                   =  ls_afvc-ObjectInternalID                   .
-        es_afvc-OperationTrackingNumber            =  ls_afvc-OperationTrackingNumber            .
-        es_afvc-BillOfOperationsType               =  ls_afvc-BillOfOperationsType               .
-        es_afvc-BillOfOperationsGroup              =  ls_afvc-BillOfOperationsGroup              .
-        es_afvc-BillOfOperationsVariant            =  ls_afvc-BillOfOperationsVariant            .
-        es_afvc-BillOfOperationsSequence           =  ls_afvc-BillOfOperationsSequence           .
-        es_afvc-BOOOperationInternalID             =  ls_afvc-BOOOperationInternalID             .
-        es_afvc-BillOfOperationsVersion            =  ls_afvc-BillOfOperationsVersion            .
-        es_afvc-BillOfMaterialCategory             =  ls_afvc-BillOfMaterialCategory             .
+            es_afvc-workcentertypecode_2               =  ls_afvc-workcentertypecode_2               .
+            es_afvc-operationcontrolprofile            =  ls_afvc-operationcontrolprofile            .
+            es_afvc-controlrecipedestination           =  ls_afvc-controlrecipedestination           .
+            es_afvc-operationconfirmation              =  ls_afvc-operationconfirmation              .
+            es_afvc-numberofoperationconfirmations     =  ls_afvc-numberofoperationconfirmations     .
+            es_afvc-factorycalendar                    =  ls_afvc-factorycalendar                    .
+            es_afvc-capacityrequirement                =  ls_afvc-capacityrequirement                .
+            es_afvc-capacityrequirementitem            =  ls_afvc-capacityrequirementitem            .
+            es_afvc-changenumber                       =  ls_afvc-changenumber                       .
+            es_afvc-objectinternalid                   =  ls_afvc-objectinternalid                   .
+            es_afvc-operationtrackingnumber            =  ls_afvc-operationtrackingnumber            .
+            es_afvc-billofoperationstype               =  ls_afvc-billofoperationstype               .
+            es_afvc-billofoperationsgroup              =  ls_afvc-billofoperationsgroup              .
+            es_afvc-billofoperationsvariant            =  ls_afvc-billofoperationsvariant            .
+            es_afvc-billofoperationssequence           =  ls_afvc-billofoperationssequence           .
+            es_afvc-boooperationinternalid             =  ls_afvc-boooperationinternalid             .
+            es_afvc-billofoperationsversion            =  ls_afvc-billofoperationsversion            .
+            es_afvc-billofmaterialcategory             =  ls_afvc-billofmaterialcategory             .
 *        es_afvc-BillOfMaterialInternalID           =  ls_afvc-BillOfMaterialInternalID           .
-        es_afvc-BillOfMaterialInternalID_2         =  ls_afvc-BillOfMaterialInternalID_2         .
-        es_afvc-BillOfMaterialItemNodeNumber       =  ls_afvc-BillOfMaterialItemNodeNumber       .
-        es_afvc-BOMItemNodeCount                   =  ls_afvc-BOMItemNodeCount                   .
-        es_afvc-ExtProcgOperationHasSubcontrg      =  ls_afvc-ExtProcgOperationHasSubcontrg      .
-        es_afvc-PurchasingOrganization             =  ls_afvc-PurchasingOrganization             .
-        es_afvc-PurchasingGroup                    =  ls_afvc-PurchasingGroup                    .
-        es_afvc-PurchaseRequisition                =  ls_afvc-PurchaseRequisition                .
-        es_afvc-PurchaseRequisitionItem            =  ls_afvc-PurchaseRequisitionItem            .
-        es_afvc-PurchaseOrder                      =  ls_afvc-PurchaseOrder                      .
-        es_afvc-PurchaseOrderItem                  =  ls_afvc-PurchaseOrderItem                  .
-        es_afvc-PurchasingInfoRecord               =  ls_afvc-PurchasingInfoRecord               .
-        es_afvc-PurgInfoRecdDataIsFixed            =  ls_afvc-PurgInfoRecdDataIsFixed            .
-        es_afvc-PurchasingInfoRecordCategory       =  ls_afvc-PurchasingInfoRecordCategory       .
-        es_afvc-Supplier                           =  ls_afvc-Supplier                           .
-        es_afvc-GoodsRecipientName                 =  ls_afvc-GoodsRecipientName                 .
-        es_afvc-UnloadingPointName                 =  ls_afvc-UnloadingPointName                 .
-        es_afvc-MaterialGroup                      =  ls_afvc-MaterialGroup                      .
-        es_afvc-OpExternalProcessingCurrency       =  ls_afvc-OpExternalProcessingCurrency       .
-        es_afvc-OpExternalProcessingPrice          =  ls_afvc-OpExternalProcessingPrice          .
-        es_afvc-NumberOfOperationPriceUnits        =  ls_afvc-NumberOfOperationPriceUnits        .
-        es_afvc-CompanyCode                        =  ls_afvc-CompanyCode                        .
-        es_afvc-BusinessArea                       =  ls_afvc-BusinessArea                       .
-        es_afvc-ControllingArea                    =  ls_afvc-ControllingArea                    .
+            es_afvc-billofmaterialinternalid_2         =  ls_afvc-billofmaterialinternalid_2         .
+            es_afvc-billofmaterialitemnodenumber       =  ls_afvc-billofmaterialitemnodenumber       .
+            es_afvc-bomitemnodecount                   =  ls_afvc-bomitemnodecount                   .
+            es_afvc-extprocgoperationhassubcontrg      =  ls_afvc-extprocgoperationhassubcontrg      .
+            es_afvc-purchasingorganization             =  ls_afvc-purchasingorganization             .
+            es_afvc-purchasinggroup                    =  ls_afvc-purchasinggroup                    .
+            es_afvc-purchaserequisition                =  ls_afvc-purchaserequisition                .
+            es_afvc-purchaserequisitionitem            =  ls_afvc-purchaserequisitionitem            .
+            es_afvc-purchaseorder                      =  ls_afvc-purchaseoutlineagreement.     "PurchaseOrder      MOD BY XINLEI XU 2025/02/16
+            es_afvc-purchaseorderitem                  =  ls_afvc-purchaseoutlineagreementitem. "PurchaseOrderItem  MOD BY XINLEI XU 2025/02/16
+            es_afvc-purchasinginforecord               =  ls_afvc-purchasinginforecord               .
+            es_afvc-purginforecddataisfixed            =  ls_afvc-purginforecddataisfixed            .
+            es_afvc-purchasinginforecordcategory       =  ls_afvc-purchasinginforecordcategory       .
+            es_afvc-supplier                           =  ls_afvc-supplier                           .
+            es_afvc-goodsrecipientname                 =  ls_afvc-goodsrecipientname                 .
+            es_afvc-unloadingpointname                 =  ls_afvc-unloadingpointname                 .
+            es_afvc-materialgroup                      =  ls_afvc-materialgroup                      .
+            es_afvc-opexternalprocessingcurrency       =  ls_afvc-opexternalprocessingcurrency       .
+            es_afvc-opexternalprocessingprice          =  ls_afvc-opexternalprocessingprice          .
+            es_afvc-numberofoperationpriceunits        =  ls_afvc-numberofoperationpriceunits        .
+            es_afvc-companycode                        =  ls_afvc-companycode                        .
+            es_afvc-businessarea                       =  ls_afvc-businessarea                       .
+            es_afvc-controllingarea                    =  ls_afvc-controllingarea                    .
 
-        es_afvc-ProfitCenter                       =  ls_afvc-ProfitCenter                    .
-        es_afvc-RequestingCostCenter               =  ls_afvc-RequestingCostCenter            .
-        es_afvc-CostElement                        =  ls_afvc-CostElement                     .
-        es_afvc-CostingVariant                     =  ls_afvc-CostingVariant                  .
-        es_afvc-CostingSheet                       =  ls_afvc-CostingSheet                    .
-        es_afvc-CostEstimate                       =  ls_afvc-CostEstimate                    .
-        es_afvc-ControllingObjectCurrency          =  ls_afvc-ControllingObjectCurrency       .
-        es_afvc-ControllingObjectClass             =  ls_afvc-ControllingObjectClass          .
-        es_afvc-FunctionalArea                     =  ls_afvc-FunctionalArea                  .
-        es_afvc-TaxJurisdiction                    =  ls_afvc-TaxJurisdiction                 .
-        es_afvc-EmployeeWageType                   =  ls_afvc-EmployeeWageType                .
-        es_afvc-EmployeeWageGroup                  =  ls_afvc-EmployeeWageGroup               .
-        es_afvc-EmployeeSuitability                =  ls_afvc-EmployeeSuitability             .
-        es_afvc-NumberOfTimeTickets                =  ls_afvc-NumberOfTimeTickets             .
-        es_afvc-Personnel                          =  ls_afvc-Personnel                       .
-        es_afvc-NumberOfEmployees                  =  ls_afvc-NumberOfEmployees               .
-        es_afvc-OperationSetupGroupCategory        =  ls_afvc-OperationSetupGroupCategory     .
-        es_afvc-OperationSetupGroup                =  ls_afvc-OperationSetupGroup             .
-        es_afvc-OperationSetupType                 =  ls_afvc-OperationSetupType              .
-        es_afvc-OperationOverlappingIsRequired     =  ls_afvc-OperationOverlappingIsRequired  .
-        es_afvc-OperationOverlappingIsPossible     =  ls_afvc-OperationOverlappingIsPossible  .
-        es_afvc-OperationsIsAlwaysOverlapping      =  ls_afvc-OperationsIsAlwaysOverlapping   .
-        es_afvc-OperationSplitIsRequired           =  ls_afvc-OperationSplitIsRequired        .
-        es_afvc-MaximumNumberOfSplits              =  ls_afvc-MaximumNumberOfSplits           .
-        es_afvc-LeadTimeReductionStrategy          =  ls_afvc-LeadTimeReductionStrategy       .
-        es_afvc-OpSchedldReductionLevel            =  ls_afvc-OpSchedldReductionLevel         .
-        es_afvc-OpErlstSchedldExecStrtDte          =  ls_afvc-OpErlstSchedldExecStrtDte       .
-        es_afvc-OpErlstSchedldExecStrtTme          =  ls_afvc-OpErlstSchedldExecStrtTme       .
-        es_afvc-OpErlstSchedldProcgStrtDte         =  ls_afvc-OpErlstSchedldProcgStrtDte      .
-        es_afvc-OpErlstSchedldProcgStrtTme         =  ls_afvc-OpErlstSchedldProcgStrtTme      .
-        es_afvc-OpErlstSchedldTrdwnStrtDte         =  ls_afvc-OpErlstSchedldTrdwnStrtDte      .
-        es_afvc-OpErlstSchedldTrdwnStrtTme         =  ls_afvc-OpErlstSchedldTrdwnStrtTme      .
-        es_afvc-OpErlstSchedldExecEndDte           =  ls_afvc-OpErlstSchedldExecEndDte        .
-        es_afvc-OpErlstSchedldExecEndTme           =  ls_afvc-OpErlstSchedldExecEndTme        .
-        es_afvc-OpLtstSchedldExecStrtDte           =  ls_afvc-OpLtstSchedldExecStrtDte        .
-        es_afvc-OpLtstSchedldExecStrtTme           =  ls_afvc-OpLtstSchedldExecStrtTme        .
-        es_afvc-OpLtstSchedldProcgStrtDte          =  ls_afvc-OpLtstSchedldProcgStrtDte       .
-        es_afvc-OpLtstSchedldProcgStrtTme          =  ls_afvc-OpLtstSchedldProcgStrtTme       .
-        es_afvc-OpLtstSchedldTrdwnStrtDte          =  ls_afvc-OpLtstSchedldTrdwnStrtDte       .
+            es_afvc-profitcenter                       =  ls_afvc-profitcenter                    .
+            es_afvc-requestingcostcenter               =  ls_afvc-requestingcostcenter            .
+            es_afvc-costelement                        =  ls_afvc-costelement                     .
+            es_afvc-costingvariant                     =  ls_afvc-costingvariant                  .
+            es_afvc-costingsheet                       =  ls_afvc-costingsheet                    .
+            es_afvc-costestimate                       =  ls_afvc-costestimate                    .
+            es_afvc-controllingobjectcurrency          =  ls_afvc-controllingobjectcurrency       .
+            es_afvc-controllingobjectclass             =  ls_afvc-controllingobjectclass          .
+            es_afvc-functionalarea                     =  ls_afvc-functionalarea                  .
+            es_afvc-taxjurisdiction                    =  ls_afvc-taxjurisdiction                 .
+            es_afvc-employeewagetype                   =  ls_afvc-employeewagetype                .
+            es_afvc-employeewagegroup                  =  ls_afvc-employeewagegroup               .
+            es_afvc-employeesuitability                =  ls_afvc-employeesuitability             .
+            es_afvc-numberoftimetickets                =  ls_afvc-numberoftimetickets             .
+            es_afvc-personnel                          =  ls_afvc-personnel                       .
+            es_afvc-numberofemployees                  =  ls_afvc-numberofemployees               .
+            es_afvc-operationsetupgroupcategory        =  ls_afvc-operationsetupgroupcategory     .
+            es_afvc-operationsetupgroup                =  ls_afvc-operationsetupgroup             .
+            es_afvc-operationsetuptype                 =  ls_afvc-operationsetuptype              .
+            es_afvc-operationoverlappingisrequired     =  ls_afvc-operationoverlappingisrequired  .
+            es_afvc-operationoverlappingispossible     =  ls_afvc-operationoverlappingispossible  .
+            es_afvc-operationsisalwaysoverlapping      =  ls_afvc-operationsisalwaysoverlapping   .
+            es_afvc-operationsplitisrequired           =  ls_afvc-operationsplitisrequired        .
+            es_afvc-maximumnumberofsplits              =  ls_afvc-maximumnumberofsplits           .
+            es_afvc-leadtimereductionstrategy          =  ls_afvc-leadtimereductionstrategy       .
+            es_afvc-opschedldreductionlevel            =  ls_afvc-opschedldreductionlevel         .
+            es_afvc-operlstschedldexecstrtdte          =  ls_afvc-operlstschedldexecstrtdte       .
+            es_afvc-operlstschedldexecstrttme          =  ls_afvc-operlstschedldexecstrttme       .
+            es_afvc-operlstschedldprocgstrtdte         =  ls_afvc-operlstschedldprocgstrtdte      .
+            es_afvc-operlstschedldprocgstrttme         =  ls_afvc-operlstschedldprocgstrttme      .
+            es_afvc-operlstschedldtrdwnstrtdte         =  ls_afvc-operlstschedldtrdwnstrtdte      .
+            es_afvc-operlstschedldtrdwnstrttme         =  ls_afvc-operlstschedldtrdwnstrttme      .
+            es_afvc-operlstschedldexecenddte           =  ls_afvc-operlstschedldexecenddte        .
+            es_afvc-operlstschedldexecendtme           =  ls_afvc-operlstschedldexecendtme        .
+            es_afvc-opltstschedldexecstrtdte           =  ls_afvc-opltstschedldexecstrtdte        .
+            es_afvc-opltstschedldexecstrttme           =  ls_afvc-opltstschedldexecstrttme        .
+            es_afvc-opltstschedldprocgstrtdte          =  ls_afvc-opltstschedldprocgstrtdte       .
+            es_afvc-opltstschedldprocgstrttme          =  ls_afvc-opltstschedldprocgstrttme       .
+            es_afvc-opltstschedldtrdwnstrtdte          =  ls_afvc-opltstschedldtrdwnstrtdte       .
 
-        es_afvc-OpLtstSchedldTrdwnStrtTme          =   ls_afvc-OpLtstSchedldTrdwnStrtTme       .
-        es_afvc-OpLtstSchedldExecEndDte            =   ls_afvc-OpLtstSchedldExecEndDte         .
-        es_afvc-OpLtstSchedldExecEndTme            =   ls_afvc-OpLtstSchedldExecEndTme         .
-        es_afvc-SchedldFcstdEarliestStartDate      =   ls_afvc-SchedldFcstdEarliestStartDate   .
-        es_afvc-SchedldFcstdEarliestStartTime      =   ls_afvc-SchedldFcstdEarliestStartTime   .
-        es_afvc-SchedldFcstdEarliestEndDate        =   ls_afvc-SchedldFcstdEarliestEndDate     .
-        es_afvc-SchedldFcstdEarliestEndTime        =   ls_afvc-SchedldFcstdEarliestEndTime     .
-        es_afvc-LatestSchedldFcstdStartDate        =   ls_afvc-LatestSchedldFcstdStartDate     .
-        es_afvc-SchedldFcstdLatestStartTime        =   ls_afvc-SchedldFcstdLatestStartTime     .
-        es_afvc-LatestSchedldFcstdEndDate          =   ls_afvc-LatestSchedldFcstdEndDate       .
-        es_afvc-SchedldFcstdLatestEndTime          =   ls_afvc-SchedldFcstdLatestEndTime       .
-        es_afvc-OperationConfirmedStartDate        =   ls_afvc-OperationConfirmedStartDate     .
-        es_afvc-OperationConfirmedEndDate          =   ls_afvc-OperationConfirmedEndDate       .
-        es_afvc-OpActualExecutionStartDate         =   ls_afvc-OpActualExecutionStartDate      .
-        es_afvc-OpActualExecutionStartTime         =   ls_afvc-OpActualExecutionStartTime      .
-        es_afvc-OpActualSetupEndDate               =   ls_afvc-OpActualSetupEndDate            .
-        es_afvc-OpActualSetupEndTime               =   ls_afvc-OpActualSetupEndTime            .
-        es_afvc-OpActualProcessingStartDate        =   ls_afvc-OpActualProcessingStartDate     .
-        es_afvc-OpActualProcessingStartTime        =   ls_afvc-OpActualProcessingStartTime     .
-        es_afvc-OpActualProcessingEndDate          =   ls_afvc-OpActualProcessingEndDate       .
-        es_afvc-OpActualProcessingEndTime          =   ls_afvc-OpActualProcessingEndTime       .
-        es_afvc-OpActualTeardownStartDate          =   ls_afvc-OpActualTeardownStartDate       .
-        es_afvc-OpActualTeardownStartTme           =   ls_afvc-OpActualTeardownStartTme        .
-        es_afvc-OpActualExecutionEndDate           =   ls_afvc-OpActualExecutionEndDate        .
-        es_afvc-OpActualExecutionEndTime           =   ls_afvc-OpActualExecutionEndTime        .
-        es_afvc-ActualForecastEndDate              =   ls_afvc-ActualForecastEndDate           .
-        es_afvc-ActualForecastEndTime              =   ls_afvc-ActualForecastEndTime           .
-        es_afvc-EarliestScheduledWaitStartDate     =   ls_afvc-EarliestScheduledWaitStartDate  .
-        es_afvc-EarliestScheduledWaitStartTime     =   ls_afvc-EarliestScheduledWaitStartTime  .
-        es_afvc-EarliestScheduledWaitEndDate       =   ls_afvc-EarliestScheduledWaitEndDate    .
-        es_afvc-EarliestScheduledWaitEndTime       =   ls_afvc-EarliestScheduledWaitEndTime    .
-        es_afvc-LatestScheduledWaitStartDate       =   ls_afvc-LatestScheduledWaitStartDate    .
-        es_afvc-LatestScheduledWaitStartTime       =   ls_afvc-LatestScheduledWaitStartTime    .
-        es_afvc-LatestScheduledWaitEndDate         =   ls_afvc-LatestScheduledWaitEndDate      .
-        es_afvc-LatestScheduledWaitEndTime         =   ls_afvc-LatestScheduledWaitEndTime      .
-        es_afvc-BreakDurationUnit                  =   ls_afvc-BreakDurationUnit               .
-        es_afvc-PlannedBreakDuration               =   ls_afvc-PlannedBreakDuration            .
-        es_afvc-ConfirmedBreakDuration             =   ls_afvc-ConfirmedBreakDuration          .
-        es_afvc-OverlapMinimumDurationUnit         =   ls_afvc-OverlapMinimumDurationUnit      .
-        es_afvc-OverlapMinimumDuration             =   ls_afvc-OverlapMinimumDuration          .
-        es_afvc-MaximumWaitDurationUnit            =   ls_afvc-MaximumWaitDurationUnit         .
-        es_afvc-MaximumWaitDuration                =   ls_afvc-MaximumWaitDuration             .
-        es_afvc-MinimumWaitDurationUnit            =   ls_afvc-MinimumWaitDurationUnit         .
-        es_afvc-MinimumWaitDuration                =   ls_afvc-MinimumWaitDuration             .
-        es_afvc-StandardMoveDurationUnit           =   ls_afvc-StandardMoveDurationUnit        .
-        es_afvc-StandardMoveDuration               =   ls_afvc-StandardMoveDuration            .
-        es_afvc-StandardQueueDurationUnit          =   ls_afvc-StandardQueueDurationUnit       .
-
-
-        es_afvc-StandardQueueDuration              = ls_afvc-StandardQueueDuration             .
-        es_afvc-MinimumQueueDurationUnit           = ls_afvc-MinimumQueueDurationUnit          .
-        es_afvc-MinimumQueueDuration               = ls_afvc-MinimumQueueDuration              .
-        es_afvc-MinimumMoveDurationUnit            = ls_afvc-MinimumMoveDurationUnit           .
-        es_afvc-MinimumMoveDuration                = ls_afvc-MinimumMoveDuration               .
-        es_afvc-OperationStandardDuration          = ls_afvc-OperationStandardDuration         .
-        es_afvc-OperationStandardDurationUnit      = ls_afvc-OperationStandardDurationUnit     .
-        es_afvc-MinimumDuration                    = ls_afvc-MinimumDuration                   .
-        es_afvc-MinimumDurationUnit                = ls_afvc-MinimumDurationUnit               .
-        es_afvc-MinimumProcessingDuration          = ls_afvc-MinimumProcessingDuration         .
-        es_afvc-MinimumProcessingDurationUnit      = ls_afvc-MinimumProcessingDurationUnit     .
-        es_afvc-ScheduledMoveDuration              = ls_afvc-ScheduledMoveDuration             .
-        es_afvc-ScheduledMoveDurationUnit          = ls_afvc-ScheduledMoveDurationUnit         .
-        es_afvc-ScheduledQueueDuration             = ls_afvc-ScheduledQueueDuration            .
-        es_afvc-ScheduledQueueDurationUnit         = ls_afvc-ScheduledQueueDurationUnit        .
-        es_afvc-ScheduledWaitDuration              = ls_afvc-ScheduledWaitDuration             .
-        es_afvc-ScheduledWaitDurationUnit          = ls_afvc-ScheduledWaitDurationUnit         .
-        es_afvc-PlannedDeliveryDuration            = ls_afvc-PlannedDeliveryDuration           .
-        es_afvc-OpPlannedSetupDurn                 = ls_afvc-OpPlannedSetupDurn                .
-        es_afvc-OpPlannedSetupDurnUnit             = ls_afvc-OpPlannedSetupDurnUnit            .
-        es_afvc-OpPlannedProcessingDurn            = ls_afvc-OpPlannedProcessingDurn           .
-        es_afvc-OpPlannedProcessingDurnUnit        = ls_afvc-OpPlannedProcessingDurnUnit       .
-        es_afvc-OpPlannedTeardownDurn              = ls_afvc-OpPlannedTeardownDurn             .
-        es_afvc-OpPlannedTeardownDurnUnit          = ls_afvc-OpPlannedTeardownDurnUnit         .
-        es_afvc-ActualForecastDuration             = ls_afvc-ActualForecastDuration            .
-        es_afvc-ActualForecastDurationUnit         = ls_afvc-ActualForecastDurationUnit        .
-        es_afvc-ForecastProcessingDuration         = ls_afvc-ForecastProcessingDuration        .
-        es_afvc-ForecastProcessingDurationUnit     = ls_afvc-ForecastProcessingDurationUnit    .
-        es_afvc-StartDateOffsetReferenceCode       = ls_afvc-StartDateOffsetReferenceCode      .
-        es_afvc-StartDateOffsetDurationUnit        = ls_afvc-StartDateOffsetDurationUnit       .
-        es_afvc-StartDateOffsetDuration            = ls_afvc-StartDateOffsetDuration           .
-        es_afvc-EndDateOffsetReferenceCode         = ls_afvc-EndDateOffsetReferenceCode        .
-        es_afvc-EndDateOffsetDurationUnit          = ls_afvc-EndDateOffsetDurationUnit         .
-        es_afvc-EndDateOffsetDuration              = ls_afvc-EndDateOffsetDuration             .
-        es_afvc-StandardWorkFormulaParamGroup      = ls_afvc-StandardWorkFormulaParamGroup     .
-        es_afvc-OperationUnit                      = ls_afvc-OperationUnit                     .
-        es_afvc-OpQtyToBaseQtyDnmntr               = ls_afvc-OpQtyToBaseQtyDnmntr              .
-        es_afvc-OpQtyToBaseQtyNmrtr                = ls_afvc-OpQtyToBaseQtyNmrtr               .
-        es_afvc-OperationScrapPercent              = ls_afvc-OperationScrapPercent             .
-        es_afvc-OperationReferenceQuantity         = ls_afvc-OperationReferenceQuantity        .
-        es_afvc-OpPlannedTotalQuantity             = ls_afvc-OpPlannedTotalQuantity            .
-        es_afvc-OpPlannedScrapQuantity             = ls_afvc-OpPlannedScrapQuantity            .
-        es_afvc-OpPlannedYieldQuantity             = ls_afvc-OpPlannedYieldQuantity            .
-        es_afvc-OpTotalConfirmedYieldQty           = ls_afvc-OpTotalConfirmedYieldQty          .
+            es_afvc-opltstschedldtrdwnstrttme          =   ls_afvc-opltstschedldtrdwnstrttme       .
+            es_afvc-opltstschedldexecenddte            =   ls_afvc-opltstschedldexecenddte         .
+            es_afvc-opltstschedldexecendtme            =   ls_afvc-opltstschedldexecendtme         .
+            es_afvc-schedldfcstdearlieststartdate      =   ls_afvc-schedldfcstdearlieststartdate   .
+            es_afvc-schedldfcstdearlieststarttime      =   ls_afvc-schedldfcstdearlieststarttime   .
+            es_afvc-schedldfcstdearliestenddate        =   ls_afvc-schedldfcstdearliestenddate     .
+            es_afvc-schedldfcstdearliestendtime        =   ls_afvc-schedldfcstdearliestendtime     .
+            es_afvc-latestschedldfcstdstartdate        =   ls_afvc-latestschedldfcstdstartdate     .
+            es_afvc-schedldfcstdlateststarttime        =   ls_afvc-schedldfcstdlateststarttime     .
+            es_afvc-latestschedldfcstdenddate          =   ls_afvc-latestschedldfcstdenddate       .
+            es_afvc-schedldfcstdlatestendtime          =   ls_afvc-schedldfcstdlatestendtime       .
+            es_afvc-operationconfirmedstartdate        =   ls_afvc-operationconfirmedstartdate     .
+            es_afvc-operationconfirmedenddate          =   ls_afvc-operationconfirmedenddate       .
+            es_afvc-opactualexecutionstartdate         =   ls_afvc-opactualexecutionstartdate      .
+            es_afvc-opactualexecutionstarttime         =   ls_afvc-opactualexecutionstarttime      .
+            es_afvc-opactualsetupenddate               =   ls_afvc-opactualsetupenddate            .
+            es_afvc-opactualsetupendtime               =   ls_afvc-opactualsetupendtime            .
+            es_afvc-opactualprocessingstartdate        =   ls_afvc-opactualprocessingstartdate     .
+            es_afvc-opactualprocessingstarttime        =   ls_afvc-opactualprocessingstarttime     .
+            es_afvc-opactualprocessingenddate          =   ls_afvc-opactualprocessingenddate       .
+            es_afvc-opactualprocessingendtime          =   ls_afvc-opactualprocessingendtime       .
+            es_afvc-opactualteardownstartdate          =   ls_afvc-opactualteardownstartdate       .
+            es_afvc-opactualteardownstarttme           =   ls_afvc-opactualteardownstarttme        .
+            es_afvc-opactualexecutionenddate           =   ls_afvc-opactualexecutionenddate        .
+            es_afvc-opactualexecutionendtime           =   ls_afvc-opactualexecutionendtime        .
+            es_afvc-actualforecastenddate              =   ls_afvc-actualforecastenddate           .
+            es_afvc-actualforecastendtime              =   ls_afvc-actualforecastendtime           .
+            es_afvc-earliestscheduledwaitstartdate     =   ls_afvc-earliestscheduledwaitstartdate  .
+            es_afvc-earliestscheduledwaitstarttime     =   ls_afvc-earliestscheduledwaitstarttime  .
+            es_afvc-earliestscheduledwaitenddate       =   ls_afvc-earliestscheduledwaitenddate    .
+            es_afvc-earliestscheduledwaitendtime       =   ls_afvc-earliestscheduledwaitendtime    .
+            es_afvc-latestscheduledwaitstartdate       =   ls_afvc-latestscheduledwaitstartdate    .
+            es_afvc-latestscheduledwaitstarttime       =   ls_afvc-latestscheduledwaitstarttime    .
+            es_afvc-latestscheduledwaitenddate         =   ls_afvc-latestscheduledwaitenddate      .
+            es_afvc-latestscheduledwaitendtime         =   ls_afvc-latestscheduledwaitendtime      .
+            es_afvc-breakdurationunit                  =   ls_afvc-breakdurationunit               .
+            es_afvc-plannedbreakduration               =   ls_afvc-plannedbreakduration            .
+            es_afvc-confirmedbreakduration             =   ls_afvc-confirmedbreakduration          .
+            es_afvc-overlapminimumdurationunit         =   ls_afvc-overlapminimumdurationunit      .
+            es_afvc-overlapminimumduration             =   ls_afvc-overlapminimumduration          .
+            es_afvc-maximumwaitdurationunit            =   ls_afvc-maximumwaitdurationunit         .
+            es_afvc-maximumwaitduration                =   ls_afvc-maximumwaitduration             .
+            es_afvc-minimumwaitdurationunit            =   ls_afvc-minimumwaitdurationunit         .
+            es_afvc-minimumwaitduration                =   ls_afvc-minimumwaitduration             .
+            es_afvc-standardmovedurationunit           =   ls_afvc-standardmovedurationunit        .
+            es_afvc-standardmoveduration               =   ls_afvc-standardmoveduration            .
+            es_afvc-standardqueuedurationunit          =   ls_afvc-standardqueuedurationunit       .
 
 
-        es_afvc-OpTotalConfirmedScrapQty           =  ls_afvc-OpTotalConfirmedScrapQty              .
-        es_afvc-OperationConfirmedReworkQty        =  ls_afvc-OperationConfirmedReworkQty           .
-        es_afvc-ProductionUnit                     =  ls_afvc-ProductionUnit                        .
-        es_afvc-OpTotConfdYieldQtyInOrdQtyUnit     =  ls_afvc-OpTotConfdYieldQtyInOrdQtyUnit        .
-        es_afvc-OpWorkQuantityUnit1                =  ls_afvc-OpWorkQuantityUnit1                   .
-        es_afvc-OpConfirmedWorkQuantity1           =  ls_afvc-OpConfirmedWorkQuantity1              .
-        es_afvc-NoFurtherOpWorkQuantity1IsExpd     =  ls_afvc-NoFurtherOpWorkQuantity1IsExpd        .
-        es_afvc-OpWorkQuantityUnit2                =  ls_afvc-OpWorkQuantityUnit2                   .
-        es_afvc-OpConfirmedWorkQuantity2           =  ls_afvc-OpConfirmedWorkQuantity2              .
-        es_afvc-NoFurtherOpWorkQuantity2IsExpd     =  ls_afvc-NoFurtherOpWorkQuantity2IsExpd        .
-        es_afvc-OpWorkQuantityUnit3                =  ls_afvc-OpWorkQuantityUnit3                   .
-        es_afvc-OpConfirmedWorkQuantity3           =  ls_afvc-OpConfirmedWorkQuantity3              .
-        es_afvc-NoFurtherOpWorkQuantity3IsExpd     =  ls_afvc-NoFurtherOpWorkQuantity3IsExpd        .
-        es_afvc-OpWorkQuantityUnit4                =  ls_afvc-OpWorkQuantityUnit4                   .
-        es_afvc-OpConfirmedWorkQuantity4           =  ls_afvc-OpConfirmedWorkQuantity4              .
-        es_afvc-NoFurtherOpWorkQuantity4IsExpd     =  ls_afvc-NoFurtherOpWorkQuantity4IsExpd        .
-        es_afvc-OpWorkQuantityUnit5                =  ls_afvc-OpWorkQuantityUnit5                   .
-        es_afvc-OpConfirmedWorkQuantity5           =  ls_afvc-OpConfirmedWorkQuantity5              .
-        es_afvc-NoFurtherOpWorkQuantity5IsExpd     =  ls_afvc-NoFurtherOpWorkQuantity5IsExpd        .
-        es_afvc-OpWorkQuantityUnit6                =  ls_afvc-OpWorkQuantityUnit6                   .
-        es_afvc-OpConfirmedWorkQuantity6           =  ls_afvc-OpConfirmedWorkQuantity6              .
-        es_afvc-NoFurtherOpWorkQuantity6IsExpd     =  ls_afvc-NoFurtherOpWorkQuantity6IsExpd        .
-        es_afvc-WorkCenterStandardWorkQtyUnit1     =  ls_afvc-WorkCenterStandardWorkQtyUnit1        .
-        es_afvc-WorkCenterStandardWorkQty1         =  ls_afvc-WorkCenterStandardWorkQty1            .
-        es_afvc-CostCtrActivityType1               =  ls_afvc-CostCtrActivityType1                  .
-        es_afvc-WorkCenterStandardWorkQtyUnit2     =  ls_afvc-WorkCenterStandardWorkQtyUnit2        .
-        es_afvc-WorkCenterStandardWorkQty2         =  ls_afvc-WorkCenterStandardWorkQty2            .
-        es_afvc-CostCtrActivityType2               =  ls_afvc-CostCtrActivityType2                  .
-        es_afvc-WorkCenterStandardWorkQtyUnit3     =  ls_afvc-WorkCenterStandardWorkQtyUnit3        .
-        es_afvc-WorkCenterStandardWorkQty3         =  ls_afvc-WorkCenterStandardWorkQty3            .
-        es_afvc-CostCtrActivityType3               =  ls_afvc-CostCtrActivityType3                  .
-        es_afvc-WorkCenterStandardWorkQtyUnit4     =  ls_afvc-WorkCenterStandardWorkQtyUnit4        .
-        es_afvc-WorkCenterStandardWorkQty4         =  ls_afvc-WorkCenterStandardWorkQty4            .
-        es_afvc-CostCtrActivityType4               =  ls_afvc-CostCtrActivityType4                  .
-        es_afvc-WorkCenterStandardWorkQtyUnit5     =  ls_afvc-WorkCenterStandardWorkQtyUnit5        .
-        es_afvc-WorkCenterStandardWorkQty5         =  ls_afvc-WorkCenterStandardWorkQty5            .
-        es_afvc-CostCtrActivityType5               =  ls_afvc-CostCtrActivityType5                  .
-        es_afvc-WorkCenterStandardWorkQtyUnit6     =  ls_afvc-WorkCenterStandardWorkQtyUnit6        .
-        es_afvc-WorkCenterStandardWorkQty6         =  ls_afvc-WorkCenterStandardWorkQty6            .
-        es_afvc-CostCtrActivityType6               =  ls_afvc-CostCtrActivityType6                  .
-        es_afvc-ForecastWorkQuantity1              =  ls_afvc-ForecastWorkQuantity1                 .
-        es_afvc-ForecastWorkQuantity2              =  ls_afvc-ForecastWorkQuantity2                 .
-        es_afvc-ForecastWorkQuantity3              =  ls_afvc-ForecastWorkQuantity3                 .
-        es_afvc-ForecastWorkQuantity4              =  ls_afvc-ForecastWorkQuantity4                 .
-        es_afvc-ForecastWorkQuantity5              =  ls_afvc-ForecastWorkQuantity5                 .
-        es_afvc-ForecastWorkQuantity6              =  ls_afvc-ForecastWorkQuantity6                 .
-        es_afvc-BusinessProcess                    =  ls_afvc-BusinessProcess                       .
-        es_afvc-BusinessProcessEntryUnit           =  ls_afvc-BusinessProcessEntryUnit              .
-        es_afvc-BusinessProcessConfirmedQty        =  ls_afvc-BusinessProcessConfirmedQty           .
-        es_afvc-NoFurtherBusinessProcQtyIsExpd     =  ls_afvc-NoFurtherBusinessProcQtyIsExpd        .
-        es_afvc-BusinessProcRemainingQtyUnit       =  ls_afvc-BusinessProcRemainingQtyUnit          .
-        es_afvc-BusinessProcessRemainingQty        =  ls_afvc-BusinessProcessRemainingQty           .
-        es_afvc-SetupOpActyNtwkInstance            =  ls_afvc-SetupOpActyNtwkInstance               .
-        es_afvc-ProduceOpActyNtwkInstance          =  ls_afvc-ProduceOpActyNtwkInstance             .
-        es_afvc-TeardownOpActyNtwkInstance         =  ls_afvc-TeardownOpActyNtwkInstance            .
-        es_afvc-FreeDefinedTableFieldSemantic      =  ls_afvc-FreeDefinedTableFieldSemantic         .
-        es_afvc-FreeDefinedAttribute01             =  ls_afvc-FreeDefinedAttribute01                .
-        es_afvc-FreeDefinedAttribute02             =  ls_afvc-FreeDefinedAttribute02                .
-        es_afvc-FreeDefinedAttribute03             =  ls_afvc-FreeDefinedAttribute03                .
-        es_afvc-FreeDefinedAttribute04             =  ls_afvc-FreeDefinedAttribute04                .
-        es_afvc-FreeDefinedQuantity1Unit           =  ls_afvc-FreeDefinedQuantity1Unit              .
-        es_afvc-FreeDefinedQuantity1               =  ls_afvc-FreeDefinedQuantity1                  .
-        es_afvc-FreeDefinedQuantity2Unit           =  ls_afvc-FreeDefinedQuantity2Unit              .
-        es_afvc-FreeDefinedQuantity2               =  ls_afvc-FreeDefinedQuantity2                  .
-        es_afvc-FreeDefinedAmount1Currency         =  ls_afvc-FreeDefinedAmount1Currency            .
-        es_afvc-FreeDefinedAmount1                 =  ls_afvc-FreeDefinedAmount1                    .
-        es_afvc-FreeDefinedAmount2Currency         =  ls_afvc-FreeDefinedAmount2Currency            .
-        es_afvc-FreeDefinedAmount2                 =  ls_afvc-FreeDefinedAmount2                    .
-        es_afvc-FreeDefinedDate1                   =  ls_afvc-FreeDefinedDate1                      .
-        es_afvc-FreeDefinedDate2                   =  ls_afvc-FreeDefinedDate2                      .
-        es_afvc-FreeDefinedIndicator1              =  ls_afvc-FreeDefinedIndicator1                 .
-        es_afvc-FreeDefinedIndicator2              =  ls_afvc-FreeDefinedIndicator2                 .
-
-        condense es_afvc-MfgOrderInternalID                .
-        condense es_afvc-OrderOperationInternalID          .
-        condense es_afvc-ManufacturingOrder                .
-        condense es_afvc-ManufacturingOrderSequence        .
-        condense es_afvc-ManufacturingOrderOperation       .
-        condense es_afvc-ManufacturingOrderOperation_2     .
-        condense es_afvc-ManufacturingOrderSubOperation    .
-        condense es_afvc-ManufacturingOrdSubOperation_2    .
-        condense es_afvc-MfgOrderOperationOrSubOp          .
-        condense es_afvc-MfgOrderOperationOrSubOp_2        .
-        condense es_afvc-MfgOrderOperationIsPhase          .
-        condense es_afvc-OrderIntBillOfOpItemOfPhase       .
-        condense es_afvc-MfgOrderPhaseSuperiorOperation    .
-        condense es_afvc-SuperiorOperation_2               .
-        condense es_afvc-ManufacturingOrderCategory        .
-        condense es_afvc-ManufacturingOrderType            .
-        condense es_afvc-ProductionSupervisor              .
-        condense es_afvc-MRPController                     .
-        condense es_afvc-ResponsiblePlannerGroup           .
-        condense es_afvc-ProductConfiguration              .
-        condense es_afvc-InspectionLot                     .
-        condense es_afvc-ManufacturingOrderImportance      .
-        condense es_afvc-MfgOrderOperationText             .
-        condense es_afvc-OperationStandardTextCode         .
-        condense es_afvc-OperationHasLongText              .
-        condense es_afvc-Language                          .
-        condense es_afvc-OperationIsToBeDeleted            .
-        condense es_afvc-NumberOfCapacities                .
-        condense es_afvc-NumberOfConfirmationSlips         .
-        condense es_afvc-OperationImportance               .
-        condense es_afvc-SuperiorOperationInternalID       .
-        condense es_afvc-Plant                             .
-        condense es_afvc-WorkCenterInternalID              .
-        condense es_afvc-WorkCenterTypeCode                .
-
-        condense es_afvc-WorkCenterTypeCode_2              .
-        condense es_afvc-OperationControlProfile           .
-        condense es_afvc-ControlRecipeDestination          .
-        condense es_afvc-OperationConfirmation             .
-        condense es_afvc-NumberOfOperationConfirmations    .
-        condense es_afvc-FactoryCalendar                   .
-        condense es_afvc-CapacityRequirement               .
-        condense es_afvc-CapacityRequirementItem           .
-        condense es_afvc-ChangeNumber                      .
-        condense es_afvc-ObjectInternalID                  .
-        condense es_afvc-OperationTrackingNumber           .
-        condense es_afvc-BillOfOperationsType              .
-        condense es_afvc-BillOfOperationsGroup             .
-        condense es_afvc-BillOfOperationsVariant           .
-        condense es_afvc-BillOfOperationsSequence          .
-        condense es_afvc-BOOOperationInternalID            .
-        condense es_afvc-BillOfOperationsVersion           .
-        condense es_afvc-BillOfMaterialCategory            .
-        condense es_afvc-BillOfMaterialInternalID          .
-        condense es_afvc-BillOfMaterialInternalID_2        .
-        condense es_afvc-BillOfMaterialItemNodeNumber      .
-        condense es_afvc-BOMItemNodeCount                  .
-        condense es_afvc-ExtProcgOperationHasSubcontrg     .
-        condense es_afvc-PurchasingOrganization            .
-        condense es_afvc-PurchasingGroup                   .
-        condense es_afvc-PurchaseRequisition               .
-        condense es_afvc-PurchaseRequisitionItem           .
-        condense es_afvc-PurchaseOrder                     .
-        condense es_afvc-PurchaseOrderItem                 .
-        condense es_afvc-PurchasingInfoRecord              .
-        condense es_afvc-PurgInfoRecdDataIsFixed           .
-        condense es_afvc-PurchasingInfoRecordCategory      .
-        condense es_afvc-Supplier                          .
-        condense es_afvc-GoodsRecipientName                .
-        condense es_afvc-UnloadingPointName                .
-        condense es_afvc-MaterialGroup                     .
-        condense es_afvc-OpExternalProcessingCurrency      .
-        condense es_afvc-OpExternalProcessingPrice         .
-        condense es_afvc-NumberOfOperationPriceUnits       .
-        condense es_afvc-CompanyCode                       .
-        condense es_afvc-BusinessArea                      .
-        condense es_afvc-ControllingArea                   .
-
-        condense es_afvc-ProfitCenter                       .
-        condense es_afvc-RequestingCostCenter               .
-        condense es_afvc-CostElement                        .
-        condense es_afvc-CostingVariant                     .
-        condense es_afvc-CostingSheet                       .
-        condense es_afvc-CostEstimate                       .
-        condense es_afvc-ControllingObjectCurrency          .
-        condense es_afvc-ControllingObjectClass             .
-        condense es_afvc-FunctionalArea                     .
-        condense es_afvc-TaxJurisdiction                    .
-        condense es_afvc-EmployeeWageType                   .
-        condense es_afvc-EmployeeWageGroup                  .
-        condense es_afvc-EmployeeSuitability                .
-        condense es_afvc-NumberOfTimeTickets                .
-        condense es_afvc-Personnel                          .
-        condense es_afvc-NumberOfEmployees                  .
-        condense es_afvc-OperationSetupGroupCategory        .
-        condense es_afvc-OperationSetupGroup                .
-        condense es_afvc-OperationSetupType                 .
-        condense es_afvc-OperationOverlappingIsRequired     .
-        condense es_afvc-OperationOverlappingIsPossible     .
-        condense es_afvc-OperationsIsAlwaysOverlapping      .
-        condense es_afvc-OperationSplitIsRequired           .
-        condense es_afvc-MaximumNumberOfSplits              .
-        condense es_afvc-LeadTimeReductionStrategy          .
-        condense es_afvc-OpSchedldReductionLevel            .
-        condense es_afvc-OpErlstSchedldExecStrtDte          .
-        condense es_afvc-OpErlstSchedldExecStrtTme          .
-        condense es_afvc-OpErlstSchedldProcgStrtDte         .
-        condense es_afvc-OpErlstSchedldProcgStrtTme         .
-        condense es_afvc-OpErlstSchedldTrdwnStrtDte         .
-        condense es_afvc-OpErlstSchedldTrdwnStrtTme         .
-        condense es_afvc-OpErlstSchedldExecEndDte           .
-        condense es_afvc-OpErlstSchedldExecEndTme           .
-        condense es_afvc-OpLtstSchedldExecStrtDte           .
-        condense es_afvc-OpLtstSchedldExecStrtTme           .
-        condense es_afvc-OpLtstSchedldProcgStrtDte          .
-        condense es_afvc-OpLtstSchedldProcgStrtTme          .
-        condense es_afvc-OpLtstSchedldTrdwnStrtDte           .
-
-        condense es_afvc-OpLtstSchedldTrdwnStrtTme          .
-        condense es_afvc-OpLtstSchedldExecEndDte            .
-        condense es_afvc-OpLtstSchedldExecEndTme            .
-        condense es_afvc-SchedldFcstdEarliestStartDate      .
-        condense es_afvc-SchedldFcstdEarliestStartTime      .
-        condense es_afvc-SchedldFcstdEarliestEndDate        .
-        condense es_afvc-SchedldFcstdEarliestEndTime        .
-        condense es_afvc-LatestSchedldFcstdStartDate        .
-        condense es_afvc-SchedldFcstdLatestStartTime        .
-        condense es_afvc-LatestSchedldFcstdEndDate          .
-        condense es_afvc-SchedldFcstdLatestEndTime          .
-        condense es_afvc-OperationConfirmedStartDate        .
-        condense es_afvc-OperationConfirmedEndDate          .
-        condense es_afvc-OpActualExecutionStartDate         .
-        condense es_afvc-OpActualExecutionStartTime         .
-        condense es_afvc-OpActualSetupEndDate               .
-        condense es_afvc-OpActualSetupEndTime               .
-        condense es_afvc-OpActualProcessingStartDate        .
-        condense es_afvc-OpActualProcessingStartTime        .
-        condense es_afvc-OpActualProcessingEndDate          .
-        condense es_afvc-OpActualProcessingEndTime          .
-        condense es_afvc-OpActualTeardownStartDate          .
-        condense es_afvc-OpActualTeardownStartTme           .
-        condense es_afvc-OpActualExecutionEndDate           .
-        condense es_afvc-OpActualExecutionEndTime           .
-        condense es_afvc-ActualForecastEndDate              .
-        condense es_afvc-ActualForecastEndTime              .
-        condense es_afvc-EarliestScheduledWaitStartDate     .
-        condense es_afvc-EarliestScheduledWaitStartTime     .
-        condense es_afvc-EarliestScheduledWaitEndDate       .
-        condense es_afvc-EarliestScheduledWaitEndTime       .
-        condense es_afvc-LatestScheduledWaitStartDate       .
-        condense es_afvc-LatestScheduledWaitStartTime       .
-        condense es_afvc-LatestScheduledWaitEndDate         .
-        condense es_afvc-LatestScheduledWaitEndTime         .
-        condense es_afvc-BreakDurationUnit                  .
-        condense es_afvc-PlannedBreakDuration               .
-        condense es_afvc-ConfirmedBreakDuration             .
-        condense es_afvc-OverlapMinimumDurationUnit         .
-        condense es_afvc-OverlapMinimumDuration             .
-        condense es_afvc-MaximumWaitDurationUnit            .
-        condense es_afvc-MaximumWaitDuration                .
-        condense es_afvc-MinimumWaitDurationUnit            .
-        condense es_afvc-MinimumWaitDuration                .
-        condense es_afvc-StandardMoveDurationUnit           .
-        condense es_afvc-StandardMoveDuration               .
-        condense es_afvc-StandardQueueDurationUnit          .
+            es_afvc-standardqueueduration              = ls_afvc-standardqueueduration             .
+            es_afvc-minimumqueuedurationunit           = ls_afvc-minimumqueuedurationunit          .
+            es_afvc-minimumqueueduration               = ls_afvc-minimumqueueduration              .
+            es_afvc-minimummovedurationunit            = ls_afvc-minimummovedurationunit           .
+            es_afvc-minimummoveduration                = ls_afvc-minimummoveduration               .
+            es_afvc-operationstandardduration          = ls_afvc-operationstandardduration         .
+            es_afvc-operationstandarddurationunit      = ls_afvc-operationstandarddurationunit     .
+            es_afvc-minimumduration                    = ls_afvc-minimumduration                   .
+            es_afvc-minimumdurationunit                = ls_afvc-minimumdurationunit               .
+            es_afvc-minimumprocessingduration          = ls_afvc-minimumprocessingduration         .
+            es_afvc-minimumprocessingdurationunit      = ls_afvc-minimumprocessingdurationunit     .
+            es_afvc-scheduledmoveduration              = ls_afvc-scheduledmoveduration             .
+            es_afvc-scheduledmovedurationunit          = ls_afvc-scheduledmovedurationunit         .
+            es_afvc-scheduledqueueduration             = ls_afvc-scheduledqueueduration            .
+            es_afvc-scheduledqueuedurationunit         = ls_afvc-scheduledqueuedurationunit        .
+            es_afvc-scheduledwaitduration              = ls_afvc-scheduledwaitduration             .
+            es_afvc-scheduledwaitdurationunit          = ls_afvc-scheduledwaitdurationunit         .
+            es_afvc-planneddeliveryduration            = ls_afvc-planneddeliveryduration           .
+            es_afvc-opplannedsetupdurn                 = ls_afvc-opplannedsetupdurn                .
+            es_afvc-opplannedsetupdurnunit             = ls_afvc-opplannedsetupdurnunit            .
+            es_afvc-opplannedprocessingdurn            = ls_afvc-opplannedprocessingdurn           .
+            es_afvc-opplannedprocessingdurnunit        = ls_afvc-opplannedprocessingdurnunit       .
+            es_afvc-opplannedteardowndurn              = ls_afvc-opplannedteardowndurn             .
+            es_afvc-opplannedteardowndurnunit          = ls_afvc-opplannedteardowndurnunit         .
+            es_afvc-actualforecastduration             = ls_afvc-actualforecastduration            .
+            es_afvc-actualforecastdurationunit         = ls_afvc-actualforecastdurationunit        .
+            es_afvc-forecastprocessingduration         = ls_afvc-forecastprocessingduration        .
+            es_afvc-forecastprocessingdurationunit     = ls_afvc-forecastprocessingdurationunit    .
+            es_afvc-startdateoffsetreferencecode       = ls_afvc-startdateoffsetreferencecode      .
+            es_afvc-startdateoffsetdurationunit        = ls_afvc-startdateoffsetdurationunit       .
+            es_afvc-startdateoffsetduration            = ls_afvc-startdateoffsetduration           .
+            es_afvc-enddateoffsetreferencecode         = ls_afvc-enddateoffsetreferencecode        .
+            es_afvc-enddateoffsetdurationunit          = ls_afvc-enddateoffsetdurationunit         .
+            es_afvc-enddateoffsetduration              = ls_afvc-enddateoffsetduration             .
+            es_afvc-standardworkformulaparamgroup      = ls_afvc-standardworkformulaparamgroup     .
+            es_afvc-operationunit                      = ls_afvc-operationunit                     .
+            es_afvc-opqtytobaseqtydnmntr               = ls_afvc-opqtytobaseqtydnmntr              .
+            es_afvc-opqtytobaseqtynmrtr                = ls_afvc-opqtytobaseqtynmrtr               .
+            es_afvc-operationscrappercent              = ls_afvc-operationscrappercent             .
+            es_afvc-operationreferencequantity         = ls_afvc-operationreferencequantity        .
+            es_afvc-opplannedtotalquantity             = ls_afvc-opplannedtotalquantity            .
+            es_afvc-opplannedscrapquantity             = ls_afvc-opplannedscrapquantity            .
+            es_afvc-opplannedyieldquantity             = ls_afvc-opplannedyieldquantity            .
+            es_afvc-optotalconfirmedyieldqty           = ls_afvc-optotalconfirmedyieldqty          .
 
 
-        condense es_afvc-StandardQueueDuration              .
-        condense es_afvc-MinimumQueueDurationUnit           .
-        condense es_afvc-MinimumQueueDuration               .
-        condense es_afvc-MinimumMoveDurationUnit            .
-        condense es_afvc-MinimumMoveDuration                .
-        condense es_afvc-OperationStandardDuration          .
-        condense es_afvc-OperationStandardDurationUnit      .
-        condense es_afvc-MinimumDuration                    .
-        condense es_afvc-MinimumDurationUnit                .
-        condense es_afvc-MinimumProcessingDuration          .
-        condense es_afvc-MinimumProcessingDurationUnit      .
-        condense es_afvc-ScheduledMoveDuration              .
-        condense es_afvc-ScheduledMoveDurationUnit          .
-        condense es_afvc-ScheduledQueueDuration             .
-        condense es_afvc-ScheduledQueueDurationUnit         .
-        condense es_afvc-ScheduledWaitDuration              .
-        condense es_afvc-ScheduledWaitDurationUnit          .
-        condense es_afvc-PlannedDeliveryDuration            .
-        condense es_afvc-OpPlannedSetupDurn                 .
-        condense es_afvc-OpPlannedSetupDurnUnit             .
-        condense es_afvc-OpPlannedProcessingDurn            .
-        condense es_afvc-OpPlannedProcessingDurnUnit        .
-        condense es_afvc-OpPlannedTeardownDurn              .
-        condense es_afvc-OpPlannedTeardownDurnUnit          .
-        condense es_afvc-ActualForecastDuration             .
-        condense es_afvc-ActualForecastDurationUnit         .
-        condense es_afvc-ForecastProcessingDuration         .
-        condense es_afvc-ForecastProcessingDurationUnit     .
-        condense es_afvc-StartDateOffsetReferenceCode       .
-        condense es_afvc-StartDateOffsetDurationUnit        .
-        condense es_afvc-StartDateOffsetDuration            .
-        condense es_afvc-EndDateOffsetReferenceCode         .
-        condense es_afvc-EndDateOffsetDurationUnit          .
-        condense es_afvc-EndDateOffsetDuration              .
-        condense es_afvc-StandardWorkFormulaParamGroup      .
-        condense es_afvc-OperationUnit                      .
-        condense es_afvc-OpQtyToBaseQtyDnmntr               .
-        condense es_afvc-OpQtyToBaseQtyNmrtr                .
-        condense es_afvc-OperationScrapPercent              .
-        condense es_afvc-OperationReferenceQuantity         .
-        condense es_afvc-OpPlannedTotalQuantity             .
-        condense es_afvc-OpPlannedScrapQuantity             .
-        condense es_afvc-OpPlannedYieldQuantity             .
-        condense es_afvc-OpTotalConfirmedYieldQty           .
+            es_afvc-optotalconfirmedscrapqty           =  ls_afvc-optotalconfirmedscrapqty              .
+            es_afvc-operationconfirmedreworkqty        =  ls_afvc-operationconfirmedreworkqty           .
+            es_afvc-productionunit                     =  ls_afvc-productionunit                        .
+            es_afvc-optotconfdyieldqtyinordqtyunit     =  ls_afvc-optotconfdyieldqtyinordqtyunit        .
+            es_afvc-opworkquantityunit1                =  ls_afvc-opworkquantityunit1                   .
+            es_afvc-opconfirmedworkquantity1           =  ls_afvc-opconfirmedworkquantity1              .
+            es_afvc-nofurtheropworkquantity1isexpd     =  ls_afvc-nofurtheropworkquantity1isexpd        .
+            es_afvc-opworkquantityunit2                =  ls_afvc-opworkquantityunit2                   .
+            es_afvc-opconfirmedworkquantity2           =  ls_afvc-opconfirmedworkquantity2              .
+            es_afvc-nofurtheropworkquantity2isexpd     =  ls_afvc-nofurtheropworkquantity2isexpd        .
+            es_afvc-opworkquantityunit3                =  ls_afvc-opworkquantityunit3                   .
+            es_afvc-opconfirmedworkquantity3           =  ls_afvc-opconfirmedworkquantity3              .
+            es_afvc-nofurtheropworkquantity3isexpd     =  ls_afvc-nofurtheropworkquantity3isexpd        .
+            es_afvc-opworkquantityunit4                =  ls_afvc-opworkquantityunit4                   .
+            es_afvc-opconfirmedworkquantity4           =  ls_afvc-opconfirmedworkquantity4              .
+            es_afvc-nofurtheropworkquantity4isexpd     =  ls_afvc-nofurtheropworkquantity4isexpd        .
+            es_afvc-opworkquantityunit5                =  ls_afvc-opworkquantityunit5                   .
+            es_afvc-opconfirmedworkquantity5           =  ls_afvc-opconfirmedworkquantity5              .
+            es_afvc-nofurtheropworkquantity5isexpd     =  ls_afvc-nofurtheropworkquantity5isexpd        .
+            es_afvc-opworkquantityunit6                =  ls_afvc-opworkquantityunit6                   .
+            es_afvc-opconfirmedworkquantity6           =  ls_afvc-opconfirmedworkquantity6              .
+            es_afvc-nofurtheropworkquantity6isexpd     =  ls_afvc-nofurtheropworkquantity6isexpd        .
+            es_afvc-workcenterstandardworkqtyunit1     =  ls_afvc-workcenterstandardworkqtyunit1        .
+            es_afvc-workcenterstandardworkqty1         =  ls_afvc-workcenterstandardworkqty1            .
+            es_afvc-costctractivitytype1               =  ls_afvc-costctractivitytype1                  .
+            es_afvc-workcenterstandardworkqtyunit2     =  ls_afvc-workcenterstandardworkqtyunit2        .
+            es_afvc-workcenterstandardworkqty2         =  ls_afvc-workcenterstandardworkqty2            .
+            es_afvc-costctractivitytype2               =  ls_afvc-costctractivitytype2                  .
+            es_afvc-workcenterstandardworkqtyunit3     =  ls_afvc-workcenterstandardworkqtyunit3        .
+            es_afvc-workcenterstandardworkqty3         =  ls_afvc-workcenterstandardworkqty3            .
+            es_afvc-costctractivitytype3               =  ls_afvc-costctractivitytype3                  .
+            es_afvc-workcenterstandardworkqtyunit4     =  ls_afvc-workcenterstandardworkqtyunit4        .
+            es_afvc-workcenterstandardworkqty4         =  ls_afvc-workcenterstandardworkqty4            .
+            es_afvc-costctractivitytype4               =  ls_afvc-costctractivitytype4                  .
+            es_afvc-workcenterstandardworkqtyunit5     =  ls_afvc-workcenterstandardworkqtyunit5        .
+            es_afvc-workcenterstandardworkqty5         =  ls_afvc-workcenterstandardworkqty5            .
+            es_afvc-costctractivitytype5               =  ls_afvc-costctractivitytype5                  .
+            es_afvc-workcenterstandardworkqtyunit6     =  ls_afvc-workcenterstandardworkqtyunit6        .
+            es_afvc-workcenterstandardworkqty6         =  ls_afvc-workcenterstandardworkqty6            .
+            es_afvc-costctractivitytype6               =  ls_afvc-costctractivitytype6                  .
+            es_afvc-forecastworkquantity1              =  ls_afvc-forecastworkquantity1                 .
+            es_afvc-forecastworkquantity2              =  ls_afvc-forecastworkquantity2                 .
+            es_afvc-forecastworkquantity3              =  ls_afvc-forecastworkquantity3                 .
+            es_afvc-forecastworkquantity4              =  ls_afvc-forecastworkquantity4                 .
+            es_afvc-forecastworkquantity5              =  ls_afvc-forecastworkquantity5                 .
+            es_afvc-forecastworkquantity6              =  ls_afvc-forecastworkquantity6                 .
+            es_afvc-businessprocess                    =  ls_afvc-businessprocess                       .
+            es_afvc-businessprocessentryunit           =  ls_afvc-businessprocessentryunit              .
+            es_afvc-businessprocessconfirmedqty        =  ls_afvc-businessprocessconfirmedqty           .
+            es_afvc-nofurtherbusinessprocqtyisexpd     =  ls_afvc-nofurtherbusinessprocqtyisexpd        .
+            es_afvc-businessprocremainingqtyunit       =  ls_afvc-businessprocremainingqtyunit          .
+            es_afvc-businessprocessremainingqty        =  ls_afvc-businessprocessremainingqty           .
+            es_afvc-setupopactyntwkinstance            =  ls_afvc-setupopactyntwkinstance               .
+            es_afvc-produceopactyntwkinstance          =  ls_afvc-produceopactyntwkinstance             .
+            es_afvc-teardownopactyntwkinstance         =  ls_afvc-teardownopactyntwkinstance            .
+            es_afvc-freedefinedtablefieldsemantic      =  ls_afvc-freedefinedtablefieldsemantic         .
+            es_afvc-freedefinedattribute01             =  ls_afvc-freedefinedattribute01                .
+            es_afvc-freedefinedattribute02             =  ls_afvc-freedefinedattribute02                .
+            es_afvc-freedefinedattribute03             =  ls_afvc-freedefinedattribute03                .
+            es_afvc-freedefinedattribute04             =  ls_afvc-freedefinedattribute04                .
+            es_afvc-freedefinedquantity1unit           =  ls_afvc-freedefinedquantity1unit              .
+            es_afvc-freedefinedquantity1               =  ls_afvc-freedefinedquantity1                  .
+            es_afvc-freedefinedquantity2unit           =  ls_afvc-freedefinedquantity2unit              .
+            es_afvc-freedefinedquantity2               =  ls_afvc-freedefinedquantity2                  .
+            es_afvc-freedefinedamount1currency         =  ls_afvc-freedefinedamount1currency            .
+            es_afvc-freedefinedamount1                 =  ls_afvc-freedefinedamount1                    .
+            es_afvc-freedefinedamount2currency         =  ls_afvc-freedefinedamount2currency            .
+            es_afvc-freedefinedamount2                 =  ls_afvc-freedefinedamount2                    .
+            es_afvc-freedefineddate1                   =  ls_afvc-freedefineddate1                      .
+            es_afvc-freedefineddate2                   =  ls_afvc-freedefineddate2                      .
+            es_afvc-freedefinedindicator1              =  ls_afvc-freedefinedindicator1                 .
+            es_afvc-freedefinedindicator2              =  ls_afvc-freedefinedindicator2                 .
+
+            CONDENSE es_afvc-mfgorderinternalid                .
+            CONDENSE es_afvc-orderoperationinternalid          .
+            CONDENSE es_afvc-manufacturingorder                .
+            CONDENSE es_afvc-manufacturingordersequence        .
+            CONDENSE es_afvc-manufacturingorderoperation       .
+            CONDENSE es_afvc-manufacturingorderoperation_2     .
+            CONDENSE es_afvc-manufacturingordersuboperation    .
+            CONDENSE es_afvc-manufacturingordsuboperation_2    .
+            CONDENSE es_afvc-mfgorderoperationorsubop          .
+            CONDENSE es_afvc-mfgorderoperationorsubop_2        .
+            CONDENSE es_afvc-mfgorderoperationisphase          .
+            CONDENSE es_afvc-orderintbillofopitemofphase       .
+            CONDENSE es_afvc-mfgorderphasesuperioroperation    .
+            CONDENSE es_afvc-superioroperation_2               .
+            CONDENSE es_afvc-manufacturingordercategory        .
+            CONDENSE es_afvc-manufacturingordertype            .
+            CONDENSE es_afvc-productionsupervisor              .
+            CONDENSE es_afvc-mrpcontroller                     .
+            CONDENSE es_afvc-responsibleplannergroup           .
+            CONDENSE es_afvc-productconfiguration              .
+            CONDENSE es_afvc-inspectionlot                     .
+            CONDENSE es_afvc-manufacturingorderimportance      .
+            CONDENSE es_afvc-mfgorderoperationtext             .
+            CONDENSE es_afvc-operationstandardtextcode         .
+            CONDENSE es_afvc-operationhaslongtext              .
+            CONDENSE es_afvc-language                          .
+            CONDENSE es_afvc-operationistobedeleted            .
+            CONDENSE es_afvc-numberofcapacities                .
+            CONDENSE es_afvc-numberofconfirmationslips         .
+            CONDENSE es_afvc-operationimportance               .
+            CONDENSE es_afvc-superioroperationinternalid       .
+            CONDENSE es_afvc-plant                             .
+            CONDENSE es_afvc-workcenterinternalid              .
+            CONDENSE es_afvc-workcentertypecode                .
+
+            CONDENSE es_afvc-workcentertypecode_2              .
+            CONDENSE es_afvc-operationcontrolprofile           .
+            CONDENSE es_afvc-controlrecipedestination          .
+            CONDENSE es_afvc-operationconfirmation             .
+            CONDENSE es_afvc-numberofoperationconfirmations    .
+            CONDENSE es_afvc-factorycalendar                   .
+            CONDENSE es_afvc-capacityrequirement               .
+            CONDENSE es_afvc-capacityrequirementitem           .
+            CONDENSE es_afvc-changenumber                      .
+            CONDENSE es_afvc-objectinternalid                  .
+            CONDENSE es_afvc-operationtrackingnumber           .
+            CONDENSE es_afvc-billofoperationstype              .
+            CONDENSE es_afvc-billofoperationsgroup             .
+            CONDENSE es_afvc-billofoperationsvariant           .
+            CONDENSE es_afvc-billofoperationssequence          .
+            CONDENSE es_afvc-boooperationinternalid            .
+            CONDENSE es_afvc-billofoperationsversion           .
+            CONDENSE es_afvc-billofmaterialcategory            .
+            CONDENSE es_afvc-billofmaterialinternalid          .
+            CONDENSE es_afvc-billofmaterialinternalid_2        .
+            CONDENSE es_afvc-billofmaterialitemnodenumber      .
+            CONDENSE es_afvc-bomitemnodecount                  .
+            CONDENSE es_afvc-extprocgoperationhassubcontrg     .
+            CONDENSE es_afvc-purchasingorganization            .
+            CONDENSE es_afvc-purchasinggroup                   .
+            CONDENSE es_afvc-purchaserequisition               .
+            CONDENSE es_afvc-purchaserequisitionitem           .
+            CONDENSE es_afvc-purchaseorder                     .
+            CONDENSE es_afvc-purchaseorderitem                 .
+            CONDENSE es_afvc-purchasinginforecord              .
+            CONDENSE es_afvc-purginforecddataisfixed           .
+            CONDENSE es_afvc-purchasinginforecordcategory      .
+            CONDENSE es_afvc-supplier                          .
+            CONDENSE es_afvc-goodsrecipientname                .
+            CONDENSE es_afvc-unloadingpointname                .
+            CONDENSE es_afvc-materialgroup                     .
+            CONDENSE es_afvc-opexternalprocessingcurrency      .
+            CONDENSE es_afvc-opexternalprocessingprice         .
+            CONDENSE es_afvc-numberofoperationpriceunits       .
+            CONDENSE es_afvc-companycode                       .
+            CONDENSE es_afvc-businessarea                      .
+            CONDENSE es_afvc-controllingarea                   .
+
+            CONDENSE es_afvc-profitcenter                       .
+            CONDENSE es_afvc-requestingcostcenter               .
+            CONDENSE es_afvc-costelement                        .
+            CONDENSE es_afvc-costingvariant                     .
+            CONDENSE es_afvc-costingsheet                       .
+            CONDENSE es_afvc-costestimate                       .
+            CONDENSE es_afvc-controllingobjectcurrency          .
+            CONDENSE es_afvc-controllingobjectclass             .
+            CONDENSE es_afvc-functionalarea                     .
+            CONDENSE es_afvc-taxjurisdiction                    .
+            CONDENSE es_afvc-employeewagetype                   .
+            CONDENSE es_afvc-employeewagegroup                  .
+            CONDENSE es_afvc-employeesuitability                .
+            CONDENSE es_afvc-numberoftimetickets                .
+            CONDENSE es_afvc-personnel                          .
+            CONDENSE es_afvc-numberofemployees                  .
+            CONDENSE es_afvc-operationsetupgroupcategory        .
+            CONDENSE es_afvc-operationsetupgroup                .
+            CONDENSE es_afvc-operationsetuptype                 .
+            CONDENSE es_afvc-operationoverlappingisrequired     .
+            CONDENSE es_afvc-operationoverlappingispossible     .
+            CONDENSE es_afvc-operationsisalwaysoverlapping      .
+            CONDENSE es_afvc-operationsplitisrequired           .
+            CONDENSE es_afvc-maximumnumberofsplits              .
+            CONDENSE es_afvc-leadtimereductionstrategy          .
+            CONDENSE es_afvc-opschedldreductionlevel            .
+            CONDENSE es_afvc-operlstschedldexecstrtdte          .
+            CONDENSE es_afvc-operlstschedldexecstrttme          .
+            CONDENSE es_afvc-operlstschedldprocgstrtdte         .
+            CONDENSE es_afvc-operlstschedldprocgstrttme         .
+            CONDENSE es_afvc-operlstschedldtrdwnstrtdte         .
+            CONDENSE es_afvc-operlstschedldtrdwnstrttme         .
+            CONDENSE es_afvc-operlstschedldexecenddte           .
+            CONDENSE es_afvc-operlstschedldexecendtme           .
+            CONDENSE es_afvc-opltstschedldexecstrtdte           .
+            CONDENSE es_afvc-opltstschedldexecstrttme           .
+            CONDENSE es_afvc-opltstschedldprocgstrtdte          .
+            CONDENSE es_afvc-opltstschedldprocgstrttme          .
+            CONDENSE es_afvc-opltstschedldtrdwnstrtdte           .
+
+            CONDENSE es_afvc-opltstschedldtrdwnstrttme          .
+            CONDENSE es_afvc-opltstschedldexecenddte            .
+            CONDENSE es_afvc-opltstschedldexecendtme            .
+            CONDENSE es_afvc-schedldfcstdearlieststartdate      .
+            CONDENSE es_afvc-schedldfcstdearlieststarttime      .
+            CONDENSE es_afvc-schedldfcstdearliestenddate        .
+            CONDENSE es_afvc-schedldfcstdearliestendtime        .
+            CONDENSE es_afvc-latestschedldfcstdstartdate        .
+            CONDENSE es_afvc-schedldfcstdlateststarttime        .
+            CONDENSE es_afvc-latestschedldfcstdenddate          .
+            CONDENSE es_afvc-schedldfcstdlatestendtime          .
+            CONDENSE es_afvc-operationconfirmedstartdate        .
+            CONDENSE es_afvc-operationconfirmedenddate          .
+            CONDENSE es_afvc-opactualexecutionstartdate         .
+            CONDENSE es_afvc-opactualexecutionstarttime         .
+            CONDENSE es_afvc-opactualsetupenddate               .
+            CONDENSE es_afvc-opactualsetupendtime               .
+            CONDENSE es_afvc-opactualprocessingstartdate        .
+            CONDENSE es_afvc-opactualprocessingstarttime        .
+            CONDENSE es_afvc-opactualprocessingenddate          .
+            CONDENSE es_afvc-opactualprocessingendtime          .
+            CONDENSE es_afvc-opactualteardownstartdate          .
+            CONDENSE es_afvc-opactualteardownstarttme           .
+            CONDENSE es_afvc-opactualexecutionenddate           .
+            CONDENSE es_afvc-opactualexecutionendtime           .
+            CONDENSE es_afvc-actualforecastenddate              .
+            CONDENSE es_afvc-actualforecastendtime              .
+            CONDENSE es_afvc-earliestscheduledwaitstartdate     .
+            CONDENSE es_afvc-earliestscheduledwaitstarttime     .
+            CONDENSE es_afvc-earliestscheduledwaitenddate       .
+            CONDENSE es_afvc-earliestscheduledwaitendtime       .
+            CONDENSE es_afvc-latestscheduledwaitstartdate       .
+            CONDENSE es_afvc-latestscheduledwaitstarttime       .
+            CONDENSE es_afvc-latestscheduledwaitenddate         .
+            CONDENSE es_afvc-latestscheduledwaitendtime         .
+            CONDENSE es_afvc-breakdurationunit                  .
+            CONDENSE es_afvc-plannedbreakduration               .
+            CONDENSE es_afvc-confirmedbreakduration             .
+            CONDENSE es_afvc-overlapminimumdurationunit         .
+            CONDENSE es_afvc-overlapminimumduration             .
+            CONDENSE es_afvc-maximumwaitdurationunit            .
+            CONDENSE es_afvc-maximumwaitduration                .
+            CONDENSE es_afvc-minimumwaitdurationunit            .
+            CONDENSE es_afvc-minimumwaitduration                .
+            CONDENSE es_afvc-standardmovedurationunit           .
+            CONDENSE es_afvc-standardmoveduration               .
+            CONDENSE es_afvc-standardqueuedurationunit          .
 
 
-        condense es_afvc-OpTotalConfirmedScrapQty            .
-        condense es_afvc-OperationConfirmedReworkQty         .
-        condense es_afvc-ProductionUnit                      .
-        condense es_afvc-OpTotConfdYieldQtyInOrdQtyUnit      .
-        condense es_afvc-OpWorkQuantityUnit1                 .
-        condense es_afvc-OpConfirmedWorkQuantity1            .
-        condense es_afvc-NoFurtherOpWorkQuantity1IsExpd      .
-        condense es_afvc-OpWorkQuantityUnit2                 .
-        condense es_afvc-OpConfirmedWorkQuantity2            .
-        condense es_afvc-NoFurtherOpWorkQuantity2IsExpd      .
-        condense es_afvc-OpWorkQuantityUnit3                 .
-        condense es_afvc-OpConfirmedWorkQuantity3            .
-        condense es_afvc-NoFurtherOpWorkQuantity3IsExpd      .
-        condense es_afvc-OpWorkQuantityUnit4                 .
-        condense es_afvc-OpConfirmedWorkQuantity4            .
-        condense es_afvc-NoFurtherOpWorkQuantity4IsExpd      .
-        condense es_afvc-OpWorkQuantityUnit5                 .
-        condense es_afvc-OpConfirmedWorkQuantity5            .
-        condense es_afvc-NoFurtherOpWorkQuantity5IsExpd      .
-        condense es_afvc-OpWorkQuantityUnit6                 .
-        condense es_afvc-OpConfirmedWorkQuantity6            .
-        condense es_afvc-NoFurtherOpWorkQuantity6IsExpd      .
-        condense es_afvc-WorkCenterStandardWorkQtyUnit1      .
-        condense es_afvc-WorkCenterStandardWorkQty1          .
-        condense es_afvc-CostCtrActivityType1                .
-        condense es_afvc-WorkCenterStandardWorkQtyUnit2      .
-        condense es_afvc-WorkCenterStandardWorkQty2          .
-        condense es_afvc-CostCtrActivityType2                .
-        condense es_afvc-WorkCenterStandardWorkQtyUnit3      .
-        condense es_afvc-WorkCenterStandardWorkQty3          .
-        condense es_afvc-CostCtrActivityType3                .
-        condense es_afvc-WorkCenterStandardWorkQtyUnit4      .
-        condense es_afvc-WorkCenterStandardWorkQty4          .
-        condense es_afvc-CostCtrActivityType4                .
-        condense es_afvc-WorkCenterStandardWorkQtyUnit5      .
-        condense es_afvc-WorkCenterStandardWorkQty5          .
-        condense es_afvc-CostCtrActivityType5                .
-        condense es_afvc-WorkCenterStandardWorkQtyUnit6      .
-        condense es_afvc-WorkCenterStandardWorkQty6          .
-        condense es_afvc-CostCtrActivityType6                .
-        condense es_afvc-ForecastWorkQuantity1               .
-        condense es_afvc-ForecastWorkQuantity2               .
-        condense es_afvc-ForecastWorkQuantity3               .
-        condense es_afvc-ForecastWorkQuantity4               .
-        condense es_afvc-ForecastWorkQuantity5               .
-        condense es_afvc-ForecastWorkQuantity6               .
-        condense es_afvc-BusinessProcess                     .
-        condense es_afvc-BusinessProcessEntryUnit            .
-        condense es_afvc-BusinessProcessConfirmedQty        .
-        condense es_afvc-NoFurtherBusinessProcQtyIsExpd     .
-        condense es_afvc-BusinessProcRemainingQtyUnit       .
-        condense es_afvc-BusinessProcessRemainingQty        .
-        condense es_afvc-SetupOpActyNtwkInstance            .
-        condense es_afvc-ProduceOpActyNtwkInstance          .
-        condense es_afvc-TeardownOpActyNtwkInstance         .
-        condense es_afvc-FreeDefinedTableFieldSemantic      .
-        condense es_afvc-FreeDefinedAttribute01             .
-        condense es_afvc-FreeDefinedAttribute02             .
-        condense es_afvc-FreeDefinedAttribute03             .
-        condense es_afvc-FreeDefinedAttribute04             .
-        condense es_afvc-FreeDefinedQuantity1Unit           .
-        condense es_afvc-FreeDefinedQuantity1               .
-        condense es_afvc-FreeDefinedQuantity2Unit           .
-        condense es_afvc-FreeDefinedQuantity2               .
-        condense es_afvc-FreeDefinedAmount1Currency         .
-        condense es_afvc-FreeDefinedAmount1                 .
-        condense es_afvc-FreeDefinedAmount2Currency         .
-        condense es_afvc-FreeDefinedAmount2                 .
-        condense es_afvc-FreeDefinedDate1                   .
-        condense es_afvc-FreeDefinedDate2                   .
-        condense es_afvc-FreeDefinedIndicator1              .
-        condense es_afvc-FreeDefinedIndicator2              .
+            CONDENSE es_afvc-standardqueueduration              .
+            CONDENSE es_afvc-minimumqueuedurationunit           .
+            CONDENSE es_afvc-minimumqueueduration               .
+            CONDENSE es_afvc-minimummovedurationunit            .
+            CONDENSE es_afvc-minimummoveduration                .
+            CONDENSE es_afvc-operationstandardduration          .
+            CONDENSE es_afvc-operationstandarddurationunit      .
+            CONDENSE es_afvc-minimumduration                    .
+            CONDENSE es_afvc-minimumdurationunit                .
+            CONDENSE es_afvc-minimumprocessingduration          .
+            CONDENSE es_afvc-minimumprocessingdurationunit      .
+            CONDENSE es_afvc-scheduledmoveduration              .
+            CONDENSE es_afvc-scheduledmovedurationunit          .
+            CONDENSE es_afvc-scheduledqueueduration             .
+            CONDENSE es_afvc-scheduledqueuedurationunit         .
+            CONDENSE es_afvc-scheduledwaitduration              .
+            CONDENSE es_afvc-scheduledwaitdurationunit          .
+            CONDENSE es_afvc-planneddeliveryduration            .
+            CONDENSE es_afvc-opplannedsetupdurn                 .
+            CONDENSE es_afvc-opplannedsetupdurnunit             .
+            CONDENSE es_afvc-opplannedprocessingdurn            .
+            CONDENSE es_afvc-opplannedprocessingdurnunit        .
+            CONDENSE es_afvc-opplannedteardowndurn              .
+            CONDENSE es_afvc-opplannedteardowndurnunit          .
+            CONDENSE es_afvc-actualforecastduration             .
+            CONDENSE es_afvc-actualforecastdurationunit         .
+            CONDENSE es_afvc-forecastprocessingduration         .
+            CONDENSE es_afvc-forecastprocessingdurationunit     .
+            CONDENSE es_afvc-startdateoffsetreferencecode       .
+            CONDENSE es_afvc-startdateoffsetdurationunit        .
+            CONDENSE es_afvc-startdateoffsetduration            .
+            CONDENSE es_afvc-enddateoffsetreferencecode         .
+            CONDENSE es_afvc-enddateoffsetdurationunit          .
+            CONDENSE es_afvc-enddateoffsetduration              .
+            CONDENSE es_afvc-standardworkformulaparamgroup      .
+            CONDENSE es_afvc-operationunit                      .
+            CONDENSE es_afvc-opqtytobaseqtydnmntr               .
+            CONDENSE es_afvc-opqtytobaseqtynmrtr                .
+            CONDENSE es_afvc-operationscrappercent              .
+            CONDENSE es_afvc-operationreferencequantity         .
+            CONDENSE es_afvc-opplannedtotalquantity             .
+            CONDENSE es_afvc-opplannedscrapquantity             .
+            CONDENSE es_afvc-opplannedyieldquantity             .
+            CONDENSE es_afvc-optotalconfirmedyieldqty           .
+
+
+            CONDENSE es_afvc-optotalconfirmedscrapqty            .
+            CONDENSE es_afvc-operationconfirmedreworkqty         .
+            CONDENSE es_afvc-productionunit                      .
+            CONDENSE es_afvc-optotconfdyieldqtyinordqtyunit      .
+            CONDENSE es_afvc-opworkquantityunit1                 .
+            CONDENSE es_afvc-opconfirmedworkquantity1            .
+            CONDENSE es_afvc-nofurtheropworkquantity1isexpd      .
+            CONDENSE es_afvc-opworkquantityunit2                 .
+            CONDENSE es_afvc-opconfirmedworkquantity2            .
+            CONDENSE es_afvc-nofurtheropworkquantity2isexpd      .
+            CONDENSE es_afvc-opworkquantityunit3                 .
+            CONDENSE es_afvc-opconfirmedworkquantity3            .
+            CONDENSE es_afvc-nofurtheropworkquantity3isexpd      .
+            CONDENSE es_afvc-opworkquantityunit4                 .
+            CONDENSE es_afvc-opconfirmedworkquantity4            .
+            CONDENSE es_afvc-nofurtheropworkquantity4isexpd      .
+            CONDENSE es_afvc-opworkquantityunit5                 .
+            CONDENSE es_afvc-opconfirmedworkquantity5            .
+            CONDENSE es_afvc-nofurtheropworkquantity5isexpd      .
+            CONDENSE es_afvc-opworkquantityunit6                 .
+            CONDENSE es_afvc-opconfirmedworkquantity6            .
+            CONDENSE es_afvc-nofurtheropworkquantity6isexpd      .
+            CONDENSE es_afvc-workcenterstandardworkqtyunit1      .
+            CONDENSE es_afvc-workcenterstandardworkqty1          .
+            CONDENSE es_afvc-costctractivitytype1                .
+            CONDENSE es_afvc-workcenterstandardworkqtyunit2      .
+            CONDENSE es_afvc-workcenterstandardworkqty2          .
+            CONDENSE es_afvc-costctractivitytype2                .
+            CONDENSE es_afvc-workcenterstandardworkqtyunit3      .
+            CONDENSE es_afvc-workcenterstandardworkqty3          .
+            CONDENSE es_afvc-costctractivitytype3                .
+            CONDENSE es_afvc-workcenterstandardworkqtyunit4      .
+            CONDENSE es_afvc-workcenterstandardworkqty4          .
+            CONDENSE es_afvc-costctractivitytype4                .
+            CONDENSE es_afvc-workcenterstandardworkqtyunit5      .
+            CONDENSE es_afvc-workcenterstandardworkqty5          .
+            CONDENSE es_afvc-costctractivitytype5                .
+            CONDENSE es_afvc-workcenterstandardworkqtyunit6      .
+            CONDENSE es_afvc-workcenterstandardworkqty6          .
+            CONDENSE es_afvc-costctractivitytype6                .
+            CONDENSE es_afvc-forecastworkquantity1               .
+            CONDENSE es_afvc-forecastworkquantity2               .
+            CONDENSE es_afvc-forecastworkquantity3               .
+            CONDENSE es_afvc-forecastworkquantity4               .
+            CONDENSE es_afvc-forecastworkquantity5               .
+            CONDENSE es_afvc-forecastworkquantity6               .
+            CONDENSE es_afvc-businessprocess                     .
+            CONDENSE es_afvc-businessprocessentryunit            .
+            CONDENSE es_afvc-businessprocessconfirmedqty        .
+            CONDENSE es_afvc-nofurtherbusinessprocqtyisexpd     .
+            CONDENSE es_afvc-businessprocremainingqtyunit       .
+            CONDENSE es_afvc-businessprocessremainingqty        .
+            CONDENSE es_afvc-setupopactyntwkinstance            .
+            CONDENSE es_afvc-produceopactyntwkinstance          .
+            CONDENSE es_afvc-teardownopactyntwkinstance         .
+            CONDENSE es_afvc-freedefinedtablefieldsemantic      .
+            CONDENSE es_afvc-freedefinedattribute01             .
+            CONDENSE es_afvc-freedefinedattribute02             .
+            CONDENSE es_afvc-freedefinedattribute03             .
+            CONDENSE es_afvc-freedefinedattribute04             .
+            CONDENSE es_afvc-freedefinedquantity1unit           .
+            CONDENSE es_afvc-freedefinedquantity1               .
+            CONDENSE es_afvc-freedefinedquantity2unit           .
+            CONDENSE es_afvc-freedefinedquantity2               .
+            CONDENSE es_afvc-freedefinedamount1currency         .
+            CONDENSE es_afvc-freedefinedamount1                 .
+            CONDENSE es_afvc-freedefinedamount2currency         .
+            CONDENSE es_afvc-freedefinedamount2                 .
+            CONDENSE es_afvc-freedefineddate1                   .
+            CONDENSE es_afvc-freedefineddate2                   .
+            CONDENSE es_afvc-freedefinedindicator1              .
+            CONDENSE es_afvc-freedefinedindicator2              .
 
             APPEND es_afvc TO es_response_afvc-items.
 
@@ -5437,76 +5456,76 @@ DATA:
       WHEN 'MBEW'  OR 'mbew' .
 
         SELECT *
-        FROM  I_ProductValuationBasic WITH PRIVILEGED ACCESS
+        FROM  i_productvaluationbasic WITH PRIVILEGED ACCESS
         WHERE (lv_where)
         INTO TABLE @DATA(lt_mbew).
 
         IF lt_mbew IS NOT INITIAL.
           LOOP  AT lt_mbew INTO DATA(ls_mbew).
-          lv_count = lv_count + 1.
-            es_mbew-Product                            = ls_mbew-Product                            .
-            es_mbew-ValuationArea                      = ls_mbew-ValuationArea                      .
-            es_mbew-ValuationType                      = ls_mbew-ValuationType                      .
-            es_mbew-ValuationClass                     = ls_mbew-ValuationClass                     .
-            es_mbew-PriceDeterminationControl          = ls_mbew-PriceDeterminationControl          .
-            es_mbew-FiscalMonthCurrentPeriod           = ls_mbew-FiscalMonthCurrentPeriod           .
-            es_mbew-FiscalYearCurrentPeriod            = ls_mbew-FiscalYearCurrentPeriod            .
-            es_mbew-StandardPrice                      = ls_mbew-StandardPrice                      .
-            es_mbew-PriceUnitQty                       = ls_mbew-PriceUnitQty                       .
-            es_mbew-InventoryValuationProcedure        = ls_mbew-InventoryValuationProcedure        .
-            es_mbew-FuturePriceValidityStartDate       = ls_mbew-FuturePriceValidityStartDate       .
-            es_mbew-PrevInvtryPriceInCoCodeCrcy        = ls_mbew-PrevInvtryPriceInCoCodeCrcy        .
-            es_mbew-MovingAveragePrice                 = ls_mbew-MovingAveragePrice                 .
-            es_mbew-ValuationCategory                  = ls_mbew-ValuationCategory                  .
-            es_mbew-ProductUsageType                   = ls_mbew-ProductUsageType                   .
-            es_mbew-ProductOriginType                  = ls_mbew-ProductOriginType                  .
-            es_mbew-IsProducedInhouse                  = ls_mbew-IsProducedInhouse                  .
-            es_mbew-ProdCostEstNumber                  = ls_mbew-ProdCostEstNumber                  .
-            es_mbew-IsMarkedForDeletion                = ls_mbew-IsMarkedForDeletion                .
-            es_mbew-ValuationMargin                    = ls_mbew-ValuationMargin                    .
-            es_mbew-IsActiveEntity                     = ls_mbew-IsActiveEntity                     .
-            es_mbew-CompanyCode                        = ls_mbew-CompanyCode                        .
-            es_mbew-ValuationClassSalesOrderStock      = ls_mbew-ValuationClassSalesOrderStock      .
-            es_mbew-ProjectStockValuationClass         = ls_mbew-ProjectStockValuationClass         .
-            es_mbew-TaxBasedPricesPriceUnitQty         = ls_mbew-TaxBasedPricesPriceUnitQty         .
-            es_mbew-PriceLastChangeDate                = ls_mbew-PriceLastChangeDate                .
-            es_mbew-FuturePrice                        = ls_mbew-FuturePrice                        .
-            es_mbew-MaintenanceStatus                  = ls_mbew-MaintenanceStatus                  .
-            es_mbew-Currency                           = ls_mbew-Currency                           .
-            es_mbew-BaseUnit                           = ls_mbew-BaseUnit                           .
-            es_mbew-MLIsActiveAtProductLevel           = ls_mbew-MLIsActiveAtProductLevel           .
+            lv_count = lv_count + 1.
+            es_mbew-product                            = ls_mbew-product                            .
+            es_mbew-valuationarea                      = ls_mbew-valuationarea                      .
+            es_mbew-valuationtype                      = ls_mbew-valuationtype                      .
+            es_mbew-valuationclass                     = ls_mbew-valuationclass                     .
+            es_mbew-pricedeterminationcontrol          = ls_mbew-pricedeterminationcontrol          .
+            es_mbew-fiscalmonthcurrentperiod           = ls_mbew-fiscalmonthcurrentperiod           .
+            es_mbew-fiscalyearcurrentperiod            = ls_mbew-fiscalyearcurrentperiod            .
+            es_mbew-standardprice                      = ls_mbew-standardprice                      .
+            es_mbew-priceunitqty                       = ls_mbew-priceunitqty                       .
+            es_mbew-inventoryvaluationprocedure        = ls_mbew-inventoryvaluationprocedure        .
+            es_mbew-futurepricevaliditystartdate       = ls_mbew-futurepricevaliditystartdate       .
+            es_mbew-previnvtrypriceincocodecrcy        = ls_mbew-previnvtrypriceincocodecrcy        .
+            es_mbew-movingaverageprice                 = ls_mbew-movingaverageprice                 .
+            es_mbew-valuationcategory                  = ls_mbew-valuationcategory                  .
+            es_mbew-productusagetype                   = ls_mbew-productusagetype                   .
+            es_mbew-productorigintype                  = ls_mbew-productorigintype                  .
+            es_mbew-isproducedinhouse                  = ls_mbew-isproducedinhouse                  .
+            es_mbew-prodcostestnumber                  = ls_mbew-prodcostestnumber                  .
+            es_mbew-ismarkedfordeletion                = ls_mbew-ismarkedfordeletion                .
+            es_mbew-valuationmargin                    = ls_mbew-valuationmargin                    .
+            es_mbew-isactiveentity                     = ls_mbew-isactiveentity                     .
+            es_mbew-companycode                        = ls_mbew-companycode                        .
+            es_mbew-valuationclasssalesorderstock      = ls_mbew-valuationclasssalesorderstock      .
+            es_mbew-projectstockvaluationclass         = ls_mbew-projectstockvaluationclass         .
+            es_mbew-taxbasedpricespriceunitqty         = ls_mbew-taxbasedpricespriceunitqty         .
+            es_mbew-pricelastchangedate                = ls_mbew-pricelastchangedate                .
+            es_mbew-futureprice                        = ls_mbew-futureprice                        .
+            es_mbew-maintenancestatus                  = ls_mbew-maintenancestatus                  .
+            es_mbew-currency                           = ls_mbew-currency                           .
+            es_mbew-baseunit                           = ls_mbew-baseunit                           .
+            es_mbew-mlisactiveatproductlevel           = ls_mbew-mlisactiveatproductlevel           .
 
-            CONDENSE es_mbew-Product                         .
-            CONDENSE es_mbew-ValuationArea                   .
-            CONDENSE es_mbew-ValuationType                   .
-            CONDENSE es_mbew-ValuationClass                  .
-            CONDENSE es_mbew-PriceDeterminationControl       .
-            CONDENSE es_mbew-FiscalMonthCurrentPeriod        .
-            CONDENSE es_mbew-FiscalYearCurrentPeriod         .
-            CONDENSE es_mbew-StandardPrice                   .
-            CONDENSE es_mbew-PriceUnitQty                    .
-            CONDENSE es_mbew-InventoryValuationProcedure     .
-            CONDENSE es_mbew-FuturePriceValidityStartDate    .
-            CONDENSE es_mbew-PrevInvtryPriceInCoCodeCrcy     .
-            CONDENSE es_mbew-MovingAveragePrice              .
-            CONDENSE es_mbew-ValuationCategory               .
-            CONDENSE es_mbew-ProductUsageType                .
-            CONDENSE es_mbew-ProductOriginType               .
-            CONDENSE es_mbew-IsProducedInhouse               .
-            CONDENSE es_mbew-ProdCostEstNumber               .
-            CONDENSE es_mbew-IsMarkedForDeletion             .
-            CONDENSE es_mbew-ValuationMargin                 .
-            CONDENSE es_mbew-IsActiveEntity                  .
-            CONDENSE es_mbew-CompanyCode                     .
-            CONDENSE es_mbew-ValuationClassSalesOrderStock   .
-            CONDENSE es_mbew-ProjectStockValuationClass      .
-            CONDENSE es_mbew-TaxBasedPricesPriceUnitQty      .
-            CONDENSE es_mbew-PriceLastChangeDate             .
-            CONDENSE es_mbew-FuturePrice                     .
-            CONDENSE es_mbew-MaintenanceStatus               .
-            CONDENSE es_mbew-Currency                        .
-            CONDENSE es_mbew-BaseUnit                        .
-            CONDENSE es_mbew-MLIsActiveAtProductLevel        .
+            CONDENSE es_mbew-product                         .
+            CONDENSE es_mbew-valuationarea                   .
+            CONDENSE es_mbew-valuationtype                   .
+            CONDENSE es_mbew-valuationclass                  .
+            CONDENSE es_mbew-pricedeterminationcontrol       .
+            CONDENSE es_mbew-fiscalmonthcurrentperiod        .
+            CONDENSE es_mbew-fiscalyearcurrentperiod         .
+            CONDENSE es_mbew-standardprice                   .
+            CONDENSE es_mbew-priceunitqty                    .
+            CONDENSE es_mbew-inventoryvaluationprocedure     .
+            CONDENSE es_mbew-futurepricevaliditystartdate    .
+            CONDENSE es_mbew-previnvtrypriceincocodecrcy     .
+            CONDENSE es_mbew-movingaverageprice              .
+            CONDENSE es_mbew-valuationcategory               .
+            CONDENSE es_mbew-productusagetype                .
+            CONDENSE es_mbew-productorigintype               .
+            CONDENSE es_mbew-isproducedinhouse               .
+            CONDENSE es_mbew-prodcostestnumber               .
+            CONDENSE es_mbew-ismarkedfordeletion             .
+            CONDENSE es_mbew-valuationmargin                 .
+            CONDENSE es_mbew-isactiveentity                  .
+            CONDENSE es_mbew-companycode                     .
+            CONDENSE es_mbew-valuationclasssalesorderstock   .
+            CONDENSE es_mbew-projectstockvaluationclass      .
+            CONDENSE es_mbew-taxbasedpricespriceunitqty      .
+            CONDENSE es_mbew-pricelastchangedate             .
+            CONDENSE es_mbew-futureprice                     .
+            CONDENSE es_mbew-maintenancestatus               .
+            CONDENSE es_mbew-currency                        .
+            CONDENSE es_mbew-baseunit                        .
+            CONDENSE es_mbew-mlisactiveatproductlevel        .
 
             APPEND es_mbew TO es_response_mbew-items.
 
@@ -5527,6 +5546,54 @@ DATA:
 
         ENDIF.
 
+*&--ADD BEGIN BY XINLEI XU 2025/02/17
+      WHEN `MARM` OR 'marm'.
+        DATA: lv_error_message_marm TYPE string.
+
+        TRY.
+            SELECT *
+              FROM i_productunitsofmeasure WITH PRIVILEGED ACCESS
+             WHERE (lv_where)
+              INTO TABLE @DATA(lt_marm).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_marm).
+            lv_error = 'X'.
+            lv_error_message_marm = lo_sql_error_marm->get_text( ).
+        ENDTRY.
+
+        IF lt_marm IS NOT INITIAL.
+          lv_count = lines( lt_marm ).
+          LOOP AT lt_marm INTO DATA(ls_marm).
+            APPEND INITIAL LINE TO es_response_marm-items ASSIGNING FIELD-SYMBOL(<lfs_marm_item>).
+            <lfs_marm_item> = CORRESPONDING #( ls_marm ).
+            TRY.
+                <lfs_marm_item>-alternativeunit = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = <lfs_marm_item>-alternativeunit ).
+                <lfs_marm_item>-volumeunit = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = <lfs_marm_item>-volumeunit ).
+                <lfs_marm_item>-weightunit = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = <lfs_marm_item>-weightunit ).
+                <lfs_marm_item>-productmeasurementunit = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = <lfs_marm_item>-productmeasurementunit ).
+                <lfs_marm_item>-lowerlevelpackagingunit = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = <lfs_marm_item>-lowerlevelpackagingunit ).
+                <lfs_marm_item>-baseunit = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = <lfs_marm_item>-baseunit ).
+                ##NO_HANDLER
+              CATCH zzcx_custom_exception.
+                " handle exception
+            ENDTRY.
+          ENDLOOP.
+
+          response->set_status( '200' ).
+          es_response_marm-message = |{ lv_count }件は送信されました。|.
+
+          DATA(lv_marm_string) = xco_cp_json=>data->from_abap( es_response_marm )->to_string( ).
+
+          response->set_text( lv_marm_string ).
+          response->set_header_field( i_name  = lc_header_content
+                                      i_value = lc_content_type ).
+        ELSE.
+          lv_error = 'X'.
+          IF lv_error_message_marm IS NOT INITIAL.
+            lv_text = lv_error_message_marm.
+          ELSE.
+            lv_text = 'There is no data in table'.
+          ENDIF.
+        ENDIF.
 
       WHEN OTHERS.
         lv_error1 = 'X'.
@@ -5538,7 +5605,7 @@ DATA:
       "propagate any errors raised
       response->set_status( '204' ).
 
-    elseif lv_error1 is NOT INITIAL.
+    ELSEIF lv_error1 IS NOT INITIAL.
       response->set_status( '404' ).
       response->set_text( lv_text ).
     ENDIF.

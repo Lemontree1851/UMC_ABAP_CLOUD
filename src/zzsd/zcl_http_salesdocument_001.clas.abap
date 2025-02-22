@@ -10,7 +10,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_salesdocument_001 IMPLEMENTATION.
+CLASS ZCL_HTTP_SALESDOCUMENT_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.

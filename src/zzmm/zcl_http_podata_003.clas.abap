@@ -6,7 +6,6 @@ CLASS zcl_http_podata_003 DEFINITION
     TYPES:
 
       BEGIN OF ts_workflow,
-
         sapbusinessobjectnodekey1      TYPE  string,
         workflowinternalid             TYPE  string,
         workflowexternalstatus         TYPE  string,
@@ -30,6 +29,7 @@ CLASS zcl_http_podata_003 DEFINITION
         workflowinternalid     TYPE  string,
         workflowtaskinternalid TYPE  string,
         workflowtaskresult     TYPE  string,
+        WorkflowTaskExternalStatus TYPE string,
 
       END OF ts_workflowdetail,
 
@@ -315,7 +315,7 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
 
     IF lt_workflow_api IS NOT INITIAL.
 
-      SORT lt_workflow_api BY sapbusinessobjectnodekey1 sapobjectnoderepresentation.
+      SORT lt_workflow_api BY sapbusinessobjectnodekey1 sapobjectnoderepresentation WorkflowInternalID DESCENDING.
 
     ENDIF.
 
@@ -343,8 +343,13 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
     IF lt_workflowdetail_api IS NOT INITIAL.
 
       SORT lt_workflowdetail_api BY workflowinternalid workflowtaskinternalid DESCENDING.
+      "ADD BY STANLEY 20250217
+      DELETE lt_workflowdetail_api WHERE WorkflowTaskExternalStatus = 'CANCELLED'.
+      "END ADD
 
       DELETE ADJACENT DUPLICATES FROM lt_workflowdetail_api COMPARING workflowinternalid.
+
+
 
     ENDIF.
 
@@ -352,7 +357,7 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
 
     LOOP AT lt_poitem INTO DATA(lw_poitems).
 
-      READ TABLE lt_workflow_api INTO DATA(lw_workflow) WITH KEY sapbusinessobjectnodekey1 = lw_poitems-purchaseorder sapobjectnoderepresentation = 'PurchaseOrder' BINARY SEARCH.
+      READ TABLE lt_workflow_api INTO DATA(lw_workflow) WITH KEY sapbusinessobjectnodekey1 = lw_poitems-purchaseorder sapobjectnoderepresentation = 'PurchaseOrder'.
 
       IF sy-subrc = 0.
         lw_result-approvedate = lw_workflow-wrkflwtskcompletionutcdatetime.

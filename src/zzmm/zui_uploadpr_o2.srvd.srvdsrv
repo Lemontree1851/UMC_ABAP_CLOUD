@@ -2,4 +2,5 @@
 define service ZUI_UPLOADPR_O2 {
   expose ZC_TMM_1006          as PurchaseReq;
   expose ZC_PRWORKFLOWhistory as ApprovalHistory;
+  expose ZC_TMM_1012          as PurchaseReqAttachment;
 }

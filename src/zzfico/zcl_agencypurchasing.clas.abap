@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_agencypurchasing IMPLEMENTATION.
+CLASS ZCL_AGENCYPURCHASING IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

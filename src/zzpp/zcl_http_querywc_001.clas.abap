@@ -10,7 +10,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_querywc_001 IMPLEMENTATION.
+CLASS ZCL_HTTP_QUERYWC_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.

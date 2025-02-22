@@ -9,7 +9,7 @@ define root custom entity ZCE_OFPARTITION
   key Plant              : werks_d;
   key Material           : matnr;
   key RequirementDate    : abap.dats;
-      MaterialByCustomer : matnr;
+      MaterialByCustomer : abap.char(35); //matnr; MOD BY XINLEI XU 2025/02/18
       MaterialName       : maktx;
       @Semantics.quantity.unitOfMeasure: 'Unit'
       RequirementQty     : menge_d;

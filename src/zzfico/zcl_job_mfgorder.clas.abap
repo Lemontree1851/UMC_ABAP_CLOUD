@@ -211,8 +211,32 @@ ENDCLASS.
 
 
 
-CLASS zcl_job_mfgorder IMPLEMENTATION.
+CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
 
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '9' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime) ##NO_HANDLER.
+        " handle exception
+    ENDTRY.
+  ENDMETHOD.
 
 
   METHOD if_apj_dt_exec_object~get_parameters.
@@ -376,6 +400,61 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
       ENDTRY.
     ENDIF.
   ENDMETHOD.
+
+
+  METHOD if_oo_adt_classrun~main.
+    " for debugger
+    DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
+    lt_parameters = VALUE #( ( selname = 'P_COMPAN'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1400' )
+*
+*                               ( selname = 'P_PLANT'
+*                               kind    = if_apj_dt_exec_object=>parameter
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '1100' )
+                               ( selname = 'P_YEAR1'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '' )
+                                                              ( selname = 'P_MONTH1'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '' )
+                                                              ( selname = 'P_TABEL'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1' )
+
+                               ).
+    TRY.
+*        if_apj_rt_exec_object~execute( it_parameters = lt_parameters ).
+        if_apj_rt_exec_object~execute( lt_parameters ).
+      CATCH cx_root INTO DATA(lo_root).
+        out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
+    ENDTRY.
+  ENDMETHOD.
+
+
+  METHOD init_application_log.
+    TRY.
+        mo_application_log = cl_bali_log=>create_with_header(
+                               header = cl_bali_header_setter=>create( object      = 'ZZ_LOG_BI001'
+                                                                       subobject   = 'ZZ_LOG_BI001_SUB'
+*                                                                       external_id = CONV #( mv_uuid )
+                                                                       ) ).
+      CATCH cx_bali_runtime INTO DATA(e) ##NO_HANDLER.
+        " handle exception
+    ENDTRY.
+  ENDMETHOD.
+
+
   METHOD save_table_01.
     IF lv_calendaryear IS NOT INITIAL AND lv_calendarmonth IS NOT INITIAL.
 
@@ -1250,6 +1329,8 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
       ENDTRY.
     ENDIF.
   ENDMETHOD.
+
+
   METHOD save_table_02.
 
     SELECT
@@ -1427,6 +1508,8 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
     ENDIF.
 
   ENDMETHOD.
+
+
   METHOD save_table_03.
 
     lv_glaccount1 = '0050301000'.
@@ -1664,79 +1747,5 @@ CLASS zcl_job_mfgorder IMPLEMENTATION.
       ENDTRY.
     ENDIF.
 
-  ENDMETHOD.
-  METHOD if_oo_adt_classrun~main.
-    " for debugger
-    DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
-    lt_parameters = VALUE #( ( selname = 'P_COMPAN'
-                               kind    = if_apj_dt_exec_object=>parameter
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '1400' )
-*
-*                               ( selname = 'P_PLANT'
-*                               kind    = if_apj_dt_exec_object=>parameter
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '1100' )
-                               ( selname = 'P_YEAR1'
-                               kind    = if_apj_dt_exec_object=>parameter
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '' )
-                                                              ( selname = 'P_MONTH1'
-                               kind    = if_apj_dt_exec_object=>parameter
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '' )
-                                                              ( selname = 'P_TABEL'
-                               kind    = if_apj_dt_exec_object=>parameter
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '1' )
-
-                               ).
-    TRY.
-*        if_apj_rt_exec_object~execute( it_parameters = lt_parameters ).
-        if_apj_rt_exec_object~execute( lt_parameters ).
-      CATCH cx_root INTO DATA(lo_root).
-        out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
-    ENDTRY.
-  ENDMETHOD.
-
-  METHOD init_application_log.
-    TRY.
-        mo_application_log = cl_bali_log=>create_with_header(
-                               header = cl_bali_header_setter=>create( object      = 'ZZ_LOG_BI001'
-                                                                       subobject   = 'ZZ_LOG_BI001_SUB'
-*                                                                       external_id = CONV #( mv_uuid )
-                                                                       ) ).
-      CATCH cx_bali_runtime INTO DATA(e) ##NO_HANDLER.
-        " handle exception
-    ENDTRY.
-  ENDMETHOD.
-
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '9' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime) ##NO_HANDLER.
-        " handle exception
-    ENDTRY.
   ENDMETHOD.
 ENDCLASS.

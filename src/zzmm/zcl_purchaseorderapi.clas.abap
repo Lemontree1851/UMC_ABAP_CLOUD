@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PURCHASEORDERAPI IMPLEMENTATION.
+CLASS zcl_purchaseorderapi IMPLEMENTATION.
 
 
   METHOD if_sadl_exit_calc_element_read~calculate.
@@ -29,9 +29,10 @@ CLASS ZCL_PURCHASEORDERAPI IMPLEMENTATION.
            END OF ts_workflow_overview_api,
 
            BEGIN OF ts_workflow_detail,
-             workflowinternalid     TYPE string,
-             workflowtaskinternalid TYPE string,
-             workflowtaskresult     TYPE string,
+             workflowinternalid         TYPE string,
+             workflowtaskinternalid     TYPE string,
+             workflowtaskexternalstatus TYPE string, " ADD BY XINLEI XU 2025/02/19
+             workflowtaskresult         TYPE string,
            END OF ts_workflow_detail,
            BEGIN OF ts_workflow_detail_d,
              results TYPE STANDARD TABLE OF ts_workflow_detail WITH DEFAULT KEY,
@@ -86,8 +87,12 @@ CLASS ZCL_PURCHASEORDERAPI IMPLEMENTATION.
                                  CHANGING  data = ls_workflow_detail ).
 
       DATA(lt_workflow_detail) = ls_workflow_detail-d-results.
-      SORT lt_workflow_detail BY workflowinternalid workflowtaskinternalid DESCENDING.
-      DELETE ADJACENT DUPLICATES FROM lt_workflow_detail COMPARING workflowinternalid.
+*&--MOD BEGIN BY XINLEI XU 2025/02/19
+*      SORT lt_workflow_detail BY workflowinternalid workflowtaskinternalid DESCENDING.
+*      DELETE ADJACENT DUPLICATES FROM lt_workflow_detail COMPARING workflowinternalid.
+      DELETE lt_workflow_detail WHERE workflowtaskexternalstatus = 'CANCELLED'.
+      SORT lt_workflow_detail BY workflowinternalid.
+*&--MOD END BY XINLEI XU 2025/02/19
     ENDIF.
 
     LOOP AT lt_original_data ASSIGNING FIELD-SYMBOL(<lfs_original_data>).

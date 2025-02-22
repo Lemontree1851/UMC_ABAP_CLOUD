@@ -32,6 +32,19 @@
         <STATUS>U</STATUS>
         <VALUES>
          <item>
+          <FIELD>ACTVT</FIELD>
+          <VALUE>Display</VALUE>
+          <VALUES>
+           <item>
+            <UUID>WyVKGOv6Hu+c6wilcKYU/A==</UUID>
+            <LOW_VALUE>03</LOW_VALUE>
+           </item>
+          </VALUES>
+          <TEXT>Activity</TEXT>
+          <STATUS>U</STATUS>
+          <IS_ACTVT>X</IS_ACTVT>
+         </item>
+         <item>
           <FIELD>ALG_OBJECT</FIELD>
           <VALUE>ZZ_LOG_DTIMP</VALUE>
           <VALUES>
@@ -43,6 +56,7 @@
             <LOW_VALUE>ZZ_LOG_DTIMP</LOW_VALUE>
            </item>
           </VALUES>
+          <TEXT>Application log: Object name (Application code)</TEXT>
           <STATUS>U</STATUS>
          </item>
          <item>
@@ -57,19 +71,8 @@
             <LOW_VALUE>ZZ_LOG_DTIMP_SUB</LOW_VALUE>
            </item>
           </VALUES>
+          <TEXT>Application Log: Subobject</TEXT>
           <STATUS>U</STATUS>
-         </item>
-         <item>
-          <FIELD>ACTVT</FIELD>
-          <VALUE>Display</VALUE>
-          <VALUES>
-           <item>
-            <UUID>WyVKGOv6Hu+c6wilcKYU/A==</UUID>
-            <LOW_VALUE>03</LOW_VALUE>
-           </item>
-          </VALUES>
-          <STATUS>U</STATUS>
-          <IS_ACTVT>X</IS_ACTVT>
          </item>
         </VALUES>
        </item>

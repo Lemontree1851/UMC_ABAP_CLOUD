@@ -11,7 +11,9 @@ ENDCLASS.
 
 
 
-CLASS zcl_query_componentusagelist IMPLEMENTATION.
+CLASS ZCL_QUERY_COMPONENTUSAGELIST IMPLEMENTATION.
+
+
   METHOD if_rap_query_provider~select.
     TYPES:
       BEGIN OF ty_finalproductinfo,

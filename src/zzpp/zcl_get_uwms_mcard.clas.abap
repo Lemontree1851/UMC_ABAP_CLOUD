@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_GET_UWMS_MCARD IMPLEMENTATION.
+CLASS zcl_get_uwms_mcard IMPLEMENTATION.
 
 
   METHOD if_sadl_exit_calc_element_read~calculate.
@@ -38,18 +38,21 @@ CLASS ZCL_GET_UWMS_MCARD IMPLEMENTATION.
     TRY.
         DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
         " Get UWMS Access configuration
-        SELECT SINGLE *
+        SELECT *
           FROM zc_tbc1001
          WHERE zid = 'ZBC002'
            AND zvalue1 = @lv_system_url
-          INTO @DATA(ls_config).
+          INTO TABLE @DATA(lt_config).
+
+        SORT lt_config BY zvalue6. " Plant
         ##NO_HANDLER
       CATCH cx_abap_context_info_error.
         "handle exception
     ENDTRY.
 
     LOOP AT lt_original_data ASSIGNING FIELD-SYMBOL(<fs_original_data>).
-      IF ls_config IS NOT INITIAL.
+      READ TABLE lt_config INTO DATA(ls_config) WITH KEY zvalue6 = <fs_original_data>-plant BINARY SEARCH.
+      IF sy-subrc = 0.
         DATA(lv_filter) = |PLANT_ID eq '{ <fs_original_data>-plant }' and MAT_ID eq '{ <fs_original_data>-material }' and LOC_ID eq '{ <fs_original_data>-storagelocation }'|.
         CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
         CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL

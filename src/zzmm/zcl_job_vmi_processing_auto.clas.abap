@@ -18,9 +18,38 @@ CLASS zcl_job_vmi_processing_auto DEFINITION
       mo_application_log TYPE REF TO if_bali_log.
 ENDCLASS.
 
-CLASS zcl_job_vmi_processing_auto IMPLEMENTATION.
+
+
+CLASS ZCL_JOB_VMI_PROCESSING_AUTO IMPLEMENTATION.
+
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime) ##NO_HANDLER.
+    ENDTRY.
+  ENDMETHOD.
+
+
   METHOD if_apj_dt_exec_object~get_parameters.
   ENDMETHOD.
+
 
   METHOD if_apj_rt_exec_object~execute.
     DATA:
@@ -109,6 +138,7 @@ CLASS zcl_job_vmi_processing_auto IMPLEMENTATION.
 
   ENDMETHOD.
 
+
   METHOD if_oo_adt_classrun~main.
 
     "for debugger
@@ -126,6 +156,7 @@ CLASS zcl_job_vmi_processing_auto IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
+
   METHOD init_application_log.
     TRY.
         mo_application_log = cl_bali_log=>create_with_header(
@@ -135,29 +166,6 @@ CLASS zcl_job_vmi_processing_auto IMPLEMENTATION.
                                                                        ) ).
       CATCH cx_bali_runtime ##NO_HANDLER.
 
-    ENDTRY.
-  ENDMETHOD.
-
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '1' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime) ##NO_HANDLER.
     ENDTRY.
   ENDMETHOD.
 ENDCLASS.

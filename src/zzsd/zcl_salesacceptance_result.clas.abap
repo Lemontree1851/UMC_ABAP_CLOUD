@@ -16,7 +16,31 @@ ENDCLASS.
 
 
 
-CLASS zcl_salesacceptance_result IMPLEMENTATION.
+CLASS ZCL_SALESACCEPTANCE_RESULT IMPLEMENTATION.
+
+
+  METHOD convert_amount.
+    DATA: int_shift          TYPE i,
+          dec_amount_int(12) TYPE p DECIMALS 5,
+          struct_tcurx       TYPE i_currency,
+          lv_output(12)      TYPE p DECIMALS 5.
+
+    SELECT SINGLE * FROM i_currency WHERE currency = @cv_currency INTO @struct_tcurx. "#EC CI_ALL_FIELDS_NEEDED
+
+    IF sy-subrc = 0. "Currency has a number of decimals not equal two
+      int_shift = 2 - struct_tcurx-decimals.
+    ELSE. "Currency is no exceptional currency. It has two decimals
+      int_shift = 0.
+    ENDIF.
+
+    " Fill AMOUNT_EXTERNAL and shift decimal point depending on CURRENCY
+    dec_amount_int = cv_input.
+    lv_output = 10 ** int_shift.
+    lv_output = lv_output * dec_amount_int.
+    cv_output = lv_output.
+  ENDMETHOD.
+
+
   METHOD if_rap_query_provider~select.
     DATA:
       lt_output TYPE STANDARD TABLE OF zr_salesacceptance_result,
@@ -259,7 +283,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
             INTO TABLE @lt_1003_t.
 
           IF lt_1003_t IS NOT INITIAL.
-            SELECT *                          "#EC CI_ALL_FIELDS_NEEDED
+            SELECT *                          "#EC CI_NO_TRANSFORM
               FROM ztsd_1012
               FOR ALL ENTRIES IN @lt_1003_t
              WHERE salesorganization = @lt_1003_t-salesorganization
@@ -390,7 +414,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
 
     IF lt_billing IS NOT INITIAL.
 * E: I_JournalEntryItem
-      SELECT companycode,
+      SELECT companycode,              "#EC CI_NO_TRANSFORM
              fiscalyear,
              accountingdocument,
              referencedocument,
@@ -403,7 +427,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
         INTO TABLE @DATA(lt_bkpf).
 
 * F: I_BillingDocumentItemPrcgElmnt
-      SELECT billingdocument,
+      SELECT billingdocument,         "#EC CI_NO_TRANSFORM
              billingdocumentitem,
              pricingprocedurestep,
              pricingprocedurecounter,
@@ -767,26 +791,4 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
 
     io_response->set_data( lt_output ).
   ENDMETHOD.
-
-  METHOD convert_amount.
-    DATA: int_shift          TYPE i,
-          dec_amount_int(12) TYPE p DECIMALS 5,
-          struct_tcurx       TYPE i_currency,
-          lv_output(12)      TYPE p DECIMALS 5.
-
-    SELECT SINGLE * FROM i_currency WHERE currency = @cv_currency INTO @struct_tcurx. "#EC CI_ALL_FIELDS_NEEDED
-
-    IF sy-subrc = 0. "Currency has a number of decimals not equal two
-      int_shift = 2 - struct_tcurx-decimals.
-    ELSE. "Currency is no exceptional currency. It has two decimals
-      int_shift = 0.
-    ENDIF.
-
-    " Fill AMOUNT_EXTERNAL and shift decimal point depending on CURRENCY
-    dec_amount_int = cv_input.
-    lv_output = 10 ** int_shift.
-    lv_output = lv_output * dec_amount_int.
-    cv_output = lv_output.
-  ENDMETHOD.
-
 ENDCLASS.

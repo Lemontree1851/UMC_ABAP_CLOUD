@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_QUERY_PICKINGLIST_STD IMPLEMENTATION.
+CLASS zcl_query_pickinglist_std IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -142,11 +142,13 @@ CLASS ZCL_QUERY_PICKINGLIST_STD IMPLEMENTATION.
       TRY.
           DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
           " Get UWMS Access configuration
-          SELECT SINGLE *
+          SELECT *
             FROM zc_tbc1001
            WHERE zid = 'ZBC002'
              AND zvalue1 = @lv_system_url
-            INTO @DATA(ls_config).
+            INTO TABLE @DATA(lt_config).
+
+          SORT lt_config BY zvalue6. " Plant
           ##NO_HANDLER
         CATCH cx_abap_context_info_error.
           "handle exception
@@ -231,22 +233,24 @@ CLASS ZCL_QUERY_PICKINGLIST_STD IMPLEMENTATION.
         INTO TABLE @DATA(lt_to_stock_from).
       SORT lt_to_stock_from BY plant material storagelocation stockquantity DESCENDING.
 
-      SELECT product,
-             nmbrofgrorgislipstoprintqty
-        FROM i_productstorage_2 WITH PRIVILEGED ACCESS
-         FOR ALL ENTRIES IN @lt_mfgorder
-       WHERE product = @lt_mfgorder-material
-        INTO TABLE @DATA(lt_productstorage).
-      SORT lt_productstorage BY product.
+      IF lt_mfgorder IS NOT INITIAL.
+        SELECT product,
+               nmbrofgrorgislipstoprintqty
+          FROM i_productstorage_2 WITH PRIVILEGED ACCESS
+           FOR ALL ENTRIES IN @lt_mfgorder
+         WHERE product = @lt_mfgorder-material
+          INTO TABLE @DATA(lt_productstorage).     "#EC CI_NO_TRANSFORM
+        SORT lt_productstorage BY product.
 
-      SELECT laboratoryordesignoffice,
-             laboratoryordesignofficename
-        FROM i_documentinforecordlbtryoffct WITH PRIVILEGED ACCESS
-         FOR ALL ENTRIES IN @lt_mfgorder
-       WHERE laboratoryordesignoffice = @lt_mfgorder-laboratoryordesignoffice
-         AND language = @sy-langu
-        INTO TABLE @DATA(lt_laboratory).
-      SORT lt_laboratory BY laboratoryordesignoffice.
+        SELECT laboratoryordesignoffice,
+               laboratoryordesignofficename
+          FROM i_documentinforecordlbtryoffct WITH PRIVILEGED ACCESS
+           FOR ALL ENTRIES IN @lt_mfgorder
+         WHERE laboratoryordesignoffice = @lt_mfgorder-laboratoryordesignoffice
+           AND language = @sy-langu
+          INTO TABLE @DATA(lt_laboratory).         "#EC CI_NO_TRANSFORM
+        SORT lt_laboratory BY laboratoryordesignoffice.
+      ENDIF.
 
       DATA(lo_unit) = cl_uom_conversion=>create( ).
 
@@ -334,7 +338,8 @@ CLASS ZCL_QUERY_PICKINGLIST_STD IMPLEMENTATION.
           ls_data-totalshortfallquantity = ls_data-totalrequiredquantity - ls_data-storagelocationtostock.
           ls_data-totaltransferquantity  = ls_data-totalshortfallquantity.
 
-          IF ls_config IS NOT INITIAL AND ls_data-storagelocationfrom IS NOT INITIAL.
+          READ TABLE lt_config INTO DATA(ls_config) WITH KEY zvalue6 = ls_data-plant BINARY SEARCH.
+          IF sy-subrc = 0 AND ls_data-storagelocationfrom IS NOT INITIAL.
             DATA(lv_filter) = |PLANT_ID eq '{ ls_data-plant }' and MAT_ID eq '{ ls_data-material }' and LOC_ID eq '{ ls_data-storagelocationfrom }'|.
             CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
             CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL

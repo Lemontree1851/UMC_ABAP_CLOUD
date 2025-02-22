@@ -878,8 +878,9 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
     WHERE  zid   = 'ZFI010'
     INTO TABLE @DATA(lt_ztbc).                "#EC CI_ALL_FIELDS_NEEDED
 
-    READ TABLE lt_ztbc INTO DATA(ls_ztbc) WITH KEY zvalue1 = cs_data-companycode.
-    IF sy-subrc = 0 AND cs_data-paymentmethod = ls_ztbc-zvalue2 AND cs_run-paymentmethod_a = ls_ztbc-zvalue3.
+    READ TABLE lt_ztbc INTO DATA(ls_ztbc) WITH KEY zvalue1 = cs_data-companycode
+    zvalue2 = cs_data-paymentmethod    zvalue3 = cs_run-paymentmethod_a .
+    IF sy-subrc = 0  .
       ls_aparitem_control-housebank        = if_abap_behv=>mk-on.
       ls_aparitem_control-housebankaccount = if_abap_behv=>mk-on.
       lv_housebank        = ls_ztbc-zvalue4.

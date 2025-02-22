@@ -102,8 +102,9 @@ FUNCTION zzfm_dtimp_tfi005.
       DATA ls_aparitem_control LIKE ls_aparitem-%control.
       ls_aparitem_control-paymentterms = if_abap_behv=>mk-on.
 
-      READ TABLE lt_ztbc INTO DATA(ls_ztbc) WITH KEY zvalue1 = ls_data-companycode.
-      IF sy-subrc = 0 AND ls_data-paymentmethod = ls_ztbc-zvalue2 AND ls_data-paymentmethod_a = ls_ztbc-zvalue3.
+      READ TABLE lt_ztbc INTO DATA(ls_ztbc) WITH KEY zvalue1 = ls_data-companycode
+      zvalue2 = ls_data-paymentmethod zvalue3 = ls_data-paymentmethod_a.
+      IF sy-subrc = 0  .
         ls_aparitem_control-housebank        = if_abap_behv=>mk-on.
         ls_aparitem_control-housebankaccount = if_abap_behv=>mk-on.
         lv_housebank        = ls_ztbc-zvalue4.

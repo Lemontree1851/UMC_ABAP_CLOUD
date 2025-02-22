@@ -35,8 +35,9 @@ define root custom entity ZR_SALESDOCUMENTREPORT
       SalesPlanVersion3              : sales_plan_version;
 
       CustomerName                   : abap.char(80);
+      Plant                          : werks_d;       // ADD BY XINLEI XU 2025/02/17
       PlantName                      : abap.char(30);
-      MatlAccountAssignmentGroup     : abap.char(2);
+      MatlAccountAssignmentGroup     : abap.char(10); // abap.char(2); MOD BY XINLEI XU 2025/02/19
       ProductGroup                   : abap.char(9);
       ProductName                    : abap.char(40);
       ConditionRateValue             : abap.char(10); //没用 等会删

@@ -11,7 +11,10 @@ CLASS zcl_query_bi003_report DEFINITION
 ENDCLASS.
 
 
-CLASS zcl_query_bi003_report IMPLEMENTATION.
+
+CLASS ZCL_QUERY_BI003_REPORT IMPLEMENTATION.
+
+
   METHOD if_rap_query_provider~select.
     CONSTANTS: lc_createdby_upload TYPE ernam VALUE 'UPLOAD'.
     DATA: lt_data TYPE TABLE OF zc_bi003_report_upload.

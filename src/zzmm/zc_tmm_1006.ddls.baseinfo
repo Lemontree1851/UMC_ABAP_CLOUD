@@ -6,9 +6,13 @@
 "ZR_TMM_1006"
 ],
 "ASSOCIATED":
-[],
+[
+"ZC_TMM_1012"
+],
 "BASE":
-[],
+[
+"ZR_TMM_1006"
+],
 "ANNO_REF":
 [],
 "SCALAR_FUNCTION":

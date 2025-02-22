@@ -114,6 +114,7 @@ CLASS zzcl_common_utils DEFINITION
                                iv_select             TYPE string OPTIONAL
                                iv_filter             TYPE string OPTIONAL
                                iv_etag               TYPE string OPTIONAL
+                               iv_csrf_token         TYPE string OPTIONAL
                                iv_contenttype_value  TYPE string OPTIONAL
                      EXPORTING VALUE(ev_status_code) TYPE if_web_http_response=>http_status-code
                                VALUE(ev_response)    TYPE string
@@ -127,6 +128,7 @@ CLASS zzcl_common_utils DEFINITION
                                iv_select             TYPE string OPTIONAL
                                iv_filter             TYPE string OPTIONAL
                                iv_etag               TYPE string OPTIONAL
+                               iv_csrf_token         TYPE string OPTIONAL
                                iv_contenttype_value  TYPE string OPTIONAL
                      EXPORTING VALUE(ev_status_code) TYPE if_web_http_response=>http_status-code
                                VALUE(ev_response)    TYPE string
@@ -255,6 +257,12 @@ CLASS zzcl_common_utils DEFINITION
                              VALUE(ev_response)    TYPE string
                              VALUE(ev_etag)        TYPE string,
 
+      get_csrf_token IMPORTING iv_odata_version      TYPE string
+                               iv_path               TYPE string
+                     EXPORTING VALUE(ev_status_code) TYPE if_web_http_response=>http_status-code
+                               VALUE(ev_response)    TYPE string
+                               VALUE(ev_csrf_token)  TYPE string,
+
       get_fiscal_year_period IMPORTING iv_date          TYPE datum
                              EXPORTING VALUE(ev_year)   TYPE gjahr
                                        VALUE(ev_period) TYPE poper,
@@ -323,7 +331,12 @@ CLASS zzcl_common_utils DEFINITION
                                   iv_run_start_time TYPE ztbc_1019-run_start_time
                                   iv_run_end_time   TYPE ztbc_1019-run_end_time
                                   iv_remark         TYPE ztbc_1019-remark OPTIONAL
-                        EXPORTING ev_log_uuid       TYPE ztbc_1019-uuid.
+                        EXPORTING ev_log_uuid       TYPE ztbc_1019-uuid,
+
+      "! Request API for OData V4
+      s3uploadattachment IMPORTING iv_body               TYPE string OPTIONAL
+                         EXPORTING VALUE(ev_status_code) TYPE if_web_http_response=>http_status-code
+                                   VALUE(ev_response)    TYPE string.
   PROTECTED SECTION.
   PRIVATE SECTION.
 
@@ -332,6 +345,36 @@ ENDCLASS.
 
 
 CLASS zzcl_common_utils IMPLEMENTATION.
+
+
+  METHOD add_interface_log.
+    TRY.
+        DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
+        ##NO_HANDLER
+      CATCH cx_uuid_error.
+        "handle exception
+    ENDTRY.
+
+    INSERT INTO ztbc_1019 VALUES @( VALUE #( uuid            = lv_uuid
+                                             interface_id    = iv_interface_id
+                                             interface_desc  = iv_interface_desc
+                                             request_method  = iv_request_method
+                                             request_url     = iv_request_url
+                                             request_body    = iv_request_body
+                                             status_code     = iv_status_code
+                                             response_body   = iv_response
+                                             record_count    = iv_record_count
+                                             run_start_time  = iv_run_start_time
+                                             run_end_time    = iv_run_end_time
+                                             remark          = iv_remark
+                                             created_by      = sy-uname
+                                             created_at      = iv_run_end_time
+                                             last_changed_by = sy-uname
+                                             last_changed_at = iv_run_end_time
+                                             local_last_changed_at = iv_run_end_time ) ).
+
+    ev_log_uuid = lv_uuid.
+  ENDMETHOD.
 
 
   METHOD calc_date_add.
@@ -506,6 +549,27 @@ CLASS zzcl_common_utils IMPLEMENTATION.
   ENDMETHOD.
 
 
+  METHOD get_access_by_user.
+    SELECT access~roleid,
+           access~accessid,
+           access~accessname
+      FROM zc_tbc1007 AS assignrole
+      JOIN zc_tbc1016 AS access ON access~roleid = assignrole~roleid
+     WHERE assignrole~mail = @iv_email
+     INTO TABLE @DATA(lt_access).
+    SORT lt_access BY accessid.
+
+    LOOP AT lt_access INTO DATA(ls_access).
+      CONDENSE ls_access-accessid NO-GAPS.
+      IF rv_access IS INITIAL.
+        rv_access = ls_access-accessid.
+      ELSE.
+        rv_access = rv_access && '&' && ls_access-accessid.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+
   METHOD get_access_token.
     TRY.
         DATA(lo_http_destination) = cl_http_destination_provider=>create_by_url( iv_token_url ).
@@ -626,6 +690,64 @@ CLASS zzcl_common_utils IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.                                             "#EC CI_VALPAR
 
+  METHOD get_csrf_token.
+    DATA: ls_odata_result TYPE ty_odata_res_d.
+
+    DATA(lv_path) = iv_path.
+
+    " Find CA by Scenario ID
+    cl_com_arrangement_factory=>create_instance( )->query_ca(
+      EXPORTING
+        is_query           = VALUE #( cscn_id_range = VALUE #( ( sign = 'I' option = 'EQ' low = 'YY1_CS_API' ) ) )
+      IMPORTING
+        et_com_arrangement = DATA(lt_ca) ).
+    IF lt_ca IS INITIAL.
+      EXIT.
+    ENDIF.
+
+    " take the first one
+    READ TABLE lt_ca INTO DATA(lo_ca) INDEX 1.
+
+    " get destination based on Communication Arrangement and the service ID
+    TRY.
+        DATA(lo_dest) = cl_http_destination_provider=>create_by_comm_arrangement(
+            comm_scenario  = 'YY1_CS_API'
+            service_id     = |YY1_ODATA{ iv_odata_version }_REST|
+            comm_system_id = lo_ca->get_comm_system_id( ) ).
+      CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
+        EXIT.
+    ENDTRY.
+
+    TRY.
+        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_dest ).
+        DATA(lo_request) = lo_http_client->get_http_request(   ).
+        lo_http_client->enable_path_prefix( ).
+
+        REPLACE ALL OCCURRENCES OF ` ` IN lv_path  WITH '%20'.
+
+        lo_request->set_uri_path( EXPORTING i_uri_path = lv_path ).
+        lo_request->set_header_field( i_name = 'Accept' i_value = 'application/json' ).
+        lo_request->set_header_field( i_name = 'x-csrf-token' i_value = 'fetch' ).
+
+        DATA(lo_response) = lo_http_client->execute( if_web_http_client=>get ).
+
+        ev_status_code = lo_response->get_status( )-code.
+        ev_response = lo_response->get_text(  ).
+        ev_csrf_token = lo_response->get_header_field( 'x-csrf-token' ).
+
+        lo_http_client->close(  ).
+
+      CATCH cx_web_message_error INTO DATA(lx_web_message_error).
+        ev_status_code = 500.
+        ev_response = lx_web_message_error->get_text(  ).
+      CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
+        ev_status_code = 500.
+        ev_response = lx_web_http_client_error->get_text(  ).
+      CATCH cx_root INTO DATA(lx_root).
+        ev_status_code = 500.
+        ev_response = lx_root->get_text(  ).
+    ENDTRY.
+  ENDMETHOD.                                             "#EC CI_VALPAR
 
   METHOD get_begindate_of_month.
     IF is_valid_date( iv_date ).
@@ -635,11 +757,46 @@ CLASS zzcl_common_utils IMPLEMENTATION.
   ENDMETHOD.
 
 
+  METHOD get_company_by_user.
+    SELECT uuid,
+           mail,
+           companycode
+      FROM zc_tbc1012
+     WHERE mail = @iv_email
+     INTO TABLE @DATA(lt_assign_company).
+
+    SORT lt_assign_company BY companycode.
+    DELETE ADJACENT DUPLICATES FROM lt_assign_company COMPARING companycode.
+
+    LOOP AT lt_assign_company INTO DATA(ls_assign_company).
+      CONDENSE ls_assign_company-companycode NO-GAPS.
+      IF rv_company IS INITIAL.
+        rv_company = ls_assign_company-companycode.
+      ELSE.
+        rv_company = rv_company && '&' && ls_assign_company-companycode.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+
   METHOD get_current_language.
     SELECT SINGLE languageisocode
       FROM i_language
      WHERE language = @sy-langu
       INTO @rv_language.
+  ENDMETHOD.
+
+
+  METHOD get_email_by_uname.
+    DATA lv_user TYPE sy-uname.
+
+    IF iv_user IS INITIAL.
+      lv_user = sy-uname.
+    ELSE.
+      lv_user = iv_user.
+    ENDIF.
+
+    SELECT SINGLE email FROM zc_businessuseremail WHERE userid = @lv_user INTO @rv_email.
   ENDMETHOD.
 
 
@@ -832,6 +989,94 @@ CLASS zzcl_common_utils IMPLEMENTATION.
                                                                      msgno = '000'
                                                                      attr1 = lx_abap_lock_failure->get_text( ) ) ).
     ENDTRY.
+  ENDMETHOD.
+
+
+  METHOD get_plant_by_user.
+    SELECT uuid,
+           mail,
+           plant
+      FROM zc_tbc1006
+     WHERE mail = @iv_email
+     INTO TABLE @DATA(lt_assign_plant).
+
+    SORT lt_assign_plant BY plant.
+    DELETE ADJACENT DUPLICATES FROM lt_assign_plant COMPARING plant.
+
+    LOOP AT lt_assign_plant INTO DATA(ls_assign_plant).
+      CONDENSE ls_assign_plant-plant NO-GAPS.
+      IF rv_plant IS INITIAL.
+        rv_plant = ls_assign_plant-plant.
+      ELSE.
+        rv_plant = rv_plant && '&' && ls_assign_plant-plant.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+
+  METHOD get_purchorg_by_user.
+    SELECT uuid,
+           mail,
+           purchasingorganization
+      FROM zc_tbc1017
+     WHERE mail = @iv_email
+     INTO TABLE @DATA(lt_assign_purchorg).
+
+    SORT lt_assign_purchorg BY purchasingorganization.
+    DELETE ADJACENT DUPLICATES FROM lt_assign_purchorg COMPARING purchasingorganization.
+
+    LOOP AT lt_assign_purchorg INTO DATA(ls_assign_purchorg).
+      CONDENSE ls_assign_purchorg-purchasingorganization NO-GAPS.
+      IF rv_purchorg IS INITIAL.
+        rv_purchorg = ls_assign_purchorg-purchasingorganization.
+      ELSE.
+        rv_purchorg = rv_purchorg && '&' && ls_assign_purchorg-purchasingorganization.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+
+  METHOD get_salesorg_by_user.
+    SELECT uuid,
+           mail,
+           salesorganization
+      FROM zc_tbc1013
+     WHERE mail = @iv_email
+     INTO TABLE @DATA(lt_assign_salesorg).
+
+    SORT lt_assign_salesorg BY salesorganization.
+    DELETE ADJACENT DUPLICATES FROM lt_assign_salesorg COMPARING salesorganization.
+
+    LOOP AT lt_assign_salesorg INTO DATA(ls_assign_salesorg).
+      CONDENSE ls_assign_salesorg-salesorganization NO-GAPS.
+      IF rv_salesorg IS INITIAL.
+        rv_salesorg = ls_assign_salesorg-salesorganization.
+      ELSE.
+        rv_salesorg = rv_salesorg && '&' && ls_assign_salesorg-salesorganization.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+
+  METHOD get_shippingpoint_by_user.
+    SELECT uuid,
+           mail,
+           shippingpoint
+      FROM zc_tbc1018
+     WHERE mail = @iv_email
+     INTO TABLE @DATA(lt_assign_shippingpoint).
+
+    SORT lt_assign_shippingpoint BY shippingpoint.
+    DELETE ADJACENT DUPLICATES FROM lt_assign_shippingpoint COMPARING shippingpoint.
+
+    LOOP AT lt_assign_shippingpoint INTO DATA(ls_assign_shippingpoint).
+      CONDENSE ls_assign_shippingpoint-shippingpoint NO-GAPS.
+      IF rv_shippingpoint IS INITIAL.
+        rv_shippingpoint = ls_assign_shippingpoint-shippingpoint.
+      ELSE.
+        rv_shippingpoint = rv_shippingpoint && '&' && ls_assign_shippingpoint-shippingpoint.
+      ENDIF.
+    ENDLOOP.
   ENDMETHOD.
 
 
@@ -1101,7 +1346,11 @@ CLASS zzcl_common_utils IMPLEMENTATION.
           lo_request->set_header_field( i_name = 'If-Match' i_value = lv_etag ).
         ENDIF.
 
-        lo_http_client->set_csrf_token(  ).
+        IF iv_csrf_token IS INITIAL.
+          lo_http_client->set_csrf_token(  ).
+        ELSE.
+          lo_request->set_header_field( i_name = 'x-csrf-token' i_value = iv_csrf_token ).
+        ENDIF.
 
         DATA(lo_response) = lo_http_client->execute( iv_method ).
 
@@ -1196,7 +1445,11 @@ CLASS zzcl_common_utils IMPLEMENTATION.
           lo_request->set_header_field( i_name = 'If-Match' i_value = lv_etag ).
         ENDIF.
 
-        lo_http_client->set_csrf_token(  ).
+        IF iv_csrf_token IS INITIAL.
+          lo_http_client->set_csrf_token(  ).
+        ELSE.
+          lo_request->set_header_field( i_name = 'x-csrf-token' i_value = iv_csrf_token ).
+        ENDIF.
 
         DATA(lo_response) = lo_http_client->execute( iv_method ).
 
@@ -1268,169 +1521,67 @@ CLASS zzcl_common_utils IMPLEMENTATION.
                                                 unit_out_not_found   = 08 ).
   ENDMETHOD.
 
-  METHOD get_email_by_uname.
-    DATA lv_user TYPE sy-uname.
-
-    IF iv_user IS INITIAL.
-      lv_user = sy-uname.
-    ELSE.
-      lv_user = iv_user.
-    ENDIF.
-
-    SELECT SINGLE email FROM zc_businessuseremail WHERE userid = @lv_user INTO @rv_email.
-  ENDMETHOD.
-
-  METHOD get_access_by_user.
-    SELECT access~roleid,
-           access~accessid,
-           access~accessname
-      FROM zc_tbc1007 AS assignrole
-      JOIN zc_tbc1016 AS access ON access~roleid = assignrole~roleid
-     WHERE assignrole~mail = @iv_email
-     INTO TABLE @DATA(lt_access).
-    SORT lt_access BY accessid.
-
-    LOOP AT lt_access INTO DATA(ls_access).
-      CONDENSE ls_access-accessid NO-GAPS.
-      IF rv_access IS INITIAL.
-        rv_access = ls_access-accessid.
-      ELSE.
-        rv_access = rv_access && '&' && ls_access-accessid.
-      ENDIF.
-    ENDLOOP.
-  ENDMETHOD.
-
-  METHOD get_plant_by_user.
-    SELECT uuid,
-           mail,
-           plant
-      FROM zc_tbc1006
-     WHERE mail = @iv_email
-     INTO TABLE @DATA(lt_assign_plant).
-
-    SORT lt_assign_plant BY plant.
-    DELETE ADJACENT DUPLICATES FROM lt_assign_plant COMPARING plant.
-
-    LOOP AT lt_assign_plant INTO DATA(ls_assign_plant).
-      CONDENSE ls_assign_plant-plant NO-GAPS.
-      IF rv_plant IS INITIAL.
-        rv_plant = ls_assign_plant-plant.
-      ELSE.
-        rv_plant = rv_plant && '&' && ls_assign_plant-plant.
-      ENDIF.
-    ENDLOOP.
-  ENDMETHOD.
-
-  METHOD get_company_by_user.
-    SELECT uuid,
-           mail,
-           companycode
-      FROM zc_tbc1012
-     WHERE mail = @iv_email
-     INTO TABLE @DATA(lt_assign_company).
-
-    SORT lt_assign_company BY companycode.
-    DELETE ADJACENT DUPLICATES FROM lt_assign_company COMPARING companycode.
-
-    LOOP AT lt_assign_company INTO DATA(ls_assign_company).
-      CONDENSE ls_assign_company-companycode NO-GAPS.
-      IF rv_company IS INITIAL.
-        rv_company = ls_assign_company-companycode.
-      ELSE.
-        rv_company = rv_company && '&' && ls_assign_company-companycode.
-      ENDIF.
-    ENDLOOP.
-  ENDMETHOD.
-
-  METHOD get_salesorg_by_user.
-    SELECT uuid,
-           mail,
-           salesorganization
-      FROM zc_tbc1013
-     WHERE mail = @iv_email
-     INTO TABLE @DATA(lt_assign_salesorg).
-
-    SORT lt_assign_salesorg BY salesorganization.
-    DELETE ADJACENT DUPLICATES FROM lt_assign_salesorg COMPARING salesorganization.
-
-    LOOP AT lt_assign_salesorg INTO DATA(ls_assign_salesorg).
-      CONDENSE ls_assign_salesorg-salesorganization NO-GAPS.
-      IF rv_salesorg IS INITIAL.
-        rv_salesorg = ls_assign_salesorg-salesorganization.
-      ELSE.
-        rv_salesorg = rv_salesorg && '&' && ls_assign_salesorg-salesorganization.
-      ENDIF.
-    ENDLOOP.
-  ENDMETHOD.
-
-  METHOD get_purchorg_by_user.
-    SELECT uuid,
-           mail,
-           purchasingorganization
-      FROM zc_tbc1017
-     WHERE mail = @iv_email
-     INTO TABLE @DATA(lt_assign_purchorg).
-
-    SORT lt_assign_purchorg BY purchasingorganization.
-    DELETE ADJACENT DUPLICATES FROM lt_assign_purchorg COMPARING purchasingorganization.
-
-    LOOP AT lt_assign_purchorg INTO DATA(ls_assign_purchorg).
-      CONDENSE ls_assign_purchorg-purchasingorganization NO-GAPS.
-      IF rv_purchorg IS INITIAL.
-        rv_purchorg = ls_assign_purchorg-purchasingorganization.
-      ELSE.
-        rv_purchorg = rv_purchorg && '&' && ls_assign_purchorg-purchasingorganization.
-      ENDIF.
-    ENDLOOP.
-  ENDMETHOD.
-
-  METHOD get_shippingpoint_by_user.
-    SELECT uuid,
-           mail,
-           shippingpoint
-      FROM zc_tbc1018
-     WHERE mail = @iv_email
-     INTO TABLE @DATA(lt_assign_shippingpoint).
-
-    SORT lt_assign_shippingpoint BY shippingpoint.
-    DELETE ADJACENT DUPLICATES FROM lt_assign_shippingpoint COMPARING shippingpoint.
-
-    LOOP AT lt_assign_shippingpoint INTO DATA(ls_assign_shippingpoint).
-      CONDENSE ls_assign_shippingpoint-shippingpoint NO-GAPS.
-      IF rv_shippingpoint IS INITIAL.
-        rv_shippingpoint = ls_assign_shippingpoint-shippingpoint.
-      ELSE.
-        rv_shippingpoint = rv_shippingpoint && '&' && ls_assign_shippingpoint-shippingpoint.
-      ENDIF.
-    ENDLOOP.
-  ENDMETHOD.
-
-  METHOD add_interface_log.
+  METHOD s3uploadattachment.
     TRY.
-        DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
+        DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
+        " Get UWEB Access configuration
+        SELECT SINGLE *
+          FROM zc_tbc1001
+         WHERE zid = 'ZBC005'
+           AND zvalue1 = @lv_system_url
+          INTO @DATA(ls_config).              "#EC CI_ALL_FIELDS_NEEDED
+
+        CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
+        CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
+        CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
+        CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
         ##NO_HANDLER
-      CATCH cx_uuid_error.
+      CATCH cx_abap_context_info_error.
         "handle exception
+        RETURN.
     ENDTRY.
 
-    INSERT INTO ztbc_1019 VALUES @( VALUE #( uuid            = lv_uuid
-                                             interface_id    = iv_interface_id
-                                             interface_desc  = iv_interface_desc
-                                             request_method  = iv_request_method
-                                             request_url     = iv_request_url
-                                             request_body    = iv_request_body
-                                             status_code     = iv_status_code
-                                             response_body   = iv_response
-                                             record_count    = iv_record_count
-                                             run_start_time  = iv_run_start_time
-                                             run_end_time    = iv_run_end_time
-                                             remark          = iv_remark
-                                             created_by      = sy-uname
-                                             created_at      = iv_run_end_time
-                                             last_changed_by = sy-uname
-                                             last_changed_at = iv_run_end_time
-                                             local_last_changed_at = iv_run_end_time ) ).
+    get_access_token( EXPORTING iv_token_url     = CONV #( ls_config-zvalue3 )
+                                iv_client_id     = CONV #( ls_config-zvalue4 )
+                                iv_client_secret = CONV #( ls_config-zvalue5 )
+                      IMPORTING ev_status_code   = ev_status_code
+                                ev_response      = ev_response
+                                es_response      = DATA(ls_response) ).
+    IF ls_response IS INITIAL.
+      RETURN.
+    ENDIF.
 
-    ev_log_uuid = lv_uuid.
+    DATA(lv_path) = |/odata/v4/Common/if_s3uploadAttachment|.
+    TRY.
+        DATA(lo_dest) = cl_http_destination_provider=>create_by_url( CONV #( ls_config-zvalue2 ) ).
+        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_dest ).
+        DATA(lo_request) = lo_http_client->get_http_request(   ).
+
+        lo_http_client->enable_path_prefix( ).
+        lo_request->set_uri_path( EXPORTING i_uri_path = lv_path ).
+
+        lo_request->set_header_field( i_name = 'Accept' i_value = 'application/json' ).
+        lo_request->set_header_field( i_name = 'Content-Type' i_value = 'application/json' ).
+        lo_request->set_header_field( i_name = 'Authorization' i_value = |{ ls_response-token_type } { ls_response-access_token }| ).
+
+        lo_request->set_text( iv_body ).
+
+        DATA(lo_response) = lo_http_client->execute( if_web_http_client=>post ).
+
+        ev_status_code = lo_response->get_status( )-code.
+        ev_response = lo_response->get_text(  ).
+
+        lo_http_client->close(  ).
+
+      CATCH cx_web_message_error INTO DATA(lx_web_message_error).
+        ev_status_code = 500.
+        ev_response = lx_web_message_error->get_text(  ).
+      CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
+        ev_status_code = 500.
+        ev_response = lx_web_http_client_error->get_text(  ).
+      CATCH cx_root INTO DATA(lx_root).
+        ev_status_code = 500.
+        ev_response = lx_root->get_text(  ).
+    ENDTRY.
   ENDMETHOD.
 ENDCLASS.

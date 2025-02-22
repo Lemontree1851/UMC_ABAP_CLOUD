@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_paidpaydocument IMPLEMENTATION.
+CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -398,11 +398,21 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
             ls_output-customername = ls_1013-customername.
             ls_output-suppliername = ls_1013-suppliername.
             ls_output-ar = ls_1013-ar.
+            ls_output-ar = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'OUT'
+                                                         iv_currency = ls_1013-currency
+                                                         iv_input = ls_1013-ar ).
+            CONDENSE ls_output-ar NO-GAPS.
             IF ls_1013-ap < 0.
-              ls_output-ap = -1 * ls_1013-ap.
+              ls_1013-ap = -1 * ls_1013-ap.
             ELSE.
-              ls_output-ap = ls_1013-ap.
+              ls_1013-ap = ls_1013-ap.
             ENDIF.
+            ls_output-ap = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'OUT'
+                                                         iv_currency = ls_1013-currency
+                                                         iv_input = ls_1013-ap ).
+            CONDENSE ls_output-ap NO-GAPS.
             ls_output-currency = ls_1013-currency.
             ls_output-belnr5 = ls_1013-belnr1.
             ls_output-gjahr5 = ls_1013-gjahr1.
@@ -415,6 +425,16 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
             APPEND ls_output TO lt_output.
           ELSE.
             MOVE-CORRESPONDING ls_table TO ls_output.
+            ls_output-ar = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'OUT'
+                                                         iv_currency = ls_1013-currency
+                                                         iv_input = ls_table-ar ).
+            CONDENSE ls_output-ar NO-GAPS.
+            ls_output-ap = zzcl_common_utils=>conversion_amount(
+                                                         iv_alpha = 'OUT'
+                                                         iv_currency = ls_1013-currency
+                                                         iv_input = ls_table-ap ).
+            CONDENSE ls_output-ap NO-GAPS.
             ls_output-ztype = lv_ztype.
             ls_output-currency = ls_table-currency.
             ls_output-belnr5 = ls_table-belnr1.

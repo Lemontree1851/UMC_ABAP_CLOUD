@@ -1,0 +1,34 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "Batch Data Import Files",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "appType": "ui5",
+    "catalogId": "SAP_TC_UI5_REPO_UIAD"
+  },
+  "ui5AppDetails": {
+    "appId": "bc.zdtimpfiles"
+  },
+  "navigation": {
+    "targetMappingId": "UI5R_9729D6840F201E118A8C38969D6A7EDD2AAE4761_TM",
+    "semanticObject": "zdtimp_files",
+    "action": "display",
+    "desktop": true,
+    "tablet": true,
+    "phone": true
+  },
+  "tiles": [
+    {
+      "id": "UI5R_9729D6840F201E118A8C38969D6A7EDD2AAE4761_AL",
+      "tileType": "static",
+      "isDefault": true,
+      "standard": {
+        "title": "Batch Data Import Files",
+        "subtitle": "Batch Import Files"
+      }
+    }
+  ]
+}

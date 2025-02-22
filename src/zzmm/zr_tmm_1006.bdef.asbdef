@@ -28,6 +28,8 @@ authorization master ( global )
 
   static action createPurchaseOrder parameter zr_upload_parameter result[1] zr_upload_parameter;
 
+  static action uploadFile parameter zr_upload_parameter result [1] zr_upload_parameter;
+
   validation checkRecords on save
   {
     field PrType,

@@ -177,16 +177,30 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
       lt_request        TYPE TABLE OF zr_productionplan,
       lt_request_return TYPE TABLE OF zr_productionplan,
       ls_request        TYPE zr_productionplan.
+    CONSTANTS:
+      lc_start TYPE c LENGTH 8 VALUE 'https://',
+      lc_end1  TYPE string VALUE '/ui#MRPRun-schedule?JobCatalogEntryName=SAP_SCM_MRP&/v4_JobRunList?sap-iapp-state=AS8BAVNXZLJM1MJLBKRAME3U1BEKHDQ2VQTZULRZ',
+      lc_end3  TYPE string VALUE '/ui#PlannedOrder-convertToProductionOrders?sap-ui-tech-hint=GUI',
+      lc_end4  TYPE string VALUE '/ui#ProductionOrder-monitor?sap-ui-tech-hint=GUI',
+      lc_end5  TYPE string VALUE '/ui#MaterialBOM-summarizedBOM?sap-ui-tech-hint=GUI',
+      lc_end6  TYPE string VALUE '/ui#ProductionRouting-display?sap-ui-tech-hint=GUI'.
 
     CHECK keys IS NOT INITIAL.
     DATA(lv_event) = keys[ 1 ]-%param-event.
     DATA(lv_zday) = keys[ 1 ]-%param-zdays.
+
+    TRY.
+        DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
+      CATCH cx_abap_context_info_error INTO DATA(lx_context_error).
+        IF  sy-subrc <> 0. ENDIF.
+    ENDTRY.
 
     LOOP AT keys INTO DATA(key).
       CLEAR ls_request.
       /ui2/cl_json=>deserialize( EXPORTING json = key-%param-zzkey
                                            pretty_name = /ui2/cl_json=>pretty_mode-camel_case
                                  CHANGING  data = lt_request ).
+
       CASE lv_event.
         WHEN 'POST'.
           post( CHANGING ct_data = lt_request
@@ -198,8 +212,36 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
                           %param = VALUE #( event = lv_event
                                             zzkey = lv_json ) ) TO result.
 
-        WHEN OTHERS.
-
+        WHEN 'WEB1'.
+          lv_system_url = lc_start && lv_system_url && lc_end1.
+          lv_json = /ui2/cl_json=>serialize( data = lv_system_url ).
+          APPEND VALUE #( %cid   = key-%cid
+                          %param = VALUE #( event = lv_event
+                                            zzkey = lv_json ) ) TO result.
+        WHEN 'WEB3'.
+          lv_system_url = lc_start && lv_system_url && lc_end3.
+          lv_json = /ui2/cl_json=>serialize( data = lv_system_url ).
+          APPEND VALUE #( %cid   = key-%cid
+                          %param = VALUE #( event = lv_event
+                                            zzkey = lv_json ) ) TO result.
+        WHEN 'WEB4'.
+          lv_system_url = lc_start && lv_system_url && lc_end4.
+          lv_json = /ui2/cl_json=>serialize( data = lv_system_url ).
+          APPEND VALUE #( %cid   = key-%cid
+                          %param = VALUE #( event = lv_event
+                                            zzkey = lv_json ) ) TO result.
+        WHEN 'WEB5'.
+          lv_system_url = lc_start && lv_system_url && lc_end5.
+          lv_json = /ui2/cl_json=>serialize( data = lv_system_url ).
+          APPEND VALUE #( %cid   = key-%cid
+                          %param = VALUE #( event = lv_event
+                                            zzkey = lv_json ) ) TO result.
+        WHEN 'WEB6'.
+          lv_system_url = lc_start && lv_system_url && lc_end6.
+          lv_json = /ui2/cl_json=>serialize( data = lv_system_url ).
+          APPEND VALUE #( %cid   = key-%cid
+                          %param = VALUE #( event = lv_event
+                                            zzkey = lv_json ) ) TO result.
       ENDCASE.
 
 
@@ -536,11 +578,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
               ENDIF.
             ENDIF.
           ENDDO.
-          "更新W行的消息
-          IF <ls_data_w>-status IS NOT INITIAL
-         AND <ls_data_w>-message IS NOT INITIAL.
-            MODIFY ct_data FROM <ls_data_w> INDEX lv_tabix TRANSPORTING status message.
-          ENDIF.
+
         WHEN 'I'.
           SELECT product,
                  plant,

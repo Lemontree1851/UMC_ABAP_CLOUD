@@ -156,5 +156,7 @@ define root view entity ZC_TMM_1006
       KyotenText,
       @Consumption.filter.hidden: true
       @UI.hidden: true
-      ApproveStatusText
+      ApproveStatusText,
+      
+      _Attachment
 }
