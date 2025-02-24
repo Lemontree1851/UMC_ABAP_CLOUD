@@ -518,20 +518,28 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
     ENDIF.
 
 *   品目マスタから製品が属される利益センタを抽出
-    SELECT product~plant,
-           product~product,
-           product~profitcenter,
-           ptext~profitcentername
-      FROM i_productplantbasic WITH PRIVILEGED ACCESS AS product
-     INNER JOIN @lt_qms_t07_quotation_d AS t07
-             ON ( t07~sap_mat_id      = product~product
-             OR   t07~material_number = product~product )
-            AND t07~plant = product~plant
-      LEFT JOIN i_profitcentertext WITH PRIVILEGED ACCESS AS ptext
-             ON ptext~profitcenter = product~profitcenter
-            AND ptext~language     = 'J'
-     INTO TABLE @DATA(lt_productplantbasic).
-    SORT lt_productplantbasic BY plant product.
+    IF lt_qms_t07_quotation_d IS NOT INITIAL.
+      SELECT product~plant,
+             product~product,
+             product~profitcenter,
+             ptext~profitcentername
+        FROM i_productplantbasic WITH PRIVILEGED ACCESS AS product
+*&--MOD BEGIN BY XINLEI XU 2025/02/24
+*     INNER JOIN @lt_qms_t07_quotation_d AS t07
+*             ON ( t07~sap_mat_id      = product~product
+*             OR   t07~material_number = product~product )
+*            AND t07~plant = product~plant
+        LEFT JOIN i_profitcentertext WITH PRIVILEGED ACCESS AS ptext
+               ON ptext~profitcenter = product~profitcenter
+              AND ptext~language     = @sy-langu
+          FOR ALL ENTRIES IN @lt_qms_t07_quotation_d
+        WHERE product~plant = @lt_qms_t07_quotation_d-plant
+          AND ( product~product = @lt_qms_t07_quotation_d-sap_mat_id OR
+                product~product = @lt_qms_t07_quotation_d-material_number )
+*&--MOD END BY XINLEI XU 2025/02/24
+       INTO TABLE @DATA(lt_productplantbasic).
+      SORT lt_productplantbasic BY plant product.
+    ENDIF.
 
 *   該当月の支払請求書を抽出
 *   各部品の最終受入単価を取得する
@@ -576,18 +584,18 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
 
    LEFT JOIN i_productdescription WITH PRIVILEGED ACCESS AS product1
           ON product1~product  = t07~material_number
-         AND product1~language = 'J'
+         AND product1~language = @sy-langu
    LEFT JOIN i_productdescription WITH PRIVILEGED ACCESS AS product2
           ON product2~product  = t07~sap_mat_id
-         AND product2~language = 'J'
+         AND product2~language = @sy-langu
   INNER JOIN i_purchaseorderapi01 WITH PRIVILEGED ACCESS AS purchase
           ON purchase~purchaseorder = itempurord~purchaseorder
    LEFT JOIN i_companycode WITH PRIVILEGED ACCESS AS companycodet
           ON companycodet~companycode  = supplier~companycode
-         AND companycodet~language     = 'J'
+         AND companycodet~language     = @sy-langu
    LEFT JOIN i_plant WITH PRIVILEGED ACCESS AS aplant
           ON aplant~plant   = suplrinvc~plant
-         AND aplant~language     = 'J'
+         AND aplant~language     = @sy-langu
 *       WHERE supplier~postingdate      >= @lv_next_start
 *         AND supplier~postingdate      <= @lv_next_end
        WHERE supplier~postingdate      <= @lv_next_end
@@ -635,82 +643,110 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
       FROM  @lt_qms_t07 AS t07
  LEFT JOIN i_productdescription WITH PRIVILEGED ACCESS AS product1
         ON product1~product  = t07~material_number
-       AND product1~language = 'J'
+       AND product1~language = @sy-langu
  LEFT JOIN i_productdescription WITH PRIVILEGED ACCESS AS product2
         ON product2~product  = t07~sap_mat_id
-       AND product2~language = 'J'
+       AND product2~language = @sy-langu
  LEFT JOIN i_companycode WITH PRIVILEGED ACCESS AS companycodet
         ON companycodet~companycode  = t07~companycode
-       AND companycodet~language     = 'J'
+       AND companycodet~language     = @sy-langu
  LEFT JOIN i_plant WITH PRIVILEGED ACCESS AS aplant
         ON aplant~plant   = t07~plant
-       AND aplant~language     = 'J'
+       AND aplant~language     = @sy-langu
       INTO TABLE @DATA(lt_name).
     SORT lt_name BY companycode plant material_number sap_mat_id.
 
 *   各部品の最終受入日付を取得
-    SELECT sup~supplierinvoice,    "仕入先請求書番号
-           sup~postingdate         "最終受入日付
-      FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS AS sup
-      JOIN  @lt_supplier AS supplier
-        ON supplier~supplierinvoice = sup~supplierinvoice
-     WHERE sup~companycode = supplier~companycode
-       AND sup~reversedocument  = @space
-     INTO TABLE @DATA(lt_sup).
-    SORT lt_sup BY supplierinvoice.
+    IF lt_supplier IS NOT INITIAL.
+      SELECT sup~supplierinvoice,    "仕入先請求書番号
+             sup~postingdate         "最終受入日付
+        FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS AS sup
+*&--MOD BEGIN BY XINLEI XU 2025/02/24
+*      JOIN  @lt_supplier AS supplier
+*        ON supplier~supplierinvoice = sup~supplierinvoice
+         FOR ALL ENTRIES IN @lt_supplier
+       WHERE sup~companycode = @lt_supplier-companycode
+         AND sup~supplierinvoice = @lt_supplier-supplierinvoice
+*&--MOD END BY XINLEI XU 2025/02/24
+         AND sup~reversedocument = @space
+       INTO TABLE @DATA(lt_sup).
+      SORT lt_sup BY supplierinvoice.
+    ENDIF.
 
 ****    購買情報マスタから各部品の固定仕入先情報を取得
-    SELECT info~supplier,"仕入先番号(複数取得した場合は「/」で区切りする)
-           plntdata~plant,
-           info~material
-      FROM i_purchasinginforecordapi01    WITH PRIVILEGED ACCESS AS info
-      JOIN i_purginforecdorgplntdataapi01 WITH PRIVILEGED ACCESS AS plntdata
-        ON info~purchasinginforecord = plntdata~purchasinginforecord
-      JOIN  @lt_qms_t07_quotation_d AS t07
-         ON plntdata~plant     = t07~plant
-        AND info~material      = t07~material_number "部品
-       INTO TABLE @DATA(lt_info).
-    SORT lt_info BY plant material.
+    IF lt_qms_t07_quotation_d IS NOT INITIAL.
+      SELECT info~supplier,"仕入先番号(複数取得した場合は「/」で区切りする)
+             plntdata~plant,
+             info~material
+        FROM i_purchasinginforecordapi01    WITH PRIVILEGED ACCESS AS info
+        JOIN i_purginforecdorgplntdataapi01 WITH PRIVILEGED ACCESS AS plntdata
+          ON info~purchasinginforecord = plntdata~purchasinginforecord
+*&--MOD BEGIN BY XINLEI XU 2025/02/24
+*      JOIN  @lt_qms_t07_quotation_d AS t07
+*         ON plntdata~plant     = t07~plant
+*        AND info~material      = t07~material_number "部品
+          FOR ALL ENTRIES IN @lt_qms_t07_quotation_d
+        WHERE plntdata~plant = @lt_qms_t07_quotation_d-plant
+          AND info~material  = @lt_qms_t07_quotation_d-material_number
+*&--MOD END BY XINLEI XU 2025/02/24
+         INTO TABLE @DATA(lt_info).
+      SORT lt_info BY plant material.
 
 *    各部品の最新標準単価＆実際単価を取得
-    SELECT basic~valuationarea AS plant,"プラント
-           basic~product AS material,             "部品
-           basic~standardprice,       "標準原価
-           basic~movingaverageprice,  "実際原価
-           basic~priceunitqty,
-           basic~currency             "会社コード通貨
-      FROM i_productvaluationbasic WITH PRIVILEGED ACCESS AS basic
-      JOIN @lt_qms_t07_quotation_d AS t07
-        ON basic~valuationarea = t07~plant
-       AND basic~product       = t07~material_number "部品
-      INTO TABLE @DATA(lt_basic).
-    SORT lt_basic BY plant material.
+      SELECT basic~valuationarea AS plant,"プラント
+             basic~product AS material,             "部品
+             basic~standardprice,       "標準原価
+             basic~movingaverageprice,  "実際原価
+             basic~priceunitqty,
+             basic~currency             "会社コード通貨
+        FROM i_productvaluationbasic WITH PRIVILEGED ACCESS AS basic
+*&--MOD BEGIN BY XINLEI XU 2025/02/24
+*        JOIN @lt_qms_t07_quotation_d AS t07
+*          ON basic~valuationarea = t07~plant
+*         AND basic~product       = t07~material_number "部品
+          FOR ALL ENTRIES IN @lt_qms_t07_quotation_d
+        WHERE basic~valuationarea = @lt_qms_t07_quotation_d-plant
+          AND basic~product       = @lt_qms_t07_quotation_d-material_number
+*&--MOD END BY XINLEI XU 2025/02/24
+         INTO TABLE @DATA(lt_basic).
+      SORT lt_basic BY plant material.
 
 *    販売請求書から当月製品の販売数量を取得
-    SELECT bil~companycode,         "会社コード
-           bil~billingdocumentdate, "請求書日付
-           bil~product AS material,             "製品
-           bil~billingquantity,     "請求書数量
-           bil~billingquantityunit  "請求書数量単位
-      FROM i_billingdocumentitem WITH PRIVILEGED ACCESS AS bil
-      JOIN @lt_qms_t07_quotation_d AS t07
-        ON t07~sap_mat_id = bil~product      "製品
-     WHERE bil~companycode  = t07~companycode
-       AND bil~billingdocumentdate >= @lv_next_start
-       AND bil~billingdocumentdate <= @lv_next_end
-      INTO TABLE @DATA(lt_bil).
-    SORT lt_bil BY material.
+      SELECT bil~companycode,         "会社コード
+             bil~billingdocumentdate, "請求書日付
+             bil~product AS material,             "製品
+             bil~billingquantity,     "請求書数量
+             bil~billingquantityunit  "請求書数量単位
+        FROM i_billingdocumentitem WITH PRIVILEGED ACCESS AS bil
+*&--MOD BEGIN BY XINLEI XU 2025/02/24
+*        JOIN @lt_qms_t07_quotation_d AS t07
+*          ON t07~sap_mat_id = bil~product      "製品
+*       WHERE bil~companycode  = t07~companycode
+         FOR ALL ENTRIES IN @lt_qms_t07_quotation_d
+       WHERE bil~companycode = @lt_qms_t07_quotation_d-companycode
+         AND bil~product     = @lt_qms_t07_quotation_d-sap_mat_id
+*&--MOD END BY XINLEI XU 2025/02/24
+         AND bil~billingdocumentdate >= @lv_next_start
+         AND bil~billingdocumentdate <= @lv_next_end
+        INTO TABLE @DATA(lt_bil).
+      SORT lt_bil BY material.
 
 *    品目マスタからMRP管理者を抽出
-    SELECT mrp~plant,
-           mrp~product AS material,
-           mrp~mrpresponsible  "MRP管理者
-      FROM i_productplantbasic WITH PRIVILEGED ACCESS AS mrp
-      JOIN @lt_qms_t07_quotation_d AS t07
-        ON mrp~plant    = t07~plant
-       AND mrp~product  = t07~material_number
-     INTO TABLE @DATA(lt_mrp).
-    SORT lt_mrp BY plant material.
+      SELECT mrp~plant,
+             mrp~product AS material,
+             mrp~mrpresponsible  "MRP管理者
+        FROM i_productplantbasic WITH PRIVILEGED ACCESS AS mrp
+*&--MOD BEGIN BY XINLEI XU 2025/02/24
+*        JOIN @lt_qms_t07_quotation_d AS t07
+*          ON mrp~plant    = t07~plant
+*         AND mrp~product  = t07~material_number
+         FOR ALL ENTRIES IN @lt_qms_t07_quotation_d
+       WHERE mrp~plant = @lt_qms_t07_quotation_d-plant
+         AND mrp~product = @lt_qms_t07_quotation_d-material_number
+*&--MOD END BY XINLEI XU 2025/02/24
+       INTO TABLE @DATA(lt_mrp).
+      SORT lt_mrp BY plant material.
+    ENDIF.
 
 *     得意先BPコードと名称を抽出
     SELECT busi~searchterm2,
@@ -721,6 +757,7 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
          ON busi~searchterm2 = substring( mrp~mrpresponsible ,2,2 )   "「MRP管理者」末2桁
        INTO TABLE @DATA(lt_busi).
     SORT lt_busi BY searchterm2.
+    DELETE ADJACENT DUPLICATES FROM lt_busi COMPARING searchterm2.
 
     LOOP AT lt_qms_t07_quotation_d ASSIGNING FIELD-SYMBOL(<lfs_qmst07>).
       lv_currency = <lfs_qmst07>-currency.
@@ -897,70 +934,102 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
     lv_yearmonthn = mv_year && lv_month.
 
 *     工程別加工費実績から各製品の加工費実績を取得
-    SELECT mfgorder~product,
-           mfgorder~producedproduct,
-           mfgorder~productionsupervisor,
-           mfgorder~companycode,
-           mfgorder~totalactualcost,
-           mfgorder~mfgorderconfirmedyieldqty AS yieldqty
-      FROM ztfi_1020 AS mfgorder
-      JOIN @lt_qms_t02_quo_d AS t02
-        ON mfgorder~product = t02~sap_mat_id
-     WHERE mfgorder~companycode = t02~companycode
-       AND mfgorder~yearmonth   = @lv_yearmonthn
-      INTO TABLE @DATA(lt_mfgorder).
+    IF lt_qms_t02_quo_d IS NOT INITIAL.
+      SELECT mfgorder~product,
+             mfgorder~producedproduct,
+             mfgorder~productionsupervisor,
+             mfgorder~companycode,
+             mfgorder~totalactualcost,
+             mfgorder~mfgorderconfirmedyieldqty AS yieldqty
+        FROM ztfi_1020 AS mfgorder
+*&--MOD BEGIN BY XINLEI XU 2025/02/24
+*      JOIN @lt_qms_t02_quo_d AS t02
+*        ON mfgorder~product = t02~sap_mat_id
+*     WHERE mfgorder~companycode = t02~companycode
+          FOR ALL ENTRIES IN @lt_qms_t02_quo_d
+        WHERE mfgorder~companycode = @lt_qms_t02_quo_d-companycode
+          AND mfgorder~product = @lt_qms_t02_quo_d-sap_mat_id
+*&--MOD END BY XINLEI XU 2025/02/24
+          AND mfgorder~yearmonth   = @lv_yearmonthn
+        INTO TABLE @DATA(lt_mfgorder).
 
 *      販売請求書から当月製品の販売数量を取得
-    SELECT bill~companycode,
-           bill~billingdocumentdate,
-           bill~product,
-           bill~billingquantity,
-           bill~billingquantityunit
-      FROM i_billingdocumentitem WITH PRIVILEGED ACCESS AS bill
-      JOIN @lt_qms_t02_quo_d AS t02
-        ON t02~sap_mat_id = bill~product
-     WHERE bill~companycode         = t02~companycode
-       AND bill~billingdocumentdate >= @lv_next_start
-       AND bill~billingdocumentdate <= @lv_next_end
-     INTO TABLE @DATA(lt_bill).
-    SORT lt_bill BY product.
+      SELECT bill~companycode,
+             bill~billingdocumentdate,
+             bill~product,
+             bill~billingquantity,
+             bill~billingquantityunit
+        FROM i_billingdocumentitem WITH PRIVILEGED ACCESS AS bill
+*&--MOD BEGIN BY XINLEI XU 2025/02/24
+*        JOIN @lt_qms_t02_quo_d AS t02
+*          ON t02~sap_mat_id = bill~product
+*       WHERE bill~companycode = t02~companycode
+         FOR ALL ENTRIES IN @lt_qms_t02_quo_d
+       WHERE bill~companycode = @lt_qms_t02_quo_d-companycode
+         AND bill~product = @lt_qms_t02_quo_d-sap_mat_id
+*&--MOD END BY XINLEI XU 2025/02/24
+         AND bill~billingdocumentdate >= @lv_next_start
+         AND bill~billingdocumentdate <= @lv_next_end
+       INTO TABLE @DATA(lt_bill).
+      SORT lt_bill BY product.
 
-    SELECT basic~valuationarea AS plant,"プラント
-           basic~product,             "部品
-           basic~currency             "会社コード通貨
-      FROM i_productvaluationbasic WITH PRIVILEGED ACCESS AS basic
-      JOIN @lt_qms_t02_quo_d AS t02
-        ON basic~valuationarea = t02~plant
-       AND basic~product       = t02~sap_mat_id
-      INTO TABLE @DATA(lt_basic2).
-    SORT lt_basic2 BY plant product.
+      SELECT basic~valuationarea AS plant,"プラント
+             basic~product,             "部品
+             basic~currency             "会社コード通貨
+        FROM i_productvaluationbasic WITH PRIVILEGED ACCESS AS basic
+*&--MOD BEGIN BY XINLEI XU 2025/02/24
+*        JOIN @lt_qms_t02_quo_d AS t02
+*          ON basic~valuationarea = t02~plant
+*         AND basic~product       = t02~sap_mat_id
+         FOR ALL ENTRIES IN @lt_qms_t02_quo_d
+       WHERE basic~valuationarea = @lt_qms_t02_quo_d-plant
+         AND basic~product = @lt_qms_t02_quo_d-sap_mat_id
+*&--MOD END BY XINLEI XU 2025/02/24
+        INTO TABLE @DATA(lt_basic2).
+      SORT lt_basic2 BY plant product.
 
-    SELECT aplant~plant,
-           aplant~plantname
-      FROM i_plant WITH PRIVILEGED ACCESS AS aplant
-      JOIN @lt_qms_t02_quo_d AS t02
-        ON aplant~plant        = t02~plant
-       AND aplant~language     = 'J'
-      INTO TABLE @DATA(lt_aplant).
-    SORT lt_aplant BY plant.
+      SELECT aplant~plant,
+             aplant~plantname
+        FROM i_plant WITH PRIVILEGED ACCESS AS aplant
+*&--MOD BEGIN BY XINLEI XU 2025/02/24
+*        JOIN @lt_qms_t02_quo_d AS t02
+*          ON aplant~plant        = t02~plant
+*         AND aplant~language     = 'J'
+         FOR ALL ENTRIES IN @lt_qms_t02_quo_d
+       WHERE aplant~plant = @lt_qms_t02_quo_d-plant
+         AND aplant~language = @sy-langu
+*&--MOD END BY XINLEI XU 2025/02/24
+        INTO TABLE @DATA(lt_aplant).
+      SORT lt_aplant BY plant.
 
-    SELECT product1~product,
-           product1~productdescription AS productdescription
-      FROM i_productdescription WITH PRIVILEGED ACCESS AS product1
-      JOIN @lt_qms_t02_quo_d AS t02
-        ON product1~product  = t02~sap_mat_id
-       AND product1~language = 'J'
-      INTO TABLE @DATA(lt_product).
-    SORT lt_product BY product.
+      SELECT product1~product,
+             product1~productdescription AS productdescription
+        FROM i_productdescription WITH PRIVILEGED ACCESS AS product1
+*&--MOD BEGIN BY XINLEI XU 2025/02/24
+*        JOIN @lt_qms_t02_quo_d AS t02
+*          ON product1~product  = t02~sap_mat_id
+*         AND product1~language = 'J'
+         FOR ALL ENTRIES IN @lt_qms_t02_quo_d
+       WHERE product1~product = @lt_qms_t02_quo_d-sap_mat_id
+         AND product1~language = @sy-langu
+*&--MOD END BY XINLEI XU 2025/02/24
+        INTO TABLE @DATA(lt_product).
+      SORT lt_product BY product.
 
-    SELECT companycodet~companycode,
-           companycodet~companycodename
-      FROM i_companycode WITH PRIVILEGED ACCESS AS companycodet
-      JOIN @lt_qms_t02_quo_d AS t02
-        ON companycodet~companycode  = t02~companycode
-     WHERE companycodet~language     = 'J'
-      INTO TABLE @DATA(lt_companycodet).
-    SORT lt_companycodet BY companycode.
+      SELECT companycodet~companycode,
+             companycodet~companycodename
+        FROM i_companycode WITH PRIVILEGED ACCESS AS companycodet
+*&--MOD BEGIN BY XINLEI XU 2025/02/24
+*        JOIN @lt_qms_t02_quo_d AS t02
+*          ON companycodet~companycode  = t02~companycode
+*       WHERE companycodet~language     = 'J'
+         FOR ALL ENTRIES IN @lt_qms_t02_quo_d
+       WHERE companycodet~companycode = @lt_qms_t02_quo_d-companycode
+         AND companycodet~language = @sy-langu
+*&--MOD END BY XINLEI XU 2025/02/24
+        INTO TABLE @DATA(lt_companycodet).
+      SORT lt_companycodet BY companycode.
+    ENDIF.
 
     LOOP AT lt_qms_t02_quo_d ASSIGNING FIELD-SYMBOL(<lfs_t02>).
       CLEAR ls_dataj.
@@ -1011,9 +1080,11 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
         ENDCASE.
 
         IF <lfs_mfgorder>-product = <lfs_mfgorder>-producedproduct.
+          CONDENSE ls_dataj-yieldqty NO-GAPS.
           ls_dataj-yieldqty = ls_dataj-yieldqty + <lfs_mfgorder>-yieldqty.
         ENDIF.
       ENDLOOP.
+      CONDENSE ls_dataj-yieldqty NO-GAPS.
 
       TRY.
           ls_dataj-actualprice_smt = ls_dataj-actualprice_smt / ls_dataj-yieldqty.

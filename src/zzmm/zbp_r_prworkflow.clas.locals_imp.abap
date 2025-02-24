@@ -29,6 +29,8 @@ CLASS lhc_purchasereq DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys FOR ACTION purchasereq~application RESULT result.
     METHODS revoke FOR MODIFY
       IMPORTING keys FOR ACTION purchasereq~revoke RESULT result.
+    METHODS handlefile FOR MODIFY
+      IMPORTING keys FOR ACTION purchasereq~handlefile RESULT result.
     METHODS check   CHANGING ct_data TYPE tt_batchupload.
     METHODS accept  CHANGING ct_data TYPE tt_batchupload.
     METHODS reject  CHANGING ct_data TYPE tt_batchupload.
@@ -683,9 +685,175 @@ CLASS lhc_purchasereq IMPLEMENTATION.
       APPEND VALUE #( %cid    = key-%cid
                       %param  = VALUE #( zzkey = lv_json ) ) TO result.
     ENDLOOP.
+  ENDMETHOD.
 
+  METHOD handlefile.
+    TYPES:BEGIN OF lty_upload,
+            uuid      TYPE sysuuid_x16,
+            seq       TYPE int4,
+            file_name TYPE zze_filename,
+            mime_type TYPE zze_mimetype,
+            file_type TYPE string,
+            file_size TYPE int4,
+            data      TYPE string,
+          END OF lty_upload,
+          BEGIN OF lty_file_object,
+            object      TYPE string,
+            object_type TYPE string,
+            file_name   TYPE zze_filename,
+            file_type   TYPE string,
+            value       TYPE string,
+          END OF lty_file_object,
+          BEGIN OF lty_s3_request,
+            attachmentjson TYPE lty_file_object,
+          END OF lty_s3_request,
+          BEGIN OF lty_s3_response,
+            value TYPE string,
+          END OF lty_s3_response.
 
+    DATA: ls_upload      TYPE lty_upload,
+          ls_s3_request  TYPE lty_s3_request,
+          ls_s3_response TYPE lty_s3_response,
+          ls_file_record TYPE ztmm_1012,
+          ls_file        TYPE zc_tmm_1012,
+          ls_file_object TYPE lty_file_object.
 
+    LOOP AT keys INTO DATA(key).
+      CASE key-%param-event.
+*        WHEN 'UPLOAD'.
+*          CLEAR: ls_upload, ls_s3_request.
+*          /ui2/cl_json=>deserialize( EXPORTING json = key-%param-zzkey
+*                                     CHANGING  data = ls_upload ).
+*          " POST BODY
+*          ls_s3_request-attachmentjson = VALUE #( object      = 'MM-011'
+*                                                  object_type = 'MM-011'
+*                                                  file_name   = ls_upload-file_name
+*                                                  file_type   = ls_upload-file_type
+*                                                  value       = ls_upload-data ).
+*
+*          DATA(lv_request_body) = /ui2/cl_json=>serialize( data = ls_s3_request
+*                                                           pretty_name = /ui2/cl_json=>pretty_mode-low_case ).
+*
+*          REPLACE ALL OCCURRENCES OF `attachmentjson` IN lv_request_body WITH `attachmentJson`.
+*
+*          zzcl_common_utils=>s3_attachment(
+*            EXPORTING
+*              iv_path        = 'if_s3uploadAttachment'
+*              iv_body        = lv_request_body
+*            IMPORTING
+*              ev_status_code = DATA(ev_status_code)
+*              ev_response    = DATA(ev_response) ).
+*
+*          IF ev_status_code = 200.
+*            /ui2/cl_json=>deserialize( EXPORTING json = ev_response
+*                                       CHANGING  data = ls_s3_response ).
+*            TRY.
+*                DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
+*                ##NO_HANDLER
+*              CATCH cx_uuid_error.
+*                "handle exception
+*            ENDTRY.
+*
+*            GET TIME STAMP FIELD DATA(lv_timestamp).
+*
+*            CLEAR ls_file_record.
+*            ls_file_record = VALUE #( pr_uuid     = ls_upload-uuid
+*                                      file_uuid   = lv_uuid
+*                                      file_seq    = ls_upload-seq
+*                                      file_type   = ls_upload-mime_type
+*                                      file_name   = ls_upload-file_name
+*                                      file_size   = ls_upload-file_size
+*                                      s3_filename = ls_s3_response-value
+*                                      created_by  = sy-uname
+*                                      created_at  = lv_timestamp
+*                                      last_changed_by = sy-uname
+*                                      last_changed_at = lv_timestamp
+*                                      local_last_changed_at = lv_timestamp ).
+*            TRY.
+*                cl_system_uuid=>convert_uuid_x16_static( EXPORTING uuid = ls_file_record-pr_uuid
+*                                                         IMPORTING uuid_c36 = ls_file_record-pr_uuid_c36 ).
+*                cl_system_uuid=>convert_uuid_x16_static( EXPORTING uuid = ls_file_record-file_uuid
+*                                                         IMPORTING uuid_c36 = ls_file_record-file_uuid_c36 ).
+*                ##NO_HANDLER
+*              CATCH cx_uuid_error.
+*                " handle exception
+*            ENDTRY.
+*
+*            INSERT INTO ztmm_1012 VALUES @ls_file_record.
+*            IF sy-subrc = 0.
+*              DATA(lv_type) = 'S'.
+*            ENDIF.
+*          ENDIF.
+*
+*          IF lv_type IS INITIAL.
+*            APPEND VALUE #( %cid   = key-%cid
+*                            %param = VALUE #( zzkey = 'E' ) ) TO result.
+*          ELSE.
+*            DATA(lv_record) = /ui2/cl_json=>serialize( ls_file_record ).
+*            APPEND VALUE #( %cid   = key-%cid
+*                            %param = VALUE #( zzkey = lv_record ) ) TO result.
+*          ENDIF.
+
+        WHEN 'DOWNLOAD'.
+          CLEAR: ls_file, ls_s3_request.
+
+          /ui2/cl_json=>deserialize( EXPORTING json = key-%param-zzkey
+                                     CHANGING  data = ls_file ).
+          " POST BODY
+          ls_s3_request-attachmentjson = VALUE #( object = 'download'
+                                                  value  = ls_file-s3filename ).
+
+          DATA(lv_request_body) = /ui2/cl_json=>serialize( data = ls_s3_request
+                                                           pretty_name = /ui2/cl_json=>pretty_mode-low_case ).
+
+          REPLACE ALL OCCURRENCES OF `attachmentjson` IN lv_request_body WITH `attachmentJson`.
+
+          zzcl_common_utils=>s3_attachment(
+            EXPORTING
+              iv_path        = 'if_s3DownloadAttachment'
+              iv_body        = lv_request_body
+            IMPORTING
+              ev_status_code = DATA(ev_status_code)
+              ev_response    = DATA(ev_response) ).
+
+          IF ev_status_code = 200.
+            /ui2/cl_json=>deserialize( EXPORTING json = ev_response
+                                       CHANGING  data = ls_s3_response ).
+
+            ls_file_object = VALUE #( file_name = ls_file-filename
+                                      file_type = ls_file-filetype
+                                      value     = ls_s3_response-value ).
+
+            DATA(lv_download) = /ui2/cl_json=>serialize( ls_file_object ).
+
+            APPEND VALUE #( %cid   = key-%cid
+                            %param = VALUE #( zzkey = lv_download ) ) TO result.
+          ELSE.
+            APPEND VALUE #( %cid   = key-%cid
+                            %param = VALUE #( zzkey = 'E' ) ) TO result.
+          ENDIF.
+
+*        WHEN 'DELETE'.
+*          CLEAR: ls_file.
+*          /ui2/cl_json=>deserialize( EXPORTING json = key-%param-zzkey
+*                                     CHANGING  data = ls_file ).
+*
+*          DELETE FROM ztmm_1012 WHERE pr_uuid   = @ls_file-pruuid
+*                                  AND file_uuid = @ls_file-fileuuid.
+*          IF sy-subrc = 0.
+*            APPEND VALUE #( %cid   = key-%cid
+*                            %param = VALUE #( zzkey = 'S' ) ) TO result.
+*          ELSE.
+*            APPEND VALUE #( %cid   = key-%cid
+*                            %param = VALUE #( zzkey = 'E' ) ) TO result.
+*          ENDIF.
+
+        WHEN OTHERS.
+
+      ENDCASE.
+
+      CLEAR: lv_request_body, ev_status_code, ev_response.
+    ENDLOOP.
   ENDMETHOD.
 
 ENDCLASS.

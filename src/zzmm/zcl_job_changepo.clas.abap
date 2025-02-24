@@ -25,7 +25,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_JOB_CHANGEPO IMPLEMENTATION.
+CLASS zcl_job_changepo IMPLEMENTATION.
 
 
   METHOD add_message_to_log.
@@ -81,7 +81,7 @@ CLASS ZCL_JOB_CHANGEPO IMPLEMENTATION.
       "BOI 虽然传值结构是一个内表，但是对于抬头数据一次依然只能传递一个key值
       MODIFY ENTITIES OF i_purchaseordertp_2
         ENTITY purchaseorder
-        UPDATE FROM value #( (  purchaseorder = ls_purchaseorder-purchaseorder
+        UPDATE FROM VALUE #( (  purchaseorder = ls_purchaseorder-purchaseorder
                                 companycode = compay_code_after
                                 %control-companycode = 1 ) )
         MAPPED DATA(mapped)
@@ -99,16 +99,27 @@ CLASS ZCL_JOB_CHANGEPO IMPLEMENTATION.
       ELSE.
         LOOP AT reported-purchaseorder INTO DATA(reported_head).
           CLEAR lv_msg.
-          MESSAGE e017(zmm_001) WITH reported_head-PurchaseOrder INTO lv_msg.
-          data(lv_msgtext) = cl_message_helper=>get_text_for_message( reported_head-%msg ).
+          MESSAGE e017(zmm_001) WITH reported_head-purchaseorder INTO lv_msg.
+          DATA(lv_msgtext) = cl_message_helper=>get_text_for_message( reported_head-%msg ).
           TRY.
               add_message_to_log( i_text = lv_msg i_type = 'E' ).
-              add_message_to_log( i_text = conv #( lv_msgtext ) i_type = 'E' ).
+              add_message_to_log( i_text = CONV #( lv_msgtext ) i_type = 'E' ).
             CATCH cx_bali_runtime ##NO_HANDLER.
           ENDTRY.
         ENDLOOP.
       ENDIF.
     ENDLOOP.
+
+*&--ADD BEGIN BY XINLEI XU 2025/02/24
+    IF lt_purchaseorder IS INITIAL.
+      CLEAR lv_msg.
+      MESSAGE s024(zmm_001) INTO lv_msg.
+      TRY.
+          add_message_to_log( i_text = lv_msg i_type = 'S' ).
+        CATCH cx_bali_runtime ##NO_HANDLER.
+      ENDTRY.
+    ENDIF.
+*&--ADD BEGIN BY XINLEI XU 2025/02/24
 
   ENDMETHOD.
 

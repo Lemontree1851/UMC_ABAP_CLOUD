@@ -1430,23 +1430,23 @@ CLASS lhc_materialrequisition IMPLEMENTATION.
 
     DATA(lv_datetime) = |{ lv_date+0(4) }/{ lv_date+4(2) }/{ lv_date+6(2) } { lv_time+0(2) }:{ lv_time+2(2) }:{ lv_time+4(2) }|.
 
-    lv_main_content = |<p style="line-height: 0.5">生産管理担当各位:</p><div style="height: 5px;"></div>|.
+    lv_main_content = |<p>生産管理担当各位:</p><div style="height: 5px;"></div>|.
     IF ls_data-type = lc_application_type_im.
       lv_filename = |{ iv_materialrequisitionno }_副資材仕損処理依頼書.pdf|.
       lv_subject = |副資材廃棄申請連絡 { iv_materialrequisitionno }　{ lv_datetime }|.
       lv_main_content = lv_main_content &&
-                        |<p style="line-height: 0.5">副資材仕損処理依頼を発行しました。</p>| &&
-                        |<p style="line-height: 0.5">SAP システム処理をお願いします。</p><div style="height: 5px;"></div>| &&
-                        |<p style="line-height: 0.5">顧客名: { ls_data-customer } : { ls_data-customername }</p>| &&
-                        |<p style="line-height: 0.5">IM番号: { iv_materialrequisitionno }</p>|.
+                        |<p>副資材仕損処理依頼を発行しました。</p>| &&
+                        |<p>SAP システム処理をお願いします。</p><div style="height: 5px;"></div>| &&
+                        |<p>顧客名: { ls_data-customer } : { ls_data-customername }</p>| &&
+                        |<p>IM番号: { iv_materialrequisitionno }</p>|.
     ELSE.
       lv_filename = |{ iv_materialrequisitionno }_部品払出依頼書.pdf|.
       lv_subject = |部品払出依頼書（MR）{ iv_materialrequisitionno }　{ lv_datetime }|.
       lv_main_content = lv_main_content &&
-                        |<p style="line-height: 0.5">計画外部品受入(M/R Manage)にて、部品払出依頼を発行しました。</p>| &&
-                        |<p style="line-height: 0.5">SAP システム処理をお願いします。</p><div style="height: 5px;"></div>| &&
-                        |<p style="line-height: 0.5">顧客名: { ls_data-customer } : { ls_data-customername }</p>| &&
-                        |<p style="line-height: 0.5">MR番号: { iv_materialrequisitionno }</p>|.
+                        |<p>計画外部品受入(M/R Manage)にて、部品払出依頼を発行しました。</p>| &&
+                        |<p>SAP システム処理をお願いします。</p><div style="height: 5px;"></div>| &&
+                        |<p>顧客名: { ls_data-customer } : { ls_data-customername }</p>| &&
+                        |<p>MR番号: { iv_materialrequisitionno }</p>|.
     ENDIF.
 
     " table begin
@@ -1477,10 +1477,10 @@ CLASS lhc_materialrequisition IMPLEMENTATION.
 
     IF ls_data-type <> lc_application_type_im.
       lv_main_content = lv_main_content &&
-                        |<p style="line-height: 0.5">倉庫担当は、現品の払い出し処理をお願いします。</p>| &&
-                        |<p style="line-height: 0.5">出庫の際は、添付の払出依頼書を部品に添付して下さい。</p><div style="height: 5px;"></div>|.
+                        |<p>倉庫担当は、現品の払い出し処理をお願いします。</p>| &&
+                        |<p>出庫の際は、添付の払出依頼書を部品に添付して下さい。</p><div style="height: 5px;"></div>|.
     ENDIF.
-    lv_main_content = lv_main_content && |<p style="line-height: 0.5">このメ-ルは、SAP にて自動配信されています。</p>|.
+    lv_main_content = lv_main_content && |<p>このメ-ルは、SAP にて自動配信されています。</p>|.
 
     lt_attachment = VALUE #( ( content_type = 'application/pdf'
                                filename     = lv_filename
@@ -1493,7 +1493,9 @@ CLASS lhc_materialrequisition IMPLEMENTATION.
                                        IMPORTING et_status       = DATA(lt_status) ).
       CATCH cx_bcs_mail INTO DATA(lx_bcs_mail).
         " handle exception
-        rv_error_text = lx_bcs_mail->get_longtext(  ).
+*        rv_error_text = lx_bcs_mail->get_longtext(  ).
+        MESSAGE ID sy-msgid TYPE 'E'
+            NUMBER sy-msgno INTO rv_error_text WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
     ENDTRY.
   ENDMETHOD.
 ENDCLASS.

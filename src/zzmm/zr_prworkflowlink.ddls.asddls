@@ -9,9 +9,12 @@ define root view entity ZR_PRWORKFLOWLINK
   //association [0..*] to ZR_WF_ApprovalHistory as _ApprovalHistory on  ztmm_1006.workflow_id    = _ApprovalHistory.WorkflowId
   //                                                                and ztmm_1006.instance_id    = _ApprovalHistory.InstanceId
   //                                                                and ztmm_1006.application_id = _ApprovalHistory.ApplicationId
-  association [0..1] to ZC_WF_PrType_VH      as _PrType         on  $projection.PrType = _PrType.Zvalue1
-    association [0..1] to ZC_WF_Location_VH    as _Kyoten         on  $projection.Kyoten = _Kyoten.Zvalue1
+  association [0..1] to ZC_WF_PrType_VH   as _PrType     on $projection.PrType = _PrType.Zvalue1
+  association [0..1] to ZC_WF_Location_VH as _Kyoten     on $projection.Kyoten = _Kyoten.Zvalue1
 
+  // ADD BEGIN BY XINLEI XU 2025/02/24
+  association [0..*] to ZC_TMM_1012       as _Attachment on $projection.UUID = _Attachment.PrUuid
+  // ADD END BY XINLEI XU 2025/02/24
 {
   key ztmm_1006.uuid                           as UUID,
       ztmm_1006.apply_depart                   as ApplyDepart,
@@ -77,7 +80,9 @@ define root view entity ZR_PRWORKFLOWLINK
       ZR_PRWORKFLOW_SUM.Amount_Sum             as AmountSum,
       ztmm_1006.workflow_id                    as WorkflowId,
       ztmm_1006.instance_id                    as InstanceId,
-      ztmm_1006.application_id                 as ApplicationId ,  
+      ztmm_1006.application_id                 as ApplicationId,
+
       _PrType,
-      _Kyoten
+      _Kyoten,
+      _Attachment
 }

@@ -12,4 +12,5 @@ define behavior for ZC_PRWORKFLOW alias PurchaseReq
   use action RejectPRWF;
   use action Application;
   use action Revoke;
+  use action handleFile;
 }

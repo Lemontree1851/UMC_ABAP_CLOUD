@@ -34,6 +34,8 @@ authorization master ( global )
 
   static action Revoke parameter zr_upload_parameter result[1] zr_upload_parameter;
 
+  static action handleFile parameter zr_upload_parameter result [1] zr_upload_parameter;
+
   validation checkRecords on save
   {
     field PrType,

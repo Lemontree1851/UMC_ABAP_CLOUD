@@ -5,4 +5,5 @@ define service ZUI_PRWORKFLOW_O2 {
   expose ZC_PRWORKFLOWLINK    as PurchaseReqWFLink;
   expose ZC_PRWORKFLOWDOCINFO as PurchaseReqWFDocInfo;
   expose ZC_PRWORKFLOWhistory as ApprovalHistory;
+  expose ZC_TMM_1012          as PurchaseReqAttachment;
 }

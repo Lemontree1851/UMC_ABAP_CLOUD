@@ -8,9 +8,13 @@
 "ZR_PRWORKFLOWLINK"
 ],
 "ASSOCIATED":
-[],
+[
+"ZC_TMM_1012"
+],
 "BASE":
-[],
+[
+"ZR_PRWORKFLOWLINK"
+],
 "ANNO_REF":
 [],
 "SCALAR_FUNCTION":

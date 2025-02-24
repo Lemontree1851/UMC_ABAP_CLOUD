@@ -26,9 +26,9 @@ authorization master ( global )
   field ( numbering : managed ) UUID;
   static action batchProcess parameter zr_upload_parameter result [1] zr_upload_parameter;
 
-  static action createPurchaseOrder parameter zr_upload_parameter result[1] zr_upload_parameter;
+  static action createPurchaseOrder parameter zr_upload_parameter result [1] zr_upload_parameter;
 
-  static action uploadFile parameter zr_upload_parameter result [1] zr_upload_parameter;
+  static action handleFile parameter zr_upload_parameter result [1] zr_upload_parameter;
 
   validation checkRecords on save
   {

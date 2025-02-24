@@ -70,5 +70,7 @@ define root view entity ZC_PRWORKFLOWLINK
       @UI.hidden: true
       _PrType.Zvalue2 as PrTypeText,
       @UI.hidden: true
-      _Kyoten.Zvalue2 as KyotenText
+      _Kyoten.Zvalue2 as KyotenText,
+
+      _Attachment
 }

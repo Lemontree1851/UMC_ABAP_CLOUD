@@ -4,6 +4,7 @@
   <asx:values>
    <AREAT>Function Group - PP</AREAT>
    <INCLUDES>
+    <SOBJ_NAME>LZZFG_DTIMP_PPTOP</SOBJ_NAME>
     <SOBJ_NAME>SAPLZZFG_DTIMP_PP</SOBJ_NAME>
    </INCLUDES>
    <FUNCTIONS>

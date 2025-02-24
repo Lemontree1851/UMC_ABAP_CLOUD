@@ -334,9 +334,10 @@ CLASS zzcl_common_utils DEFINITION
                         EXPORTING ev_log_uuid       TYPE ztbc_1019-uuid,
 
       "! Request API for OData V4
-      s3uploadattachment IMPORTING iv_body               TYPE string OPTIONAL
-                         EXPORTING VALUE(ev_status_code) TYPE if_web_http_response=>http_status-code
-                                   VALUE(ev_response)    TYPE string.
+      s3_attachment IMPORTING iv_path               TYPE string
+                              iv_body               TYPE string
+                    EXPORTING VALUE(ev_status_code) TYPE if_web_http_response=>http_status-code
+                              VALUE(ev_response)    TYPE string.
   PROTECTED SECTION.
   PRIVATE SECTION.
 
@@ -1521,7 +1522,7 @@ CLASS zzcl_common_utils IMPLEMENTATION.
                                                 unit_out_not_found   = 08 ).
   ENDMETHOD.
 
-  METHOD s3uploadattachment.
+  METHOD s3_attachment.
     TRY.
         DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
         " Get UWEB Access configuration
@@ -1551,7 +1552,7 @@ CLASS zzcl_common_utils IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    DATA(lv_path) = |/odata/v4/Common/if_s3uploadAttachment|.
+    DATA(lv_path) = |/odata/v4/Common/{ iv_path }|.
     TRY.
         DATA(lo_dest) = cl_http_destination_provider=>create_by_url( CONV #( ls_config-zvalue2 ) ).
         DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_dest ).
