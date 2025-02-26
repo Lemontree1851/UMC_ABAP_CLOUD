@@ -20,8 +20,10 @@ define view entity ZC_TMM_1012
       pr_uuid_c36           as PrUuidC36,
       file_uuid_c36         as FileUuidC36,
       created_by            as CreatedBy,
+      created_by_name       as CreatedByName,
       created_at            as CreatedAt,
       last_changed_by       as LastChangedBy,
+      last_changed_by_name  as LastChangedByName,
       last_changed_at       as LastChangedAt,
       local_last_changed_at as LocalLastChangedAt
 }

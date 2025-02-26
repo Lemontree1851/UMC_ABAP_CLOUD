@@ -1584,5 +1584,5 @@ CLASS zzcl_common_utils IMPLEMENTATION.
         ev_status_code = 500.
         ev_response = lx_root->get_text(  ).
     ENDTRY.
-  ENDMETHOD.
+  ENDMETHOD.                                             "#EC CI_VALPAR
 ENDCLASS.

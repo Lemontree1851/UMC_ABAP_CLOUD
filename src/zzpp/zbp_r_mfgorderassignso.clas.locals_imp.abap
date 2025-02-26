@@ -91,10 +91,10 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
                   ELSE soitem~requestedquantityinbaseunit
               END AS un_assign_qty
         FROM i_salesdocumentitem WITH PRIVILEGED ACCESS AS soitem
-        LEFT OUTER JOIN i_salesorderscheduleline WITH PRIVILEGED ACCESS
-                     AS scheduleline ON  scheduleline~salesorder = soitem~salesdocument
-                                     AND scheduleline~salesorderitem = soitem~salesdocumentitem
-                                     AND scheduleline~scheduleline = '0001'
+        JOIN i_salesorderscheduleline WITH PRIVILEGED ACCESS
+                      AS scheduleline ON  scheduleline~salesorder = soitem~salesdocument
+                                      AND scheduleline~salesorderitem = soitem~salesdocumentitem
+                                      AND scheduleline~scheduleline = '0001'
         LEFT OUTER JOIN zr_mfgorderassignsoitem_sumso WITH PRIVILEGED ACCESS
                      AS sum ON  sum~salesorder = soitem~salesdocument
                             AND sum~salesorderitem = soitem~salesdocumentitem

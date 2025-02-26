@@ -230,18 +230,7 @@ CLASS ZCL_HTTP_PURCHASE_001 IMPLEMENTATION.
       ENDLOOP.
     ENDIF.
 
-    IF lt_req IS INITIAL.
-      lv_text = 'error'.
-      "propagate any errors raised
-      response->set_status( '500' ).
-      response->set_text( lv_text ).
-    ELSEIF es_outputs-items IS INITIAL.
-      lv_text = 'Not Found'.
-      "propagate any errors raised
-      response->set_status( '404' ).
-      response->set_text( lv_text ).
-    ELSE.
-      "respond with success payload
+
       response->set_status( '200' ).
 
       DATA(lv_json_string) = xco_cp_json=>data->from_abap( es_outputs )->apply( VALUE #(
@@ -251,7 +240,6 @@ CLASS ZCL_HTTP_PURCHASE_001 IMPLEMENTATION.
       response->set_header_field( i_name  = lc_header_content
                                   i_value = lc_content_type ).
 
-    ENDIF.
 
   ENDMETHOD.
 ENDCLASS.

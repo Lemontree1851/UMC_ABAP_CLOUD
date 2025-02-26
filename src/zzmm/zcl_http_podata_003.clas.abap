@@ -405,7 +405,7 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
         "ADD BY STANLEY 20250207
         READ TABLE LT_USERNAME INTO DATA(LS_USERNAME) WITH KEY BusinessPartner = LW_POITEMS-CreatedByUser+2.
         IF SY-SUBRC EQ 0.
-            lw_result-sap_cd_by_text = LS_USERNAME-LastName && LS_USERNAME-FirstName.
+            lw_result-sap_cd_by_text = |{ LS_USERNAME-LastName } { LS_USERNAME-FirstName }|.
         ENDIF.
 
 

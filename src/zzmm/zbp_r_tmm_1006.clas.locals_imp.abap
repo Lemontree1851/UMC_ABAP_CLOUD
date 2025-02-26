@@ -765,6 +765,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
     DATA is_free_of_charge(5) TYPE c.
     DATA lv_message TYPE string.
     DATA lv_order_item TYPE i.
+    DATA lv_item TYPE i.
     "填充request数据
     LOOP AT records_key INTO DATA(record_key).
       "抬头数据
@@ -778,10 +779,14 @@ CLASS lhc_purchasereq IMPLEMENTATION.
       ls_request-correspnc_internal_reference = record_key-polinkby.
       "行项目数据
       CLEAR ls_request-to_purchase_order_item.
-      CLEAR: lt_mm1006,lv_order_item.
+      CLEAR: lt_mm1006,lv_order_item,lv_item.
       LOOP AT records INTO record_temp WHERE ordertype = record_key-ordertype AND supplier = record_key-supplier AND companycode = record_key-companycode
         AND purchaseorg = record_key-purchaseorg AND purchasegrp = record_key-purchasegrp AND currency = record_key-currency.
-        lv_order_item = lv_order_item + 1.
+*&--MOD BEGIN BY XINLEI XU 2025/02/25 按照10,20,30的规则採番
+*       lv_order_item = lv_order_item + 1.
+        lv_item += 1.
+        lv_order_item = lv_item * 10.
+*&--MOD END BY XINLEI XU 2025/02/25
         IF record_temp-returnitem IS NOT INITIAL.
           is_returns_item = 'true'.
         ELSE.
@@ -972,6 +977,11 @@ CLASS lhc_purchasereq IMPLEMENTATION.
           ls_file        TYPE zc_tmm_1012,
           ls_file_object TYPE lty_file_object.
 
+    SELECT SINGLE userdescription
+      FROM i_user WITH PRIVILEGED ACCESS
+     WHERE userid = @sy-uname
+      INTO @DATA(lv_username).
+
     LOOP AT keys INTO DATA(key).
       CASE key-%param-event.
         WHEN 'UPLOAD'.
@@ -1019,8 +1029,10 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                       file_size   = ls_upload-file_size
                                       s3_filename = ls_s3_response-value
                                       created_by  = sy-uname
+                                      created_by_name = lv_username
                                       created_at  = lv_timestamp
                                       last_changed_by = sy-uname
+                                      last_changed_by_name = lv_username
                                       last_changed_at = lv_timestamp
                                       local_last_changed_at = lv_timestamp ).
             TRY.
