@@ -572,18 +572,18 @@ CLASS zzcl_common_utils IMPLEMENTATION.
 
 
   METHOD get_access_token.
+    DATA lv_url TYPE string.
     TRY.
-        DATA(lo_http_destination) = cl_http_destination_provider=>create_by_url( iv_token_url ).
+        lv_url = |{ iv_token_url }?grant_type=client_credentials|.
+        DATA(lo_http_destination) = cl_http_destination_provider=>create_by_url( lv_url ).
         DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_http_destination ).
         DATA(lo_request) = lo_http_client->get_http_request( ).
 
-        DATA(lv_post_data) = |grant_type=client_credentials&client_id={ iv_client_id }&client_secret={ iv_client_secret }|.
+        lo_request->set_authorization_basic( i_username = iv_client_id i_password = iv_client_secret ).
 
-        lo_request->set_header_field( i_name = 'Content-type' i_value = 'application/x-www-form-urlencoded' ).
+        lo_request->set_header_field( i_name = 'Accept' i_value = 'application/json' ).
 
-        lo_request->set_text( lv_post_data ).
-
-        DATA(lo_response) = lo_http_client->execute( if_web_http_client=>post ).
+        DATA(lo_response) = lo_http_client->execute( if_web_http_client=>get ).
 
         ev_status_code = lo_response->get_status( )-code.
         ev_response = lo_response->get_text(  ).

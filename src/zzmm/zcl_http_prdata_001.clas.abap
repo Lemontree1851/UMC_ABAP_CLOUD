@@ -85,7 +85,7 @@ CLASS ZCL_HTTP_PRDATA_001 IMPLEMENTATION.
           RECEIVING
             calc_date = lv_pre_month ).
 
-
+    lv_pre_month+6(2) = '01'.
 
     SELECT
                 a~PurchaseRequisition                    ,
@@ -118,8 +118,9 @@ CLASS ZCL_HTTP_PRDATA_001 IMPLEMENTATION.
     ON E~Product = A~Material
     LEFT JOIN I_PurchasingGroup WITH PRIVILEGED ACCESS as f
     on f~PurchasingGroup = a~PurchasingGroup
-
-    INTO TABLE @DATA(lt_pr).
+    WHERE PurchaseReqnCreationDate BETWEEN @lv_pre_month AND @lv_date
+    INTO TABLE @DATA(lt_pr)
+.
 
     SELECT supplier,
            Material,

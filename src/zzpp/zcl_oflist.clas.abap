@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_OFLIST IMPLEMENTATION.
+CLASS zcl_oflist IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -104,22 +104,42 @@ CLASS ZCL_OFLIST IMPLEMENTATION.
 
         "获取备注
         IF lt_pir_item IS NOT INITIAL.
-          SELECT
-            material,
-            plant,
-            customer,
-            requirement_date,
-            remark,
-            created_at
-          FROM ztpp_1012 WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_pir_key
-          WHERE material = @lt_pir_key-product
-            AND plant = @lt_pir_key-plant
-            AND customer = @lt_pir_key-requirementplan
-            AND requirement_date = @lt_pir_key-requirementdate
-          INTO TABLE @DATA(lt_pp1012).
-          SORT lt_pp1012 BY material plant customer requirement_date created_at DESCENDING.
-          DELETE ADJACENT DUPLICATES FROM lt_pp1012 COMPARING material plant customer requirement_date.
+*&--MOD BEGIN BY XINLEI XU 2025/02/26
+*          SELECT material,
+*                 plant,
+*                 customer,
+*                 requirement_date,
+*                 remark,
+*                 created_at
+*            FROM ztpp_1012 WITH PRIVILEGED ACCESS
+*             FOR ALL ENTRIES IN @lt_pir_key
+*           WHERE material = @lt_pir_key-product
+*             AND plant = @lt_pir_key-plant
+*             AND customer = @lt_pir_key-requirementplan
+*             AND requirement_date = @lt_pir_key-requirementdate
+*            INTO TABLE @DATA(lt_pp1012).
+          SELECT ztpp_1012~material,
+                 ztpp_1012~plant,
+                 ztpp_1012~customer,
+                 ztpp_1012~requirement_date,
+                 ztpp_1012~requirement_qty,
+                 ztpp_1012~remark,
+                 substring( CAST( ztpp_1012~created_at AS CHAR ), 1, 8 ) AS created_at
+            FROM ztpp_1012 WITH PRIVILEGED ACCESS
+            JOIN @lt_pir_key AS a ON ztpp_1012~material = a~product
+                                 AND ztpp_1012~plant = a~plant
+                                 AND ztpp_1012~customer = a~requirementplan
+                                 AND ztpp_1012~requirement_date = a~requirementdate
+                                 AND ztpp_1012~requirement_qty = a~plannedquantity
+            INTO TABLE @DATA(lt_pp1012).
+*&--MOD END BY XINLEI XU 2025/02/26
+          SORT lt_pp1012 BY material plant customer requirement_date requirement_qty created_at DESCENDING.
+          DELETE ADJACENT DUPLICATES FROM lt_pp1012 COMPARING material plant customer requirement_date requirement_qty.
+
+          " ADD BEGIN BY XINLEI XU 2025/02/26
+          DATA(lt_pp1012_temp) = lt_pp1012.
+          SORT lt_pp1012_temp BY material plant customer requirement_date requirement_qty created_at.
+          " ADD END BY XINLEI XU 2025/02/26
         ENDIF.
 
         SELECT
@@ -164,13 +184,33 @@ CLASS ZCL_OFLIST IMPLEMENTATION.
           ENDIF.
 
           "备注
-          DATA(lv_customer) = ls_pir_item-requirementplan.
-          lv_customer = |{ lv_customer ALPHA = IN }|.
-          READ TABLE lt_pp1012 INTO DATA(ls_pp1012) WITH KEY material = ls_pir_item-product plant = ls_pir_item-plant
-            customer = lv_customer requirement_date = ls_pir_item-requirementdate BINARY SEARCH.
-          IF sy-subrc = 0.
-            ls_oflist-remark = ls_pp1012-remark.
+          IF ls_pir_item-plndindeprqmtversion = '01'. " ADD BY XINLEI XU 2025/02/26
+            DATA(lv_customer) = ls_pir_item-requirementplan.
+            lv_customer = |{ lv_customer ALPHA = IN }|.
+*&--ADD BEGIN BY XINLEI XU 2025/02/26
+            READ TABLE lt_pp1012_temp INTO DATA(ls_pp1012_temp) WITH KEY material = ls_pir_item-product
+                                                                         plant = ls_pir_item-plant
+                                                                         customer = lv_customer
+                                                                         requirement_date = ls_pir_item-requirementdate
+                                                                         requirement_qty = ls_pir_item-plannedquantity
+                                                                         created_at = ls_pir_item-lastchangedate
+                                                                         BINARY SEARCH.
+            IF sy-subrc = 0.
+              ls_oflist-remark = ls_pp1012_temp-remark.
+            ELSE.
+*&--ADD END BY XINLEI XU 2025/02/26
+              READ TABLE lt_pp1012 INTO DATA(ls_pp1012) WITH KEY material = ls_pir_item-product
+                                                                 plant = ls_pir_item-plant
+                                                                 customer = lv_customer
+                                                                 requirement_date = ls_pir_item-requirementdate
+                                                                 BINARY SEARCH.
+
+              IF sy-subrc = 0.
+                ls_oflist-remark = ls_pp1012-remark.
+              ENDIF.
+            ENDIF.
           ENDIF.
+
           APPEND ls_oflist TO lt_oflist.
           CLEAR ls_oflist.
         ENDLOOP.

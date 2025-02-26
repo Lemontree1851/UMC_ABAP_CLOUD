@@ -128,28 +128,28 @@ CLASS lhc_zzr_dtimp_conf IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
 
-    READ ENTITIES OF zzr_dtimp_conf IN LOCAL MODE
-    ENTITY configuration
-    ALL FIELDS WITH CORRESPONDING #( keys )
-    RESULT DATA(lt_result)
-    FAILED DATA(ls_failed)
-    REPORTED DATA(ls_reported).
-
-    DATA(lv_text1) = |！！！临时检查，防止错删！！！|.
-    DATA(lv_text2) = |1、修改<ObjectName>字段值为：DEL2024，再次点击删除|.
-    DATA(lv_text3) = |2、请联系技术人员：许鑫磊|.
-
-    LOOP AT lt_result INTO DATA(ls_result).
-      IF ls_result-objectname <> 'DEL2024'.
-        APPEND VALUE #( %tky = <lfs_key>-%tky ) TO failed-configuration.
-        INSERT VALUE #( %tky = <lfs_key>-%tky
-                        %msg = new_message_with_text( text = lv_text3 ) ) INTO TABLE reported-configuration.
-        INSERT VALUE #( %tky = <lfs_key>-%tky
-                        %msg = new_message_with_text( text = lv_text2 ) ) INTO TABLE reported-configuration.
-        INSERT VALUE #( %tky = <lfs_key>-%tky
-                        %msg = new_message_with_text( text = lv_text1 ) ) INTO TABLE reported-configuration.
-      ENDIF.
-    ENDLOOP.
+*    READ ENTITIES OF zzr_dtimp_conf IN LOCAL MODE
+*    ENTITY configuration
+*    ALL FIELDS WITH CORRESPONDING #( keys )
+*    RESULT DATA(lt_result)
+*    FAILED DATA(ls_failed)
+*    REPORTED DATA(ls_reported).
+*
+*    DATA(lv_text1) = |！！！临时检查，防止错删！！！|.
+*    DATA(lv_text2) = |1、修改<ObjectName>字段值为：DEL2024，再次点击删除|.
+*    DATA(lv_text3) = |2、请联系技术人员：许鑫磊|.
+*
+*    LOOP AT lt_result INTO DATA(ls_result).
+*      IF ls_result-objectname <> 'DEL2024'.
+*        APPEND VALUE #( %tky = <lfs_key>-%tky ) TO failed-configuration.
+*        INSERT VALUE #( %tky = <lfs_key>-%tky
+*                        %msg = new_message_with_text( text = lv_text3 ) ) INTO TABLE reported-configuration.
+*        INSERT VALUE #( %tky = <lfs_key>-%tky
+*                        %msg = new_message_with_text( text = lv_text2 ) ) INTO TABLE reported-configuration.
+*        INSERT VALUE #( %tky = <lfs_key>-%tky
+*                        %msg = new_message_with_text( text = lv_text1 ) ) INTO TABLE reported-configuration.
+*      ENDIF.
+*    ENDLOOP.
   ENDMETHOD.
 
 ENDCLASS.

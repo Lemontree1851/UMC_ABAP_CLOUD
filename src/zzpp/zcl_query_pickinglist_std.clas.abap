@@ -114,9 +114,10 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
            b~laboratoryordesignoffice,
            b~productgroup,
            b~externalproductgroup,
-           \_storagelocation-storagelocationname ##SELECT_WITH_PRIVILEGED_ACCESS[_STORAGELOCATION]
+           a~\_storagelocation-storagelocationname ##SELECT_WITH_PRIVILEGED_ACCESS[_STORAGELOCATION]
       FROM i_mfgorderoperationcomponent WITH PRIVILEGED ACCESS AS a
       JOIN i_product WITH PRIVILEGED ACCESS AS b ON b~product = a~material
+      JOIN i_mfgorderwithstatus WITH PRIVILEGED ACCESS AS c ON c~manufacturingorder = a~manufacturingorder
      WHERE b~producttype <> 'ZHLB'
        AND a~reservationisfinallyissued <> @abap_true
        AND a~matlcompismarkedfordeletion <> @abap_true
@@ -136,6 +137,15 @@ CLASS zcl_query_pickinglist_std IMPLEMENTATION.
        AND b~laboratoryordesignoffice IN @lr_laboratoryordesignoffice
        AND b~externalproductgroup IN @lr_externalproductgroup
        AND b~sizeordimensiontext IN @lr_sizeordimensiontext
+       AND c~orderiscreated IS INITIAL
+       AND c~orderispartiallyreleased IS INITIAL
+       AND c~orderislocked IS INITIAL
+       AND c~orderisdelivered IS INITIAL
+       AND c~orderisconfirmed IS INITIAL
+       AND c~orderistechnicallycompleted IS INITIAL
+       AND c~orderisclosed IS INITIAL
+       AND c~orderismarkedfordeletion IS INITIAL
+       AND c~orderisdeleted IS INITIAL
       INTO TABLE @DATA(lt_mfgorder).
 
     IF lt_mfgorder IS NOT INITIAL.
