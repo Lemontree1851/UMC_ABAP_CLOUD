@@ -151,12 +151,6 @@ CLASS ZCL_HTTP_PODATA_005 IMPLEMENTATION.
     xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
       ( xco_cp_json=>transformation->underscore_to_pascal_case )
       ) )->write_to( REF #( lt_req ) ).
-      DATA lv_url TYPE string value '/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001'.
-                    zzcl_common_utils=>get_csrf_token( EXPORTING iv_odata_version = 'V4'
-                                          iv_path          = lv_url
-                                IMPORTING ev_status_code   = DATA(ev_status_code)
-                                          ev_response      = DATA(ev_response)
-                                          ev_csrf_token          = DATA(ev_csrf_token) ).
 
 
     IF lt_req IS NOT INITIAL.
@@ -273,10 +267,9 @@ CLASS ZCL_HTTP_PODATA_005 IMPLEMENTATION.
       LOOP AT lt_req INTO DATA(ls_del) WHERE ztype = 'D'.
            READ TABLE lt_already_confirm INTO DATA(ls_del_line) WITH KEY PurchaseOrder = ls_del-pono
                                                                              PurchaseOrderItem = ls_del-dno.
-           DATA(lv_d_path) = |'/sap/opu/odata4/sap/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001/ConfirmationLine| &&
+           DATA(lv_d_path) = |/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001/ConfirmationLine| &&
                              |/{ ls_del_line-supplierconfirmation }/{ ls_del_line-supplierconfirmationitem }/{ lw_req-seq }|.
            zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_d_path
-                                                         iv_csrf_token =  ev_csrf_token
                                                                iv_method      = if_web_http_client=>delete
                                                      IMPORTING ev_status_code = DATA(lv_status_code)
                                                                ev_response    = DATA(lv_response) ).
@@ -372,23 +365,21 @@ CLASS ZCL_HTTP_PODATA_005 IMPLEMENTATION.
                 WHEN 'N'.
                     DATA(lv_n_path) = '/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001/Confirmation'.
                 WHEN 'I'.
-                    DATA(lv_i_path) = |'/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001/ConfirmationItem| &&
+                    DATA(lv_i_path) = |/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001/ConfirmationItem| &&
                                       |/{ ls_confrim_line-supplierconfirmation }/{ ls_confrim_line-supplierconfirmationitem }/_SupplierConfirmationLineTP'|.
 
 
 
                    zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_i_path
                                                                        iv_method      = if_web_http_client=>post
-                                                                       iv_csrf_token =  ev_csrf_token
                                                                        iv_body        = lv_json_string
                                                              IMPORTING ev_status_code = lv_status_code
                                                                        ev_response    = lv_response ).
                 WHEN 'U'.
-                    DATA(lv_u_path) = |'/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001/ConfirmationLine| &&
+                    DATA(lv_u_path) = |/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001/ConfirmationLine| &&
                                       |/{ ls_confrim_line-supplierconfirmation }/{ ls_confrim_line-supplierconfirmationitem }/{ lw_req-seq }|.
                    zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_u_path
                                                                        iv_method      = if_web_http_client=>patch
-                                                                       iv_csrf_token =  ev_csrf_token
                                                                        iv_body        = lv_json_string
                                                              IMPORTING ev_status_code = lv_status_code
                                                                        ev_response    = lv_response ).

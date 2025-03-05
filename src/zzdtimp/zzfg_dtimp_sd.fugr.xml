@@ -4,6 +4,7 @@
   <asx:values>
    <AREAT>Function Group - SD</AREAT>
    <INCLUDES>
+    <SOBJ_NAME>LZZFG_DTIMP_SDTOP</SOBJ_NAME>
     <SOBJ_NAME>SAPLZZFG_DTIMP_SD</SOBJ_NAME>
    </INCLUDES>
    <FUNCTIONS>

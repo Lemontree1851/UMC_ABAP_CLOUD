@@ -380,8 +380,8 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         ENDIF.
       ENDLOOP.
       lv_filter = |{ lv_filter })|.
-    ELSE.
-      lv_filter = |{ lv_filter } and Material ne ''|.
+*    ELSE.
+*      lv_filter = |{ lv_filter } and Material ne ''|. " DEL BY XINLEI XU 2025/03/03
     ENDIF.
 
     DATA(lv_top) = 5000.
@@ -963,11 +963,43 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     ENDLOOP.
 
     IF lt_bi1003 IS NOT INITIAL.
+*&--ADD BEGIN BY XINLEI XU 2025/02/28
+      DATA: lr_yearmonth TYPE RANGE OF ztbi_1003-yearmonth.
+      CLEAR lr_yearmonth.
+      lr_yearmonth = VALUE #( FOR item IN lt_bi1003 ( sign = 'I'
+                                                      option = 'EQ'
+                                                      low  = item-yearmonth ) ).
+      SORT lr_yearmonth BY low.
+      DELETE ADJACENT DUPLICATES FROM lr_yearmonth COMPARING low.
+      DATA(lv_lines) = lines( lr_yearmonth ).
+
+      SELECT COUNT(*)
+        FROM ztbi_1003
+       WHERE yearmonth IN @lr_yearmonth
+         AND companycode IN @lr_companycode
+         AND plant IN @lr_plant
+        INTO @DATA(lv_count_1003).
+      IF lv_count_1003 > 0.
+        DELETE FROM ztbi_1003 WHERE yearmonth IN @lr_yearmonth
+                                AND companycode IN @lr_companycode
+                                AND plant IN @lr_plant.
+      ENDIF.
+      CLEAR lv_msg.
+      lv_msg = |テーブル ZTBI_1003 { lr_yearmonth[ 1 ]-low }-{ lr_yearmonth[ lv_lines ]-low } データ { lv_count_1003 }件削除。|.
+      TRY.
+          add_message_to_log( i_text = lv_msg i_type = 'S' ).
+        CATCH cx_bali_runtime ##NO_HANDLER.
+      ENDTRY.
+*&--ADD END BY XINLEI XU 2025/02/28
+
       MODIFY ztbi_1003 FROM TABLE @lt_bi1003.
       IF sy-subrc = 0.
         COMMIT WORK.
         CLEAR lv_msg.
-        MESSAGE s005(zbi003) INTO lv_msg.
+*&--MOD BEGIN BY XINLEI XU 2025/02/28
+*        MESSAGE s005(zbi003) INTO lv_msg.
+        lv_msg = |テーブル ZTBI_1003 { lr_yearmonth[ 1 ]-low }-{ lr_yearmonth[ lv_lines ]-low } データ { lines( lt_bi1003 ) }件更新。|.
+*&--MOD END BY XINLEI XU 2025/02/28
         TRY.
             add_message_to_log( i_text = lv_msg i_type = 'S' ).
           CATCH cx_bali_runtime ##NO_HANDLER.
@@ -976,6 +1008,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         ROLLBACK WORK.
         CLEAR lv_msg.
         MESSAGE s006(zbi003) INTO lv_msg.
+        lv_msg = |テーブル ZTBI_1003 データの更新に失敗しました。|. " ADD BY XINLEI 2025/02/28
         TRY.
             add_message_to_log( i_text = lv_msg i_type = 'E' ).
           CATCH cx_bali_runtime ##NO_HANDLER.

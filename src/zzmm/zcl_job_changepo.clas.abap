@@ -25,7 +25,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_job_changepo IMPLEMENTATION.
+CLASS ZCL_JOB_CHANGEPO IMPLEMENTATION.
 
 
   METHOD add_message_to_log.

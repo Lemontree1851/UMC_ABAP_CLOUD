@@ -157,7 +157,7 @@ CLASS ZCL_PURINFOMASTERLIST IMPLEMENTATION.
            g~organizationbpname1 AS organizationbpname1_ja,
            h~zvalue2,
            i~purchasinggroupname,
-           j~shippingconditionname,
+           j~shippinginstructionname AS shippingconditionname,
            k~organizationbpname1 AS organizationbpname1_en,
            o~supplierisfixed
 
@@ -184,9 +184,14 @@ CLASS ZCL_PURINFOMASTERLIST IMPLEMENTATION.
             AND o~supplier = a~supplier
       LEFT JOIN i_purchasinggroup WITH PRIVILEGED ACCESS AS i
              ON i~purchasinggroup = d~purchasinggroup
-      LEFT JOIN i_shippingconditiontext WITH PRIVILEGED ACCESS AS j
-             ON j~shippingcondition = d~shippinginstruction
+*&--MOD BEGIN BY XINLEI XU 2025/02/28
+*      LEFT JOIN i_shippingconditiontext WITH PRIVILEGED ACCESS AS j
+*             ON j~shippingcondition = d~shippinginstruction
+*            AND j~language = @sy-langu
+      LEFT JOIN i_shippinginstructiontext WITH PRIVILEGED ACCESS AS j
+             ON j~shippinginstruction = d~shippinginstruction
             AND j~language = @sy-langu
+*&--MOD END BY XINLEI XU 2025/02/28
       LEFT JOIN i_businesspartner WITH PRIVILEGED ACCESS AS k
              ON k~businesspartner = b~manufacturernumber
       LEFT JOIN ztbc_1001 AS h ON zid = 'ZMM001' AND zvalue1 = d~taxcode

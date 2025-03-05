@@ -107,7 +107,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_job_costanalysis_n IMPLEMENTATION.
+CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
 
 
   METHOD add_message_to_log.

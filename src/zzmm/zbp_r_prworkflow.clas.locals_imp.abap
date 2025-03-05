@@ -516,14 +516,31 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         DATA lv_frontend_datetime_str TYPE timestamp.
         lv_frontend_datetime_str = current_date && current_time.
         CONVERT TIME STAMP lv_frontend_datetime_str TIME ZONE record-timezone INTO DATE current_date TIME current_time.
+*&--ADD BEGIN BY XINLEI XU 2025/03/05
+        DATA lv_tzntstmpl TYPE tzntstmpl.
+        GET TIME STAMP FIELD lv_tzntstmpl.
+*&--ADD END BY XINLEI XU 2025/03/05
         IF lv_new IS NOT INITIAL.
           UPDATE ztmm_1006
-             SET workflow_id   = @record-workflowid,
-                application_id = @record-applicationid,
-                instance_id    = @lv_instanceid,
-                apply_date = @current_date,
-                apply_time = @current_time
-         WHERE pr_no = @record-prno.
+             SET workflow_id    = @record-workflowid,
+                 application_id = @record-applicationid,
+                 instance_id    = @lv_instanceid,
+                 apply_date     = @current_date,
+                 apply_time     = @current_time,
+*&--ADD BEGIN BY XINLEI XU 2025/03/05 BUG Fix 撤回后再次申请时，没有更新申请时间
+                 local_last_changed_by = @sy-uname,
+                 local_last_changed_at = @lv_tzntstmpl,
+                 lat_cahanged_at = @lv_tzntstmpl
+           WHERE pr_no = @record-prno.
+        ELSE.
+          UPDATE ztmm_1006
+             SET apply_date = @current_date,
+                 apply_time = @current_time,
+                 local_last_changed_by = @sy-uname,
+                 local_last_changed_at = @lv_tzntstmpl,
+                 lat_cahanged_at = @lv_tzntstmpl
+           WHERE pr_no = @record-prno.
+*&--ADD BEGIN BY XINLEI XU 2025/03/05
         ENDIF.
 *&--生成审批流同时添加审批流日志
         MESSAGE s033(zmm_001)  INTO lv_remark.

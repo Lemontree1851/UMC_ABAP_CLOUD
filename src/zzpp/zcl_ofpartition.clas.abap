@@ -25,7 +25,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_ofpartition IMPLEMENTATION.
+CLASS ZCL_OFPARTITION IMPLEMENTATION.
 
 
   METHOD get_process_date_range.
@@ -101,8 +101,25 @@ CLASS zcl_ofpartition IMPLEMENTATION.
 *                 requirementdate TYPE zc_orderforecast-requirementdate,
 *                 requirementqty  TYPE zc_orderforecast-requirementqty,
 *               END OF ty_split_of.
-        DATA: lt_split_of TYPE TABLE OF zce_ofpartition,
-              ls_split_of TYPE zce_ofpartition.
+
+*&--ADD BEGIN BY XINLEI XU 2025/02/27
+        TYPES: BEGIN OF ty_ofpartition,
+                 _customer                 TYPE kunnr,
+                 _plant                    TYPE werks_d,
+                 _material                 TYPE matnr,
+                 _requirement_date         TYPE datum,
+                 _material_by_customer(35) TYPE c,
+                 _material_name            TYPE maktx,
+                 _requirement_qty          TYPE menge_d,
+                 _unit                     TYPE meins,
+               END OF ty_ofpartition.
+
+        DATA: lt_response       TYPE TABLE OF zce_ofpartition,
+              lt_split_of_group TYPE TABLE OF ty_ofpartition.
+*&--ADD END BY XINLEI XU 2025/02/27
+
+        DATA: lt_split_of TYPE TABLE OF ty_ofpartition, " zce_ofpartition,
+              ls_split_of TYPE ty_ofpartition. " zce_ofpartition.
         TRY.
             DATA(lt_ranges) = io_request->get_filter( )->get_as_ranges( ).
           CATCH cx_rap_query_filter_no_range INTO DATA(cx_erro).
@@ -427,18 +444,21 @@ CLASS zcl_ofpartition IMPLEMENTATION.
 
         "确定OF分割后的数量
         LOOP AT lt_of_key INTO DATA(ls_of_key).
-          ls_split_of-customer = ls_of_key-customer.
-          ls_split_of-plant = ls_of_key-plant.
-          ls_split_of-material = ls_of_key-material.
+*&--MOD BEGIN BY XINLEI XU 2025/02/27
+*          ls_split_of-_customer = ls_of_key-customer.
+          ls_split_of-_customer = |{ ls_of_key-customer ALPHA = OUT }|.
+*&--MOD END BY XINLEI XU 2025/02/27
+          ls_split_of-_plant = ls_of_key-plant.
+          ls_split_of-_material = ls_of_key-material.
           READ TABLE lt_additional INTO DATA(ls_additional) WITH KEY customer = ls_of_key-customer
             plant = ls_of_key-plant material = ls_of_key-material BINARY SEARCH.
           IF sy-subrc = 0.
-            ls_split_of-materialbycustomer = ls_additional-materialbycustomer.
-            ls_split_of-materialname = ls_additional-productname.
+            ls_split_of-_material_by_customer = ls_additional-materialbycustomer.
+            ls_split_of-_material_name = ls_additional-productname.
           ENDIF.
 
 *&--ADD BEGIN BY XINLEI XU 2025/02/18
-          IF ls_split_of-materialbycustomer NOT IN r_materialbycustomer.
+          IF ls_split_of-_material_by_customer NOT IN r_materialbycustomer.
             CONTINUE.
           ENDIF.
 *&--ADD END BY XINLEI XU 2025/02/18
@@ -448,7 +468,7 @@ CLASS zcl_ofpartition IMPLEMENTATION.
           IF sy-subrc = 0.
             DATA(temp_date) = lv_date_range-startdate.
             WHILE temp_date <= lv_date_range-enddate.
-              ls_split_of-requirementdate = temp_date.
+              ls_split_of-_requirement_date = temp_date.
               "如果是分割范围内的日期，数量需要重新分配
               IF temp_date >= lv_splitstartdate AND temp_date <= lv_splitenddate.
                 READ TABLE lt_split_date INTO ls_split_date WITH KEY customer = ls_of_key-customer
@@ -457,12 +477,12 @@ CLASS zcl_ofpartition IMPLEMENTATION.
                   READ TABLE lt_split_coll INTO ls_split_coll WITH KEY customer = ls_of_key-customer
                     plant = ls_of_key-plant material = ls_of_key-material requirementmonth = ls_split_date-splitmonth BINARY SEARCH.
                   IF sy-subrc = 0.
-                    ls_split_of-requirementqty = get_splitqty(  x = ls_split_date-datecount
-                                                                y = ls_split_coll-requirementqty
-                                                                z = ls_split_date-shipunit
-                                                                n = ls_split_date-dateindex ).
+                    ls_split_of-_requirement_qty = get_splitqty(  x = ls_split_date-datecount
+                                                                  y = ls_split_coll-requirementqty
+                                                                  z = ls_split_date-shipunit
+                                                                  n = ls_split_date-dateindex ).
                   ELSE.
-                    ls_split_of-requirementqty = 0.
+                    ls_split_of-_requirement_qty = 0.
                   ENDIF.
                 ENDIF.
                 "如果是分割范围外的日期，数量直接取原来的
@@ -470,25 +490,25 @@ CLASS zcl_ofpartition IMPLEMENTATION.
                 READ TABLE lt_orderforecast INTO ls_orderforecast WITH KEY customer = ls_of_key-customer
                   plant = ls_of_key-plant material = ls_of_key-material requirementdate = temp_date BINARY SEARCH.
                 IF sy-subrc = 0.
-                  ls_split_of-requirementqty = ls_orderforecast-requirementqty.
+                  ls_split_of-_requirement_qty = ls_orderforecast-requirementqty.
                 ENDIF.
               ENDIF.
               APPEND ls_split_of TO lt_split_of.
-              CLEAR ls_split_of-requirementqty.
+              CLEAR ls_split_of-_requirement_qty.
               temp_date = temp_date + 1.
             ENDWHILE.
             "如果没有分割范围数据，可能是此条数据没有分割主数据，但仍要显示原数据
           ELSE.
             temp_date = lv_date_range-startdate.
             WHILE temp_date <= lv_date_range-enddate.
-              ls_split_of-requirementdate = temp_date.
+              ls_split_of-_requirement_date = temp_date.
               READ TABLE lt_orderforecast INTO ls_orderforecast WITH KEY customer = ls_of_key-customer
                 plant = ls_of_key-plant material = ls_of_key-material requirementdate = temp_date BINARY SEARCH.
               IF sy-subrc = 0.
-                ls_split_of-requirementqty = ls_orderforecast-requirementqty.
+                ls_split_of-_requirement_qty = ls_orderforecast-requirementqty.
               ENDIF.
               APPEND ls_split_of TO lt_split_of.
-              CLEAR ls_split_of-requirementqty.
+              CLEAR ls_split_of-_requirement_qty.
               temp_date = temp_date + 1.
             ENDWHILE.
 *            LOOP AT lt_orderforecast INTO ls_orderforecast WHERE customer = ls_of_key-customer AND
@@ -504,19 +524,66 @@ CLASS zcl_ofpartition IMPLEMENTATION.
         " 处理数据时 lt_of_key 已经排序，所以这里的排序可以省略
 *        sort lt_split_of by customer plant material requirementdate.
 
-        IF io_request->is_total_numb_of_rec_requested( ).
-          io_response->set_total_number_of_records( lines( lt_split_of ) ).
-        ENDIF.
-        IF io_request->is_data_requested( ).
-          zzcl_odata_utils=>paging(
-            EXPORTING
-              io_paging = io_request->get_paging( )
-            CHANGING
-              ct_data = lt_split_of
-          ).
-          io_response->set_data( lt_split_of ).
-        ENDIF.
+*&--MOD BEGIN BY XINLEI XU 2025/02/27 性能优化
+*        IF io_request->is_total_numb_of_rec_requested( ).
+*          io_response->set_total_number_of_records( lines( lt_split_of ) ).
+*        ENDIF.
+*        IF io_request->is_data_requested( ).
+*          zzcl_odata_utils=>paging(
+*            EXPORTING
+*              io_paging = io_request->get_paging( )
+*            CHANGING
+*              ct_data = lt_split_of
+*          ).
+*          io_response->set_data( lt_split_of ).
+*        ENDIF.
 
+        DATA lv_times TYPE p.
+        DATA lv_index_begin TYPE int4.
+        DATA lv_index_end TYPE int4.
+
+        DATA(lv_count) = lines( lt_split_of ).
+        lv_times = ceil( lv_count / 20000 ).
+
+        IF io_request->is_data_requested( ).
+          CLEAR: lv_index_begin, lv_index_end.
+          DO lv_times TIMES.
+            lv_index_begin += 1.
+            lv_index_end = sy-index * 20000.
+            IF lv_index_end >= lv_count.
+              lv_index_end = lv_count.
+            ENDIF.
+            CLEAR lt_split_of_group.
+            APPEND LINES OF lt_split_of FROM lv_index_begin TO lv_index_end TO lt_split_of_group.
+
+            APPEND INITIAL LINE TO lt_response ASSIGNING FIELD-SYMBOL(<lfs_response>).
+            TRY.
+                <lfs_response>-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+                ##NO_HANDLER
+              CATCH cx_uuid_error.
+                " handle exception
+            ENDTRY.
+            <lfs_response>-datajson = /ui2/cl_json=>serialize( data = lt_split_of_group
+                                                              pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+
+            lv_index_begin = lv_index_end.
+          ENDDO.
+
+          IF io_request->is_total_numb_of_rec_requested(  ) .
+            io_response->set_total_number_of_records( lines( lt_response ) ).
+          ENDIF.
+
+          " Paging
+          zzcl_odata_utils=>paging( EXPORTING io_paging = io_request->get_paging(  )
+                                    CHANGING  ct_data   = lt_response ).
+
+          io_response->set_data( lt_response ).
+        ELSE.
+          IF io_request->is_total_numb_of_rec_requested(  ) .
+            io_response->set_total_number_of_records( CONV #( lv_times ) ).
+          ENDIF.
+        ENDIF.
+*&--MOD END BY XINLEI XU 2025/02/27
     ENDCASE.
   ENDMETHOD.
 ENDCLASS.

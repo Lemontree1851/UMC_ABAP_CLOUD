@@ -180,6 +180,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
     CONSTANTS:
       lc_start TYPE c LENGTH 8 VALUE 'https://',
       lc_end1  TYPE string VALUE '/ui#MRPRun-schedule?JobCatalogEntryName=SAP_SCM_MRP&/v4_JobRunList?sap-iapp-state=AS8BAVNXZLJM1MJLBKRAME3U1BEKHDQ2VQTZULRZ',
+      lc_end2  TYPE string VALUE '/#zmfgorderassignso-display',
       lc_end3  TYPE string VALUE '/ui#PlannedOrder-convertToProductionOrders?sap-ui-tech-hint=GUI',
       lc_end4  TYPE string VALUE '/ui#ProductionOrder-monitor?sap-ui-tech-hint=GUI',
       lc_end5  TYPE string VALUE '/ui#MaterialBOM-summarizedBOM?sap-ui-tech-hint=GUI',
@@ -218,6 +219,19 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
           APPEND VALUE #( %cid   = key-%cid
                           %param = VALUE #( event = lv_event
                                             zzkey = lv_json ) ) TO result.
+*&--ADD BEGIN BY XINLEI XU 2025/03/03
+        WHEN 'WEB2'.
+          " Get BTP URL configuration
+          SELECT SINGLE *
+            FROM zc_tbc1001
+           WHERE zid = 'ZBC006'
+             AND zvalue1 = @lv_system_url
+            INTO @DATA(ls_config).            "#EC CI_ALL_FIELDS_NEEDED
+          lv_json = /ui2/cl_json=>serialize( data = |{ ls_config-zvalue2 }{ lc_end2 }| ).
+          APPEND VALUE #( %cid   = key-%cid
+                          %param = VALUE #( event = lv_event
+                                            zzkey = lv_json ) ) TO result.
+*&--ADD END BY XINLEI XU 2025/03/03
         WHEN 'WEB3'.
           lv_system_url = lc_start && lv_system_url && lc_end3.
           lv_json = /ui2/cl_json=>serialize( data = lv_system_url ).

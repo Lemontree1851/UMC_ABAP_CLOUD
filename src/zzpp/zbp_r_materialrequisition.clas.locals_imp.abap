@@ -351,6 +351,20 @@ CLASS lhc_materialrequisition IMPLEMENTATION.
         INTO TABLE @DATA(lt_order).
       SORT lt_order BY manufacturingorder material.
 
+*&--ADD BEGIN BY XINLEI XU 2025/02/27
+      SELECT material,
+             plant,
+             materialdescription,
+             standardprice,
+             currency
+        FROM zc_productvh WITH PRIVILEGED ACCESS
+         FOR ALL ENTRIES IN @cs_data-items
+       WHERE material = @cs_data-items-material
+         AND plant = @cs_data-header-plant
+        INTO TABLE @DATA(lt_product).
+      SORT lt_product BY material.
+*&--ADD END BY XINLEI XU 2025/02/27
+
       LOOP AT cs_data-items ASSIGNING FIELD-SYMBOL(<lfs_item>).
         READ TABLE lt_storagelocation INTO DATA(ls_storagelocation) WITH KEY storagelocation = <lfs_item>-storage_location
                                                                     BINARY SEARCH.
@@ -358,16 +372,32 @@ CLASS lhc_materialrequisition IMPLEMENTATION.
           <lfs_item>-storage_location_name = ls_storagelocation-storagelocationname.
         ENDIF.
 
+*&--MOD BEGIN BY XINLEI XU 2025/02/27
+*        READ TABLE lt_order INTO DATA(ls_order) WITH KEY manufacturingorder = <lfs_item>-manufacturing_order
+*                                                         material = <lfs_item>-material BINARY SEARCH.
+*        IF sy-subrc = 0.
+*          <lfs_item>-material_description = ls_order-materialdescription.
+*          <lfs_item>-standard_price = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
+*                                                                            iv_currency = ls_order-currency
+*                                                                            iv_input = ls_order-standardprice ).
+*          <lfs_item>-currency = ls_order-currency.
+*          <lfs_item>-order_is_closed = ls_order-orderisclosed.
+*        ENDIF.
         READ TABLE lt_order INTO DATA(ls_order) WITH KEY manufacturingorder = <lfs_item>-manufacturing_order
                                                          material = <lfs_item>-material BINARY SEARCH.
         IF sy-subrc = 0.
-          <lfs_item>-material_description = ls_order-materialdescription.
-          <lfs_item>-standard_price = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
-                                                                            iv_currency = ls_order-currency
-                                                                            iv_input = ls_order-standardprice ).
-          <lfs_item>-currency = ls_order-currency.
           <lfs_item>-order_is_closed = ls_order-orderisclosed.
         ENDIF.
+        READ TABLE lt_product INTO DATA(ls_product) WITH KEY material = <lfs_item>-material BINARY SEARCH.
+        IF sy-subrc = 0.
+          <lfs_item>-material_description = ls_product-materialdescription.
+          <lfs_item>-standard_price = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
+                                                                            iv_currency = ls_product-currency
+                                                                            iv_input = ls_product-standardprice ).
+          <lfs_item>-currency = ls_product-currency.
+        ENDIF.
+*&--MOD END BY XINLEI XU 2025/02/27
+
         <lfs_item>-local_last_changed_at_s = <lfs_item>-local_last_changed_at.
         " conversion output
         <lfs_item>-manufacturing_order = |{ <lfs_item>-manufacturing_order ALPHA = OUT }|.

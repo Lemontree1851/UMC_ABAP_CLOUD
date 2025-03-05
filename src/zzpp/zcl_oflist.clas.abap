@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_oflist IMPLEMENTATION.
+CLASS ZCL_OFLIST IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -124,7 +124,8 @@ CLASS zcl_oflist IMPLEMENTATION.
                  ztpp_1012~requirement_date,
                  ztpp_1012~requirement_qty,
                  ztpp_1012~remark,
-                 substring( CAST( ztpp_1012~created_at AS CHAR ), 1, 8 ) AS created_at
+                 ztpp_1012~created_at,
+                 substring( CAST( ztpp_1012~created_at AS CHAR ), 1, 8 ) AS created_date
             FROM ztpp_1012 WITH PRIVILEGED ACCESS
             JOIN @lt_pir_key AS a ON ztpp_1012~material = a~product
                                  AND ztpp_1012~plant = a~plant
@@ -138,7 +139,7 @@ CLASS zcl_oflist IMPLEMENTATION.
 
           " ADD BEGIN BY XINLEI XU 2025/02/26
           DATA(lt_pp1012_temp) = lt_pp1012.
-          SORT lt_pp1012_temp BY material plant customer requirement_date requirement_qty created_at.
+          SORT lt_pp1012_temp BY material plant customer requirement_date requirement_qty created_date.
           " ADD END BY XINLEI XU 2025/02/26
         ENDIF.
 
@@ -193,7 +194,7 @@ CLASS zcl_oflist IMPLEMENTATION.
                                                                          customer = lv_customer
                                                                          requirement_date = ls_pir_item-requirementdate
                                                                          requirement_qty = ls_pir_item-plannedquantity
-                                                                         created_at = ls_pir_item-lastchangedate
+                                                                         created_date = ls_pir_item-lastchangedate
                                                                          BINARY SEARCH.
             IF sy-subrc = 0.
               ls_oflist-remark = ls_pp1012_temp-remark.
@@ -203,6 +204,7 @@ CLASS zcl_oflist IMPLEMENTATION.
                                                                  plant = ls_pir_item-plant
                                                                  customer = lv_customer
                                                                  requirement_date = ls_pir_item-requirementdate
+                                                                 requirement_qty = ls_pir_item-plannedquantity
                                                                  BINARY SEARCH.
 
               IF sy-subrc = 0.
@@ -219,22 +221,17 @@ CLASS zcl_oflist IMPLEMENTATION.
           requirementsegment plndindeprqmtperiod periodtype requirementdate.
 
         "过滤
-        zzcl_odata_utils=>filtering(
-                            EXPORTING
-                              io_filter = io_request->get_filter( )
-                              it_excluded = VALUE #( ( fieldname = 'INTERVALDAYS' ) )
-                            CHANGING
-                              ct_data = lt_oflist ).
+        zzcl_odata_utils=>filtering( EXPORTING io_filter = io_request->get_filter( )
+                                               it_excluded = VALUE #( ( fieldname = 'INTERVALDAYS' ) )
+                                     CHANGING  ct_data = lt_oflist ).
         "排序
-        zzcl_odata_utils=>orderby(
-                            EXPORTING
-                              it_order = io_request->get_sort_elements( )
-                            CHANGING
-                              ct_data = lt_oflist ).
+        zzcl_odata_utils=>orderby( EXPORTING it_order = io_request->get_sort_elements( )
+                                   CHANGING  ct_data  = lt_oflist ).
 
         IF io_request->is_total_numb_of_rec_requested( ).
           io_response->set_total_number_of_records( lines( lt_oflist ) ).
         ENDIF.
+
         IF io_request->is_data_requested( ).
           zzcl_odata_utils=>paging(
             EXPORTING

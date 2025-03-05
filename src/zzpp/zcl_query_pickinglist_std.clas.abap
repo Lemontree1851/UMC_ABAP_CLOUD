@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_query_pickinglist_std IMPLEMENTATION.
+CLASS ZCL_QUERY_PICKINGLIST_STD IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

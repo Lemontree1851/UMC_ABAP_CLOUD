@@ -94,6 +94,7 @@ define root custom entity ZC_MFGORDER_001
       @UI                       : {
       lineItem                  : [ { position: 160, label: '部署（工程）' } ] }
       @EndUserText.label        : '部署（工程）'
+      @Consumption.hidden: true
       Department                : abap.char(12);
       @UI                       : {
       lineItem                  : [ { position: 165, label: '製造責任者（工程情報）' } ] }
@@ -137,6 +138,7 @@ define root custom entity ZC_MFGORDER_001
       lineItem                  : [ { position: 230, label: '加工費実績（1単位）' } ] }
       @EndUserText.label        : '加工費実績（1単位）'
       @Semantics.amount.currencyCode : 'Currency_Empty'
+      @Consumption.hidden: true
       ActualCost1PC             : abap.curr(20,2);
       @UI                       : {
       selectionField            : [ { position: 3 } ] }

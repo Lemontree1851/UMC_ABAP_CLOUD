@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_get_uwms_mcard IMPLEMENTATION.
+CLASS ZCL_GET_UWMS_MCARD IMPLEMENTATION.
 
 
   METHOD if_sadl_exit_calc_element_read~calculate.

@@ -33,9 +33,42 @@ FUNCTION zzfm_dtimp_tpp1022.
     ls_data-material         = <line>-('material').
     ls_data-unloading_point  = <line>-('unloading_point').
 
+*&--ADD BEGIN BY XINLEI XU 2025/02/28
+    ls_data-quantity         = <line>-('quantity').
+    ls_data-quantity_uom     = <line>-('quantity_uom').
+    ls_data-basic_start_date = <line>-('basic_start_date').
+    ls_data-basic_end_date   = <line>-('basic_end_date').
+
+    SELECT SINGLE *
+      FROM i_manufacturingorder WITH PRIVILEGED ACCESS
+     WHERE manufacturingorder = @ls_data-order_number
+      INTO @DATA(ls_order).
+*&--ADD END BY XINLEI XU 2025/02/28
+
     TRY.
-        ls_data-order_number  = |{ ls_data-order_number ALPHA = IN }|.
-        ls_data-material      = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_data-material ).
+        ls_data-order_number = |{ ls_data-order_number ALPHA = IN }|.
+        ls_data-material = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_data-material ).
+
+*&--ADD BEGIN BY XINLEI XU 2025/02/28
+        ls_data-quantity = COND #( WHEN ls_data-quantity IS INITIAL
+                                   THEN ls_order-mfgorderplannedtotalqty
+                                   ELSE ls_data-quantity ).
+
+        IF ls_data-quantity_uom IS NOT INITIAL.
+          ls_data-quantity_uom = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_in
+                                                                      iv_input = ls_data-quantity_uom ).
+        ELSE.
+          ls_data-quantity_uom = ls_order-productionunit.
+        ENDIF.
+
+        ls_data-basic_start_date = COND #( WHEN ls_data-basic_start_date IS INITIAL
+                                           THEN ls_order-mfgorderplannedstartdate
+                                           ELSE ls_data-basic_start_date ).
+
+        ls_data-basic_end_date = COND #( WHEN ls_data-basic_end_date IS INITIAL
+                                         THEN ls_order-mfgorderplannedenddate
+                                         ELSE ls_data-basic_end_date ).
+*&--ADD END BY XINLEI XU 2025/02/28
         ##NO_HANDLER
       CATCH zzcx_custom_exception INTO lo_root_exc.
     ENDTRY.
@@ -43,13 +76,23 @@ FUNCTION zzfm_dtimp_tpp1022.
     MODIFY ENTITY i_productionordertp
     UPDATE FIELDS (
                     unloadingpointname
+*&--ADD BEGIN BY XINLEI XU 2025/02/28
+                    orderplannedtotalqty
+                    productionunit
+                    orderplannedstartdate
+                    orderplannedenddate
+*&--ADD END BY XINLEI XU 2025/02/28
                   )
-    WITH VALUE #(
-                  (
+    WITH VALUE #( (
                     %key-productionorder     = ls_data-order_number
                     %data-unloadingpointname = ls_data-unloading_point
-                  )
-                 )
+*&--ADD BEGIN BY XINLEI XU 2025/02/28
+                    %data-orderplannedtotalqty = ls_data-quantity
+                    %data-productionunit = ls_data-quantity_uom
+                    %data-orderplannedstartdate = ls_data-basic_start_date
+                    %data-orderplannedenddate = ls_data-basic_end_date
+*&--ADD END BY XINLEI XU 2025/02/28
+                ) )
     FAILED DATA(failed)
     REPORTED DATA(reported)
     MAPPED DATA(mapped).

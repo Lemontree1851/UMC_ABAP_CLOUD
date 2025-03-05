@@ -1,4 +1,4 @@
 @EndUserText.label: '先々在庫推移分析'
 define service ZAPI_BI005_O2 {
-  expose ZC_BI005_REPORT;
+  expose ZC_BI005_REPORT_API;
 }

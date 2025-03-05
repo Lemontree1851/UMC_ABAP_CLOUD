@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
+CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -430,10 +430,16 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
           REPLACE ALL OCCURRENCES OF `\/Date(`    IN lv_response  WITH ``.
           REPLACE ALL OCCURRENCES OF `)\/`        IN lv_response  WITH ``.
 
-          xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
-             ( xco_cp_json=>transformation->pascal_case_to_underscore )
-             ( xco_cp_json=>transformation->boolean_to_abap_bool )
-          ) )->write_to( REF #( ls_response ) ).
+*&--MOD BEGIN BY XINLEI XU 2025/03/04 Optimize for speed
+*          xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
+*             ( xco_cp_json=>transformation->pascal_case_to_underscore )
+*             ( xco_cp_json=>transformation->boolean_to_abap_bool )
+*          ) )->write_to( REF #( ls_response ) ).
+
+          /ui2/cl_json=>deserialize( EXPORTING json = lv_response
+                                               pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+                                     CHANGING  data = ls_response ).
+*&--MOD END BY XINLEI XU 2025/03/04
 
           DATA(lt_mrpdata) = ls_response-d-results.
           LOOP AT lt_mrpdata ASSIGNING FIELD-SYMBOL(<lfs_mrpdata>).

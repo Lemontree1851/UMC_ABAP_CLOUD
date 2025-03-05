@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_productionplan IMPLEMENTATION.
+CLASS ZCL_PRODUCTIONPLAN IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

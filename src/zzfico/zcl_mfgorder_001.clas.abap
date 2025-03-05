@@ -279,6 +279,7 @@ CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
         WITH PRIVILEGED ACCESS
         WHERE plant IN @lr_plant
         AND companycode IN @lr_companycode
+        and CURPLANPROJSLSORDVALNSTRATEGY is INITIAL
         INTO TABLE @lt_mfgorderactlplantgtldgrcost.
 
         ls_mfgorderactlplantgtldgrcost-yearperiod = lv_period.

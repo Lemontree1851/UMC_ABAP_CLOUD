@@ -45,9 +45,9 @@ CLASS zzcl_common_utils DEFINITION
              results  TYPE TABLE OF ty_metadata WITH DEFAULT KEY,
              metadata TYPE ty_etag,
            END OF   ty_odata_res,
-           BEGIN OF ty_odata_res_d,
+           BEGIN OF ty_odatav2_res_d,
              d TYPE ty_odata_res,
-           END OF   ty_odata_res_d.
+           END OF   ty_odatav2_res_d.
 
     TYPES:
       "odata v2 api message structure
@@ -621,7 +621,8 @@ CLASS zzcl_common_utils IMPLEMENTATION.
 
 
   METHOD get_api_etag.
-    DATA: ls_odata_result TYPE ty_odata_res_d.
+    DATA: ls_odatav2_result TYPE ty_odatav2_res_d.
+    DATA: ls_odatav4_result TYPE ty_etag.
 
     DATA(lv_path) = iv_path.
 
@@ -666,16 +667,38 @@ CLASS zzcl_common_utils IMPLEMENTATION.
         ev_response = lo_response->get_text(  ).
 
         IF ev_status_code = 200.
-          REPLACE ALL OCCURRENCES OF `__metadata` IN ev_response WITH 'metadata'.
-          /ui2/cl_json=>deserialize( EXPORTING json = ev_response
-                                               pretty_name = /ui2/cl_json=>pretty_mode-camel_case
-                                     CHANGING  data = ls_odata_result ).
-          IF ls_odata_result-d-results IS NOT INITIAL.
-            ev_etag = ls_odata_result-d-results[ 1 ]-metadata-etag.
-          ELSE.
-            ev_etag = ls_odata_result-d-metadata-etag.
-          ENDIF.
+*&--MOD BEGIN BY XINLEI XU 2025/03/05 V2/V4
+*          REPLACE ALL OCCURRENCES OF `__metadata` IN ev_response WITH 'metadata'.
+*          /ui2/cl_json=>deserialize( EXPORTING json = ev_response
+*                                               pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+*                                     CHANGING  data = ls_odatav2_result ).
+*          IF ls_odatav2_result-d-results IS NOT INITIAL.
+*            ev_etag = ls_odatav2_result-d-results[ 1 ]-metadata-etag.
+*          ELSE.
+*            ev_etag = ls_odatav2_result-d-metadata-etag.
+
+          CASE iv_odata_version.
+            WHEN 'V2'.
+              REPLACE ALL OCCURRENCES OF `__metadata` IN ev_response WITH 'metadata'.
+              /ui2/cl_json=>deserialize( EXPORTING json = ev_response
+                                                   pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+                                         CHANGING  data = ls_odatav2_result ).
+              IF ls_odatav2_result-d-results IS NOT INITIAL.
+                ev_etag = ls_odatav2_result-d-results[ 1 ]-metadata-etag.
+              ELSE.
+                ev_etag = ls_odatav2_result-d-metadata-etag.
+              ENDIF.
+
+            WHEN 'V4'.
+              REPLACE ALL OCCURRENCES OF `@odata.metadataEtag` IN ev_response WITH 'etag'.
+              /ui2/cl_json=>deserialize( EXPORTING json = ev_response
+                                                   pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+                                         CHANGING  data = ls_odatav4_result ).
+              ev_etag = ls_odatav4_result-etag.
+            WHEN OTHERS.
+          ENDCASE.
         ENDIF.
+*&--MOD END BY XINLEI XU 2025/03/05
 
         lo_http_client->close(  ).
 
@@ -692,8 +715,6 @@ CLASS zzcl_common_utils IMPLEMENTATION.
   ENDMETHOD.                                             "#EC CI_VALPAR
 
   METHOD get_csrf_token.
-    DATA: ls_odata_result TYPE ty_odata_res_d.
-
     DATA(lv_path) = iv_path.
 
     " Find CA by Scenario ID
@@ -1357,9 +1378,7 @@ CLASS zzcl_common_utils IMPLEMENTATION.
 
         ev_status_code = lo_response->get_status( )-code.
         ev_response = lo_response->get_text(  ).
-        IF iv_method = if_web_http_client=>get.
-          ev_etag = lo_response->get_header_field( i_name = 'etag' ).
-        ENDIF.
+
         lo_http_client->close(  ).
 
       CATCH cx_web_message_error INTO DATA(lx_web_message_error).
@@ -1433,18 +1452,20 @@ CLASS zzcl_common_utils IMPLEMENTATION.
           lo_request->set_text( iv_body ).
         ENDIF.
 
-        IF iv_etag IS NOT INITIAL.
-          DATA(lv_etag) = iv_etag.
-        ELSEIF iv_method = if_web_http_client=>patch.
-          get_api_etag( EXPORTING iv_odata_version = 'V4'
-                                  iv_path          = lv_path
-                        IMPORTING ev_status_code   = ev_status_code
-                                  ev_response      = ev_response
-                                  ev_etag          = lv_etag ).
-        ENDIF.
-        IF lv_etag IS NOT INITIAL.
-          lo_request->set_header_field( i_name = 'If-Match' i_value = lv_etag ).
-        ENDIF.
+*&--DEL BEGIN BY XINLEI XU 2025/03/05 If-Match/If-None-Match header not supported for this resource
+*        IF iv_etag IS NOT INITIAL.
+*          DATA(lv_etag) = iv_etag.
+*        ELSEIF iv_method = if_web_http_client=>patch.
+*          get_api_etag( EXPORTING iv_odata_version = 'V4'
+*                                  iv_path          = lv_path
+*                        IMPORTING ev_status_code   = ev_status_code
+*                                  ev_response      = ev_response
+*                                  ev_etag          = lv_etag ).
+*        ENDIF.
+*        IF lv_etag IS NOT INITIAL.
+*          lo_request->set_header_field( i_name = 'If-Match' i_value = lv_etag ).
+*        ENDIF.
+*&--DEL END BY XINLEI XU 2025/03/05
 
         IF iv_csrf_token IS INITIAL.
           lo_http_client->set_csrf_token(  ).
@@ -1457,9 +1478,6 @@ CLASS zzcl_common_utils IMPLEMENTATION.
         ev_status_code = lo_response->get_status( )-code.
         ev_response = lo_response->get_text(  ).
 
-        IF iv_method = if_web_http_client=>get.
-          ev_etag = lo_response->get_header_field( i_name = 'etag' ).
-        ENDIF.
         lo_http_client->close(  ).
 
       CATCH cx_web_message_error INTO DATA(lx_web_message_error).

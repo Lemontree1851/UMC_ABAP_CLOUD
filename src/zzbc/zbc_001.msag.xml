@@ -206,6 +206,13 @@
      <MSGNR>032</MSGNR>
      <TEXT>Please delete the assignment information for role &amp;1.</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>033</MSGNR>
+     <TEXT>
+キーが同じインスタンスはすでに登録されています</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

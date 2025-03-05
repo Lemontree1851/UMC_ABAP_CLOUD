@@ -132,7 +132,7 @@ CLASS ZCL_PICKINGLIST IMPLEMENTATION.
 
         IF lv_quantity1 - lv_quantity2 = 0.
           <fs_original_data>-postingstatus   = '未転記'.
-        ELSEIF lv_quantity1 - lv_quantity2 > 0 AND lv_quantity1 - lv_quantity2 - lv_quantity3 = 0.
+        ELSEIF lv_quantity1 - lv_quantity2 > 0 AND lv_quantity1 - lv_quantity2 - lv_quantity3 >= 0.
           <fs_original_data>-postingstatus   = '転記済'.
           <fs_original_data>-postingquantity = lv_quantity1 - lv_quantity2.
         ELSEIF lv_quantity1 - lv_quantity2 > 0 AND lv_quantity1 - lv_quantity2 - lv_quantity3 < 0.

@@ -634,21 +634,20 @@ CLASS ZZCL_WF_UTILS IMPLEMENTATION.
 *      iv_remark         = '审批通过，无意见'
 *    ).
 **********************************************************************
-    SELECT SINGLE
-      *
-    FROM ztmm_1006
-    WHERE pr_no = '1000040'
-    INTO  @DATA(ls_mm1006).                   "#EC CI_ALL_FIELDS_NEEDED
-
-    ls_mm1006-workflow_id = 'purchaserequisition'.
-
-    zzcl_wf_utils=>get_application_id(
-              EXPORTING iv_workflowid    = ls_mm1006-workflow_id
-                        iv_uuid          = ls_mm1006-uuid
-              IMPORTING ev_error         = DATA(lv_ev_error)
-                        ev_errortext     = DATA(lv_error_text)
-                        ev_applicationid = ls_mm1006-application_id ).
-
+*    SELECT SINGLE
+*      *
+*    FROM ztmm_1006
+*    WHERE pr_no = 'ESE2502001'
+*    INTO  @DATA(ls_mm1006).                   "#EC CI_ALL_FIELDS_NEEDED
+*
+*    ls_mm1006-workflow_id = 'purchaserequisition'.
+*
+*    zzcl_wf_utils=>get_application_id(
+*              EXPORTING iv_workflowid    = ls_mm1006-workflow_id
+*                        iv_uuid          = ls_mm1006-uuid
+*              IMPORTING ev_error         = DATA(lv_ev_error)
+*                        ev_errortext     = DATA(lv_error_text)
+*                        ev_applicationid = ls_mm1006-application_id ).
 
   ENDMETHOD.
 
@@ -692,6 +691,8 @@ CLASS ZZCL_WF_UTILS IMPLEMENTATION.
     WHERE  zid   = @iv_zid
       AND zkey1  = @lc_zkey1
       AND zkey2  = @lc_zkey2
+      AND zvalue1 = @ls_ztmm_1006-company_code
+      AND zvalue2 = @ls_ztmm_1006-pr_type
     INTO @DATA(ls_ztbc_1001).
     IF sy-subrc <> 0.
       ev_error = 'X'.
@@ -735,7 +736,21 @@ CLASS ZZCL_WF_UTILS IMPLEMENTATION.
       lv_main_content = lv_main_content && |<p>{ iv_remark }</p>|.
     ENDIF.
     IF ls_ztbc_1001-zkey7 IS NOT INITIAL.
+      TRY.
+          DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
+          " Get BTP URL configuration
+          SELECT SINGLE *
+            FROM zc_tbc1001
+           WHERE zid = 'ZBC006'
+             AND zvalue1 = @lv_system_url
+            INTO @DATA(ls_config).            "#EC CI_ALL_FIELDS_NEEDED
+          ##NO_HANDLER
+        CATCH cx_abap_context_info_error.
+          "handle exception
+      ENDTRY.
+      ls_ztbc_1001-zvalue7 = ls_config-zvalue2 && ls_ztbc_1001-zvalue7.
       lv_main_content = lv_main_content && |<a href="{ ls_ztbc_1001-zvalue7 }">{ ls_ztbc_1001-zvalue7 }</a>|.
+
     ENDIF.
 
     IF ls_ztbc_1001-zkey8 IS NOT INITIAL.

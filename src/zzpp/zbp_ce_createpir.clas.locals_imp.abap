@@ -322,11 +322,11 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
     ENDIF.
     lv_date = lv_date_range-startdate.
     WHILE lv_date <= lv_date_range-enddate.
-      "如果不是工作日则不用处理
-      IF NOT zzcl_common_utils=>is_workingday( iv_plant = cs_plndindeprqmt-plant iv_date = lv_date ).
-        lv_date = lv_date + 1.
-        CONTINUE.
-      ENDIF.
+*      "如果不是工作日则不用处理
+*      IF NOT zzcl_common_utils=>is_workingday( iv_plant = cs_plndindeprqmt-plant iv_date = lv_date ).
+*        lv_date = lv_date + 1.
+*        CONTINUE.
+*      ENDIF.
       "默认一次只会有一个维度的数据
       READ TABLE ct_plndindeprqmt TRANSPORTING NO FIELDS WITH KEY requirementdate = lv_date."因为会插入数据，所以无法使用binary search。除非新增一个内表
       "如果是工作日且内表中没有则需要用0填充

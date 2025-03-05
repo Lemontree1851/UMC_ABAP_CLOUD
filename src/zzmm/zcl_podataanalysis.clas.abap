@@ -616,29 +616,30 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 **********************************************************************
 
 * Authorization Check
+      DATA(lv_user_prefix) = sy-uname+0(2).
+      IF lv_user_prefix = 'CB'.
+        DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+        DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+        DATA(lv_ekorg) = zzcl_common_utils=>get_purchorg_by_user( lv_user_email ).
 
-      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
-      DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
-      DATA(lv_ekorg) = zzcl_common_utils=>get_purchorg_by_user( lv_user_email ).
+        IF lv_plant IS INITIAL.
+          CLEAR lt_result.
+        ELSE.
+          SPLIT lv_plant AT '&' INTO TABLE DATA(lt_plant_check).
+          CLEAR lr_plant.
+          lr_plant = VALUE #( FOR plant IN lt_plant_check ( sign = 'I' option = 'EQ' low = plant ) ).
+          DELETE lt_result WHERE plant NOT IN lr_plant.
+        ENDIF.
 
-      IF lv_plant IS INITIAL.
-        CLEAR lt_result.
-      ELSE.
-        SPLIT lv_plant AT '&' INTO TABLE DATA(lt_plant_check).
-        CLEAR lr_plant.
-        lr_plant = VALUE #( FOR plant IN lt_plant_check ( sign = 'I' option = 'EQ' low = plant ) ).
-        DELETE lt_result WHERE plant NOT IN lr_plant.
+        IF lv_ekorg IS INITIAL.
+          CLEAR lt_result.
+        ELSE.
+          SPLIT lv_ekorg AT '&' INTO TABLE DATA(lt_purchorg_check).
+          CLEAR lr_purchasingorganization.
+          lr_purchasingorganization = VALUE #( FOR purchorg IN lt_purchorg_check ( sign = 'I' option = 'EQ' low = purchorg ) ).
+          DELETE lt_result WHERE purchasingorganization NOT IN lr_purchasingorganization.
+        ENDIF.
       ENDIF.
-
-      IF lv_ekorg IS INITIAL.
-        CLEAR lt_result.
-      ELSE.
-        SPLIT lv_ekorg AT '&' INTO TABLE DATA(lt_purchorg_check).
-        CLEAR lr_purchasingorganization.
-        lr_purchasingorganization = VALUE #( FOR purchorg IN lt_purchorg_check ( sign = 'I' option = 'EQ' low = purchorg ) ).
-        DELETE lt_result WHERE purchasingorganization NOT IN lr_purchasingorganization.
-      ENDIF.
-
 *---------------------------------------------------------------------------
 
       IF lt_result IS NOT INITIAL.
@@ -730,24 +731,43 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
       SORT lt_factorycalendar BY plant.
 
 
+*&--MOD BEGIN BY XINLEI XU 2025/03/04 BUG Fix
+*      CLEAR lv_count.
+*      LOOP AT lt_plant INTO DATA(ls_plant_v).
+*        lv_count += 1.
+*        IF lv_count = 1.
+*          lv_filter = |(MRPPlant eq '{ ls_plant_v-plant }' and MRPArea eq '{ ls_plant_v-plant }')|.
+*        ELSE.
+*          lv_filter = |{ lv_filter } or (MRPPlant eq '{ ls_plant_v-plant }' and MRPArea eq '{ ls_plant_v-plant }')|.
+*        ENDIF.
+*      ENDLOOP.
+*
+*      IF lines( lt_material ) < 30.
+*        CLEAR lv_count.
+*        LOOP AT lt_material INTO DATA(ls_material_v).
+*          lv_count += 1.
+*          IF lv_count = 1.
+*            lv_filter = |{ lv_filter } and (Material eq '{ ls_material_v-material }'|.
+*          ELSE.
+*            lv_filter = |{ lv_filter } or Material eq '{ ls_material_v-material }'|.
+*          ENDIF.
+*        ENDLOOP.
+*        lv_filter = |{ lv_filter })|.
+*      ENDIF.
 
-      " MRP数据取得
-      CLEAR lv_count.
-      LOOP AT lt_plant INTO DATA(ls_plant_v).
-        lv_count += 1.
-        IF lv_count = 1.
-          lv_filter = |(MRPPlant eq '{ ls_plant_v-plant }' and MRPArea eq '{ ls_plant_v-plant }')|.
-        ELSE.
-          lv_filter = |{ lv_filter } or (MRPPlant eq '{ ls_plant_v-plant }' and MRPArea eq '{ ls_plant_v-plant }')|.
-        ENDIF.
-      ENDLOOP.
+      DATA(lv_select) = |Material,MRPArea,MRPPlant,MRPElementOpenQuantity,MRPElementAvailyOrRqmtDate,| &&
+                        |MRPElement,MRPElementItem,SourceMRPElement,MRPElementCategory,MRPElementDocumentType,| &&
+                        |ProductionVersion,MRPElementScheduleLine,MRPElementReschedulingDate,ExceptionMessageNumber,ExceptionMessageText|.
+      lv_path = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?sap-language={ zzcl_common_utils=>get_current_language( ) }|.
+
+      CLEAR lv_filter.
 
       IF lines( lt_material ) < 30.
         CLEAR lv_count.
         LOOP AT lt_material INTO DATA(ls_material_v).
           lv_count += 1.
           IF lv_count = 1.
-            lv_filter = |{ lv_filter } and (Material eq '{ ls_material_v-material }'|.
+            lv_filter = |(Material eq '{ ls_material_v-material }'|.
           ELSE.
             lv_filter = |{ lv_filter } or Material eq '{ ls_material_v-material }'|.
           ENDIF.
@@ -755,21 +775,35 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         lv_filter = |{ lv_filter })|.
       ENDIF.
 
-      lv_path = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?sap-language={ zzcl_common_utils=>get_current_language( ) }|.
-      zzcl_common_utils=>request_api_v2(
-            EXPORTING
-              iv_path        = lv_path
-              iv_method      = if_web_http_client=>get
-              iv_filter      = lv_filter
-            IMPORTING
-              ev_status_code = DATA(lv_stat_code)
-              ev_response    = DATA(lv_resbody_api) ).
-      IF lv_stat_code = '200'.
-        /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
-                                   CHANGING  data = ls_res_mrp_api ).
-        APPEND LINES OF ls_res_mrp_api-d-results TO lt_mrp_api.
-        SORT lt_mrp_api BY mrpelement mrpelementitem mrpelementscheduleline mrpelementcategory.
-      ENDIF.
+      LOOP AT lt_plant INTO DATA(ls_plant_v).
+        IF lv_filter IS NOT INITIAL.
+          DATA(lv_new_filter) = |{ lv_filter } and (MRPPlant eq '{ ls_plant_v-plant }' and MRPArea eq '{ ls_plant_v-plant }')|.
+        ELSE.
+          lv_new_filter = |(MRPPlant eq '{ ls_plant_v-plant }' and MRPArea eq '{ ls_plant_v-plant }')|.
+        ENDIF.
+
+        " MRP数据取得
+        zzcl_common_utils=>request_api_v2(
+              EXPORTING
+                iv_path        = lv_path
+                iv_method      = if_web_http_client=>get
+                iv_filter      = lv_new_filter
+                iv_select      = lv_select
+              IMPORTING
+                ev_status_code = DATA(lv_stat_code)
+                ev_response    = DATA(lv_resbody_api) ).
+
+        IF lv_stat_code = '200'.
+          CLEAR ls_res_mrp_api.
+          /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+                                     CHANGING  data = ls_res_mrp_api ).
+
+          APPEND LINES OF ls_res_mrp_api-d-results TO lt_mrp_api.
+        ENDIF.
+        CLEAR lv_new_filter.
+      ENDLOOP.
+      SORT lt_mrp_api BY mrpelement mrpelementitem mrpelementscheduleline mrpelementcategory.
+*&--MOD END BY XINLEI XU 2025/03/04
 
 *&--MOD BEGIN BY XINLEI XU 2025/02/21
       TRY.
@@ -794,7 +828,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
         CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
 
-        DATA(lv_top)  = 1000.
+        DATA(lv_top)  = 50000.
         DATA(lv_skip) = -1000.
         DO.
           lv_skip += 1000.

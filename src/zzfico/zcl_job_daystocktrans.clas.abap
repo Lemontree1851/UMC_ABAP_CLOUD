@@ -71,7 +71,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_job_daystocktrans IMPLEMENTATION.
+CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
 
 
   METHOD add_message_to_log.
@@ -637,11 +637,34 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       CLEAR ls_1016.
     ENDLOOP.
 
+*&--ADD BEGIN BY XINLEI XU 2025/02/28
+    SELECT COUNT(*)
+      FROM ztfi_1015
+     WHERE excudate = @lv_date
+       AND companycode IN @lr_companycode
+       AND plant IN @lr_plant
+      INTO @DATA(lv_count_1015).
+    IF lv_count_1015 > 0.
+      DELETE FROM ztfi_1015 WHERE excudate = @lv_date
+                              AND companycode IN @lr_companycode
+                              AND plant IN @lr_plant.
+    ENDIF.
+    CLEAR lv_msg.
+    lv_msg = |テーブル ZTFI_1015 { lv_date } データ { lv_count_1015 }件削除。|.
+    TRY.
+        add_message_to_log( i_text = lv_msg i_type = 'S' ).
+      CATCH cx_bali_runtime ##NO_HANDLER.
+    ENDTRY.
+*&--ADD BEGIN BY XINLEI XU 2025/02/28
+
     MODIFY ztfi_1015 FROM TABLE @lt_1015.
     IF sy-subrc = 0.
       COMMIT WORK.
       CLEAR lv_msg.
-      MESSAGE s006(zfico_001) INTO lv_msg.
+*&--MOD BEGIN BY XINLEI XU 2025/02/28
+*      MESSAGE s006(zfico_001) INTO lv_msg.
+      lv_msg = |テーブル ZTFI_1015 { lv_date } データ { lines( lt_1015 ) }件更新。|.
+*&--MOD END BY XINLEI XU 2025/02/28
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'S' ).
         CATCH cx_bali_runtime ##NO_HANDLER.
@@ -651,10 +674,32 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       TRY.
           CLEAR lv_msg.
           MESSAGE e005(zfico_001) INTO lv_msg.
+          lv_msg = |テーブル ZTFI_1015 データ { lv_msg }。|. " ADD BY XINLEI 2025/02/28
           add_message_to_log( i_text = lv_msg i_type = 'E' ).
         CATCH cx_bali_runtime ##NO_HANDLER.
       ENDTRY.
     ENDIF.
+
+*&--ADD BEGIN BY XINLEI XU 2025/02/28
+    DATA(lv_yearmonth) = |{ lv_gjahr }{ lv_poper }|.
+    SELECT COUNT(*)
+      FROM ztfi_1016
+     WHERE yearmonth = @lv_yearmonth
+       AND companycode IN @lr_companycode
+       AND plant IN @lr_plant
+      INTO @DATA(lv_count_1016).
+    IF lv_count_1016 > 0.
+      DELETE FROM ztfi_1016 WHERE yearmonth = @lv_yearmonth
+                              AND companycode IN @lr_companycode
+                              AND plant IN @lr_plant.
+    ENDIF.
+    CLEAR lv_msg.
+    lv_msg = |テーブル ZTFI_1016 { lv_yearmonth } データ { lv_count_1016 }件削除。|.
+    TRY.
+        add_message_to_log( i_text = lv_msg i_type = 'S' ).
+      CATCH cx_bali_runtime ##NO_HANDLER.
+    ENDTRY.
+*&--ADD END BY XINLEI XU 2025/02/28
 
     DATA(lv_end_date) = zzcl_common_utils=>get_enddate_of_month( EXPORTING iv_date = lv_date ).
 *    IF lv_date = lv_end_date.
@@ -662,7 +707,10 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
     IF sy-subrc = 0.
       COMMIT WORK.
       CLEAR lv_msg.
-      MESSAGE s006(zfico_001) INTO lv_msg.
+*&--MOD BEGIN BY XINLEI XU 2025/02/28
+*      MESSAGE s006(zfico_001) INTO lv_msg.
+      lv_msg = |テーブル ZTFI_1016 { lv_yearmonth } データ { lines( lt_1016 ) }件更新。|.
+*&--MOD END BY XINLEI XU 2025/02/28
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'S' ).
         CATCH cx_bali_runtime ##NO_HANDLER.
@@ -671,6 +719,7 @@ CLASS zcl_job_daystocktrans IMPLEMENTATION.
       ROLLBACK WORK.
       CLEAR lv_msg.
       MESSAGE e005(zfico_001) INTO lv_msg.
+      lv_msg = |テーブル ZTFI_1016 データ { lv_msg }。|. " ADD BY XINLEI 2025/02/28
       TRY.
           add_message_to_log( i_text = lv_msg i_type = 'E' ).
         CATCH cx_bali_runtime ##NO_HANDLER.

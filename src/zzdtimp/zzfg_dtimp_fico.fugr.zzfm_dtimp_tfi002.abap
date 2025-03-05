@@ -38,6 +38,14 @@ FUNCTION zzfm_dtimp_tfi002.
   DATA:ls_res_api_old  TYPE ty_res_api.
   DATA lv_msg TYPE cl_bali_free_text_setter=>ty_text .
   DATA lv_msg_del TYPE string.
+  TYPES:
+    BEGIN OF ty_dup,
+      companycode TYPE string,
+      zglaccount  TYPE string,
+      num         TYPE i,
+    END OF ty_dup.
+  DATA:ls_dup TYPE ty_dup.
+  DATA:lt_dup TYPE STANDARD TABLE OF ty_dup.
   CREATE DATA eo_data TYPE TABLE OF (iv_struc).
 
   eo_data->* = io_data->*.
@@ -57,12 +65,20 @@ FUNCTION zzfm_dtimp_tfi002.
                CHANGING  data = ls_res_api_old ).
   SORT ls_res_api_old-d-results BY  companycode  zglaccount.
 
+  LOOP AT eo_data->* ASSIGNING FIELD-SYMBOL(<linedup>).
 
+    ls_dup-companycode               = <linedup>-('Companycode').
+    ls_dup-zglaccount                = <linedup>-('Zglaccount').
+    ls_dup-num                       = 1.
+    COLLECT  ls_dup INTO  lt_dup.
+  ENDLOOP.
+
+  DELETE lt_dup WHERE num = 1.
 
   LOOP AT ls_res_api_old-d-results INTO DATA(ls_old).
 
     "这次导入不存在的直接删
-    READ TABLE eo_data->* ASSIGNING FIELD-SYMBOL(<line>) WITH KEY ('Companycode') = ls_old-companycode ('Zglaccount') = ls_old-zglaccount.
+    READ TABLE eo_data->* ASSIGNING FIELD-SYMBOL(<line>) WITH KEY ('Companycode') = ls_old-companycode ('Zglaccount') = ls_old-zglaccount."#EC CI_ANYSEQ
     IF sy-subrc <> 0.
 
       IF iv_struc = 'ZZS_DTIMP_TFI002_DEL' AND lv_msg_del IS INITIAL.
@@ -120,6 +136,14 @@ FUNCTION zzfm_dtimp_tfi002.
         <line>-('Type') = 'E'.
       ELSE.
 
+        IF iv_struc = 'ZZS_DTIMP_TFI002_DEL' AND lv_msg_del IS INITIAL.
+        ELSE.
+          READ TABLE lt_dup TRANSPORTING NO FIELDS WITH KEY companycode = ls_old-companycode zglaccount = ls_old-zglaccount.
+          IF sy-subrc = 0.
+            CONTINUE.
+          ENDIF.
+        ENDIF.
+
         CLEAR lv_msg.
         lv_path = |/YY1_B_GLACCOUNT_CDS/YY1_B_GLACCOUNT(guid'{  ls_old-sap_uuid }')|.
         zzcl_common_utils=>request_api_v2(
@@ -135,6 +159,12 @@ FUNCTION zzfm_dtimp_tfi002.
           <line>-('Message') = ls_old-companycode && ` ` &&  ls_old-zglaccount && ':' && lv_resbody_api2.
           <line>-('Type') = 'E'.
         ENDIF.
+
+        READ TABLE lt_dup TRANSPORTING NO FIELDS WITH KEY companycode = ls_old-companycode zglaccount = ls_old-zglaccount.
+        IF sy-subrc = 0.
+          CONTINUE.
+        ENDIF.
+
         "存在的先删
         CLEAR lv_msg.
         DATA(lv_requestbody) = xco_cp_json=>data->from_abap( ls_results )->apply( VALUE #(
@@ -165,7 +195,12 @@ FUNCTION zzfm_dtimp_tfi002.
 
   "new key 直接导入
   LOOP AT eo_data->* ASSIGNING <line>.
-
+    READ TABLE lt_dup TRANSPORTING NO FIELDS WITH KEY companycode = <line>-('Companycode') zglaccount = <line>-('Zglaccount').
+    IF sy-subrc = 0.
+      MESSAGE s033(zbc_001) INTO lv_message.
+      <line>-('Type') = 'E'.
+      <line>-('Message') = zzcl_common_utils=>merge_message( iv_message1 = <line>-('Message') iv_message2 = lv_message iv_symbol = '/' ).
+    ENDIF.
     CHECK <line>-('Message') IS INITIAL.
 
     READ TABLE ls_res_api_old-d-results TRANSPORTING NO FIELDS WITH KEY companycode = <line>-('Companycode') zglaccount = <line>-('Zglaccount') BINARY SEARCH.
@@ -184,25 +219,25 @@ FUNCTION zzfm_dtimp_tfi002.
       <line>-('Message') = zzcl_common_utils=>merge_message( iv_message1 = <line>-('Message') iv_message2 = lv_msg_del iv_symbol = '/' ).
     ENDIF.
 
-      IF ls_results-companycode IS INITIAL.
-        MESSAGE s006(zbc_001) WITH TEXT-004 INTO lv_message.
-        <line>-('Message') = zzcl_common_utils=>merge_message( iv_message1 = <line>-('Message') iv_message2 = lv_message iv_symbol = '/' ).
-      ENDIF.
+    IF ls_results-companycode IS INITIAL.
+      MESSAGE s006(zbc_001) WITH TEXT-004 INTO lv_message.
+      <line>-('Message') = zzcl_common_utils=>merge_message( iv_message1 = <line>-('Message') iv_message2 = lv_message iv_symbol = '/' ).
+    ENDIF.
 
-      IF ls_results-zglaccount IS INITIAL.
-        MESSAGE s006(zbc_001) WITH TEXT-005 INTO lv_message.
-        <line>-('Message') = zzcl_common_utils=>merge_message( iv_message1 = <line>-('Message') iv_message2 = lv_message iv_symbol = '/' ).
-      ENDIF.
+    IF ls_results-zglaccount IS INITIAL.
+      MESSAGE s006(zbc_001) WITH TEXT-005 INTO lv_message.
+      <line>-('Message') = zzcl_common_utils=>merge_message( iv_message1 = <line>-('Message') iv_message2 = lv_message iv_symbol = '/' ).
+    ENDIF.
 
-      IF ls_results-zhojoku  IS INITIAL.
-        MESSAGE s006(zbc_001) WITH TEXT-006 INTO lv_message.
-        <line>-('Message') = zzcl_common_utils=>merge_message( iv_message1 = <line>-('Message') iv_message2 = lv_message iv_symbol = '/' ).
-      ENDIF.
+    IF ls_results-zhojoku  IS INITIAL.
+      MESSAGE s006(zbc_001) WITH TEXT-006 INTO lv_message.
+      <line>-('Message') = zzcl_common_utils=>merge_message( iv_message1 = <line>-('Message') iv_message2 = lv_message iv_symbol = '/' ).
+    ENDIF.
 
-      IF ls_results-zglaccountname IS INITIAL.
-        MESSAGE s006(zbc_001) WITH TEXT-007 INTO lv_message.
-        <line>-('Message') = zzcl_common_utils=>merge_message( iv_message1 = <line>-('Message') iv_message2 = lv_message iv_symbol = '/' ).
-      ENDIF.
+    IF ls_results-zglaccountname IS INITIAL.
+      MESSAGE s006(zbc_001) WITH TEXT-007 INTO lv_message.
+      <line>-('Message') = zzcl_common_utils=>merge_message( iv_message1 = <line>-('Message') iv_message2 = lv_message iv_symbol = '/' ).
+    ENDIF.
 
     IF <line>-('Message') IS NOT INITIAL.
       <line>-('Type') = 'E'.

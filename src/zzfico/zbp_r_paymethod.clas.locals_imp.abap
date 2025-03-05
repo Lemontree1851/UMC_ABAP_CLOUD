@@ -300,15 +300,16 @@ CLASS lhc_paymethod IMPLEMENTATION.
     INTO TABLE @DATA(lt_paymentterms).                  "#EC CI_NOWHERE
     SORT lt_paymentterms BY paymentterms paymenttermsvaliditymonthday.
 
-    SELECT
-    businesspartner,
-    organizationbpname1
-    FROM i_businesspartner
-    FOR ALL ENTRIES IN @lt_data
-    WHERE businesspartner = @lt_data-supplier
-    INTO TABLE @DATA(lt_businesspartner).
-    SORT lt_businesspartner BY businesspartner.
-
+    IF lt_data IS NOT INITIAL.
+      SELECT
+      businesspartner,
+      organizationbpname1
+      FROM i_businesspartner
+      FOR ALL ENTRIES IN @lt_data
+      WHERE businesspartner = @lt_data-supplier
+      INTO TABLE @DATA(lt_businesspartner).        "#EC CI_NO_TRANSFORM
+      SORT lt_businesspartner BY businesspartner.
+    ENDIF.
 
     LOOP AT lt_data INTO DATA(ls_data).
       CLEAR ls_sum.

@@ -1,17 +1,18 @@
-CLASS zcl_salesdocumentreport DEFINITION
+CLASS zcl_query_salesdocumentreport DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC .
 
   PUBLIC SECTION.
-    INTERFACES if_rap_query_provider.
+
+    INTERFACES if_rap_query_provider .
   PROTECTED SECTION.
   PRIVATE SECTION.
 ENDCLASS.
 
 
 
-CLASS zcl_salesdocumentreport IMPLEMENTATION.
+CLASS ZCL_QUERY_SALESDOCUMENTREPORT IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -29,6 +30,7 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
       ls_customer               LIKE LINE OF  lr_customer,
       ls_product                LIKE LINE OF  lr_product,
       ls_conditioncurrency      LIKE LINE OF  lr_conditioncurrency.
+
     TYPES:
       BEGIN OF ty_finalproductinfo,
         highlevelmaterial            TYPE matnr,
@@ -2063,6 +2065,5 @@ CLASS zcl_salesdocumentreport IMPLEMENTATION.
                               CHANGING  ct_data   = lt_output ).
 
     io_response->set_data( lt_output ).
-
   ENDMETHOD.
 ENDCLASS.

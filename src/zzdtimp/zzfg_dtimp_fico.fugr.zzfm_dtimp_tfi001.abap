@@ -36,6 +36,16 @@ FUNCTION zzfm_dtimp_tfi001.
   DATA:ls_res_api_old  TYPE ty_res_api.
   DATA lv_msg TYPE cl_bali_free_text_setter=>ty_text .
   DATA lv_msg_del TYPE string.
+  TYPES:
+    BEGIN OF ty_dup,
+      bukrs     TYPE string,
+      zbunseki1 TYPE string,
+      num       TYPE i,
+    END OF ty_dup.
+  DATA:ls_dup TYPE ty_dup.
+  DATA:lt_dup TYPE STANDARD TABLE OF ty_dup.
+
+
   CREATE DATA eo_data TYPE TABLE OF (iv_struc).
 
   eo_data->* = io_data->*.
@@ -55,12 +65,20 @@ FUNCTION zzfm_dtimp_tfi001.
                CHANGING  data = ls_res_api_old ).
   SORT ls_res_api_old-d-results BY bukrs zbunseki1.
 
+  LOOP AT eo_data->* ASSIGNING FIELD-SYMBOL(<linedup>).
 
+    ls_dup-bukrs                  = <linedup>-('Bukrs').
+    ls_dup-zbunseki1              = <linedup>-('Zbunseki1').
+    ls_dup-num                    = 1.
+    COLLECT  ls_dup INTO  lt_dup.
+  ENDLOOP.
+
+  DELETE lt_dup WHERE num = 1.
 
   LOOP AT ls_res_api_old-d-results INTO DATA(ls_old).
 
     "这次导入不存在的直接删
-    READ TABLE eo_data->* ASSIGNING FIELD-SYMBOL(<line>) WITH KEY ('Bukrs') = ls_old-bukrs ('Zbunseki1') = ls_old-zbunseki1.
+    READ TABLE eo_data->* ASSIGNING FIELD-SYMBOL(<line>) WITH KEY ('Bukrs') = ls_old-bukrs ('Zbunseki1') = ls_old-zbunseki1. "#EC CI_ANYSEQ
     IF sy-subrc <> 0.
 
       IF iv_struc = 'ZZS_DTIMP_TFI001_DEL' AND lv_msg_del IS INITIAL.
@@ -83,6 +101,7 @@ FUNCTION zzfm_dtimp_tfi001.
       ENDIF.
 
     ELSE.
+
       "这次导入和旧的key一样的话 先删再post
       CLEAR ls_results.
 
@@ -113,6 +132,14 @@ FUNCTION zzfm_dtimp_tfi001.
         <line>-('Type') = 'E'.
       ELSE.
 
+        IF iv_struc = 'ZZS_DTIMP_TFI001_DEL' AND lv_msg_del IS INITIAL.
+        ELSE.
+          READ TABLE lt_dup TRANSPORTING NO FIELDS WITH KEY bukrs = ls_old-bukrs zbunseki1 = ls_old-zbunseki1.
+          IF sy-subrc = 0.
+            CONTINUE.
+          ENDIF.
+        ENDIF.
+
         CLEAR lv_msg.
         lv_path = |/YY1_B_BUNSEKI1_CDS/YY1_B_BUNSEKI1(guid'{  ls_old-sap_uuid }')|.
         zzcl_common_utils=>request_api_v2(
@@ -128,6 +155,12 @@ FUNCTION zzfm_dtimp_tfi001.
           <line>-('Message') = ls_old-bukrs && ` ` &&  ls_old-zbunseki1 && ':' && lv_resbody_api2.
           <line>-('Type') = 'E'.
         ENDIF.
+
+        READ TABLE lt_dup TRANSPORTING NO FIELDS WITH KEY bukrs = ls_old-bukrs zbunseki1 = ls_old-zbunseki1.
+        IF sy-subrc = 0.
+          CONTINUE.
+        ENDIF.
+
         "存在的先删
         CLEAR lv_msg.
         DATA(lv_requestbody) = xco_cp_json=>data->from_abap( ls_results )->apply( VALUE #(
@@ -154,11 +187,17 @@ FUNCTION zzfm_dtimp_tfi001.
         ENDIF.
       ENDIF.
     ENDIF.
+
   ENDLOOP.
 
   "new key 直接导入
   LOOP AT eo_data->* ASSIGNING <line>.
-
+    READ TABLE lt_dup TRANSPORTING NO FIELDS WITH KEY bukrs = <line>-('Bukrs') zbunseki1 = <line>-('Zbunseki1').
+    IF sy-subrc = 0.
+      MESSAGE s033(zbc_001) INTO lv_message.
+      <line>-('Type') = 'E'.
+      <line>-('Message') = zzcl_common_utils=>merge_message( iv_message1 = <line>-('Message') iv_message2 = lv_message iv_symbol = '/' ).
+    ENDIF.
     CHECK <line>-('Message') IS INITIAL.
 
     READ TABLE ls_res_api_old-d-results TRANSPORTING NO FIELDS WITH KEY bukrs = <line>-('Bukrs') zbunseki1 = <line>-('Zbunseki1') BINARY SEARCH.

@@ -136,15 +136,18 @@ CLASS ZCL_COSTANALYSISCOM IMPLEMENTATION.
       INTO CORRESPONDING FIELDS OF TABLE @lt_data.
 
 *&--Authorization Check
-    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
-    DATA(lv_companycode) = zzcl_common_utils=>get_company_by_user( lv_user_email ).
-    IF lv_companycode IS INITIAL.
-      CLEAR lt_data.
-    ELSE.
-      SPLIT lv_companycode AT '&' INTO TABLE DATA(lt_company_check).
-      CLEAR lr_companycode.
-      lr_companycode = VALUE #( FOR companycode IN lt_company_check ( sign = 'I' option = 'EQ' low = companycode ) ).
-      DELETE lt_data WHERE companycode NOT IN lr_companycode.
+    DATA(lv_user_prefix) = sy-uname+0(2).
+    IF lv_user_prefix = 'CB'.
+      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+      DATA(lv_companycode) = zzcl_common_utils=>get_company_by_user( lv_user_email ).
+      IF lv_companycode IS INITIAL.
+        CLEAR lt_data.
+      ELSE.
+        SPLIT lv_companycode AT '&' INTO TABLE DATA(lt_company_check).
+        CLEAR lr_companycode.
+        lr_companycode = VALUE #( FOR companycode IN lt_company_check ( sign = 'I' option = 'EQ' low = companycode ) ).
+        DELETE lt_data WHERE companycode NOT IN lr_companycode.
+      ENDIF.
     ENDIF.
 *&--Authorization Check
 

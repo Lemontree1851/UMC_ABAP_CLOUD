@@ -48,5 +48,4 @@ define root view entity ZR_DAYSTOCKTRANS
       ztfi_1015.last_changed_at                as LastChangedAt,
       @Semantics.systemDateTime.localInstanceLastChangedAt: true
       ztfi_1015.local_last_changed_at          as LocalLastChangedAt
-
 }

@@ -1,4 +1,4 @@
-@ObjectModel.query.implementedBy: 'ABAP:ZCL_SALESDOCUMENTREPORT'
+@ObjectModel.query.implementedBy: 'ABAP:ZCL_QUERY_SALESDOCUMENTREPORT'
 @EndUserText.label: '販売計画一覧'
 @UI: {
   headerInfo: {
@@ -26,12 +26,16 @@ define root custom entity ZR_SALESDOCUMENTREPORT
   key YearDate                       : abap.char(6);
 
       @Consumption.filter            : {selectionType: #SINGLE, multipleSelections: false }
+      @Consumption.valueHelpDefinition:[{entity:{ name: 'ZC_SalesPlanVersion0_VH', element: 'SalesPlanVersion'} }]
       SalesPlanVersion0              : sales_plan_version;
       @Consumption.filter            : {selectionType: #SINGLE, multipleSelections: false }
+      @Consumption.valueHelpDefinition:[{entity:{ name: 'ZC_SalesPlanVersion1_VH', element: 'SalesPlanVersion'} }]
       SalesPlanVersion1              : sales_plan_version;
       @Consumption.filter            : {selectionType: #SINGLE, multipleSelections: false }
+      @Consumption.valueHelpDefinition:[{entity:{ name: 'ZC_SalesPlanVersion2_VH', element: 'SalesPlanVersion'} }]
       SalesPlanVersion2              : sales_plan_version;
       @Consumption.filter            : {selectionType: #SINGLE, multipleSelections: false }
+      @Consumption.valueHelpDefinition:[{entity:{ name: 'ZC_SalesPlanVersion3_VH', element: 'SalesPlanVersion'} }]
       SalesPlanVersion3              : sales_plan_version;
 
       CustomerName                   : abap.char(80);

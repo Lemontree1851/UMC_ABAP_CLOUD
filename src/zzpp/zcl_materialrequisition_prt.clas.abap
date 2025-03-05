@@ -12,15 +12,30 @@ ENDCLASS.
 
 
 
-CLASS ZCL_MATERIALREQUISITION_PRT IMPLEMENTATION.
+CLASS zcl_materialrequisition_prt IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
     DATA lt_data TYPE TABLE OF zr_materialrequisition_prt_i.
 
+    TRY.
+        DATA(lt_filter_cond) = io_request->get_filter( )->get_as_ranges( ).
+
+        LOOP AT lt_filter_cond INTO DATA(ls_filter_cond).
+          CASE ls_filter_cond-name.
+            WHEN 'MATERIALREQUISITIONNO'.
+              DATA(lr_materialrequisitionno) = ls_filter_cond-range.
+            WHEN OTHERS.
+          ENDCASE.
+        ENDLOOP.
+        ##NO_HANDLER
+      CATCH cx_rap_query_filter_no_range.
+    ENDTRY.
+
     SELECT *
       FROM zc_materialrequisition
-      INTO TABLE @DATA(lt_master).                      "#EC CI_NOWHERE
+     WHERE materialrequisitionno IN @lr_materialrequisitionno
+      INTO TABLE @DATA(lt_master).
 
     LOOP AT lt_master ASSIGNING FIELD-SYMBOL(<lfs_master>).
 
@@ -31,6 +46,10 @@ CLASS ZCL_MATERIALREQUISITION_PRT IMPLEMENTATION.
       ELSE.
         <lfs_data>-remark = |{ <lfs_master>-reason }-{ <lfs_master>-reasontext } { <lfs_master>-remark }|.
       ENDIF.
+
+*&--ADD BEGIN BY XINLEI XU 2025/03/04
+      SPLIT <lfs_data>-material AT ':' INTO <lfs_data>-material DATA(lv_other).
+*&--ADD END BY XINLEI XU 2025/03/04
     ENDLOOP.
 
     " Filtering

@@ -1899,6 +1899,9 @@ CLASS zcl_http_podata_002 DEFINITION
       lv_tablename(10)  TYPE c,
       lv_error(1)       TYPE c,
       lv_error1(1)      TYPE c,
+      lv_error400(1)    type c,
+      lv_error404(1)    type c,
+
       lv_text           TYPE string,
       lc_header_content TYPE string VALUE 'content-type',
       lc_content_type   TYPE string VALUE 'text/json',
@@ -1917,7 +1920,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_podata_002 IMPLEMENTATION.
+CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -5547,7 +5550,7 @@ CLASS zcl_http_podata_002 IMPLEMENTATION.
         ENDIF.
 
 *&--ADD BEGIN BY XINLEI XU 2025/02/17
-      WHEN `MARM` OR 'marm'.
+      WHEN 'MARM' OR 'marm'.
         DATA: lv_error_message_marm TYPE string.
 
         TRY.
@@ -5556,8 +5559,9 @@ CLASS zcl_http_podata_002 IMPLEMENTATION.
              WHERE (lv_where)
               INTO TABLE @DATA(lt_marm).
           CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_marm).
-            lv_error = 'X'.
+            lv_error400 = 'X'.
             lv_error_message_marm = lo_sql_error_marm->get_text( ).
+
         ENDTRY.
 
         IF lt_marm IS NOT INITIAL.
@@ -5587,27 +5591,36 @@ CLASS zcl_http_podata_002 IMPLEMENTATION.
           response->set_header_field( i_name  = lc_header_content
                                       i_value = lc_content_type ).
         ELSE.
-          lv_error = 'X'.
-          IF lv_error_message_marm IS NOT INITIAL.
-            lv_text = lv_error_message_marm.
-          ELSE.
+          lv_error404 = 'X'.
+          if lv_error_message_marm is INITIAL.
             lv_text = 'There is no data in table'.
+          else.
+            lv_text = lv_error_message_marm.
           ENDIF.
         ENDIF.
 
       WHEN OTHERS.
-        lv_error1 = 'X'.
+        lv_error1 = 'X'. "没有找到资源。
         lv_text = 'The table entry was not found'.
 
     ENDCASE.
 
-    IF lv_error IS NOT INITIAL.
-      "propagate any errors raised
-      response->set_status( '204' ).
-
-    ELSEIF lv_error1 IS NOT INITIAL.
+    IF lv_error1 IS NOT INITIAL.
       response->set_status( '404' ).
       response->set_text( lv_text ).
+      EXIT.
+
+    ELSEIF lv_error400 IS NOT INITIAL.
+      response->set_status( '400' ).
+      response->set_text( lv_text ).
+      exit.
+
+    elseif lv_error404 IS NOT INITIAL.
+      "propagate any errors raised
+      response->set_status( '404' ).
+      response->set_text( lv_text ).
+
+
     ENDIF.
 
   ENDMETHOD.

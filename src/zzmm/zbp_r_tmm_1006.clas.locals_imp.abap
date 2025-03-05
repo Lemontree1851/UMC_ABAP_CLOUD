@@ -720,6 +720,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
       ENDLOOP.
       SELECT i_product~product,
              i_product~productgroup,
+             i_product~baseunit,
              i_producttext~productname
         FROM i_product WITH PRIVILEGED ACCESS
         LEFT OUTER JOIN i_producttext WITH PRIVILEGED ACCESS ON i_producttext~product  = i_product~product
@@ -802,14 +803,20 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         DATA(lv_matid) = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = record_temp-matid ).
         DATA(lv_supplier) = |{ record_temp-supplier ALPHA = IN }|.
 
-        IF record_temp-matdesc IS INITIAL
-        OR record_temp-materialgroup IS INITIAL.
-          READ TABLE lt_product INTO DATA(ls_product) WITH KEY product = lv_matid BINARY SEARCH.
-          IF sy-subrc = 0.
-            record_temp-matdesc = COND #( WHEN record_temp-matdesc IS NOT INITIAL THEN record_temp-matdesc ELSE ls_product-productname ).
-            record_temp-materialgroup = COND #( WHEN record_temp-materialgroup IS NOT INITIAL THEN record_temp-materialgroup ELSE ls_product-productgroup ).
+        READ TABLE lt_product INTO DATA(ls_product) WITH KEY product = lv_matid BINARY SEARCH.
+        IF sy-subrc = 0.
+          record_temp-matdesc = COND #( WHEN record_temp-matdesc IS NOT INITIAL THEN record_temp-matdesc ELSE ls_product-productname ).
+          record_temp-materialgroup = COND #( WHEN record_temp-materialgroup IS NOT INITIAL THEN record_temp-materialgroup ELSE ls_product-productgroup ).
+          IF record_temp-unit IS INITIAL.
+            TRY.
+                record_temp-unit = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = ls_product-baseunit ).
+                ##NO_HANDLER
+              CATCH zzcx_custom_exception.
+                " handle exception
+            ENDTRY.
           ENDIF.
         ENDIF.
+
         IF record_temp-location IS INITIAL.
           READ TABLE lt_product_location INTO DATA(ls_product_location) WITH KEY product = lv_matid
                                                                                  plant   = record_temp-plant BINARY SEARCH.
@@ -823,9 +830,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                                                            plant    = record_temp-plant
                                                                            purchasingorganization = record_temp-purchaseorg BINARY SEARCH.
         IF sy-subrc = 0.
-          IF record_temp-tax IS INITIAL.
-            record_temp-tax = ls_purinfo_record-taxcode.
-          ENDIF.
+          record_temp-tax = COND #( WHEN record_temp-tax IS NOT INITIAL THEN record_temp-tax ELSE ls_purinfo_record-taxcode ).
+
           IF record_temp-currency IS INITIAL.
             record_temp-currency = ls_purinfo_record-currency.
             record_key-currency = ls_purinfo_record-currency.
