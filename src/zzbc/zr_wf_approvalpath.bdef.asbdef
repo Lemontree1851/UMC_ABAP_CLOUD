@@ -41,6 +41,7 @@ authorization master ( instance )
       Kyoten             = kyoten;
       Knttp              = knttp;
       CostCenter         = cost_center;
+      PurchaseGroup      = purchase_group;
       AmountFrom         = amount_from;
       AmountTo           = amount_to;
       CreatedBy          = created_by;

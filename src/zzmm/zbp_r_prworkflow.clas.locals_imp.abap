@@ -150,14 +150,16 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                          ev_errortext     = lv_error_text
                                          ev_users         = lv_users_prby ).
 
-        zzcl_wf_utils=>get_polink_by( EXPORTING iv_workflowid    = cs_data-workflowid
-                                               iv_applicationid = cs_data-applicationid
-                                                iv_instanceid     = cs_data-instanceid
-                                     IMPORTING ev_error         = lv_ev_error
-                                               ev_errortext     = lv_error_text
-                                               ev_users         = lv_users_polink ).
-      ENDIF.
+        IF lv_ev_error IS INITIAL.
 
+          zzcl_wf_utils=>get_polink_by( EXPORTING iv_workflowid    = cs_data-workflowid
+                                                 iv_applicationid = cs_data-applicationid
+                                                  iv_instanceid     = cs_data-instanceid
+                                       IMPORTING ev_error         = lv_ev_error
+                                                 ev_errortext     = lv_error_text
+                                                 ev_users         = lv_users_polink ).
+        ENDIF.
+      ENDIF.
 *&--有错 停止
       IF lv_ev_error IS NOT INITIAL.
         cs_data-message = lv_error_text.

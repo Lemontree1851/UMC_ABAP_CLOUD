@@ -22,7 +22,7 @@ CLASS zcl_bi005_job DEFINITION
 
 *     部品の入庫予測データ
       BEGIN OF ty_supply,
-        yearmonth      TYPE n LENGTH 6,
+        yearmonth      TYPE n LENGTH 7, "6, MOD BY XINLEI XU 2025/03/07 会计年月 而非年月
         plant          TYPE werks_d,
         material       TYPE matnr,
         supplyquantity TYPE p LENGTH 7 DECIMALS 0,
@@ -30,7 +30,7 @@ CLASS zcl_bi005_job DEFINITION
 
 *     各品目の出庫予測データ
       BEGIN OF ty_demand,
-        yearmonth      TYPE n LENGTH 6,
+        yearmonth      TYPE n LENGTH 7, "6, MOD BY XINLEI XU 2025/03/07 会计年月 而非年月
         plant          TYPE werks_d,
         material       TYPE matnr,
         customer       TYPE kunnr,
@@ -167,7 +167,6 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       lv_count          TYPE i,
       lv_filter         TYPE string,
       lv_filter2        TYPE string,
-      lv_filter3        TYPE string,
       lt_supply         TYPE STANDARD TABLE OF ty_supply,
       lt_demand         TYPE STANDARD TABLE OF ty_demand,
       lt_bi1003         TYPE STANDARD TABLE OF ztbi_1003,
@@ -367,63 +366,89 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
     lv_filter = |{ lv_filter })|.
-    lv_filter3 = lv_filter.
+    lv_filter2 = lv_filter.
 
-    IF lines( lt_material ) < 40.
-      CLEAR lv_count.
-      LOOP AT lt_material INTO DATA(ls_material).
-        lv_count += 1.
-        IF lv_count = 1.
-          lv_filter = |{ lv_filter } and (Material eq '{ ls_material-material }'|.
-        ELSE.
-          lv_filter = |{ lv_filter } or Material eq '{ ls_material-material }'|.
-        ENDIF.
-      ENDLOOP.
-      lv_filter = |{ lv_filter })|.
-*    ELSE.
-*      lv_filter = |{ lv_filter } and Material ne ''|. " DEL BY XINLEI XU 2025/03/03
-    ENDIF.
+*&--MOD BEGIN BY XINLEI XU 2025/03/10 需要的字段可以直接从CDS获取
+*    IF lines( lt_material ) < 40.
+*      CLEAR lv_count.
+*      LOOP AT lt_material INTO DATA(ls_material).
+*        lv_count += 1.
+*        IF lv_count = 1.
+*          lv_filter = |{ lv_filter } and (Material eq '{ ls_material-material }'|.
+*        ELSE.
+*          lv_filter = |{ lv_filter } or Material eq '{ ls_material-material }'|.
+*        ENDIF.
+*      ENDLOOP.
+*      lv_filter = |{ lv_filter })|.
+**    ELSE.
+**      lv_filter = |{ lv_filter } and Material ne ''|. " DEL BY XINLEI XU 2025/03/03
+*    ENDIF.
+*
+*    DATA(lv_top) = 5000.
+*    DATA(lv_skip) = 0.
+*    DATA(lv_while) = abap_on.
+*
+**   部品の入庫予測データを取得
+**   PO登録した後の原材料Supplyの数字を取得する（ZMM80）
+*    WHILE lv_while IS NOT INITIAL.
+*      CLEAR lv_while.
+*      DATA(lv_path) = |/zui_podataanalysis_o4/srvd/sap/zui_podataanalysis_o4/0001/PODataAnalysis?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+*      DATA(lv_select) = |Plant,Material,Supplier,DeliveryDate,ScheduleLineDeliveryDate,ConfirmedQuantity,OrderQuantity|.
+*      zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+*                                                   iv_method      = if_web_http_client=>get
+*                                                   iv_select      = lv_select
+*                                                   iv_filter      = lv_filter
+*                                                   iv_format      = 'json'
+*                                         IMPORTING ev_status_code = DATA(lv_status_code)
+*                                                   ev_response    = DATA(lv_response) ).
+*      IF lv_status_code = 200.
+*        REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_response  WITH `count`.
+*        /ui2/cl_json=>deserialize( EXPORTING json = lv_response
+*                                   CHANGING  data = ls_podataanalysis ).
+*
+*        APPEND LINES OF ls_podataanalysis-value TO lt_podataanalysis.
+*        IF lines( lt_podataanalysis ) < ls_podataanalysis-count.
+*          lv_while = abap_on.
+*          lv_top = ls_podataanalysis-count - lines( lt_podataanalysis ).
+*          lv_skip = 5000 * sy-index.
+*        ENDIF.
+*      ENDIF.
+*    ENDWHILE.
 
-    DATA(lv_top) = 5000.
-    DATA(lv_skip) = 0.
-    DATA(lv_while) = abap_on.
-
-*   部品の入庫予測データを取得
-*   PO登録した後の原材料Supplyの数字を取得する（ZMM80）
-    WHILE lv_while IS NOT INITIAL.
-      CLEAR lv_while.
-      DATA(lv_path) = |/zui_podataanalysis_o4/srvd/sap/zui_podataanalysis_o4/0001/PODataAnalysis?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-      DATA(lv_select) = |Plant,Material,Supplier,DeliveryDate,ScheduleLineDeliveryDate,ConfirmedQuantity,OrderQuantity|.
-      zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
-                                                   iv_method      = if_web_http_client=>get
-                                                   iv_select      = lv_select
-                                                   iv_filter      = lv_filter
-                                                   iv_format      = 'json'
-                                         IMPORTING ev_status_code = DATA(lv_status_code)
-                                                   ev_response    = DATA(lv_response) ).
-      IF lv_status_code = 200.
-        REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_response  WITH `count`.
-        /ui2/cl_json=>deserialize( EXPORTING json = lv_response
-                                   CHANGING  data = ls_podataanalysis ).
-
-        APPEND LINES OF ls_podataanalysis-value TO lt_podataanalysis.
-        IF lines( lt_podataanalysis ) < ls_podataanalysis-count.
-          lv_while = abap_on.
-          lv_top = ls_podataanalysis-count - lines( lt_podataanalysis ).
-          lv_skip = 5000 * sy-index.
-        ENDIF.
-      ENDIF.
-    ENDWHILE.
+    SELECT plant,
+           material,
+           deliverydate,
+           schedulelinedeliverydate,
+           confirmedquantity,
+           orderquantity
+      FROM zc_podataanalysis
+     WHERE plant IN @lr_plant
+      INTO TABLE @lt_podataanalysis.
+*&--MOD END BY XINLEI XU 2025/03/10 需要的字段可以直接从CDS获取
 
     DELETE lt_podataanalysis WHERE ( ( deliverydate IS NOT INITIAL AND ( deliverydate < lv_now_start OR deliverydate > lv_next_end ) OR
-                                 deliverydate IS INITIAL AND ( schedulelinedeliverydate < lv_now_start OR schedulelinedeliverydate > lv_next_end )  ) ).
+                                     ( deliverydate IS INITIAL AND ( schedulelinedeliverydate < lv_now_start OR schedulelinedeliverydate > lv_next_end ) ) ) ).
 
     LOOP AT lt_podataanalysis ASSIGNING FIELD-SYMBOL(<fs_l_response>).
-      IF <fs_l_response>-deliverydate IS NOT INITIAL.
-        ls_supply-yearmonth = <fs_l_response>-deliverydate+0(6).
-      ELSEIF <fs_l_response>-schedulelinedeliverydate IS NOT INITIAL.
-        ls_supply-yearmonth = <fs_l_response>-schedulelinedeliverydate+0(6).
+*&--MOD BEGIN BY XINLEI XU 2025/03/07 BUG Fix
+*      IF <fs_l_response>-deliverydate IS NOT INITIAL.
+*        ls_supply-yearmonth = <fs_l_response>-deliverydate+0(6).
+*      ELSEIF <fs_l_response>-schedulelinedeliverydate IS NOT INITIAL.
+*        ls_supply-yearmonth = <fs_l_response>-schedulelinedeliverydate+0(6).
+*      ENDIF.
+      DATA(lv_deliverydate) = COND #( WHEN <fs_l_response>-deliverydate IS NOT INITIAL
+                                      THEN <fs_l_response>-deliverydate
+                                      WHEN <fs_l_response>-schedulelinedeliverydate IS NOT INITIAL
+                                      THEN <fs_l_response>-schedulelinedeliverydate ).
+      zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date   = lv_deliverydate
+                                                 IMPORTING ev_year   = DATA(lv_gjahr_1)
+                                                           ev_period = DATA(lv_poper_1) ).
+      ls_supply-yearmonth = |{ lv_gjahr_1 }{ lv_poper_1 }|.
+
+      IF ls_supply-yearmonth < lv_yearperiod.
+        CONTINUE.
       ENDIF.
+*&--MOD END BY XINLEI XU 2025/03/07 BUG Fix
 
       IF <fs_l_response>-confirmedquantity IS NOT INITIAL.
         ls_supply-supplyquantity = <fs_l_response>-confirmedquantity.
@@ -459,10 +484,6 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
 
 *   PO登録されない原材料のSupplyの数字を取得する（ZMM06）
-      DATA(lv_start_c) = lv_now_start+0(4) && '-' && lv_now_start+4(2) && '-' && lv_now_start+6(2) && 'T00:00:00'.
-      DATA(lv_next_end_c)   = lv_next_end+0(4) && '-' && lv_next_end+4(2) && '-' && lv_next_end+6(2)  && 'T00:00:00'.
-      lv_filter2 = |{ lv_filter2 } and ARRANGE_END_DATE be datetime'{ lv_start_c }' and ARRANGE_END_DATE le datetime'{ lv_next_end_c }'|.
-
       DATA(lv_top1)  = 1000.
       DATA(lv_skip1) = -1000.
       DO.
@@ -493,15 +514,35 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     ENDLOOP.
 
     LOOP AT lt_uweb_api ASSIGNING FIELD-SYMBOL(<fs_l_uweb_api>).
+*&--MOD BEGIN BY XINLEI XU 2025/03/07 BUG Fix
+*      IF <fs_l_uweb_api>-arrange_end_date < 0.
+*        ls_supply-yearmonth = '190001'.
+*      ELSEIF <fs_l_uweb_api>-arrange_end_date = '253402214400000'.
+*        ls_supply-yearmonth = '999912'.
+*      ELSE.
+*        ls_supply-yearmonth = xco_cp_time=>unix_timestamp(
+*                    iv_unix_timestamp = <fs_l_uweb_api>-arrange_end_date / 1000
+*                 )->get_moment( )->as( xco_cp_time=>format->abap )->value+0(6).
+*      ENDIF.
       IF <fs_l_uweb_api>-arrange_end_date < 0.
-        ls_supply-yearmonth = '190001'.
+        DATA(lv_arrangedate) = '190001'.
       ELSEIF <fs_l_uweb_api>-arrange_end_date = '253402214400000'.
-        ls_supply-yearmonth = '999912'.
+        lv_arrangedate = '999912'.
       ELSE.
-        ls_supply-yearmonth = xco_cp_time=>unix_timestamp(
+        lv_arrangedate = xco_cp_time=>unix_timestamp(
                     iv_unix_timestamp = <fs_l_uweb_api>-arrange_end_date / 1000
                  )->get_moment( )->as( xco_cp_time=>format->abap )->value+0(6).
       ENDIF.
+      zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date   = CONV #( |{ lv_arrangedate }01| )
+                                                 IMPORTING ev_year   = DATA(lv_gjahr_2)
+                                                           ev_period = DATA(lv_poper_2) ).
+      ls_supply-yearmonth = |{ lv_gjahr_2 }{ lv_poper_2 }|.
+
+      IF ls_supply-yearmonth < lv_yearperiod.
+        CONTINUE.
+      ENDIF.
+*&--MOD END BY XINLEI XU 2025/03/07 BUG Fix
+
       ls_supply-supplyquantity = <fs_l_uweb_api>-arrange_qty_sum.
       ls_supply-material = <fs_l_uweb_api>-material.
       ls_supply-plant    = <fs_l_uweb_api>-plant.
@@ -561,7 +602,18 @@ CLASS zcl_bi005_job IMPLEMENTATION.
 
     IF sy-subrc = 0.
       LOOP AT lt_1012 ASSIGNING FIELD-SYMBOL(<fs_l_1012>).
-        ls_demand-yearmonth = <fs_l_1012>-requirement_date+0(6).
+*&--MOD BEGIN BY XINLEI XU 2025/03/07 BUG Fix
+*        ls_demand-yearmonth = <fs_l_1012>-requirement_date+0(6).
+        zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date   = <fs_l_1012>-requirement_date
+                                                   IMPORTING ev_year   = DATA(lv_gjahr_3)
+                                                             ev_period = DATA(lv_poper_3) ).
+        ls_demand-yearmonth = |{ lv_gjahr_3 }{ lv_poper_3 }|.
+
+        IF ls_demand-yearmonth < lv_yearperiod.
+          CONTINUE.
+        ENDIF.
+*&--MOD END BY XINLEI XU 2025/03/07 BUG Fix
+
         ls_demand-material = <fs_l_1012>-material.
         ls_demand-plant    = <fs_l_1012>-plant.
         ls_demand-customer = <fs_l_1012>-customer.
@@ -572,18 +624,17 @@ CLASS zcl_bi005_job IMPLEMENTATION.
     ENDIF.
 
 *   各製品の構成半製品を取得
-    lv_path = |/API_BILL_OF_MATERIAL_SRV;v=0002/MaterialBOMItem?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-    lv_filter3 = |BillOfMaterialVariant eq '1' and { lv_filter3 }|.
-    lv_select = |Plant,Material,BillOfMaterialComponent,BillOfMaterialItemQuantity,IsAssembly|.
+    DATA(lv_path) = |/API_BILL_OF_MATERIAL_SRV;v=0002/MaterialBOMItem?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+    lv_filter2 = |BillOfMaterialVariant eq '1' and { lv_filter2 }|.
+    DATA(lv_select) = |Plant,Material,BillOfMaterialComponent,BillOfMaterialItemQuantity,IsAssembly|.
     zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
                                                  iv_method      = if_web_http_client=>get
                                                  iv_select      = lv_select
-                                                 iv_filter      = lv_filter3
+                                                 iv_filter      = lv_filter2
                                                  iv_format      = 'json'
-                                       IMPORTING ev_status_code = lv_status_code
-                                                 ev_response    = lv_response ).
+                                       IMPORTING ev_status_code = DATA(lv_status_code)
+                                                 ev_response    = DATA(lv_response) ).
     IF lv_status_code = 200.
-*     json => abap
       /ui2/cl_json=>deserialize( EXPORTING json = lv_response
                                  CHANGING  data = ls_response_bom ).
       IF ls_response_bom-d-results IS NOT INITIAL.
@@ -618,11 +669,16 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         ls_bi1003-created_at         = lv_timestamp.
         ls_bi1003-last_changed_by    = sy-uname.
         ls_bi1003-last_changed_at    = lv_timestamp.
-        zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date   = |{ <fs_l_demand>-yearmonth }01|
-                                                   IMPORTING ev_year   = DATA(lv_gjahr_tmp)
-                                                             ev_period = DATA(lv_poper_tmp) ).
-        ls_bi1003-yearmonth          = |{ lv_gjahr_tmp }{ lv_poper_tmp }|.
-        ls_bi1003-plant              = <fs_l_demand>-plant.
+
+*&--MOD BEGIN BY XINLEI XU 2025/03/11
+*        zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date   = |{ <fs_l_demand>-yearmonth }01|
+*                                                   IMPORTING ev_year   = DATA(lv_gjahr_tmp)
+*                                                             ev_period = DATA(lv_poper_tmp) ).
+*        ls_bi1003-yearmonth = |{ lv_gjahr_tmp }{ lv_poper_tmp }|.
+        ls_bi1003-yearmonth = <fs_l_demand>-yearmonth.
+*&--MOD END BY XINLEI XU 2025/03/11
+
+        ls_bi1003-plant = <fs_l_demand>-plant.
 
 *       前月の在庫実績の製品
         READ TABLE lt_1016 ASSIGNING FIELD-SYMBOL(<fs_l_1016>)
@@ -724,7 +780,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
               ls_bi1003-created_at         = lv_timestamp.
               ls_bi1003-last_changed_by    = sy-uname.
               ls_bi1003-last_changed_at    = lv_timestamp.
-              ls_bi1003-yearmonth          = |{ lv_gjahr_tmp }{ lv_poper_tmp }|.
+              ls_bi1003-yearmonth          = <fs_l_demand>-yearmonth. "|{ lv_gjahr_tmp }{ lv_poper_tmp }|. MOD BY XINLEI XU 2025/03/11
               ls_bi1003-plant              = <fs_l_demand>-plant.
 
               lv_bom_qty = lv_next_qty * <fs_l_bom>-billofmaterialitemquantity.
@@ -905,9 +961,10 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         IF sy-subrc <> 0.
 *&--ADD BEGIN BY XINLEI XU 2025/01/15
           " Balance（期首）= 上个月的 Balance（期末）
-          IF <fs_l_bi1003> IS ASSIGNED.
-            ls_bi1003-balanceopenning = <fs_l_bi1003>-balanceclosing.
-          ENDIF.
+*          IF <fs_l_bi1003> IS ASSIGNED.
+*            ls_bi1003-balanceopenning = <fs_l_bi1003>-balanceclosing.
+*          ENDIF.
+          ls_bi1003-balanceopenning = ls_bi1003-balanceclosing.
 *&--ADD BEGIN BY XINLEI XU 2025/01/15
 *         原材料のSupplyの数字を取得する
           READ TABLE lt_supply INTO ls_supply
@@ -983,6 +1040,9 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         DELETE FROM ztbi_1003 WHERE yearmonth IN @lr_yearmonth
                                 AND companycode IN @lr_companycode
                                 AND plant IN @lr_plant.
+
+        " 删除T环境因BUG造成的脏数据，该会计年月数据后续不会出现 所以代码可删可不删
+        DELETE FROM ztbi_1003 WHERE yearmonth = '2024011'.
       ENDIF.
       CLEAR lv_msg.
       lv_msg = |テーブル ZTBI_1003 { lr_yearmonth[ 1 ]-low }-{ lr_yearmonth[ lv_lines ]-low } データ { lv_count_1003 }件削除。|.

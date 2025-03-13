@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BOM IMPLEMENTATION.
+CLASS zcl_bom IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -418,9 +418,9 @@ CLASS ZCL_BOM IMPLEMENTATION.
       SORT lt_productgrouptext_2 BY productgroup.
 
       IF lv_explosiontype = 4.
-        SORT lt_bomlist BY explodebomlevelvalue material plant billofmaterialvariant headermaterial billofmaterialitemnumber.
+        SORT lt_bomlist BY plant material explodebomlevelvalue headermaterial billofmaterialvariant billofmaterialitemnumber.
         DELETE ADJACENT DUPLICATES FROM lt_bomlist
-                              COMPARING explodebomlevelvalue material plant billofmaterialvariant headermaterial billofmaterialitemnumber.
+                              COMPARING plant material explodebomlevelvalue headermaterial billofmaterialvariant billofmaterialitemnumber.
       ENDIF.
 
       lt_bomlist_tmp = lt_bomlist.

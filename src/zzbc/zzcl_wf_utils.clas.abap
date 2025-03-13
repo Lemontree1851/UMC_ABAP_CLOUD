@@ -21,7 +21,12 @@ CLASS zzcl_wf_utils DEFINITION
                lc_costcenter_zid  TYPE string VALUE `ZMM021`,
                lc_company_1100(4) TYPE c  VALUE `1100`,
                lc_company_1400(4) TYPE c  VALUE `1400`,
-               lc_workflowid_pr   TYPE zc_wf_approvalhistory-workflowid VALUE 'purchaserequisition'.
+               lc_workflowid_pr   TYPE zc_wf_approvalhistory-workflowid VALUE 'purchaserequisition',
+               lc_pr_type1        TYPE c  VALUE `1`,
+               lc_pr_type2        TYPE c  VALUE `2`,
+               lc_pr_type3        TYPE c  VALUE `3`,
+               lc_buy_purpoose_a  TYPE c  VALUE `A`,
+               lc_buy_purpoose_b  TYPE c  VALUE `B`.
 
     INTERFACES if_oo_adt_classrun.
 
@@ -108,7 +113,7 @@ ENDCLASS.
 
 
 
-CLASS ZZCL_WF_UTILS IMPLEMENTATION.
+CLASS zzcl_wf_utils IMPLEMENTATION.
 
 
   METHOD add_approval_history.
@@ -227,22 +232,26 @@ CLASS ZZCL_WF_UTILS IMPLEMENTATION.
         IF ls_ztmm_1006-company_code = lc_company_1100.
 
           DATA:ls_zc_wf_approvalpath TYPE zc_wf_approvalpath.
-
-          "get buy_purpoose mapping
-          SELECT SINGLE *
-            FROM ztbc_1001
-          WHERE  zid   = @lc_buy_zid
-            AND zkey1  = @lc_zkey6
-            AND zvalue1 = @ls_ztmm_1006-buy_purpoose
-          INTO @DATA(ls_ztbc_buy).            "#EC CI_ALL_FIELDS_NEEDED
-          IF sy-subrc <> 0.
-            ev_error = 'X'.
-            MESSAGE s020(zbc_001) WITH ls_ztmm_1006-buy_purpoose 'ZTBC_1001' lc_buy_zid INTO ev_errortext.
-            RETURN.
-          ELSE.
-            ls_zc_wf_approvalpath-buypurpose = ls_ztbc_buy-zvalue2.
+          IF ls_ztmm_1006-pr_type = lc_pr_type1.
+            "get buy_purpoose mapping
+            SELECT SINGLE *
+              FROM ztbc_1001
+            WHERE  zid   = @lc_buy_zid
+              AND zkey1  = @lc_zkey6
+              AND zvalue1 = @ls_ztmm_1006-buy_purpoose
+            INTO @DATA(ls_ztbc_buy).          "#EC CI_ALL_FIELDS_NEEDED
+            IF sy-subrc <> 0.
+              ev_error = 'X'.
+              MESSAGE s020(zbc_001) WITH ls_ztmm_1006-buy_purpoose 'ZTBC_1001' lc_buy_zid INTO ev_errortext.
+              RETURN.
+            ELSE.
+              ls_zc_wf_approvalpath-buypurpose = ls_ztbc_buy-zvalue2.
+            ENDIF.
+          ELSEIF ls_ztmm_1006-pr_type = lc_pr_type2.
+            ls_zc_wf_approvalpath-buypurpose = lc_buy_purpoose_a.
+          ELSEIF ls_ztmm_1006-pr_type = lc_pr_type3.
+            ls_zc_wf_approvalpath-buypurpose = lc_buy_purpoose_b.
           ENDIF.
-
           "get order_type mapping
           SELECT SINGLE *
             FROM ztbc_1001
@@ -262,11 +271,12 @@ CLASS ZZCL_WF_UTILS IMPLEMENTATION.
           TRY .
               SELECT SINGLE applicationid
               FROM zc_wf_approvalpath
-             WHERE  prtype      = @ls_ztmm_1006-pr_type
-               AND  applydepart = @ls_ztmm_1006-apply_depart
-               AND  ordertype   = @ls_zc_wf_approvalpath-ordertype
-               AND  buypurpose  = @ls_zc_wf_approvalpath-buypurpose
-               AND  kyoten      = @ls_ztmm_1006-kyoten
+             WHERE  prtype        = @ls_ztmm_1006-pr_type
+               AND  applydepart   = @ls_ztmm_1006-apply_depart
+               AND  ordertype     = @ls_zc_wf_approvalpath-ordertype
+               AND  buypurpose    = @ls_zc_wf_approvalpath-buypurpose
+               AND  kyoten        = @ls_ztmm_1006-kyoten
+               AND  PurchaseGroup = @ls_ztmm_1006-purchase_grp
               INTO @DATA(lv_applicationid).
               ev_applicationid = lv_applicationid.
 

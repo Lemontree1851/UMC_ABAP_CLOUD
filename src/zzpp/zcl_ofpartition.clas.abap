@@ -25,7 +25,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_OFPARTITION IMPLEMENTATION.
+CLASS zcl_ofpartition IMPLEMENTATION.
 
 
   METHOD get_process_date_range.
@@ -156,20 +156,30 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
         DATA(lv_enddate) = lv_date_range-enddate.
         "获取OF数据
         SELECT
-          customer,
-          plant,
-          material,
-          requirementdate,
-          substring( requirementdate, 1, 6 ) AS requirementmonth,
-          requirementqty,
-          unitofmeasure,
-          createdat
-        FROM zc_orderforecast
-        WHERE customer IN @r_customer
-          AND plant IN @r_plant
-          AND material IN @r_material
-          AND requirementdate >= @lv_startdate
-          AND requirementdate <= @lv_enddate
+          _of~customer,
+          _of~plant,
+          _of~material,
+          _of~requirementdate,
+          substring( _of~requirementdate, 1, 6 ) AS requirementmonth,
+          _of~requirementqty,
+          _of~unitofmeasure,
+          _of~createdat
+        FROM zc_orderforecast AS _of
+        "begin add by zoukun at 20250305
+        LEFT JOIN ztbc_1001 AS _config
+          ON _config~zid = 'ZPP013'
+          AND _config~zvalue1 = _of~plant
+        LEFT JOIN i_customermaterial_2 WITH PRIVILEGED ACCESS AS _custmat
+          ON _custmat~salesorganization = _config~zvalue2
+          AND _custmat~product = _of~material
+          AND _custmat~customer = _of~customer
+        "end add by zoukun at 20250305
+        WHERE _of~customer IN @r_customer
+          AND _of~plant IN @r_plant
+          AND _of~material IN @r_material
+          AND _custmat~materialbycustomer IN @r_materialbycustomer
+          AND _of~requirementdate >= @lv_startdate
+          AND _of~requirementdate <= @lv_enddate
         INTO TABLE @DATA(lt_orderforecast).
         IF lt_orderforecast IS INITIAL.
           IF io_request->is_total_numb_of_rec_requested( ).
@@ -189,9 +199,19 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
           root~shipunit,
           root~validend
         FROM zc_ofsplitrule AS root
+        "begin add by zoukun at 20250305
+        LEFT JOIN ztbc_1001 AS _config
+          ON _config~zid = 'ZPP013'
+          AND _config~zvalue1 = root~plant
+        LEFT JOIN i_customermaterial_2 WITH PRIVILEGED ACCESS AS _custmat
+          ON _custmat~salesorganization = _config~zvalue2
+          AND _custmat~product = root~splitmaterial
+          AND _custmat~customer = root~customer
+        "end add by zoukun at 20250305
         WHERE root~customer IN @r_customer
           AND root~plant IN @r_plant
           AND root~splitmaterial IN @r_material
+          AND _custmat~materialbycustomer IN @r_materialbycustomer
           AND root~deleteflag  = ''
           AND root~validend >= @current_month
         INTO TABLE @DATA(lt_ofsplitrule).
@@ -240,14 +260,23 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
           COLLECT ls_split_coll INTO lt_split_coll.
           CLEAR ls_split_coll.
         ENDLOOP.
+
         DATA lv_index TYPE i.
         DATA date_index TYPE i.
         DATA the_last_month(6) TYPE n.
         DATA lv_validend(7) TYPE c.
+        data lv_splitdate type datum.
         "分割起始日期
         DATA(lv_splitstartdate) = CONV datum( lv_splitstart && '01' ).
         "分割结束日期
         DATA(lv_splitenddate) = zzcl_common_utils=>get_enddate_of_month( lv_splitend && '01' ).
+
+        "获取非工作日
+        SELECT
+          *
+        FROM ztpp_1018
+        INTO TABLE @DATA(lt_factorycalendar).
+        SORT lt_factorycalendar BY plant holiday_date.
         "确定分割范围内哪些日期需要分配数量
         LOOP AT lt_ofsplitrule INTO DATA(ls_ofsplitrule).
           lv_validend = ls_ofsplitrule-validend.
@@ -260,7 +289,15 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
                 ls_split_date-validend = lv_validend.
                 ls_split_date-splitdate = zzcl_common_utils=>calc_date_add( date = lv_splitstart && '01' month = lv_index ).
                 "如果当前日期非工作日则需要向后延，找到下一个工作日
-                ls_split_date-splitdate = zzcl_common_utils=>get_workingday( iv_date = ls_split_date-splitdate iv_plant = ls_ofsplitrule-plant ).
+*                ls_split_date-splitdate = zzcl_common_utils=>get_workingday( iv_date = ls_split_date-splitdate iv_plant = ls_ofsplitrule-plant ).
+                lv_splitdate = ls_split_date-splitdate.
+                READ TABLE lt_factorycalendar INTO DATA(ls_factorycalendar) WITH KEY plant = ls_ofsplitrule-plant
+                  holiday_date = lv_splitdate BINARY SEARCH.
+                IF sy-subrc = 0.
+                  ls_split_date-splitdate = ls_factorycalendar-next_workday.
+                else.
+                  ls_split_date-splitdate = lv_splitdate.
+                ENDIF.
                 "如果日期已经超过了要分割的区间则不用处理
                 IF ( ls_split_date-splitdate > lv_splitenddate ).
                   EXIT.
@@ -279,7 +316,15 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
                 ls_split_date-splitdate = zzcl_common_utils=>calc_date_add( date = lv_splitstart && '01' month = lv_index ).
 
                 "上旬
-                ls_split_date-splitdate = zzcl_common_utils=>get_workingday( iv_date = ls_split_date-splitdate(6) && '01' iv_plant = ls_ofsplitrule-plant ).
+*                ls_split_date-splitdate = zzcl_common_utils=>get_workingday( iv_date = ls_split_date-splitdate(6) && '01' iv_plant = ls_ofsplitrule-plant ).
+                lv_splitdate = ls_split_date-splitdate(6) && '01'.
+                READ TABLE lt_factorycalendar INTO ls_factorycalendar WITH KEY plant = ls_ofsplitrule-plant
+                  holiday_date = lv_splitdate BINARY SEARCH.
+                IF sy-subrc = 0.
+                  ls_split_date-splitdate = ls_factorycalendar-next_workday.
+                else.
+                  ls_split_date-splitdate = lv_splitdate.
+                ENDIF.
                 "如果日期已经超过了要分割的区间则不用处理
                 IF ( ls_split_date-splitdate > lv_splitenddate ).
                   EXIT.
@@ -288,7 +333,15 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
                 ls_split_date-dateindex = 1."按旬分割每月有3个日期
                 APPEND ls_split_date TO lt_split_date.
                 "中旬
-                ls_split_date-splitdate = zzcl_common_utils=>get_workingday( iv_date = ls_split_date-splitdate(6) && '11' iv_plant = ls_ofsplitrule-plant ).
+*                ls_split_date-splitdate = zzcl_common_utils=>get_workingday( iv_date = ls_split_date-splitdate(6) && '11' iv_plant = ls_ofsplitrule-plant ).
+                lv_splitdate = ls_split_date-splitdate(6) && '11'.
+                READ TABLE lt_factorycalendar INTO ls_factorycalendar WITH KEY plant = ls_ofsplitrule-plant
+                  holiday_date = lv_splitdate BINARY SEARCH.
+                IF sy-subrc = 0.
+                  ls_split_date-splitdate = ls_factorycalendar-next_workday.
+                else.
+                  ls_split_date-splitdate = lv_splitdate.
+                ENDIF.
                 "如果日期已经超过了要分割的区间则不用处理
                 IF ( ls_split_date-splitdate > lv_splitenddate ).
                   EXIT.
@@ -297,7 +350,15 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
                 ls_split_date-dateindex = 2."按旬分割每月有3个日期
                 APPEND ls_split_date TO lt_split_date.
                 "下旬
-                ls_split_date-splitdate = zzcl_common_utils=>get_workingday( iv_date = ls_split_date-splitdate(6) && '21' iv_plant = ls_ofsplitrule-plant ).
+*                ls_split_date-splitdate = zzcl_common_utils=>get_workingday( iv_date = ls_split_date-splitdate(6) && '21' iv_plant = ls_ofsplitrule-plant ).
+                lv_splitdate = ls_split_date-splitdate(6) && '21'.
+                READ TABLE lt_factorycalendar INTO ls_factorycalendar WITH KEY plant = ls_ofsplitrule-plant
+                  holiday_date = lv_splitdate BINARY SEARCH.
+                IF sy-subrc = 0.
+                  ls_split_date-splitdate = ls_factorycalendar-next_workday.
+                else.
+                  ls_split_date-splitdate = lv_splitdate.
+                ENDIF.
                 "如果日期已经超过了要分割的区间则不用处理
                 IF ( ls_split_date-splitdate > lv_splitenddate ).
                   EXIT.
@@ -371,8 +432,17 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
                 IF sy-index > 1.
                   lv_work_day = lv_work_day + 1.
                 ENDIF.
-                lv_work_day = zzcl_common_utils=>get_workingday( iv_date = lv_work_day iv_plant = ls_ofsplitrule-plant ).
-                ls_split_date-splitdate = lv_work_day.
+*                lv_work_day = zzcl_common_utils=>get_workingday( iv_date = lv_work_day iv_plant = ls_ofsplitrule-plant ).
+*                ls_split_date-splitdate = lv_work_day.
+                lv_splitdate = lv_work_day.
+                READ TABLE lt_factorycalendar INTO ls_factorycalendar WITH KEY plant = ls_ofsplitrule-plant
+                  holiday_date = lv_splitdate BINARY SEARCH.
+                IF sy-subrc = 0.
+                  ls_split_date-splitdate = ls_factorycalendar-next_workday.
+                else.
+                  ls_split_date-splitdate = lv_splitdate.
+                ENDIF.
+                lv_work_day = ls_split_date-splitdate.
                 "如果日期已经超过了要分割的区间则不用处理
                 IF ( ls_split_date-splitdate > lv_splitenddate ).
                   EXIT.

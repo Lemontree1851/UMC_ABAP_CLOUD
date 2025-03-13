@@ -21,6 +21,8 @@ define root view entity ZC_WF_ApprovalPath
       Knttp,
       @ObjectModel.text.element: ['CostCenterName']
       CostCenter,
+      @ObjectModel.text.element: ['PurchasingGroupName']
+      PurchaseGroup,
       AmountFrom,
       AmountTo,
       CreatedBy,
@@ -43,6 +45,8 @@ define root view entity ZC_WF_ApprovalPath
       _KNTTP.Zvalue2       as KnttpText,
       @UI.hidden: true
       _CostCenterText.CostCenterName,
+      @UI.hidden: true
+      _PurchasingGroup.PurchasingGroupName,
 
       /* Associations */
       _ApprovalNode : redirected to composition child ZC_WF_ApprovalNode

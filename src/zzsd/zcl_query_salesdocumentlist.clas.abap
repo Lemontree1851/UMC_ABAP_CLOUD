@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
+CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -33,37 +33,37 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
 
     DATA:
       lt_data                    TYPE STANDARD TABLE OF zc_salesdocumentlist,
-      lr_salesorganization       TYPE RANGE OF zc_salesdocumentlist-salesorganization,
       lr_user_salesorg           TYPE RANGE OF zc_salesdocumentlist-salesorganization,
-      lr_salesdocument           TYPE RANGE OF zc_salesdocumentlist-salesdocument,
-      lr_soldtoparty             TYPE RANGE OF zc_salesdocumentlist-soldtoparty,
-      lr_salesdocumenttype       TYPE RANGE OF zc_salesdocumentlist-salesdocumenttype,
-      lr_salesdocapprovalstatus  TYPE RANGE OF zc_salesdocumentlist-salesdocapprovalstatus,
-      lr_yy1_salesdoctype_sdh    TYPE RANGE OF zc_salesdocumentlist-yy1_salesdoctype_sdh,
-      lr_purchaseorderbycustomer TYPE RANGE OF zc_salesdocumentlist-purchaseorderbycustomer,
-      lr_product                 TYPE RANGE OF zc_salesdocumentlist-product,
-      lr_plant                   TYPE RANGE OF zc_salesdocumentlist-plant,
-      lr_requesteddeliverydate   TYPE RANGE OF zc_salesdocumentlist-requesteddeliverydate,
-      lr_salesdocumentdate       TYPE RANGE OF zc_salesdocumentlist-salesdocumentdate,
-      lr_confirmeddeliverydate   TYPE RANGE OF zc_salesdocumentlist-confirmeddeliverydate,
-      lr_creationdateitem        TYPE RANGE OF zc_salesdocumentlist-creationdateitem,
+*      lr_salesorganization       TYPE RANGE OF zc_salesdocumentlist-salesorganization,
+*      lr_salesdocument           TYPE RANGE OF zc_salesdocumentlist-salesdocument,
+*      lr_soldtoparty             TYPE RANGE OF zc_salesdocumentlist-soldtoparty,
+*      lr_salesdocumenttype       TYPE RANGE OF zc_salesdocumentlist-salesdocumenttype,
+*      lr_salesdocapprovalstatus  TYPE RANGE OF zc_salesdocumentlist-salesdocapprovalstatus,
+*      lr_yy1_salesdoctype_sdh    TYPE RANGE OF zc_salesdocumentlist-yy1_salesdoctype_sdh,
+*      lr_purchaseorderbycustomer TYPE RANGE OF zc_salesdocumentlist-purchaseorderbycustomer,
+*      lr_product                 TYPE RANGE OF zc_salesdocumentlist-product,
+*      lr_plant                   TYPE RANGE OF zc_salesdocumentlist-plant,
+*      lr_requesteddeliverydate   TYPE RANGE OF zc_salesdocumentlist-requesteddeliverydate,
+*      lr_salesdocumentdate       TYPE RANGE OF zc_salesdocumentlist-salesdocumentdate,
+*      lr_confirmeddeliverydate   TYPE RANGE OF zc_salesdocumentlist-confirmeddeliverydate,
+*      lr_creationdateitem        TYPE RANGE OF zc_salesdocumentlist-creationdateitem,
       lr_salesdocumentrjcnreason TYPE RANGE OF zc_salesdocumentlist-salesdocumentrjcnreason,
       lr_deliverystatus          TYPE RANGE OF i_salesdocumentitem-deliverystatus,
       lr_relatedbillingstatus    TYPE RANGE OF i_deliverydocumentitem-deliveryrelatedbillingstatus,
       lr_conditiontype           TYPE RANGE OF i_salesdocitempricingelement-conditiontype,
-      ls_salesorganization       LIKE LINE OF lr_salesorganization,
-      ls_salesdocument           LIKE LINE OF lr_salesdocument,
-      ls_soldtoparty             LIKE LINE OF lr_soldtoparty,
-      ls_salesdocumenttype       LIKE LINE OF lr_salesdocumenttype,
-      ls_salesdocapprovalstatus  LIKE LINE OF lr_salesdocapprovalstatus,
-      ls_yy1_salesdoctype_sdh    LIKE LINE OF lr_yy1_salesdoctype_sdh,
-      ls_purchaseorderbycustomer LIKE LINE OF lr_purchaseorderbycustomer,
-      ls_product                 LIKE LINE OF lr_product,
-      ls_plant                   LIKE LINE OF lr_plant,
-      ls_requesteddeliverydate   LIKE LINE OF lr_requesteddeliverydate,
-      ls_salesdocumentdate       LIKE LINE OF lr_salesdocumentdate,
-      ls_confirmeddeliverydate   LIKE LINE OF lr_confirmeddeliverydate,
-      ls_creationdateitem        LIKE LINE OF lr_creationdateitem,
+*      ls_salesorganization       LIKE LINE OF lr_salesorganization,
+*      ls_salesdocument           LIKE LINE OF lr_salesdocument,
+*      ls_soldtoparty             LIKE LINE OF lr_soldtoparty,
+*      ls_salesdocumenttype       LIKE LINE OF lr_salesdocumenttype,
+*      ls_salesdocapprovalstatus  LIKE LINE OF lr_salesdocapprovalstatus,
+*      ls_yy1_salesdoctype_sdh    LIKE LINE OF lr_yy1_salesdoctype_sdh,
+*      ls_purchaseorderbycustomer LIKE LINE OF lr_purchaseorderbycustomer,
+*      ls_product                 LIKE LINE OF lr_product,
+*      ls_plant                   LIKE LINE OF lr_plant,
+*      ls_requesteddeliverydate   LIKE LINE OF lr_requesteddeliverydate,
+*      ls_salesdocumentdate       LIKE LINE OF lr_salesdocumentdate,
+*      ls_confirmeddeliverydate   LIKE LINE OF lr_confirmeddeliverydate,
+*      ls_creationdateitem        LIKE LINE OF lr_creationdateitem,
       ls_deliverystatus          LIKE LINE OF lr_deliverystatus,
       ls_conditiontype           LIKE LINE OF lr_conditiontype,
       ls_data                    TYPE zc_salesdocumentlist,
@@ -128,79 +128,126 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
       CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option) ##NO_HANDLER.
     ENDTRY.
 
+*&--MOD BEGIN BY XINLEI XU 2025/03/06 BUG Fix
+*    LOOP AT lt_filter_cond INTO DATA(ls_filter_cond).
+*      LOOP AT ls_filter_cond-range INTO DATA(str_rec_l_range).
+*        CASE ls_filter_cond-name.
+*          WHEN 'USEREMAIL'.
+*            lv_user_email = str_rec_l_range-low.
+*          WHEN 'SALESORGANIZATION'.
+*            MOVE-CORRESPONDING str_rec_l_range TO ls_salesorganization.
+*            APPEND ls_salesorganization TO lr_salesorganization.
+*            CLEAR ls_salesorganization.
+*          WHEN 'SALESDOCUMENT'.
+*            MOVE-CORRESPONDING str_rec_l_range TO ls_salesdocument.
+*            APPEND ls_salesdocument TO lr_salesdocument.
+*            CLEAR ls_salesdocument.
+*          WHEN 'SOLDTOPARTY'.
+*            MOVE-CORRESPONDING str_rec_l_range TO ls_soldtoparty.
+*            APPEND ls_soldtoparty TO lr_soldtoparty.
+*            CLEAR ls_soldtoparty.
+*          WHEN 'SALESDOCUMENTTYPE'.
+*            MOVE-CORRESPONDING str_rec_l_range TO ls_salesdocumenttype.
+*            APPEND ls_salesdocumenttype TO lr_salesdocumenttype.
+*            CLEAR ls_salesdocumenttype.
+*          WHEN 'SALESDOCAPPROVALSTATUS'.
+*            MOVE-CORRESPONDING str_rec_l_range TO ls_salesdocapprovalstatus.
+*            APPEND ls_salesdocapprovalstatus TO lr_salesdocapprovalstatus.
+*            CLEAR ls_salesdocapprovalstatus.
+*          WHEN 'YY1_SALESDOCTYPE_SDH'.
+*            MOVE-CORRESPONDING str_rec_l_range TO ls_yy1_salesdoctype_sdh.
+*            APPEND ls_yy1_salesdoctype_sdh TO lr_yy1_salesdoctype_sdh.
+*            CLEAR ls_yy1_salesdoctype_sdh.
+*          WHEN 'PURCHASEORDERBYCUSTOMER'.
+*            MOVE-CORRESPONDING str_rec_l_range TO ls_purchaseorderbycustomer.
+*            APPEND ls_purchaseorderbycustomer TO lr_purchaseorderbycustomer.
+*            CLEAR ls_purchaseorderbycustomer.
+*          WHEN 'PRODUCT'.
+*            MOVE-CORRESPONDING str_rec_l_range TO ls_product.
+*            APPEND ls_product TO lr_product.
+*            CLEAR ls_product.
+*          WHEN 'PLANT'.
+*            MOVE-CORRESPONDING str_rec_l_range TO ls_plant.
+*            APPEND ls_plant TO lr_plant.
+*            CLEAR ls_plant.
+*          WHEN 'REQUESTEDDELIVERYDATE'.
+*            MOVE-CORRESPONDING str_rec_l_range TO ls_requesteddeliverydate.
+*            APPEND ls_requesteddeliverydate TO lr_requesteddeliverydate.
+*            CLEAR ls_requesteddeliverydate.
+*          WHEN 'SALESDOCUMENTDATE'.
+*            MOVE-CORRESPONDING str_rec_l_range TO ls_salesdocumentdate.
+*            APPEND ls_salesdocumentdate TO lr_salesdocumentdate.
+*            CLEAR ls_salesdocumentdate.
+*          WHEN 'CONFIRMEDDELIVERYDATE'.
+*            MOVE-CORRESPONDING str_rec_l_range TO ls_confirmeddeliverydate.
+*            APPEND ls_confirmeddeliverydate TO lr_confirmeddeliverydate.
+*            CLEAR ls_confirmeddeliverydate.
+*          WHEN 'CREATIONDATEITEM'.
+*            MOVE-CORRESPONDING str_rec_l_range TO ls_creationdateitem.
+*            APPEND ls_creationdateitem TO lr_creationdateitem.
+*            CLEAR ls_creationdateitem.
+*          WHEN 'INDICATOR1'.
+*            lv_indicator1 = str_rec_l_range-low.
+*          WHEN 'INDICATOR2'.
+*            lv_indicator2 = str_rec_l_range-low.
+*          WHEN 'INDICATOR3'.
+*            lv_indicator3 = str_rec_l_range-low.
+*          WHEN 'INDICATOR4'.
+*            lv_indicator4 = str_rec_l_range-low.
+*          WHEN 'INDICATOR5'.
+*            lv_indicator5 = str_rec_l_range-low.
+*          WHEN 'INDICATOR6'.
+*            lv_indicator6 = str_rec_l_range-low.
+*          WHEN OTHERS.
+*        ENDCASE.
+*      ENDLOOP.
+*    ENDLOOP.
     LOOP AT lt_filter_cond INTO DATA(ls_filter_cond).
-      LOOP AT ls_filter_cond-range INTO DATA(str_rec_l_range).
-        CASE ls_filter_cond-name.
-          WHEN 'USEREMAIL'.
-            lv_user_email = str_rec_l_range-low.
-          WHEN 'SALESORGANIZATION'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_salesorganization.
-            APPEND ls_salesorganization TO lr_salesorganization.
-            CLEAR ls_salesorganization.
-          WHEN 'SALESDOCUMENT'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_salesdocument.
-            APPEND ls_salesdocument TO lr_salesdocument.
-            CLEAR ls_salesdocument.
-          WHEN 'SOLDTOPARTY'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_soldtoparty.
-            APPEND ls_soldtoparty TO lr_soldtoparty.
-            CLEAR ls_soldtoparty.
-          WHEN 'SALESDOCUMENTTYPE'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_salesdocumenttype.
-            APPEND ls_salesdocumenttype TO lr_salesdocumenttype.
-            CLEAR ls_salesdocumenttype.
-          WHEN 'SALESDOCAPPROVALSTATUS'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_salesdocapprovalstatus.
-            APPEND ls_salesdocapprovalstatus TO lr_salesdocapprovalstatus.
-            CLEAR ls_salesdocapprovalstatus.
-          WHEN 'YY1_SALESDOCTYPE_SDH'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_yy1_salesdoctype_sdh.
-            APPEND ls_yy1_salesdoctype_sdh TO lr_yy1_salesdoctype_sdh.
-            CLEAR ls_yy1_salesdoctype_sdh.
-          WHEN 'PURCHASEORDERBYCUSTOMER'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_purchaseorderbycustomer.
-            APPEND ls_purchaseorderbycustomer TO lr_purchaseorderbycustomer.
-            CLEAR ls_purchaseorderbycustomer.
-          WHEN 'PRODUCT'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_product.
-            APPEND ls_product TO lr_product.
-            CLEAR ls_product.
-          WHEN 'PLANT'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_plant.
-            APPEND ls_plant TO lr_plant.
-            CLEAR ls_plant.
-          WHEN 'REQUESTEDDELIVERYDATE'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_requesteddeliverydate.
-            APPEND ls_requesteddeliverydate TO lr_requesteddeliverydate.
-            CLEAR ls_requesteddeliverydate.
-          WHEN 'SALESDOCUMENTDATE'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_salesdocumentdate.
-            APPEND ls_salesdocumentdate TO lr_salesdocumentdate.
-            CLEAR ls_salesdocumentdate.
-          WHEN 'CONFIRMEDDELIVERYDATE'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_confirmeddeliverydate.
-            APPEND ls_confirmeddeliverydate TO lr_confirmeddeliverydate.
-            CLEAR ls_confirmeddeliverydate.
-          WHEN 'CREATIONDATEITEM'.
-            MOVE-CORRESPONDING str_rec_l_range TO ls_creationdateitem.
-            APPEND ls_creationdateitem TO lr_creationdateitem.
-            CLEAR ls_creationdateitem.
-          WHEN 'INDICATOR1'.
-            lv_indicator1 = str_rec_l_range-low.
-          WHEN 'INDICATOR2'.
-            lv_indicator2 = str_rec_l_range-low.
-          WHEN 'INDICATOR3'.
-            lv_indicator3 = str_rec_l_range-low.
-          WHEN 'INDICATOR4'.
-            lv_indicator4 = str_rec_l_range-low.
-          WHEN 'INDICATOR5'.
-            lv_indicator5 = str_rec_l_range-low.
-          WHEN 'INDICATOR6'.
-            lv_indicator6 = str_rec_l_range-low.
-          WHEN OTHERS.
-        ENDCASE.
-      ENDLOOP.
+      CASE ls_filter_cond-name.
+        WHEN 'SALESORGANIZATION'.
+          DATA(lr_salesorganization) = ls_filter_cond-range.
+        WHEN 'SALESDOCUMENT'.
+          DATA(lr_salesdocument) = ls_filter_cond-range.
+        WHEN 'SOLDTOPARTY'.
+          DATA(lr_soldtoparty) = ls_filter_cond-range.
+        WHEN 'SALESDOCUMENTTYPE'.
+          DATA(lr_salesdocumenttype) = ls_filter_cond-range.
+        WHEN 'SALESDOCAPPROVALSTATUS'.
+          DATA(lr_salesdocapprovalstatus) = ls_filter_cond-range.
+        WHEN 'YY1_SALESDOCTYPE_SDH'.
+          DATA(lr_yy1_salesdoctype_sdh) = ls_filter_cond-range.
+        WHEN 'PURCHASEORDERBYCUSTOMER'.
+          DATA(lr_purchaseorderbycustomer) = ls_filter_cond-range.
+        WHEN 'PRODUCT'.
+          DATA(lr_product) = ls_filter_cond-range.
+        WHEN 'PLANT'.
+          DATA(lr_plant) = ls_filter_cond-range.
+        WHEN 'REQUESTEDDELIVERYDATE'.
+          DATA(lr_requesteddeliverydate) = ls_filter_cond-range.
+        WHEN 'SALESDOCUMENTDATE'.
+          DATA(lr_salesdocumentdate) = ls_filter_cond-range.
+        WHEN 'CONFIRMEDDELIVERYDATE'.
+          DATA(lr_confirmeddeliverydate) = ls_filter_cond-range.
+        WHEN 'CREATIONDATEITEM'.
+          DATA(lr_creationdateitem) = ls_filter_cond-range.
+        WHEN 'USEREMAIL'.
+          lv_user_email = ls_filter_cond-range[ 1 ]-low.
+        WHEN 'INDICATOR1'.
+          lv_indicator1 = ls_filter_cond-range[ 1 ]-low.
+        WHEN 'INDICATOR2'.
+          lv_indicator2 = ls_filter_cond-range[ 1 ]-low.
+        WHEN 'INDICATOR3'.
+          lv_indicator3 = ls_filter_cond-range[ 1 ]-low.
+        WHEN 'INDICATOR4'.
+          lv_indicator4 = ls_filter_cond-range[ 1 ]-low.
+        WHEN 'INDICATOR5'.
+          lv_indicator5 = ls_filter_cond-range[ 1 ]-low.
+        WHEN 'INDICATOR6'.
+          lv_indicator6 = ls_filter_cond-range[ 1 ]-low.
+        WHEN OTHERS.
+      ENDCASE.
     ENDLOOP.
+*&--MOD END BY XINLEI XU 2025/03/06 BUG Fix
 
     DATA(lv_user_salesorg) = zzcl_common_utils=>get_salesorg_by_user( lv_user_email ).
     SPLIT lv_user_salesorg AT '&' INTO TABLE DATA(lt_user_salesorg).
@@ -208,7 +255,7 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
 
     IF lr_user_salesorg IS NOT INITIAL.
       IF lr_salesorganization IS INITIAL.
-        lr_salesorganization = lr_user_salesorg.
+        lr_salesorganization = CORRESPONDING #( lr_user_salesorg ).
       ELSE.
         LOOP AT lr_salesorganization ASSIGNING FIELD-SYMBOL(<fs_salesorganization>).
           IF <fs_salesorganization>-low NOT IN lr_user_salesorg.
@@ -365,7 +412,7 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
        WHERE a~salesdocument = @lt_salesdocumentitem-salesdocument
          AND a~salesdocumentitem = @lt_salesdocumentitem-salesdocumentitem
          AND a~isconfirmeddelivschedline = @abap_true
-        INTO TABLE @DATA(lt_salesdocumentscheduleline).
+        INTO TABLE @DATA(lt_salesdocumentscheduleline). "#EC CI_NO_TRANSFORM
 
       DATA(lt_salesdocumentitem_tmp) = lt_salesdocumentitem.
       SORT lt_salesdocumentitem_tmp BY controllingarea profitcenter.
@@ -402,7 +449,7 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
          AND salesdocumentitem = @lt_salesdocumentitem-salesdocumentitem
          AND conditioninactivereason = @space
          AND conditiontype IN @lr_conditiontype
-        INTO TABLE @DATA(lt_salesdocitempricingelement).
+        INTO TABLE @DATA(lt_salesdocitempricingelement). "#EC CI_NO_TRANSFORM
 
       "Obtain data of delivery document item
       SELECT a~deliverydocument,
@@ -420,7 +467,7 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
          FOR ALL ENTRIES IN @lt_salesdocumentitem
        WHERE a~referencesddocument = @lt_salesdocumentitem-salesdocument
          AND a~referencesddocumentitem = @lt_salesdocumentitem-salesdocumentitem
-        INTO TABLE @DATA(lt_deliverydocumentitem).
+        INTO TABLE @DATA(lt_deliverydocumentitem). "#EC CI_NO_TRANSFORM
       IF sy-subrc = 0.
         "Obtain data of billing document item(DN billing)
         SELECT a~billingdocument,
@@ -436,7 +483,7 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
            AND a~referencesddocumentitem = @lt_deliverydocumentitem-deliverydocumentitem
            AND b~billingdocumentiscancelled = @abap_false
            AND b~cancelledbillingdocument = @abap_false
-          INTO TABLE @DATA(lt_billingdocumentitem_dn).
+          INTO TABLE @DATA(lt_billingdocumentitem_dn). "#EC CI_NO_TRANSFORM
 
         "Obtain data of material document item
         SELECT a~materialdocumentyear,
@@ -456,7 +503,7 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
                              WHERE reversedmaterialdocumentyear = a~materialdocumentyear
                                AND reversedmaterialdocument = a~materialdocument
                                AND reversedmaterialdocumentitem = a~materialdocumentitem )
-          INTO TABLE @DATA(lt_materialdocumentitem).
+          INTO TABLE @DATA(lt_materialdocumentitem). "#EC CI_NO_TRANSFORM
       ENDIF.
 
       "Obtain data of billing document item(SO billing)
@@ -473,7 +520,7 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
          AND a~salesdocumentitem = @lt_salesdocumentitem-salesdocumentitem
          AND b~billingdocumentiscancelled = @abap_false
          AND b~cancelledbillingdocument = @abap_false
-        INTO TABLE @DATA(lt_billingdocumentitem_so).
+        INTO TABLE @DATA(lt_billingdocumentitem_so). "#EC CI_NO_TRANSFORM
     ENDIF.
 
     DATA(lt_deliverydocumentitem_bs) = lt_deliverydocumentitem.

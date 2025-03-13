@@ -27,6 +27,7 @@ FUNCTION zzfm_dtimp_tbc1008.
     ls_data-kyoten         = <line>-('KYOTEN').
     ls_data-knttp          = <line>-('KNTTP').
     ls_data-cost_center    = <line>-('COST_CENTER').
+    ls_data-purchase_group = <line>-('PURCHASE_GROUP').
     ls_data-amount_from    = <line>-('AMOUNT_FROM').
     ls_data-amount_to      = <line>-('AMOUNT_TO').
 

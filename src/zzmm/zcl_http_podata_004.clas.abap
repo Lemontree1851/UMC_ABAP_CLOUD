@@ -246,7 +246,7 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
                costcenter,
                glaccount
           FROM i_purordaccountassignmentapi01 WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_supplier_invoice1
+          FOR ALL ENTRIES IN @lt_supplier_invoice1 "#EC CI_FAE_LINES_ENSURED
           WHERE purchaseorder = @lt_supplier_invoice1-purchaseorder
             AND purchaseorderitem = @lt_supplier_invoice1-purchaseorderitem
           INTO TABLE @DATA(lt_acct_assgmt1).
@@ -277,9 +277,10 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
                netpriceamount,
                netpricequantity
           FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_acct_assgmt1
-          WHERE purchaseorder = @lt_acct_assgmt1-purchaseorder
-            AND purchaseorderitem = @lt_acct_assgmt1-purchaseorderitem
+          "FOR ALL ENTRIES IN @lt_acct_assgmt1 del by stanley 20250306
+           FOR ALL ENTRIES IN @lt_supplier_invoice1 "add by stanley 20250306" #EC CI_FAE_LINES_ENSURED
+          WHERE purchaseorder = @lt_supplier_invoice1-purchaseorder "#EC CI_FAE_LINES_ENSURED
+            AND purchaseorderitem = @lt_supplier_invoice1-purchaseorderitem "#EC CI_FAE_LINES_ENSURED
           INTO TABLE @DATA(lt_po_item1).
 
       ENDIF.
@@ -846,9 +847,10 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
                netpriceamount,
                netpricequantity
           FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_acct_assgmt2
-          WHERE purchaseorder = @lt_acct_assgmt2-purchaseorder
-            AND purchaseorderitem = @lt_acct_assgmt2-purchaseorderitem
+          "FOR ALL ENTRIES IN @lt_acct_assgmt2 del by stanley 20250306
+           FOR ALL ENTRIES IN @lt_supplier_invoice2 "add  by stanley 20250306 "#EC CI_FAE_LINES_ENSURED
+          WHERE purchaseorder = @lt_supplier_invoice2-purchaseorder
+            AND purchaseorderitem = @lt_supplier_invoice2-purchaseorderitem
           INTO TABLE @DATA(lt_po_item2).
       ENDIF.
 

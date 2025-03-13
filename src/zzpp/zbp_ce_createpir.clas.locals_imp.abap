@@ -73,6 +73,7 @@ CLASS lhc_zce_createpir DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS get_supply_demand_items
       IMPORTING iv_material                   TYPE matnr
                 iv_plant                      TYPE werks_d
+                iv_customer                   TYPE kunnr
       RETURNING VALUE(rt_supply_demand_items) TYPE zttpp_1002.
     METHODS createpir
       IMPORTING iv_type          TYPE string DEFAULT 'OF'
@@ -163,7 +164,7 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
           lv_type = 'S'.
           MESSAGE s090(zpp_001) INTO lv_msg.
         ELSE.
-          lv_type = 'E'.
+*          lv_type = 'E'.
 *          " 将所有错误消息拼接在一起
 *          LOOP AT reported-zce_createpir INTO DATA(ls_message).
 *            lv_msg = zzcl_common_utils=>merge_message(
@@ -273,6 +274,9 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
     "将数量转换成正值并合并数量
     CLEAR lt_supplydemanditems.
     LOOP AT ls_response_api-d-results INTO DATA(ls_results).
+      IF ls_results-mrpelementbusinesspartner <> iv_customer.
+        CONTINUE.
+      ENDIF.
       MOVE-CORRESPONDING ls_results TO ls_supplydemanditems.
       " 时间戳格式转换成日期格式
       ls_supplydemanditems-mrprqmtdate = CONV string( ls_supplydemanditems-mrpelementavailyorrqmtdate DIV 1000000 ).
@@ -302,10 +306,23 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
       ls_res     TYPE ty_res,
       lv_path    TYPE string.
 
+    SELECT
+      *
+    FROM ztpp_1018
+    INTO TABLE @DATA(lt_factorycalendar).
+    SORT lt_factorycalendar BY plant holiday_date.
+
     "有些日期不是工作日，sap会自动变成节日的前一个工作日，但业务需求要后一个工作日，所以需要手动更改为后一个工作日
     LOOP AT ct_plndindeprqmt INTO cs_plndindeprqmt.
       lv_requirementdate = cs_plndindeprqmt-requirementdate.
-      cs_plndindeprqmt-requirementdate = zzcl_common_utils=>get_workingday( iv_plant = cs_plndindeprqmt-plant iv_date = lv_requirementdate ).
+      READ TABLE lt_factorycalendar INTO DATA(ls_factorycalendar) WITH KEY plant = cs_plndindeprqmt-plant
+        holiday_date = lv_requirementdate BINARY SEARCH.
+      IF sy-subrc = 0.
+        cs_plndindeprqmt-requirementdate = ls_factorycalendar-next_workday.
+      ELSE.
+        cs_plndindeprqmt-requirementdate = lv_requirementdate.
+      ENDIF.
+*      cs_plndindeprqmt-requirementdate = zzcl_common_utils=>get_workingday( iv_plant = cs_plndindeprqmt-plant iv_date = lv_requirementdate ).
       cs_plndindeprqmt-requirementmonth = cs_plndindeprqmt-requirementdate(6).
       MOVE-CORRESPONDING cs_plndindeprqmt TO ls_ofpartition.
       COLLECT ls_ofpartition INTO lt_ofpartition.
@@ -322,11 +339,17 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
     ENDIF.
     lv_date = lv_date_range-startdate.
     WHILE lv_date <= lv_date_range-enddate.
-*      "如果不是工作日则不用处理
+*      "如果不是工作日则不用处理,也不能处理
 *      IF NOT zzcl_common_utils=>is_workingday( iv_plant = cs_plndindeprqmt-plant iv_date = lv_date ).
 *        lv_date = lv_date + 1.
 *        CONTINUE.
 *      ENDIF.
+      READ TABLE lt_factorycalendar INTO ls_factorycalendar WITH KEY plant = cs_plndindeprqmt-plant
+        holiday_date = lv_date BINARY SEARCH.
+      IF sy-subrc = 0.
+        lv_date = lv_date + 1.
+        CONTINUE.
+      ENDIF.
       "默认一次只会有一个维度的数据
       READ TABLE ct_plndindeprqmt TRANSPORTING NO FIELDS WITH KEY requirementdate = lv_date."因为会插入数据，所以无法使用binary search。除非新增一个内表
       "如果是工作日且内表中没有则需要用0填充
@@ -561,7 +584,7 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
     ENDLOOP.
     " 结合受注残出荷残的需求数量 决定生成需求
     "1. 获取受注残出荷残合计的需求数量
-    DATA(lt_supplydemanditems) = get_supply_demand_items( iv_material = ls_request-material iv_plant = ls_request-plant ).
+    DATA(lt_supplydemanditems) = get_supply_demand_items( iv_material = ls_request-material iv_plant = ls_request-plant iv_customer = ls_request-customer ).
     "2. 对需求数据进行排序，确保按日期从早到晚处理
     SORT lt_supplydemanditems BY mrpelementbusinesspartner mrpplant material mrprqmtdate.
     SORT lt_ofpartition BY customer plant material requirementmonth requirementdate requirementqty.

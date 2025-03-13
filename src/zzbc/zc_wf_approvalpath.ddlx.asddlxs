@@ -82,6 +82,12 @@ annotate view ZC_WF_ApprovalPath with
   @Consumption.valueHelpDefinition: [{ entity: { name: 'I_CostCenterStdVH', element: 'CostCenter' } }]
   CostCenter;
 
+  @UI.lineItem: [{ position: 91, importance: #MEDIUM, cssDefault.width: '10rem' }]
+  @UI.identification: [ { position: 91 } ]
+  @EndUserText.label: 'Purchasing Group'
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_PurchasingGroup', element: 'PurchasingGroup' } }]
+  PurchaseGroup;
+
   @UI.lineItem: [{ position: 100, importance: #MEDIUM, cssDefault.width: '10rem' }]
   @UI.identification: [ { position: 100 } ]
   @EndUserText.label: 'Amount From'

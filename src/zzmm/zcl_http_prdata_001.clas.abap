@@ -102,7 +102,8 @@ CLASS ZCL_HTTP_PRDATA_001 IMPLEMENTATION.
                 b~BusinessPartnerName1                 ,
                 d~MinimumPurchaseOrderQuantity         ,
                 e~ProductManufacturerNumber            ,
-                f~PurchasingGroupName
+                f~PurchasingGroupName                  ,
+                a~PurchaseRequisitionReleaseDate  "add by stanley 20250306
 
     FROM i_purchaserequisitionitemapi01 WITH PRIVILEGED ACCESS as a
     LEFT JOIN i_supplier WITH PRIVILEGED ACCESS as b
@@ -159,11 +160,12 @@ CLASS ZCL_HTTP_PRDATA_001 IMPLEMENTATION.
 
             lv_dur = LW_PR-MaterialPlannedDeliveryDurn + LW_PR-MaterialGoodsReceiptDuration.
 
-            ls_response-ARRANGE_START_DATE = zzcl_common_utils=>calc_date_subtract(
-                    EXPORTING
-                      date  = LW_PR-DeliveryDate
-                      DAY = lv_dur
-                  ).
+*            ls_response-ARRANGE_START_DATE = zzcl_common_utils=>calc_date_subtract(
+*                    EXPORTING
+*                      date  = LW_PR-DeliveryDate
+*                      DAY = lv_dur
+*                  ).
+            ls_response-ARRANGE_START_DATE = lw_pr-PurchaseRequisitionReleaseDate."Change By Stanley 20250306
 
             "ls_response-ARRANGE_START_DATE  =   LW_PR-DeliveryDate.
             ls_response-ARRANGE_END_DATE    =   LW_PR-DeliveryDate.

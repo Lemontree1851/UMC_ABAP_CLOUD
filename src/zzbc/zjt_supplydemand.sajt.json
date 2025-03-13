@@ -1,0 +1,19 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "MRP Supply Demand items Job",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "catalogName": "ZJCE_SUPPLYDEMAND"
+  },
+  "parameters": {
+    "singleValueParameters": [
+      {
+        "name": "P_PLANT",
+        "value": ""
+      }
+    ]
+  }
+}

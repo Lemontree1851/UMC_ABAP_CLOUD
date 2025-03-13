@@ -83,7 +83,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_EXPLODEBOM IMPLEMENTATION.
+CLASS zcl_explodebom IMPLEMENTATION.
 
 
   METHOD get_data.
@@ -437,7 +437,11 @@ CLASS ZCL_EXPLODEBOM IMPLEMENTATION.
             ENDIF.
           ENDLOOP.
 
-          APPEND LINES OF lt_bomlist TO ct_bomlist.
+*          APPEND LINES OF lt_bomlist TO ct_bomlist.
+          LOOP AT lt_bomlist INTO ls_bomlist.
+            ls_bomlist-material = iv_material.
+            APPEND ls_bomlist TO ct_bomlist.
+          ENDLOOP.
       ENDCASE.
     ENDIF.
 

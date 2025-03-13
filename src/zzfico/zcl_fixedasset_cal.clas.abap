@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
+CLASS zcl_fixedasset_cal IMPLEMENTATION.
 
 
   METHOD if_sadl_exit_calc_element_read~calculate.
@@ -171,14 +171,14 @@ CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
           <fs_original_data>-originalacquisitionamount = ls_glaccountlineitem-debitamountincocodecrcy.
           <fs_original_data>-originalacquisitioncurrency = ls_glaccountlineitem-companycodecurrency.
         ENDIF.
-        <fs_original_data>-barcode = <fs_original_data>-companycode && ';' &&  <fs_original_data>-masterfixedasset && ';' && <fs_original_data>-fixedasset && ';' .
-        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-inventorynote && ';' && <fs_original_data>-fixedassetdescription && ';' &&  <fs_original_data>-fixedassetexternalid && ';' && <fs_original_data>-inventory && ';' .
-        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-costcenter && ';' && <fs_original_data>-costcentername && ';' &&  <fs_original_data>-assetcapitalizationdate && ';' && <fs_original_data>-depreciationstartdate && ';' .
-        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-assetaccountdeterminationdesc && ';' && <fs_original_data>-depreciationkeyname && ';' &&  <fs_original_data>-leasedassetnote && ';'.
-        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-plannedusefullifeinyears && ';' && <fs_original_data>-originalacquisitionamount && ';' && <fs_original_data>-investmentreason && ';' .
-        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-assettypename && ';' && <fs_original_data>-yy1_fixedasset1_faa && ';'  && ';' && <fs_original_data>-jp_prptytxrptspcldepr .
+*        <fs_original_data>-barcode = <fs_original_data>-companycode && ';' &&  <fs_original_data>-masterfixedasset && ';' && <fs_original_data>-fixedasset && ';' .
+*        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-inventorynote && ';' && <fs_original_data>-fixedassetdescription && ';' &&  <fs_original_data>-fixedassetexternalid && ';' && <fs_original_data>-inventory && ';' .
+*        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-costcenter && ';' && <fs_original_data>-costcentername && ';' &&  <fs_original_data>-assetcapitalizationdate && ';' && <fs_original_data>-depreciationstartdate && ';' .
+*        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-assetaccountdeterminationdesc && ';' && <fs_original_data>-depreciationkeyname && ';' &&  <fs_original_data>-leasedassetnote && ';'.
+*        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-plannedusefullifeinyears && ';' && <fs_original_data>-originalacquisitionamount && ';' && <fs_original_data>-investmentreason && ';' .
+*        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-assettypename && ';' && <fs_original_data>-yy1_fixedasset1_faa && ';'  && ';' && <fs_original_data>-jp_prptytxrptspcldepr .
 
-
+        <fs_original_data>-barcode =  <fs_original_data>-fixedassetexternalid  && ';'  && <fs_original_data>-costcenter.
 
       ENDLOOP.
     ENDIF.

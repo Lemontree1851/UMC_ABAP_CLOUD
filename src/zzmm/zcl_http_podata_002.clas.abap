@@ -2044,11 +2044,10 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             WHERE (lv_where)
             INTO TABLE @DATA(lt_ekko).
 
-          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_ekko).
-
-            lv_error = 'X'.
-            lv_error_message_ekko = lo_sql_error_ekko->get_text( ).    " 获取错误描述
-
+       catch cx_sy_dynamic_osql_error into data(lo_sql_error_EKko).
+            lv_error400 = 'X'.
+            lv_error_message_ekko = lo_sql_error_EKko->get_text( ).
+            lv_text = lv_error_message_ekko.
         ENDTRY.
 
         IF lt_ekko IS NOT INITIAL.
@@ -2194,16 +2193,9 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-
-          IF lv_error_message_ekko IS NOT INITIAL.
-
-            lv_text = lv_error_message_ekko .
-
-          ELSE.
-            lv_text = 'There is no data in table'.
-
-          ENDIF.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
 
         ENDIF.
 
@@ -2217,11 +2209,10 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             WHERE (lv_where)
             INTO TABLE @DATA(lt_ekpo).
 
-          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_ekpo).
-
-            lv_error = 'X'.
-            lv_error_message_ekpo = lo_sql_error_ekpo->get_text( ).    " 获取错误描述
-
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_EKpo).
+            lv_error400 = 'X'.
+            lv_error_message_ekpo = lo_sql_error_EKpo->get_text( ).
+            lv_text = lv_error_message_ekpo.
         ENDTRY.
 
         IF lt_ekpo IS NOT INITIAL.
@@ -2522,20 +2513,23 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-
-          lv_error = 'X'.
-
-          IF lv_error_message_ekpo IS NOT INITIAL.
-            lv_text = lv_error_message_ekpo.
-          ELSE.
-            lv_text = 'There is no data in table'.
-          ENDIF.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN `EKET` OR 'eket'.
-        SELECT * FROM i_purordschedulelineapi01 WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_eket).
+        data:lv_error_message_eket type string.
+        try.
+            SELECT * FROM i_purordschedulelineapi01 WITH PRIVILEGED ACCESS
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_eket).
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_EKet).
+            lv_error400 = 'X'.
+            lv_error_message_eket = lo_sql_error_EKet->get_text( ).
+            lv_text = lv_error_message_eket.
+        ENDTRY.
+
 
         IF lt_eket IS NOT INITIAL.
           LOOP  AT lt_eket INTO DATA(ls_eket).
@@ -2620,14 +2614,22 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN 'EKBE'  OR 'ekbe' .
-        SELECT * FROM i_purchaseorderhistoryapi01 WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_ekbe).
+        data:lv_error_message_ekbe type string.
+        try.
+            SELECT * FROM i_purchaseorderhistoryapi01 WITH PRIVILEGED ACCESS
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_ekbe).
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_EKbe).
+            lv_error400 = 'X'.
+            lv_error_message_ekbe = lo_sql_error_EKbe->get_text( ).
+            lv_text = lv_error_message_ekbe.
+        ENDTRY.
 
         IF lt_ekbe IS NOT INITIAL.
           LOOP  AT lt_ekbe INTO DATA(ls_ekbe).
@@ -2762,14 +2764,22 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN 'EKKN'  OR 'ekkn' .
-        SELECT * FROM i_purordaccountassignmentapi01 WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_ekkn).
+        data:lv_error_message_EKKN type string.
+        try.
+            SELECT * FROM i_purordaccountassignmentapi01 WITH PRIVILEGED ACCESS
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_ekkn).
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_EKKN).
+            lv_error400 = 'X'.
+            lv_error_message_EKKN = lo_sql_error_EKKN->get_text( ).
+            lv_text = lv_error_message_EKKN.
+        ENDTRY.
 
         IF lt_ekkn IS NOT INITIAL.
           LOOP AT lt_ekkn INTO DATA(ls_ekkn).
@@ -2899,18 +2909,26 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN 'MARA'  OR 'mara' .
-        SELECT i_product~*,
-               i_productsales~packagingmaterialtype
-        FROM i_product WITH PRIVILEGED ACCESS
-        LEFT JOIN i_productsales WITH PRIVILEGED ACCESS
-        ON i_product~product = i_productsales~product
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_mara).
+        data:lv_error_message_mara type string.
+        try.
+            SELECT i_product~*,
+                   i_productsales~packagingmaterialtype
+            FROM i_product WITH PRIVILEGED ACCESS
+            LEFT JOIN i_productsales WITH PRIVILEGED ACCESS
+            ON i_product~product = i_productsales~product
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_mara).
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_mara).
+            lv_error400 = 'X'.
+            lv_error_message_mara = lo_sql_error_mara->get_text( ).
+            lv_text = lv_error_message_mara.
+        ENDTRY.
 
         IF lt_mara IS NOT INITIAL.
           LOOP AT lt_mara INTO DATA(ls_mara).
@@ -3215,14 +3233,22 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN 'MAKT'  OR 'makt' .
-        SELECT * FROM i_producttext WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_makt).
+        data:lv_error_message_makt type string.
+        try.
+            SELECT * FROM i_producttext WITH PRIVILEGED ACCESS
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_makt).
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_makt).
+            lv_error400 = 'X'.
+            lv_error_message_makt = lo_sql_error_makt->get_text( ).
+            lv_text = lv_error_message_makt.
+        ENDTRY.
 
         IF lt_makt IS NOT INITIAL.
           LOOP  AT lt_makt INTO DATA(ls_makt).
@@ -3250,8 +3276,9 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN 'MARD'  OR 'mard' .
@@ -3275,14 +3302,10 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             GROUP BY material, plant, storagelocation, inventorystocktype, inventoryspecialstocktype
             INTO TABLE @DATA(lt_mard).
 
-          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error).
-
-
-            lv_error = 'X'.
-
-
-            lv_error_message = lo_sql_error->get_text( ).    " 获取错误描述
-
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_mard).
+            lv_error400 = 'X'.
+            lv_error_message = lo_sql_error_mard->get_text( ).
+            lv_text = lv_error_message.
         ENDTRY.
 
 
@@ -3364,21 +3387,23 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-
-          IF lv_error_message IS NOT INITIAL.
-            lv_text = lv_error_message.
-          ELSE.
-            lv_text = 'There is no data in table'.
-          ENDIF.
-
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
-      WHEN 'T024D' OR 'T024D'.
+      WHEN 'T024D' OR 't024d'.
+        data:lv_error_message_T024D type string.
+        try.
+            SELECT * FROM i_mrpcontroller WITH PRIVILEGED ACCESS
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_t024d).
 
-        SELECT * FROM i_mrpcontroller WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_t024d).
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_T024D).
+            lv_error400 = 'X'.
+            lv_error_message_T024D = lo_sql_error_T024D->get_text( ).
+            lv_text = lv_error_message_T024D.
+        ENDTRY.
 
 
         IF lt_t024d IS NOT INITIAL.
@@ -3416,14 +3441,23 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN 'T001L' OR 't001l'.
-        SELECT * FROM i_storagelocation WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_t001l).
+
+      data:lv_error_message_t001l type string.
+        try.
+            SELECT * FROM i_storagelocation WITH PRIVILEGED ACCESS
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_t001l).
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_t001l).
+            lv_error400 = 'X'.
+            lv_error_message_t001l = lo_sql_error_t001l->get_text( ).
+            lv_text = lv_error_message_t001l.
+        ENDTRY.
 
         IF lt_t001l IS NOT INITIAL.
           LOOP  AT lt_t001l INTO DATA(ls_t001l).
@@ -3462,49 +3496,57 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN 'MARC'  OR 'marc' .
-        SELECT i_productplantbasic~*,
+        data:lv_error_message_marc type string.
+        try.
+            SELECT i_productplantbasic~*,
 
-*               \_GoodsMovementQuantity-productproductionquantityunit,
-*               \_GoodsMovementQuantity-productionschedulingprofile,
-               i_productworkscheduling~productproductionquantityunit,
-               i_productworkscheduling~productionschedulingprofile,
-               i_productplantsupplyplanning~*,
-               i_productplantsales~loadinggroup,
-               i_productplantprocurement~isautopurordcreationallowed,
-               i_productplantprocurement~issourcelistrequired,
-               i_productplantcosting~costinglotsize,
-               i_productplantcosting~productiscostingrelevant
+*                   \_GoodsMovementQuantity-productproductionquantityunit,
+*                   \_GoodsMovementQuantity-productionschedulingprofile,
+                   i_productworkscheduling~productproductionquantityunit,
+                   i_productworkscheduling~productionschedulingprofile,
+                   i_productplantsupplyplanning~*,
+                   i_productplantsales~loadinggroup,
+                   i_productplantprocurement~isautopurordcreationallowed,
+                   i_productplantprocurement~issourcelistrequired,
+                   i_productplantcosting~costinglotsize,
+                   i_productplantcosting~productiscostingrelevant
 
-        FROM i_productplantbasic WITH PRIVILEGED ACCESS
+            FROM i_productplantbasic WITH PRIVILEGED ACCESS
 
-        ##SELECT_WITH_PRIVILEGED_ACCESS[_GOODSMOVEMENTQUANTITY]
+            ##SELECT_WITH_PRIVILEGED_ACCESS[_GOODSMOVEMENTQUANTITY]
 
 
-        LEFT JOIN i_productworkscheduling WITH PRIVILEGED ACCESS
-          ON i_productplantbasic~product = i_productworkscheduling~product
-         AND i_productplantbasic~plant = i_productworkscheduling~plant
-        LEFT JOIN i_productplantsupplyplanning WITH PRIVILEGED ACCESS
-          ON i_productplantbasic~product = i_productplantsupplyplanning~product
-         AND i_productplantbasic~plant = i_productplantsupplyplanning~plant
-        LEFT JOIN i_productplantsales WITH PRIVILEGED ACCESS
-          ON i_productplantbasic~product = i_productplantsales~product
-         AND i_productplantbasic~plant = i_productplantsales~plant
-        LEFT JOIN i_productplantprocurement WITH PRIVILEGED ACCESS
-          ON i_productplantbasic~product = i_productplantprocurement~product
-         AND i_productplantbasic~plant = i_productplantprocurement~plant
-        LEFT JOIN i_productplantcosting WITH PRIVILEGED ACCESS
-          ON i_productplantbasic~product = i_productplantcosting~product
-         AND i_productplantbasic~plant = i_productplantcosting~plant
+            LEFT JOIN i_productworkscheduling WITH PRIVILEGED ACCESS
+              ON i_productplantbasic~product = i_productworkscheduling~product
+             AND i_productplantbasic~plant = i_productworkscheduling~plant
+            LEFT JOIN i_productplantsupplyplanning WITH PRIVILEGED ACCESS
+              ON i_productplantbasic~product = i_productplantsupplyplanning~product
+             AND i_productplantbasic~plant = i_productplantsupplyplanning~plant
+            LEFT JOIN i_productplantsales WITH PRIVILEGED ACCESS
+              ON i_productplantbasic~product = i_productplantsales~product
+             AND i_productplantbasic~plant = i_productplantsales~plant
+            LEFT JOIN i_productplantprocurement WITH PRIVILEGED ACCESS
+              ON i_productplantbasic~product = i_productplantprocurement~product
+             AND i_productplantbasic~plant = i_productplantprocurement~plant
+            LEFT JOIN i_productplantcosting WITH PRIVILEGED ACCESS
+              ON i_productplantbasic~product = i_productplantcosting~product
+             AND i_productplantbasic~plant = i_productplantcosting~plant
 
-        WHERE (lv_where)
-*        where i_productplantbasic~product = 'ZTEST_FG001'
+            WHERE (lv_where)
+*            where i_productplantbasic~product = 'ZTEST_FG001'
 
-        INTO TABLE @DATA(lt_marc).
+            INTO TABLE @DATA(lt_marc).
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_marc).
+            lv_error400 = 'X'.
+            lv_error_message_marc = lo_sql_error_marc->get_text( ).
+            lv_text = lv_error_message_marc.
+        ENDTRY.
 
         IF lt_marc IS NOT INITIAL.
           LOOP  AT lt_marc INTO DATA(ls_marc).
@@ -3668,13 +3710,21 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
       WHEN 'MKAL'  OR 'mkal' .
-        SELECT * FROM i_productionversion WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_mkal).
+        data:lv_error_message_mkal type string.
+        try.
+            SELECT * FROM i_productionversion WITH PRIVILEGED ACCESS
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_mkal).
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_mkal).
+            lv_error400 = 'X'.
+            lv_error_message_mkal = lo_sql_error_mkal->get_text( ).
+            lv_text = lv_error_message_mkal.
+        ENDTRY.
 
         IF lt_mkal IS NOT INITIAL.
           LOOP  AT lt_mkal INTO DATA(ls_mkal).
@@ -3797,22 +3847,30 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN 'AFKO'  OR 'afko' .
-        SELECT i_manufacturingorder~*,
-               i_billofmaterialheaderdex_2~*
-          FROM i_manufacturingorder WITH PRIVILEGED ACCESS
-          LEFT JOIN i_billofmaterialheaderdex_2 WITH PRIVILEGED ACCESS
-            ON i_manufacturingorder~billofmaterialcategory = i_billofmaterialheaderdex_2~billofmaterialcategory
-         " and i_manufacturingorder~BillOfMaterial = i_billofmaterialheaderdex_2~BillOfMaterial
-           AND i_manufacturingorder~billofmaterialinternalid = i_billofmaterialheaderdex_2~billofmaterial
-           AND i_manufacturingorder~billofmaterialvariant = i_billofmaterialheaderdex_2~billofmaterialvariant
-           AND i_manufacturingorder~billofmaterialvariantusage = i_billofmaterialheaderdex_2~billofmaterialvariantusage
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_afko).
+        data:lv_error_message_afko type string.
+        try.
+            SELECT i_manufacturingorder~*,
+                   i_billofmaterialheaderdex_2~*
+              FROM i_manufacturingorder WITH PRIVILEGED ACCESS
+              LEFT JOIN i_billofmaterialheaderdex_2 WITH PRIVILEGED ACCESS
+                ON i_manufacturingorder~billofmaterialcategory = i_billofmaterialheaderdex_2~billofmaterialcategory
+             " and i_manufacturingorder~BillOfMaterial = i_billofmaterialheaderdex_2~BillOfMaterial
+               AND i_manufacturingorder~billofmaterialinternalid = i_billofmaterialheaderdex_2~billofmaterial
+               AND i_manufacturingorder~billofmaterialvariant = i_billofmaterialheaderdex_2~billofmaterialvariant
+               AND i_manufacturingorder~billofmaterialvariantusage = i_billofmaterialheaderdex_2~billofmaterialvariantusage
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_afko).
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_afko).
+            lv_error400 = 'X'.
+            lv_error_message_afko = lo_sql_error_afko->get_text( ).
+            lv_text = lv_error_message_afko.
+        ENDTRY.
 
         IF lt_afko IS NOT INITIAL.
           LOOP  AT lt_afko INTO DATA(ls_afko).
@@ -4127,14 +4185,23 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN 'AFPO'  OR 'afpo' .
-        SELECT * FROM i_manufacturingorderitem WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_afpo).
+        data:lv_error_message_afpo type string.
+        try.
+            SELECT * FROM i_manufacturingorderitem WITH PRIVILEGED ACCESS
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_afpo).
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_afpo).
+            lv_error400 = 'X'.
+            lv_error_message_afpo = lo_sql_error_afpo->get_text( ).
+            lv_text = lv_error_message_afpo.
+        ENDTRY.
+
 
         IF lt_afpo IS NOT INITIAL.
           LOOP  AT lt_afpo INTO DATA(ls_afpo).
@@ -4363,48 +4430,59 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN 'PLPO'  OR 'plpo' .
-        SELECT *
-*           i_inspplanoperationversion_2~inspectionplangroup,
-*           i_inspplanoperationversion_2~boooperationinternalid,
-*           i_inspplanoperationversion_2~booopinternalversioncounter,
-*           i_inspplanoperationversion_2~billofoperationstype,
-*           i_inspplanoperationversion_2~inspectionplan,
-*           i_inspplanoperationversion_2~workcenterinternalid,
-*           i_inspplanoperationversion_2~workcentertypecode,
-*           i_inspplanoperationversion_2~isdeleted,
-*           i_inspplanoperationversion_2~isimplicitlydeleted,
-*           i_inspplanoperationversion_2~operationexternalid,
-*           i_inspplanoperationversion_2~operation,
-*           i_inspplanoperationversion_2~operationtext,
-*           i_inspplanoperationversion_2~plant,
-*           i_inspplanoperationversion_2~operationcontrolprofile,
-*           i_inspplanoperationversion_2~operationstandardtextcode,
-*           i_inspplanoperationversion_2~billofoperationsreftype,
-*           i_inspplanoperationversion_2~billofoperationsrefgroup,
-*           i_inspplanoperationversion_2~billofoperationsrefvariant,
-*           i_inspplanoperationversion_2~boorefoperationincrementvalue,
-*           i_inspplanoperationversion_2~inspsbstcompletionconfirmation,
-*           i_inspplanoperationversion_2~inspsbsthasnotimeorquantity,
-*           i_inspplanoperationversion_2~operationreferencequantity,
-*           i_inspplanoperationversion_2~operationunit,
-*           i_inspplanoperationversion_2~opqtytobaseqtydnmntr,
-*           i_inspplanoperationversion_2~opqtytobaseqtynmrtr,
-*           i_inspplanoperationversion_2~creationdate,
-*           i_inspplanoperationversion_2~createdbyuser,
-*           i_inspplanoperationversion_2~lastchangedate,
-*           i_inspplanoperationversion_2~lastchangedbyuser,
-*           i_inspplanoperationversion_2~changenumber,
-*           i_inspplanoperationversion_2~validitystartdate,
-*           i_inspplanoperationversion_2~validityenddate
 
-        FROM i_mfgboooperationchangestate WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_plpo).
+        data:lv_error_message_plpo type string.
+
+        try.
+            SELECT *
+*               i_inspplanoperationversion_2~inspectionplangroup,
+*               i_inspplanoperationversion_2~boooperationinternalid,
+*               i_inspplanoperationversion_2~booopinternalversioncounter,
+*               i_inspplanoperationversion_2~billofoperationstype,
+*               i_inspplanoperationversion_2~inspectionplan,
+*               i_inspplanoperationversion_2~workcenterinternalid,
+*               i_inspplanoperationversion_2~workcentertypecode,
+*               i_inspplanoperationversion_2~isdeleted,
+*               i_inspplanoperationversion_2~isimplicitlydeleted,
+*               i_inspplanoperationversion_2~operationexternalid,
+*               i_inspplanoperationversion_2~operation,
+*               i_inspplanoperationversion_2~operationtext,
+*               i_inspplanoperationversion_2~plant,
+*               i_inspplanoperationversion_2~operationcontrolprofile,
+*               i_inspplanoperationversion_2~operationstandardtextcode,
+*               i_inspplanoperationversion_2~billofoperationsreftype,
+*               i_inspplanoperationversion_2~billofoperationsrefgroup,
+*               i_inspplanoperationversion_2~billofoperationsrefvariant,
+*               i_inspplanoperationversion_2~boorefoperationincrementvalue,
+*               i_inspplanoperationversion_2~inspsbstcompletionconfirmation,
+*               i_inspplanoperationversion_2~inspsbsthasnotimeorquantity,
+*               i_inspplanoperationversion_2~operationreferencequantity,
+*               i_inspplanoperationversion_2~operationunit,
+*               i_inspplanoperationversion_2~opqtytobaseqtydnmntr,
+*               i_inspplanoperationversion_2~opqtytobaseqtynmrtr,
+*               i_inspplanoperationversion_2~creationdate,
+*               i_inspplanoperationversion_2~createdbyuser,
+*               i_inspplanoperationversion_2~lastchangedate,
+*               i_inspplanoperationversion_2~lastchangedbyuser,
+*               i_inspplanoperationversion_2~changenumber,
+*               i_inspplanoperationversion_2~validitystartdate,
+*               i_inspplanoperationversion_2~validityenddate
+
+            FROM i_mfgboooperationchangestate WITH PRIVILEGED ACCESS
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_plpo).
+
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_plpo).
+            lv_error400 = 'X'.
+            lv_error_message_plpo = lo_sql_error_plpo->get_text( ).
+            lv_text = lv_error_message_plpo.
+        ENDTRY.
 
         IF lt_plpo IS NOT INITIAL.
           LOOP  AT lt_plpo INTO DATA(ls_plpo).
@@ -4491,18 +4569,28 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN 'RESB'  OR 'resb' .
-        SELECT i_mfgorderoperationcomponent~*,
-               i_manufacturingorderitem~plannedorder
-        FROM i_mfgorderoperationcomponent WITH PRIVILEGED ACCESS
-        LEFT JOIN i_manufacturingorderitem WITH PRIVILEGED ACCESS
-        ON i_mfgorderoperationcomponent~manufacturingorder = i_manufacturingorderitem~manufacturingorder
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_resb).
+        data: lv_error_message_resb type string.
+
+        try.
+            SELECT i_mfgorderoperationcomponent~*,
+                   i_manufacturingorderitem~plannedorder
+            FROM i_mfgorderoperationcomponent WITH PRIVILEGED ACCESS
+            LEFT JOIN i_manufacturingorderitem WITH PRIVILEGED ACCESS
+            ON i_mfgorderoperationcomponent~manufacturingorder = i_manufacturingorderitem~manufacturingorder
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_resb).
+
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_resb).
+            lv_error400 = 'X'.
+            lv_error_message_resb = lo_sql_error_resb->get_text( ).
+            lv_text = lv_error_message_resb.
+        ENDTRY.
 
         IF lt_resb IS NOT INITIAL.
           LOOP  AT lt_resb INTO DATA(ls_resb).
@@ -4850,16 +4938,23 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN 'AFVC'  OR 'afvc' .
-*
-        SELECT *
-          FROM i_manufacturingorderoperation WITH PRIVILEGED ACCESS
-         WHERE (lv_where)
-          INTO TABLE @DATA(lt_afvc).
+        data: lv_error_message_afvc type string.
+        try.
+            SELECT *
+              FROM i_manufacturingorderoperation WITH PRIVILEGED ACCESS
+             WHERE (lv_where)
+              INTO TABLE @DATA(lt_afvc).
+        catch cx_sy_dynamic_osql_error into data(lo_sql_error_afvc).
+            lv_error400 = 'X'.
+            lv_error_message_afvc = lo_sql_error_afvc->get_text( ).
+            lv_text = lv_error_message_afvc.
+        ENDTRY.
 
         IF lt_afvc IS NOT INITIAL.
 
@@ -5452,16 +5547,26 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
       WHEN 'MBEW'  OR 'mbew' .
+       data lv_error_message_mbew type string.
 
-        SELECT *
-        FROM  i_productvaluationbasic WITH PRIVILEGED ACCESS
-        WHERE (lv_where)
-        INTO TABLE @DATA(lt_mbew).
+        try.
+            SELECT *
+            FROM  i_productvaluationbasic WITH PRIVILEGED ACCESS
+            WHERE (lv_where)
+            INTO TABLE @DATA(lt_mbew).
+
+        CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_mbew).
+            lv_error400 = 'X'.
+            lv_error_message_mbew = lo_sql_error_mbew->get_text( ).
+            lv_text = lv_error_message_mbew.
+
+        ENDTRY.
 
         IF lt_mbew IS NOT INITIAL.
           LOOP  AT lt_mbew INTO DATA(ls_mbew).
@@ -5544,8 +5649,10 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-          lv_error = 'X'.
-          lv_text = 'There is no data in table'.
+
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
 
         ENDIF.
 
@@ -5561,6 +5668,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
           CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_marm).
             lv_error400 = 'X'.
             lv_error_message_marm = lo_sql_error_marm->get_text( ).
+            lv_text = lv_error_message_marm.
 
         ENDTRY.
 
@@ -5591,35 +5699,26 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
           response->set_header_field( i_name  = lc_header_content
                                       i_value = lc_content_type ).
         ELSE.
-          lv_error404 = 'X'.
-          if lv_error_message_marm is INITIAL.
-            lv_text = 'There is no data in table'.
-          else.
-            lv_text = lv_error_message_marm.
-          ENDIF.
+            if lv_error400 <> 'X'.
+                lv_error = 'X'.  "204 no data
+            endif.
         ENDIF.
 
+
       WHEN OTHERS.
-        lv_error1 = 'X'. "没有找到资源。
+        lv_error400 = 'X'. "没有找到资源。
         lv_text = 'The table entry was not found'.
 
     ENDCASE.
 
-    IF lv_error1 IS NOT INITIAL.
-      response->set_status( '404' ).
-      response->set_text( lv_text ).
+    IF lv_error IS NOT INITIAL.
+      response->set_status( '204' ).  "no data
       EXIT.
 
     ELSEIF lv_error400 IS NOT INITIAL.
-      response->set_status( '400' ).
+      response->set_status( '400' ).  "bad request
       response->set_text( lv_text ).
       exit.
-
-    elseif lv_error404 IS NOT INITIAL.
-      "propagate any errors raised
-      response->set_status( '404' ).
-      response->set_text( lv_text ).
-
 
     ENDIF.
 

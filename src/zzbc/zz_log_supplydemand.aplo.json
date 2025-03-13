@@ -1,0 +1,14 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "MRP Supply Demand items Job",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "subobjects": [
+    {
+      "name": "ZZ_LOG_SUPPLYDEMAND",
+      "description": "MRP Supply Demand items Job"
+    }
+  ]
+}

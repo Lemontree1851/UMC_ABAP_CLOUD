@@ -3,17 +3,19 @@
 define root view entity ZR_WF_ApprovalPath
   as select from ztbc_1008 as _ApprovalPath
 
-  association [0..1] to ZC_WF_PrType_VH      as _PrType         on  $projection.PrType = _PrType.Zvalue1
-  association [0..1] to ZC_WF_ApplyDepart_VH as _ApplyDepart    on  $projection.ApplyDepart = _ApplyDepart.Zvalue1
-  association [0..1] to ZC_WF_OrderType_VH   as _OrderType      on  $projection.OrderType = _OrderType.Zvalue1
-  association [0..1] to ZC_WF_BuyPurpose_VH  as _BuyPurpose     on  $projection.BuyPurpose = _BuyPurpose.Zvalue1
-  association [0..1] to ZC_WF_Location_VH    as _Kyoten         on  $projection.Kyoten = _Kyoten.Zvalue1
-  association [0..1] to ZC_WF_KNTTP_VH       as _KNTTP          on  $projection.Knttp = _KNTTP.Zvalue1
-  association [0..1] to I_CostCenterText     as _CostCenterText on  $projection.CostCenter            = _CostCenterText.CostCenter
-                                                                and _CostCenterText.ControllingArea   = 'A000'
-                                                                and _CostCenterText.Language          = $session.system_language
-                                                                and _CostCenterText.ValidityStartDate <= $session.system_date
-                                                                and _CostCenterText.ValidityEndDate   >= $session.system_date
+  association [0..1] to ZC_WF_PrType_VH      as _PrType          on  $projection.PrType = _PrType.Zvalue1
+  association [0..1] to ZC_WF_ApplyDepart_VH as _ApplyDepart     on  $projection.ApplyDepart = _ApplyDepart.Zvalue1
+  association [0..1] to ZC_WF_OrderType_VH   as _OrderType       on  $projection.OrderType = _OrderType.Zvalue1
+  association [0..1] to ZC_WF_BuyPurpose_VH  as _BuyPurpose      on  $projection.BuyPurpose = _BuyPurpose.Zvalue1
+  association [0..1] to ZC_WF_Location_VH    as _Kyoten          on  $projection.Kyoten = _Kyoten.Zvalue1
+  association [0..1] to ZC_WF_KNTTP_VH       as _KNTTP           on  $projection.Knttp = _KNTTP.Zvalue1
+  association [0..1] to I_CostCenterText     as _CostCenterText  on  $projection.CostCenter            = _CostCenterText.CostCenter
+                                                                 and _CostCenterText.ControllingArea   = 'A000'
+                                                                 and _CostCenterText.Language          = $session.system_language
+                                                                 and _CostCenterText.ValidityStartDate <= $session.system_date
+                                                                 and _CostCenterText.ValidityEndDate   >= $session.system_date
+  association [0..1] to I_PurchasingGroup    as _PurchasingGroup on  $projection.PurchaseGroup = _PurchasingGroup.PurchasingGroup
+
   composition [0..*] of ZR_WF_ApprovalNode   as _ApprovalNode
 {
   key workflow_id           as WorkflowId,
@@ -25,6 +27,7 @@ define root view entity ZR_WF_ApprovalPath
       kyoten                as Kyoten,
       knttp                 as Knttp,
       cost_center           as CostCenter,
+      purchase_group        as PurchaseGroup,
       amount_from           as AmountFrom,
       amount_to             as AmountTo,
       @Semantics.user.createdBy: true
@@ -46,5 +49,6 @@ define root view entity ZR_WF_ApprovalPath
       _BuyPurpose,
       _Kyoten,
       _KNTTP,
-      _CostCenterText
+      _CostCenterText,
+      _PurchasingGroup
 }

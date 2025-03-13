@@ -216,7 +216,8 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
            a~purchasingorganization,
            d~textobjecttype,
            d~plainlongtext,
-           e~schedulelinedeliverydate
+           e~schedulelinedeliverydate,
+           a~PurchaseOrderType "add by stanley 20250307
       FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS AS b
      INNER JOIN i_purchaseorderapi01 WITH PRIVILEGED ACCESS AS a
         ON b~purchaseorder = a~purchaseorder
@@ -386,14 +387,17 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
 
           ELSE.
             "如果不是completed 则不是传出对象。
-            lv_response = ''.
+             lv_response = ''.
           ENDIF.
 
         ENDIF.
 
       ELSE.
-
-        lv_response = ''.
+       if lw_poitems-PurchaseOrderType =  'ZB21'."add by stanley 20250307 for advanced purchase pass ZB21
+             lv_response = 'X'.
+       else.
+             lv_response = ''.
+       endif.
 
       ENDIF.
 

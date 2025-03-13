@@ -828,7 +828,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
         CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
 
-        DATA(lv_top)  = 50000.
+        DATA(lv_top)  = 1000.
         DATA(lv_skip) = -1000.
         DO.
           lv_skip += 1000.

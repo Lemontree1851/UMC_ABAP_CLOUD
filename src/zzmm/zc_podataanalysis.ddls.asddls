@@ -1,7 +1,7 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'PO Data Analysis'
 define view entity ZC_PODATAANALYSIS
-  as select from ZC_POMM01
+  as select distinct from ZC_POMM01
 
   association [1..1] to I_Supplier              as _Supplier        on  ZC_POMM01.Supplier               = _Supplier.Supplier
   association [0..1] to I_MRPController         as _MRPController   on  ZC_POMM01.MRPResponsible         = _MRPController.MRPController
