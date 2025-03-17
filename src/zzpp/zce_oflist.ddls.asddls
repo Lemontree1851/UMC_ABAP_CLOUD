@@ -8,6 +8,7 @@ define custom entity ZCE_OFLIST
   key MRPArea                       : abap.char(10);
   key PlndIndepRqmtType             : abap.char(4);
   key PlndIndepRqmtVersion          : abap.char(2);
+      @Consumption.valueHelpDefinition: [ { entity: { name: 'I_Customer_VH', element: 'Customer' } } ]
   key RequirementPlan               : abap.char(10);
   key RequirementSegment            : abap.char(40);
   key PlndIndepRqmtPeriod           : abap.char(8);
@@ -25,4 +26,6 @@ define custom entity ZCE_OFLIST
       Remark                        : abap.char(100);
       ProfitCenter                  : prctr;
       IntervalDays                  : int4;
+
+      UserEmail                     : abap.char(241); // ADD BY XINLEI XU 2025/03/17
 }

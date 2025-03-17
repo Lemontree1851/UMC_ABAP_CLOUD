@@ -3,7 +3,8 @@ CLASS lhc_zr_tmm_1011 DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     TYPES:BEGIN OF lty_request.
             INCLUDE TYPE zr_tmm_1011.
-    TYPES:  row TYPE i,
+    TYPES:  row       TYPE i,
+            useremail TYPE i_workplaceaddress-defaultemailaddress, " ADD BY XINLEI XU 2025/03/17
           END OF lty_request,
           lty_request_t TYPE TABLE OF lty_request.
     METHODS:
@@ -77,8 +78,12 @@ CLASS lhc_zr_tmm_1011 IMPLEMENTATION.
 
     CHECK ct_data IS NOT INITIAL.
 
-    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
-    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+*&--ADD BEGIN BY XINLEI XU 2025/03/17
+    READ TABLE ct_data INTO DATA(ls_data) INDEX 1.
+*&--ADD END BY XINLEI XU 2025/03/17
+
+*    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ). " DEL BY XINLEI XU 2025/03/17
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( ls_data-useremail ).
 
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
       CLEAR lv_length.

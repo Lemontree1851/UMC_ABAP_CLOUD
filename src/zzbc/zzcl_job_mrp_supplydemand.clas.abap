@@ -22,7 +22,34 @@ ENDCLASS.
 
 
 
-CLASS zzcl_job_mrp_supplydemand IMPLEMENTATION.
+CLASS ZZCL_JOB_MRP_SUPPLYDEMAND IMPLEMENTATION.
+
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+        ##NO_HANDLER
+      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
+        " handle exception
+    ENDTRY.
+  ENDMETHOD.
+
 
   METHOD if_apj_dt_exec_object~get_parameters.
     " Return the supported selection parameters here
@@ -36,6 +63,7 @@ CLASS zzcl_job_mrp_supplydemand IMPLEMENTATION.
     " Return the default parameters values here
     " et_parameter_val
   ENDMETHOD.
+
 
   METHOD if_apj_rt_exec_object~execute.
     TYPES: BEGIN OF ts_mrp_result,
@@ -125,6 +153,9 @@ CLASS zzcl_job_mrp_supplydemand IMPLEMENTATION.
             CATCH cx_uuid_error.
               " handle exception
           ENDTRY.
+
+          <lfs_data>-material = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = <lfs_data>-material ).
+
           <lfs_data>-created_by = sy-uname.
           GET TIME STAMP FIELD <lfs_data>-created_at.
           <lfs_data>-last_changed_by = sy-uname.
@@ -168,8 +199,10 @@ CLASS zzcl_job_mrp_supplydemand IMPLEMENTATION.
 
   ENDMETHOD.
 
+
   METHOD if_oo_adt_classrun~main.
   ENDMETHOD.
+
 
   METHOD init_application_log.
     TRY.
@@ -181,30 +214,4 @@ CLASS zzcl_job_mrp_supplydemand IMPLEMENTATION.
         " handle exception
     ENDTRY.
   ENDMETHOD.
-
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '1' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-        ##NO_HANDLER
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
-        " handle exception
-    ENDTRY.
-  ENDMETHOD.
-
 ENDCLASS.

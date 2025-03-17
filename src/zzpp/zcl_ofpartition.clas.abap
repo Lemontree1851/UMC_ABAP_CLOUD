@@ -25,7 +25,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_ofpartition IMPLEMENTATION.
+CLASS ZCL_OFPARTITION IMPLEMENTATION.
 
 
   METHOD get_process_date_range.

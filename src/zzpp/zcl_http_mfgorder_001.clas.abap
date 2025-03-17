@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_MFGORDER_001 IMPLEMENTATION.
+CLASS zcl_http_mfgorder_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -129,6 +129,7 @@ CLASS ZCL_HTTP_MFGORDER_001 IMPLEMENTATION.
         _reservation_item              TYPE i_mfgorderoperationcomponent-reservationitem,
         _goods_movement_type           TYPE i_mfgorderoperationcomponent-goodsmovementtype,
         _material_component_sort_text  TYPE i_mfgorderoperationcomponent-materialcomponentsorttext,
+        _procurement_type_item         TYPE i_productplantbasic-procurementtype,
       END OF ty_bom,
       tt_bom TYPE STANDARD TABLE OF ty_bom WITH DEFAULT KEY,
 
@@ -204,7 +205,7 @@ CLASS ZCL_HTTP_MFGORDER_001 IMPLEMENTATION.
       lc_msgty      TYPE string        VALUE 'E',
       lc_alpha_out  TYPE string        VALUE 'OUT'.
 
-GET TIME STAMP FIELD DATA(lv_timestamp_start).
+    GET TIME STAMP FIELD DATA(lv_timestamp_start).
 
     "Obtain request data
     DATA(lv_req_body) = request->get_text( ).
@@ -400,7 +401,7 @@ GET TIME STAMP FIELD DATA(lv_timestamp_start).
           "Obtain data of enterprise project element
           SELECT wbselementinternalid,
                  projectelement
-            FROM i_enterpriseprojectelement_2 WITH PRIVILEGED ACCESS
+            FROM i_enterpriseprojectelement_2 WITH PRIVILEGED ACCESS "#EC CI_NO_TRANSFORM
              FOR ALL ENTRIES IN @lt_manufacturingorder
            WHERE wbselementinternalid = @lt_manufacturingorder-wbselementinternalid_2
             INTO TABLE @DATA(lt_enterpriseprojectelement_2).
@@ -432,7 +433,7 @@ GET TIME STAMP FIELD DATA(lv_timestamp_start).
                  orderhasgeneratedoperations,
                  orderistobehandledinbatches,
                  materialavailyisnotchecked
-            FROM i_mfgorderwithstatus WITH PRIVILEGED ACCESS
+            FROM i_mfgorderwithstatus WITH PRIVILEGED ACCESS "#EC CI_NO_TRANSFORM
              FOR ALL ENTRIES IN @lt_manufacturingorder
            WHERE manufacturingorder = @lt_manufacturingorder-_manufacturing_order
             INTO TABLE @DATA(lt_mfgorderwithstatus).
@@ -441,7 +442,7 @@ GET TIME STAMP FIELD DATA(lv_timestamp_start).
           SELECT manufacturingorder AS _manufacturing_order,
                  salesorderscheduleline AS _sales_order_schedule_line,
                  materialprocurementtype AS _material_procurement_type
-            FROM i_manufacturingorderitem WITH PRIVILEGED ACCESS
+            FROM i_manufacturingorderitem WITH PRIVILEGED ACCESS "#EC CI_NO_TRANSFORM
              FOR ALL ENTRIES IN @lt_manufacturingorder
            WHERE manufacturingorder = @lt_manufacturingorder-_manufacturing_order
             INTO TABLE @DATA(lt_manufacturingorderitem).
@@ -489,13 +490,24 @@ GET TIME STAMP FIELD DATA(lv_timestamp_start).
                  reservationitem AS _reservation_item,
                  goodsmovementtype AS _goods_movement_type,
                  materialcomponentsorttext AS _material_component_sort_text
-            FROM i_mfgorderoperationcomponent WITH PRIVILEGED ACCESS AS a
+            FROM i_mfgorderoperationcomponent WITH PRIVILEGED ACCESS AS a "#EC CI_NO_TRANSFORM
             LEFT OUTER JOIN i_productdescription WITH PRIVILEGED ACCESS AS b
               ON b~product = a~material
              AND b~language = @sy-langu"ls_ztbc_1001-language
              FOR ALL ENTRIES IN @lt_manufacturingorder
            WHERE a~manufacturingorder = @lt_manufacturingorder-_manufacturing_order
             INTO TABLE @DATA(lt_mfgorderoperationcomponent).
+          IF sy-subrc = 0.
+            "Obtain data of product plant
+            SELECT product,
+                   plant,
+                   procurementtype
+              FROM i_productplantbasic WITH PRIVILEGED ACCESS "#EC CI_NO_TRANSFORM
+               FOR ALL ENTRIES IN @lt_mfgorderoperationcomponent
+             WHERE product = @lt_mfgorderoperationcomponent-_material
+               AND plant = @lt_mfgorderoperationcomponent-_plant
+              INTO TABLE @DATA(lt_productplantbasic).
+          ENDIF.
 
           "Obtain data of routing
           SELECT a~manufacturingorder AS _manufacturing_order,
@@ -534,7 +546,7 @@ GET TIME STAMP FIELD DATA(lv_timestamp_start).
                  a~opworkquantityunit6 AS _op_work_quantity_unit6,
                  a~workcenterstandardworkqty6,
                  a~workcenterstandardworkqtyunit6
-            FROM i_manufacturingorderoperation WITH PRIVILEGED ACCESS AS a
+            FROM i_manufacturingorderoperation WITH PRIVILEGED ACCESS AS a "#EC CI_NO_TRANSFORM
             LEFT OUTER JOIN i_workcenter WITH PRIVILEGED ACCESS AS b
               ON b~workcenterinternalid = a~workcenterinternalid
              AND b~workcentertypecode = a~workcentertypecode_2
@@ -557,6 +569,7 @@ GET TIME STAMP FIELD DATA(lv_timestamp_start).
     SORT lt_mfgorderwithstatus BY _manufacturing_order.
     SORT lt_manufacturingorderitem BY _manufacturing_order.
     SORT lt_mfgorderoperationcomponent BY _manufacturing_order billofmaterialitemnumber_2.
+    SORT lt_productplantbasic BY product plant.
     SORT lt_manufacturingorderoperation BY _manufacturing_order manufacturingorderoperation_2.
 
     lv_timestamp = cl_abap_context_info=>get_system_date( ) && cl_abap_context_info=>get_system_time( ).
@@ -622,6 +635,14 @@ GET TIME STAMP FIELD DATA(lv_timestamp_start).
           ENDIF.
 
           MOVE-CORRESPONDING ls_mfgorderoperationcomponent TO ls_bom.
+
+          "Read data of product plant
+          READ TABLE lt_productplantbasic INTO DATA(ls_productplantbasic) WITH KEY product = ls_mfgorderoperationcomponent-_material
+                                                                                   plant = ls_mfgorderoperationcomponent-_plant
+                                                                          BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_bom-_procurement_type_item = ls_productplantbasic-procurementtype.
+          ENDIF.
 
           TRY.
               ls_bom-_base_unit = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out iv_input = ls_bom-_base_unit ).

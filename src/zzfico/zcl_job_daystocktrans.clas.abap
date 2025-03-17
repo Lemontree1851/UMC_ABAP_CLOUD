@@ -241,12 +241,49 @@ CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
 *&--ADD END BY XINLEI XU 2025/01/13 CR#4046
 
 *   日別、得意先別、品目タイプ別の在庫金額の抽出
-    SELECT a~companycode,                             "会社コード
-           a~material AS product,                     "品目
-           a~valuationarea AS plant,                  "プラント
+*&--MOD BEGIN BY XINLEI XU 2025/03/14
+*    SELECT a~companycode,                             "会社コード
+*           a~material AS product,                     "品目
+*           a~valuationarea AS plant,                  "プラント
+*           a~valuationquantity,                       "評価数量
+*           a~unitofmeasure,
+*           a~companycodecurrency AS currency,         "通貨
+*           b~producttype,                             "製品タイプ
+*           c~materialtypename,                        "製品タイプテキスト
+*           e~businesspartner,                         "ビジネスパートナ
+*           e~businesspartnername,                     "ビジネスパートナ名
+*           f~priceunitqty,
+*           division( f~movingaverageprice,f~priceunitqty,2 ) AS movingaverageprice, "移動平均価
+*           division( f~standardprice,f~priceunitqty,2 ) AS standardprice,           "標準原価
+*           CASE f~movingaverageprice                  "移動平均価
+*               WHEN 0 THEN division( f~standardprice,f~priceunitqty,2 )
+*               ELSE division( f~movingaverageprice,f~priceunitqty,2 )
+*           END AS averageprice
+*      FROM i_inventoryamtbyfsclperd( p_fiscalperiod = @lv_poper , p_fiscalyear = @lv_gjahr ) WITH PRIVILEGED ACCESS AS a
+*      INNER JOIN i_product WITH PRIVILEGED ACCESS AS b ON b~product = a~material
+*      INNER JOIN i_productvaluationbasic WITH PRIVILEGED ACCESS AS f ON f~product = a~material
+*                                                                    AND f~valuationarea = a~valuationarea
+*      LEFT JOIN i_producttypetext WITH PRIVILEGED ACCESS AS c ON c~producttype = b~producttype
+*                                                             AND c~language = 'J'
+*      LEFT JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS d ON d~plant = a~valuationarea
+*                                                              AND d~product = a~material
+*                                                              AND d~mrpresponsible IS NOT INITIAL
+*      LEFT JOIN i_businesspartner WITH PRIVILEGED ACCESS AS e ON e~searchterm2 = right( d~mrpresponsible,2 )
+*      WHERE a~companycode IN @lr_companycode
+*        AND a~valuationarea IN @lr_plant
+*        AND a~ledger = '0L'
+*        AND ( a~invtryvalnspecialstocktype = 'O'
+*         OR   a~invtryvalnspecialstocktype = 'T'
+*         OR   a~invtryvalnspecialstocktype = @space )
+*        AND b~producttype IN ( 'ZFRT','ZHLB','ZROH' )
+*      INTO TABLE @DATA(lt_productplant).
+
+    SELECT f~companycode,                             "会社コード
+           f~product,                                 "品目
+           f~valuationarea AS plant,                  "プラント
            a~valuationquantity,                       "評価数量
-           a~unitofmeasure,
-           a~companycodecurrency AS currency,         "通貨
+           f~baseunit AS unitofmeasure,
+           f~currency,                                "通貨
            b~producttype,                             "製品タイプ
            c~materialtypename,                        "製品タイプテキスト
            e~businesspartner,                         "ビジネスパートナ
@@ -258,24 +295,25 @@ CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
                WHEN 0 THEN division( f~standardprice,f~priceunitqty,2 )
                ELSE division( f~movingaverageprice,f~priceunitqty,2 )
            END AS averageprice
-      FROM i_inventoryamtbyfsclperd( p_fiscalperiod = @lv_poper , p_fiscalyear = @lv_gjahr ) WITH PRIVILEGED ACCESS AS a
-      INNER JOIN i_product WITH PRIVILEGED ACCESS AS b ON b~product = a~material
-      INNER JOIN i_productvaluationbasic WITH PRIVILEGED ACCESS AS f ON f~product = a~material
-                                                                    AND f~valuationarea = a~valuationarea
+      FROM i_productvaluationbasic WITH PRIVILEGED ACCESS AS f
+      LEFT JOIN i_inventoryamtbyfsclperd( p_fiscalperiod = @lv_poper, p_fiscalyear = @lv_gjahr ) WITH PRIVILEGED ACCESS AS a
+             ON a~material = f~product
+            AND a~valuationarea = f~valuationarea
+            AND a~ledger = '0L'
+            AND a~invtryvalnspecialstocktype IN ( 'O','T', @space )
+      LEFT JOIN i_product WITH PRIVILEGED ACCESS AS b ON b~product = f~product
       LEFT JOIN i_producttypetext WITH PRIVILEGED ACCESS AS c ON c~producttype = b~producttype
-                                                             AND c~language = 'J'
-      LEFT JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS d ON d~plant = a~valuationarea
-                                                              AND d~product = a~material
-                                                              AND d~mrpresponsible IS NOT INITIAL
+                                                             AND c~language = @sy-langu
+      LEFT JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS d ON d~plant = f~valuationarea
+                                                               AND d~product = f~product
+                                                               AND d~mrpresponsible IS NOT INITIAL
       LEFT JOIN i_businesspartner WITH PRIVILEGED ACCESS AS e ON e~searchterm2 = right( d~mrpresponsible,2 )
-      WHERE a~companycode IN @lr_companycode
-        AND a~valuationarea IN @lr_plant
-        AND a~ledger = '0L'
-        AND ( a~invtryvalnspecialstocktype = 'O'
-         OR   a~invtryvalnspecialstocktype = 'T'
-         OR   a~invtryvalnspecialstocktype = @space )
+      WHERE f~companycode IN @lr_companycode
+        AND f~valuationarea IN @lr_plant
+        AND f~standardprice IS NOT INITIAL
         AND b~producttype IN ( 'ZFRT','ZHLB','ZROH' )
       INTO TABLE @DATA(lt_productplant).
+*&--MOD END BY XINLEI XU 2025/03/14
 
     SORT lt_productplant BY companycode     ASCENDING
                             plant           ASCENDING

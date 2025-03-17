@@ -20,7 +20,12 @@ define root custom entity ZC_InventoryRequirement
       ShowInformation        : abap_boolean; // 購買関連情報表示
       ShowDetailLines        : abap_boolean; // 購買関連明細行表示
       ShowDEMAND             : abap_boolean; // DEMAND明細表示
-
+      
+      // ADD BEGIN BY XINLEI XU 2025/03/14
+      FromMRPTable           : abap_boolean; // 同期済のMRPデータ使用
+      UserEmail              : abap.char(241);
+      // ADD END BY XINLEI XU 2025/03/14
+      
       // Dynamic Data
       DynamicData            : abap.string;
 }

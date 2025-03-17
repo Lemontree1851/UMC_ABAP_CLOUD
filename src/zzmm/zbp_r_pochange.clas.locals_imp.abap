@@ -2,7 +2,8 @@ CLASS lhc_pochange DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
     TYPES:BEGIN OF lty_request.
             INCLUDE TYPE zr_pochange.
-    TYPES:  row TYPE i,
+    TYPES:  row       TYPE i,
+            useremail TYPE i_workplaceaddress-defaultemailaddress, " ADD BY XINLEI XU 2025/03/17
           END OF lty_request,
           lty_request_t TYPE TABLE OF lty_request.
 
@@ -136,8 +137,14 @@ CLASS lhc_pochange IMPLEMENTATION.
       lv_message TYPE string,
       lc_null    TYPE c VALUE '-'.
 
+*&--ADD BEGIN BY XINLEI XU 2025/03/17
+    CHECK ct_data IS NOT INITIAL.
+    READ TABLE ct_data INTO DATA(ls_data1) INDEX 1.
+    DATA(lv_user_email) = ls_data1-useremail.
+*&--ADD END BY XINLEI XU 2025/03/17
+
 * Authorization Check
-    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+*    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ). " DEL BY XINLEI XU 2025/03/17
     DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
     lv_ekorg = zzcl_common_utils=>get_purchorg_by_user( lv_user_email ).
 
@@ -150,7 +157,7 @@ CLASS lhc_pochange IMPLEMENTATION.
 
       IF NOT lv_ekorg CS <lfs_data>-purchasingorganization.
         lv_status = 'E'.
-        MESSAGE e027(zbc_001) WITH <lfs_data>-purchasingorganization INTO lv_msg.
+        MESSAGE e030(zbc_001) WITH <lfs_data>-purchasingorganization INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
       ENDIF.
 
@@ -414,12 +421,12 @@ CLASS lhc_pochange IMPLEMENTATION.
         ls_purchaseorderitem_update-netpriceamount = 0.
         ls_purchaseorderitem_update-%control-netpriceamount = if_abap_behv=>mk-on.
         IF ls_data-discountinkindeligibility = lc_null.
-            ls_purchaseorderitem_update-invoiceisexpected = 'X'.
-            ls_purchaseorderitem_update-%control-invoiceisexpected = if_abap_behv=>mk-on.
-            ls_purchaseorderitem_update-invoiceisgoodsreceiptbased = 'X'.
-            ls_purchaseorderitem_update-%control-invoiceisgoodsreceiptbased = if_abap_behv=>mk-on.
-            ls_purchaseorderitem_update-evaldrcptsettlmtisallowed = 'X'.
-            ls_purchaseorderitem_update-%control-evaldrcptsettlmtisallowed = if_abap_behv=>mk-on.
+          ls_purchaseorderitem_update-invoiceisexpected = 'X'.
+          ls_purchaseorderitem_update-%control-invoiceisexpected = if_abap_behv=>mk-on.
+          ls_purchaseorderitem_update-invoiceisgoodsreceiptbased = 'X'.
+          ls_purchaseorderitem_update-%control-invoiceisgoodsreceiptbased = if_abap_behv=>mk-on.
+          ls_purchaseorderitem_update-evaldrcptsettlmtisallowed = 'X'.
+          ls_purchaseorderitem_update-%control-evaldrcptsettlmtisallowed = if_abap_behv=>mk-on.
         ENDIF.
       ENDIF.
       "Tax Code

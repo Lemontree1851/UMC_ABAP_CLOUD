@@ -36,11 +36,14 @@ annotate entity ZC_SALESORDER_U with
   Material;
   @UI.selectionField: [{ position: 50 }]
   @EndUserText.label: '登録日（ヘッダー）'
+  @Consumption.filter.selectionType: #INTERVAL
   CreationDate;
   @UI.selectionField: [{ position: 55 }]
+  @Consumption.filter.selectionType: #INTERVAL
   RequestedDeliveryDate;
   @EndUserText.label: '計画出庫日付'
   @UI.selectionField: [{ position: 60 }]
+  @Consumption.filter.selectionType: #INTERVAL
   GoodsIssueDate;
   @UI.selectionField: [{ position: 65 }]
   @EndUserText.label: '受注伝票タイプ（Old）'

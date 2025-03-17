@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_OFLIST IMPLEMENTATION.
+CLASS zcl_oflist IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -49,6 +49,12 @@ CLASS ZCL_OFLIST IMPLEMENTATION.
               DATA(r_plndindeprqmtisactive) = ls_ranges-range.
             WHEN 'REQUIREMENTDATE'.
               DATA(r_requirementdate) = ls_ranges-range.
+*&--ADD BEGIN BY XINLEI XU 2025/03/17
+            WHEN 'USEREMAIL'.
+              DATA lv_user_email TYPE zce_oflist-useremail.
+              lv_user_email = ls_ranges-range[ 1 ]-low.
+*&--ADD END BY XINLEI XU 2025/03/17
+            WHEN OTHERS.
           ENDCASE.
         ENDLOOP.
 
@@ -82,12 +88,14 @@ CLASS ZCL_OFLIST IMPLEMENTATION.
         LEFT OUTER JOIN i_productdescription WITH PRIVILEGED ACCESS AS product_text
           ON root~product = product_text~product
           AND product_text~language = @sy-langu
-        "权限控制
-        INNER JOIN zr_tbc1006 AS _assignplant
-          ON _assignplant~plant = root~plant
-        INNER JOIN zc_businessuseremail AS _user
-          ON  _user~email  = _assignplant~mail
-          AND _user~userid = @sy-uname
+*&--DEL BEGIN BY XINLEI XU 2025/03/17
+*        "权限控制
+*        INNER JOIN zr_tbc1006 AS _assignplant
+*          ON _assignplant~plant = root~plant
+*        INNER JOIN zc_businessuseremail AS _user
+*          ON  _user~email  = _assignplant~mail
+*          AND _user~userid = @sy-uname
+*&--DEL END BY XINLEI XU 2025/03/17
         WHERE root~plant IN @r_plant
           AND root~requirementplan IN @r_requirementplan
           AND root~product IN @r_product
@@ -96,6 +104,20 @@ CLASS ZCL_OFLIST IMPLEMENTATION.
           AND cust_mat2~materialbycustomer IN @r_materialbycustomer
           AND pir_bik~plndindeprqmtisactive IN @r_plndindeprqmtisactive
         INTO TABLE @DATA(lt_pir_item).
+
+*&--ADD BEGIN BY XINLEI XU 2025/03/17
+*&--Authorization Check
+        DATA lr_plant TYPE RANGE OF i_plant-plant.
+        DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+        IF lv_plant IS INITIAL.
+          CLEAR lt_pir_item.
+        ELSE.
+          SPLIT lv_plant AT '&' INTO TABLE DATA(lt_plant_check).
+          CLEAR lr_plant.
+          lr_plant = VALUE #( FOR plant IN lt_plant_check ( sign = 'I' option = 'EQ' low = plant ) ).
+          DELETE lt_pir_item WHERE plant NOT IN lr_plant.
+        ENDIF.
+*&--ADD END BY XINLEI XU 2025/03/17
 
         DATA(lt_pir_key) = lt_pir_item.
         LOOP AT lt_pir_key ASSIGNING FIELD-SYMBOL(<fs_pir_key>).
@@ -222,7 +244,8 @@ CLASS ZCL_OFLIST IMPLEMENTATION.
 
         "过滤
         zzcl_odata_utils=>filtering( EXPORTING io_filter = io_request->get_filter( )
-                                               it_excluded = VALUE #( ( fieldname = 'INTERVALDAYS' ) )
+                                               it_excluded = VALUE #( ( fieldname = 'INTERVALDAYS' )
+                                                                      ( fieldname = 'USEREMAIL' ) )
                                      CHANGING  ct_data = lt_oflist ).
         "排序
         zzcl_odata_utils=>orderby( EXPORTING it_order = io_request->get_sort_elements( )

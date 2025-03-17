@@ -92,4 +92,6 @@ define root custom entity ZR_PURINFOMASTERLIST
       productsalesorg                : abap.char(4);
       zvalue2                        : abap.char(120);
       Rate                           : abap.char(50);
+
+      UserEmail                      : abap.char(241); // ADD BY XINLEI XU 2025/03/17
 }

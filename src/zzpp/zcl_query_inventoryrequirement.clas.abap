@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
+CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -250,6 +250,13 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                 DATA(lv_showdetaillines) = ls_filter_cond-range[ 1 ]-low.
               WHEN 'SHOWDEMAND'.
                 DATA(lv_showdemand) = ls_filter_cond-range[ 1 ]-low.
+*&--ADD BEGIN BY XINLEI XU 2025/03/14
+              WHEN 'FROMMRPTABLE'.
+                DATA(lv_frommrptable) = ls_filter_cond-range[ 1 ]-low.
+              WHEN 'USEREMAIL'.
+                DATA lv_user_email TYPE zc_inventoryrequirement-useremail.
+                lv_user_email = ls_filter_cond-range[ 1 ]-low.
+*&--ADD END BY XINLEI XU 2025/03/14
               WHEN OTHERS.
             ENDCASE.
           ENDLOOP.
@@ -301,7 +308,7 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
         INTO TABLE @DATA(lt_fixed_data).
 
 *&--Authorization Check
-      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+*      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ). " DEL BY XINLEI XU 2025/03/14
       DATA(lv_plant_check) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
       IF lv_plant_check IS INITIAL.
         CLEAR lt_fixed_data.
@@ -393,42 +400,43 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
           lv_mrparea = lv_plant.
         ENDIF.
 
-        DATA(lv_path)   = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-        DATA(lv_select) = |Material,MRPArea,MRPPlant,MRPElementOpenQuantity,MRPElementAvailyOrRqmtDate,MRPElementBusinessPartner,| &&
-                          |MRPElementBusinessPartnerName,MRPElementCategory,MRPElementCategoryName,MRPElementDocumentType,| &&
-                          |MRPElement,MRPElementItem,MRPElementScheduleLine,SourceMRPElement,SourceMRPElementCategory,SourceMRPElementItem,SourceMRPElementScheduleLine|.
+        IF lv_frommrptable = abap_false.
+          DATA(lv_path)   = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+          DATA(lv_select) = |Material,MRPArea,MRPPlant,MRPElementOpenQuantity,MRPElementAvailyOrRqmtDate,MRPElementBusinessPartner,| &&
+                            |MRPElementBusinessPartnerName,MRPElementCategory,MRPElementCategoryName,MRPElementDocumentType,| &&
+                            |MRPElement,MRPElementItem,MRPElementScheduleLine,SourceMRPElement,SourceMRPElementCategory,SourceMRPElementItem,SourceMRPElementScheduleLine|.
 
-        lv_filter = |MRPPlant eq '{ lv_plant }' and MRPArea eq '{ lv_mrparea }'|.
+          lv_filter = |MRPPlant eq '{ lv_plant }' and MRPArea eq '{ lv_mrparea }'|.
 
-        IF lines( lt_temp ) < 30.
-          CLEAR lv_count.
-          LOOP AT lt_temp INTO DATA(ls_temp).
-            lv_count += 1.
-            IF lv_count = 1.
-              lv_filter = |{ lv_filter } and (Material eq '{ ls_temp-product }'|.
-            ELSE.
-              lv_filter = |{ lv_filter } or Material eq '{ ls_temp-product }'|.
-            ENDIF.
-          ENDLOOP.
-          lv_filter = |{ lv_filter })|.
-        ENDIF.
+          IF lines( lt_temp ) < 30.
+            CLEAR lv_count.
+            LOOP AT lt_temp INTO DATA(ls_temp).
+              lv_count += 1.
+              IF lv_count = 1.
+                lv_filter = |{ lv_filter } and (Material eq '{ ls_temp-product }'|.
+              ELSE.
+                lv_filter = |{ lv_filter } or Material eq '{ ls_temp-product }'|.
+              ENDIF.
+            ENDLOOP.
+            lv_filter = |{ lv_filter })|.
+          ENDIF.
 
-        zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
-                                                     iv_method      = if_web_http_client=>get
-                                                     iv_select      = lv_select
-                                                     iv_filter      = lv_filter
-                                           IMPORTING ev_status_code = DATA(lv_status_code)
-                                                     ev_response    = DATA(lv_response) ).
-        IF lv_status_code = 200.
-          REPLACE ALL OCCURRENCES OF `MRPElementAvailyOrRqmtDate`    IN lv_response WITH `Mrpelementavailyorrqmtdatestr`.
-          REPLACE ALL OCCURRENCES OF `MRPElementBusinessPartner`     IN lv_response WITH `Mrpelementbusinesspartner`.
-          REPLACE ALL OCCURRENCES OF `MRPElementBusinessPartnerName` IN lv_response WITH `Mrpelementbusinesspartnername`.
-          REPLACE ALL OCCURRENCES OF `SourceMRPElementScheduleLine`  IN lv_response WITH `Sourcemrpelementscheduleline`.
+          zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
+                                                       iv_method      = if_web_http_client=>get
+                                                       iv_select      = lv_select
+                                                       iv_filter      = lv_filter
+                                             IMPORTING ev_status_code = DATA(lv_status_code)
+                                                       ev_response    = DATA(lv_response) ).
+          IF lv_status_code = 200.
+            REPLACE ALL OCCURRENCES OF `MRPElementAvailyOrRqmtDate`    IN lv_response WITH `Mrpelementavailyorrqmtdatestr`.
+            REPLACE ALL OCCURRENCES OF `MRPElementBusinessPartner`     IN lv_response WITH `Mrpelementbusinesspartner`.
+            REPLACE ALL OCCURRENCES OF `MRPElementBusinessPartnerName` IN lv_response WITH `Mrpelementbusinesspartnername`.
+            REPLACE ALL OCCURRENCES OF `SourceMRPElementScheduleLine`  IN lv_response WITH `Sourcemrpelementscheduleline`.
 
-          REPLACE ALL OCCURRENCES OF `__count`    IN lv_response WITH `count`.
-          REPLACE ALL OCCURRENCES OF `__metadata` IN lv_response WITH `metadata`.
-          REPLACE ALL OCCURRENCES OF `\/Date(`    IN lv_response  WITH ``.
-          REPLACE ALL OCCURRENCES OF `)\/`        IN lv_response  WITH ``.
+            REPLACE ALL OCCURRENCES OF `__count`    IN lv_response WITH `count`.
+            REPLACE ALL OCCURRENCES OF `__metadata` IN lv_response WITH `metadata`.
+            REPLACE ALL OCCURRENCES OF `\/Date(`    IN lv_response  WITH ``.
+            REPLACE ALL OCCURRENCES OF `)\/`        IN lv_response  WITH ``.
 
 *&--MOD BEGIN BY XINLEI XU 2025/03/04 Optimize for speed
 *          xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
@@ -436,13 +444,41 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
 *             ( xco_cp_json=>transformation->boolean_to_abap_bool )
 *          ) )->write_to( REF #( ls_response ) ).
 
-          /ui2/cl_json=>deserialize( EXPORTING json = lv_response
-                                               pretty_name = /ui2/cl_json=>pretty_mode-camel_case
-                                     CHANGING  data = ls_response ).
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_response
+                                                 pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+                                       CHANGING  data = ls_response ).
 *&--MOD END BY XINLEI XU 2025/03/04
+            DATA(lt_mrpdata) = ls_response-d-results.
+          ENDIF.
+*&--ADD BEGIN BY XINLEI XU 2025/03/14
+        ELSE.
+          SELECT material,
+                 mrparea AS m_r_p_area,
+                 mrpplant AS m_r_p_plant,
+                 mrpelementopenquantity AS m_r_p_element_open_quantity,
+                 mrpelementavailyorrqmtdate,
+                 mrpelementbusinesspartner,
+                 mrpelementbusinesspartnername,
+                 mrpelementcategory AS m_r_p_element_category,
+                 mrpelementcategoryname AS m_r_p_element_category_name,
+                 mrpelementdocumenttype AS m_r_p_element_document_type,
+                 mrpelement AS m_r_p_element,
+                 mrpelementitem AS m_r_p_element_item,
+                 mrpelementscheduleline AS m_r_p_element_schedule_line,
+                 sourcemrpelement AS source_m_r_p_element,
+                 sourcemrpelementcategory AS source_m_r_p_element_category,
+                 sourcemrpelementitem AS source_m_r_p_element_item,
+                 sourcemrpelementscheduleline
+            FROM ztbc_1020
+             FOR ALL ENTRIES IN @lt_temp
+           WHERE material = @lt_temp-product
+             AND mrpplant = @lt_temp-plant
+            INTO CORRESPONDING FIELDS OF TABLE @lt_mrpdata.
+        ENDIF.
+*&--ADD END BY XINLEI XU 2025/03/14
 
-          DATA(lt_mrpdata) = ls_response-d-results.
-          LOOP AT lt_mrpdata ASSIGNING FIELD-SYMBOL(<lfs_mrpdata>).
+        LOOP AT lt_mrpdata ASSIGNING FIELD-SYMBOL(<lfs_mrpdata>).
+          IF lv_frommrptable = abap_false.
             IF <lfs_mrpdata>-mrpelementavailyorrqmtdatestr < 0.
               <lfs_mrpdata>-mrpelementavailyorrqmtdate = '19000101'.
             ELSEIF <lfs_mrpdata>-mrpelementavailyorrqmtdatestr = '253402214400000'.
@@ -453,40 +489,40 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                        )->get_moment( )->as( xco_cp_time=>format->abap )->value+0(8).
             ENDIF.
             <lfs_mrpdata>-product = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = <lfs_mrpdata>-material ).
+          ENDIF.
 
-            " 入庫処理日数考慮要否
-            IF lv_whether_process = lc_str_yes.
-              READ TABLE lt_fixed_data INTO DATA(ls_fixed_data) WITH KEY product = <lfs_mrpdata>-product BINARY SEARCH.
-              IF sy-subrc = 0.
-                " - 入庫処理日数
-                <lfs_mrpdata>-mrpelementavailyorrqmtdate = zzcl_common_utils=>calc_date_subtract( date = <lfs_mrpdata>-mrpelementavailyorrqmtdate
-                                                                                                  day  = CONV #( ls_fixed_data-goodsreceiptduration ) ).
-              ELSE.
-                CLEAR ls_fixed_data.
-              ENDIF.
+          " 入庫処理日数考慮要否
+          IF lv_whether_process = lc_str_yes.
+            READ TABLE lt_fixed_data INTO DATA(ls_fixed_data) WITH KEY product = <lfs_mrpdata>-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              " - 入庫処理日数
+              <lfs_mrpdata>-mrpelementavailyorrqmtdate = zzcl_common_utils=>calc_date_subtract( date = <lfs_mrpdata>-mrpelementavailyorrqmtdate
+                                                                                                day  = CONV #( ls_fixed_data-goodsreceiptduration ) ).
+            ELSE.
+              CLEAR ls_fixed_data.
             ENDIF.
+          ENDIF.
 
-            <lfs_mrpdata>-yearmonth = <lfs_mrpdata>-mrpelementavailyorrqmtdate+0(6).
-            TRY.
-                cl_scal_utils=>date_get_week(
-                  EXPORTING
-                    iv_date = <lfs_mrpdata>-mrpelementavailyorrqmtdate
-                  IMPORTING
-                    ev_year_week = <lfs_mrpdata>-yearweek ).
-                ##NO_HANDLER
-              CATCH cx_scal.
-                "handle exception
-            ENDTRY.
+          <lfs_mrpdata>-yearmonth = <lfs_mrpdata>-mrpelementavailyorrqmtdate+0(6).
+          TRY.
+              cl_scal_utils=>date_get_week(
+                EXPORTING
+                  iv_date = <lfs_mrpdata>-mrpelementavailyorrqmtdate
+                IMPORTING
+                  ev_year_week = <lfs_mrpdata>-yearweek ).
+              ##NO_HANDLER
+            CATCH cx_scal.
+              "handle exception
+          ENDTRY.
 
-            IF <lfs_mrpdata>-m_r_p_element_category = lc_mrpelement_category_sb.
-              <lfs_mrpdata>-planned_order = |{ <lfs_mrpdata>-source_m_r_p_element ALPHA = IN }|.
-            ENDIF.
-            IF <lfs_mrpdata>-m_r_p_element_category = lc_mrpelement_category_ar.
-              <lfs_mrpdata>-manufacturing_order = |{ <lfs_mrpdata>-source_m_r_p_element ALPHA = IN }|.
-            ENDIF.
-          ENDLOOP.
-          SORT lt_mrpdata BY material.
-        ENDIF.
+          IF <lfs_mrpdata>-m_r_p_element_category = lc_mrpelement_category_sb.
+            <lfs_mrpdata>-planned_order = |{ <lfs_mrpdata>-source_m_r_p_element ALPHA = IN }|.
+          ENDIF.
+          IF <lfs_mrpdata>-m_r_p_element_category = lc_mrpelement_category_ar.
+            <lfs_mrpdata>-manufacturing_order = |{ <lfs_mrpdata>-source_m_r_p_element ALPHA = IN }|.
+          ENDIF.
+        ENDLOOP.
+        SORT lt_mrpdata BY material.
         " End MRP計画データ取得
 
         " Begin 在庫データ集約

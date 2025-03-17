@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
+CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

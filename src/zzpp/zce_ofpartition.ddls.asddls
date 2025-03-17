@@ -20,6 +20,7 @@ define root custom entity ZCE_OFPARTITION
       // ADD BEGIN BY XINLEI XU 2025/02/27 性能优化
   key UUID               : sysuuid_x16;
       DataJson           : abap.string;
+      @Consumption.valueHelpDefinition: [ { entity: { name: 'I_Customer_VH', element: 'Customer' } } ]
       Customer           : kunnr;
       Plant              : werks_d;
       Material           : matnr;

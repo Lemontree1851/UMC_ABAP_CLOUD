@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PURINFOMASTERLIST IMPLEMENTATION.
+CLASS zcl_purinfomasterlist IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -101,6 +101,11 @@ CLASS ZCL_PURINFOMASTERLIST IMPLEMENTATION.
               IF ls_filter_cond-range IS NOT INITIAL.
                 DATA(lv_ztype2) = ls_filter_cond-range[ 1 ]-low.
               ENDIF.
+*&--ADD BEGIN BY XINLEI XU 2025/03/17
+            WHEN 'USEREMAIL'.
+              DATA lv_user_email TYPE zr_purinfomasterlist-useremail.
+              lv_user_email = ls_filter_cond-range[ 1 ]-low.
+*&--ADD END BY XINLEI XU 2025/03/17
             WHEN OTHERS.
           ENDCASE.
         ENDLOOP.
@@ -210,7 +215,7 @@ CLASS ZCL_PURINFOMASTERLIST IMPLEMENTATION.
       INTO TABLE @DATA(lt_purinfoitem).
 
 *&--Authorization Check
-    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+*    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ). " DEL BY XINLEI XU 2025/03/17
     DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
     DATA(lv_purchorg) = zzcl_common_utils=>get_purchorg_by_user( lv_user_email ).
     IF lv_plant IS INITIAL.
@@ -626,7 +631,8 @@ CLASS ZCL_PURINFOMASTERLIST IMPLEMENTATION.
                                                                   ( fieldname = 'CREATIONDATE_2' )
                                                                   ( fieldname = 'PLUSDAY' )
                                                                   ( fieldname = 'ZTYPE1' )
-                                                                  ( fieldname = 'ZTYPE2' ) )
+                                                                  ( fieldname = 'ZTYPE2' )
+                                                                  ( fieldname = 'USEREMAIL' ) )
                                  CHANGING  ct_data     = lt_data ).
 
     IF io_request->is_total_numb_of_rec_requested(  ) .

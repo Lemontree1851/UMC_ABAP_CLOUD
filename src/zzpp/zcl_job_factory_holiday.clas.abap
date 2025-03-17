@@ -23,7 +23,32 @@ ENDCLASS.
 
 
 
-CLASS zcl_job_factory_holiday IMPLEMENTATION.
+CLASS ZCL_JOB_FACTORY_HOLIDAY IMPLEMENTATION.
+
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime) ##NO_HANDLER.
+        " handle exception
+    ENDTRY.
+  ENDMETHOD.
 
 
   METHOD if_apj_dt_exec_object~get_parameters.
@@ -107,29 +132,6 @@ CLASS zcl_job_factory_holiday IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '1' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime) ##NO_HANDLER.
-        " handle exception
-    ENDTRY.
-  ENDMETHOD.
 
   METHOD init_application_log.
     TRY.

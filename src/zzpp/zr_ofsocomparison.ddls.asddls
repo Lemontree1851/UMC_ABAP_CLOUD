@@ -31,7 +31,7 @@ define root custom entity ZR_OFSOCOMPARISON
       MaterialName       : maktx;
       @UI                : { lineItem: [ { position: 50, label: '得意先品目' } ], selectionField: [ { position: 40 } ] }
       @EndUserText.label : '得意先品目'
-//      @Consumption.valueHelpDefinition: [ { entity: { element: 'Product', name: 'I_CustomerMaterial_2' } } ]
+      //      @Consumption.valueHelpDefinition: [ { entity: { element: 'Product', name: 'I_CustomerMaterial_2' } } ]
       MATERIALBYCUSTOMER : matnr;
       @UI                : { lineItem: [ { position: 60, label: '登録日付' } ]}
       @EndUserText.label : '登録日付'
@@ -224,4 +224,5 @@ define root custom entity ZR_OFSOCOMPARISON
       PeriodT35          : abap.char( 6 );
       PeriodT36          : abap.char( 6 );
 
+      UserEmail          : abap.char(241); // ADD BY XINLEI XU 2025/03/17
 }

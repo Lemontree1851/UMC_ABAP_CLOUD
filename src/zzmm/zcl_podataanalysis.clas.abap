@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_podataanalysis IMPLEMENTATION.
+CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

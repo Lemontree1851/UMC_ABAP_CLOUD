@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_materialrequisition_prt IMPLEMENTATION.
+CLASS ZCL_MATERIALREQUISITION_PRT IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

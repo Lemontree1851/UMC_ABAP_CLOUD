@@ -2,7 +2,12 @@ CLASS lhc_sourcelist DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
     TYPES:BEGIN OF lty_request.
             INCLUDE TYPE zr_purchasingsourcelist.
-    TYPES:  row TYPE i,
+    TYPES:  row         TYPE i,
+*&--ADD BEGIN BY XINLEI XU 2025/03/17
+            useremail   TYPE i_workplaceaddress-defaultemailaddress,
+            material_in TYPE matnr,
+            supplier_in TYPE lifnr,
+*&--ADD END BY XINLEI XU 2025/03/17
           END OF lty_request,
           lty_request_t TYPE TABLE OF lty_request.
 
@@ -104,10 +109,18 @@ CLASS lhc_sourcelist IMPLEMENTATION.
       lv_matnr    TYPE c LENGTH 18,
       lc_null     TYPE c VALUE '-'.
 
+
+    READ TABLE ct_data ASSIGNING FIELD-SYMBOL(<ls_data>) INDEX 1.
+    IF sy-subrc <> 0.
+      RETURN.
+    ENDIF.
+    lv_usage = <ls_data>-xflag. "A/B/C
+
 * Authorization Check
-    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+*    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ). " DEL BY XINLEI XU 2025/03/17
+    DATA(lv_user_email) = <ls_data>-useremail.
     DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
-    LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<ls_data>).
+    LOOP AT ct_data ASSIGNING <ls_data>.
       IF NOT lv_plant CS <ls_data>-plant.
         lv_status = 'E'.
         <ls_data>-status = 'E'.
@@ -119,8 +132,23 @@ CLASS lhc_sourcelist IMPLEMENTATION.
     ENDIF.
 *---------------------------------------------------------
 
-    READ TABLE ct_data ASSIGNING <ls_data> INDEX 1.
-    lv_usage = <ls_data>-xflag. "A/B/C
+*&--ADD BEGIN BY XINLEI XU 2025/03/17
+    LOOP AT ct_data ASSIGNING <ls_data>.
+      <ls_data>-material_in = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in
+                                                                   iv_input = <ls_data>-material ).
+      <ls_data>-supplier_in = |{ <ls_data>-supplier ALPHA = IN }|.
+    ENDLOOP.
+
+    IF ct_data IS NOT INITIAL.
+      SELECT supplier,
+             supplierplant
+        FROM i_supplier WITH PRIVILEGED ACCESS
+         FOR ALL ENTRIES IN @ct_data
+       WHERE supplier = @ct_data-supplier_in
+        INTO TABLE @DATA(lt_supplier).
+      SORT lt_supplier BY supplier.
+    ENDIF.
+*&--ADD END BY XINLEI XU 2025/03/17
 
     CASE lv_usage.
       WHEN 'A'.     "Create
@@ -216,6 +244,13 @@ CLASS lhc_sourcelist IMPLEMENTATION.
                                              && 'T00:00:00'.
           ls_sourcelist-_supplier = <ls_data>-supplier.
 
+*&--ADD BEGIN BY XINLEI XU 2025/03/17
+          READ TABLE lt_supplier INTO DATA(ls_supplier) WITH KEY supplier = <ls_data>-supplier_in BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_sourcelist-_supplying_plant = ls_supplier-supplierplant.
+          ENDIF.
+*&--ADD END BY XINLEI XU 2025/03/17
+
           IF <ls_data>-sourceofsupplyisblocked = 'X'.
             ls_sourcelist-_source_of_supply_is_blocked = abap_true.
           ELSE.
@@ -244,8 +279,8 @@ CLASS lhc_sourcelist IMPLEMENTATION.
             MESSAGE s006(zmm_001) INTO lv_message.
             "Call boi update
             IF <ls_data>-supplierisfixed IS NOT INITIAL.
-              <ls_data>-material = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = 'IN' iv_input = <ls_data>-material ).
-              <ls_data>-supplier = |{ <ls_data>-supplier ALPHA = IN }|.
+*              <ls_data>-material = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = 'IN' iv_input = <ls_data>-material ).
+*              <ls_data>-supplier = |{ <ls_data>-supplier ALPHA = IN }|.
               SELECT SINGLE
                      a~material,                "#EC CI_FAE_NO_LINES_OK
                      a~plant,
@@ -261,9 +296,9 @@ CLASS lhc_sourcelist IMPLEMENTATION.
                 INNER JOIN i_purchasingsourcelistitemtp WITH PRIVILEGED ACCESS AS b
                 ON ( a~material = b~material
                  AND a~plant = b~plant )
-               WHERE a~material = @<ls_data>-material
+               WHERE a~material = @<ls_data>-material_in
                  AND a~plant = @<ls_data>-plant
-                 AND b~supplier = @<ls_data>-supplier
+                 AND b~supplier = @<ls_data>-supplier_in
                  AND b~purchasingorganization = @<ls_data>-purchasingorganization
                 INTO @DATA(ls_list).
 
@@ -271,6 +306,12 @@ CLASS lhc_sourcelist IMPLEMENTATION.
               ls_item_update-%control-supplierisfixed = if_abap_behv=>mk-on.
 
               ls_item_update-supplier = ls_list-supplier.
+*&--ADD BEGIN BY XINLEI XU 2025/03/17
+              READ TABLE lt_supplier INTO ls_supplier WITH KEY supplier = ls_list-supplier BINARY SEARCH.
+              IF sy-subrc = 0.
+                ls_item_update-supplyingplant = ls_supplier-supplierplant.
+              ENDIF.
+*&--ADD END BY XINLEI XU 2025/03/17
               ls_item_update-purchasingorganization = ls_list-purchasingorganization.
               ls_item_update-validitystartdate = ls_list-validitystartdate.
               ls_item_update-validityenddate = ls_list-validityenddate.
@@ -321,12 +362,8 @@ CLASS lhc_sourcelist IMPLEMENTATION.
           <ls_data>-status = lv_status.
           <ls_data>-message = lv_message.
         ENDLOOP.
+
       WHEN 'B'.     "Update
-        LOOP AT ct_data ASSIGNING <ls_data>.
-          <ls_data>-material = zzcl_common_utils=>conversion_matn1(
-                                   EXPORTING iv_alpha = 'IN'
-                                             iv_input = <ls_data>-material ).
-        ENDLOOP.
         SELECT a~material,                      "#EC CI_FAE_NO_LINES_OK
                a~plant,
                b~sourcelistrecord,
@@ -342,14 +379,14 @@ CLASS lhc_sourcelist IMPLEMENTATION.
           ON ( a~material = b~material
            AND a~plant = b~plant )
           FOR ALL ENTRIES IN @ct_data
-         WHERE a~material = @ct_data-material
+         WHERE a~material = @ct_data-material_in
            AND a~plant = @ct_data-plant
           INTO TABLE @DATA(lt_list).
 
         SORT lt_list BY material plant sourcelistrecord.
         LOOP AT ct_data ASSIGNING <ls_data>.
           READ TABLE lt_list INTO DATA(ls_list1)
-               WITH KEY material = <ls_data>-material
+               WITH KEY material = <ls_data>-material_in
                         plant = <ls_data>-plant
                         sourcelistrecord = <ls_data>-sourcelistrecord
                BINARY SEARCH.
@@ -358,12 +395,19 @@ CLASS lhc_sourcelist IMPLEMENTATION.
 * check field if changed:
 ** If import field is initial,the BOI will clear the value.
 ** So set the database value to the field if initial
-            DATA(lv_lifnr) = |{ <ls_data>-supplier ALPHA = IN }|.
             IF <ls_data>-supplier IS NOT INITIAL
-           AND lv_lifnr <> ls_list1-supplier.
-              ls_item_update-supplier = lv_lifnr.
+           AND <ls_data>-supplier_in <> ls_list1-supplier.
+              ls_item_update-supplier = <ls_data>-supplier_in.
               ls_item_update-%control-supplier = if_abap_behv=>mk-on.
               DATA(lv_flg) = 'X'.
+
+*&--ADD BEGIN BY XINLEI XU 2025/03/17
+              READ TABLE lt_supplier INTO ls_supplier WITH KEY supplier = <ls_data>-supplier_in BINARY SEARCH.
+              IF sy-subrc = 0.
+                ls_item_update-supplyingplant = ls_supplier-supplierplant.
+                ls_item_update-%control-supplyingplant = if_abap_behv=>mk-on.
+              ENDIF.
+*&--ADD END BY XINLEI XU 2025/03/17
             ELSE.
               ls_item_update-supplier = ls_list1-supplier.
             ENDIF.
@@ -434,12 +478,10 @@ CLASS lhc_sourcelist IMPLEMENTATION.
 
           IF ls_item_update IS NOT INITIAL
          AND lv_flg = 'X'.
-* Key
-
-            ls_item_update-%key-material = <ls_data>-material.
+            ls_item_update-%key-material = <ls_data>-material_in.
             ls_item_update-%key-plant = <ls_data>-plant.
             ls_item_update-%key-sourcelistrecord = <ls_data>-sourcelistrecord.
-            ls_item_update-material = <ls_data>-material.
+            ls_item_update-material = <ls_data>-material_in.
             ls_item_update-plant = <ls_data>-plant.
             ls_item_update-sourcelistrecord = <ls_data>-sourcelistrecord.
             APPEND ls_item_update TO lt_item_update.
@@ -484,12 +526,9 @@ CLASS lhc_sourcelist IMPLEMENTATION.
         ENDLOOP.
       WHEN 'C'.     "Delete
         LOOP AT ct_data ASSIGNING <ls_data>.
-          ls_item_delete-%key-material = zzcl_common_utils=>conversion_matn1(
-                                   EXPORTING iv_alpha = 'IN'
-                                             iv_input = <ls_data>-material ).
+          ls_item_delete-%key-material = <ls_data>-material_in.
           ls_item_delete-%key-plant = <ls_data>-plant.
           ls_item_delete-%key-sourcelistrecord = <ls_data>-sourcelistrecord.
-
           APPEND ls_item_delete TO lt_item_delete.
           CLEAR: ls_item_delete.
         ENDLOOP.
@@ -525,9 +564,6 @@ CLASS lhc_sourcelist IMPLEMENTATION.
       WHEN OTHERS.
 
     ENDCASE.
-
-
   ENDMETHOD.
-
 
 ENDCLASS.

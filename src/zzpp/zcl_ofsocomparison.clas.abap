@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
+CLASS zcl_ofsocomparison IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -119,6 +119,11 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
                 lv_latestof     = str_rec_l_range-low.
               WHEN 'CONTENTS'.
                 lv_contents    = str_rec_l_range-low.
+*&--ADD BEGIN BY XINLEI XU 2025/03/17
+              WHEN 'USEREMAIL'.
+                DATA lv_user_email TYPE zr_ofsocomparison-useremail.
+                lv_user_email = str_rec_l_range-low.
+*&--ADD END BY XINLEI XU 2025/03/17
               WHEN OTHERS.
             ENDCASE.
           ENDLOOP.
@@ -156,7 +161,7 @@ CLASS ZCL_OFSOCOMPARISON IMPLEMENTATION.
       INTO TABLE @DATA(lt_of).
 
 *&--Authorization Check
-    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+*    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ). " DEL BY XINLEI XU 2025/03/17
     DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
     IF lv_plant IS INITIAL.
       CLEAR lt_of.

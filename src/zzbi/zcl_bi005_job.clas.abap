@@ -596,7 +596,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
        WHERE a~salesorganization = @lt_material_zfrt-plant
          AND a~product = @lt_material_zfrt-material
          AND a~sddocument = '0000000000'
-        INTO TABLE @DATA(lt_1012).
+        APPENDING TABLE @DATA(lt_1012).
     ENDLOOP.
 *&--ADD END BY XINLEI XU 2025/01/14 CR#4046
 
@@ -961,10 +961,12 @@ CLASS zcl_bi005_job IMPLEMENTATION.
         IF sy-subrc <> 0.
 *&--ADD BEGIN BY XINLEI XU 2025/01/15
           " Balance（期首）= 上个月的 Balance（期末）
-*          IF <fs_l_bi1003> IS ASSIGNED.
-*            ls_bi1003-balanceopenning = <fs_l_bi1003>-balanceclosing.
-*          ENDIF.
-          ls_bi1003-balanceopenning = ls_bi1003-balanceclosing.
+          IF <fs_l_bi1003> IS ASSIGNED.
+            ls_bi1003-balanceopenning = <fs_l_bi1003>-balanceclosing.
+            UNASSIGN <fs_l_bi1003>." ADD BY XINLEI XU 2025/03/17
+          ELSE.
+            ls_bi1003-balanceopenning = ls_bi1003-balanceclosing. " ADD BY XINLEI XU 2025/03/17
+          ENDIF.
 *&--ADD BEGIN BY XINLEI XU 2025/01/15
 *         原材料のSupplyの数字を取得する
           READ TABLE lt_supply INTO ls_supply

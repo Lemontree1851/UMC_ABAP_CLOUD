@@ -3,7 +3,8 @@ CLASS lhc_physicalinvupload DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     TYPES:BEGIN OF lty_request.
             INCLUDE TYPE zr_physicalinventoryupload.
-    TYPES:  row TYPE i,
+    TYPES:  row       TYPE i,
+            useremail TYPE i_workplaceaddress-defaultemailaddress, " ADD BY XINLEI XU 2025/03/17
           END OF lty_request,
 
           lty_request_t TYPE TABLE OF lty_request.
@@ -160,12 +161,16 @@ CLASS lhc_physicalinvupload IMPLEMENTATION.
              d TYPE ty_response_c,
            END OF ty_response_cc.
     DATA:ls_response_cc TYPE ty_response_cc.
-*-----------------------------------
 
+    READ TABLE ct_data ASSIGNING FIELD-SYMBOL(<ls_data>) INDEX 1.
+    IF sy-subrc <> 0.
+      RETURN.
+    ENDIF.
+*-----------------------------------
 * Authorization Check
-    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
-    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
-    LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<ls_data>).
+*    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ). " DEL BY XINLEI XU 2025/03/17
+    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( <ls_data>-useremail ).
+    LOOP AT ct_data ASSIGNING <ls_data>.
       IF NOT lv_plant CS <ls_data>-plant.
         lv_status = 'E'.
         <ls_data>-status = 'E'.

@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_fixedasset_cal IMPLEMENTATION.
+CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
 
 
   METHOD if_sadl_exit_calc_element_read~calculate.

@@ -277,8 +277,7 @@ CLASS lhc_zr_bomupload IMPLEMENTATION.
 
     DATA(lv_path) = |/API_BILL_OF_MATERIAL_SRV;v=2/MaterialBOM?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
 
-    zzcl_common_utils=>request_api_v2( EXPORTING " iv_is_fue      = abap_true
-                                                 iv_path        = lv_path
+    zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = lv_path
                                                  iv_method      = if_web_http_client=>post
                                                  iv_body        = lv_requestbody
                                        IMPORTING ev_status_code = DATA(lv_status_code)

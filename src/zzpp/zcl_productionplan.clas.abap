@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PRODUCTIONPLAN IMPLEMENTATION.
+CLASS zcl_productionplan IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -179,8 +179,9 @@ CLASS ZCL_PRODUCTIONPLAN IMPLEMENTATION.
       lv_year         TYPE c LENGTH 4,
       lv_date         TYPE budat,
       lv_capacity(12) TYPE p,
-      lv_value(12)    TYPE p DECIMALS 2.
-
+      lv_value(12)    TYPE p DECIMALS 2,
+      lv_plan         TYPE c,
+      lv_prod         TYPE c.
 
     "Dynamic table
     DATA:
@@ -539,7 +540,6 @@ CLASS ZCL_PRODUCTIONPLAN IMPLEMENTATION.
           CLEAR: ls_mrp_api.
         ENDLOOP.
       ENDLOOP.
-
     ENDIF.
 
 
@@ -553,10 +553,24 @@ CLASS ZCL_PRODUCTIONPLAN IMPLEMENTATION.
                       mrpelementdocumenttype = 'LA'.
         IF sy-subrc = 0
        AND ls_mrp_api-mrpelementopenquantity <> 0.
+          lv_plan = 'X'.
+        ENDIF.
+
+        READ TABLE lt_mrp_pegging INTO ls_mrp_api
+             WITH KEY material = ls_bom-idnrk
+                      mrpelementcategory = 'FE'.
+        IF sy-subrc = 0
+       AND ls_mrp_api-mrpelementopenquantity <> 0.
+          lv_prod = 'X'.
+        ENDIF.
+
+        IF lv_plan = 'X'
+        OR lv_prod = 'X'.
           APPEND ls_bom TO lt_bom.
         ENDIF.
-      ENDLOOP.
 
+        CLEAR: lv_plan, lv_prod.
+      ENDLOOP.
     ENDIF.
 
 * 2.6 在庫取得

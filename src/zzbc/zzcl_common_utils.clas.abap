@@ -345,7 +345,7 @@ ENDCLASS.
 
 
 
-CLASS zzcl_common_utils IMPLEMENTATION.
+CLASS ZZCL_COMMON_UTILS IMPLEMENTATION.
 
 
   METHOD add_interface_log.
@@ -714,6 +714,37 @@ CLASS zzcl_common_utils IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.                                             "#EC CI_VALPAR
 
+
+  METHOD get_begindate_of_month.
+    IF is_valid_date( iv_date ).
+      rv_month_begin_date(6) = iv_date(6).
+      rv_month_begin_date+6(2) = frist.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD get_company_by_user.
+    SELECT uuid,
+           mail,
+           companycode
+      FROM zc_tbc1012
+     WHERE mail = @iv_email
+     INTO TABLE @DATA(lt_assign_company).
+
+    SORT lt_assign_company BY companycode.
+    DELETE ADJACENT DUPLICATES FROM lt_assign_company COMPARING companycode.
+
+    LOOP AT lt_assign_company INTO DATA(ls_assign_company).
+      CONDENSE ls_assign_company-companycode NO-GAPS.
+      IF rv_company IS INITIAL.
+        rv_company = ls_assign_company-companycode.
+      ELSE.
+        rv_company = rv_company && '&' && ls_assign_company-companycode.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+
   METHOD get_csrf_token.
     DATA(lv_path) = iv_path.
 
@@ -770,35 +801,6 @@ CLASS zzcl_common_utils IMPLEMENTATION.
         ev_response = lx_root->get_text(  ).
     ENDTRY.
   ENDMETHOD.                                             "#EC CI_VALPAR
-
-  METHOD get_begindate_of_month.
-    IF is_valid_date( iv_date ).
-      rv_month_begin_date(6) = iv_date(6).
-      rv_month_begin_date+6(2) = frist.
-    ENDIF.
-  ENDMETHOD.
-
-
-  METHOD get_company_by_user.
-    SELECT uuid,
-           mail,
-           companycode
-      FROM zc_tbc1012
-     WHERE mail = @iv_email
-     INTO TABLE @DATA(lt_assign_company).
-
-    SORT lt_assign_company BY companycode.
-    DELETE ADJACENT DUPLICATES FROM lt_assign_company COMPARING companycode.
-
-    LOOP AT lt_assign_company INTO DATA(ls_assign_company).
-      CONDENSE ls_assign_company-companycode NO-GAPS.
-      IF rv_company IS INITIAL.
-        rv_company = ls_assign_company-companycode.
-      ELSE.
-        rv_company = rv_company && '&' && ls_assign_company-companycode.
-      ENDIF.
-    ENDLOOP.
-  ENDMETHOD.
 
 
   METHOD get_current_language.
@@ -1493,53 +1495,6 @@ CLASS zzcl_common_utils IMPLEMENTATION.
   ENDMETHOD.                                             "#EC CI_VALPAR
 
 
-  METHOD send_email.
-    TRY.
-        DATA(lo_mail) = cl_bcs_mail_message=>create_instance( ).
-
-        LOOP AT it_recipient INTO DATA(ls_recipient).
-          lo_mail->add_recipient( iv_address = ls_recipient-address
-                                  iv_copy    = ls_recipient-copy ).
-        ENDLOOP.
-
-        lo_mail->set_subject( iv_subject ).
-        lo_mail->set_main( cl_bcs_mail_textpart=>create_instance( iv_content      = iv_main_content
-                                                                  iv_content_type = 'text/html' ) ).
-        LOOP AT it_attachment INTO DATA(ls_attachment).
-          lo_mail->add_attachment( cl_bcs_mail_binarypart=>create_instance( iv_content      = ls_attachment-content
-                                                                            iv_content_type = ls_attachment-content_type
-                                                                            iv_filename     = ls_attachment-filename ) ).
-        ENDLOOP.
-
-        lo_mail->send( IMPORTING et_status = et_status ).
-      CATCH cx_bcs_mail.
-        RAISE EXCEPTION TYPE cx_bcs_mail.
-    ENDTRY.
-  ENDMETHOD.
-
-
-  METHOD set_datadescr.
-    rv_descr ?= cl_abap_elemdescr=>describe_by_name( iv_types ).
-  ENDMETHOD.                                             "#EC CI_VALPAR
-
-
-  METHOD unit_conversion_simple.
-    DATA(lo_unit) = cl_uom_conversion=>create( ).
-    lo_unit->unit_conversion_simple( EXPORTING  input                = input
-                                                round_sign           = round_sign
-                                                unit_in              = unit_in
-                                                unit_out             = unit_out
-                                     IMPORTING  output               = output
-                                     EXCEPTIONS conversion_not_found = 01
-                                                division_by_zero     = 02
-                                                input_invalid        = 03
-                                                output_invalid       = 04
-                                                overflow             = 05
-                                                units_missing        = 06
-                                                unit_in_not_found    = 07
-                                                unit_out_not_found   = 08 ).
-  ENDMETHOD.
-
   METHOD s3_attachment.
     TRY.
         DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
@@ -1603,4 +1558,52 @@ CLASS zzcl_common_utils IMPLEMENTATION.
         ev_response = lx_root->get_text(  ).
     ENDTRY.
   ENDMETHOD.                                             "#EC CI_VALPAR
+
+
+  METHOD send_email.
+    TRY.
+        DATA(lo_mail) = cl_bcs_mail_message=>create_instance( ).
+
+        LOOP AT it_recipient INTO DATA(ls_recipient).
+          lo_mail->add_recipient( iv_address = ls_recipient-address
+                                  iv_copy    = ls_recipient-copy ).
+        ENDLOOP.
+
+        lo_mail->set_subject( iv_subject ).
+        lo_mail->set_main( cl_bcs_mail_textpart=>create_instance( iv_content      = iv_main_content
+                                                                  iv_content_type = 'text/html' ) ).
+        LOOP AT it_attachment INTO DATA(ls_attachment).
+          lo_mail->add_attachment( cl_bcs_mail_binarypart=>create_instance( iv_content      = ls_attachment-content
+                                                                            iv_content_type = ls_attachment-content_type
+                                                                            iv_filename     = ls_attachment-filename ) ).
+        ENDLOOP.
+
+        lo_mail->send( IMPORTING et_status = et_status ).
+      CATCH cx_bcs_mail.
+        RAISE EXCEPTION TYPE cx_bcs_mail.
+    ENDTRY.
+  ENDMETHOD.
+
+
+  METHOD set_datadescr.
+    rv_descr ?= cl_abap_elemdescr=>describe_by_name( iv_types ).
+  ENDMETHOD.                                             "#EC CI_VALPAR
+
+
+  METHOD unit_conversion_simple.
+    DATA(lo_unit) = cl_uom_conversion=>create( ).
+    lo_unit->unit_conversion_simple( EXPORTING  input                = input
+                                                round_sign           = round_sign
+                                                unit_in              = unit_in
+                                                unit_out             = unit_out
+                                     IMPORTING  output               = output
+                                     EXCEPTIONS conversion_not_found = 01
+                                                division_by_zero     = 02
+                                                input_invalid        = 03
+                                                output_invalid       = 04
+                                                overflow             = 05
+                                                units_missing        = 06
+                                                unit_in_not_found    = 07
+                                                unit_out_not_found   = 08 ).
+  ENDMETHOD.
 ENDCLASS.
