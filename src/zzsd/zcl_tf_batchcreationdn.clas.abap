@@ -60,29 +60,35 @@ CLASS ZCL_TF_BATCHCREATIONDN IMPLEMENTATION.
             CASE when sd1001a.customer is not null
               then
                 case
-                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD016' and zvalue1 = basic.salesdocumenttype ) > 1
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD016' and zvalue1 = basic.salesdocumenttype ) > 0 -- 1 MOD BY XINLEI XU 2025/03/18 BUG Fix
                     then sd1001a.returnstoragelocation
                   when basic.yy1_salesdoctype_sdh = ''
                     then sd1001a.finishedstoragelocation
-                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD013' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD013' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 0 -- 1 MOD BY XINLEI XU 2025/03/18 BUG Fix
                     then sd1001a.finishedstoragelocation
-                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD014' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
-                    then case when sd1001a.vmistoragelocation = '' THEN sd1001a.partsstoragelocation else sd1001a.vmistoragelocation end
-                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD015' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD014' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 0 -- 1 MOD BY XINLEI XU 2025/03/18 BUG Fix
+                    -- MOD BEGIN BY XINLEI XU 2025/03/18
+                    -- then case when sd1001a.vmistoragelocation = '' THEN sd1001a.partsstoragelocation else sd1001a.vmistoragelocation end
+                    then case when sd1001a.vmistoragelocation = '' THEN sd1001a.finishedstoragelocation else sd1001a.vmistoragelocation end
+                    -- MOD END BY XINLEI XU 2025/03/18
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD015' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 0 -- 1 MOD BY XINLEI XU 2025/03/18 BUG Fix
                     then sd1001a.repairstoragelocation
                 end
              -- if the three conditions do not take a value, fix billingtoparty as empty(sd1001b)
               else
                 case
-                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD016' and zvalue1 = basic.salesdocumenttype ) > 1
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD016' and zvalue1 = basic.salesdocumenttype ) > 0 -- 1 MOD BY XINLEI XU 2025/03/18 BUG Fix
                     then sd1001b.returnstoragelocation
                   when basic.yy1_salesdoctype_sdh = ''
                     then sd1001b.finishedstoragelocation
-                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD013' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD013' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 0 -- 1 MOD BY XINLEI XU 2025/03/18 BUG Fix
                     then sd1001b.finishedstoragelocation
-                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD014' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
-                    then case when sd1001b.vmistoragelocation = '' THEN sd1001b.partsstoragelocation else sd1001b.vmistoragelocation end
-                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD015' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 1
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD014' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 0 -- 1 MOD BY XINLEI XU 2025/03/18 BUG Fix
+                    -- MOD BEGIN BY XINLEI XU 2025/03/18
+                    -- then case when sd1001b.vmistoragelocation = '' THEN sd1001b.partsstoragelocation else sd1001b.vmistoragelocation end
+                    then case when sd1001b.vmistoragelocation = '' THEN sd1001b.finishedstoragelocation else sd1001b.vmistoragelocation end
+                    -- MOD END BY XINLEI XU 2025/03/18
+                  when ( select count( * ) from zr_tbc1001 where zid = 'ZSD015' and zvalue1 = basic.yy1_salesdoctype_sdh ) > 0 -- 1 MOD BY XINLEI XU 2025/03/18 BUG Fix
                     then sd1001b.repairstoragelocation
                 end
             end

@@ -52,7 +52,7 @@ define view entity ZC_PODATAANALYSIS
       IsCompletelyDelivered,
       TaxCode,
       PricingDateControl,
-      IncotermsClassification,
+      // IncotermsClassification, DEL BY XINLEI XU 2025/03/18 I_PurgInfoRecdOrgPlntDataApi01-IncotermsClassification
       NetPriceQuantity,
       NetPriceAmount,
       PurchaseOrderItemCategory,

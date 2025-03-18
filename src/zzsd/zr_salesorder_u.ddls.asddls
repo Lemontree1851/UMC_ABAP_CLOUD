@@ -110,7 +110,10 @@ define root view entity ZR_SALESORDER_U
       @Consumption.filter.hidden: true
       cast('' as vbeln_vl)                        as DeliveryDocument,
       @Consumption.filter.hidden: true
-      cast('' as posnr )                          as DeliveryDocumentItem,
+      // MOD BEGIN BY XINLEI XU 2025/03/18 BUG Fix
+      // cast('' as posnr )                    as DeliveryDocumentItem,
+      cast('000000' as posnr )                    as DeliveryDocumentItem,
+      // MOD END BY XINLEI XU 2025/03/18
       @Consumption.filter.hidden: true
       cast('' as msgty )                          as Type,
       @Consumption.filter.hidden: true

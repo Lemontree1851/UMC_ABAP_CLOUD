@@ -175,7 +175,7 @@ CLASS lhc_pochange IMPLEMENTATION.
 
     lv_po = |{ ls_data-purchaseorder ALPHA = IN }|.
     SELECT SINGLE documentcurrency
-      FROM i_purchaseorderapi01
+      FROM i_purchaseorderapi01 WITH PRIVILEGED ACCESS
      WHERE purchaseorder = @lv_po
       INTO @lv_waers.
 
@@ -212,7 +212,7 @@ CLASS lhc_pochange IMPLEMENTATION.
     "Check if po item is exist
     SELECT purchaseorder,
            purchaseorderitem
-      FROM i_purchaseorderitemapi01
+      FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS
      WHERE purchaseorder = @lv_po
       INTO TABLE @DATA(lt_poitem).
     SORT lt_poitem BY purchaseorder purchaseorderitem.
@@ -240,7 +240,7 @@ CLASS lhc_pochange IMPLEMENTATION.
     ENDIF.
 
     SELECT SINGLE languageisocode
-      FROM i_language
+      FROM i_language WITH PRIVILEGED ACCESS
      WHERE language = @sy-langu
       INTO @DATA(lv_langu).
 * Change Process
@@ -550,7 +550,7 @@ CLASS lhc_pochange IMPLEMENTATION.
 * --PO Item long text
       IF ls_data-longtext IS NOT INITIAL.
         SELECT COUNT(*)
-          FROM i_purchaseorderitemnotetp_2
+          FROM i_purchaseorderitemnotetp_2 WITH PRIVILEGED ACCESS
          WHERE purchaseorder = @lv_po
            AND purchaseorderitem = @ls_data-purchaseorderitem
            AND textobjecttype = 'F01'

@@ -6,32 +6,37 @@ define view ZC_POMM01
     left outer join I_POSupplierConfirmationAPI01 as l on  l.PurchaseOrder     = b.PurchaseOrder
                                                        and l.PurchaseOrderItem = b.PurchaseOrderItem
 
+  // MOD BEGIN BY XINLEI XU 2025/03/18
+  //  association [1..1] to I_PurchaseOrderAPI01        as a on  $projection.PurchaseOrder = a.PurchaseOrder
+    left outer join I_PurchaseOrderAPI01          as a on a.PurchaseOrder = b.PurchaseOrder
+  // MOD END BY XINLEI XU 2025/03/18
 
-  association [1..1] to I_PurchaseOrderAPI01        as a on  $projection.PurchaseOrder = a.PurchaseOrder
   association [1..1] to I_Supplier                  as c on  $projection.Manufacturer = c.Supplier
   association [0..1] to I_ProductMRPArea            as d on  d.Product  = b.Material
                                                          and d.MRPPlant = b.Plant
   association [0..1] to I_ProductPlantBasic         as e on  e.Product = b.Material
                                                          and e.Plant   = b.Plant
-  //  association [0..1]  to   I_MRPController               as f on  f.MRPController = e.MRPResponsible
-  //                                                              and f.Plant         = b.Plant
-  association [0..1] to I_PurchasingInfoRecordApi01 as g on  g.PurchasingInfoRecord = b.PurchasingInfoRecord
+
+  // MOD BEGIN BY XINLEI XU 2025/03/18
+  //  association [0..1] to I_PurchasingInfoRecordApi01 as g on  g.PurchasingInfoRecord = b.PurchasingInfoRecord
+  association [0..1] to I_PurchasingInfoRecordApi01 as g on  g.Supplier  = a.Supplier
+                                                         and g.Material  = b.Material
+                                                         and g.IsDeleted is initial
+  // MOD END BY XINLEI XU 2025/03/18
+
   association [0..1] to I_StorageLocation           as h on  h.Plant           = b.Plant
                                                          and h.StorageLocation = b.StorageLocation
   association [0..1] to I_Product                   as i on  i.Product = b.Material
-  //  association [0..1]  to   I_SupplierPurchasingOrg       as j on  j.Supplier               = a.Supplier
-  //                                                              and j.PurchasingOrganization = a.PurchasingOrganization
   association [0..1] to I_ProductSupplyPlanning     as k on  k.Product = b.Material
                                                          and k.Plant   = b.Plant
   association [0..1] to I_PurOrdScheduleLineAPI01   as m on  m.PurchaseOrder     = b.PurchaseOrder
                                                          and m.PurchaseOrderItem = b.PurchaseOrderItem
-
 {
   key b.PurchaseOrder,
   key b.PurchaseOrderItem,
   key l.SequentialNmbrOfSuplrConf,
 
-      concat(b.PurchaseOrder,b.PurchaseOrderItem) as popoitem,
+      concat(b.PurchaseOrder,b.PurchaseOrderItem)                         as popoitem,
       l.DeliveryDate,
 
       l.SupplierConfirmationExtNumber,
@@ -56,7 +61,7 @@ define view ZC_POMM01
       b.ManufacturerPartNmbr,
       b.Manufacturer,
       b.AccountAssignmentCategory,
-      c.SupplierName                              as SupplierName2,
+      c.SupplierName                                                      as SupplierName2,
       b.PlannedDeliveryDurationInDays,
       b.GoodsReceiptDurationInDays,
       b.OrderQuantity,
@@ -73,7 +78,7 @@ define view ZC_POMM01
       b.IsCompletelyDelivered,
       b.TaxCode,
       b.PricingDateControl,
-      b.IncotermsClassification,
+      // b.IncotermsClassification, DEL BY XINLEI XU 2025/03/18 I_PurgInfoRecdOrgPlntDataApi01-IncotermsClassification
       b.NetPriceQuantity,
       b.NetPriceAmount,
       b.PurchaseOrderItemCategory,
@@ -81,7 +86,6 @@ define view ZC_POMM01
       b.PurchasingDocumentDeletionCode,
       d.MRPArea,
       e.MRPResponsible,
-      //  f.MRPControllerName,
       g.SupplierCertOriginCountry,
       g.PurchasingInfoRecord,
       g.SupplierSubrange,
@@ -89,10 +93,11 @@ define view ZC_POMM01
       i.ProductionMemoPageFormat,
       i.ProductionOrInspectionMemoTxt,
       i.YY1_BPCODE_PRD_PRD,
-      //  j.SupplierRespSalesPersonName,
       k.BaseUnit,
       @Semantics.quantity.unitOfMeasure: 'BaseUnit'
       k.LotSizeRoundingQuantity,
       m.ScheduleLineDeliveryDate,
       m.RoughGoodsReceiptQty
-} where b.PurchasingDocumentDeletionCode = ''
+}
+where
+  b.PurchasingDocumentDeletionCode = ''

@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
+CLASS zcl_fixedasset_cal IMPLEMENTATION.
 
 
   METHOD if_sadl_exit_calc_element_read~calculate.
@@ -70,7 +70,9 @@ CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
     lt_original_data = CORRESPONDING #( it_original_data ).
     IF lt_original_data IS NOT INITIAL.
 
-      SELECT companycode,masterfixedasset,fixedasset, debitamountincocodecrcy ,companycodecurrency FROM
+      SELECT companycode,masterfixedasset,fixedasset, debitamountincocodecrcy ,companycodecurrency ,
+      subledgeracctlineitemtype,FiscalYear,AccountingDocument,LedgerGLLineItem
+      FROM
       i_glaccountlineitem
       WITH PRIVILEGED ACCESS
       FOR ALL ENTRIES IN @lt_original_data
@@ -78,7 +80,7 @@ CLASS ZCL_FIXEDASSET_CAL IMPLEMENTATION.
       AND fixedasset = @lt_original_data-fixedasset
       AND sourceledger = '0L'
       AND ledger = '0L'
-      AND subledgeracctlineitemtype = '7000'
+      AND (   subledgeracctlineitemtype = '7000' or subledgeracctlineitemtype = '7040' )
       AND masterfixedasset IS NOT INITIAL
       AND debitamountincocodecrcy IS NOT INITIAL
       INTO TABLE @DATA(lt_glaccountlineitem).

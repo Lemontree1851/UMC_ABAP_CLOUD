@@ -104,7 +104,7 @@ CLASS lhc_zr_tmm_1011 IMPLEMENTATION.
            orderquantity,
            storagelocation,
            purchaseorderquantityunit
-           FROM i_purchaseorderitemapi01
+           FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS
            FOR ALL ENTRIES IN @ct_data
            WHERE purchaseorder = @ct_data-purchaseorder
            AND purchaseorderitem = @ct_data-purchaseorderitem

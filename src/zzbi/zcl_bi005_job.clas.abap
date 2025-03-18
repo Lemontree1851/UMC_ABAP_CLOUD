@@ -488,7 +488,7 @@ CLASS zcl_bi005_job IMPLEMENTATION.
       DATA(lv_skip1) = -1000.
       DO.
         lv_skip1 += 1000.
-        zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/PCH09_LIST?$top={ lv_top1 }&$skip={ lv_skip1 }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|
+        zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/PCH09_LIST_1?$top={ lv_top1 }&$skip={ lv_skip1 }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|
                                                                 iv_token_url     = CONV #( ls_config-zvalue3 )
                                                                 iv_client_id     = CONV #( ls_config-zvalue4 )
                                                                 iv_client_secret = CONV #( ls_config-zvalue5 )

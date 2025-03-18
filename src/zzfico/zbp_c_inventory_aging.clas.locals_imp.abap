@@ -370,7 +370,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
              valuationarea,
              valuationquantity,
              amountincompanycodecurrency
-        FROM i_inventoryamtbyfsclperd( p_fiscalperiod = @lv_fiscalperiod, p_fiscalyear = @lv_fiscalyear ) WITH PRIVILEGED ACCESS
+        FROM i_inventoryamtbyfsclperd( p_fiscalperiod = @lv_fiscalperiod, p_fiscalyear = @lv_fiscalyear ) WITH PRIVILEGED ACCESS"#EC CI_NO_TRANSFORM
          FOR ALL ENTRIES IN @lt_productplantbasic
        WHERE companycode = @lt_productplantbasic-companycode
          AND valuationarea = @lt_productplantbasic-valuationarea
@@ -1199,7 +1199,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
                  fiscalperiod,
                  nextfiscalperiod,
                  nextfiscalperiodfiscalyear
-            FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+            FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS"#EC CI_NO_TRANSFORM
              FOR ALL ENTRIES IN @lt_fiscalyearperiod_new
            WHERE nextfiscalperiod = @lt_fiscalyearperiod_new-fiscalperiod
              AND nextfiscalperiodfiscalyear = @lt_fiscalyearperiod_new-fiscalyear
@@ -1245,7 +1245,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
                  reversedmaterialdocumentyear,
                  reversedmaterialdocument,
                  reversedmaterialdocumentitem
-            FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
+            FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS"#EC CI_NO_TRANSFORM
              FOR ALL ENTRIES IN @lt_materialdocumentitem
            WHERE reversedmaterialdocumentyear = @lt_materialdocumentitem-materialdocumentyear
              AND reversedmaterialdocument = @lt_materialdocumentitem-materialdocument

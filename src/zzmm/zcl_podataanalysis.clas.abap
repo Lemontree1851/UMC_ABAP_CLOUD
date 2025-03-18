@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
+CLASS zcl_podataanalysis IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -600,7 +600,7 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
          AND suppliermaterialnumber IN @lr_suppliermaterialnumber
          AND plant IN @lr_plant
          AND storagelocation IN @lr_storagelocation
-         AND incotermsclassification IN @lr_incotermsclassification
+       " AND incotermsclassification IN @lr_incotermsclassification DEL BY XINLEI XU 2025/03/18
          AND createdbyuser IN @lr_createdbyuser
          AND correspncinternalreference IN @lr_correspncinternalreference
          AND purchaseorderdate IN @lr_purchaseorderdate
@@ -670,6 +670,7 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
                a~purchasinginforecordcategory,
                a~plant,
                a~shippinginstruction,
+               a~incotermsclassification, " ADD BY XINLEI XU 2025/03/18
                b~shippinginstructionname
           FROM i_purginforecdorgplntdataapi01 WITH PRIVILEGED ACCESS AS a
           LEFT JOIN i_shippinginstructiontext WITH PRIVILEGED ACCESS AS b
@@ -679,6 +680,7 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
          WHERE a~purchasinginforecord = @lt_result-purchasinginforecord
            AND a~purchasingorganization = @lt_result-purchasingorganization
            AND a~plant = @lt_result-plant
+           AND a~purchasinginforecordcategory = @lt_result-purchaseorderitemcategory " ADD BY XINLEI XU 2025/03/18
            AND a~ismarkedfordeletion IS INITIAL
           INTO TABLE @DATA(lt_purginfo).
         SORT lt_purginfo BY purchasinginforecord purchasingorganization plant purchasinginforecordcategory.
@@ -932,7 +934,14 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
                                                                BINARY SEARCH.
         IF sy-subrc = 0.
           lw_data-shippinginstructionname = lw_purginfo-shippinginstructionname.
+          lw_data-incotermsclassification = lw_purginfo-incotermsclassification. " ADD BY XINLEI XU 2025/03/18
         ENDIF.
+
+*&--ADD BEGIN BY XINLEI XU 2025/03/18
+        IF lw_data-incotermsclassification NOT IN lr_incotermsclassification.
+          CONTINUE.
+        ENDIF.
+*&--ADD END BY XINLEI XU 2025/03/18
 
         "2.19 例外
         "2.20 注意

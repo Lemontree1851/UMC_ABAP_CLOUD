@@ -108,7 +108,7 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
       "Obtain data of product description
       SELECT product,
              productdescription
-        FROM i_productdescription
+        FROM i_productdescription "#EC CI_NO_TRANSFORM
          FOR ALL ENTRIES IN @lt_ztfi_1019
        WHERE product = @lt_ztfi_1019-product
          AND language = @sy-langu
