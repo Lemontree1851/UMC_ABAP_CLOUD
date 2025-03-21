@@ -22,7 +22,7 @@ define view entity ZR_SalesOrderSLItem
       OrderQuantityUnit
 
 }
-where ConfdOrderQtyByMatlAvailCheck > 0
+//where ConfdOrderQtyByMatlAvailCheck > 0  DEL BY XINLEI XU 2025/03/19
 group by
   SalesDocument,
   SalesDocumentItem,

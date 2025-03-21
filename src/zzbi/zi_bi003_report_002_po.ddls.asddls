@@ -54,6 +54,7 @@ define view entity ZI_BI003_REPORT_002_PO
 
       poitem.CompanyCode,
       poitem.Material,
+      poitem.PurchaseOrderItemText, // ADD BY XINLEI XU 2025/03/19
       poitem.ProfitCenter,
 
       poitem._PurchaseOrder,

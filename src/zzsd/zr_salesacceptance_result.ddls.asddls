@@ -22,19 +22,19 @@ define root custom entity ZR_SALESACCEPTANCE_RESULT
   key AcceptYear             : gjahr;
   key AcceptPeriod           : abap.char(2);  //検収期間
   key SalesDocument          : vbeln_va;      //受注伝票番号
-  key SalesDocumentItem      : abap.char(6);      //受注明細番号
+  key SalesDocumentItem      : abap.char(6); //受注明細番号
   key BillingDocument        : abap.char(10); //実績伝票番号
   key CustomerPO             : abap.char(35); //得意先PO番号
   key ProcessStatus          : abap.char(20); //処理ステータス
       AcceptPeriodFrom       : abap.dats;     //検収期間From
       AcceptPeriodTo         : abap.dats;     //検収期間To
       SalesDocumentType      : auart; //受注伝票タイプ
-      SalesDocumentTypeText  : bezei;  //SalesDocumentTypeName
+      SalesDocumentTypeText  : bezei; //SalesDocumentTypeName
       Product                : matnr; //品目コード
       SalesDocumentItemText  : arktx; //品名
       PostingDate            : budat; //実績転記日
       AcceptDate             : abap.dats; //検収日付
-      AcceptQty              : abap.char(20);//検収数
+      AcceptQty              : abap.char(20); //検収数
       BillingQuantity        : abap.char(20); //出庫数
       AcceptPrice            : abap.char(20); //検収単価
       ConditionRateValue     : abap.char(20); //請求単価
@@ -62,4 +62,5 @@ define root custom entity ZR_SALESACCEPTANCE_RESULT
       @Semantics.unitOfMeasure       : true
       unit                   : meins;
 
+      UserEmail              : abap.char(241); // ADD BY XINLEI XU 2025/03/19
 }

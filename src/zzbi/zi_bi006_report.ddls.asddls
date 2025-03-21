@@ -34,7 +34,7 @@ define custom entity ZI_BI006_REPORT
       @EndUserText.label:'Profit Center Name'
       ProfitCenterName : abap.char(20);
 
-      @Consumption.valueHelpDefinition: [{ entity: { element: 'Customer', name: 'I_Customer' } }]
+      @Consumption.valueHelpDefinition: [{ entity: { element: 'Customer', name: 'ZC_CustomerVH' } }]
       Customer         : kunnr;
 
       @EndUserText.label:'Customer Name'

@@ -124,7 +124,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
+CLASS zcl_http_podata_004 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -168,7 +168,10 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
              a~documentdate,
              a~postingdate,
              a~exchangerate,
-             a~duecalculationbasedate,
+*&--MOD BEGIN BY XINLEI XU 2025/03/19 CM#4336
+*             a~duecalculationbasedate,
+             h~netduedate AS duecalculationbasedate,
+*&--MOD BEGIN BY XINLEI XU 2025/03/19 CM#4336
              a~invoicegrossamount,
              a~createdbyuser,
              a~lastchangedbyuser,
@@ -202,6 +205,14 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ON e~purchaseorder = c~purchaseorder
         LEFT JOIN i_purchasinggroup WITH PRIVILEGED ACCESS AS f
         ON f~purchasinggroup = e~purchasinggroup
+*&--ADD BEGIN BY XINLEI XU 2025/03/19
+        LEFT JOIN i_journalentry WITH PRIVILEGED ACCESS AS g ON  g~originalreferencedocument = a~supplierinvoicewthnfiscalyear
+                                                             AND g~companycode = a~companycode
+        LEFT JOIN i_operationalacctgdocitem WITH PRIVILEGED ACCESS AS h ON h~accountingdocument = g~accountingdocument
+                                                                       AND h~companycode = g~companycode
+                                                                       AND h~fiscalyear = g~fiscalyear
+                                                                       AND h~financialaccounttype = 'K'
+*&--ADD END BY XINLEI XU 2025/03/19
         INTO TABLE @DATA(lt_supplier_invoice1).
 
       DATA(lt_supplier_invoice2) = lt_supplier_invoice1[].
@@ -475,11 +486,15 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
       SORT lt_result1 BY supplierinvoice fiscalyear DESCENDING.
 
-      " 删除 supplierinvoice 小于 lw_versionmax-inv_no 的数据
-      DELETE lt_result1 WHERE supplierinvoice < lw_versionmax-inv_no.
+*&--MOD BEGIN BY XINLEI XU 2025/03/20
+*      " 删除 supplierinvoice 小于 lw_versionmax-inv_no 的数据
+*      DELETE lt_result1 WHERE supplierinvoice < lw_versionmax-inv_no.
+      " 增量同步
+      DELETE lt_result1 WHERE supplierinvoice <= lw_versionmax-inv_no.
+*&--MOD END BY XINLEI XU 2025/03/20
 
       " 删除 supplierinvoiceitem 为空且 taxamountheader 不等于 '仮払消費税調整' 的数据
-      DELETE lt_result1 WHERE supplierinvoiceitem IS INITIAL OR supplierinvoiceitem = '000000'
+      DELETE lt_result1 WHERE ( supplierinvoiceitem IS INITIAL OR supplierinvoiceitem = '000000' )
                           AND documentheadertext <> '仮払消費税調整'.
 
       " 合并数据
@@ -516,7 +531,9 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ENDIF.
 
         ls_response-exchangerate                         = lw_result1-exchangerate.
-        ls_response-duecalculationbasedate               = lw_result1-duecalculationbasedate.
+        IF lw_result1-duecalculationbasedate IS NOT INITIAL AND lw_result1-duecalculationbasedate <> '00000000'.
+          ls_response-duecalculationbasedate             = lw_result1-duecalculationbasedate.
+        ENDIF.
         ls_response-invoicegrossamount                   = lw_result1-invoicegrossamount.
         ls_response-createdbyuser                        = lw_result1-createdbyuser.
         ls_response-lastchangedbyuser                    = lw_result1-lastchangedbyuser.
@@ -738,7 +755,10 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
              a~documentdate,
              a~postingdate,
              a~exchangerate,
-             a~duecalculationbasedate,
+*&--MOD BEGIN BY XINLEI XU 2025/03/19 CM#4336
+*             a~duecalculationbasedate,
+             h~netduedate AS duecalculationbasedate,
+*&--MOD BEGIN BY XINLEI XU 2025/03/19 CM#4336
              a~invoicegrossamount,
              a~createdbyuser,
              a~lastchangedbyuser,
@@ -772,6 +792,14 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ON e~purchaseorder = c~purchaseorder
         LEFT JOIN i_purchasinggroup WITH PRIVILEGED ACCESS AS f
         ON f~purchasinggroup = e~purchasinggroup
+*&--ADD BEGIN BY XINLEI XU 2025/03/19
+        LEFT JOIN i_journalentry WITH PRIVILEGED ACCESS AS g ON  g~originalreferencedocument = a~supplierinvoicewthnfiscalyear
+                                                             AND g~companycode = a~companycode
+        LEFT JOIN i_operationalacctgdocitem WITH PRIVILEGED ACCESS AS h ON h~accountingdocument = g~accountingdocument
+                                                                       AND h~companycode = g~companycode
+                                                                       AND h~fiscalyear = g~fiscalyear
+                                                                       AND h~financialaccounttype = 'K'
+*&--ADD END BY XINLEI XU 2025/03/19
         INTO TABLE @DATA(lt_supplier_invoice3).
 
 
@@ -1026,13 +1054,16 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
       SORT lt_result BY supplierinvoice fiscalyear DESCENDING.
 
-      " 删除 supplierinvoice 小于 lw_versionmax-inv_no 的数据
+*&--MOD BEGIN BY XINLEI XU 2025/03/20
+*      " 删除 supplierinvoice 小于 lw_versionmax-inv_no 的数据
 *      DELETE lt_result WHERE supplierinvoice < lw_versionmax1-inv_no.
-      DELETE lt_result WHERE supplierinvoice < lw_versionmax1-inv_no.
+      " 增量同步
+      DELETE lt_result WHERE supplierinvoice <= lw_versionmax1-inv_no.
+*&--MOD END BY XINLEI XU 2025/03/20
 
       " 删除 supplierinvoiceitem 为空且 taxamountheader 不等于 '仮払消費税調整' 的数据
-      DELETE lt_result WHERE supplierinvoiceitem IS INITIAL OR supplierinvoiceitem = '000000'
-                          AND documentheadertext <> '仮払消費税調整'.
+      DELETE lt_result WHERE ( supplierinvoiceitem IS INITIAL OR supplierinvoiceitem = '000000' )
+                         AND documentheadertext <> '仮払消費税調整'.
 
       " 合并数据
       LOOP AT lt_result INTO lw_result.
@@ -1067,7 +1098,9 @@ CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
         ENDIF.
 
         ls_response-exchangerate                         = lw_result-exchangerate.
-        ls_response-duecalculationbasedate               = lw_result-duecalculationbasedate.
+        IF lw_result-duecalculationbasedate IS NOT INITIAL AND lw_result-duecalculationbasedate <> '00000000'.
+          ls_response-duecalculationbasedate             = lw_result-duecalculationbasedate.
+        ENDIF.
         ls_response-invoicegrossamount                   = lw_result-invoicegrossamount.
         ls_response-createdbyuser                        = lw_result-createdbyuser.
         ls_response-lastchangedbyuser                    = lw_result-lastchangedbyuser.

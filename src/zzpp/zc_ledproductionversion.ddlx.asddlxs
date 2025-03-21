@@ -20,7 +20,7 @@ annotate view ZC_LEDPRODUCTIONVERSION with
   @UI.lineItem: [ { position: 10, cssDefault.width: '12rem'  } ]
   @UI.selectionField: [ { position: 10  } ]
   @UI.identification: [ { position: 10  } ]
-  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_PRODUCT_VH', element: 'Product' } }]
   @EndUserText.label: 'Production Material'
   Material;
 
@@ -44,7 +44,7 @@ annotate view ZC_LEDPRODUCTIONVERSION with
   @UI.lineItem: [ { position: 40, cssDefault.width: '12rem'  } ]
   @UI.selectionField: [ { position: 40  } ]
   @UI.identification: [ { position: 40  } ]
-  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_PRODUCT_VH', element: 'Product' } }]
   @EndUserText.label: 'Component'
   Component;
 

@@ -1,4 +1,5 @@
 @VDM.viewType: #BASIC
+
 @ObjectModel.dataCategory: #VALUE_HELP
 @ObjectModel.representativeKey: 'Customer'
 
@@ -13,19 +14,11 @@
 @ObjectModel.usageType.dataClass: #MASTER
 
 @AccessControl.authorizationCheck: #NOT_REQUIRED
-@Search.searchable: true
-@Metadata.ignorePropagatedAnnotations: true
 
 @EndUserText.label: 'Customer'
 @Consumption.ranked: true
-define view entity ZC_Customer_VH
+define view entity ZC_CustomerVH
   as select from I_Customer
-    inner join   I_CustomerCompany         as customerc on I_Customer.Customer = customerc.Customer
-    inner join   I_CreditManagementAccount as creditm   on creditm.BusinessPartner = customerc.Customer
-    inner join   I_CustomerSalesArea       as customers on customers.Customer = customerc.Customer
-    inner join   I_SalesOrganization       as Sales     on  Sales.SalesOrganization = customerc.CompanyCode
-                                                        and Sales.SalesOrganization = creditm.CreditSegment
-                                                        and Sales.SalesOrganization = customers.SalesOrganization
 {
           @ObjectModel.text.element: ['BPCustomerName']
           @Search.defaultSearchElement: true
@@ -180,5 +173,4 @@ define view entity ZC_Customer_VH
           @UI.hidden: true
           @Consumption.filter.hidden: true
           I_Customer.DataController10
-
 }

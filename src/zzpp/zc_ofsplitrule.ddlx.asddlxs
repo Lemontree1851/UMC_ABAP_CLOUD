@@ -19,13 +19,13 @@ annotate view ZC_OFSPLITRULE with
   @UI.lineItem: [ { position: 05, importance: #HIGH } ]
   @UI.selectionField: [{ position: 05 }]
   @UI.identification: [{ position: 05 }]
-  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Customer', element: 'Customer' } }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_CustomerVH', element: 'Customer' } }]
   Customer;
 
   @UI.lineItem: [ { position: 10, importance: #HIGH } ]
   @UI.selectionField: [{ position: 10 }]
   @UI.identification: [{ position: 10 }]
-  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_PRODUCT_VH', element: 'Product' } }]
   SplitMaterial;
 
   @UI.lineItem: [ { position: 20, importance: #HIGH, cssDefault.width: '10rem' } ]

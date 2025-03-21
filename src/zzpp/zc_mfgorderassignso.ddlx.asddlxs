@@ -35,7 +35,7 @@ annotate view ZC_MFGORDERASSIGNSO with
 
   @UI.lineItem: [{ position: 20 }]
   @UI.selectionField: [{ position: 20 }]
-  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_MRPControllerVH', element: 'MRPController' } }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_MRPControllerVH', element: 'MRPController' } }]
   MRPController;
 
   @UI.lineItem: [{ position: 30 }]
@@ -45,7 +45,7 @@ annotate view ZC_MFGORDERASSIGNSO with
 
   @UI.lineItem: [{ position: 40, cssDefault.width: '8rem' }]
   @UI.selectionField: [{ position: 40 }]
-  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_PRODUCT_VH', element: 'Product' } }]
   @UI.identification: [ { position: 10 } ]
   Material;
 
@@ -55,6 +55,7 @@ annotate view ZC_MFGORDERASSIGNSO with
 
   @UI.lineItem: [{ position: 60 }]
   @UI.selectionField: [{ position: 60 }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ManufacturingOrderVH', element: 'ManufacturingOrder' } }]
   ManufacturingOrder;
 
   @UI.lineItem: [{ position: 70 }]
@@ -88,7 +89,7 @@ annotate view ZC_MFGORDERASSIGNSO with
 
   @UI.lineItem: [{ position: 110 }]
   @UI.selectionField: [{ position: 90 }]
-  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_SalesDocumentStdVH', element: 'SalesDocument' } }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_SalesDocumentVH', element: 'SalesDocument' } }]
   @EndUserText.label: 'Sales Order'
   SalesOrder;
 

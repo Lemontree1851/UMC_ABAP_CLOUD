@@ -7,10 +7,10 @@ define root custom entity ZR_COSTANALYSISPROCESS
       @Consumption.valueHelpDefinition: [ { entity: { element: 'CompanyCode', name: 'I_CompanyCodeStdVH' } } ]
   key Companycode         : abap.char( 4 );
   key Plant               : werks_d;
-      @Consumption.valueHelpDefinition: [ { entity: { element: 'Product', name: 'I_ProductStdVH' } } ]
+      @Consumption.valueHelpDefinition: [ { entity: { element: 'Product', name: 'ZI_PRODUCT_VH' } } ]
   key Product             : matnr;
   key ProductDescription  : abap.char( 40 );
-      @Consumption.valueHelpDefinition: [ { entity: { name: 'I_Customer_VH', element: 'Customer' } } ]
+      @Consumption.valueHelpDefinition: [ { entity: { name: 'ZC_CustomerVH', element: 'Customer' } } ]
       Customer            : kunnr;
       CustomerName        : abap.char( 40 );
       CompanycodeText     : abap.char( 40 );

@@ -113,7 +113,7 @@ ENDCLASS.
 
 
 
-CLASS ZZCL_WF_UTILS IMPLEMENTATION.
+CLASS zzcl_wf_utils IMPLEMENTATION.
 
 
   METHOD add_approval_history.
@@ -276,9 +276,20 @@ CLASS ZZCL_WF_UTILS IMPLEMENTATION.
                AND  ordertype     = @ls_zc_wf_approvalpath-ordertype
                AND  buypurpose    = @ls_zc_wf_approvalpath-buypurpose
                AND  kyoten        = @ls_ztmm_1006-kyoten
-               AND  PurchaseGroup = @ls_ztmm_1006-purchase_grp
+               AND  purchasegroup = @ls_ztmm_1006-purchase_grp
               INTO @DATA(lv_applicationid).
+              IF sy-subrc <> 0.
+                SELECT SINGLE applicationid
+                  FROM zc_wf_approvalpath
+                 WHERE  prtype        = @ls_ztmm_1006-pr_type
+                   AND  applydepart   = @ls_ztmm_1006-apply_depart
+                   AND  ordertype     = @ls_zc_wf_approvalpath-ordertype
+                   AND  buypurpose    = @ls_zc_wf_approvalpath-buypurpose
+                   AND  kyoten        = @ls_ztmm_1006-kyoten
+                  INTO @lv_applicationid.
+              ENDIF.
               ev_applicationid = lv_applicationid.
+
 
             CATCH cx_root INTO DATA(lx_root).
               " handle exception

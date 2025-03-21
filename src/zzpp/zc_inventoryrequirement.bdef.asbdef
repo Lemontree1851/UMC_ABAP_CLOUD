@@ -1,5 +1,6 @@
 unmanaged implementation in class zbp_c_inventoryrequirement unique;
-strict ( 2 ); //Uncomment this line in order to enable strict mode 2. The strict mode has two variants (strict(1), strict(2)) and is prerequisite to be future proof regarding syntax and to be able to release your BO.
+//strict ( 2 ); //Uncomment this line in order to enable strict mode 2. The strict mode has two variants (strict(1), strict(2)) and is prerequisite to be future proof regarding syntax and to be able to release your BO.
+strict;
 
 define behavior for ZC_InventoryRequirement //alias <alias_name>
 //late numbering
@@ -14,4 +15,8 @@ authorization master ( instance )
 
   field ( readonly ) UUID;
 
+  // ADD BEGIN BY XINLEI XU 2025/03/21 CM#4333
+  static action ScheduleMRPSynchronous parameter ZR_UPLOAD_PARAMETER result [1] ZR_UPLOAD_PARAMETER;
+  static action GetMRPSynchronousTime result [1] ZR_UPLOAD_PARAMETER;
+  // ADD END BY XINLEI XU 2025/03/21 CM#4333
 }

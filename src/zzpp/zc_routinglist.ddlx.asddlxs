@@ -11,7 +11,7 @@ annotate entity ZC_ROUTINGLIST with
 {
 
   @UI.lineItem: [ { position: 10, importance: #MEDIUM } ]
-  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_PRODUCT_VH', element: 'Product' } }]
   @UI.selectionField: [ { position: 20 } ]
   Product;
 
@@ -61,7 +61,7 @@ annotate entity ZC_ROUTINGLIST with
 
   @UI.lineItem: [ { position: 130, importance: #MEDIUM, cssDefault.width: '8rem' } ]
   @UI.selectionField: [ { position: 50 } ]
-  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_WorkCenter', element: 'WorkCenter' } }]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_WorkCenterVH', element: 'WorkCenter' } }]
   WorkCenter;
 
   @UI.lineItem: [ { position: 140, importance: #MEDIUM } ]

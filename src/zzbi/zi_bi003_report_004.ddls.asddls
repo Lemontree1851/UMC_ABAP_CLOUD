@@ -28,7 +28,8 @@ define root view entity ZI_BI003_REPORT_004
       Material,
 
       @EndUserText: { label:  'Material Text', quickInfo: 'Material Text' }
-      _ProductText.ProductName            as MaterialText,
+      // _ProductText.ProductName            as MaterialText,
+      PurchaseOrderItemText               as MaterialText, // ADD BY XINLEI XU 2025/03/19
 
       @ObjectModel.text.element: [ 'ProductGroupName' ]
       _Product.ProductGroup,
@@ -206,53 +207,56 @@ union select from ZI_BI003_REPORT_004_BILLING
          cast( '' as abap.char(6))       as AccountingDocumentItem
 }
 // ADD BEGIN BY XINLEI XU 2025/02/10
-union select from ztbi_bi003_j04 as _table
+union select from ztbi_bi003_j04       as _table
+  inner join      ZR_TBC1012           as _AssignCompany on _AssignCompany.CompanyCode = _table.company_code
+  inner join      ZC_BusinessUserEmail as _User          on  _User.Email  = _AssignCompany.Mail
+                                                         and _User.UserID = $session.user
 {
-  key purchase_order             as PurchaseOrder,
-  key purchase_order_item        as PurchaseOrderItem,
-  key billing_document           as BillingDocument,
-  key billing_document_item      as BillingDocumentItem,
-      company_code               as CompanyCode,
-      fiscal_year_period         as FiscalYearPeriod,
-      fiscal_year                as FiscalYear,
-      fiscal_month               as FiscalMonth,
-      recovery_management_number as RecoveryManagementNumber,
-      company_code_name          as CompanyCodeName,
-      material                   as Material,
-      material_text              as MaterialText,
-      product_group              as ProductGroup,
-      product_group_name         as ProductGroupName,
-      order_quantity             as OrderQuantity,
-      base_unit                  as BaseUnit,
-      net_price_amount           as NetPriceAmount,
-      company_currency           as CompanyCurrency,
-      recovery_necessary_amount  as RecoveryNecessaryAmount,
-      gl_account                 as GlAccount,
-      gl_account_name            as GlAccountName,
-      fixed_asset                as FixedAsset,
-      fixed_asset_description    as FixedAssetDescription,
-      sales_order_document       as SalesOrderDocument,
-      sales_order_document_item  as SalesOrderDocumentItem,
-      customer                   as Customer,
-      customer_name              as CustomerName,
-      transaction_currency       as TransactionCurrency,
-      billing_product            as BillingProduct,
-      billing_product_text       as BillingProductText,
-      billing_document_date      as BillingDocumentDate,
-      profit_center              as ProfitCenter,
-      profit_center_name         as ProfitCenterName,
-      billing_quantity_unit      as BillingQuantityUnit,
-      billing_quantity           as BillingQuantity,
-      billing_currency           as BillingCurrency,
-      billing_price              as BillingPrice,
-      condition_type             as ConditionType,
-      condition_rate_amount      as ConditionRateAmount,
-      recovery_amount            as RecoveryAmount,
-      cast( '' as belnr_d )      as AccountingDocument,
-      cast( '' as abap.char(6))  as AccountingDocumentItem
+  key _table.purchase_order             as PurchaseOrder,
+  key _table.purchase_order_item        as PurchaseOrderItem,
+  key _table.billing_document           as BillingDocument,
+  key _table.billing_document_item      as BillingDocumentItem,
+      _table.company_code               as CompanyCode,
+      _table.fiscal_year_period         as FiscalYearPeriod,
+      _table.fiscal_year                as FiscalYear,
+      _table.fiscal_month               as FiscalMonth,
+      _table.recovery_management_number as RecoveryManagementNumber,
+      _table.company_code_name          as CompanyCodeName,
+      _table.material                   as Material,
+      _table.material_text              as MaterialText,
+      _table.product_group              as ProductGroup,
+      _table.product_group_name         as ProductGroupName,
+      _table.order_quantity             as OrderQuantity,
+      _table.base_unit                  as BaseUnit,
+      _table.net_price_amount           as NetPriceAmount,
+      _table.company_currency           as CompanyCurrency,
+      _table.recovery_necessary_amount  as RecoveryNecessaryAmount,
+      _table.gl_account                 as GlAccount,
+      _table.gl_account_name            as GlAccountName,
+      _table.fixed_asset                as FixedAsset,
+      _table.fixed_asset_description    as FixedAssetDescription,
+      _table.sales_order_document       as SalesOrderDocument,
+      _table.sales_order_document_item  as SalesOrderDocumentItem,
+      _table.customer                   as Customer,
+      _table.customer_name              as CustomerName,
+      _table.transaction_currency       as TransactionCurrency,
+      _table.billing_product            as BillingProduct,
+      _table.billing_product_text       as BillingProductText,
+      _table.billing_document_date      as BillingDocumentDate,
+      _table.profit_center              as ProfitCenter,
+      _table.profit_center_name         as ProfitCenterName,
+      _table.billing_quantity_unit      as BillingQuantityUnit,
+      _table.billing_quantity           as BillingQuantity,
+      _table.billing_currency           as BillingCurrency,
+      _table.billing_price              as BillingPrice,
+      _table.condition_type             as ConditionType,
+      _table.condition_rate_amount      as ConditionRateAmount,
+      _table.recovery_amount            as RecoveryAmount,
+      cast( '' as belnr_d )             as AccountingDocument,
+      cast( '' as abap.char(6))         as AccountingDocumentItem
 }
 where
-  job_run_by = 'UPLOAD'
+  _table.job_run_by = 'UPLOAD'
 // ADD END BY XINLEI XU 2025/02/10
 
 // ADD BEGIN BY XINLEI XU 2025/02/20

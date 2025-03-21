@@ -6,7 +6,7 @@ define root custom entity ZR_CREDITMANTABLE
       @Consumption.valueHelpDefinition: [ { entity: { name: 'I_SalesOrganization', element: 'SalesOrganization' } } ]
       SalesOrganization : vkorg;
       zyear             : gjahr;
-//      @Consumption.valueHelpDefinition: [ { entity: { name: 'I_Customer_VH', element: 'Customer' } } ]
+      //      @Consumption.valueHelpDefinition: [ { entity: { name: 'I_Customer_VH', element: 'Customer' } } ]
       @Consumption.valueHelpDefinition: [ { entity: { name: 'ZC_Customer_VH', element: 'Customer' } } ]
       Customer          : abap.char( 10 );
       CustomerName      : abap.char( 81 );
@@ -65,4 +65,6 @@ define root custom entity ZR_CREDITMANTABLE
       zpercent10        : abap.char( 10 );
       zpercent11        : abap.char( 10 );
       zpercent12        : abap.char( 10 );
+
+      UserEmail         : abap.char(241); // ADD BY XINLEI XU 2025/03/19
 }

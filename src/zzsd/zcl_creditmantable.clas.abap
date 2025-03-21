@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
+CLASS zcl_creditmantable IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -62,6 +62,12 @@ CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
 
               WHEN 'ZYEAR'.
                 lv_zyear = str_rec_l_range-low.
+
+*&--ADD BEGIN BY XINLEI XU 2025/03/19
+              WHEN 'USEREMAIL'.
+                DATA lv_user_email TYPE zr_creditmantable-useremail.
+                lv_user_email = str_rec_l_range-low.
+*&--ADD END BY XINLEI XU 2025/03/19
               WHEN OTHERS.
             ENDCASE.
           ENDLOOP.
@@ -117,7 +123,7 @@ CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
     DELETE ADJACENT DUPLICATES FROM lt_customer COMPARING salesorganization customer customername creditsegmentcurrency limitamount terms paymentterms.
 
 *&--Authorization Check
-    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+*    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ). " DEL BY XINLEI XU 2025/03/19
     DATA(lv_salesorg) = zzcl_common_utils=>get_salesorg_by_user( lv_user_email ).
     IF lv_salesorg IS INITIAL.
       CLEAR lt_customer.

@@ -2,7 +2,8 @@ CLASS lhc_salesacceptance DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
     TYPES:BEGIN OF lty_request.
             INCLUDE TYPE zr_salesacceptance.
-    TYPES:  row TYPE i,
+    TYPES:  row       TYPE i,
+            useremail TYPE i_workplaceaddress-defaultemailaddress, " ADD BY XINLEI XU 2025/03/19
           END OF lty_request,
           lty_request_t TYPE TABLE OF lty_request.
     TYPES:
@@ -38,7 +39,7 @@ CLASS lhc_salesacceptance DEFINITION INHERITING FROM cl_abap_behavior_handler.
                                cv_acceptperiod TYPE monat
                                cv_from         TYPE d
                                cv_to           TYPE d.
-    METHODS convert_amount changing cv_currency TYPE i_currency-currency
+    METHODS convert_amount CHANGING cv_currency TYPE i_currency-currency
                                     cv_input    TYPE any
                                     cv_output   TYPE lv_output.
     CONSTANTS:

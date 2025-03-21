@@ -42,8 +42,10 @@ define view entity ZC_ProductVH
       @Semantics.amount.currencyCode: 'Currency'
       //      _Valuation.StandardPrice,
       //      _Valuation.PriceUnitQty,
+      @EndUserText.label: 'Standard Price'
       cast( cast( _Valuation.StandardPrice as abap.dec( 20, 4 ) ) / _Valuation.PriceUnitQty
       as abap.curr( 11, 2 ))          as StandardPrice,
+      @EndUserText.label: 'Price Unit'
       '1'                             as PriceUnitQty,
 
       _Valuation.Currency,

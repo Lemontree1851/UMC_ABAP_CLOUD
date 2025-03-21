@@ -22,48 +22,20 @@ ENDCLASS.
 
 
 
-CLASS ZZCL_JOB_MRP_SUPPLYDEMAND IMPLEMENTATION.
-
-
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '1' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-        ##NO_HANDLER
-      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
-        " handle exception
-    ENDTRY.
-  ENDMETHOD.
-
+CLASS zzcl_job_mrp_supplydemand IMPLEMENTATION.
 
   METHOD if_apj_dt_exec_object~get_parameters.
     " Return the supported selection parameters here
-    et_parameter_def = VALUE #( ( selname        = 'P_PLANT'
+    et_parameter_def = VALUE #( ( selname        = 'P_ID'
                                   kind           = if_apj_dt_exec_object=>parameter
-                                  datatype       = 'C'
-                                  length         = 4
-                                  param_text     = 'Plant'
+                                  datatype       = 'X'
+                                  length         = 16
+                                  param_text     = 'Schedule UUID'
                                   changeable_ind = abap_true ) ).
 
     " Return the default parameters values here
     " et_parameter_val
   ENDMETHOD.
-
 
   METHOD if_apj_rt_exec_object~execute.
     TYPES: BEGIN OF ts_mrp_result,
@@ -91,8 +63,8 @@ CLASS ZZCL_JOB_MRP_SUPPLYDEMAND IMPLEMENTATION.
 
     LOOP AT it_parameters INTO DATA(ls_parameter).
       CASE ls_parameter-selname.
-        WHEN 'P_PLANT'.
-          DATA(lv_plant) = ls_parameter-low.
+        WHEN 'P_ID'.
+          DATA(lv_uuid) = ls_parameter-low.
       ENDCASE.
     ENDLOOP.
 
@@ -109,21 +81,14 @@ CLASS ZZCL_JOB_MRP_SUPPLYDEMAND IMPLEMENTATION.
         " handle exception
     ENDTRY.
 
-    IF lv_plant IS NOT INITIAL AND lv_plant <> '*'.
-      APPEND VALUE #( sign = 'I' option = 'EQ' low = lv_plant ) TO lr_plant.
-    ELSE.
-      SELECT plant FROM i_plant WITH PRIVILEGED ACCESS INTO TABLE @DATA(lt_plant).
-      LOOP AT lt_plant INTO DATA(ls_plant).
-        APPEND VALUE #( sign = 'I' option = 'EQ' low = ls_plant-plant ) TO lr_plant.
-      ENDLOOP.
-    ENDIF.
-    SORT lr_plant BY low.
+    SELECT plant FROM i_plant WITH PRIVILEGED ACCESS INTO TABLE @DATA(lt_plant). "#EC CI_NOWHERE
+    SORT lt_plant BY plant.
 
-    LOOP AT lr_plant INTO DATA(lw_plant).
+    LOOP AT lt_plant INTO DATA(ls_plant).
       CLEAR: lv_filter,
              lt_data.
 
-      lv_filter = |MRPPlant eq '{ lw_plant-low }' and MRPArea eq '{ lw_plant-low }'|.
+      lv_filter = |MRPPlant eq '{ ls_plant-plant }' and MRPArea eq '{ ls_plant-plant }'|.
       TRY.
           add_message_to_log( |Request Object Data: { lv_filter }| ).
           ##NO_HANDLER
@@ -150,6 +115,7 @@ CLASS ZZCL_JOB_MRP_SUPPLYDEMAND IMPLEMENTATION.
         LOOP AT lt_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
           TRY.
               <lfs_data>-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+              ##NO_HANDLER
             CATCH cx_uuid_error.
               " handle exception
           ENDTRY.
@@ -163,11 +129,15 @@ CLASS ZZCL_JOB_MRP_SUPPLYDEMAND IMPLEMENTATION.
           GET TIME STAMP FIELD <lfs_data>-local_last_changed_at.
         ENDLOOP.
 
-        DELETE FROM ztbc_1020 WHERE mrpplant = @lw_plant-low
-                                AND mrparea  = @lw_plant-low.
+        DELETE FROM ztbc_1020 WHERE mrpplant = @ls_plant-plant
+                                AND mrparea  = @ls_plant-plant.
 
         MODIFY ztbc_1020 FROM TABLE @lt_data.
         IF sy-subrc = 0.
+          IF lv_uuid IS NOT INITIAL.
+            GET TIME STAMP FIELD DATA(lv_timestamp).
+            UPDATE ztbc_1021 SET schedule_end = @lv_timestamp WHERE uuid = @lv_uuid.
+          ENDIF.
           TRY.
               add_message_to_log( |テーブル ZTBC_1020 データ { lines( lt_data ) } 件更新| ).
               ##NO_HANDLER
@@ -199,10 +169,8 @@ CLASS ZZCL_JOB_MRP_SUPPLYDEMAND IMPLEMENTATION.
 
   ENDMETHOD.
 
-
   METHOD if_oo_adt_classrun~main.
   ENDMETHOD.
-
 
   METHOD init_application_log.
     TRY.
@@ -214,4 +182,30 @@ CLASS ZZCL_JOB_MRP_SUPPLYDEMAND IMPLEMENTATION.
         " handle exception
     ENDTRY.
   ENDMETHOD.
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+        ##NO_HANDLER
+      CATCH cx_bali_runtime INTO DATA(lx_bali_runtime).
+        " handle exception
+    ENDTRY.
+  ENDMETHOD.
+
 ENDCLASS.

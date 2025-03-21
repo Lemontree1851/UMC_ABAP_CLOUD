@@ -170,8 +170,45 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
     "TOFIX 实际不是按照so划分DN 应该是按照几个字段来判定是否为一个DN
     "一个so对应一个dn 所以用SO作为抬头
     DATA(records_key) = records.
-    SORT records_key BY salesdocument.
-    DELETE ADJACENT DUPLICATES FROM records_key COMPARING salesdocument.
+
+*&--MOD BEGIN BY XINLEI XU 2025/03/21 按维度将数据分组，相同维度的数据创建一个DN
+*    SORT records_key BY salesdocument.
+*    DELETE ADJACENT DUPLICATES FROM records_key COMPARING salesdocument.
+    SORT records_key BY salesdocumenttype
+                        salesorganization
+                        shippingpoint
+                        soldtoparty
+                        billingtoparty
+                        shiptoparty
+                        plant
+                        transitplant
+                        route
+                        shippingtype
+                        incotermsclassification
+                        incotermstransferlocation.
+    DELETE ADJACENT DUPLICATES FROM records_key COMPARING salesdocumenttype
+                                                          salesorganization
+                                                          shippingpoint
+                                                          soldtoparty
+                                                          billingtoparty
+                                                          shiptoparty
+                                                          plant
+                                                          transitplant
+                                                          route
+                                                          shippingtype
+                                                          incotermsclassification
+                                                          incotermstransferlocation.
+    IF records_key IS NOT INITIAL.
+      SELECT zid,
+             zseq,
+             zvalue1
+        FROM ztbc_1001
+       WHERE zid = 'ZSD016'
+        INTO TABLE @DATA(lt_config).
+      SORT lt_config BY zvalue1.
+    ENDIF.
+*&--MOD END BY XINLEI XU 2025/03/21
+
     "给request中填充数据
     LOOP AT records_key INTO DATA(record_key).
       is_error = abap_false.
@@ -183,7 +220,21 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
       CLEAR ls_request-to_delivery_document_item-results.
       " 行项目信息
       CLEAR lv_item_index.
-      LOOP AT records INTO record_temp WHERE salesdocument = record_key-salesdocument.
+*&--MOD BEGIN BY XINLEI XU 2025/03/21 按维度将数据分组，相同维度的数据创建一个DN
+*      LOOP AT records INTO record_temp WHERE salesdocument = record_key-salesdocument.
+      LOOP AT records INTO record_temp WHERE salesdocumenttype = record_key-salesdocumenttype
+                                         AND salesorganization = record_key-salesorganization
+                                         AND shippingpoint = record_key-shippingpoint
+                                         AND soldtoparty = record_key-soldtoparty
+                                         AND billingtoparty = record_key-billingtoparty
+                                         AND shiptoparty = record_key-shiptoparty
+                                         AND plant = record_key-plant
+                                         AND transitplant = record_key-transitplant
+                                         AND route = record_key-route
+                                         AND shippingtype = record_key-shippingtype
+                                         AND incotermsclassification = record_key-incotermsclassification
+                                         AND incotermstransferlocation = record_key-incotermstransferlocation.
+*&--MOD END BY XINLEI XU 2025/03/21
         ls_delivery_item-reference_s_d_document = record_temp-salesdocument.
         ls_delivery_item-reference_s_d_document_item = record_temp-salesdocumentitem.
         ls_delivery_item-actual_delivery_quantity = record_temp-currdeliveryqty.
@@ -198,16 +249,18 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
         MODIFY records FROM record_temp.
       ENDLOOP.
 
-      SELECT
-        COUNT( * )
-      FROM ztbc_1001
-      WHERE zid = 'ZSD016'
-      AND zvalue1 = @record_key-salesdocumenttype.
+*&--MOD BEGIN BY XINLEI XU 2025/03/21 优化
+*      SELECT COUNT( * )
+*        FROM ztbc_1001
+*       WHERE zid = 'ZSD016'
+*         AND zvalue1 = @record_key-salesdocumenttype.
+      READ TABLE lt_config TRANSPORTING NO FIELDS WITH KEY zvalue1 = record_key-salesdocumenttype BINARY SEARCH.
+*&--MOD END BY XINLEI XU 2025/03/21
       "返品DN
-      IF SY-SUBRC = 0.
+      IF sy-subrc = 0.
         lv_api_head = '/API_CUSTOMER_RETURNS_DELIVERY_SRV;v=0002/A_ReturnsDeliveryHeader'.
         lv_api_item = '/API_CUSTOMER_RETURNS_DELIVERY_SRV;v=0002/A_ReturnsDeliveryItem'.
-      else.
+      ELSE.
         lv_api_head = '/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader'.
         lv_api_item = '/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryItem'.
       ENDIF.
@@ -335,7 +388,21 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
         is_error = abap_true.
       ENDIF.
       IF is_error = abap_true.
-        LOOP AT records INTO record_temp WHERE salesdocument = record_key-salesdocument.
+*&--MOD BEGIN BY XINLEI XU 2025/03/21 按维度将数据分组，相同维度的数据创建一个DN
+*      LOOP AT records INTO record_temp WHERE salesdocument = record_key-salesdocument.
+        LOOP AT records INTO record_temp WHERE salesdocumenttype = record_key-salesdocumenttype
+                                           AND salesorganization = record_key-salesorganization
+                                           AND shippingpoint = record_key-shippingpoint
+                                           AND soldtoparty = record_key-soldtoparty
+                                           AND billingtoparty = record_key-billingtoparty
+                                           AND shiptoparty = record_key-shiptoparty
+                                           AND plant = record_key-plant
+                                           AND transitplant = record_key-transitplant
+                                           AND route = record_key-route
+                                           AND shippingtype = record_key-shippingtype
+                                           AND incotermsclassification = record_key-incotermsclassification
+                                           AND incotermstransferlocation = record_key-incotermstransferlocation.
+*&--MOD END BY XINLEI XU 2025/03/21
           record_temp-type = 'E'.
           record_temp-message = zzcl_common_utils=>merge_message( iv_message1 = record_temp-message
                                                                   iv_message2 = zzcl_common_utils=>parse_error_v2( lv_response )

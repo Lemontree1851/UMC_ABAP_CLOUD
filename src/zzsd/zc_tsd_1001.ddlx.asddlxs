@@ -1,8 +1,8 @@
 @Metadata.layer: #CORE
 @UI: {
   headerInfo: {
-    typeName: '出荷保管場', 
-    typeNamePlural: '出荷保管場'
+    typeName: '出荷保管場所決定マス夕', 
+    typeNamePlural: '出荷保管場所決定マス夕'
   }
 }
 annotate view ZC_TSD_1001 with
@@ -10,7 +10,7 @@ annotate view ZC_TSD_1001 with
   @UI.facet: [ {
     id: 'idIdentification', 
     type: #IDENTIFICATION_REFERENCE, 
-    label: '出荷保管場', 
+    label: '出荷保管場所決定マス夕', 
     position: 10 
   } ]
   @UI.lineItem: [ {

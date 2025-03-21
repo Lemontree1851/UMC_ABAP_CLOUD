@@ -26,10 +26,10 @@ CLASS zcl_http_podata_003 DEFINITION
 *---------------------------------------------------------------------------
       BEGIN OF ts_workflowdetail,
 
-        workflowinternalid     TYPE  string,
-        workflowtaskinternalid TYPE  string,
-        workflowtaskresult     TYPE  string,
-        WorkflowTaskExternalStatus TYPE string,
+        workflowinternalid         TYPE  string,
+        workflowtaskinternalid     TYPE  string,
+        workflowtaskresult         TYPE  string,
+        workflowtaskexternalstatus TYPE string,
 
       END OF ts_workflowdetail,
 
@@ -83,7 +83,7 @@ CLASS zcl_http_podata_003 DEFINITION
         textobjecttype                 TYPE c LENGTH  4,
         plainlongtext                  TYPE string,
         schedulelinedeliverydate       TYPE c LENGTH  8,
-        suppliermaterialnumber         TYPE I_PurchaseOrderItemAPI01-suppliermaterialnumber,
+        suppliermaterialnumber         TYPE i_purchaseorderitemapi01-suppliermaterialnumber,
         internationalarticlenumber     TYPE string,
         requisitionername              TYPE c LENGTH 12,
         correspncinternalreference     TYPE c LENGTH 12,
@@ -132,11 +132,9 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
-
+CLASS zcl_http_podata_003 IMPLEMENTATION.
 
   METHOD if_http_service_extension~handle_request.
-
     DATA:
       lt_polog TYPE TABLE OF ztmm_1002,
       lw_polog TYPE ztmm_1002.
@@ -152,9 +150,7 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
     DATA(lv_predate) = zzcl_common_utils=>calc_date_subtract(
                 EXPORTING
                   date      = lv_sy_datum
-
                   day       = '1'
-
               ).
 
     DATA: lv_date       TYPE d,
@@ -176,16 +172,12 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
     lv_plant     = ls_req-plant.
     lv_timestamp = ls_req-time_stamp.
 
-    data:lv_where type String.
+    DATA:lv_where TYPE string.
 
-    if lv_plant is NOT INITIAL.
-
-        lv_where = |b~plant = @lv_plant and a~lastchangedatetime >= @lv_timestamp|.
-
-    else.
-
-        lv_where = |a~lastchangedatetime >= @lv_timestamp|.
-
+    IF lv_plant IS NOT INITIAL.
+      lv_where = |b~plant = @lv_plant and a~lastchangedatetime >= @lv_timestamp|.
+    ELSE.
+      lv_where = |a~lastchangedatetime >= @lv_timestamp|.
     ENDIF.
 
     SELECT b~purchaseorder,
@@ -217,7 +209,7 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
            d~textobjecttype,
            d~plainlongtext,
            e~schedulelinedeliverydate,
-           a~PurchaseOrderType "add by stanley 20250307
+           a~purchaseordertype "add by stanley 20250307
       FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS AS b
      INNER JOIN i_purchaseorderapi01 WITH PRIVILEGED ACCESS AS a
         ON b~purchaseorder = a~purchaseorder
@@ -230,15 +222,15 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
         ON b~purchaseorder = e~purchaseorder
        AND b~purchaseorderitem = e~purchaseorderitem
       LEFT JOIN i_businessuserbasic WITH PRIVILEGED ACCESS AS f
-        ON a~CreatedByUser = f~BusinessPartner
+        ON a~createdbyuser = f~businesspartner
      WHERE (lv_where)
       INTO TABLE @DATA(lt_poitem).
 
-      SELECT BusinessPartner,
-             LASTNAME,
-             FIRSTNAME
-          FROM i_businessuserbasic
-          INTO TABLE @DATA(LT_USERNAME)."#EC CI_NOWHERE
+    SELECT businesspartner,
+           lastname,
+           firstname
+        FROM i_businessuserbasic
+        INTO TABLE @DATA(lt_username).                  "#EC CI_NOWHERE
 *--------------------------------------------------------------just for test
 
 *DELETE lt_poitem WHERE purchaseorder <> '3100000000'.
@@ -252,12 +244,9 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
     WHERE zid = 'ZMM001'
     INTO TABLE @DATA(lt_1001).
 
-    IF  lt_poitem IS NOT INITIAL.
-
+    IF lt_poitem IS NOT INITIAL.
       DATA(lt_poitem_copy) = lt_poitem.
-
       SORT lt_poitem_copy BY purchaseorder purchaseorderitem.
-
       DELETE ADJACENT DUPLICATES FROM lt_poitem_copy COMPARING purchaseorder purchaseorderitem.
 
       SELECT  purchaseorder,
@@ -267,20 +256,18 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
               confirmedquantity,
               mrprelevantquantity,
               supplierconfirmationextnumber
-
          FROM i_posupplierconfirmationapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_poitem_copy
         WHERE purchaseorder = @lt_poitem_copy-purchaseorder
           AND purchaseorderitem = @lt_poitem_copy-purchaseorderitem
          INTO TABLE @DATA(lt_confirmation).
-
     ENDIF.
 
     SELECT * FROM i_purchaseorderitemnotetp_2 WITH PRIVILEGED ACCESS
     WHERE textobjecttype = 'F01'
     INTO TABLE @DATA(lt_note).
 
-    IF    lt_note IS NOT INITIAL.
+    IF lt_note IS NOT INITIAL.
       SORT lt_note BY purchaseorder purchaseorderitem.
     ENDIF.
 
@@ -288,13 +275,11 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
       lt_result TYPE STANDARD TABLE OF ty_response,
       lw_result TYPE ty_response.
 
-
     DATA:
       lv_path  TYPE string,
       lv_path1 TYPE string.
 
-
-*     审批状态取得取得
+*   审批状态取得取得
     lv_path = |/YY1_WORKFLOWSTATUSOVERVIEW_CDS/YY1_WorkflowStatusOverview|.
     "Call API
     zzcl_common_utils=>request_api_v2(
@@ -309,19 +294,14 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
                              CHANGING data = ls_res_workflow ).
 
     IF lv_stat_code1 = '200' AND ls_res_workflow-d-results IS NOT INITIAL.
-
       APPEND LINES OF ls_res_workflow-d-results TO lt_workflow_api.
-
     ENDIF.
 
     IF lt_workflow_api IS NOT INITIAL.
-
-      SORT lt_workflow_api BY sapbusinessobjectnodekey1 sapobjectnoderepresentation WorkflowInternalID DESCENDING.
-
+      SORT lt_workflow_api BY sapbusinessobjectnodekey1 sapobjectnoderepresentation workflowinternalid DESCENDING.
     ENDIF.
 
-*      审批详情取得
-
+*   审批详情取得
     lv_path1 = |/YY1_WORKFLOWSTATUSDETAILS_CDS/YY1_WorkflowStatusDetails|.
     "Call API
     zzcl_common_utils=>request_api_v2(
@@ -345,16 +325,13 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
 
       SORT lt_workflowdetail_api BY workflowinternalid workflowtaskinternalid DESCENDING.
       "ADD BY STANLEY 20250217
-      DELETE lt_workflowdetail_api WHERE WorkflowTaskExternalStatus = 'CANCELLED'.
+      DELETE lt_workflowdetail_api WHERE workflowtaskexternalstatus = 'CANCELLED'.
       "END ADD
 
       DELETE ADJACENT DUPLICATES FROM lt_workflowdetail_api COMPARING workflowinternalid.
-
-
-
     ENDIF.
 
-    DATA:lv_response TYPE c .
+    DATA: lv_response TYPE c .
 
     LOOP AT lt_poitem INTO DATA(lw_poitems).
 
@@ -364,52 +341,40 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
         lw_result-approvedate = lw_workflow-wrkflwtskcompletionutcdatetime.
 
         READ TABLE lt_workflowdetail_api INTO DATA(lw_workflow_d) WITH KEY workflowinternalid = lw_workflow-workflowinternalid BINARY SEARCH.
-
         "如果能在detail中取到WorkflowTaskInternalID
         IF sy-subrc = 0.
-
           IF lw_workflow_d-workflowtaskresult = 'RELEASED'.
-
             lv_response = 'X'.
-
           ELSE.
-
             lv_response = ''.
-
           ENDIF.
-
           "当取不到internalid 的时候
         ELSE.
           "直接判断WorkflowTaskExternalStatus是不是COMPLETED
           IF lw_workflow-workflowexternalstatus = 'COMPLETED'.
             "如果是，则是传出对象。
             lv_response = 'X'.
-
           ELSE.
             "如果不是completed 则不是传出对象。
-             lv_response = ''.
+            lv_response = ''.
           ENDIF.
-
         ENDIF.
-
       ELSE.
-       if lw_poitems-PurchaseOrderType =  'ZB21'."add by stanley 20250307 for advanced purchase pass ZB21
-             lv_response = 'X'.
-       else.
-             lv_response = ''.
-       endif.
-
+        IF lw_poitems-purchaseordertype =  'ZB21'."add by stanley 20250307 for advanced purchase pass ZB21
+          lv_response = 'X'.
+        ELSE.
+          lv_response = ''.
+        ENDIF.
       ENDIF.
 
       "只有是传出对象的时候才会去传出
-      IF  lv_response = 'X'.
-
+      IF lv_response = 'X'.
         MOVE-CORRESPONDING lw_poitems TO lw_result.
 
         "ADD BY STANLEY 20250207
-        READ TABLE LT_USERNAME INTO DATA(LS_USERNAME) WITH KEY BusinessPartner = LW_POITEMS-CreatedByUser+2.
-        IF SY-SUBRC EQ 0.
-            lw_result-sap_cd_by_text = |{ LS_USERNAME-LastName } { LS_USERNAME-FirstName }|.
+        READ TABLE lt_username INTO DATA(ls_username) WITH KEY businesspartner = lw_poitems-createdbyuser+2.
+        IF sy-subrc EQ 0.
+          lw_result-sap_cd_by_text = |{ ls_username-lastname } { ls_username-firstname }|.
         ENDIF.
 
 
@@ -428,21 +393,16 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
         lw_result-purchaseorderquantityunit = lv_unit1.
 
         APPEND lw_result TO lt_result.
-
         CLEAR lw_result.
-
       ENDIF.
 
-      CLEAR:lv_response,lw_result,lw_note,lw_workflow,lw_workflow_d.
-
+      CLEAR: lv_response,lw_result,lw_note,lw_workflow,lw_workflow_d.
     ENDLOOP.
 
-    DATA lv_taxamount1        TYPE p LENGTH 10 DECIMALS 2."两位小数
-
-    DATA lv_taxamount        TYPE p LENGTH 10  ."两位小数
+    DATA lv_taxamount  TYPE p LENGTH 10 DECIMALS 0. " 整数
+    DATA lv_taxamount1 TYPE p LENGTH 10 DECIMALS 2. " 两位小数
 
     LOOP AT lt_result INTO lw_result.
-
       ls_response-purchaseorder                      = lw_result-purchaseorder                  .
       ls_response-supplier                           = lw_result-supplier                       .
       ls_response-companycode                        = lw_result-companycode                    .
@@ -490,51 +450,44 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
 *      clear lw_approvedate.
 
       READ TABLE lt_1001 INTO DATA(lw_1001) WITH KEY zvalue1 = lw_result-taxcode.
-*
       IF sy-subrc = 0.
-
         DATA(lv_value) = lw_1001-zvalue2.
-
       ENDIF.
       CLEAR lw_1001.
 
+      CONDENSE ls_response-netamount NO-GAPS.
       CASE lw_result-documentcurrency.
         WHEN 'JPY'.
-
           ls_response-taxamount = lv_value / 100 * ls_response-netamount.
-
-*            lv_taxamount2 = floor( lw_result-taxamount * 100 ) / 100.
-*            ls_response-taxamount = lv_taxamount2.
-
-          " 舍弃小数部分，取整
           CONDENSE ls_response-taxamount.
-
-          lv_taxamount = floor( ls_response-taxamount ).
+*&--MOD BEGIN BY XINLEI XU 2025/03/19 CM#4208 自动四舍五入
+*          lv_taxamount = floor( ls_response-taxamount ).
+          lv_taxamount = ls_response-taxamount.
+*&--MOD END BY XINLEI XU 2025/03/19 CM#4208
           ls_response-taxamount = lv_taxamount.
 
         WHEN 'USD'.
-
           ls_response-taxamount = lv_value / 100 * ls_response-netamount.
-
-          " 舍弃小数部分，取整
           CONDENSE ls_response-taxamount.
-
-          lv_taxamount1 = floor( ls_response-taxamount * 100 ) / 100.
+*&--MOD BEGIN BY XINLEI XU 2025/03/19 CM#4208 四舍五入
+*          lv_taxamount1 = floor( ls_response-taxamount * 100 ) / 100.
+          lv_taxamount1 = ls_response-taxamount * 100 / 100.
+*&--MOD END BY XINLEI XU 2025/03/19 CM#4208
           ls_response-taxamount = lv_taxamount1.
 
         WHEN 'EUR'.
-
           ls_response-taxamount = lv_value / 100 * ls_response-netamount.
-
           CONDENSE ls_response-taxamount.
-          lv_taxamount1 = floor( ls_response-taxamount * 100 ) / 100.
+*&--MOD BEGIN BY XINLEI XU 2025/03/19 CM#4208 四舍五入
+*          lv_taxamount1 = floor( ls_response-taxamount * 100 ) / 100.
+          lv_taxamount1 = ls_response-taxamount * 100 / 100.
+*&--MOD END BY XINLEI XU 2025/03/19 CM#4208
           ls_response-taxamount = lv_taxamount1.
-
         WHEN OTHERS.
 
       ENDCASE.
 
-      CLEAR :  lv_value, lv_taxamount1.
+      CLEAR: lv_value, lv_taxamount1.
 
       ls_response-storagelocation                    = lw_result-storagelocation                .
       ls_response-storagelocationname                = lw_result-storagelocationname            .
@@ -612,7 +565,6 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
 
       APPEND ls_response TO es_response-items.
       CLEAR ls_response.
-
     ENDLOOP.
 
     SORT es_response-items BY purchaseorder purchaseorderitem.
@@ -621,9 +573,7 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
       lv_text = 'there is no data to send'.
       "propagate any errors raised
       response->set_status( '204' )."204
-
     ELSE.
-
       "respond with success payload
       response->set_status( '200' ).
 
@@ -633,8 +583,6 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
       response->set_text( lv_json_string ).
       response->set_header_field( i_name  = lc_header_content
                                   i_value = lc_content_type ).
-
     ENDIF.
-
   ENDMETHOD.
 ENDCLASS.

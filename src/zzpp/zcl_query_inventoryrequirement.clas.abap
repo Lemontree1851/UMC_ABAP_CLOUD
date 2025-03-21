@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
+CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -253,9 +253,6 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
 *&--ADD BEGIN BY XINLEI XU 2025/03/14
               WHEN 'FROMMRPTABLE'.
                 DATA(lv_frommrptable) = ls_filter_cond-range[ 1 ]-low.
-              WHEN 'USEREMAIL'.
-                DATA lv_user_email TYPE zc_inventoryrequirement-useremail.
-                lv_user_email = ls_filter_cond-range[ 1 ]-low.
 *&--ADD END BY XINLEI XU 2025/03/14
               WHEN OTHERS.
             ENDCASE.
@@ -296,7 +293,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
              eolgroup AS e_o_l_group,
              ismainproduct AS is_main_product,
              supplierprice AS supplier_price
-        FROM zc_inventoryrequirement_fixed
+        FROM zc_inventoryrequirement_fixed WITH PRIVILEGED ACCESS
        WHERE plant = @lv_plant
          AND product IN @lr_product
          AND mrpcontroller IN @lr_mrpcontroller
@@ -308,7 +305,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
         INTO TABLE @DATA(lt_fixed_data).
 
 *&--Authorization Check
-*      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ). " DEL BY XINLEI XU 2025/03/14
+      DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
       DATA(lv_plant_check) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
       IF lv_plant_check IS INITIAL.
         CLEAR lt_fixed_data.
@@ -488,8 +485,8 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
                           iv_unix_timestamp = <lfs_mrpdata>-mrpelementavailyorrqmtdatestr / 1000
                        )->get_moment( )->as( xco_cp_time=>format->abap )->value+0(8).
             ENDIF.
-            <lfs_mrpdata>-product = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = <lfs_mrpdata>-material ).
           ENDIF.
+          <lfs_mrpdata>-product = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = <lfs_mrpdata>-material ).
 
           " 入庫処理日数考慮要否
           IF lv_whether_process = lc_str_yes.
@@ -670,7 +667,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
           IF lt_filter_mrpdata_sb IS NOT INITIAL.
             SELECT plannedorder,
                    i_plannedorder~product
-              FROM i_plannedorder
+              FROM i_plannedorder WITH PRIVILEGED ACCESS
                FOR ALL ENTRIES IN @lt_filter_mrpdata_sb
              WHERE plannedorder = @lt_filter_mrpdata_sb-planned_order
               INTO TABLE @DATA(lt_plannedorder).
@@ -680,7 +677,7 @@ CLASS ZCL_QUERY_INVENTORYREQUIREMENT IMPLEMENTATION.
           IF lt_filter_mrpdata_ar IS NOT INITIAL.
             SELECT manufacturingorder,
                    product
-              FROM i_manufacturingorder
+              FROM i_manufacturingorder WITH PRIVILEGED ACCESS
                FOR ALL ENTRIES IN @lt_filter_mrpdata_ar
              WHERE manufacturingorder = @lt_filter_mrpdata_ar-manufacturing_order
               INTO TABLE @DATA(lt_manufacturingorder).

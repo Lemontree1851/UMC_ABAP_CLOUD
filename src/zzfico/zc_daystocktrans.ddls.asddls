@@ -23,7 +23,7 @@ define root view entity ZC_DAYSTOCKTRANS
   key Plant,
       @UI                        : { lineItem: [ { position: 40, label: '得意先BPコード' } ], selectionField: [ { position: 4 } ] }
       @Consumption.filter        : { selectionType: #SINGLE, multipleSelections: false }
-      @Consumption.valueHelpDefinition: [ { entity: { name: 'ZC_BusinessPartnerVH', element: 'BusinessPartner' } } ]
+      @Consumption.valueHelpDefinition: [ { entity: { name: 'ZC_CustomerVH', element: 'BusinessPartner' } } ]
       @EndUserText.label         : '得意先BPコード'
   key BusinessPartner,
       @UI                        : { lineItem: [ { position: 50, label: '得意先名' } ] }

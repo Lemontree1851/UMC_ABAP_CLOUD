@@ -21,7 +21,7 @@ define root view entity ZC_BI003_REPORT_001
       CompanyCode,
       CompanyName,
 
-      @Consumption.valueHelpDefinition: [{ entity:{ element: 'Customer', name: 'I_Customer' } }]
+      @Consumption.valueHelpDefinition: [{ entity:{ element: 'Customer', name: 'ZC_CustomerVH' } }]
       @ObjectModel.text.element: [ 'CustomerName' ]
       Customer,
       CustomerName,

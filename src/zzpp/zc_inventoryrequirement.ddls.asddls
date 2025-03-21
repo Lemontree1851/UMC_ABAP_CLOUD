@@ -23,7 +23,6 @@ define root custom entity ZC_InventoryRequirement
       
       // ADD BEGIN BY XINLEI XU 2025/03/14
       FromMRPTable           : abap_boolean; // 同期済のMRPデータ使用
-      UserEmail              : abap.char(241);
       // ADD END BY XINLEI XU 2025/03/14
       
       // Dynamic Data

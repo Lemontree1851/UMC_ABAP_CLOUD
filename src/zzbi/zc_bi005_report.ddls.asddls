@@ -30,13 +30,13 @@ define root view entity ZC_BI005_REPORT
       @UI                            : {
       selectionField                 : [ { position: 3 } ],
       lineItem                       : [ { position: 80 } ] }
-      @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_PRODUCT_VH', element: 'Product' } }]
       @EndUserText: { label:  '品番', quickInfo: '品番' }
   key Product,
       @UI                            : {
       selectionField                 : [ { position: 4 } ],
       lineItem                       : [ { position: 120 } ] }
-      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_BusinessPartnerVH', element: 'BusinessPartner' } }]
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_CustomerVH', element: 'Customer' } }]
       @EndUserText: { label:  '得意先', quickInfo: '得意先' }
   key Customer,
       @EndUserText: { label:  '会社コードテキスト', quickInfo: '会社コードテキスト' }

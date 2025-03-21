@@ -16,7 +16,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_SALESACCEPTANCE_RESULT IMPLEMENTATION.
+CLASS zcl_salesacceptance_result IMPLEMENTATION.
 
 
   METHOD convert_amount.
@@ -90,6 +90,11 @@ CLASS ZCL_SALESACCEPTANCE_RESULT IMPLEMENTATION.
               DATA(lr_finish) = ls_filter_cond-range.
               READ TABLE lr_finish INTO DATA(lrs_finish) INDEX 1.
               DATA(lv_finish) = lrs_finish-low.
+*&--ADD BEGIN BY XINLEI XU 2025/03/19
+            WHEN 'USEREMAIL'.
+              DATA lv_user_email TYPE zr_salesacceptance_result-useremail.
+              lv_user_email = ls_filter_cond-range[ 1 ]-low.
+*&--ADD END BY XINLEI XU 2025/03/19
           ENDCASE.
         ENDLOOP.
       CATCH cx_rap_query_filter_no_range.
@@ -283,7 +288,7 @@ CLASS ZCL_SALESACCEPTANCE_RESULT IMPLEMENTATION.
             INTO TABLE @lt_1003_t.
 
           IF lt_1003_t IS NOT INITIAL.
-            SELECT *                          "#EC CI_NO_TRANSFORM
+            SELECT *                               "#EC CI_NO_TRANSFORM
               FROM ztsd_1012
               FOR ALL ENTRIES IN @lt_1003_t
              WHERE salesorganization = @lt_1003_t-salesorganization
@@ -370,7 +375,7 @@ CLASS ZCL_SALESACCEPTANCE_RESULT IMPLEMENTATION.
     ENDIF.
 
 * Authorization Check
-    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+*    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ). " DEL BY XINLEI XU 2025/03/19
     DATA(lv_vkorg) = zzcl_common_utils=>get_salesorg_by_user( lv_user_email ).
     IF lv_vkorg IS INITIAL.
       CLEAR: lt_1003, lt_so.
@@ -414,7 +419,7 @@ CLASS ZCL_SALESACCEPTANCE_RESULT IMPLEMENTATION.
 
     IF lt_billing IS NOT INITIAL.
 * E: I_JournalEntryItem
-      SELECT companycode,              "#EC CI_NO_TRANSFORM
+      SELECT companycode,                          "#EC CI_NO_TRANSFORM
              fiscalyear,
              accountingdocument,
              referencedocument,
@@ -427,7 +432,7 @@ CLASS ZCL_SALESACCEPTANCE_RESULT IMPLEMENTATION.
         INTO TABLE @DATA(lt_bkpf).
 
 * F: I_BillingDocumentItemPrcgElmnt
-      SELECT billingdocument,         "#EC CI_NO_TRANSFORM
+      SELECT billingdocument,                      "#EC CI_NO_TRANSFORM
              billingdocumentitem,
              pricingprocedurestep,
              pricingprocedurecounter,
