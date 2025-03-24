@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_ECN IMPLEMENTATION.
+CLASS zcl_ecn IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -349,7 +349,7 @@ CLASS ZCL_ECN IMPLEMENTATION.
 
       LOOP AT lt_bomlink INTO DATA(ls_materialbomlink).
         " Explode BOM
-        zcl_explodebom=>get_data(
+        zcl_explodebom_ecn=>get_data(
           EXPORTING
             iv_explosiontype               = '4'
             iv_plant                       = ls_materialbomlink-plant

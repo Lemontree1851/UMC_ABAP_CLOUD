@@ -21,6 +21,7 @@ annotate view ZC_TSD_1001 with
     position: 10 
   } ]
   @UI.selectionField: [{position: 5}]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'ZC_CustomerVH', element: 'Customer' } } ]
   Customer;
   
   @UI.lineItem: [ {
@@ -32,6 +33,7 @@ annotate view ZC_TSD_1001 with
     position: 20 
   } ]
   @UI.selectionField: [{position: 10}]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'ZC_CustomerVH', element: 'Customer' } } ]
   BillingToParty;
   
   @UI.lineItem: [ {

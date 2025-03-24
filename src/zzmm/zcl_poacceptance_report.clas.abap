@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
+CLASS zcl_poacceptance_report IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -207,7 +207,7 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
                productmanufacturernumber,
                yy1_customermaterial_prd,
                manufacturernumber
-          FROM i_product
+          FROM i_product WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po
          WHERE product = @lt_po-material
            AND manufacturernumber IN @lr_mfrnr
@@ -216,7 +216,7 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
 * Get Purchasing Group
         SELECT purchasinggroup,
                purchasinggroupname
-          FROM i_purchasinggroup
+          FROM i_purchasinggroup WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po
          WHERE purchasinggroup = @lt_po-purchasinggroup
           INTO TABLE @DATA(lt_purchasinggroup).
@@ -224,14 +224,14 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
 * Get Business Partner Name
         SELECT businesspartner,
                organizationbpname1
-          FROM i_businesspartner
+          FROM i_businesspartner WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po
          WHERE businesspartner = @lt_po-supplier
           INTO TABLE @DATA(lt_bp).
 
         SELECT businesspartner,
                organizationbpname1
-          FROM i_businesspartner
+          FROM i_businesspartner WITH PRIVILEGED ACCESS
          WHERE businesspartner IN @lr_mfrnr
           APPENDING TABLE @lt_bp.
 
@@ -241,8 +241,7 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
                sequentialnmbrofsuplrconf,
                deliverydate,
                confirmedquantity
-          FROM i_posupplierconfirmationapi01
-          WITH PRIVILEGED ACCESS
+          FROM i_posupplierconfirmationapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po
          WHERE purchaseorder = @lt_po-purchaseorder
            AND purchaseorderitem = @lt_po-purchaseorderitem
@@ -254,8 +253,7 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
         SELECT purchaseorder,
                purchaseorderitem,
                schedulelinedeliverydate
-          FROM i_purordschedulelineapi01
-          WITH PRIVILEGED ACCESS
+          FROM i_purordschedulelineapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po
          WHERE purchaseorder = @lt_po-purchaseorder
            AND purchaseorderitem = @lt_po-purchaseorderitem
@@ -269,8 +267,7 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
                costcenter,
                glaccount,
                profitcenter
-          FROM i_purordaccountassignmentapi01
-          WITH PRIVILEGED ACCESS
+          FROM i_purordaccountassignmentapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po
          WHERE purchaseorder = @lt_po-purchaseorder
            AND purchaseorderitem = @lt_po-purchaseorderitem
@@ -313,8 +310,7 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
                quantity,
                purchaseorderamount,
                invoiceamtinpurordtransaccrcy
-          FROM i_purchaseorderhistoryapi01
-          WITH PRIVILEGED ACCESS
+          FROM i_purchaseorderhistoryapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po
          WHERE purchaseorder = @lt_po-purchaseorder
            AND purchaseorderitem = @lt_po-purchaseorderitem
@@ -331,12 +327,11 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
           SELECT materialdocumentyear,
                  materialdocument,
                  materialdocumentheadertext
-            FROM i_materialdocumentheader_2
-            WITH PRIVILEGED ACCESS
+            FROM i_materialdocumentheader_2 WITH PRIVILEGED ACCESS
             FOR ALL ENTRIES IN @lt_ekbe
            WHERE materialdocumentyear = @lt_ekbe-purchasinghistorydocumentyear
              AND materialdocument = @lt_ekbe-purchasinghistorydocument
-            INTO TABLE @DATA(lt_matdoc).
+            INTO TABLE @DATA(lt_matdoc).           "#EC CI_NO_TRANSFORM
 
           SELECT supplierinvoice,
                  fiscalyear,
@@ -345,12 +340,11 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
                  invoicingparty,
                  exchangerate,
                  duecalculationbasedate
-            FROM i_supplierinvoiceapi01
-            WITH PRIVILEGED ACCESS
+            FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS
             FOR ALL ENTRIES IN @lt_ekbe
            WHERE supplierinvoice = @lt_ekbe-purchasinghistorydocument
              AND fiscalyear = @lt_ekbe-purchasinghistorydocumentyear
-            INTO TABLE @DATA(lt_invoice).
+            INTO TABLE @DATA(lt_invoice).          "#EC CI_NO_TRANSFORM
         ENDIF.
 
         LOOP AT lt_invoice INTO DATA(ls_invoice).
@@ -366,8 +360,7 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
                  fiscalyear,
                  accountingdocument,
                  originalreferencedocument
-            FROM i_journalentry
-            WITH PRIVILEGED ACCESS
+            FROM i_journalentry WITH PRIVILEGED ACCESS
             FOR ALL ENTRIES IN @lt_invoice
            WHERE companycode = @lt_invoice-companycode
              AND fiscalyear = @lt_invoice-fiscalyear
@@ -423,30 +416,19 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
       ENDLOOP.
 
       SORT lt_mat BY purchaseorder purchaseorderitem materialdocumentyear materialdocument materialdocumentitem.
-      SORT lt_inv BY purchaseorder purchaseorderitem fiscalyear supplierinvoice supplierinvoiceitem.
+      SORT lt_inv BY purchaseorder purchaseorderitem referencedocumentfiscalyear referencedocument referencedocumentitem.
       LOOP AT lt_mat INTO ls_mat.
-        IF ls_mat-purchaseorder <> lv_ebeln
-        OR ls_mat-purchaseorderitem <> lv_ebelp.
-          CLEAR: lv_flg, lv_tabix.
-          READ TABLE lt_inv INTO ls_inv
-               WITH KEY purchaseorder = ls_mat-purchaseorder
-                        purchaseorderitem = ls_mat-purchaseorderitem BINARY SEARCH.
-          IF sy-subrc = 0.
-            lv_tabix = sy-tabix.
-          ELSE.
-            lv_flg = 'X'.
-          ENDIF.
-        ENDIF.
-
-        IF lv_flg IS INITIAL.
-          READ TABLE lt_inv ASSIGNING FIELD-SYMBOL(<lfs_inv>) INDEX lv_tabix.
-          IF <lfs_inv>-purchaseorder = ls_mat-purchaseorder
-         AND <lfs_inv>-purchaseorderitem = ls_mat-purchaseorderitem.
-            <lfs_inv>-del = 'X'.
-            ls_pur-fiscalyear = <lfs_inv>-fiscalyear.
-            ls_pur-supplierinvoice = <lfs_inv>-supplierinvoice.
-            ls_pur-supplierinvoiceitem = <lfs_inv>-supplierinvoiceitem.
-          ENDIF.
+        READ TABLE lt_inv ASSIGNING FIELD-SYMBOL(<lfs_inv>)
+                   WITH KEY purchaseorder = ls_mat-purchaseorder
+                            purchaseorderitem = ls_mat-purchaseorderitem
+                            referencedocumentfiscalyear = ls_mat-materialdocumentyear
+                            referencedocument = ls_mat-materialdocument
+                            referencedocumentitem = ls_mat-materialdocumentitem BINARY SEARCH.
+        IF sy-subrc = 0.
+          <lfs_inv>-del = 'X'.
+          ls_pur-fiscalyear = <lfs_inv>-fiscalyear.
+          ls_pur-supplierinvoice = <lfs_inv>-supplierinvoice.
+          ls_pur-supplierinvoiceitem = <lfs_inv>-supplierinvoiceitem.
         ENDIF.
         ls_pur-purchaseorder = ls_mat-purchaseorder.
         ls_pur-purchaseorderitem = ls_mat-purchaseorderitem.
@@ -455,10 +437,6 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
         ls_pur-materialdocumentitem = ls_mat-materialdocumentitem.
         APPEND ls_pur TO lt_pur.
         CLEAR: ls_pur.
-
-        lv_tabix = lv_tabix + 1.
-        lv_ebeln = ls_mat-purchaseorder.
-        lv_ebelp = ls_mat-purchaseorderitem.
       ENDLOOP.
       DELETE lt_inv WHERE del = 'X'.
 

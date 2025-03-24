@@ -17,7 +17,7 @@ annotate view ZC_TBC1018 with
   Mail;
 
   @UI.lineItem: [{ position: 10, cssDefault.width: '10rem' }]
-  @Consumption.valueHelpDefinition: [{ entity: {name: 'I_ShippingPointStdVH' , element: 'ShippingPoint' },
+  @Consumption.valueHelpDefinition: [{ entity: {name: 'ZC_ShippingPointVH' , element: 'ShippingPoint' },
                additionalBinding: [{ localElement: 'ShippingPointName', element: 'ShippingPointName', usage: #RESULT }]
   }]
   @EndUserText.label: 'Shipping Point'

@@ -9,6 +9,7 @@ annotate entity ZC_INVOICEREPORT with
 {
   @UI.selectionField: [{ position: 5 }]
   @UI.lineItem: [{ position: 15 }]
+  @Consumption.valueHelpDefinition: [{ entity:{name:'ZC_BillingDocumentVH', element:'BillingDocument'} }]
   BillingDocument;
   @UI.lineItem: [{ position: 20 }]
   BillingDocumentItem;
@@ -23,20 +24,25 @@ annotate entity ZC_INVOICEREPORT with
   //  BillingDocumentItemText;
   @UI.selectionField: [{ position: 20 }]
   @UI.lineItem: [{ position: 30 }]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'ZC_CustomerVH', element: 'Customer' } } ]
   SoldToParty;
   @UI.selectionField: [{ position: 25 }]
   @UI.lineItem: [{ position: 5 }]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'I_SalesOrganization', element: 'SalesOrganization' } } ]
   SalesOrganization;
   @UI.selectionField: [{ position: 15 }]
   @UI.lineItem: [{ position: 25 }]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'ZC_CustomerVH', element: 'Customer' } } ]
   BillToParty;
   @UI.lineItem: [{ position: 35 }]
   ShippingPoint;
   @UI.selectionField: [{ position: 30 }]
   @UI.lineItem: [{ position: 10 }]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'I_SalesOffice', element: 'SalesOffice' } } ]
   SalesOffice;
   @UI.selectionField: [{ position: 60 }]
   @UI.lineItem: [{ position: 50 }]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'ZI_PRODUCT_VH', element: 'Product' } } ]
   Product;
   //  BillingQuantity;
   //  BillingQuantityUnit;
@@ -56,6 +62,7 @@ annotate entity ZC_INVOICEREPORT with
   //  TransactionCurrency;
   @UI.selectionField: [{ position: 65 }]
   @UI.lineItem: [{ position: 57 }]
+  @Consumption.valueHelpDefinition: [{ entity:{name:'ZC_SalesDocumentVH', element:'SalesDocument'} }]
   SalesDocument;
   @UI.lineItem: [{ position: 61 }]
   NetAmount10;

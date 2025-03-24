@@ -22,6 +22,7 @@ define root custom entity ZR_PURINFOMASTERLIST
   key Supplier                       : lifnr;
       @Consumption.valueHelpDefinition:[{ entity: { name: 'I_PurchasingGroup', element: 'PurchasingGroup' } }]
   key PurchasingGroup                : ekgrp;
+      @Consumption.valueHelpDefinition:[{ entity: { name: 'I_Supplier', element: 'Supplier' } }]
   key ManufacturerNumber             : mfrnr;
   key ProductManufacturerNumber      : mfrpn;
   key latestoffer                    : abap.char(1);
@@ -93,5 +94,7 @@ define root custom entity ZR_PURINFOMASTERLIST
       zvalue2                        : abap.char(120);
       Rate                           : abap.char(50);
 
+      @Consumption.filter.hidden     : true
+      @UI.hidden                     : true
       UserEmail                      : abap.char(241); // ADD BY XINLEI XU 2025/03/17
 }

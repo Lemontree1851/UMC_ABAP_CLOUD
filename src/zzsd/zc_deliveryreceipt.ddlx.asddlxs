@@ -10,6 +10,7 @@ annotate entity ZC_DeliveryReceipt
 {
   @UI.selectionField: [{ position: 5 }]
   @UI.lineItem: [{ position: 15 }]
+  @Consumption.valueHelpDefinition:[ { entity:{ name:'ZC_DeliveryDocumentVH', element:'DeliveryDocument' } } ]
   DeliveryDocument;
   @UI.lineItem: [{ position: 20 }]
   DeliveryDocumentItem;
@@ -29,12 +30,15 @@ annotate entity ZC_DeliveryReceipt
   DeliveryDocumentType;
   @UI.selectionField: [{ position: 20 }]
   @UI.lineItem: [{ position: 30 }]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'ZC_ShippingPointVH', element: 'ShippingPoint' } } ]
   ShippingPoint;
   @UI.selectionField: [{ position: 35 }]
   @UI.lineItem: [{ position: 65 }]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'ZC_CustomerVH', element: 'Customer' } } ]
   SoldToParty;
   @UI.selectionField: [{ position: 40 }]
   @UI.lineItem: [{ position: 25 }]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'ZC_CustomerVH', element: 'Customer' } } ]
   ShipToParty;
   @UI.selectionField: [{ position: 30 }]
   @UI.lineItem: [{ position: 40 }]
@@ -53,12 +57,15 @@ annotate entity ZC_DeliveryReceipt
   CreationDate;
   @UI.selectionField: [{ position: 60 }]
   @UI.lineItem: [{ position: 5 }]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'I_SalesOrganization', element: 'SalesOrganization' } } ]
   SalesOrganization;
   @UI.selectionField: [{ position: 65 }]
   @UI.lineItem: [{ position: 10 }]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'I_SalesOffice', element: 'SalesOffice' } } ]
   SalesOffice;
   @UI.selectionField: [{ position: 25 }]
   @UI.lineItem: [{ position: 50 }]
+  @Consumption.valueHelpDefinition: [ { entity: { name: 'ZI_PRODUCT_VH', element: 'Product' } } ]
   Material;
   @UI.selectionField: [{ position: 75 }]
   @UI.lineItem: [{ position: 55 }]

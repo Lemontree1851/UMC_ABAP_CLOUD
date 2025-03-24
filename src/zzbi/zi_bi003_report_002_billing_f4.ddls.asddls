@@ -61,14 +61,14 @@ define view entity ZI_BI003_REPORT_002_BILLING_F4
 
       BillingPrice.ConditionType,
 
-
       case Currency.Decimals
       when 3 then BillingPrice.ConditionRateAmount * 10
       when 2 then BillingPrice.ConditionRateAmount
       when 1 then BillingPrice.ConditionRateAmount / 10
       when 0 then BillingPrice.ConditionRateAmount / 100
       else BillingPrice.ConditionRateAmount end as ConditionRateAmount,
-
+      
+      BillingPrice.ConditionQuantity, // ADD BY XINLEI XU 2025/03/24
 
       SalesDocument.SoldToParty,
 

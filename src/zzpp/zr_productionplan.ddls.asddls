@@ -1,35 +1,24 @@
 @EndUserText.label: '生産計画立案プラットフォーム'
-
-@ObjectModel: {
-    query: {
-        implementedBy: 'ABAP:ZCL_PRODUCTIONPLAN'
-    }
-}
-
+@ObjectModel: { query: { implementedBy: 'ABAP:ZCL_PRODUCTIONPLAN' } }
 define root custom entity ZR_PRODUCTIONPLAN
 {
       @UI                  : { selectionField: [ { position: 1 } ] }
       @Consumption.valueHelpDefinition: [{ entity: { name: 'I_PlantStdVH', element: 'Plant' } }]
   key Plant                : werks_d; //プラント
-
       @UI                  : { selectionField: [ { position: 2 } ] }
-      @Consumption.valueHelpDefinition: [{ entity: { name: 'I_MRPControllerVH', element: 'MRPController' } }]
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_MRPControllerVH', element: 'MRPController' } }]
   key MRPResponsible       : dispo; //MRP Controller
-
       @UI                  : { selectionField: [ { position: 4 } ] }
-      @Consumption.valueHelpDefinition: [{ entity: { name: 'I_ProductStdVH', element: 'Product' } }]
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_PRODUCT_VH', element: 'Product' } }]
   key Product              : matnr; //品目
-
   key Idnrk                : matnr; //bom component
-
   key Stufe                : stufe; //层级
-
   key Verid                : verid; //production version
   key Mdv01                : arbpl; //Production Line
   key PlanType             : abap.char(1); //Plan type
       Project              : abap.char(20); //Project
       @UI                  : { selectionField: [ { position: 3 } ] }
-      @Consumption.valueHelpDefinition: [{ entity: { name: 'I_PlndOrderProdnSupervisorVH', element: 'ProductionSupervisor' } }]
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ProductionSupervisorVH', element: 'ProductionSupervisor' } }]
       ProductionSupervisor : abap.char(3); //Production Supervisor
       @UI                  : { selectionField: [ { position: 5 } ] }
       zday                 : abap.numc(2);
@@ -39,7 +28,7 @@ define root custom entity ZR_PRODUCTIONPLAN
       Theory               : abap.char(1); //checkbox
       ECN                  : abap.char(1); //checkbox
       WO                   : abap.char(1); //checkbox
-      exOut                  : abap.char(1); //checkbox
+      exOut                : abap.char(1); //checkbox
 
       Capacity             : abap.char(20); //capacity
       Remark               : abap.char(20); //Remark

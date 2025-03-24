@@ -591,7 +591,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 **        AND N~Language =
 *        INTO TABLE @DATA(lt_result) .
       SELECT *
-        FROM zc_podataanalysis
+        FROM zc_podataanalysis WITH PRIVILEGED ACCESS
        WHERE purchaseorder IN @lr_purchaseorder
          AND purchaseorderitem IN @lr_poitem
          AND supplier IN @lr_sup

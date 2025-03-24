@@ -18,7 +18,7 @@ define root custom entity ZR_POACCEPTANCE
       //購買伝票
       @UI                            : { lineItem: [ { position: 90 } ],
                                          selectionField: [ { position: 5 } ] }
-      @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'PurchasingDocument', name: 'I_PurchasingDocumentStdVH'}}],
+      @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'PurchaseOrder', name: 'ZC_PurchaseOrderAPI'}}],
                   filter             : { multipleSelections: true, selectionType: #SINGLE } }
       @EndUserText.label             : '{@i18n>PurchaseOrder}'
   key PurchaseOrder                  : ebeln;
@@ -114,7 +114,7 @@ define root custom entity ZR_POACCEPTANCE
       //仕入先
       @UI                            : { lineItem: [ { position: 70 } ],
                                          selectionField: [ { position: 4 } ] }
-      @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'Supplier', name: 'I_Supplier_VH'}}],
+      @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'Supplier', name: 'ZC_SupplierVH'}}],
                   filter             : { multipleSelections: true, selectionType: #SINGLE } }
       @EndUserText.label             : '{@i18n>Supplier}'
       Supplier                       : lifnr;
@@ -135,7 +135,7 @@ define root custom entity ZR_POACCEPTANCE
       //品目
       @UI                            : { lineItem: [ { position: 120 } ],
                                          selectionField: [ { position: 9 } ] }
-      @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'Product', name: 'I_ProductStdVH'}}],
+      @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'Product', name: 'ZI_PRODUCT_VH'}}],
                   filter             : { multipleSelections: true, selectionType: #SINGLE } }
       @EndUserText.label             : '{@i18n>Material}'
       Material                       : matnr;
@@ -160,7 +160,7 @@ define root custom entity ZR_POACCEPTANCE
       
       //メーカーCD
       @UI                            : { lineItem: [ { position: 151 } ] }
-      @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'Supplier', name: 'I_Supplier_VH'}}],
+      @Consumption                   : {valueHelpDefinition: [{ entity:{ element: 'Supplier', name: 'ZC_SupplierVH'}}],
                   filter             : { multipleSelections: true, selectionType: #SINGLE } }
       @EndUserText.label             : '{@i18n>ManufacturerNumber}'
       ManufacturerNumber             : mfrnr;
