@@ -39,10 +39,15 @@ define view entity ZI_BI003_REPORT_003_BILLING
       billing.CompanyCode,
       billing.RecoveryManagementNumber,
       billing.ConditionType,
-      billing.ConditionRateAmount,
+      
+      // MOD BEGIN BY XINLEI XU 2025/03/25
+      // billing.ConditionRateAmount,
+      billing.ConditionRateAmount / billing.ConditionQuantity as ConditionRateAmount,
 
       @Semantics.amount.currencyCode: 'TransactionCurrency'
-      case when billing.ConditionRateAmount > 0 then cast( ( billing.ConditionRateAmount * billing.BillingQuantity ) as dmbtr )
+      // case when billing.ConditionRateAmount > 0 then cast( ( billing.ConditionRateAmount * billing.BillingQuantity ) as dmbtr )
+      case when billing.ConditionRateAmount > 0 then cast( ( billing.ConditionRateAmount / billing.ConditionQuantity * billing.BillingQuantity ) as dmbtr )
+      // MOD END BY XINLEI XU 2025/03/25
       else billing.BillingNetAmount
       end        as RecoveryAmount, //BillingTotalAmount,
 

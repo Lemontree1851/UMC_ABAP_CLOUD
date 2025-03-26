@@ -39,14 +39,17 @@ union all select from ZI_BI003_REPORT_002_BILLING_F3( p_recover_type: 'IN', p_co
       cast( '0.00' as dmbtr ) as TotalGroupAmount
 }
 
-union all select from ztbi_bi003_j03 as _table
+union all select from ztbi_bi003_j03       as _table
+  inner join          ZR_TBC1012           as _AssignCompany on _AssignCompany.CompanyCode = _table.company_code
+  inner join          ZC_BusinessUserEmail as _User          on  _User.Email  = _AssignCompany.Mail
+                                                             and _User.UserID = $session.user
 {
-  key recovery_management_number as RecoveryManagementNumber,
-  key fiscal_year_period         as FiscalYearPeriod,
-      company_currency           as CompanyCurrency,
-      recovery_necessary_amount  as TotalGroupAmount
+  key _table.recovery_management_number as RecoveryManagementNumber,
+  key _table.fiscal_year_period         as FiscalYearPeriod,
+      _table.company_currency           as CompanyCurrency,
+      _table.recovery_necessary_amount  as TotalGroupAmount
 }
 where
-      job_run_by    = 'UPLOAD'
-  and product_group = $parameters.p_product_group
+      _table.job_run_by    = 'UPLOAD'
+  and _table.product_group = $parameters.p_product_group
 // NEW END BY XINLEI XU 2025/02/11

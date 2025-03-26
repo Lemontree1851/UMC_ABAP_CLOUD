@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_MR_001 IMPLEMENTATION.
+CLASS zcl_http_mr_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -94,8 +94,10 @@ CLASS ZCL_HTTP_MR_001 IMPLEMENTATION.
     DATA(lv_req_body) = request->get_text( ).
 
     "JSON->ABAP
-    xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
-        ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    IF lv_req_body IS NOT INITIAL.
+      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
+          ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    ENDIF.
 
     lv_plant     = ls_req-plant.
     lv_timestamp = ls_req-time_stamp.
@@ -168,7 +170,7 @@ CLASS ZCL_HTTP_MR_001 IMPLEMENTATION.
               FROM ztpp_1010 AS a
                FOR ALL ENTRIES IN @lt_ztpp_1009
              WHERE material_requisition_no = @lt_ztpp_1009-material_requisition_no
-              INTO TABLE @DATA(lt_ztpp_1010).
+              INTO TABLE @DATA(lt_ztpp_1010).      "#EC CI_NO_TRANSFORM
           ENDIF.
         ENDIF.
 

@@ -50,24 +50,42 @@ define root view entity ZI_BI003_REPORT_003
 
       @Semantics.amount.currencyCode: 'CompanyCurrency'
       @EndUserText: { label:  'Net Price Amount', quickInfo: 'Net Price Amount' }
-      cast( currency_conversion( amount=>NetPriceAmount,
-                                 exchange_rate_date=>_PurchaseOrder.CreationDate,
-                                 source_currency=>DocumentCurrency,
-                                 target_currency=>_CompanyCode.Currency
-                               )
-            as dmbtr )                    as NetPriceAmount,
+      // MOD BEGN BY XINLEI XU 2025/03/26
+      //      cast( currency_conversion( amount=>NetPriceAmount,
+      //                                 exchange_rate_date=>_PurchaseOrder.CreationDate,
+      //                                 source_currency=>DocumentCurrency,
+      //                                 target_currency=>_CompanyCode.Currency
+      //                               )
+      //            as dmbtr )                    as NetPriceAmount,
+      case when DocumentCurrency <> _CompanyCode.Currency
+           then cast( currency_conversion( amount=>NetPriceAmount,
+                                           exchange_rate_date=>_PurchaseOrder.CreationDate,
+                                           source_currency=>DocumentCurrency,
+                                           target_currency=>_CompanyCode.Currency ) as dmbtr )
+           else NetPriceAmount
+      end                                 as NetPriceAmount,
+      // MOD END BY XINLEI XU 2025/03/26
 
       _CompanyCode.Currency               as CompanyCurrency,
 
       @Semantics.amount.currencyCode: 'CompanyCurrency'
       @EndUserText: { label:  'Recovery Necessary Amount', quickInfo: 'Recovery Necessary Amount' }
-      cast( ( cast( currency_conversion( amount=>NetPriceAmount,
-                                       exchange_rate_date=>_PurchaseOrder.CreationDate,
-                                       source_currency=>DocumentCurrency,
-                                       target_currency=>_CompanyCode.Currency
-                                     )
-              as abap.dec(16, 2) ) * OrderQuantity
-           )  as dmbtr )                  as RecoveryNecessaryAmount,
+      // MOD BEGN BY XINLEI XU 2025/03/26
+      //      cast( ( cast( currency_conversion( amount=>NetPriceAmount,
+      //                                       exchange_rate_date=>_PurchaseOrder.CreationDate,
+      //                                       source_currency=>DocumentCurrency,
+      //                                       target_currency=>_CompanyCode.Currency
+      //                                     )
+      //              as abap.dec(16, 2) ) * OrderQuantity
+      //           )  as dmbtr )                  as RecoveryNecessaryAmount,
+      case when DocumentCurrency <> _CompanyCode.Currency
+           then cast( ( cast( currency_conversion( amount=>NetPriceAmount,
+                                                   exchange_rate_date=>_PurchaseOrder.CreationDate,
+                                                   source_currency=>DocumentCurrency,
+                                                   target_currency=>_CompanyCode.Currency ) as abap.dec(16, 2) ) * OrderQuantity )  as dmbtr )
+           else cast( cast( NetPriceAmount as abap.dec(16, 2) ) * OrderQuantity as dmbtr )
+      end                                 as RecoveryNecessaryAmount,
+      // MOD END BY XINLEI XU 2025/03/26
 
       @ObjectModel.text.element: [ 'GLAccountName' ]
       GLAccount,
@@ -130,15 +148,15 @@ define root view entity ZI_BI003_REPORT_003
 }
 union select from ZI_BI003_REPORT_003_BILLING
 {
-  key    cast( '' as ebeln )                                                           as PurchaseOrder,
-  key    cast('00000' as ebelp)                                                        as PurchaseOrderItem,
-  key    cast('' as abap.char(2))                                                      as SourceLedger,
+  key    cast( '' as ebeln )             as PurchaseOrder,
+  key    cast('00000' as ebelp)          as PurchaseOrderItem,
+  key    cast('' as abap.char(2))        as SourceLedger,
 
   key    CompanyCode,
   key    _FiscalCalendarDate.FiscalYear,
-  key    cast( '' as belnr_d )                                                         as AccountingDocument,
-  key    cast( '' as abap.char(6))                                                     as LedgerGLLineItem,
-  key    cast('' as fins_ledger)                                                       as Ledger,
+  key    cast( '' as belnr_d )           as AccountingDocument,
+  key    cast( '' as abap.char(6))       as LedgerGLLineItem,
+  key    cast('' as fins_ledger)         as Ledger,
   key    BillingDocument,
   key    BillingDocumentItem,
 
@@ -146,41 +164,41 @@ union select from ZI_BI003_REPORT_003_BILLING
 
          case _FiscalCalendarDate.FiscalPeriod when '000' then '00'
                   else cast( substring(_FiscalCalendarDate.FiscalPeriod, 2, 2) as monat )
-                  end                                                                  as FiscalMonth,
+                  end                    as FiscalMonth,
 
          RecoveryManagementNumber,
 
          _Companycode.CompanyCodeName,
 
-         cast('' as matnr)                                                             as Material,
-         cast('' as maktx)                                                             as MaterialText,
+         cast('' as matnr)               as Material,
+         cast('' as maktx)               as MaterialText,
 
 
-         cast('' as abap.char(9))                                                      as ProductGroup,
+         cast('' as abap.char(9))        as ProductGroup,
 
-         cast('' as abap.char(20))                                                     as ProductGroupName,
+         cast('' as abap.char(20))       as ProductGroupName,
 
 
-         cast('0' as abap.quan( 13, 3 ))                                               as OrderQuantity,
-         cast('' as vrkme)                                                             as BaseUnit,
+         cast('0' as abap.quan( 13, 3 )) as OrderQuantity,
+         cast('' as vrkme)               as BaseUnit,
 
-         cast( '0.00' as dmbtr )                                                       as NetPriceAmount,
+         cast( '0.00' as dmbtr )         as NetPriceAmount,
 
-         _Companycode.Currency                                                         as CompanyCurrency,
+         _Companycode.Currency           as CompanyCurrency,
 
-         cast( '0.00' as dmbtr )                                                       as RecoveryNecessaryAmount,
+         cast( '0.00' as dmbtr )         as RecoveryNecessaryAmount,
 
-         cast( '' as hkont)                                                            as GLAccount,
-         cast('' as abap.char(20) )                                                    as GLAccountName,
+         cast( '' as hkont)              as GLAccount,
+         cast('' as abap.char(20) )      as GLAccountName,
 
-         cast('' as anln1 )                                                            as FixedAsset,
+         cast('' as anln1 )              as FixedAsset,
 
-         cast('' as abap.char(50) )                                                    as FixedAssetDescription,
+         cast('' as abap.char(50) )      as FixedAssetDescription,
 
          salesorderdocument,
          salesorderdocumentitem,
 
-         SoldToParty                                                                   as Customer,
+         SoldToParty                     as Customer,
 
          _Customer.CustomerName,
 
@@ -188,7 +206,7 @@ union select from ZI_BI003_REPORT_003_BILLING
 
          billingproduct,
 
-         _ProductText.ProductName                                                      as BillingProductText,
+         _ProductText.ProductName        as BillingProductText,
 
          BillingDocumentDate,
 
@@ -199,36 +217,69 @@ union select from ZI_BI003_REPORT_003_BILLING
          BillingQuantityUnit,
 
          BillingQuantity,
-         _Companycode.Currency                                                         as BillingCurrency,
+         _Companycode.Currency           as BillingCurrency,
 
-         currency_conversion( amount=>BillingPrice,
-                     exchange_rate_date=>BillingDocumentDate,
-                     source_currency=>TransactionCurrency,
-                     target_currency=>_Companycode.Currency
-                   )                                                                   as BillingPrice, //BillingNetAmount,
+         // MOD BEGN BY XINLEI XU 2025/03/26
+         //         currency_conversion( amount=>BillingPrice,
+         //                     exchange_rate_date=>BillingDocumentDate,
+         //                     source_currency=>TransactionCurrency,
+         //                     target_currency=>_Companycode.Currency
+         //                   )                                                                   as BillingPrice,
+         case when TransactionCurrency <> _Companycode.Currency
+              then currency_conversion( amount=>BillingPrice,
+                                        exchange_rate_date=>BillingDocumentDate,
+                                        source_currency=>TransactionCurrency,
+                                        target_currency=>_Companycode.Currency )
+              else BillingPrice
+         end                             as BillingPrice,
+         // MOD END BY XINLEI XU 2025/03/26
 
          ConditionType,
 
-         cast( currency_conversion( amount=>ConditionRateAmount,
-                              exchange_rate_date=>BillingDocumentDate,
-                              source_currency=>TransactionCurrency,
-                              target_currency=>_Companycode.Currency
-                            )  as dmbtr )                                              as ConditionRateAmount,
+         // MOD BEGN BY XINLEI XU 2025/03/26
+         //         cast( currency_conversion( amount=>ConditionRateAmount,
+         //                              exchange_rate_date=>BillingDocumentDate,
+         //                              source_currency=>TransactionCurrency,
+         //                              target_currency=>_Companycode.Currency
+         //                            )  as dmbtr )                                              as ConditionRateAmount,
+         case when TransactionCurrency <> _Companycode.Currency
+              then cast( currency_conversion( amount=>ConditionRateAmount,
+                                              exchange_rate_date=>BillingDocumentDate,
+                                              source_currency=>TransactionCurrency,
+                                              target_currency=>_Companycode.Currency ) as dmbtr )
+              else cast( ConditionRateAmount as dmbtr )
+         end                             as ConditionRateAmount,
 
-         currency_conversion( amount=>RecoveryAmount,
-                                      exchange_rate_date=>BillingDocumentDate,
-                                      source_currency=>TransactionCurrency,
-                                      target_currency=>_Companycode.Currency
-                                    )                                                  as RecoveryAmount, //BillingTotalAmount,
+         //         currency_conversion( amount=>RecoveryAmount,
+         //                                      exchange_rate_date=>BillingDocumentDate,
+         //                                      source_currency=>TransactionCurrency,
+         //                                      target_currency=>_Companycode.Currency
+         //                                    )                                                  as RecoveryAmount, //BillingTotalAmount,
+         case when TransactionCurrency <> _Companycode.Currency
+              then currency_conversion( amount=>RecoveryAmount,
+                                        exchange_rate_date=>BillingDocumentDate,
+                                        source_currency=>TransactionCurrency,
+                                        target_currency=>_Companycode.Currency )
+              else RecoveryAmount
+         end                             as RecoveryAmount, //BillingTotalAmount,
+         // MOD END BY XINLEI XU 2025/03/26
 
          PercentageOfAp,
 
-         cast( cast( currency_conversion( amount=>RecoveryAmount,
-                                      exchange_rate_date=>BillingDocumentDate,
-                                      source_currency=>TransactionCurrency,
-                                      target_currency=>_Companycode.Currency
-                                    ) as abap.dec(16, 2) ) * PercentageOfAp as dmbtr ) as AccountingPostingAmount
-
+         // MOD BEGN BY XINLEI XU 2025/03/26
+         //         cast( cast( currency_conversion( amount=>RecoveryAmount,
+         //                                      exchange_rate_date=>BillingDocumentDate,
+         //                                      source_currency=>TransactionCurrency,
+         //                                      target_currency=>_Companycode.Currency
+         //                                    ) as abap.dec(16, 2) ) * PercentageOfAp as dmbtr ) as AccountingPostingAmount
+         case when TransactionCurrency <> _Companycode.Currency
+              then cast( cast( currency_conversion( amount=>RecoveryAmount,
+                                                    exchange_rate_date=>BillingDocumentDate,
+                                                    source_currency=>TransactionCurrency,
+                                                    target_currency=>_Companycode.Currency ) as abap.dec(16, 2) ) * PercentageOfAp as dmbtr )
+              else cast( cast( RecoveryAmount as abap.dec(16, 2) ) * PercentageOfAp as dmbtr )
+         end                             as AccountingPostingAmount
+         // MOD END BY XINLEI XU 2025/03/26
 }
 union select from ZI_BI003_REPORT_003_ACCOUTING( p_recover_type: 'IN' )
 {
@@ -309,7 +360,7 @@ union select from ZI_BI003_REPORT_003_ACCOUTING( p_recover_type: 'IN' )
 
       cast('0.00' as dmbtr)               as ConditionRateAmount,
 
-      cast('0.00' as dmbtr)               as RecoveryAmount,                                              //BillingTotalAmount,
+      cast('0.00' as dmbtr)               as RecoveryAmount, //BillingTotalAmount,
 
       cast('0.00' as abap.dec(17, 5))     as PercentageOfAp,
 

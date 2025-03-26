@@ -15,7 +15,7 @@ define view entity ZI_BI003_REPORT_REC_NEC_AMT_GS
                                                                                                         and new.FiscalYearPeriod         <= old.FiscalYearPeriod // ADD BY XINLEI XU 2025/02/11
 {
   key old.RecoveryManagementNumber,
-      old.FiscalYearPeriod,
+  key old.FiscalYearPeriod,
       old.CompanyCurrency,
 
       @Semantics.amount.currencyCode: 'CompanyCurrency'

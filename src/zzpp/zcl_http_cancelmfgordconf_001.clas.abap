@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
+CLASS zcl_http_cancelmfgordconf_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -54,24 +54,24 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
       END OF ty_res_api.
 
     DATA:
-      lo_root_exc       TYPE REF TO cx_root,
-      lt_ztpp_1004      TYPE STANDARD TABLE OF ztpp_1004,
-      lt_ztpp_1005      TYPE STANDARD TABLE OF ztpp_1005,
-      ls_ztpp_1004      TYPE ztpp_1004,
-      ls_ztpp_1005      TYPE ztpp_1005,
-      ls_req            TYPE ty_req,
-      ls_res            TYPE ty_res,
-      ls_res_api        TYPE ty_res_api,
-      lv_umesid         TYPE sysuuid_c32,
-      lv_plant          TYPE i_mfgorderconfirmation-plant,
-      lv_group          TYPE i_mfgorderconfirmation-mfgorderconfirmationgroup,
-      lv_count          TYPE i_mfgorderconfirmation-mfgorderconfirmation,
-      lv_creator        TYPE c LENGTH 40,
-      lv_path           TYPE string,
-      lv_string         TYPE string,
-      lv_unix_timestamp TYPE int8,
+      lo_root_exc           TYPE REF TO cx_root,
+      lt_ztpp_1004          TYPE STANDARD TABLE OF ztpp_1004,
+      lt_ztpp_1005          TYPE STANDARD TABLE OF ztpp_1005,
+      ls_ztpp_1004          TYPE ztpp_1004,
+      ls_ztpp_1005          TYPE ztpp_1005,
+      ls_req                TYPE ty_req,
+      ls_res                TYPE ty_res,
+      ls_res_api            TYPE ty_res_api,
+      lv_umesid             TYPE sysuuid_c32,
+      lv_plant              TYPE i_mfgorderconfirmation-plant,
+      lv_group              TYPE i_mfgorderconfirmation-mfgorderconfirmationgroup,
+      lv_count              TYPE i_mfgorderconfirmation-mfgorderconfirmation,
+      lv_creator            TYPE c LENGTH 40,
+      lv_path               TYPE string,
+      lv_string             TYPE string,
+      lv_unix_timestamp     TYPE int8,
       lv_previous_processed TYPE ztpp_1004-messagetype,
-      ls_error          TYPE zzcl_odata_utils=>gty_error.
+      ls_error              TYPE zzcl_odata_utils=>gty_error.
 
     CONSTANTS:
       lc_msgid         TYPE string VALUE 'ZPP_001',
@@ -90,8 +90,10 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
     DATA(lv_req_body) = request->get_text( ).
 
     "JSON->ABAP
-    xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
-        ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    IF lv_req_body IS NOT INITIAL.
+      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
+          ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    ENDIF.
 
     lv_umesid = ls_req-u_m_e_s_i_d.
     lv_plant = ls_req-plant.
@@ -138,7 +140,7 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
           RAISE EXCEPTION TYPE cx_abap_api_state.
         ENDIF.
 
-       "Check previous processed
+        "Check previous processed
         SELECT umesid,
                plant,
                pgmid,
@@ -179,81 +181,81 @@ CLASS ZCL_HTTP_CANCELMFGORDCONF_001 IMPLEMENTATION.
           ls_res-_msgty = lv_previous_processed.
         ELSE.
 
-        "Obtain data of manufacturing order confirmation
-        SELECT SINGLE
-               manufacturingorder,
-               isreversed,
-               isreversal,
-               milestoneconfirmationtype
-          FROM i_mfgorderconfirmation WITH PRIVILEGED ACCESS
-         WHERE mfgorderconfirmationgroup = @lv_group
-           AND mfgorderconfirmation = @lv_count
-           AND plant = @lv_plant
-          INTO @DATA(ls_mfgorderconfirmation).
-        IF sy-subrc = 0.
-          IF ls_mfgorderconfirmation-isreversed = 'X' OR ls_mfgorderconfirmation-isreversal = 'X'.
-            "作業実績は既に取消しました！
-            MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 022 INTO ls_res-_msg.
-            RAISE EXCEPTION TYPE cx_abap_api_state.
-          ENDIF.
+          "Obtain data of manufacturing order confirmation
+          SELECT SINGLE
+                 manufacturingorder,
+                 isreversed,
+                 isreversal,
+                 milestoneconfirmationtype
+            FROM i_mfgorderconfirmation WITH PRIVILEGED ACCESS
+           WHERE mfgorderconfirmationgroup = @lv_group
+             AND mfgorderconfirmation = @lv_count
+             AND plant = @lv_plant
+            INTO @DATA(ls_mfgorderconfirmation).
+          IF sy-subrc = 0.
+            IF ls_mfgorderconfirmation-isreversed = 'X' OR ls_mfgorderconfirmation-isreversal = 'X'.
+              "作業実績は既に取消しました！
+              MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 022 INTO ls_res-_msg.
+              RAISE EXCEPTION TYPE cx_abap_api_state.
+            ENDIF.
 
-          "/API_PROD_ORDER_CONFIRMATION_2_SRV/CancelProdnOrdConf?ConfirmationGroup='{ConfirmationGroup}'&ConfirmationCount='{ConfirmationCount}'
-          lv_path = |/API_PROD_ORDER_CONFIRMATION_2_SRV/CancelProdnOrdConf?ConfirmationGroup='{ lv_group }'&ConfirmationCount='{ lv_count }'|.
+            "/API_PROD_ORDER_CONFIRMATION_2_SRV/CancelProdnOrdConf?ConfirmationGroup='{ConfirmationGroup}'&ConfirmationCount='{ConfirmationCount}'
+            lv_path = |/API_PROD_ORDER_CONFIRMATION_2_SRV/CancelProdnOrdConf?ConfirmationGroup='{ lv_group }'&ConfirmationCount='{ lv_count }'|.
 
-          "Call API of canceling manufacturing order confirmation
-          zzcl_common_utils=>request_api_v2(
-            EXPORTING
-              iv_path        = lv_path
-              iv_method      = if_web_http_client=>post
-            IMPORTING
-              ev_status_code = DATA(lv_stat_code)
-              ev_response    = DATA(lv_resbody_api) ).
+            "Call API of canceling manufacturing order confirmation
+            zzcl_common_utils=>request_api_v2(
+              EXPORTING
+                iv_path        = lv_path
+                iv_method      = if_web_http_client=>post
+              IMPORTING
+                ev_status_code = DATA(lv_stat_code)
+                ev_response    = DATA(lv_resbody_api) ).
 
-          "Could not fetch SCRF token
-          IF lv_stat_code = lc_stat_code_500.
-            ls_res-_msg = lv_resbody_api.
-            RAISE EXCEPTION TYPE cx_abap_api_state.
-          ENDIF.
+            "Could not fetch SCRF token
+            IF lv_stat_code = lc_stat_code_500.
+              ls_res-_msg = lv_resbody_api.
+              RAISE EXCEPTION TYPE cx_abap_api_state.
+            ENDIF.
 
-          IF lv_stat_code = lc_stat_code_200.
-            "JSON->ABAP
-            xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
-                ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_res_api ) ).
+            IF lv_stat_code = lc_stat_code_200.
+              "JSON->ABAP
+              xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
+                  ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_res_api ) ).
 
-            "作業実績取消は成功しました！
-            MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 028 INTO ls_res-_msg.
-            ls_res-_msgty = 'S'.
+              "作業実績取消は成功しました！
+              MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 028 INTO ls_res-_msg.
+              ls_res-_msgty = 'S'.
 
-            ls_ztpp_1004-manufacturingorder = |{ ls_res_api-d-order_i_d ALPHA = IN }|.
-            ls_ztpp_1004-manufacturingorderoperation_2 = ls_res_api-d-order_operation.
+              ls_ztpp_1004-manufacturingorder = |{ ls_res_api-d-order_i_d ALPHA = IN }|.
+              ls_ztpp_1004-manufacturingorderoperation_2 = ls_res_api-d-order_operation.
 
-            lv_string = ls_res_api-d-posting_date.
-            SHIFT lv_string BY 6 PLACES LEFT.
-            REPLACE ALL OCCURRENCES OF ')/' IN lv_string WITH ''.
-            lv_unix_timestamp = lv_string / 1000.
+              lv_string = ls_res_api-d-posting_date.
+              SHIFT lv_string BY 6 PLACES LEFT.
+              REPLACE ALL OCCURRENCES OF ')/' IN lv_string WITH ''.
+              lv_unix_timestamp = lv_string / 1000.
 
-            IF lv_unix_timestamp > 0.
-              DATA(lv_date) = xco_cp_time=>unix_timestamp( iv_unix_timestamp = lv_unix_timestamp )->get_moment(
-                                                                                                 )->as( xco_cp_time=>format->abap
-                                                         )->value+0(8).
-              ls_ztpp_1004-postingdate = lv_date.
+              IF lv_unix_timestamp > 0.
+                DATA(lv_date) = xco_cp_time=>unix_timestamp( iv_unix_timestamp = lv_unix_timestamp )->get_moment(
+                                                                                                   )->as( xco_cp_time=>format->abap
+                                                           )->value+0(8).
+                ls_ztpp_1004-postingdate = lv_date.
+              ELSE.
+                ls_ztpp_1004-postingdate = lc_date_19000101.
+              ENDIF.
             ELSE.
-              ls_ztpp_1004-postingdate = lc_date_19000101.
+              "作業実績取消は失敗しました：
+              MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 027 INTO ls_res-_msg.
+              /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+                                         CHANGING  data = ls_error ).
+              "ls_res-_msg = ls_res-_msg && ls_res_api-error-message-value.
+              ls_res-_msg = ls_res-_msg && ls_error-error-message-value.
+              RAISE EXCEPTION TYPE cx_abap_api_state.
             ENDIF.
           ELSE.
-            "作業実績取消は失敗しました：
-            MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 027 INTO ls_res-_msg.
-            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
-                                       CHANGING  data = ls_error ).
-            "ls_res-_msg = ls_res-_msg && ls_res_api-error-message-value.
-            ls_res-_msg = ls_res-_msg && ls_error-error-message-value.
+            "作業確認番号&1確認カウンタ&2存在しません！
+            MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 021 WITH lv_group lv_count INTO ls_res-_msg.
             RAISE EXCEPTION TYPE cx_abap_api_state.
           ENDIF.
-        ELSE.
-          "作業確認番号&1確認カウンタ&2存在しません！
-          MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 021 WITH lv_group lv_count INTO ls_res-_msg.
-          RAISE EXCEPTION TYPE cx_abap_api_state.
-        ENDIF.
 
         ENDIF.
 

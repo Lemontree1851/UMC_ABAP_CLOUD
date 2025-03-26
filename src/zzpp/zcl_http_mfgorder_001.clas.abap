@@ -211,8 +211,10 @@ CLASS zcl_http_mfgorder_001 IMPLEMENTATION.
     DATA(lv_req_body) = request->get_text( ).
 
     "JSON->ABAP
-    xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
-        ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    IF lv_req_body IS NOT INITIAL.
+      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
+          ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    ENDIF.
 
     lv_plant = ls_req-plant.
     lv_order = |{ ls_req-order ALPHA = IN }|.

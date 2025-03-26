@@ -1899,8 +1899,8 @@ CLASS zcl_http_podata_002 DEFINITION
       lv_tablename(10)  TYPE c,
       lv_error(1)       TYPE c,
       lv_error1(1)      TYPE c,
-      lv_error400(1)    type c,
-      lv_error404(1)    type c,
+      lv_error400(1)    TYPE c,
+      lv_error404(1)    TYPE c,
 
       lv_text           TYPE string,
       lc_header_content TYPE string VALUE 'content-type',
@@ -1920,7 +1920,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
+CLASS zcl_http_podata_002 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -1933,10 +1933,11 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
     ELSE.
 *    将读取到的表名作为参数后面用
-      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
-          ( xco_cp_json=>transformation->underscore_to_pascal_case )
-      ) )->write_to( REF #( ls_req ) ).
-
+      IF lv_req_body IS NOT INITIAL.
+        xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
+            ( xco_cp_json=>transformation->underscore_to_pascal_case )
+        ) )->write_to( REF #( ls_req ) ).
+      ENDIF.
     ENDIF.
 
     lv_where = ls_req-sql.
@@ -2044,9 +2045,9 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             WHERE (lv_where)
             INTO TABLE @DATA(lt_ekko).
 
-       catch cx_sy_dynamic_osql_error into data(lo_sql_error_EKko).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_ekko).
             lv_error400 = 'X'.
-            lv_error_message_ekko = lo_sql_error_EKko->get_text( ).
+            lv_error_message_ekko = lo_sql_error_ekko->get_text( ).
             lv_text = lv_error_message_ekko.
         ENDTRY.
 
@@ -2193,9 +2194,9 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
 
         ENDIF.
 
@@ -2209,9 +2210,9 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             WHERE (lv_where)
             INTO TABLE @DATA(lt_ekpo).
 
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_EKpo).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_ekpo).
             lv_error400 = 'X'.
-            lv_error_message_ekpo = lo_sql_error_EKpo->get_text( ).
+            lv_error_message_ekpo = lo_sql_error_ekpo->get_text( ).
             lv_text = lv_error_message_ekpo.
         ENDTRY.
 
@@ -2513,20 +2514,20 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN `EKET` OR 'eket'.
-        data:lv_error_message_eket type string.
-        try.
+        DATA:lv_error_message_eket TYPE string.
+        TRY.
             SELECT * FROM i_purordschedulelineapi01 WITH PRIVILEGED ACCESS
             WHERE (lv_where)
             INTO TABLE @DATA(lt_eket).
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_EKet).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_eket).
             lv_error400 = 'X'.
-            lv_error_message_eket = lo_sql_error_EKet->get_text( ).
+            lv_error_message_eket = lo_sql_error_eket->get_text( ).
             lv_text = lv_error_message_eket.
         ENDTRY.
 
@@ -2614,20 +2615,20 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'EKBE'  OR 'ekbe' .
-        data:lv_error_message_ekbe type string.
-        try.
+        DATA:lv_error_message_ekbe TYPE string.
+        TRY.
             SELECT * FROM i_purchaseorderhistoryapi01 WITH PRIVILEGED ACCESS
             WHERE (lv_where)
             INTO TABLE @DATA(lt_ekbe).
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_EKbe).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_ekbe).
             lv_error400 = 'X'.
-            lv_error_message_ekbe = lo_sql_error_EKbe->get_text( ).
+            lv_error_message_ekbe = lo_sql_error_ekbe->get_text( ).
             lv_text = lv_error_message_ekbe.
         ENDTRY.
 
@@ -2764,21 +2765,21 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'EKKN'  OR 'ekkn' .
-        data:lv_error_message_EKKN type string.
-        try.
+        DATA:lv_error_message_ekkn TYPE string.
+        TRY.
             SELECT * FROM i_purordaccountassignmentapi01 WITH PRIVILEGED ACCESS
             WHERE (lv_where)
             INTO TABLE @DATA(lt_ekkn).
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_EKKN).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_ekkn).
             lv_error400 = 'X'.
-            lv_error_message_EKKN = lo_sql_error_EKKN->get_text( ).
-            lv_text = lv_error_message_EKKN.
+            lv_error_message_ekkn = lo_sql_error_ekkn->get_text( ).
+            lv_text = lv_error_message_ekkn.
         ENDTRY.
 
         IF lt_ekkn IS NOT INITIAL.
@@ -2909,14 +2910,14 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'MARA'  OR 'mara' .
-        data:lv_error_message_mara type string.
-        try.
+        DATA:lv_error_message_mara TYPE string.
+        TRY.
             SELECT i_product~*,
                    i_productsales~packagingmaterialtype
             FROM i_product WITH PRIVILEGED ACCESS
@@ -2924,7 +2925,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             ON i_product~product = i_productsales~product
             WHERE (lv_where)
             INTO TABLE @DATA(lt_mara).
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_mara).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_mara).
             lv_error400 = 'X'.
             lv_error_message_mara = lo_sql_error_mara->get_text( ).
             lv_text = lv_error_message_mara.
@@ -3233,18 +3234,18 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'MAKT'  OR 'makt' .
-        data:lv_error_message_makt type string.
-        try.
+        DATA:lv_error_message_makt TYPE string.
+        TRY.
             SELECT * FROM i_producttext WITH PRIVILEGED ACCESS
             WHERE (lv_where)
             INTO TABLE @DATA(lt_makt).
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_makt).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_makt).
             lv_error400 = 'X'.
             lv_error_message_makt = lo_sql_error_makt->get_text( ).
             lv_text = lv_error_message_makt.
@@ -3276,9 +3277,9 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'MARD'  OR 'mard' .
@@ -3302,7 +3303,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             GROUP BY material, plant, storagelocation, inventorystocktype, inventoryspecialstocktype
             INTO TABLE @DATA(lt_mard).
 
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_mard).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_mard).
             lv_error400 = 'X'.
             lv_error_message = lo_sql_error_mard->get_text( ).
             lv_text = lv_error_message.
@@ -3387,22 +3388,22 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'T024D' OR 't024d'.
-        data:lv_error_message_T024D type string.
-        try.
+        DATA:lv_error_message_t024d TYPE string.
+        TRY.
             SELECT * FROM i_mrpcontroller WITH PRIVILEGED ACCESS
             WHERE (lv_where)
             INTO TABLE @DATA(lt_t024d).
 
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_T024D).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_t024d).
             lv_error400 = 'X'.
-            lv_error_message_T024D = lo_sql_error_T024D->get_text( ).
-            lv_text = lv_error_message_T024D.
+            lv_error_message_t024d = lo_sql_error_t024d->get_text( ).
+            lv_text = lv_error_message_t024d.
         ENDTRY.
 
 
@@ -3441,19 +3442,19 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'T001L' OR 't001l'.
 
-      data:lv_error_message_t001l type string.
-        try.
+        DATA:lv_error_message_t001l TYPE string.
+        TRY.
             SELECT * FROM i_storagelocation WITH PRIVILEGED ACCESS
             WHERE (lv_where)
             INTO TABLE @DATA(lt_t001l).
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_t001l).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_t001l).
             lv_error400 = 'X'.
             lv_error_message_t001l = lo_sql_error_t001l->get_text( ).
             lv_text = lv_error_message_t001l.
@@ -3496,14 +3497,14 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'MARC'  OR 'marc' .
-        data:lv_error_message_marc type string.
-        try.
+        DATA:lv_error_message_marc TYPE string.
+        TRY.
             SELECT i_productplantbasic~*,
 
 *                   \_GoodsMovementQuantity-productproductionquantityunit,
@@ -3542,7 +3543,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 *            where i_productplantbasic~product = 'ZTEST_FG001'
 
             INTO TABLE @DATA(lt_marc).
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_marc).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_marc).
             lv_error400 = 'X'.
             lv_error_message_marc = lo_sql_error_marc->get_text( ).
             lv_text = lv_error_message_marc.
@@ -3710,17 +3711,17 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
       WHEN 'MKAL'  OR 'mkal' .
-        data:lv_error_message_mkal type string.
-        try.
+        DATA:lv_error_message_mkal TYPE string.
+        TRY.
             SELECT * FROM i_productionversion WITH PRIVILEGED ACCESS
             WHERE (lv_where)
             INTO TABLE @DATA(lt_mkal).
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_mkal).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_mkal).
             lv_error400 = 'X'.
             lv_error_message_mkal = lo_sql_error_mkal->get_text( ).
             lv_text = lv_error_message_mkal.
@@ -3847,14 +3848,14 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'AFKO'  OR 'afko' .
-        data:lv_error_message_afko type string.
-        try.
+        DATA:lv_error_message_afko TYPE string.
+        TRY.
             SELECT i_manufacturingorder~*,
                    i_billofmaterialheaderdex_2~*
               FROM i_manufacturingorder WITH PRIVILEGED ACCESS
@@ -3866,7 +3867,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                AND i_manufacturingorder~billofmaterialvariantusage = i_billofmaterialheaderdex_2~billofmaterialvariantusage
             WHERE (lv_where)
             INTO TABLE @DATA(lt_afko).
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_afko).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_afko).
             lv_error400 = 'X'.
             lv_error_message_afko = lo_sql_error_afko->get_text( ).
             lv_text = lv_error_message_afko.
@@ -4185,18 +4186,18 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'AFPO'  OR 'afpo' .
-        data:lv_error_message_afpo type string.
-        try.
+        DATA:lv_error_message_afpo TYPE string.
+        TRY.
             SELECT * FROM i_manufacturingorderitem WITH PRIVILEGED ACCESS
             WHERE (lv_where)
             INTO TABLE @DATA(lt_afpo).
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_afpo).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_afpo).
             lv_error400 = 'X'.
             lv_error_message_afpo = lo_sql_error_afpo->get_text( ).
             lv_text = lv_error_message_afpo.
@@ -4430,16 +4431,16 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'PLPO'  OR 'plpo' .
 
-        data:lv_error_message_plpo type string.
+        DATA:lv_error_message_plpo TYPE string.
 
-        try.
+        TRY.
             SELECT *
 *               i_inspplanoperationversion_2~inspectionplangroup,
 *               i_inspplanoperationversion_2~boooperationinternalid,
@@ -4478,7 +4479,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             WHERE (lv_where)
             INTO TABLE @DATA(lt_plpo).
 
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_plpo).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_plpo).
             lv_error400 = 'X'.
             lv_error_message_plpo = lo_sql_error_plpo->get_text( ).
             lv_text = lv_error_message_plpo.
@@ -4569,15 +4570,15 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'RESB'  OR 'resb' .
-        data: lv_error_message_resb type string.
+        DATA: lv_error_message_resb TYPE string.
 
-        try.
+        TRY.
             SELECT i_mfgorderoperationcomponent~*,
                    i_manufacturingorderitem~plannedorder
             FROM i_mfgorderoperationcomponent WITH PRIVILEGED ACCESS
@@ -4586,7 +4587,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
             WHERE (lv_where)
             INTO TABLE @DATA(lt_resb).
 
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_resb).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_resb).
             lv_error400 = 'X'.
             lv_error_message_resb = lo_sql_error_resb->get_text( ).
             lv_text = lv_error_message_resb.
@@ -4938,19 +4939,19 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'AFVC'  OR 'afvc' .
-        data: lv_error_message_afvc type string.
-        try.
+        DATA: lv_error_message_afvc TYPE string.
+        TRY.
             SELECT *
               FROM i_manufacturingorderoperation WITH PRIVILEGED ACCESS
              WHERE (lv_where)
               INTO TABLE @DATA(lt_afvc).
-        catch cx_sy_dynamic_osql_error into data(lo_sql_error_afvc).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_afvc).
             lv_error400 = 'X'.
             lv_error_message_afvc = lo_sql_error_afvc->get_text( ).
             lv_text = lv_error_message_afvc.
@@ -5547,21 +5548,21 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
                                       i_value = lc_content_type ).
 
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
       WHEN 'MBEW'  OR 'mbew' .
-       data lv_error_message_mbew type string.
+        DATA lv_error_message_mbew TYPE string.
 
-        try.
+        TRY.
             SELECT *
             FROM  i_productvaluationbasic WITH PRIVILEGED ACCESS
             WHERE (lv_where)
             INTO TABLE @DATA(lt_mbew).
 
-        CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_mbew).
+          CATCH cx_sy_dynamic_osql_error INTO DATA(lo_sql_error_mbew).
             lv_error400 = 'X'.
             lv_error_message_mbew = lo_sql_error_mbew->get_text( ).
             lv_text = lv_error_message_mbew.
@@ -5650,9 +5651,9 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
         ELSE.
 
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
 
         ENDIF.
 
@@ -5699,9 +5700,9 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
           response->set_header_field( i_name  = lc_header_content
                                       i_value = lc_content_type ).
         ELSE.
-            if lv_error400 <> 'X'.
-                lv_error = 'X'.  "204 no data
-            endif.
+          IF lv_error400 <> 'X'.
+            lv_error = 'X'.  "204 no data
+          ENDIF.
         ENDIF.
 
 
@@ -5718,7 +5719,7 @@ CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
     ELSEIF lv_error400 IS NOT INITIAL.
       response->set_status( '400' ).  "bad request
       response->set_text( lv_text ).
-      exit.
+      EXIT.
 
     ENDIF.
 

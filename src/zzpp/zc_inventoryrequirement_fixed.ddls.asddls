@@ -31,6 +31,25 @@ define view entity ZC_InventoryRequirement_fixed
 
       _PurchasingInfoRecord.PurchasingInfoRecord,
 
+      // ADD BEGIN BY XINLEI XU 2025/03/25
+      ExternalProductGroup,
+      ProductGroup,
+      ProductType,
+      IndustryStandardName,
+      ProductManufacturerNumber,
+      ManufacturerNumber,
+      ProductDescription,
+      MRPControllerName,
+      LotSizingProcedure,
+      @Semantics.amount.currencyCode: 'Currency'
+      ProductStandardPrice,
+      Currency,
+      PriceUnitQty,
+      _BusinessPartner.OrganizationBPName1,
+      _PurchasingInfoRecord.SupplierCertOriginCountry,
+      _PurchasingInfoRecord.SupplierMaterialNumber,
+      // ADD END BY XINLEI XU 2025/03/25
+
       /* Associations */
       _Product,
       _ProductDescription,

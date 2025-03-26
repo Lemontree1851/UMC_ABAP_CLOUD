@@ -28,14 +28,28 @@ union all select from ZI_BI003_REPORT_003_ACCOUTING(p_recover_type: 'IN') // MOD
       AmountInCompanyCodeCurrency as TotalAmount
 }
 // ADD BEGIN BY XINLEI XU 2025/02/11
-union all select from ztbi_bi003_j03 as _table
+union all select from ztbi_bi003_j03       as _table
+  inner join          ZR_TBC1012           as _AssignCompany on _AssignCompany.CompanyCode = _table.company_code
+  inner join          ZC_BusinessUserEmail as _User          on  _User.Email  = _AssignCompany.Mail
+                                                             and _User.UserID = $session.user
 {
-
-  key recovery_management_number as RecoveryManagementNumber,
-  key fiscal_year_period         as FiscalYearPeriod,
-      company_currency           as CompanyCurrency,
-      recovery_necessary_amount  as TotalAmount
+  key _table.recovery_management_number as RecoveryManagementNumber,
+  key _table.fiscal_year_period         as FiscalYearPeriod,
+      _table.company_currency           as CompanyCurrency,
+      _table.recovery_necessary_amount  as TotalAmount
 }
 where
-  job_run_by = 'UPLOAD'
+  _table.job_run_by = 'UPLOAD'
 // ADD END BY XINLEI XU 2025/02/10
+
+// ADD BEGIN BY XINLEI XU 2025/03/25
+union all select from ZI_BI003_REPORT_REC_NEC_AMT_GS( p_product_group:'400' )
+{
+  key RecoveryManagementNumber,
+  key FiscalYearPeriod,
+      CompanyCurrency,
+      cast('0.00' as dmbtr) as TotalAmount
+}
+where
+  substring( RecoveryManagementNumber , 1 ,2 ) = 'IN'
+// ADD END BY XINLEI XU 2025/03/25

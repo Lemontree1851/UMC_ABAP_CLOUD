@@ -69,6 +69,7 @@ define view entity ZI_BI003_REPORT_002_BILLING_F5
       when 0 then BillingPrice.ConditionRateAmount / 100
       else BillingPrice.ConditionRateAmount end as ConditionRateAmount,
 
+      BillingPrice.ConditionQuantity, // ADD BY XINLEI XU 2025/03/25
 
       SalesDocument.SoldToParty,
 

@@ -62,31 +62,53 @@ define root view entity ZI_BI003_REPORT_002
       @Semantics.amount.currencyCode: 'CompanyCurrency'
       @EndUserText: { label:  'Old Material Price', quickInfo: 'Old Material Price' }
       //_OldMaterial.NetPriceAmount as OldMaterialPrice,
-      cast( currency_conversion( amount => _OldMaterial.NetPriceAmount,
-                           exchange_rate_date =>_PurchaseOrder.CreationDate,
-                           source_currency => DocumentCurrency,
-                           target_currency => _CompanyCode.Currency
-                         )   as dmbtr )   as OldMaterialPrice,
+      //MOD BEGIN BY XINLEI XU 2025/03/26
+      //      cast( currency_conversion( amount => _OldMaterial.NetPriceAmount,
+      //                           exchange_rate_date =>_PurchaseOrder.CreationDate,
+      //                           source_currency => DocumentCurrency,
+      //                           target_currency => _CompanyCode.Currency
+      //                         )   as dmbtr )   as OldMaterialPrice,
+      case when DocumentCurrency <> _CompanyCode.Currency
+           then cast( currency_conversion( amount => _OldMaterial.NetPriceAmount,
+                                           exchange_rate_date =>_PurchaseOrder.CreationDate,
+                                           source_currency => DocumentCurrency,
+                                           target_currency => _CompanyCode.Currency ) as dmbtr )
+           else _OldMaterial.NetPriceAmount
+      end                                 as OldMaterialPrice,
 
       @Semantics.amount.currencyCode: 'CompanyCurrency'
       @EndUserText: { label:  'Net Price Diff', quickInfo: 'Net Price Diff' }
-      cast( currency_conversion( amount => NetPriceAmount - _OldMaterial.NetPriceAmount ,
-                           exchange_rate_date => _PurchaseOrder.CreationDate,
-                           source_currency => DocumentCurrency,
-                           target_currency => _CompanyCode.Currency
-                         )   as dmbtr )   as NetPriceDiff,
-
-
+      //      cast( currency_conversion( amount => NetPriceAmount - _OldMaterial.NetPriceAmount ,
+      //                           exchange_rate_date => _PurchaseOrder.CreationDate,
+      //                           source_currency => DocumentCurrency,
+      //                           target_currency => _CompanyCode.Currency
+      //                         )   as dmbtr )         as NetPriceDiff,
+      case when DocumentCurrency <> _CompanyCode.Currency
+           then cast( currency_conversion( amount => NetPriceAmount - _OldMaterial.NetPriceAmount,
+                                           exchange_rate_date => _PurchaseOrder.CreationDate,
+                                           source_currency => DocumentCurrency,
+                                           target_currency => _CompanyCode.Currency ) as dmbtr )
+           else  NetPriceAmount - _OldMaterial.NetPriceAmount
+      end                                 as NetPriceDiff,
 
       @Semantics.amount.currencyCode: 'CompanyCurrency'
       @EndUserText: { label:  'Recovery Necessary Amount', quickInfo: 'Recovery Necessary Amount' }
-      cast ( cast( currency_conversion( amount => NetPriceAmount - _OldMaterial.NetPriceAmount ,
-                   exchange_rate_date => _PurchaseOrder.CreationDate,
-                   source_currency => DocumentCurrency,
-                   target_currency => _CompanyCode.Currency
-                 ) as abap.dec( 16, 2 ) ) * OrderQuantity
-             as dmbtr
-           )                              as RecoveryNecessaryAmount, //NetAmountDiff,
+      //      cast ( cast( currency_conversion( amount => NetPriceAmount - _OldMaterial.NetPriceAmount ,
+      //                   exchange_rate_date => _PurchaseOrder.CreationDate,
+      //                   source_currency => DocumentCurrency,
+      //                   target_currency => _CompanyCode.Currency
+      //                 ) as abap.dec( 16, 2 ) ) * OrderQuantity
+      //             as dmbtr
+      //           )                                                      as RecoveryNecessaryAmount,
+      case when DocumentCurrency <> _CompanyCode.Currency
+           then cast ( cast( currency_conversion( amount => NetPriceAmount - _OldMaterial.NetPriceAmount,
+                                                  exchange_rate_date => _PurchaseOrder.CreationDate,
+                                                  source_currency => DocumentCurrency,
+                                                  target_currency => _CompanyCode.Currency ) as abap.dec( 16, 2 ) ) * OrderQuantity as dmbtr )
+           else cast ( cast( NetPriceAmount - _OldMaterial.NetPriceAmount as abap.dec( 16, 2 ) )
+                       * OrderQuantity as dmbtr )
+      end                                 as RecoveryNecessaryAmount,
+      //MOD END BY XINLEI XU 2025/03/26
 
       _CompanyCode.CompanyCodeName,
 
@@ -201,37 +223,65 @@ union select from ZI_BI003_REPORT_002_BILLING(p_condition_type: 'ZPSB', p_recove
          _Companycode.Currency              as BillingCurrency,
 
 
-         currency_conversion( amount=>BillingPrice,
-                              exchange_rate_date=>BillingDocumentDate,
-                              source_currency=>TransactionCurrency,
-                              target_currency=>_Companycode.Currency
-                            )               as BillingPrice,
-
-
+         // MOD BEGN BY XINLEI XU 2025/03/26
+         //         currency_conversion( amount=>BillingPrice,
+         //                              exchange_rate_date=>BillingDocumentDate,
+         //                              source_currency=>TransactionCurrency,
+         //                              target_currency=>_Companycode.Currency
+         //                            )               as BillingPrice,
+         case when TransactionCurrency <> _Companycode.Currency
+              then currency_conversion( amount=>BillingPrice,
+                                        exchange_rate_date=>BillingDocumentDate,
+                                        source_currency=>TransactionCurrency,
+                                        target_currency=>_Companycode.Currency )
+              else BillingPrice
+         end                                as BillingPrice,
 
          ConditionType,
 
-         cast( currency_conversion( amount=>ConditionRateAmount,
-                              exchange_rate_date=>BillingDocumentDate,
-                              source_currency=>TransactionCurrency,
-                              target_currency=>_Companycode.Currency
-                            )  as dmbtr )   as ConditionRateAmount,
+         //         cast( currency_conversion( amount=>ConditionRateAmount,
+         //                              exchange_rate_date=>BillingDocumentDate,
+         //                              source_currency=>TransactionCurrency,
+         //                              target_currency=>_Companycode.Currency
+         //                            )  as dmbtr )   as ConditionRateAmount,
+         case when TransactionCurrency <> _Companycode.Currency
+              then cast( currency_conversion( amount=>ConditionRateAmount,
+                                              exchange_rate_date=>BillingDocumentDate,
+                                              source_currency=>TransactionCurrency,
+                                              target_currency=>_Companycode.Currency ) / ConditionQuantity as dmbtr )
+              else cast( ConditionRateAmount / ConditionQuantity as dmbtr )
+         end                                as ConditionRateAmount,
 
          case when ConditionRateAmount > 0 then
-          cast ( cast( currency_conversion( amount => ConditionRateAmount,
-                       exchange_rate_date => BillingDocumentDate,
-                       source_currency => TransactionCurrency,
-                       target_currency => _Companycode.Currency
-                     ) as abap.dec( 16, 2 ) ) * BillingQuantity
-                 as dmbtr
-               )
-         else cast ( cast( currency_conversion( amount => BillingNetAmount,
-                       exchange_rate_date => BillingDocumentDate,
-                       source_currency => TransactionCurrency,
-                       target_currency => _Companycode.Currency
-                     ) as abap.dec( 16, 2 ) )
-                 as dmbtr
-               )
+         //          cast ( cast( currency_conversion( amount => ConditionRateAmount,
+         //                       exchange_rate_date => BillingDocumentDate,
+         //                       source_currency => TransactionCurrency,
+         //                       target_currency => _Companycode.Currency
+         //                     ) as abap.dec( 16, 2 ) ) * BillingQuantity
+         //                 as dmbtr
+         //               )
+         //         else cast ( cast( currency_conversion( amount => BillingNetAmount,
+         //                       exchange_rate_date => BillingDocumentDate,
+         //                       source_currency => TransactionCurrency,
+         //                       target_currency => _Companycode.Currency
+         //                     ) as abap.dec( 16, 2 ) )
+         //                 as dmbtr
+         //               )
+              case when TransactionCurrency <> _Companycode.Currency
+                   then cast ( cast( currency_conversion( amount => ConditionRateAmount,
+                                                          exchange_rate_date => BillingDocumentDate,
+                                                          source_currency => TransactionCurrency,
+                                                          target_currency => _Companycode.Currency
+                                                        ) as abap.dec( 16, 2 ) ) / ConditionQuantity * BillingQuantity as dmbtr )
+                   else cast ( ConditionRateAmount / ConditionQuantity * BillingQuantity as dmbtr ) end
+         else
+              case when TransactionCurrency <> _Companycode.Currency
+                   then cast ( cast( currency_conversion( amount => BillingNetAmount,
+                                                          exchange_rate_date => BillingDocumentDate,
+                                                          source_currency => TransactionCurrency,
+                                                          target_currency => _Companycode.Currency ) as abap.dec( 16, 2 ) ) as dmbtr )
+                   else BillingNetAmount end
+         // MOD END BY XINLEI XU 2025/03/26
          end                                as RecoveryAmount //BillingTotalAmount
 }
 // ADD BEGIN BY XINLEI XU 2025/02/10

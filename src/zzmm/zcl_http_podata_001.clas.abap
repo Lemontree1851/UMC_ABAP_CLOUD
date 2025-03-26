@@ -104,7 +104,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
+CLASS zcl_http_podata_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -117,10 +117,11 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
 
     ELSE.
       "first deserialize the request
-      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
-          ( xco_cp_json=>transformation->underscore_to_pascal_case )
-      ) )->write_to( REF #( lt_req ) ).
-
+      IF lv_req_body IS NOT INITIAL.
+        xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
+            ( xco_cp_json=>transformation->underscore_to_pascal_case )
+        ) )->write_to( REF #( lt_req ) ).
+      ENDIF.
     ENDIF.
 
     IF lt_req IS NOT INITIAL.
@@ -148,7 +149,7 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
           AND purchaseorderitem = @lt_req-dno
         INTO TABLE @DATA(lt_deletecode).
 
-      SELECT purchaseorder, purchaseorderitem,purchaseorderquantityunit,NetAmount,DocumentCurrency
+      SELECT purchaseorder, purchaseorderitem,purchaseorderquantityunit,netamount,documentcurrency
         FROM i_purchaseorderitemapi01 WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_req
         WHERE purchaseorder = @lt_req-pono
@@ -161,14 +162,14 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
 
         SELECT unitofmeasure, unitofmeasureisocode
            FROM i_unitofmeasure WITH PRIVILEGED ACCESS
-           FOR ALL ENTRIES IN @lt_unit "#EC CI_NO_TRANSFORM
+           FOR ALL ENTRIES IN @lt_unit             "#EC CI_NO_TRANSFORM
            WHERE unitofmeasure = @lt_unit-purchaseorderquantityunit
            INTO TABLE @DATA(lt_unit1).
 
       ENDIF.
 
     ENDIF.
-      DATA:ls_unit LIKE LINE OF lt_unit.
+    DATA:ls_unit LIKE LINE OF lt_unit.
     " 检查删除标志
     LOOP AT lt_deletecode INTO DATA(ls_deletecode).
       IF ls_deletecode-purchasingdocumentdeletioncode = 'L'.
@@ -183,8 +184,8 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
       lv_length TYPE i VALUE 0,
       lv_index  TYPE i.
 
-    DATA: lv_newdn type c,
-          lv_dno          TYPE n    LENGTH 5.
+    DATA: lv_newdn TYPE c,
+          lv_dno   TYPE n    LENGTH 5.
     DATA: ls_quantity LIKE LINE OF lt_deletecode.
     " 如果没有删除标志的错误，进行数量总和比较
     IF lv_error IS INITIAL.
@@ -200,46 +201,46 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
         CLEAR:lv_newdn,lv_dno.
         lv_index = 0.
 
-          "ADD BY STANLEY 20250120
-          SELECT purchaseorder,
-                 purchaseorderitem,
-                 sequentialnmbrofsuplrconf,
-                 deliverydate,
-                 mrprelevantquantity
-            FROM I_POSupplierConfirmationAPI01 WITH PRIVILEGED ACCESS
-           WHERE purchaseorder = @lw_req1-pono
-             AND mrprelevantquantity > 0
-            INTO TABLE @data(lt_already_confirm).
-          SORT lt_already_confirm BY purchaseorder purchaseorderitem sequentialnmbrofsuplrconf.
-          LOOP AT lt_already_confirm INTO DATA(ls_already_confirm).
-            CLEAR:ls_insert_req.
-            ls_insert_req-pono = ls_already_confirm-purchaseorder.
-            ls_insert_req-dno = ls_already_confirm-purchaseorderitem.
-            ls_insert_req-seq = ls_already_confirm-sequentialnmbrofsuplrconf.
-            ls_insert_req-deliverydate = ls_already_confirm-deliverydate+0(4) && '-' &&
-            ls_already_confirm-deliverydate+4(2) && '-' && ls_already_confirm-deliverydate+6(2).
-            ls_insert_req-delflag = 'A'."Already Confirmed
-            ls_insert_req-quantity = ls_already_confirm-mrprelevantquantity.
-            APPEND ls_insert_req TO lt_req.
-          ENDLOOP.
+        "ADD BY STANLEY 20250120
+        SELECT purchaseorder,
+               purchaseorderitem,
+               sequentialnmbrofsuplrconf,
+               deliverydate,
+               mrprelevantquantity
+          FROM i_posupplierconfirmationapi01 WITH PRIVILEGED ACCESS
+         WHERE purchaseorder = @lw_req1-pono
+           AND mrprelevantquantity > 0
+          INTO TABLE @DATA(lt_already_confirm).
+        SORT lt_already_confirm BY purchaseorder purchaseorderitem sequentialnmbrofsuplrconf.
+        LOOP AT lt_already_confirm INTO DATA(ls_already_confirm).
+          CLEAR:ls_insert_req.
+          ls_insert_req-pono = ls_already_confirm-purchaseorder.
+          ls_insert_req-dno = ls_already_confirm-purchaseorderitem.
+          ls_insert_req-seq = ls_already_confirm-sequentialnmbrofsuplrconf.
+          ls_insert_req-deliverydate = ls_already_confirm-deliverydate+0(4) && '-' &&
+          ls_already_confirm-deliverydate+4(2) && '-' && ls_already_confirm-deliverydate+6(2).
+          ls_insert_req-delflag = 'A'."Already Confirmed
+          ls_insert_req-quantity = ls_already_confirm-mrprelevantquantity.
+          APPEND ls_insert_req TO lt_req.
+        ENDLOOP.
 
-          SORT lt_req BY pono dno seq deliverydate.
-         "END ADD
+        SORT lt_req BY pono dno seq deliverydate.
+        "END ADD
 
 
-        DATA:LV_FREE(1) TYPE C.
+        DATA:lv_free(1) TYPE c.
         LOOP AT lt_req INTO DATA(ls_req) WHERE pono = lw_req1-pono  .
 
           "判断是否有新行需要item标签结尾
-            if lv_dno = 0.
-                lv_dno = ls_req-dno.
-            endif.
-            if lv_dno NE ls_req-dno.
-                lv_newdn = 'X'.
-                lv_dno = ls_req-dno.
-            else.
-                clear lv_newdn.
-            endif.
+          IF lv_dno = 0.
+            lv_dno = ls_req-dno.
+          ENDIF.
+          IF lv_dno NE ls_req-dno.
+            lv_newdn = 'X'.
+            lv_dno = ls_req-dno.
+          ELSE.
+            CLEAR lv_newdn.
+          ENDIF.
           "end
 
           lv_index = lv_index + 1.
@@ -440,9 +441,9 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
               "=====================================change by wz
 
               "ADD BY STANLEY 20250120
-              DATA:LV_ACTION(1) TYPE C.
+              DATA:lv_action(1) TYPE c.
               IF ls_req-delflag = 'A'.
-                LV_ACTION = '2'.
+                lv_action = '2'.
               ELSE.
                 lv_action = '1'.
               ENDIF.
@@ -464,36 +465,36 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
                                    |<PurchaseOrderItemID>{ ls_req-dno }</PurchaseOrderItemID>|.
 
             ELSE.
-                if lv_newdn = 'X'.
+              IF lv_newdn = 'X'.
 
-                  "ADD BY STANLEY 20250218
-                  if lv_free = 'X'.
-                      lv_current_request = lv_current_request &&
-                                           |<NetPrice>| &&
-                                           |<Amount currencyCode="{ ls_unit-DocumentCurrency }"> { ls_unit-NetAmount }</Amount>| &&
-                                           |<BaseQuantity unitCode="{ lv_converted_unit }">{ ls_quantity-OrderQuantity }</BaseQuantity>| &&
-                                           |</NetPrice>|.
-                  endif.
-                  " END ADD
-                 lv_current_request = lv_current_request &&
-                                      |</Item>| && |<Item>| &&
-                                      |<ActionCode>{ lv_action }</ActionCode>| &&
-                                      |<PurchaseOrderItemID>{ ls_req-dno }</PurchaseOrderItemID>|.
-                endif.
+                "ADD BY STANLEY 20250218
+                IF lv_free = 'X'.
+                  lv_current_request = lv_current_request &&
+                                       |<NetPrice>| &&
+                                       |<Amount currencyCode="{ ls_unit-documentcurrency }"> { ls_unit-netamount }</Amount>| &&
+                                       |<BaseQuantity unitCode="{ lv_converted_unit }">{ ls_quantity-orderquantity }</BaseQuantity>| &&
+                                       |</NetPrice>|.
+                ENDIF.
+                " END ADD
+                lv_current_request = lv_current_request &&
+                                     |</Item>| && |<Item>| &&
+                                     |<ActionCode>{ lv_action }</ActionCode>| &&
+                                     |<PurchaseOrderItemID>{ ls_req-dno }</PurchaseOrderItemID>|.
+              ENDIF.
             ENDIF.
-             " ADD BY STANLEY 20250108
-             READ TABLE  lt_deletecode INTO ls_quantity WITH KEY purchaseorder     = ls_req-pono
-                                                                 purchaseorderitem = ls_req-dno .
+            " ADD BY STANLEY 20250108
+            READ TABLE  lt_deletecode INTO ls_quantity WITH KEY purchaseorder     = ls_req-pono
+                                                                purchaseorderitem = ls_req-dno .
             " 假设获取到的单位信息包含在 lt_unit 中，取第一个单位信息
             LOOP AT lt_unit INTO ls_unit  WHERE purchaseorder = ls_req-pono AND purchaseorderitem = ls_req-dno.
 
 
               CLEAR lv_converted_unit.
-              if ls_unit-NetAmount = 0.
+              IF ls_unit-netamount = 0.
                 lv_free ='X'.
-              else.
+              ELSE.
                 CLEAR:lv_free.
-              endif.
+              ENDIF.
               READ TABLE lt_unit1 WITH KEY unitofmeasure  = ls_unit-purchaseorderquantityunit INTO DATA(ls_unit1).
 
               IF sy-subrc = 0.
@@ -522,14 +523,14 @@ CLASS ZCL_HTTP_PODATA_001 IMPLEMENTATION.
               " ADD BY STANLEY 20250108
               READ TABLE  lt_deletecode INTO ls_quantity WITH KEY purchaseorder     = ls_req-pono
                                                                         purchaseorderitem = ls_req-dno .
-              if ls_unit-NetAmount = 0.
+              IF ls_unit-netamount = 0.
 
-                  lv_current_request = lv_current_request &&
-                                       |<NetPrice>| &&
-                                       |<Amount currencyCode="{ ls_unit-DocumentCurrency }"> { ls_unit-NetAmount }</Amount>| &&
-                                       |<BaseQuantity unitCode="{ lv_converted_unit }">{ ls_quantity-OrderQuantity }</BaseQuantity>| &&
-                                       |</NetPrice>|.
-              endif.
+                lv_current_request = lv_current_request &&
+                                     |<NetPrice>| &&
+                                     |<Amount currencyCode="{ ls_unit-documentcurrency }"> { ls_unit-netamount }</Amount>| &&
+                                     |<BaseQuantity unitCode="{ lv_converted_unit }">{ ls_quantity-orderquantity }</BaseQuantity>| &&
+                                     |</NetPrice>|.
+              ENDIF.
               " END ADD
 
               lv_current_request = lv_current_request &&

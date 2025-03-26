@@ -41,6 +41,22 @@ define view entity ZR_InventoryRequirement_fixed
       cast( '' as abap.char(1000) )     as EOLGroup,
       ''                                as IsMainProduct,
 
+      // ADD BEGIN BY XINLEI XU 2025/03/25
+      _Product.ExternalProductGroup,
+      _Product.ProductGroup,
+      _Product.ProductType,
+      _Product.IndustryStandardName,
+      _Product.ProductManufacturerNumber,
+      _Product.ManufacturerNumber,
+      _ProductDescription.ProductDescription,
+      _MRPController.MRPControllerName,
+      _ProductPlantSupplyPlanning.LotSizingProcedure,
+      @Semantics.amount.currencyCode: 'Currency'
+      _ProductValuation.StandardPrice   as ProductStandardPrice,
+      _ProductValuation.Currency,
+      _ProductValuation.PriceUnitQty,
+      // ADD END BY XINLEI XU 2025/03/25
+
       _Product,
       _ProductDescription,
       _MRPController,

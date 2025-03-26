@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_CHECKMFGORDERMDOC_001 IMPLEMENTATION.
+CLASS zcl_http_checkmfgordermdoc_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -73,14 +73,16 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_001 IMPLEMENTATION.
       lc_gmtype_261   TYPE i_mfgorderoperationcomponent-goodsmovementtype VALUE '261',
       lc_stocktype_01 TYPE i_materialstock_2-inventorystocktype           VALUE '01'.
 
-GET TIME STAMP FIELD DATA(lv_timestamp_start).
+    GET TIME STAMP FIELD DATA(lv_timestamp_start).
 
     "Obtain request data
     DATA(lv_req_body) = request->get_text( ).
 
     "JSON->ABAP
-    xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
-        ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    IF lv_req_body IS NOT INITIAL.
+      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
+          ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    ENDIF.
 
     lv_plant = ls_req-plant.
     lv_order = |{ ls_req-order ALPHA = IN }|.
@@ -205,7 +207,7 @@ GET TIME STAMP FIELD DATA(lv_timestamp_start).
              AND plant = @lt_mfgorderoperationcomponent-plant
              AND storagelocation = @lt_mfgorderoperationcomponent-storagelocation
              AND ismarkedfordeletion = 'X'
-            INTO TABLE @DATA(lt_productstoragelocationbasic).
+            INTO TABLE @DATA(lt_productstoragelocationbasic). "#EC CI_NO_TRANSFORM
 
           "Obtain data of product
           SELECT product,
@@ -213,7 +215,7 @@ GET TIME STAMP FIELD DATA(lv_timestamp_start).
             FROM i_product WITH PRIVILEGED ACCESS
              FOR ALL ENTRIES IN @lt_mfgorderoperationcomponent
            WHERE product = @lt_mfgorderoperationcomponent-material
-            INTO TABLE @DATA(lt_product).
+            INTO TABLE @DATA(lt_product).          "#EC CI_NO_TRANSFORM
 
           "Obtain data of material stock
           SELECT material,
@@ -244,7 +246,7 @@ GET TIME STAMP FIELD DATA(lv_timestamp_start).
              AND sddocumentitem = @lt_mfgorderoperationcomponent-salesorderitem
              AND wbselementinternalid = @lt_mfgorderoperationcomponent-wbselementinternalid_2
              AND inventorystocktype = @lc_stocktype_01
-            INTO TABLE @DATA(lt_materialstock_2).
+            INTO TABLE @DATA(lt_materialstock_2).  "#EC CI_NO_TRANSFORM
 
           ls_res-_msgty = 'S'.
           "製造指図&1の構成品目の在庫を参照してください！

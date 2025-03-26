@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
+CLASS zcl_http_checkmfgordermdoc_002 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -118,8 +118,10 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
     DATA(lv_req_body) = request->get_text( ).
 
     "JSON->ABAP
-    xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
-        ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    IF lv_req_body IS NOT INITIAL.
+      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
+          ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    ENDIF.
 
     lv_plant = ls_req-plant.
     lv_group = ls_req-mfg_order_confirmation_group.
@@ -266,7 +268,7 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
                  AND plant = @lt_materialdocumentitem-plant
                  AND storagelocation = @lt_materialdocumentitem-storagelocation
                  AND ismarkedfordeletion = 'X'
-                INTO TABLE @DATA(lt_productstoragelocationbasic).
+                INTO TABLE @DATA(lt_productstoragelocationbasic). "#EC CI_NO_TRANSFORM
               IF sy-subrc <> 0.
                 "Obtain data of material stock
                 SELECT material,
@@ -297,7 +299,7 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
                    AND sddocumentitem = @lt_materialdocumentitem-salesorderitem
                    AND wbselementinternalid = @lt_materialdocumentitem-wbselementinternalid
                    AND inventorystocktype = @lc_stocktype_01
-                  INTO TABLE @lt_stock.
+                  INTO TABLE @lt_stock.            "#EC CI_NO_TRANSFORM
               ENDIF.
 
               "Obtain product plant
@@ -308,7 +310,7 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
                WHERE product = @lt_materialdocumentitem-material
                  AND plant = @lt_materialdocumentitem-plant
                  AND specialprocurementtype = @lc_specproctype_52
-                INTO TABLE @DATA(lt_productplantbasic).
+                INTO TABLE @DATA(lt_productplantbasic). "#EC CI_NO_TRANSFORM
             ELSE.
               "入出庫伝票は取得できません！
               MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 023 INTO ls_res-_msg.

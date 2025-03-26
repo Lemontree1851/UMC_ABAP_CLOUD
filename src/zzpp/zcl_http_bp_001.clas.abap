@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_BP_001 IMPLEMENTATION.
+CLASS zcl_http_bp_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -67,8 +67,10 @@ CLASS ZCL_HTTP_BP_001 IMPLEMENTATION.
     DATA(lv_req_body) = request->get_text( ).
 
     "JSON->ABAP
-    xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
-        ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    IF lv_req_body IS NOT INITIAL.
+      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
+          ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    ENDIF.
 
     lv_company = ls_req-company_code.
     lv_partner = |{ ls_req-business_partner ALPHA = IN }|.

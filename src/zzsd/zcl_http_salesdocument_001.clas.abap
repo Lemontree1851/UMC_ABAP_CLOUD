@@ -10,7 +10,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_SALESDOCUMENT_001 IMPLEMENTATION.
+CLASS zcl_http_salesdocument_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -98,8 +98,10 @@ CLASS ZCL_HTTP_SALESDOCUMENT_001 IMPLEMENTATION.
     DATA(lv_req_body) = request->get_text( ).
 
     "JSON->ABAP
-    xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
-        ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    IF lv_req_body IS NOT INITIAL.
+      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
+          ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    ENDIF.
 
     lv_salesorganization   = ls_req-sales_organization.
     lv_distributionchannel = ls_req-distribution_channel.

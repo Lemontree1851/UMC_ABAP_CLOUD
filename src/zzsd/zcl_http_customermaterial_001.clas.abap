@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_CUSTOMERMATERIAL_001 IMPLEMENTATION.
+CLASS zcl_http_customermaterial_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -83,8 +83,10 @@ CLASS ZCL_HTTP_CUSTOMERMATERIAL_001 IMPLEMENTATION.
     DATA(lv_req_body) = request->get_text( ).
 
     "JSON->ABAP
-    xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
-        ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    IF lv_req_body IS NOT INITIAL.
+      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
+          ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    ENDIF.
 
     lv_salesorganization   = ls_req-sales_organization.
     lv_distributionchannel = ls_req-distribution_channel.
@@ -297,7 +299,7 @@ CLASS ZCL_HTTP_CUSTOMERMATERIAL_001 IMPLEMENTATION.
              AND distributionchannel = @lt_log-distributionchannel
              AND customer = @lt_log-customer
              AND product = @lt_log-product
-            INTO TABLE @DATA(lt_customermaterial_2).
+            INTO TABLE @DATA(lt_customermaterial_2). "#EC CI_NO_TRANSFORM
         ENDIF.
       CATCH cx_root INTO lo_root_exc.
         ls_res-_msgty = 'E'.

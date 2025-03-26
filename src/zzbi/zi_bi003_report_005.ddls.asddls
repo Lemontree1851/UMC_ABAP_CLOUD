@@ -149,11 +149,20 @@ union select from ZI_BI003_REPORT_005_BILLING
 
          _Companycode.Currency               as BillingCurrency,
 
-         currency_conversion( amount=>BillingPrice,
-                              exchange_rate_date=>BillingDocumentDate,
-                              source_currency=>TransactionCurrency,
-                              target_currency=>_Companycode.Currency
-                            )                as BillingPrice,
+         // MOD BEGN BY XINLEI XU 2025/03/26
+         //         currency_conversion( amount=>BillingPrice,
+         //                              exchange_rate_date=>BillingDocumentDate,
+         //                              source_currency=>TransactionCurrency,
+         //                              target_currency=>_Companycode.Currency
+         //                            )                as BillingPrice,
+         case when TransactionCurrency <> _Companycode.Currency
+              then currency_conversion( amount=>BillingPrice,
+                                        exchange_rate_date=>BillingDocumentDate,
+                                        source_currency=>TransactionCurrency,
+                                        target_currency=>_Companycode.Currency )
+              else BillingPrice
+         end                                 as BillingPrice,
+         // MOD END BY XINLEI XU 2025/03/26
 
          ConditionType,
 
@@ -166,59 +175,78 @@ union select from ZI_BI003_REPORT_005_BILLING
 
          //cast(ConditionRateAmount as dmbtr)  as ConditionRateAmount,
 
-         currency_conversion( amount=>cast( ConditionRateAmount as dmbtr ),
-                           exchange_rate_date=>BillingDocumentDate,
-                           source_currency=>TransactionCurrency,
-                           target_currency=>_Companycode.Currency
-                         )                   as ConditionRateAmount,
+         // MOD BEGN BY XINLEI XU 2025/03/26
+         //         currency_conversion( amount=>cast( ConditionRateAmount as dmbtr ),
+         //                           exchange_rate_date=>BillingDocumentDate,
+         //                           source_currency=>TransactionCurrency,
+         //                           target_currency=>_Companycode.Currency
+         //                         )                   as ConditionRateAmount,
+         //
+         //         currency_conversion( amount=>RecoveryAmount,
+         //                                      exchange_rate_date=>BillingDocumentDate,
+         //                                      source_currency=>TransactionCurrency,
+         //                                      target_currency=>_Companycode.Currency
+         //                             )               as RecoveryAmount //BillingTotalAmount
+         case when TransactionCurrency <> _Companycode.Currency
+              then currency_conversion( amount=>cast( ConditionRateAmount as dmbtr ),
+                                        exchange_rate_date=>BillingDocumentDate,
+                                        source_currency=>TransactionCurrency,
+                                        target_currency=>_Companycode.Currency )
+              else cast( ConditionRateAmount as dmbtr )
+         end                                 as ConditionRateAmount,
 
-         currency_conversion( amount=>RecoveryAmount,
-                                      exchange_rate_date=>BillingDocumentDate,
-                                      source_currency=>TransactionCurrency,
-                                      target_currency=>_Companycode.Currency
-                             )               as RecoveryAmount //BillingTotalAmount
-
+         case when TransactionCurrency <> _Companycode.Currency
+              then currency_conversion( amount=>RecoveryAmount,
+                                        exchange_rate_date=>BillingDocumentDate,
+                                        source_currency=>TransactionCurrency,
+                                        target_currency=>_Companycode.Currency )
+              else RecoveryAmount
+         end                                 as RecoveryAmount //BillingTotalAmount
+         // MOD END BY XINLEI XU 2025/03/26
 }
 // ADD BEGIN BY XINLEI XU 2025/02/10
-union select from ztbi_bi003_j05 as _table
+union select from ztbi_bi003_j05       as _table
+  inner join      ZR_TBC1012           as _AssignCompany on _AssignCompany.CompanyCode = _table.company_code
+  inner join      ZC_BusinessUserEmail as _User          on  _User.Email  = _AssignCompany.Mail
+                                                         and _User.UserID = $session.user
 {
-  key material_document          as MaterialDocument,
-  key material_document_year     as MaterialDocumentYear,
-  key material_document_item     as MaterialDocumentItem,
-  key billing_document           as BillingDocument,
-  key billing_document_item      as BillingDocumentItem,
-      material                   as Material,
-      product_name               as ProductName,
-      recovery_management_number as RecoveryManagementNumber,
-      quantity_in_entry_unit     as QuantityInEntryUnit,
-      entry_unit                 as EntryUnit,
-      fiscal_year_period         as FiscalYearPeriod,
-      fiscal_year                as FiscalYear,
-      fiscal_month               as FiscalMonth,
-      company_code               as CompanyCode,
-      company_code_name          as CompanyCodeName,
-      recovery_necessary_amount  as RecoveryNecessaryAmount,
-      company_currency           as CompanyCurrency,
-      gl_account                 as GlAccount,
-      gl_account_name            as GlAccountName,
-      sales_order_document       as SalesOrderDocument,
-      sales_order_document_item  as SalesOrderDocumentItem,
-      customer                   as Customer,
-      customer_name              as CustomerName,
-      transaction_currency       as TransactionCurrency,
-      billing_product            as BillingProduct,
-      billing_product_text       as BillingProductText,
-      billing_document_date      as BillingDocumentDate,
-      profit_center              as ProfitCenter,
-      profit_center_name         as ProfitCenterName,
-      billing_quantity_unit      as BillingQuantityUnit,
-      billing_quantity           as BillingQuantity,
-      billing_currency           as BillingCurrency,
-      billing_price              as BillingPrice,
-      condition_type             as ConditionType,
-      condition_rate_amount      as ConditionRateAmount,
-      recovery_amount            as RecoveryAmount
+  key _table.material_document          as MaterialDocument,
+  key _table.material_document_year     as MaterialDocumentYear,
+  key _table.material_document_item     as MaterialDocumentItem,
+  key _table.billing_document           as BillingDocument,
+  key _table.billing_document_item      as BillingDocumentItem,
+      _table.material                   as Material,
+      _table.product_name               as ProductName,
+      _table.recovery_management_number as RecoveryManagementNumber,
+      _table.quantity_in_entry_unit     as QuantityInEntryUnit,
+      _table.entry_unit                 as EntryUnit,
+      _table.fiscal_year_period         as FiscalYearPeriod,
+      _table.fiscal_year                as FiscalYear,
+      _table.fiscal_month               as FiscalMonth,
+      _table.company_code               as CompanyCode,
+      _table.company_code_name          as CompanyCodeName,
+      _table.recovery_necessary_amount  as RecoveryNecessaryAmount,
+      _table.company_currency           as CompanyCurrency,
+      _table.gl_account                 as GlAccount,
+      _table.gl_account_name            as GlAccountName,
+      _table.sales_order_document       as SalesOrderDocument,
+      _table.sales_order_document_item  as SalesOrderDocumentItem,
+      _table.customer                   as Customer,
+      _table.customer_name              as CustomerName,
+      _table.transaction_currency       as TransactionCurrency,
+      _table.billing_product            as BillingProduct,
+      _table.billing_product_text       as BillingProductText,
+      _table.billing_document_date      as BillingDocumentDate,
+      _table.profit_center              as ProfitCenter,
+      _table.profit_center_name         as ProfitCenterName,
+      _table.billing_quantity_unit      as BillingQuantityUnit,
+      _table.billing_quantity           as BillingQuantity,
+      _table.billing_currency           as BillingCurrency,
+      _table.billing_price              as BillingPrice,
+      _table.condition_type             as ConditionType,
+      _table.condition_rate_amount      as ConditionRateAmount,
+      _table.recovery_amount            as RecoveryAmount
 }
 where
-  job_run_by = 'UPLOAD'
+  _table.job_run_by = 'UPLOAD'
 // ADD END BY XINLEI XU 2025/02/10

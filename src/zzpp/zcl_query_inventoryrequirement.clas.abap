@@ -273,22 +273,22 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
              procurementtype,
              goodsreceiptduration,
              supplier,
-             \_product-externalproductgroup AS external_product_group,
-             \_product-productgroup AS product_group,
-             \_product-producttype AS product_type,
-             \_product-industrystandardname AS industry_standard_name,
-             \_product-productmanufacturernumber AS product_manufacturer_number,
-             \_product-manufacturernumber AS manufacturer_number,
-             \_productdescription-productdescription AS product_description,
-             \_mrpcontroller-mrpcontrollername AS m_r_p_controller_name,
-             \_productplantsupplyplanning-lotsizingprocedure AS lot_sizing_procedure,
-             \_productvaluation-standardprice,
-             \_productvaluation-currency,
-             \_productvaluation-priceunitqty,
-             \_businesspartner-organizationbpname1 AS supplier_name,
-             \_purchasinginforecord-purchasinginforecord,
-             \_purchasinginforecord-suppliercertorigincountry AS supplier_certorigin_country,
-             \_purchasinginforecord-suppliermaterialnumber AS supplier_material_number,
+             externalproductgroup AS external_product_group,
+             productgroup AS product_group,
+             producttype AS product_type,
+             industrystandardname AS industry_standard_name,
+             productmanufacturernumber AS product_manufacturer_number,
+             manufacturernumber AS manufacturer_number,
+             productdescription AS product_description,
+             mrpcontrollername AS m_r_p_controller_name,
+             lotsizingprocedure AS lot_sizing_procedure,
+             productstandardprice AS standardprice,
+             currency,
+             priceunitqty,
+             organizationbpname1 AS supplier_name,
+             purchasinginforecord,
+             suppliercertorigincountry AS supplier_certorigin_country,
+             suppliermaterialnumber AS supplier_material_number,
              standardprice AS standard_price,
              eolgroup AS e_o_l_group,
              ismainproduct AS is_main_product,
@@ -298,10 +298,10 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
          AND product IN @lr_product
          AND mrpcontroller IN @lr_mrpcontroller
          AND purchasinggroup IN @lr_purchasinggroup
-         AND \_product-productgroup IN @lr_productgroup
-         AND \_product-producttype IN @lr_producttype
+         AND productgroup IN @lr_productgroup
+         AND producttype IN @lr_producttype
          AND supplier IN @lr_supplier
-         AND \_purchasinginforecord-suppliermaterialnumber IN @lr_suppliermaterialnumber
+         AND suppliermaterialnumber IN @lr_suppliermaterialnumber
         INTO TABLE @DATA(lt_fixed_data).
 
 *&--Authorization Check

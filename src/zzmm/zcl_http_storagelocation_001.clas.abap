@@ -48,7 +48,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_STORAGELOCATION_001 IMPLEMENTATION.
+CLASS zcl_http_storagelocation_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -62,9 +62,11 @@ CLASS ZCL_HTTP_STORAGELOCATION_001 IMPLEMENTATION.
 
     ELSE.
       "处理JSON请求体
-      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
-          ( xco_cp_json=>transformation->underscore_to_pascal_case )
-      ) )->write_to( REF #( lt_input ) ).
+      IF lv_req_body IS NOT INITIAL.
+        xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
+            ( xco_cp_json=>transformation->underscore_to_pascal_case )
+        ) )->write_to( REF #( lt_input ) ).
+      ENDIF.
     ENDIF.
 
     SELECT *
