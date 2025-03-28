@@ -101,13 +101,7 @@
     <item>
      <ID>I</ID>
      <KEY>015</KEY>
-     <ENTRY>指定得意先且つ指定期間の検収データは既に照合済み</ENTRY>
-     <LENGTH>50</LENGTH>
-    </item>
-    <item>
-     <ID>I</ID>
-     <KEY>016</KEY>
-     <ENTRY>指定得意先且つ指定期間の検収データは既に照合済み</ENTRY>
+     <ENTRY>指定得意先且つ指定期間の検収データはまだ登録していません。</ENTRY>
      <LENGTH>50</LENGTH>
     </item>
     <item>

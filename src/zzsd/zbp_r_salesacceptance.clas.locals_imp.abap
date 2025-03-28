@@ -148,7 +148,7 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
     ENDLOOP.
 * Get reference data
     SELECT product
-      FROM i_product
+      FROM i_product WITH PRIVILEGED ACCESS
       FOR ALL ENTRIES IN @ct_data
      WHERE product = @ct_data-umcproductcode
       INTO TABLE @DATA(lt_mara).
@@ -157,8 +157,7 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
            customer,
            product,
            materialbycustomer
-      FROM i_customermaterial_2
-      WITH PRIVILEGED ACCESS
+      FROM i_customermaterial_2 WITH PRIVILEGED ACCESS
       FOR ALL ENTRIES IN @ct_data
      WHERE salesorganization = @ct_data-salesorganization
        AND customer = @ct_data-customer
@@ -167,8 +166,9 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
     SORT lt_mara BY product.
     SORT lt_customermaterial BY salesorganization customer.
 
-    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
-    DATA(lv_vkorg) = zzcl_common_utils=>get_salesorg_by_user( lv_user_email ).
+    READ TABLE ct_data INTO DATA(ls_data) INDEX 1.
+*    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
+    DATA(lv_vkorg) = zzcl_common_utils=>get_salesorg_by_user( ls_data-useremail ).
 
     LOOP AT ct_data ASSIGNING <lfs_data>.
       CLEAR lv_message.
@@ -259,7 +259,7 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
 
 * Authorization Check
       IF NOT lv_vkorg CS <lfs_data>-salesorganization.
-        MESSAGE e027(zbc_001) WITH <lfs_data>-salesorganization INTO lv_msg.
+        MESSAGE e029(zbc_001) WITH <lfs_data>-salesorganization INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
       ENDIF.
 
@@ -322,13 +322,13 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
     IF sy-subrc = 0.
       LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'E'.
-        <lfs_data>-message = TEXT-013.
+        <lfs_data>-message = TEXT-013.  "指定得意先且つ指定期間の検収データは既に登録しました。
       ENDLOOP.
     ELSE.
 * Insert process
       SELECT product,
              baseunit
-        FROM i_product
+        FROM i_product WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @ct_data
        WHERE product = @ct_data-umcproductcode
         INTO TABLE @DATA(lt_mara).
@@ -337,8 +337,7 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
              customer,
              product,
              materialbycustomer
-        FROM i_customermaterial_2
-        WITH PRIVILEGED ACCESS
+        FROM i_customermaterial_2 WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @ct_data
        WHERE salesorganization = @ct_data-salesorganization
          AND customer = @ct_data-customer
@@ -347,7 +346,15 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       SORT lt_mara BY product.
       SORT lt_customermaterial BY salesorganization customer.
 
+*&--ADD BEGIN BY XINLEI XU 2025/03/27 Authorization Check
+      READ TABLE ct_data INTO DATA(ls_data) INDEX 1.
+      DATA(lv_vkorg) = zzcl_common_utils=>get_salesorg_by_user( ls_data-useremail ).
+
       LOOP AT ct_data ASSIGNING <lfs_data>.
+        IF NOT lv_vkorg CS <lfs_data>-salesorganization.
+          CONTINUE.
+        ENDIF.
+*&--ADD END BY XINLEI XU 2025/03/27
         ls_ztsd_1003-salesorganization = <lfs_data>-salesorganization.
         ls_ztsd_1003-customer = <lfs_data>-customer.
         ls_ztsd_1003-periodtype = <lfs_data>-periodtype.
@@ -408,13 +415,27 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       INSERT ztsd_1003 FROM TABLE @lt_ztsd_1003.
       IF sy-subrc = 0.
         LOOP AT ct_data ASSIGNING <lfs_data>.
-          <lfs_data>-status = 'S'.
-          <lfs_data>-message = TEXT-017.  "Insert Successfully
+*&--ADD BEGIN BY XINLEI XU 2025/03/27
+          IF NOT lv_vkorg CS <lfs_data>-salesorganization.
+            <lfs_data>-status = 'E'.
+            MESSAGE e029(zbc_001) WITH <lfs_data>-salesorganization INTO <lfs_data>-message.
+          ELSE.
+*&--ADD END BY XINLEI XU 2025/03/27
+            <lfs_data>-status = 'S'.
+            <lfs_data>-message = TEXT-017.  "Insert Successfully
+          ENDIF.
         ENDLOOP.
       ELSE.
         LOOP AT ct_data ASSIGNING <lfs_data>.
-          <lfs_data>-status = 'E'.
-          <lfs_data>-message = TEXT-018.  "Insert failed
+*&--ADD BEGIN BY XINLEI XU 2025/03/27
+          IF NOT lv_vkorg CS <lfs_data>-salesorganization.
+            <lfs_data>-status = 'E'.
+            MESSAGE e029(zbc_001) WITH <lfs_data>-salesorganization INTO <lfs_data>-message.
+          ELSE.
+*&--ADD END BY XINLEI XU 2025/03/27
+            <lfs_data>-status = 'E'.
+            <lfs_data>-message = TEXT-018.  "Insert failed
+          ENDIF.
         ENDLOOP.
       ENDIF.
     ENDIF.
@@ -459,7 +480,7 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
     IF sy-subrc <> 0.
       LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'E'.
-        <lfs_data>-message = TEXT-013. "指定得意先且つ指定期間の検収データは既に登録しました。
+        <lfs_data>-message = TEXT-015. "指定得意先且つ指定期間の検収データはまだ登録していません。
       ENDLOOP.
       RETURN.
     ENDIF.
@@ -486,7 +507,6 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
         LOOP AT ct_data ASSIGNING <lfs_data>.
           <lfs_data>-status = 'E'.
           <lfs_data>-message = TEXT-022.  "Delete failed
-          EXIT.
         ENDLOOP.
         RETURN.
       ENDIF.
@@ -494,26 +514,33 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
 
     SELECT product,
            baseunit
-      FROM i_product
+      FROM i_product WITH PRIVILEGED ACCESS
        FOR ALL ENTRIES IN @ct_data
      WHERE product = @ct_data-umcproductcode
       INTO TABLE @DATA(lt_mara).
 
     SELECT salesorganization,
-                 customer,
-                 product,
-                 materialbycustomer
-            FROM i_customermaterial_2
-            WITH PRIVILEGED ACCESS
-            FOR ALL ENTRIES IN @ct_data
-           WHERE salesorganization = @ct_data-salesorganization
-             AND customer = @ct_data-customer
-            INTO TABLE @DATA(lt_customermaterial).
+           customer,
+           product,
+           materialbycustomer
+      FROM i_customermaterial_2 WITH PRIVILEGED ACCESS
+       FOR ALL ENTRIES IN @ct_data
+     WHERE salesorganization = @ct_data-salesorganization
+       AND customer = @ct_data-customer
+      INTO TABLE @DATA(lt_customermaterial).
 
     SORT lt_mara BY product.
     SORT lt_customermaterial BY salesorganization customer.
 
+*&--ADD BEGIN BY XINLEI XU 2025/03/27 Authorization Check
+    READ TABLE ct_data INTO DATA(ls_data) INDEX 1.
+    DATA(lv_vkorg) = zzcl_common_utils=>get_salesorg_by_user( ls_data-useremail ).
+
     LOOP AT ct_data ASSIGNING <lfs_data>.
+      IF NOT lv_vkorg CS <lfs_data>-salesorganization.
+        CONTINUE.
+      ENDIF.
+*&--ADD END BY XINLEI XU 2025/03/27
       ls_ztsd_1003-salesorganization = <lfs_data>-salesorganization.
       ls_ztsd_1003-customer = <lfs_data>-customer.
       ls_ztsd_1003-periodtype = <lfs_data>-periodtype.
@@ -574,13 +601,27 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
     INSERT ztsd_1003 FROM TABLE @lt_ztsd_1003.
     IF sy-subrc = 0.
       LOOP AT ct_data ASSIGNING <lfs_data>.
-        <lfs_data>-status = 'S'.
-        <lfs_data>-message = TEXT-019.  "Update successfully
+*&--ADD BEGIN BY XINLEI XU 2025/03/27
+        IF NOT lv_vkorg CS <lfs_data>-salesorganization.
+          <lfs_data>-status = 'E'.
+          MESSAGE e029(zbc_001) WITH <lfs_data>-salesorganization INTO <lfs_data>-message.
+        ELSE.
+*&--ADD END BY XINLEI XU 2025/03/27
+          <lfs_data>-status = 'S'.
+          <lfs_data>-message = TEXT-019.  "Update successfully
+        ENDIF.
       ENDLOOP.
     ELSE.
       LOOP AT ct_data ASSIGNING <lfs_data>.
-        <lfs_data>-status = 'E'.
-        <lfs_data>-message = TEXT-020.  "Update failed
+*&--ADD BEGIN BY XINLEI XU 2025/03/27
+        IF NOT lv_vkorg CS <lfs_data>-salesorganization.
+          <lfs_data>-status = 'E'.
+          MESSAGE e029(zbc_001) WITH <lfs_data>-salesorganization INTO <lfs_data>-message.
+        ELSE.
+*&--ADD END BY XINLEI XU 2025/03/27
+          <lfs_data>-status = 'E'.
+          <lfs_data>-message = TEXT-020.  "Update failed
+        ENDIF.
       ENDLOOP.
     ENDIF.
   ENDMETHOD.
@@ -617,7 +658,7 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
     IF sy-subrc <> 0.
       LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'E'.
-        <lfs_data>-message = TEXT-013. "指定得意先且つ指定期間の検収データは既に登録しました。
+        <lfs_data>-message = TEXT-015. "指定得意先且つ指定期間の検収データはまだ登録していません。
       ENDLOOP.
       RETURN.
     ENDIF.
@@ -638,20 +679,43 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
       RETURN.
     ENDIF.
 
+*&--ADD BEGIN BY XINLEI XU 2025/03/27 Authorization Check
+    READ TABLE ct_data INTO DATA(ls_data) INDEX 1.
+    DATA(lv_vkorg) = zzcl_common_utils=>get_salesorg_by_user( ls_data-useremail ).
+
+    LOOP AT lt_table ASSIGNING FIELD-SYMBOL(<lfs_table>).
+      IF NOT lv_vkorg CS <lfs_table>-salesorganization.
+        DELETE lt_table.
+      ENDIF.
+    ENDLOOP.
+*&--ADD END BY XINLEI XU 2025/03/27
+
 * Delete data
-    IF lt_table IS NOT INITIAL.
-      DELETE ztsd_1003 FROM TABLE @lt_table.
-      IF sy-subrc = 0.
-        LOOP AT ct_data ASSIGNING <lfs_data>.
+    DELETE ztsd_1003 FROM TABLE @lt_table.
+    IF sy-subrc = 0.
+      LOOP AT ct_data ASSIGNING <lfs_data>.
+*&--ADD BEGIN BY XINLEI XU 2025/03/27
+        IF NOT lv_vkorg CS <lfs_data>-salesorganization.
+          <lfs_data>-status = 'E'.
+          MESSAGE e029(zbc_001) WITH <lfs_data>-salesorganization INTO <lfs_data>-message.
+        ELSE.
+*&--ADD END BY XINLEI XU 2025/03/27
           <lfs_data>-status = 'S'.
           <lfs_data>-message = TEXT-021.  "Delete successfully
-        ENDLOOP.
-      ELSE.
-        LOOP AT ct_data ASSIGNING <lfs_data>.
+        ENDIF.
+      ENDLOOP.
+    ELSE.
+      LOOP AT ct_data ASSIGNING <lfs_data>.
+*&--ADD BEGIN BY XINLEI XU 2025/03/27
+        IF NOT lv_vkorg CS <lfs_data>-salesorganization.
+          <lfs_data>-status = 'E'.
+          MESSAGE e029(zbc_001) WITH <lfs_data>-salesorganization INTO <lfs_data>-message.
+        ELSE.
+*&--ADD END BY XINLEI XU 2025/03/27
           <lfs_data>-status = 'E'.
           <lfs_data>-message = TEXT-022.  "Delete failed
-        ENDLOOP.
-      ENDIF.
+        ENDIF.
+      ENDLOOP.
     ENDIF.
   ENDMETHOD.
 
@@ -695,7 +759,7 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
     IF sy-subrc <> 0.
       LOOP AT ct_data ASSIGNING <lfs_data>.
         <lfs_data>-status = 'E'.
-        <lfs_data>-message = TEXT-013. "指定得意先且つ指定期間の検収データは既に登録しました。
+        <lfs_data>-message = TEXT-015. "指定得意先且つ指定期間の検収データはまだ登録していません。
       ENDLOOP.
       RETURN.
     ENDIF.
@@ -718,7 +782,7 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
 
     SELECT product,
            baseunit
-      FROM i_product
+      FROM i_product WITH PRIVILEGED ACCESS
       FOR ALL ENTRIES IN @ct_data
      WHERE product = @ct_data-umcproductcode
       INTO TABLE @DATA(lt_mara).
@@ -736,7 +800,15 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
     SORT lt_mara BY product.
     SORT lt_customermaterial BY salesorganization customer.
 
+*&--ADD BEGIN BY XINLEI XU 2025/03/27 Authorization Check
+    READ TABLE ct_data INTO DATA(ls_data) INDEX 1.
+    DATA(lv_vkorg) = zzcl_common_utils=>get_salesorg_by_user( ls_data-useremail ).
+
     LOOP AT ct_data ASSIGNING <lfs_data>.
+      IF NOT lv_vkorg CS <lfs_data>-salesorganization.
+        CONTINUE.
+      ENDIF.
+*&--ADD END BY XINLEI XU 2025/03/27
       ls_ztsd_1003-salesorganization = <lfs_data>-salesorganization.
       ls_ztsd_1003-customer = <lfs_data>-customer.
       ls_ztsd_1003-periodtype = <lfs_data>-periodtype.
@@ -798,13 +870,27 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
     INSERT ztsd_1003 FROM TABLE @lt_ztsd_1003.
     IF sy-subrc = 0.
       LOOP AT ct_data ASSIGNING <lfs_data>.
-        <lfs_data>-status = 'S'.
-        <lfs_data>-message = TEXT-023.  "Update successfully
+*&--ADD BEGIN BY XINLEI XU 2025/03/27
+        IF NOT lv_vkorg CS <lfs_data>-salesorganization.
+          <lfs_data>-status = 'E'.
+          MESSAGE e029(zbc_001) WITH <lfs_data>-salesorganization INTO <lfs_data>-message.
+        ELSE.
+*&--ADD END BY XINLEI XU 2025/03/27
+          <lfs_data>-status = 'S'.
+          <lfs_data>-message = TEXT-023.  "Update successfully
+        ENDIF.
       ENDLOOP.
     ELSE.
       LOOP AT ct_data ASSIGNING <lfs_data>.
-        <lfs_data>-status = 'E'.
-        <lfs_data>-message = TEXT-024.  "Update failed
+*&--ADD BEGIN BY XINLEI XU 2025/03/27
+        IF NOT lv_vkorg CS <lfs_data>-salesorganization.
+          <lfs_data>-status = 'E'.
+          MESSAGE e029(zbc_001) WITH <lfs_data>-salesorganization INTO <lfs_data>-message.
+        ELSE.
+*&--ADD END BY XINLEI XU 2025/03/27
+          <lfs_data>-status = 'E'.
+          <lfs_data>-message = TEXT-024.  "Update failed
+        ENDIF.
       ENDLOOP.
     ENDIF.
   ENDMETHOD.
@@ -869,7 +955,7 @@ CLASS lhc_salesacceptance IMPLEMENTATION.
           dec_amount_int(12) TYPE p DECIMALS 5,
           struct_tcurx       TYPE i_currency.
 
-    SELECT SINGLE * FROM i_currency WHERE currency = @cv_currency INTO @struct_tcurx. "#EC CI_ALL_FIELDS_NEEDED
+    SELECT SINGLE * FROM i_currency WITH PRIVILEGED ACCESS WHERE currency = @cv_currency INTO @struct_tcurx. "#EC CI_ALL_FIELDS_NEEDED
 
     IF sy-subrc = 0. "Currency has a number of decimals not equal two
       int_shift = 2 - struct_tcurx-decimals.

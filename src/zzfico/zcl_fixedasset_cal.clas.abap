@@ -71,7 +71,8 @@ CLASS zcl_fixedasset_cal IMPLEMENTATION.
     IF lt_original_data IS NOT INITIAL.
 
       SELECT companycode,masterfixedasset,fixedasset, debitamountincocodecrcy ,companycodecurrency ,
-      subledgeracctlineitemtype,FiscalYear,AccountingDocument,LedgerGLLineItem
+      subledgeracctlineitemtype,fiscalyear,accountingdocument,ledgergllineitem,businesstransactiontype,
+      quantity,baseunit
       FROM
       i_glaccountlineitem
       WITH PRIVILEGED ACCESS
@@ -80,11 +81,12 @@ CLASS zcl_fixedasset_cal IMPLEMENTATION.
       AND fixedasset = @lt_original_data-fixedasset
       AND sourceledger = '0L'
       AND ledger = '0L'
-      AND (   subledgeracctlineitemtype = '7000' or subledgeracctlineitemtype = '7040' )
+      AND (   subledgeracctlineitemtype = '7000' OR subledgeracctlineitemtype = '7040' )
       AND masterfixedasset IS NOT INITIAL
+      AND businesstransactiontype NE 'RFBC'
       AND debitamountincocodecrcy IS NOT INITIAL
       INTO TABLE @DATA(lt_glaccountlineitem).
-      SORT lt_glaccountlineitem BY companycode masterfixedasset fixedasset.
+      SORT lt_glaccountlineitem BY companycode masterfixedasset fixedasset quantity DESCENDING.
 
       LOOP AT lt_glaccountlineitem INTO DATA(lt_glaccountlineitem1).
         CLEAR ls_sum.
@@ -181,7 +183,13 @@ CLASS zcl_fixedasset_cal IMPLEMENTATION.
 *        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-assettypename && ';' && <fs_original_data>-yy1_fixedasset1_faa && ';'  && ';' && <fs_original_data>-jp_prptytxrptspcldepr .
 
         <fs_original_data>-barcode =  <fs_original_data>-fixedassetexternalid  && ';'  && <fs_original_data>-costcenter.
+        READ TABLE lt_glaccountlineitem INTO DATA(ls_glaccountlineitem1) WITH KEY companycode = <fs_original_data>-companycode
+  masterfixedasset = <fs_original_data>-masterfixedasset fixedasset = <fs_original_data>-fixedasset BINARY SEARCH.
+        IF sy-subrc = 0.
 
+          <fs_original_data>-quantity = ls_glaccountlineitem1-quantity.
+          <fs_original_data>-baseunit = ls_glaccountlineitem1-baseunit.
+        ENDIF.
       ENDLOOP.
     ENDIF.
     ct_calculated_data = CORRESPONDING #(  lt_original_data ).
@@ -207,6 +215,16 @@ CLASS zcl_fixedasset_cal IMPLEMENTATION.
           INSERT `FIXEDASSET` INTO TABLE et_requested_orig_elements.
           INSERT `DEPRECIATIONKEY` INTO TABLE et_requested_orig_elements.
         WHEN 'ORIGINALACQUISITIONCURRENCY'.
+          INSERT `COMPANYCODE` INTO TABLE et_requested_orig_elements.
+          INSERT `MASTERFIXEDASSET` INTO TABLE et_requested_orig_elements.
+          INSERT `FIXEDASSET` INTO TABLE et_requested_orig_elements.
+          INSERT `DEPRECIATIONKEY` INTO TABLE et_requested_orig_elements.
+        WHEN 'QUANTITY'.
+          INSERT `COMPANYCODE` INTO TABLE et_requested_orig_elements.
+          INSERT `MASTERFIXEDASSET` INTO TABLE et_requested_orig_elements.
+          INSERT `FIXEDASSET` INTO TABLE et_requested_orig_elements.
+          INSERT `DEPRECIATIONKEY` INTO TABLE et_requested_orig_elements.
+        WHEN 'BASEUNIT'.
           INSERT `COMPANYCODE` INTO TABLE et_requested_orig_elements.
           INSERT `MASTERFIXEDASSET` INTO TABLE et_requested_orig_elements.
           INSERT `FIXEDASSET` INTO TABLE et_requested_orig_elements.

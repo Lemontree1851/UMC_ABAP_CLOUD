@@ -51,6 +51,7 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
     DATA:
       lv_year                 TYPE c LENGTH 4,
       lv_month                TYPE monat,
+      lv_period               TYPE monat,
       lv_nextmonth            TYPE budat,
       lv_from                 TYPE budat,
       lv_to                   TYPE budat,
@@ -113,43 +114,44 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
       INTO TABLE @DATA(lt_1001).
 
     lv_year = lv_acceptyear.
+    lv_period = lv_acceptperiod.
     CASE lv_periodtype.
       WHEN 'A'.  "1日~月末
-        lv_from = lv_year && lv_acceptperiod && '01'.
-        IF lv_acceptperiod = 12.
+        lv_from = lv_year && lv_period && '01'.
+        IF lv_period = 12.
           lv_year = lv_year + 1.
           lv_nextmonth = lv_year && '01' && '01'.
         ELSE.
-          lv_month = lv_acceptperiod + 1.
+          lv_month = lv_period + 1.
           lv_nextmonth = lv_year && lv_month && '01'.
         ENDIF.
         lv_to = lv_nextmonth - 1.
       WHEN 'B'.  "16日~次月15日
-        lv_from = lv_year && lv_acceptperiod && '16'.
-        IF lv_acceptperiod = 12.
+        lv_from = lv_year && lv_period && '16'.
+        IF lv_period = 12.
           lv_year = lv_year + 1.
           lv_month = '01'.
         ELSE.
-          lv_month = lv_acceptperiod + 1.
+          lv_month = lv_period + 1.
         ENDIF.
         lv_to = lv_year && lv_month && '15'.
       WHEN 'C'.  "21日~次月20日
-        lv_from = lv_year && lv_acceptperiod && '21'.
-        IF lv_acceptperiod = 12.
+        lv_from = lv_year && lv_period && '21'.
+        IF lv_period = 12.
           lv_year = lv_year + 1.
           lv_month = '01'.
         ELSE.
-          lv_month = lv_acceptperiod + 1.
+          lv_month = lv_period + 1.
         ENDIF.
         lv_to = lv_year && lv_month && '20'.
 
       WHEN 'D'.  "26日~次月25日
-        lv_from = lv_year && lv_acceptperiod && '26'.
-        IF lv_acceptperiod = 12.
+        lv_from = lv_year && lv_period && '26'.
+        IF lv_period = 12.
           lv_year = lv_year + 1.
           lv_month = '01'.
         ELSE.
-          lv_month = lv_acceptperiod + 1.
+          lv_month = lv_period + 1.
         ENDIF.
         lv_to = lv_year && lv_month && '25'.
     ENDCASE.
@@ -667,12 +669,27 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
 
     "没有SO的数据
     IF lv_finish = '0'.
+      IF lt_1003 IS NOT INITIAL.
+        SELECT salesorganization,             "#EC CI_FAE_LINES_ENSURED
+               customer,
+               product,
+               materialbycustomer
+          FROM i_customermaterial_2 WITH PRIVILEGED ACCESS
+          FOR ALL ENTRIES IN @lt_1003
+         WHERE salesorganization = @lt_1003-salesorganization
+           AND customer = @lt_1003-customer
+          INTO TABLE @DATA(lt_customermaterial).
+      ENDIF.
+
       SORT lt_so BY purchaseorderbycustomer.
+      SORT lt_customermaterial BY salesorganization customer.
+
       LOOP AT lt_1003 INTO ls_1003.
         READ TABLE lt_so INTO ls_so
              WITH KEY purchaseorderbycustomer = ls_1003-customerpo BINARY SEARCH.
         IF sy-subrc <> 0.
           ls_output-finishstatus = lv_finish.
+          ls_output-salesorganization = ls_1003-salesorganization.
           ls_output-customer = ls_1003-customer.          "得意先
           ls_output-periodtype = ls_1003-periodtype.      "期間区分
           ls_output-acceptyear = ls_1003-acceptyear.
@@ -680,6 +697,16 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
           ls_output-customerpo = ls_1003-customerpo.      "得意先PO番号
           ls_output-acceptperiodfrom = ls_1003-acceptperiodfrom.
           ls_output-acceptperiodto = ls_1003-acceptperiodto.
+          IF ls_1003-umcproductcode IS NOT INITIAL.
+            ls_output-product = ls_1003-umcproductcode.
+          ELSE.
+            READ TABLE lt_customermaterial INTO DATA(ls_customermaterial)
+                 WITH KEY salesorganization = ls_1003-salesorganization
+                          customer = ls_1003-customer BINARY SEARCH.
+            IF  sy-subrc = 0.
+              ls_output-product = ls_customermaterial-product.
+            ENDIF.
+          ENDIF.
           ls_output-acceptdate = ls_1003-acceptdate.   "検収日付
           ls_output-acceptqty = ls_1003-acceptqty.     "検収数
           "検収単価
@@ -779,7 +806,8 @@ CLASS zcl_salesacceptance_result IMPLEMENTATION.
     IF lv_layer = '1'.
       " Filtering
       zzcl_odata_utils=>filtering( EXPORTING io_filter   = io_request->get_filter(  )
-                                             it_excluded = VALUE #( ( fieldname = 'LAYER' ) )
+                                             it_excluded = VALUE #( ( fieldname = 'LAYER' )
+                                                                    ( fieldname = 'USEREMAIL' ) )
                                    CHANGING  ct_data     = lt_output ).
     ENDIF.
     IF io_request->is_total_numb_of_rec_requested(  ) .

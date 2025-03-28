@@ -333,17 +333,26 @@ CLASS zcl_poacceptance_report IMPLEMENTATION.
              AND materialdocument = @lt_ekbe-purchasinghistorydocument
             INTO TABLE @DATA(lt_matdoc).           "#EC CI_NO_TRANSFORM
 
-          SELECT supplierinvoice,
-                 fiscalyear,
-                 supplierinvoicewthnfiscalyear,
-                 companycode,
-                 invoicingparty,
-                 exchangerate,
-                 duecalculationbasedate
-            FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS
+          SELECT a~supplierinvoice,
+                 a~fiscalyear,
+                 a~supplierinvoicewthnfiscalyear,
+                 a~companycode,
+                 a~invoicingparty,
+                 a~exchangerate,
+                 "a~duecalculationbasedate
+                 c~netduedate AS duecalculationbasedate " MOD BY XINLEI XU 2025/03/28 CM#4336
+            FROM i_supplierinvoiceapi01 WITH PRIVILEGED ACCESS AS a
+*&--ADD BEGIN BY XINLEI XU 2025/03/28 CM#4336
+            LEFT JOIN i_journalentry WITH PRIVILEGED ACCESS AS b ON b~originalreferencedocument = a~supplierinvoicewthnfiscalyear
+                                                                AND b~companycode = a~companycode
+            LEFT JOIN i_operationalacctgdocitem WITH PRIVILEGED ACCESS AS c ON c~accountingdocument = b~accountingdocument
+                                                                           AND c~companycode = b~companycode
+                                                                           AND c~fiscalyear = b~fiscalyear
+                                                                           AND c~financialaccounttype = 'K'
+*&--ADD END BY XINLEI XU 2025/03/28
             FOR ALL ENTRIES IN @lt_ekbe
-           WHERE supplierinvoice = @lt_ekbe-purchasinghistorydocument
-             AND fiscalyear = @lt_ekbe-purchasinghistorydocumentyear
+           WHERE a~supplierinvoice = @lt_ekbe-purchasinghistorydocument
+             AND a~fiscalyear = @lt_ekbe-purchasinghistorydocumentyear
             INTO TABLE @DATA(lt_invoice).          "#EC CI_NO_TRANSFORM
         ENDIF.
 

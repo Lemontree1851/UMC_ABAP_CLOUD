@@ -3,10 +3,10 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'Fixed Asset Print'
 define view ZC_FIXEDASSETPRINT
-  as select from I_FixedAssetAssgmt as A
-     inner join   ZR_TBC1012           as _AssignCompany on _AssignCompany.CompanyCode = A.CompanyCode
+  as select from I_FixedAssetAssgmt   as A
+    inner join   ZR_TBC1012           as _AssignCompany on _AssignCompany.CompanyCode = A.CompanyCode
     inner join   ZC_BusinessUserEmail as _UserCompany   on  _UserCompany.Email  = _AssignCompany.Mail
-                                                       and _UserCompany.UserID = $session.user 
+                                                        and _UserCompany.UserID = $session.user
 {
       @UI:{
           lineItem: [ { position: 1 } ],
@@ -135,6 +135,20 @@ define view ZC_FIXEDASSETPRINT
       A._FixedAsset._AssetValuationForLedger[1:Ledger = '0L'and AssetRealDepreciationArea = '01'].DepreciationKey,
       @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_FIXEDASSET_CAL'
       @EndUserText.label: 'BarCode'
-      cast( '' as abap.sstring(300)  )         as BarCode
+      cast( '' as abap.sstring(300)  )         as BarCode,
+      @UI:{
+          lineItem: [ { position: 170 } ]
+      }
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_FIXEDASSET_CAL'
+      @EndUserText.label: '数量'
+      @Semantics.quantity.unitOfMeasure : 'BaseUnit'
+      cast( 0 as abap.quan(23,3)  )            as quantity,
+      @UI:{
+      lineItem: [ { position: 180 } ]
+      }
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_FIXEDASSET_CAL'
+      @EndUserText.label: '単位'
+      A._FixedAsset.AreaSizeUnit               as BaseUnit
+      //cast( '' as abap.unit( 3 ) )            as BaseUnit
 
 }

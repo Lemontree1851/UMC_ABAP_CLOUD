@@ -62,22 +62,30 @@ ENDCLASS.
 CLASS zcl_http_prdata_001 IMPLEMENTATION.
 
   METHOD if_http_service_extension~handle_request.
-    TYPES: BEGIN OF ts_mrp_result,
-             results TYPE TABLE OF ztbc_1020 WITH DEFAULT KEY,
-           END OF ts_mrp_result,
-           BEGIN OF ts_mrp_response,
-             d TYPE ts_mrp_result,
-           END OF ts_mrp_response.
+    TYPES: BEGIN OF ty_mrp_record,
+             material                   TYPE i_supplydemanditemtp-material,
+             mrparea                    TYPE i_supplydemanditemtp-mrparea,
+             mrpplant                   TYPE i_supplydemanditemtp-mrpplant,
+             mrpelement                 TYPE i_supplydemanditemtp-mrpelement,
+             mrpelementitem             TYPE i_supplydemanditemtp-mrpelementitem,
+             mrpelementreschedulingdate TYPE datum,
+           END OF ty_mrp_record,
+           BEGIN OF ty_mrp_result,
+             results TYPE TABLE OF ty_mrp_record WITH DEFAULT KEY,
+           END OF ty_mrp_result,
+           BEGIN OF ty_mrp_response,
+             d TYPE ty_mrp_result,
+           END OF ty_mrp_response.
 
-    DATA: lt_mrp_data     TYPE TABLE OF ztbc_1020,
-          ls_mrp_response TYPE ts_mrp_response,
+    DATA: lt_mrp_data     TYPE TABLE OF ty_mrp_record,
+          ls_mrp_response TYPE ty_mrp_response,
           lv_filter       TYPE string,
           lv_workingday   TYPE datum.
 
-    DATA(lv_date) = cl_abap_context_info=>get_system_date( ).
-    DATA(lv_pre_month) = zzcl_common_utils=>calc_date_subtract( EXPORTING date  = lv_date
-                                                                          month = lc_month_1 ).
-    lv_pre_month+6(2) = '01'.
+*    DATA(lv_date) = cl_abap_context_info=>get_system_date( ).
+*    DATA(lv_pre_month) = zzcl_common_utils=>calc_date_subtract( EXPORTING date  = lv_date
+*                                                                          month = lc_month_1 ).
+*    lv_pre_month+6(2) = '01'.
 
     SELECT a~purchaserequisition,
            a~purchaserequisitionitem,
@@ -108,7 +116,11 @@ CLASS zcl_http_prdata_001 IMPLEMENTATION.
       LEFT JOIN i_purchasinggroup WITH PRIVILEGED ACCESS AS f ON f~purchasinggroup = a~purchasinggroup
       LEFT JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS g ON g~product = a~material
                                                                AND g~plant = a~plant
-     WHERE purchasereqncreationdate BETWEEN @lv_pre_month AND @lv_date
+*&--MOD BEGIN BY XINLEI XU 2025/03/28 BUG Fixed
+*     WHERE purchasereqncreationdate BETWEEN @lv_pre_month AND @lv_date
+     WHERE a~processingstatus = 'N'
+       AND a~isdeleted IS INITIAL
+*&--MOD END BY XINLEI XU 2025/03/28
       INTO TABLE @DATA(lt_pr).
 
     IF lt_pr IS NOT INITIAL.
@@ -121,7 +133,7 @@ CLASS zcl_http_prdata_001 IMPLEMENTATION.
       WHERE supplier = @lt_pr-fixedsupplier
         AND material = @lt_pr-material
         AND isdeleted <> 'X'
-       INTO TABLE @DATA(lt_phno).
+       INTO TABLE @DATA(lt_phno).                  "#EC CI_NO_TRANSFORM
       SORT lt_phno BY supplier material.
 
 *&--ADD BEGIN BY XINLEI XU 2025/03/26 CR#4293
@@ -186,26 +198,29 @@ CLASS zcl_http_prdata_001 IMPLEMENTATION.
                                                                mrpelement = lw_pr-purchaserequisition
                                                                mrpelementitem = lw_pr-purchaserequisitionitem BINARY SEARCH.
         IF sy-subrc = 0.
-          " 手配終了日 = 再日程計画日付
+          " 手配終了日 = 再日程計画日付 - 入库处理日数(稼働日)
+          DATA(lv_duration) = lw_pr-goodsreceiptduration.
           CLEAR lv_workingday.
-          lv_workingday = zzcl_common_utils=>calc_date_subtract( EXPORTING date = ls_mrp_data-mrpelementreschedulingdate
-                                                                           day  = CONV #( lw_pr-goodsreceiptduration ) ).
-          IF zzcl_common_utils=>is_workingday( iv_plant = lw_pr-plant
-                                               iv_date  = lv_workingday ).
-            ls_response-arrange_end_date = lv_workingday.
-          ELSE.
-            " 計算結果は非稼働日なら前倒しの日付になる
+          lv_workingday = ls_mrp_data-mrpelementreschedulingdate.
+          IF lv_duration > 0.
             DO.
               lv_workingday -= 1.
               IF zzcl_common_utils=>is_workingday( iv_plant = lw_pr-plant
                                                    iv_date  = lv_workingday ).
+                lv_duration -= 1.
+              ENDIF.
+
+              IF lv_duration = 0.
                 ls_response-arrange_end_date = lv_workingday.
                 EXIT.
               ENDIF.
             ENDDO.
+          ELSE.
+            ls_response-arrange_end_date = lv_workingday.
           ENDIF.
         ENDIF.
 
+        " 手配開始日 = 手配終了日 - MaterialPlannedDeliveryDurn
         CLEAR lv_workingday.
         lv_workingday = zzcl_common_utils=>calc_date_subtract( EXPORTING date = CONV #( ls_response-arrange_end_date )
                                                                          day  = CONV #( lw_pr-materialplanneddeliverydurn ) ).

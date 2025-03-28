@@ -96,6 +96,13 @@ CLASS zzcl_job_mrp_supplydemand IMPLEMENTATION.
           " handle exception
       ENDTRY.
 
+      TRY.
+          add_message_to_log( |Processing, please wait| ).
+          ##NO_HANDLER
+        CATCH cx_bali_runtime.
+          " handle exception
+      ENDTRY.
+
       zzcl_common_utils=>request_api_v2(
         EXPORTING
           iv_path        = lv_path
@@ -167,6 +174,12 @@ CLASS zzcl_job_mrp_supplydemand IMPLEMENTATION.
       CLEAR: ev_status_code, ev_response.
     ENDLOOP.
 
+    TRY.
+        add_message_to_log( |Processing completed| ).
+        ##NO_HANDLER
+      CATCH cx_bali_runtime.
+        " handle exception
+    ENDTRY.
   ENDMETHOD.
 
   METHOD if_oo_adt_classrun~main.

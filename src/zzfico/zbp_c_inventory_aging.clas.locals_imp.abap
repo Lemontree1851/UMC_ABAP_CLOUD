@@ -370,7 +370,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
              valuationarea,
              valuationquantity,
              amountincompanycodecurrency
-        FROM i_inventoryamtbyfsclperd( p_fiscalperiod = @lv_fiscalperiod, p_fiscalyear = @lv_fiscalyear ) WITH PRIVILEGED ACCESS"#EC CI_NO_TRANSFORM
+        FROM i_inventoryamtbyfsclperd( p_fiscalperiod = @lv_fiscalperiod, p_fiscalyear = @lv_fiscalyear ) WITH PRIVILEGED ACCESS "#EC CI_NO_TRANSFORM
          FOR ALL ENTRIES IN @lt_productplantbasic
        WHERE companycode = @lt_productplantbasic-companycode
          AND valuationarea = @lt_productplantbasic-valuationarea
@@ -561,6 +561,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
            AND a~plant = @lt_productplantbasic_zfrt-valuationarea
            AND a~companycode = @lv_companycode
            AND a~billingdocumentdate <= @lv_fiscalperiodenddate
+           AND a~netamount > 0
            AND b~billingdocumentiscancelled = @abap_false
            AND b~cancelledbillingdocument = @space
            AND b~billingdocumenttype IN (@lc_billingdocumenttype_f2,@lc_billingdocumenttype_iv2)
@@ -586,6 +587,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
          WHERE a~product = @lt_finalproductinfo-material
            AND a~plant = @lt_finalproductinfo-plant
            AND a~companycode = @lv_companycode
+           AND a~netamount > 0
            AND b~billingdocumentiscancelled = @abap_false
            AND b~cancelledbillingdocument = @space
            AND b~billingdocumenttype IN (@lc_billingdocumenttype_f2,@lc_billingdocumenttype_iv2)
@@ -1199,7 +1201,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
                  fiscalperiod,
                  nextfiscalperiod,
                  nextfiscalperiodfiscalyear
-            FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS"#EC CI_NO_TRANSFORM
+            FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS "#EC CI_NO_TRANSFORM
              FOR ALL ENTRIES IN @lt_fiscalyearperiod_new
            WHERE nextfiscalperiod = @lt_fiscalyearperiod_new-fiscalperiod
              AND nextfiscalperiodfiscalyear = @lt_fiscalyearperiod_new-fiscalyear
@@ -1245,7 +1247,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
                  reversedmaterialdocumentyear,
                  reversedmaterialdocument,
                  reversedmaterialdocumentitem
-            FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS"#EC CI_NO_TRANSFORM
+            FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS "#EC CI_NO_TRANSFORM
              FOR ALL ENTRIES IN @lt_materialdocumentitem
            WHERE reversedmaterialdocumentyear = @lt_materialdocumentitem-materialdocumentyear
              AND reversedmaterialdocument = @lt_materialdocumentitem-materialdocument
@@ -1916,6 +1918,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
       SORT lt_purchaseorderhistorydex BY plant material.
       SORT lt_billingdocumentitem_final BY product plant.
 
+*      DELETE lt_ztfi_1019_db WHERE product <> 'ZTEST_FG001'.
+
       LOOP AT lt_ztfi_1019_db ASSIGNING FIELD-SYMBOL(<fs_ztfi_1019_db>).
         "Read data of inventory amount for fiscal period
         READ TABLE lt_inventoryamtbyfsclperd_sum INTO ls_inventoryamtbyfsclperd WITH KEY valuationarea = <fs_ztfi_1019_db>-plant
@@ -1993,9 +1997,15 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
           ENDIF.
         ENDIF.
 
-        IF <fs_ztfi_1019_db>-inventoryamount - <fs_ztfi_1019_db>-valuationamount > 0.
-          <fs_ztfi_1019_db>-valuationafteramount = <fs_ztfi_1019_db>-inventoryamount - <fs_ztfi_1019_db>-valuationamount.
-          <fs_ztfi_1019_db>-valuationloss        = <fs_ztfi_1019_db>-inventoryamount - <fs_ztfi_1019_db>-valuationamount.
+        IF <fs_ztfi_1019_db>-valuationamount = 0.
+          <fs_ztfi_1019_db>-valuationafteramount = <fs_ztfi_1019_db>-inventoryamount.
+        ELSE.
+          IF <fs_ztfi_1019_db>-inventoryamount - <fs_ztfi_1019_db>-valuationamount >= 0.
+            <fs_ztfi_1019_db>-valuationafteramount = <fs_ztfi_1019_db>-valuationamount.
+            <fs_ztfi_1019_db>-valuationloss        = <fs_ztfi_1019_db>-inventoryamount - <fs_ztfi_1019_db>-valuationamount.
+          ELSE.
+            <fs_ztfi_1019_db>-valuationafteramount = <fs_ztfi_1019_db>-inventoryamount.
+          ENDIF.
         ENDIF.
       ENDLOOP.
     ENDIF.

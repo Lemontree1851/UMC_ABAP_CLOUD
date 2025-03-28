@@ -107,7 +107,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
+CLASS zcl_job_costanalysis_n IMPLEMENTATION.
 
 
   METHOD add_message_to_log.
@@ -441,12 +441,13 @@ CLASS ZCL_JOB_COSTANALYSIS_N IMPLEMENTATION.
                 WITH KEY project_no           = <fs_responset07>-sales_number
                          requisition_version  = <fs_responset07>-quo_version
                          item_no              = <fs_responset07>-sales_d_no
-                         sap_mat_id           = <fs_responset07>-sap_mat_id
+*                        sap_mat_id           = <fs_responset07>-sap_mat_id  " DEL BY XINLEI XU 2025/03/28 BUG Fixed
                          BINARY SEARCH.
               IF sy-subrc = 0.
                 <fs_responset07>-plant       = lv_t02-plant.
                 <fs_responset07>-companycode = lv_t02-companycode.
                 <fs_responset07>-currency    = lv_t02-currency.
+                <fs_responset07>-sap_mat_id  = lv_t02-sap_mat_id. " ADD BY XINLEI XU 2025/03/28 BUG Fixed
                 APPEND <fs_responset07> TO lt_qms_t07_all.
               ENDIF.
             ENDLOOP.

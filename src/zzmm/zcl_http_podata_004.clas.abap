@@ -446,6 +446,7 @@ CLASS zcl_http_podata_004 IMPLEMENTATION.
         CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
         CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
         CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
+        CONDENSE ls_config-zvalue6 NO-GAPS. " Company Code
 
         DATA(lv_skip) = -1000.
         DO.
@@ -476,21 +477,34 @@ CLASS zcl_http_podata_004 IMPLEMENTATION.
             EXIT.
           ENDIF.
         ENDDO.
-      ENDLOOP.
-
-      SORT lt_uweb_api BY gl_year inv_no DESCENDING.
-      DELETE ADJACENT DUPLICATES FROM lt_uweb_api COMPARING gl_year inv_no.
+*&--ADD BEGIN BY Stanley 2025/03/27
+      SORT lt_uweb_api BY gl_year DESCENDING inv_no DESCENDING.
+      "DELETE ADJACENT DUPLICATES FROM lt_uweb_api COMPARING gl_year inv_no.
 
       "inv_no
       READ TABLE lt_uweb_api INDEX 1 INTO DATA(lw_versionmax).
 
       SORT lt_result1 BY supplierinvoice fiscalyear DESCENDING.
+      DELETE lt_result1 WHERE supplierinvoice <= lw_versionmax-inv_no and fiscalyear <= lw_versionmax-gl_year and companycode = ls_config-zvalue6.
+      CLEAR:lt_uweb_api[].
+*&--ADD End BY Stanley 2025/03/27
+      ENDLOOP.
+
+*&--DEL BEGIN Stanley 2025/03/27
+*      SORT lt_uweb_api BY gl_year inv_no DESCENDING.
+*      DELETE ADJACENT DUPLICATES FROM lt_uweb_api COMPARING gl_year inv_no.
+*
+*      "inv_no
+*      READ TABLE lt_uweb_api INDEX 1 INTO DATA(lw_versionmax).
+*
+*      SORT lt_result1 BY supplierinvoice fiscalyear DESCENDING.
+*&--DEL End Stanley 2025/03/27
 
 *&--MOD BEGIN BY XINLEI XU 2025/03/20
 *      " 删除 supplierinvoice 小于 lw_versionmax-inv_no 的数据
 *      DELETE lt_result1 WHERE supplierinvoice < lw_versionmax-inv_no.
       " 增量同步
-      DELETE lt_result1 WHERE supplierinvoice <= lw_versionmax-inv_no.
+    "  DELETE lt_result1 WHERE supplierinvoice <= lw_versionmax-inv_no.
 *&--MOD END BY XINLEI XU 2025/03/20
 
       " 删除 supplierinvoiceitem 为空且 taxamountheader 不等于 '仮払消費税調整' 的数据
@@ -1014,6 +1028,7 @@ CLASS zcl_http_podata_004 IMPLEMENTATION.
         CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
         CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
         CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
+        CONDENSE ls_config-zvalue6 NO-GAPS. " Company Code
 
         DATA(lv_skip1) = -1000.
         DO.
@@ -1044,21 +1059,33 @@ CLASS zcl_http_podata_004 IMPLEMENTATION.
             EXIT.
           ENDIF.
         ENDDO.
+*&--ADD BEGIN BY Stanley 2025/03/27
+          SORT lt_uweb_api BY gl_year DESCENDING inv_no DESCENDING.
+          "DELETE ADJACENT DUPLICATES FROM lt_uweb_api COMPARING gl_year inv_no.
+
+          "获取supplierinvoice最大的记录
+          READ TABLE lt_uweb_api INDEX 1 INTO DATA(lw_versionmax1).
+
+          SORT lt_result BY supplierinvoice fiscalyear DESCENDING.
+
+          DELETE lt_result WHERE supplierinvoice <= lw_versionmax1-inv_no and companycode = ls_config-zvalue6 and fiscalyear <= lw_versionmax-gl_year..
+          Clear:lt_uweb_api[].
+*&--ADD End BY Stanley 2025/03/27
       ENDLOOP.
-
-      SORT lt_uweb_api BY gl_year inv_no DESCENDING.
-      DELETE ADJACENT DUPLICATES FROM lt_uweb_api COMPARING gl_year inv_no.
-
-      "获取supplierinvoice最大的记录
-      READ TABLE lt_uweb_api INDEX 1 INTO DATA(lw_versionmax1).
-
-      SORT lt_result BY supplierinvoice fiscalyear DESCENDING.
-
+*&--DEL BEGIN BY Stanley 2025/03/27
+*      SORT lt_uweb_api BY gl_year inv_no DESCENDING.
+*      DELETE ADJACENT DUPLICATES FROM lt_uweb_api COMPARING gl_year inv_no.
+*
+*      "获取supplierinvoice最大的记录
+*      READ TABLE lt_uweb_api INDEX 1 INTO DATA(lw_versionmax1).
+*
+*      SORT lt_result BY supplierinvoice fiscalyear DESCENDING.
+*&--DEL End BY Stanley 2025/03/27
 *&--MOD BEGIN BY XINLEI XU 2025/03/20
 *      " 删除 supplierinvoice 小于 lw_versionmax-inv_no 的数据
 *      DELETE lt_result WHERE supplierinvoice < lw_versionmax1-inv_no.
       " 增量同步
-      DELETE lt_result WHERE supplierinvoice <= lw_versionmax1-inv_no.
+     " DELETE lt_result WHERE supplierinvoice <= lw_versionmax1-inv_no.
 *&--MOD END BY XINLEI XU 2025/03/20
 
       " 删除 supplierinvoiceitem 为空且 taxamountheader 不等于 '仮払消費税調整' 的数据
