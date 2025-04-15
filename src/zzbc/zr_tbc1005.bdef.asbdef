@@ -88,10 +88,11 @@ etag master LocalLastChangedAt
 }
 
 define behavior for ZR_TBC1007_1 alias User
+persistent table ztbc_1007
 draft table ztbc_1007_1_d
 lock dependent by _Role
 authorization dependent by _Role
-with unmanaged save
+//with unmanaged save
 {
   update;
   delete;

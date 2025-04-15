@@ -57,5 +57,9 @@ define root view entity ZR_INVOICEREPORT
       _main._SD1008.invoice_item_no                                                                 as InvoiceItemNo,
       // ADD END BY XINLEI XU 2025/01/10
 
+      // ADD BEGIN BY XINLEI XU 2025/04/03
+      concat_with_space(_main._BC1001.zvalue3, _main._BC1001.zvalue4, 1)                            as TheCompanyCity,
+      // ADD END BY XINLEI XU 2025/04/03
+
       _main._BC1001
 }

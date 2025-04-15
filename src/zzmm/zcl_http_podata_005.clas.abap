@@ -146,6 +146,7 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
     "define New Supplier Confirmation
     TYPES: BEGIN OF ty_head,
              delivery_date                TYPE string,
+             delivery_time                TYPE string,
              confirmed_quantity           TYPE i_purchaseorderitemapi01-orderquantity,
              purchase_order_quantity_unit TYPE string,
              ext_number                   TYPE string,
@@ -165,8 +166,25 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
          lv_item TYPE ty_item_tp,
          lv_json TYPE ty_json_data.
 
+    "response
+    TYPES: BEGIN OF ty_supplier_confirmation,
+             supplier_confirmation TYPE string,
+           END OF ty_supplier_confirmation.
+
+    TYPES: BEGIN OF ty_supplier_confirmation_item,
+             supplier_confirmation TYPE string,
+             supplier_confirmation_item TYPE string,
+           END OF ty_supplier_confirmation_item.
+
+DATA:
+      ls_supplier_confirmation TYPE ty_supplier_confirmation,
+      lt_supplier_confirmation_item TYPE TABLE OF ty_supplier_confirmation_item.
+
+
+
     DATA(lv_req_body) = request->get_text( ).
     DATA(lv_header) = request->get_header_field( i_name = 'form' ).
+    DATA:lv_response TYPE string.
 
     "first deserialize the request`
     IF lv_req_body IS NOT INITIAL.
@@ -219,7 +237,8 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
              deliverydate,
              mrprelevantquantity,
              supplierconfirmation,
-             supplierconfirmationitem
+             supplierconfirmationitem,
+             supplierconfirmationExtNumber
         FROM i_posupplierconfirmationapi01 WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_req
        WHERE purchaseorder = @lt_req-pono
@@ -229,31 +248,36 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
       SORT lt_req_conf BY supplierconfirmation supplierconfirmationitem.
       DELETE ADJACENT DUPLICATES FROM lt_req_conf COMPARING supplierconfirmation supplierconfirmationitem.
 
-      LOOP AT lt_req_conf INTO DATA(ls_req_conf).
-        DATA(lv_q_path) = |/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001/ConfirmationItem| &&
-                           |/{ ls_req_conf-supplierconfirmation }/{ ls_req_conf-supplierconfirmationitem }/_SupplierConfirmationLineTP|.
-
-        zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_q_path
-                                                     iv_method      = if_web_http_client=>get
-                                                     iv_format      = 'json'
-                                           IMPORTING ev_status_code = DATA(lv_status_code)
-                                                     ev_response    = DATA(lv_response) ).
-        IF lv_status_code = 200.
-          /ui2/cl_json=>deserialize( EXPORTING json = lv_response
-                                     CHANGING  data = gs_get_result ).
-          APPEND LINES OF gs_get_result-value TO gt_value.
-        ENDIF.
-
-
+      "排序
+      DATA:IND TYPE I.
+      SORT lt_already_confirm BY purchaseorder purchaseorderitem deliverydate.
+      DATA(lt_already_confirm_bak) = lt_already_confirm[].
+      CLEAR:lt_already_confirm[].
+      LOOP AT lt_already_confirm_bak INTO DATA(ls_confirm) group by ls_confirm-purchaseorderitem.
+        IND = 0.
+        LOOP AT GROUP ls_confirm INTO DATA(wa).
+          IND += 1.
+          WA-sequentialnmbrofsuplrconf = IND.
+          append wa TO lt_already_confirm.
+        ENDLOOP.
       ENDLOOP.
+      SORT lt_already_confirm BY purchaseorder purchaseorderitem deliverydate.
+
 
       LOOP AT lt_req INTO lw_req.
-        READ TABLE lt_already_confirm INTO DATA(ls_confirm_chk) WITH KEY purchaseorder = lw_req-pono
+        READ TABLE lt_already_confirm INTO DATA(ls_confirm_notexist) WITH KEY purchaseorder = lw_req-pono
                                                                          purchaseorderitem = lw_req-dno.
-        IF sy-subrc EQ 0.
-          lw_req-ztype = 'I'.
-        ELSE.
-          lw_req-ztype = 'N'.
+        IF SY-SUBRC NE 0 .
+            lw_req-ztype = 'N'.
+        ELSE..
+        READ TABLE lt_already_confirm INTO DATA(ls_confirm_chk) WITH KEY purchaseorder = lw_req-pono
+                                                                         purchaseorderitem = lw_req-dno
+                                                                             sequentialnmbrofsuplrconf = lw_req-seq.
+            IF sy-subrc EQ 0.
+              lw_req-ztype = 'U'.
+            ELSE.
+              lw_req-ztype = 'I'.
+            ENDIF.
         ENDIF.
         lw_req-supplierconfirm = ls_confirm_chk-supplierconfirmation.
         lw_req-supplierconfirmitm = ls_confirm_chk-supplierconfirmationitem.
@@ -261,18 +285,6 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
         MODIFY lt_req FROM lw_req TRANSPORTING ztype supplierconfirm supplierconfirmitm.
       ENDLOOP.
 
-      "查找需要删除的
-      LOOP AT lt_already_confirm INTO DATA(ls_confirm_del).
-        READ TABLE lt_req INTO lw_req WITH KEY pono = ls_confirm_del-purchaseorder
-                                               dno = ls_confirm_del-purchaseorderitem.
-        IF sy-subrc NE 0.
-          lw_req-pono = ls_confirm_del-purchaseorder.
-          lw_req-dno = ls_confirm_del-purchaseorderitem.
-          lw_req-seq = ls_confirm_del-sequentialnmbrofsuplrconf.
-          lw_req-ztype = 'D'.
-          APPEND lw_req TO lt_req.
-        ENDIF.
-      ENDLOOP.
 
     ENDIF.
 
@@ -287,7 +299,8 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
 
     DATA:
       lv_length TYPE i VALUE 0,
-      lv_index  TYPE i.
+      lv_index  TYPE i,
+      lv_status_code TYPE if_web_http_response=>http_status-code.
 
     DATA: lv_newdn TYPE c,
           lv_dno   TYPE n    LENGTH 5.
@@ -316,11 +329,13 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
         "ADD BY STANLEY 20250120
         SORT lt_already_confirm BY purchaseorder purchaseorderitem sequentialnmbrofsuplrconf.
         LOOP AT lt_already_confirm INTO DATA(ls_already_confirm).
-          IF ls_already_confirm-mrprelevantquantity > 0.
+          IF ls_already_confirm-mrprelevantquantity > 0 AND ls_already_confirm-MRPRelevantQuantity NE lw_req1-quantity.
             CLEAR:ls_insert_req.
             ls_insert_req-pono = ls_already_confirm-purchaseorder.
             ls_insert_req-dno = ls_already_confirm-purchaseorderitem.
             ls_insert_req-seq = ls_already_confirm-sequentialnmbrofsuplrconf.
+            ls_insert_req-extnumber = ls_already_confirm-supplierconfirmationExtNumber.
+            ls_insert_req-ztype = 'U'.
             ls_insert_req-deliverydate = ls_already_confirm-deliverydate+0(4) && '-' &&
             ls_already_confirm-deliverydate+4(2) && '-' && ls_already_confirm-deliverydate+6(2).
             ls_insert_req-delflag = 'A'."Already Confirmed
@@ -332,18 +347,11 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
         SORT lt_req BY pono dno seq deliverydate.
         "END ADD
 
-        "查找Sequence
-
-
-        "删除行
-        DATA(lv_d_path) = |/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001/ConfirmationLine| &&
-                          |/{ lw_req1-supplierconfirm }/{ lw_req1-supplierconfirmitm }/{ lw_req1-actualline }|.
-        zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_d_path
-                                                            iv_method      = if_web_http_client=>delete
-                                                  IMPORTING ev_status_code = lv_status_code
-                                                            ev_response    = lv_response ).
 
         LOOP AT lt_req INTO DATA(ls_req) WHERE pono = lw_req1-pono  .
+          if ls_req-seq > 1 and ls_req-ztype = 'N'.
+             CONTINUE.
+          endif.
 
           " 按照纳品日进行筛选累加
           DATA(lv_current_date) = ls_req-deliverydate.
@@ -361,8 +369,9 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
 
           IF lv_sum_qty <= ls_deletecode_item-orderquantity.
             READ TABLE lt_already_confirm INTO DATA(ls_confrim_line) WITH KEY purchaseorder = ls_req-pono
-                                                                              purchaseorderitem = ls_req-dno.
-            IF ls_req-ztype = 'I'.
+                                                                              purchaseorderitem = ls_req-dno
+                                                                              sequentialnmbrofsuplrconf = ls_req-seq.
+            IF ls_req-ztype = 'I' OR ls_req-ztype = 'U'.
               CLEAR:ls_update_stru,lt_update_stru.
               ls_update_stru = VALUE #(
                       deliverydate =  ls_req-deliverydate
@@ -398,13 +407,16 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
                   r_json        = lv_json_string.
 
             ELSEIF ls_req-ztype = 'N'.
-              lv_head-delivery_date = ls_req-deliverydate.
-              lv_head-confirmed_quantity = ls_req-quantity.
-              lv_head-purchase_order_quantity_unit = 'PCS'.
-              lv_head-ext_number = ls_req-extnumber.
+              LOOP AT lt_req INTO DATA(ls_new) WHERE pono = lw_req1-pono  and dno = lw_req1-dno.
+                  lv_head-delivery_date = ls_new-deliverydate.
+                  lv_head-confirmed_quantity = ls_new-quantity.
+                  lv_head-purchase_order_quantity_unit = 'PCS'.
+                  lv_head-ext_number = ls_new-extnumber.
+                  lv_head-delivery_time = '05:00:00'.
 
-              lv_item-po_item = ls_req-dno.
-              APPEND lv_head TO lv_item-line_tp.
+                  lv_item-po_item = ls_new-dno.
+                  APPEND lv_head TO lv_item-line_tp.
+              ENDLOOP.
 
               lv_json-suplr_conf_ref_purchase_order = ls_req-pono.
               APPEND lv_item TO lv_json-supplier_confirmation_item_tp.
@@ -431,6 +443,10 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
 
               ls_name_mapping-abap = 'DELIVERY_DATE'.
               ls_name_mapping-json = 'DeliveryDate'.
+              INSERT ls_name_mapping INTO TABLE lt_name_mappings.
+
+              ls_name_mapping-abap = 'DELIVERY_Time'.
+              ls_name_mapping-json = 'DeliveryTime'.
               INSERT ls_name_mapping INTO TABLE lt_name_mappings.
 
               ls_name_mapping-abap = 'CONFIRMED_QUANTITY'.
@@ -462,6 +478,7 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
                                                                     iv_body        = lv_json_string
                                                           IMPORTING ev_status_code = lv_status_code
                                                                     ev_response    = lv_response ).
+
               WHEN 'I'.
                 DATA(lv_i_path) = |/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001/ConfirmationItem| &&
                                   |/{ ls_confrim_line-supplierconfirmation }/{ ls_confrim_line-supplierconfirmationitem }/_SupplierConfirmationLineTP|.
@@ -473,18 +490,31 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
                                                                     iv_body        = lv_json_string
                                                           IMPORTING ev_status_code = lv_status_code
                                                                     ev_response    = lv_response ).
-              WHEN 'D'.
-                CONTINUE.
+              WHEN 'U'.
+                 DATA(lv_u_path) = |/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001/ConfirmationLine| &&
+                                                  |/{ ls_confrim_line-supplierconfirmation }/{ ls_confrim_line-supplierconfirmationitem }/{ ls_confrim_line-SequentialNmbrOfSuplrConf }|.
+
+                zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_u_path
+                                                                    iv_method      = if_web_http_client=>patch
+                                                                    iv_body        = lv_json_string
+                                                          IMPORTING ev_status_code = lv_status_code
+                                                                    ev_response    = lv_response ).
+
             ENDCASE.
 
 
-
+          ELSE.
+            lv_text = '納期回答合計数量は購買発注の発注数を超過します. データをチェックしてください.'.
+            lv_error = 'X'.
           ENDIF.
 
         ENDLOOP.
       ENDLOOP.
     ENDIF.
 
+    IF LV_ERROR = ''.
+      lv_text = '納期回答情報は購買伝票に反映されました.'.
+    ENDIF.
 *将错误消息通过标准方法改成前台能读取到的内容
     IF lv_text IS NOT INITIAL.
 

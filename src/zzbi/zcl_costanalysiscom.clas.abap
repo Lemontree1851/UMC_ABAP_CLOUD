@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_COSTANALYSISCOM IMPLEMENTATION.
+CLASS zcl_costanalysiscom IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -125,7 +125,12 @@ CLASS ZCL_COSTANALYSISCOM IMPLEMENTATION.
            quo_version,
            sales_d_no,
            profitcenter,
-           profitcentername
+           profitcentername,
+*&--ADD BEGIN BY XINLEI XU 2025/04/10
+           finalsuppliername,
+           finalpurchaseorder,
+           fixedsuppliername
+*&--ADD END BY XINLEI XU 2025/04/10
       FROM ztbi_1001
      WHERE companycode IN @lr_companycode
        AND zyear       IN @lr_zyear
@@ -133,7 +138,7 @@ CLASS ZCL_COSTANALYSISCOM IMPLEMENTATION.
        AND product     IN @lr_product
        AND material    IN @lr_material
        AND customer    IN @lr_customer
-      INTO CORRESPONDING FIELDS OF TABLE @lt_data.
+      INTO TABLE @DATA(lt_bi1001).
 
 *&--Authorization Check
     DATA(lv_user_prefix) = sy-uname+0(2).
@@ -141,15 +146,30 @@ CLASS ZCL_COSTANALYSISCOM IMPLEMENTATION.
       DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ).
       DATA(lv_companycode) = zzcl_common_utils=>get_company_by_user( lv_user_email ).
       IF lv_companycode IS INITIAL.
-        CLEAR lt_data.
+        CLEAR lt_bi1001.
       ELSE.
         SPLIT lv_companycode AT '&' INTO TABLE DATA(lt_company_check).
         CLEAR lr_companycode.
         lr_companycode = VALUE #( FOR companycode IN lt_company_check ( sign = 'I' option = 'EQ' low = companycode ) ).
-        DELETE lt_data WHERE companycode NOT IN lr_companycode.
+        DELETE lt_bi1001 WHERE companycode NOT IN lr_companycode.
       ENDIF.
     ENDIF.
 *&--Authorization Check
+
+    LOOP AT lt_bi1001 ASSIGNING FIELD-SYMBOL(<lfs_bi1001>).
+      APPEND INITIAL LINE TO lt_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
+      <lfs_data> = CORRESPONDING #( <lfs_bi1001> ).
+      <lfs_data>-estimatedprice = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
+                                                                        iv_currency = <lfs_bi1001>-currency
+                                                                        iv_input = <lfs_bi1001>-estimatedprice ).
+
+      <lfs_data>-finalprice = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
+                                                                    iv_currency = <lfs_bi1001>-currency
+                                                                    iv_input = <lfs_bi1001>-finalprice ).
+
+      <lfs_data>-finalsupplier = |{ <lfs_bi1001>-finalsupplier ALPHA = OUT }|.
+      <lfs_data>-finalpurchaseorder = |{ <lfs_bi1001>-finalpurchaseorder ALPHA = OUT }|.
+    ENDLOOP.
 
     " Filtering
     zzcl_odata_utils=>filtering( EXPORTING io_filter = io_request->get_filter(  )

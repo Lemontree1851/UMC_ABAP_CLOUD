@@ -10,7 +10,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
+CLASS zcl_query_inventory_aging IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -71,6 +71,9 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
 
       lc_chargeablesupplyflag_y TYPE string VALUE 'Y',
       lc_chargeablesupplyflag_n TYPE string VALUE 'N',
+      lc_producttype_zroh       TYPE mtart VALUE 'ZROH',
+      lc_offest_from            TYPE string VALUE ':',
+      lc_offest_to              TYPE string VALUE '2',
       lc_sign_i                 TYPE c LENGTH 1 VALUE 'I',
       lc_option_eq              TYPE c LENGTH 2 VALUE 'EQ'.
 
@@ -108,7 +111,7 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
       "Obtain data of product description
       SELECT product,
              productdescription
-        FROM i_productdescription "#EC CI_NO_TRANSFORM
+        FROM i_productdescription WITH PRIVILEGED ACCESS "#EC CI_NO_TRANSFORM
          FOR ALL ENTRIES IN @lt_ztfi_1019
        WHERE product = @lt_ztfi_1019-product
          AND language = @sy-langu
@@ -122,7 +125,7 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
       "Obtain data of product type text
       SELECT producttype,
              producttypename
-        FROM i_producttypetext_2
+        FROM i_producttypetext_2 WITH PRIVILEGED ACCESS
          FOR ALL ENTRIES IN @lt_ztfi_1019_tmp
        WHERE producttype = @lt_ztfi_1019_tmp-producttype
          AND language = @sy-langu
@@ -152,7 +155,7 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
       SELECT plant,
              mrpcontroller,
              mrpcontrollername
-        FROM i_mrpcontrollervh
+        FROM i_mrpcontrollervh WITH PRIVILEGED ACCESS
          FOR ALL ENTRIES IN @lt_ztfi_1019_tmp
        WHERE plant = @lt_ztfi_1019_tmp-plant
          AND mrpcontroller = @lt_ztfi_1019_tmp-mrpresponsible
@@ -248,16 +251,15 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
         ls_data-mrpcontrollername = ls_mrpcontrollervh-mrpcontrollername.
       ENDIF.
 
-*      IF ls_ztfi_1019_header-product+5(1) = 'D'.
-*        ls_data-chargeablesupplyflag = 'Y'.
-*      ELSE.
-*        ls_data-chargeablesupplyflag = 'N'.
-*      ENDIF.
-
+      "品目コードの最後4桁固定「：**2」
       lv_length = strlen( ls_ztfi_1019_header-product ).
-      lv_offset = lv_length - 1.
+      DATA(lv_offset_from) = lv_length - 4.
+      DATA(lv_offset_to)   = lv_length - 1.
 
-      IF lv_offset >= 0 AND ls_ztfi_1019_header-product+lv_offset(1) = '2'.
+      IF lv_offset_from >= 0 AND lv_offset_to >= 0
+      AND ls_ztfi_1019_header-product+lv_offset_from(1) = lc_offest_from
+      AND ls_ztfi_1019_header-product+lv_offset_to(1)   = lc_offest_to
+      AND ls_ztfi_1019_header-producttype = lc_producttype_zroh.
         ls_data-chargeablesupplyflag = lc_chargeablesupplyflag_y.
       ELSE.
         ls_data-chargeablesupplyflag = lc_chargeablesupplyflag_n.
@@ -500,7 +502,8 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
 
         CLEAR:
           lv_totalamount,
-          lv_totalqty.
+          lv_totalqty,
+          lv_age.
       ENDIF.
 
       APPEND ls_data TO lt_data.

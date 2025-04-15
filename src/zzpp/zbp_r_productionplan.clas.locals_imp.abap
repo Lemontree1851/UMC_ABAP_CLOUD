@@ -56,8 +56,7 @@ CLASS lhc_zr_productionplan DEFINITION INHERITING FROM cl_abap_behavior_handler.
       END OF ts_planorder_i,
 
       BEGIN OF ts_planorder_u,
-        _base_unit             TYPE c LENGTH 3,
-        _total_quantity        TYPE menge_d,
+        _total_quantity        TYPE c LENGTH 15,
         _planned_order_is_firm TYPE abap_bool,
       END OF ts_planorder_u,
 
@@ -654,10 +653,10 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
       ls_planorder_u   TYPE ts_planorder_u,
       ls_res_planorder TYPE ts_res_plan_api.
     DATA:
-      lv_msg     TYPE string,
-      lv_message TYPE string,
-      lv_firm    TYPE abap_bool,
-      lv_etag    TYPE string.
+      lv_msg           TYPE string,
+      lv_message       TYPE string,
+      lv_firm          TYPE abap_bool,
+      lv_etag          TYPE string.
 
     IF cs_data-plantype = 'P'.
       lv_firm = abap_true.
@@ -665,28 +664,22 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
       lv_firm = abap_false.
     ENDIF.
 
-
     ls_planorder_u-_total_quantity = cv_qty.
+    CONDENSE ls_planorder_u-_total_quantity NO-GAPS.
     ls_planorder_u-_planned_order_is_firm = lv_firm.
-    TRY.
-        ls_planorder_u-_base_unit =  zzcl_common_utils=>conversion_cunit(
-                                      EXPORTING iv_alpha = 'OUT'
-                                                iv_input = cs_planorder-baseunit ).
-      CATCH zzcx_custom_exception INTO lo_root_exc.
-        IF sy-subrc = 0.
-        ENDIF.
-    ENDTRY.
-    zzcl_common_utils=>request_api_v4( EXPORTING iv_path = |/api_plannedorder/srvd_a2x/sap/plannedorder/0001/PlannedOrderHeader/{ cs_planorder-plannedorder }|
-                                                 iv_method      = if_web_http_client=>get
-                                                 "iv_etag        = lv_etag
-                                       IMPORTING ev_status_code = DATA(lv_status_code)
-                                                 ev_response    = DATA(lv_response)
-                                                 ev_etag        = lv_etag ).
+
+    DATA(lv_parameter) = '''' && cs_planorder-plannedorder && ''''.
+    zzcl_common_utils=>get_api_etag( EXPORTING iv_odata_version = 'V2'
+                                               iv_path          = |/API_PLANNED_ORDERS/A_PlannedOrder({ lv_parameter })|
+                                     IMPORTING ev_status_code   = DATA(lv_status_code)
+                                               ev_response      = DATA(lv_response)
+                                               ev_etag          = lv_etag ).
+
     IF lv_etag IS NOT INITIAL.
       DATA(lv_reqbody_api) = /ui2/cl_json=>serialize( data = ls_planorder_u
                                                       compress = 'X'
                                                       pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
-      zzcl_common_utils=>request_api_v4( EXPORTING iv_path = |/api_plannedorder/srvd_a2x/sap/plannedorder/0001/PlannedOrderHeader/{ cs_planorder-plannedorder }|
+      zzcl_common_utils=>request_api_v2( EXPORTING iv_path = |/API_PLANNED_ORDERS/A_PlannedOrder({ lv_parameter })|
                                                  iv_method      = if_web_http_client=>patch
                                                  iv_body        = lv_reqbody_api
                                                  iv_etag        = lv_etag
@@ -695,8 +688,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
       /ui2/cl_json=>deserialize(
                            EXPORTING json = lv_response
                            CHANGING data = ls_res_planorder ).
-      IF lv_status_code = 201
-      OR lv_status_code = 200. " update
+      IF lv_status_code = 204. " update
         IF cs_data-message IS INITIAL.
           cs_data-status = 'S'.
           cs_data-message = cs_planorder-plannedorder && ` update`.
@@ -724,15 +716,15 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
       lv_msg     TYPE string,
       lv_message TYPE string,
       lv_etag    TYPE string.
+    DATA(lv_parameter) = '''' && cs_planorder-plannedorder && ''''.
+    zzcl_common_utils=>get_api_etag( EXPORTING iv_odata_version = 'V2'
+                                               iv_path          = |/API_PLANNED_ORDERS/A_PlannedOrder({ lv_parameter })|
+                                     IMPORTING ev_status_code   = DATA(lv_status_code)
+                                               ev_response      = DATA(lv_response)
+                                               ev_etag          = lv_etag ).
 
-    zzcl_common_utils=>request_api_v4( EXPORTING iv_path = |/api_plannedorder/srvd_a2x/sap/plannedorder/0001/PlannedOrderHeader/{ cs_planorder-plannedorder }|
-                                                 iv_method      = if_web_http_client=>get
-                                                 "iv_etag        = lv_etag
-                                       IMPORTING ev_status_code = DATA(lv_status_code)
-                                                 ev_response    = DATA(lv_response)
-                                                 ev_etag        = lv_etag ).
     IF lv_etag IS NOT INITIAL.
-      zzcl_common_utils=>request_api_v4( EXPORTING iv_path = |/api_plannedorder/srvd_a2x/sap/plannedorder/0001/PlannedOrderHeader/{ cs_planorder-plannedorder }|
+      zzcl_common_utils=>request_api_v2( EXPORTING iv_path = |/API_PLANNED_ORDERS/A_PlannedOrder({ lv_parameter })|
                                                  iv_method      = if_web_http_client=>delete
                                                  iv_etag = lv_etag
                                          IMPORTING ev_status_code = lv_status_code
@@ -743,9 +735,9 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
       IF lv_status_code = 204. " success
         IF cs_data-message IS INITIAL.
           cs_data-status = 'S'.
-          cs_data-message = cs_planorder-plannedorder && ` update`.
+          cs_data-message = cs_planorder-plannedorder && ` delete`.
         ELSE.
-          cs_data-message = cs_data-message && ';' && cs_planorder-plannedorder && ` update`.
+          cs_data-message = cs_data-message && ';' && cs_planorder-plannedorder && ` delete`.
         ENDIF.
       ELSE.
         cs_data-status = 'E'.
@@ -772,7 +764,7 @@ CLASS lhc_zr_productionplan IMPLEMENTATION.
     ls_planorder_i-_production_plant = cs_planorder-mrpplant.
 
     SELECT SINGLE baseunit
-      FROM i_product
+      FROM i_product WITH PRIVILEGED ACCESS
      WHERE product = @cs_planorder-material
       INTO @DATA(lv_unit).
     TRY.

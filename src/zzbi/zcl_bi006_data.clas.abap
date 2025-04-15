@@ -48,7 +48,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BI006_DATA IMPLEMENTATION.
+CLASS zcl_bi006_data IMPLEMENTATION.
 
 
   METHOD get_data.
@@ -70,11 +70,11 @@ CLASS ZCL_BI006_DATA IMPLEMENTATION.
            c~valuationarea,
            d~producttype
     FROM ztfi_1019 AS a
-    LEFT OUTER JOIN i_companycode AS b
+    LEFT OUTER JOIN i_companycode WITH PRIVILEGED ACCESS AS b
     ON a~companycode = b~companycode
-    LEFT OUTER JOIN i_plant AS c
+    LEFT OUTER JOIN i_plant WITH PRIVILEGED ACCESS AS c
     ON a~plant = c~plant
-    LEFT OUTER JOIN i_product AS d
+    LEFT OUTER JOIN i_product WITH PRIVILEGED ACCESS AS d
     ON a~product = d~product
     WHERE a~companycode IN @ir_companycode
     AND a~fiscalyear IN @ir_fiscalyear
@@ -266,8 +266,8 @@ CLASS ZCL_BI006_DATA IMPLEMENTATION.
            f~fiscalyear,
            f~fiscalperiod,
            f~fiscalperiodenddate
-    FROM i_companycode AS c
-    INNER JOIN i_fiscalcalendardate AS f
+    FROM i_companycode WITH PRIVILEGED ACCESS AS c
+    INNER JOIN i_fiscalcalendardate WITH PRIVILEGED ACCESS AS f
     ON c~fiscalyearvariant = f~fiscalyearvariant
     FOR ALL ENTRIES IN @lt_group_data
     WHERE c~companycode = @lt_group_data-companycode
@@ -295,7 +295,7 @@ CLASS ZCL_BI006_DATA IMPLEMENTATION.
               materialpricecontrol,
               actualprice,
               standardprice
-     FROM i_inventorypricebykeydate( p_calendardate = @lv_date )
+     FROM i_inventorypricebykeydate( p_calendardate = @lv_date ) WITH PRIVILEGED ACCESS
      FOR ALL ENTRIES IN @lt_group_data
      WHERE ledger = @lt_group_data-ledger
      AND material = @lt_group_data-product
@@ -314,7 +314,11 @@ CLASS ZCL_BI006_DATA IMPLEMENTATION.
     LOOP AT lt_group_data INTO DATA(ls_group_data).
       CLEAR ls_data.
       MOVE-CORRESPONDING ls_group_data TO ls_data.
-      ls_data-type = '長滞在庫'.
+
+*&--MOD BEGIN BY XINLEI XU 2025/04/08
+*      ls_data-type = '長滞在庫'.
+      ls_data-type = '長滞実績'.
+*&--MOD END BY XINLEI XU 2025/04/08
 
       IF ls_data-fiscalperiod IS NOT INITIAL.
         ls_data-fiscalyearmonth = |{ ls_data-fiscalyear }{ ls_data-fiscalperiod+1(2) }|.

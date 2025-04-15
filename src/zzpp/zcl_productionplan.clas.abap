@@ -54,7 +54,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
         mrpelementcategory         TYPE c LENGTH 2,
         mrpelementdocumenttype     TYPE c LENGTH 4,
         productionversion          TYPE c LENGTH 4,
-        sourcemrpelement           TYPE c LENGTH 12,
+        sourcemrpelement           TYPE c LENGTH 10,
       END OF ts_mrp_api,
       tt_mrp_api TYPE STANDARD TABLE OF ts_mrp_api WITH DEFAULT KEY,
 
@@ -178,6 +178,9 @@ CLASS zcl_productionplan IMPLEMENTATION.
       lv_nextmonth    TYPE monat,
       lv_year         TYPE c LENGTH 4,
       lv_date         TYPE budat,
+      lv_days_i       TYPE i,
+      lv_timestamp    TYPE timestampl,
+      lv_startdate    TYPE budat,
       lv_capacity(12) TYPE p,
       lv_value(12)    TYPE p DECIMALS 2,
       lv_plan         TYPE c,
@@ -432,7 +435,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
       SELECT product,                         "#EC CI_FAE_LINES_ENSURED
              plant,
              lotsizeroundingquantity
-        FROM i_productplantsupplyplanning
+        FROM i_productplantsupplyplanning WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_bom
        WHERE product = @lt_bom-idnrk
          AND plant = @lt_bom-plant
@@ -457,7 +460,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
     IF lt_prodver IS NOT INITIAL.
       SELECT workcenterinternalid,                 "#EC CI_NO_TRANSFORM
              workcenter
-        FROM i_workcenter
+        FROM i_workcenter WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_prodver
        WHERE workcenter = @lt_prodver-productionline
         INTO TABLE @DATA(lt_workcenter).
@@ -470,7 +473,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
              workcenterinternalid,
              standardworkquantity2,
              standardworkquantityunit2
-        FROM i_mfgboooperationchangestate
+        FROM i_mfgboooperationchangestate WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_prodver
        WHERE billofoperationstype = @lt_prodver-billofoperationstype
          AND billofoperationsgroup = @lt_prodver-billofoperationsgroup
@@ -481,68 +484,206 @@ CLASS zcl_productionplan IMPLEMENTATION.
     ENDIF.
 * 2.6 ~ 2.13
     "只有getitem单独读物料才能返回availableqty.
-    LOOP AT lt_bom INTO ls_bom.
-      READ ENTITIES OF i_supplydemanditemtp PRIVILEGED
-            ENTITY supplydemanditem
-            EXECUTE getitem
-            FROM VALUE #( ( %param-material = ls_bom-idnrk
-                            %param-mrparea = ls_bom-plant
-                            %param-mrpplant = ls_bom-plant ) )
-            RESULT DATA(lt_sdi_result)
-            FAILED DATA(lt_sdi_failed)
-            REPORTED DATA(lt_sdi_reported).
-      READ TABLE lt_sdi_result INTO DATA(ls_result) INDEX 1.
-      LOOP AT lt_sdi_result INTO DATA(ls_item).
-        ls_mrp_api-material = ls_item-%param-material.
-        ls_mrp_api-mrpplant = ls_item-%param-mrpplant.
-        ls_mrp_api-mrpelementopenquantity = ls_item-%param-mrpelementopenquantity.
-        ls_mrp_api-mrpavailablequantity = ls_item-%param-mrpavailablequantity.
-        ls_mrp_api-mrpelement = ls_item-%param-mrpelement.
-        ls_mrp_api-mrpelementavailyorrqmtdate = ls_item-%param-mrpelementavailyorrqmtdate.
-        ls_mrp_api-mrpelementcategory = ls_item-%param-mrpelementcategory.
-        ls_mrp_api-mrpelementdocumenttype = ls_item-%param-mrpelementdocumenttype.
-        ls_mrp_api-productionversion = ls_item-%param-productionversion.
-        ls_mrp_api-sourcemrpelement = ls_item-%param-sourcemrpelement_2.
+*    LOOP AT lt_bom INTO ls_bom.
+*      READ ENTITIES OF i_supplydemanditemtp PRIVILEGED
+*            ENTITY supplydemanditem
+*            EXECUTE getitem
+*            FROM VALUE #( ( %param-material = ls_bom-idnrk
+*                            %param-mrparea = ls_bom-plant
+*                            %param-mrpplant = ls_bom-plant ) )
+*            RESULT DATA(lt_sdi_result)
+*            FAILED DATA(lt_sdi_failed)
+*            REPORTED DATA(lt_sdi_reported).
+*
+*      LOOP AT lt_sdi_result INTO DATA(ls_item).
+*        ls_mrp_api-material = ls_item-%param-material.
+*        ls_mrp_api-mrpplant = ls_item-%param-mrpplant.
+*        ls_mrp_api-mrpelementopenquantity = ls_item-%param-mrpelementopenquantity.
+*        ls_mrp_api-mrpavailablequantity = ls_item-%param-mrpavailablequantity.
+*        ls_mrp_api-mrpelement = ls_item-%param-mrpelement.
+*        ls_mrp_api-mrpelementavailyorrqmtdate = ls_item-%param-mrpelementavailyorrqmtdate.
+*        ls_mrp_api-mrpelementcategory = ls_item-%param-mrpelementcategory.
+*        ls_mrp_api-mrpelementdocumenttype = ls_item-%param-mrpelementdocumenttype.
+*        ls_mrp_api-productionversion = ls_item-%param-productionversion.
+*        ls_mrp_api-sourcemrpelement = ls_item-%param-sourcemrpelement_2.
+*
+*        APPEND ls_mrp_api TO lt_mrp_api.
+*        CLEAR: ls_mrp_api.
+*
+*      ENDLOOP.
+*    ENDLOOP.
 
-        APPEND ls_mrp_api TO lt_mrp_api.
-        CLEAR: ls_mrp_api.
-
-      ENDLOOP.
-    ENDLOOP.
+*****如果一次性读大量物料，或者拆成少量物料分多次调用BOI，都会有内存不足的报错(ST22)，
+*****因此VC，FE，AR，SB的类型改成从cds取数计算
     "只有GetPeggingWithItems能读取到VC和FE类型
+*    LOOP AT lt_bom_tmp INTO ls_bom.
+*      ls_para_p-%param-mrparea = ls_bom-plant.
+*      ls_para_p-%param-mrpplant = ls_bom-plant.
+*      ls_para_p-%param-material = ls_bom-idnrk.
+*      APPEND ls_para_p TO lt_para_p.
+*    ENDLOOP.
+*    READ ENTITIES OF i_supplydemanditemtp PRIVILEGED
+*         ENTITY supplydemanditem
+*          EXECUTE getpeggingwithitems
+*          FROM lt_para_p
+*         RESULT DATA(lt_sdi_result_p)
+*         FAILED DATA(lt_sdi_failed_p)
+*         REPORTED DATA(lt_sdi_reported_p).
+*    IF lt_sdi_failed_p IS INITIAL.
+*      LOOP AT lt_sdi_result_p INTO DATA(ls_result_p).
+*        LOOP AT ls_result_p-%param-_supplydemanditemgetitemr INTO DATA(ls_p).
+*          ls_mrp_api-material = ls_p-material.
+*          ls_mrp_api-mrpplant = ls_p-mrpplant.
+*          ls_mrp_api-mrpelementopenquantity = ls_p-mrpelementopenquantity.
+*          ls_mrp_api-mrpavailablequantity = ls_p-mrpavailablequantity.
+*          ls_mrp_api-mrpelement = ls_p-mrpelement.
+*          ls_mrp_api-mrpelementavailyorrqmtdate = ls_p-mrpelementavailyorrqmtdate.
+*          ls_mrp_api-mrpelementcategory = ls_p-mrpelementcategory.
+*          ls_mrp_api-mrpelementdocumenttype = ls_p-mrpelementdocumenttype.
+*          ls_mrp_api-productionversion = ls_p-productionversion.
+*          ls_mrp_api-sourcemrpelement = ls_p-sourcemrpelement.
+*          APPEND ls_mrp_api TO lt_mrp_pegging.
+*          CLEAR: ls_mrp_api.
+*        ENDLOOP.
+*      ENDLOOP.
+*    ENDIF.
+** 2.8 過去～今月までの受注取得
+** 2.9 今月～未来までの受注取得
+*    SELECT a~salesorder,
+*           a~salesorderitem,
+*           b~scheduleline,
+*           a~originallyrequestedmaterial,
+*           a~plant,
+*           b~productavailabilitydate,
+*           b~requestedrqmtqtyinbaseunit
+*      FROM i_salesorderitem WITH PRIVILEGED ACCESS AS a
+*      INNER JOIN i_salesorderscheduleline WITH PRIVILEGED ACCESS AS b
+*        ON ( a~salesorder = b~salesorder
+*         AND a~salesorderitem = b~salesorderitem )
+*      FOR ALL ENTRIES IN @lt_bom
+*     WHERE a~originallyrequestedmaterial = @lt_bom-idnrk
+*       AND a~plant = @lt_bom-plant
+*       AND b~requestedrqmtqtyinbaseunit <> 0
+*      INTO TABLE @DATA(lt_so).
+*
+*    LOOP AT lt_so INTO DATA(ls_so).
+*      ls_mrp_api-material = ls_so-originallyrequestedmaterial.
+*      ls_mrp_api-mrpplant = ls_so-plant.
+*      ls_mrp_api-mrpelementopenquantity = ls_so-requestedrqmtqtyinbaseunit.
+*      ls_mrp_api-mrpelementavailyorrqmtdate = ls_so-productavailabilitydate.
+*      ls_mrp_api-mrpelementcategory = 'VC'.
+*      APPEND ls_mrp_api TO lt_mrp_pegging.
+*      CLEAR: ls_mrp_api.
+*    ENDLOOP.
+*
+** 2.12 製造指図取得 FE
+*    SELECT manufacturingorder,
+*           manufacturingorderitem,
+*           product,
+*           productionplant,
+*           productionversion,
+*           mfgorderplannedstartdate,
+*           mfgorderitemgoodsreceiptqty,
+*           mfgorderplannedtotalqty
+*      FROM i_manufacturingorderitem WITH PRIVILEGED ACCESS
+*      FOR ALL ENTRIES IN @lt_bom
+*     WHERE product = @lt_bom-idnrk
+*       AND productionplant = @lt_bom-plant
+*       AND orderitemisnotrelevantformrp <> 'X'
+*      INTO TABLE @DATA(lt_order).
+*
+*    LOOP AT lt_order INTO DATA(ls_order).
+*      ls_mrp_api-material = ls_order-product.
+*      ls_mrp_api-mrpplant = ls_order-productionplant.
+*      ls_mrp_api-mrpelementopenquantity = ls_order-mfgorderplannedtotalqty - ls_order-mfgorderitemgoodsreceiptqty.
+*      ls_mrp_api-mrpelementavailyorrqmtdate = ls_order-mfgorderplannedstartdate.
+*      ls_mrp_api-mrpelementcategory = 'FE'.
+*      IF ls_mrp_api-mrpelementopenquantity <> 0.
+*        APPEND ls_mrp_api TO lt_mrp_pegging.
+*        CLEAR: ls_mrp_api.
+*      ENDIF.
+*    ENDLOOP.
+    DATA(lv_select) = |Material,MRPPlant,MRPElementOpenQuantity,MRPAvailableQuantity,| &&
+                      |MRPElement,MRPElementAvailyOrRqmtDate,MRPElementCategory,MRPElementDocumentType,| &&
+                      |ProductionVersion,SourceMRPElement|.
+    lv_path = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?sap-language={ zzcl_common_utils=>get_current_language( ) }|.
+
     LOOP AT lt_bom INTO ls_bom.
-      ls_para_p-%param-mrparea = ls_bom-plant.
-      ls_para_p-%param-mrpplant = ls_bom-plant.
-      ls_para_p-%param-material = ls_bom-idnrk.
-      APPEND ls_para_p TO lt_para_p.
+      lv_count = lv_count + 1.
+
+      IF lv_filter IS INITIAL.
+        lv_filter = |(Material eq '{ ls_bom-idnrk }'|.
+      ELSE.
+        lv_filter = |{ lv_filter } or Material eq '{ ls_bom-idnrk }'|.
+      ENDIF.
+
+      IF ( lv_count MOD 100 ) = 0.
+        IF lv_filter IS NOT INITIAL.
+          lv_filter = |{ lv_filter })|.
+          DATA(lv_new_filter) = |{ lv_filter } and (MRPPlant eq '{ ls_bom-plant }' and MRPArea eq '{ ls_bom-plant }')|.
+        ELSE.
+          lv_new_filter = |(MRPPlant eq '{ ls_bom-plant }' and MRPArea eq '{ ls_bom-plant }')|.
+        ENDIF.
+
+        " MRP数据取得
+        zzcl_common_utils=>request_api_v2(
+          EXPORTING
+            iv_path = lv_path
+            iv_method = if_web_http_client=>get
+            iv_filter = lv_new_filter
+            iv_select = lv_select
+          IMPORTING
+            ev_status_code = DATA(lv_stat_code)
+            ev_response = DATA(lv_resbody_api) ).
+
+        IF lv_stat_code = '200'.
+          CLEAR ls_res_mrp_api.
+          /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+          CHANGING data = ls_res_mrp_api ).
+
+          APPEND LINES OF ls_res_mrp_api-d-results TO lt_mrp_api.
+        ENDIF.
+
+        CLEAR: lv_count, lv_filter, lv_new_filter.
+      ENDIF.
     ENDLOOP.
-    READ ENTITIES OF i_supplydemanditemtp PRIVILEGED
-         ENTITY supplydemanditem
-          EXECUTE getpeggingwithitems
-          FROM lt_para_p
-         RESULT DATA(lt_sdi_result_p)
-         FAILED DATA(lt_sdi_failed_p)
-         REPORTED DATA(lt_sdi_reported_p).
-    IF lt_sdi_failed_p IS INITIAL.
-      LOOP AT lt_sdi_result_p INTO DATA(ls_result_p).
-        LOOP AT ls_result_p-%param-_supplydemanditemgetitemr INTO DATA(ls_p).
-          ls_mrp_api-material = ls_p-material.
-          ls_mrp_api-mrpplant = ls_p-mrpplant.
-          ls_mrp_api-mrpelementopenquantity = ls_p-mrpelementopenquantity.
-          ls_mrp_api-mrpavailablequantity = ls_p-mrpavailablequantity.
-          ls_mrp_api-mrpelement = ls_p-mrpelement.
-          ls_mrp_api-mrpelementavailyorrqmtdate = ls_p-mrpelementavailyorrqmtdate.
-          ls_mrp_api-mrpelementcategory = ls_p-mrpelementcategory.
-          ls_mrp_api-mrpelementdocumenttype = ls_p-mrpelementdocumenttype.
-          ls_mrp_api-productionversion = ls_p-productionversion.
-          ls_mrp_api-sourcemrpelement = ls_p-sourcemrpelement.
-          APPEND ls_mrp_api TO lt_mrp_pegging.
-          CLEAR: ls_mrp_api.
-        ENDLOOP.
-      ENDLOOP.
+    "不足100条
+    IF lv_filter IS NOT INITIAL.
+      lv_filter = |{ lv_filter })|.
+      lv_new_filter = |{ lv_filter } and (MRPPlant eq '{ ls_bom-plant }' and MRPArea eq '{ ls_bom-plant }')|.
+    ELSE.
+      lv_new_filter = |(MRPPlant eq '{ ls_bom-plant }' and MRPArea eq '{ ls_bom-plant }')|.
     ENDIF.
 
+    " MRP数据取得
+    zzcl_common_utils=>request_api_v2(
+      EXPORTING
+        iv_path = lv_path
+        iv_method = if_web_http_client=>get
+        iv_filter = lv_new_filter
+        iv_select = lv_select
+      IMPORTING
+        ev_status_code = lv_stat_code
+        ev_response = lv_resbody_api ).
 
+    IF lv_stat_code = '200'.
+      CLEAR ls_res_mrp_api.
+      /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+      CHANGING data = ls_res_mrp_api ).
+
+      APPEND LINES OF ls_res_mrp_api-d-results TO lt_mrp_api.
+    ENDIF.
+
+    LOOP AT lt_mrp_api ASSIGNING FIELD-SYMBOL(<lfs_mrp>).
+      lv_startdate = '19700101'.
+      lv_timestamp = <lfs_mrp>-mrpelementavailyorrqmtdate+6(10).
+      lv_days_i = lv_timestamp  DIV 86400.
+      lv_startdate = lv_startdate + lv_days_i.
+      <lfs_mrp>-mrpelementavailyorrqmtdate = lv_startdate.
+      <lfs_mrp>-mrpelement = |{ <lfs_mrp>-mrpelement ALPHA = IN }|.
+      <lfs_mrp>-sourcemrpelement = |{ <lfs_mrp>-sourcemrpelement ALPHA = IN }|.
+    ENDLOOP.
+************************************************************************
     IF lv_plancheck = 'X'.   "計画手配検査
       lt_bom_tmp[] = lt_bom[].
       CLEAR: lt_bom.
@@ -556,7 +697,8 @@ CLASS zcl_productionplan IMPLEMENTATION.
           lv_plan = 'X'.
         ENDIF.
 
-        READ TABLE lt_mrp_pegging INTO ls_mrp_api
+        "READ TABLE lt_mrp_pegging INTO ls_mrp_api
+        READ TABLE lt_mrp_api INTO ls_mrp_api
              WITH KEY material = ls_bom-idnrk
                       mrpelementcategory = 'FE'.
         IF sy-subrc = 0
@@ -628,7 +770,8 @@ CLASS zcl_productionplan IMPLEMENTATION.
     lv_datum = lv_year && lv_nextmonth && '01'.
     lv_date = lv_datum - 1.
 
-    LOOP AT lt_mrp_pegging INTO ls_mrp_api
+    "LOOP AT lt_mrp_pegging INTO ls_mrp_api
+    LOOP AT lt_mrp_api INTO ls_mrp_api
          GROUP BY ( material = ls_mrp_api-material
                     mrpplant = ls_mrp_api-mrpplant )
          REFERENCE INTO DATA(pegging).
@@ -664,7 +807,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
            AND mrpelementdocumenttype = 'LA'.
       lrs_plnum-sign = 'I'.
       lrs_plnum-option = 'EQ'.
-      lrs_plnum-low = ls_mrp_api-mrpelement.
+      lrs_plnum-low = ls_mrp_api-sourcemrpelement.
       APPEND lrs_plnum TO lr_plnum.
       CLEAR: lrs_plnum.
     ENDLOOP.
@@ -696,6 +839,14 @@ CLASS zcl_productionplan IMPLEMENTATION.
         INTO TABLE @DATA(lt_unconfirmplan).
     ENDIF.
 * 合计未确定和ATP的数量，用于比较颜色
+    lv_datum = cl_abap_context_info=>get_system_date( ).
+    LOOP AT lt_unconfirmplan ASSIGNING FIELD-SYMBOL(<lfs_unplan>).
+      " 将小于今天的startdate修改成今天
+      IF <lfs_unplan>-plndorderplannedstartdate < lv_datum.
+        <lfs_unplan>-plndorderplannedstartdate = lv_datum.
+      ENDIF.
+    ENDLOOP.
+
     DATA(lt_un_tmp) = lt_unconfirmplan[].
     CLEAR: lt_unconfirmplan.
     DATA: ls_unconfirm LIKE LINE OF lt_unconfirmplan.
@@ -721,7 +872,8 @@ CLASS zcl_productionplan IMPLEMENTATION.
     ENDLOOP.
 
 * 2.12 製造指図取得
-    LOOP AT lt_mrp_pegging INTO ls_mrp_api WHERE mrpelementcategory = 'FE'.
+    "LOOP AT lt_mrp_pegging INTO ls_mrp_api WHERE mrpelementcategory = 'FE'.
+    LOOP AT lt_mrp_api INTO ls_mrp_api WHERE mrpelementcategory = 'FE'.
       lrs_orderid-sign = 'I'.
       lrs_orderid-option = 'EQ'.
       lrs_orderid-low = ls_mrp_api-mrpelement.
@@ -737,13 +889,14 @@ CLASS zcl_productionplan IMPLEMENTATION.
              mfgorderplannedstartdate,
              mfgorderitemgoodsreceiptqty,
              mfgorderplannedtotalqty
-        FROM i_manufacturingorderitem
+        FROM i_manufacturingorderitem WITH PRIVILEGED ACCESS
        WHERE manufacturingorder IN @lr_orderid
         INTO TABLE @DATA(lt_order).
     ENDIF.
 * 2.12 従属所要取得
     CLEAR: lr_plnum.
-    LOOP AT lt_mrp_pegging INTO ls_mrp_api
+    "LOOP AT lt_mrp_pegging INTO ls_mrp_api
+    LOOP AT lt_mrp_api INTO ls_mrp_api
         WHERE mrpelementcategory = 'SB'.
       lrs_plnum-sign = 'I'.
       lrs_plnum-option = 'EQ'.
@@ -754,13 +907,14 @@ CLASS zcl_productionplan IMPLEMENTATION.
 
     IF lr_plnum IS NOT INITIAL.
       SELECT plannedorder
-        FROM i_plannedorder
+        FROM i_plannedorder WITH PRIVILEGED ACCESS
        WHERE plannedorder IN @lr_plnum
          AND plannedorderisfirm = 'X'
         INTO TABLE @DATA(lt_sb).
     ENDIF.
 
-    DATA(lt_mrp_tmp) = lt_mrp_pegging[].
+    "DATA(lt_mrp_tmp) = lt_mrp_pegging[].
+    DATA(lt_mrp_tmp) = lt_mrp_api[].
     SORT lt_mrp_tmp BY mrpelementcategory sourcemrpelement.
     LOOP AT lt_sb INTO DATA(ls_sb).
       READ TABLE lt_mrp_tmp INTO ls_mrp_api
@@ -772,19 +926,75 @@ CLASS zcl_productionplan IMPLEMENTATION.
         CLEAR: ls_require.
       ENDIF.
     ENDLOOP.
+*    SELECT a~reservation,
+*           a~reservationitem,
+*           a~recordtype,
+*           b~plannedorder,
+*           a~matlcomprequirementdate,
+*           a~material,
+*           a~plant,
+*           a~requiredquantity
+*      FROM i_plannedordercomponent WITH PRIVILEGED ACCESS AS a
+*      INNER JOIN i_plannedorder WITH PRIVILEGED ACCESS AS b
+*        ON ( a~plannedorder = b~plannedorder )
+*      FOR ALL ENTRIES IN @lt_bom
+*     WHERE a~material = @lt_bom-idnrk
+*       AND a~plant = @lt_bom-plant
+*       AND b~plannedorderisfirm = 'X'
+*       INTO TABLE @DATA(lt_planord).
+*
+*    LOOP AT lt_planord INTO DATA(ls_planord).
+*      ls_require-material = ls_planord-material.
+*      ls_require-mrpplant = ls_planord-plant.
+*      ls_require-mrpelementopenquantity = ls_planord-requiredquantity.
+*      ls_require-mrpelementavailyorrqmtdate = ls_planord-matlcomprequirementdate.
+*      ls_require-mrpelementcategory = 'SB'.
+*      IF ls_require-mrpelementopenquantity <> 0.
+*        APPEND ls_require TO lt_require.
+*        CLEAR: ls_require.
+*      ENDIF.
+*    ENDLOOP.
 
 * 2.13 入出庫予定取得
-    LOOP AT lt_mrp_pegging INTO ls_mrp_api
+    "LOOP AT lt_mrp_pegging INTO ls_mrp_api
+    LOOP AT lt_mrp_api INTO ls_mrp_api
          WHERE mrpelementcategory = 'AR'.
       MOVE-CORRESPONDING ls_mrp_api TO ls_reserve.
       ls_reserve-mrpelementopenquantity = abs( ls_mrp_api-mrpelementopenquantity ).
       APPEND ls_reserve TO lt_reserve.
       CLEAR: ls_reserve.
     ENDLOOP.
+*    SELECT reservation,
+*           reservationitem,
+*           recordtype,
+*           material,
+*           plant,
+*           matlcomprequirementdate,
+*           requiredquantity,
+*           withdrawnquantity
+*      FROM i_mfgorderoperationcomponent WITH PRIVILEGED ACCESS
+*      FOR ALL ENTRIES IN @lt_bom
+*     WHERE material = @lt_bom-idnrk
+*       AND plant = @lt_bom-plant
+*       AND matlcompismarkedfordeletion <> 'X'
+*      INTO TABLE @DATA(lt_mfgord).
+*
+*    LOOP AT lt_mfgord INTO DATA(ls_mfgord).
+*      ls_reserve-material = ls_mfgord-material.
+*      ls_reserve-mrpplant = ls_mfgord-plant.
+*      ls_reserve-mrpelementopenquantity = ls_mfgord-requiredquantity - ls_mfgord-withdrawnquantity.
+*      ls_reserve-mrpelementavailyorrqmtdate = ls_mfgord-matlcomprequirementdate.
+*      ls_reserve-mrpelementcategory = 'AR'.
+*      IF ls_reserve-mrpelementopenquantity <> 0.
+*        ls_reserve-mrpelementopenquantity = abs( ls_reserve-mrpelementopenquantity ).
+*        APPEND ls_reserve TO lt_require.
+*        CLEAR: ls_reserve.
+*      ENDIF.
+*    ENDLOOP.
 
 * 2.14 出荷計画取得
     lt_bom_tmp[] = lt_bom[].
-    CLEAR: lv_count.
+
     SORT lt_bom_tmp BY plant idnrk.
     IF lt_bom_tmp IS NOT INITIAL.
       SELECT product,
@@ -816,8 +1026,8 @@ CLASS zcl_productionplan IMPLEMENTATION.
         iv_method      = if_web_http_client=>get
         iv_format      = 'json'
       IMPORTING
-        ev_status_code = DATA(lv_stat_code)
-        ev_response    = DATA(lv_resbody_api) ).
+        ev_status_code = lv_stat_code
+        ev_response    = lv_resbody_api ).
     /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
                                CHANGING data = ls_res_ecn ).
     IF lv_stat_code = '200'

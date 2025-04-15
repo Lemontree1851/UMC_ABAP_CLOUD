@@ -46,7 +46,7 @@ CLASS zcl_fixedasset_cal IMPLEMENTATION.
         fixedasset              TYPE  i_glaccountlineitem-fixedasset,
         debitamountincocodecrcy TYPE  i_glaccountlineitem-debitamountincocodecrcy,
         companycodecurrency     TYPE  i_glaccountlineitem-companycodecurrency,
-
+        quantity                TYPE  i_glaccountlineitem-quantity,
       END OF ty_sum,
       tt_results1 TYPE STANDARD TABLE OF ty_results1 WITH DEFAULT KEY,
       BEGIN OF ty_d1,
@@ -174,6 +174,7 @@ CLASS zcl_fixedasset_cal IMPLEMENTATION.
 
           <fs_original_data>-originalacquisitionamount = ls_glaccountlineitem-debitamountincocodecrcy.
           <fs_original_data>-originalacquisitioncurrency = ls_glaccountlineitem-companycodecurrency.
+          <fs_original_data>-quantity = ls_glaccountlineitem-quantity.
         ENDIF.
 *        <fs_original_data>-barcode = <fs_original_data>-companycode && ';' &&  <fs_original_data>-masterfixedasset && ';' && <fs_original_data>-fixedasset && ';' .
 *        <fs_original_data>-barcode = <fs_original_data>-barcode && <fs_original_data>-inventorynote && ';' && <fs_original_data>-fixedassetdescription && ';' &&  <fs_original_data>-fixedassetexternalid && ';' && <fs_original_data>-inventory && ';' .
@@ -187,7 +188,7 @@ CLASS zcl_fixedasset_cal IMPLEMENTATION.
   masterfixedasset = <fs_original_data>-masterfixedasset fixedasset = <fs_original_data>-fixedasset BINARY SEARCH.
         IF sy-subrc = 0.
 
-          <fs_original_data>-quantity = ls_glaccountlineitem1-quantity.
+          "<fs_original_data>-quantity = ls_glaccountlineitem1-quantity.
           <fs_original_data>-baseunit = ls_glaccountlineitem1-baseunit.
         ENDIF.
       ENDLOOP.

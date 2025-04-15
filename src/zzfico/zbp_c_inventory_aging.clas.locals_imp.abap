@@ -73,8 +73,8 @@ CLASS lhc_inventoryaging DEFINITION INHERITING FROM cl_abap_behavior_handler.
       END OF ty_receipt,
 
       BEGIN OF ty_qc_vendor,
-        calendaryear        TYPE    ztfi_1004-calendaryear,
-        calendarmonth       TYPE    ztfi_1004-calendarmonth,
+        calendaryear        TYPE ztfi_1004-calendaryear,
+        calendarmonth       TYPE ztfi_1004-calendarmonth,
         plant               TYPE i_materialdocumentitem_2-plant,
         material            TYPE i_materialdocumentitem_2-material,
         postingdate         TYPE i_materialdocumentitem_2-postingdate,
@@ -377,10 +377,10 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
          AND material = @lt_productplantbasic-product
          AND ledger = @lv_ledger
          AND invtryvalnspecialstocktype <> @lc_invspecialstocktype_t
-         AND invtryvalnspecialstocktype <> @lc_invspecialstocktype_k
+*         AND invtryvalnspecialstocktype <> @lc_invspecialstocktype_k
          AND invtryvalnspecialstocktype <> @lc_invspecialstocktype_e
          AND valuationquantity <> 0
-         AND amountincompanycodecurrency <> 0
+*         AND amountincompanycodecurrency <> 0
         INTO TABLE @lt_inventoryamtbyfsclperd.
 
       LOOP AT lt_inventoryamtbyfsclperd INTO DATA(ls_inventoryamtbyfsclperd).
@@ -467,11 +467,12 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
            FOR ALL ENTRIES IN @lt_productplantbasic_zroh
          WHERE a~plant = @lt_productplantbasic_zroh-valuationarea
            AND a~material = @lt_productplantbasic_zroh-product
-           AND b~companycode = @lv_companycode
            AND a~purchasinghistorycategory = @lc_purhistorycategory_q
+           AND a~debitcreditcode = @lc_debitcreditcode_s
            AND a~postingdate <= @lv_fiscalperiodenddate
            AND a~purordamountincompanycodecrcy <> 0
-           AND b~fiscalyear = @lv_fiscalperiodstartdate+0(4)
+           AND b~companycode = @lv_companycode
+           AND b~fiscalyear = @lv_fiscalyear "lv_fiscalperiodstartdate+0(4)
            AND b~reversedocument = @space
            AND b~postingdate BETWEEN @lv_fiscalperiodstartdate AND @lv_fiscalperiodenddate
           INTO TABLE @DATA(lt_purchaseorderhistorydex_tmp).
@@ -499,6 +500,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
              AND purchasinghistorydocument = @lt_purchaseorderhistorydex_tmp-referencedocument
              AND plant = @lt_purchaseorderhistorydex_tmp-plant
              AND material = @lt_purchaseorderhistorydex_tmp-material
+             AND debitcreditcode = @lc_debitcreditcode_s
             INTO TABLE @DATA(lt_purchaseorderhistorydex).
         ENDIF.
       ENDIF.
@@ -656,7 +658,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
            AND goodsmovementtype IN @lr_mvtype
 *           AND inventoryspecialstocktype = @space
            AND inventoryspecialstocktype <> @lc_invspecialstocktype_t
-           AND inventoryspecialstocktype <> @lc_invspecialstocktype_k
+*           AND inventoryspecialstocktype <> @lc_invspecialstocktype_k
            AND inventoryspecialstocktype <> @lc_invspecialstocktype_e
            AND postingdate IN @lr_postingdate
           INTO TABLE @lt_materialdocumentitem.
@@ -1843,8 +1845,14 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
 
             ls_ztfi_1019_db-qty = lv_qty.
 
-            lv_value = ( lv_fiscalperiodenddate - ls_receipt-postingdate ) / 30.
-            lv_age = trunc( lv_value ) + 1.
+*            lv_value = ( lv_fiscalperiodenddate - ls_receipt-postingdate ) / 30.
+*            lv_age = trunc( lv_value ) + 1.
+
+            DATA(lv_months) = zzcl_common_utils=>months_between_two_dates( EXPORTING iv_date_from = ls_receipt-postingdate
+                                                                                     iv_date_to   = lv_fiscalperiodenddate ).
+
+            "月份差值，需要包含起始日期的月份
+            lv_age = lv_months + 1.
 
             IF lv_age > lc_maxage_36.
               lv_age = lc_maxage_36.
@@ -1884,8 +1892,14 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
 
               ls_ztfi_1019_db-qty = lv_qty.
 
-              lv_value = ( lv_fiscalperiodenddate - ls_receipt-postingdate ) / 30.
-              lv_age = trunc( lv_value ) + 1.
+*              lv_value = ( lv_fiscalperiodenddate - ls_receipt-postingdate ) / 30.
+*              lv_age = trunc( lv_value ) + 1.
+
+              lv_months = zzcl_common_utils=>months_between_two_dates( EXPORTING iv_date_from = ls_receipt-postingdate
+                                                                                 iv_date_to   = lv_fiscalperiodenddate ).
+
+              "月份差值，需要包含起始日期的月份
+              lv_age = lv_months + 1.
 
               IF lv_age > lc_maxage_36.
                 lv_age = lc_maxage_36.
@@ -1964,18 +1978,18 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         ENDIF.
 
         "Read data of root product
-        READ TABLE lt_finalproductinfo TRANSPORTING NO FIELDS WITH KEY product = <fs_ztfi_1019_db>-product
-                                                                       plant = <fs_ztfi_1019_db>-plant
-                                                              BINARY SEARCH.
+        READ TABLE lt_finalproductinfo into ls_finalproductinfo WITH KEY product = <fs_ztfi_1019_db>-product
+                                                                         plant = <fs_ztfi_1019_db>-plant
+                                                                BINARY SEARCH.
         IF sy-subrc = 0.
           "Read data of billing document item
-          READ TABLE lt_billingdocumentitem_final TRANSPORTING NO FIELDS WITH KEY product = <fs_ztfi_1019_db>-product
-                                                                                  plant = <fs_ztfi_1019_db>-plant
+          READ TABLE lt_billingdocumentitem_final TRANSPORTING NO FIELDS WITH KEY product = ls_finalproductinfo-material
+                                                                                  plant = ls_finalproductinfo-plant
                                                                               BINARY SEARCH.
           IF sy-subrc = 0.
             LOOP AT lt_billingdocumentitem_final INTO DATA(ls_billingdocumentitem_final) FROM sy-tabix.
-              IF ls_billingdocumentitem_final-product <> <fs_ztfi_1019_db>-product
-              OR ls_billingdocumentitem_final-plant <> <fs_ztfi_1019_db>-plant.
+              IF ls_billingdocumentitem_final-product <> ls_finalproductinfo-material
+              OR ls_billingdocumentitem_final-plant <> ls_finalproductinfo-plant.
                 EXIT.
               ENDIF.
 

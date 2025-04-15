@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_mfgorder_002 IMPLEMENTATION.
+CLASS ZCL_HTTP_MFGORDER_002 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.

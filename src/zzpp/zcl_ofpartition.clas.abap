@@ -25,7 +25,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_OFPARTITION IMPLEMENTATION.
+CLASS zcl_ofpartition IMPLEMENTATION.
 
 
   METHOD get_process_date_range.
@@ -265,17 +265,16 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
         DATA date_index TYPE i.
         DATA the_last_month(6) TYPE n.
         DATA lv_validend(7) TYPE c.
-        data lv_splitdate type datum.
+        DATA lv_splitdate TYPE datum.
         "分割起始日期
         DATA(lv_splitstartdate) = CONV datum( lv_splitstart && '01' ).
         "分割结束日期
         DATA(lv_splitenddate) = zzcl_common_utils=>get_enddate_of_month( lv_splitend && '01' ).
 
         "获取非工作日
-        SELECT
-          *
-        FROM ztpp_1018
-        INTO TABLE @DATA(lt_factorycalendar).
+        SELECT *
+          FROM ztpp_1018
+          INTO TABLE @DATA(lt_factorycalendar).         "#EC CI_NOWHERE
         SORT lt_factorycalendar BY plant holiday_date.
         "确定分割范围内哪些日期需要分配数量
         LOOP AT lt_ofsplitrule INTO DATA(ls_ofsplitrule).
@@ -295,7 +294,7 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
                   holiday_date = lv_splitdate BINARY SEARCH.
                 IF sy-subrc = 0.
                   ls_split_date-splitdate = ls_factorycalendar-next_workday.
-                else.
+                ELSE.
                   ls_split_date-splitdate = lv_splitdate.
                 ENDIF.
                 "如果日期已经超过了要分割的区间则不用处理
@@ -322,7 +321,7 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
                   holiday_date = lv_splitdate BINARY SEARCH.
                 IF sy-subrc = 0.
                   ls_split_date-splitdate = ls_factorycalendar-next_workday.
-                else.
+                ELSE.
                   ls_split_date-splitdate = lv_splitdate.
                 ENDIF.
                 "如果日期已经超过了要分割的区间则不用处理
@@ -339,7 +338,7 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
                   holiday_date = lv_splitdate BINARY SEARCH.
                 IF sy-subrc = 0.
                   ls_split_date-splitdate = ls_factorycalendar-next_workday.
-                else.
+                ELSE.
                   ls_split_date-splitdate = lv_splitdate.
                 ENDIF.
                 "如果日期已经超过了要分割的区间则不用处理
@@ -356,7 +355,7 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
                   holiday_date = lv_splitdate BINARY SEARCH.
                 IF sy-subrc = 0.
                   ls_split_date-splitdate = ls_factorycalendar-next_workday.
-                else.
+                ELSE.
                   ls_split_date-splitdate = lv_splitdate.
                 ENDIF.
                 "如果日期已经超过了要分割的区间则不用处理
@@ -439,7 +438,7 @@ CLASS ZCL_OFPARTITION IMPLEMENTATION.
                   holiday_date = lv_splitdate BINARY SEARCH.
                 IF sy-subrc = 0.
                   ls_split_date-splitdate = ls_factorycalendar-next_workday.
-                else.
+                ELSE.
                   ls_split_date-splitdate = lv_splitdate.
                 ENDIF.
                 lv_work_day = ls_split_date-splitdate.

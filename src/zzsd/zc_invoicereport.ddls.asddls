@@ -52,6 +52,8 @@ define root view entity ZC_INVOICEREPORT
           _BC1001.zvalue6 as TheCompanyFaxNumber,
           _BC1001.zvalue7 as TheCompanyName,
 
+          TheCompanyCity, // ADD BY XINLEI XU 2025/04/03
+
           //  汇款地址 vbrk tx05 长文本
           // 效率太低，且报表不展示,只打印时获取，考虑在调用打印的actin返回数据之后再获取一下文本
           @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_GET_INVOICEREPORT_LONGTEXT'

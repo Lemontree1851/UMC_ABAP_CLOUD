@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PURCHASEORDERAPI IMPLEMENTATION.
+CLASS zcl_purchaseorderapi IMPLEMENTATION.
 
 
   METHOD if_sadl_exit_calc_element_read~calculate.
@@ -69,7 +69,10 @@ CLASS ZCL_PURCHASEORDERAPI IMPLEMENTATION.
                                  CHANGING  data = ls_workflow_overview ).
 
       DATA(lt_workflow_overview) = ls_workflow_overview-d-results.
-      SORT lt_workflow_overview BY sapbusinessobjectnodekey1 workflowinternalid.
+*&--MOD BEGIN BY XINLEI XU 2025/04/10
+*      SORT lt_workflow_overview BY sapbusinessobjectnodekey1 workflowinternalid.
+      SORT lt_workflow_overview BY sapbusinessobjectnodekey1 workflowinternalid DESCENDING.
+*&--MOD END BY XINLEI XU 2025/04/10
     ENDIF.
 
     " Get WorkflowStatusDetails

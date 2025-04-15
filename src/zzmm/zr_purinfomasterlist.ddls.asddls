@@ -34,7 +34,8 @@ define root custom entity ZR_PURINFOMASTERLIST
       Ztype2                         : abap.char(1);
       ProductName                    : maktx;
       ProductGroup                   : matkl;
-      @Semantics.amount.currencyCode : 'Currency_plnt'
+      // @Semantics.amount.currencyCode : 'Currency_plnt'
+      @Semantics.amount.currencyCode : 'Currency_record' // MOD BY XINLEI XU 2025/04/07
       NetPriceAmount                 : abap.curr(13,2);
       @Semantics.currencyCode        : true
       Currency_plnt                  : waers;
@@ -62,7 +63,8 @@ define root custom entity ZR_PURINFOMASTERLIST
       Taxprice                       : abap.dec(15,3);
       @Semantics.amount.currencyCode : 'Currency_standard'
       UnitPrice_plnt                 : abap.curr(15,2);
-      UnitPrice_standard             : abap.dec(15,3);
+      @Semantics.amount.currencyCode : 'Currency_standard'
+      UnitPrice_standard             : abap.curr(15,2);
       PriceUnitQty                   : abap.dec(5);
       Currency_standard              : waers;
       orderpriceunittoorderunitnmrtr : abap.dec(5,0);
@@ -97,4 +99,6 @@ define root custom entity ZR_PURINFOMASTERLIST
       @Consumption.filter.hidden     : true
       @UI.hidden                     : true
       UserEmail                      : abap.char(241); // ADD BY XINLEI XU 2025/03/17
+
+      Currency_record                : waers; // ADD BY XINLEI XU 2025/04/07
 }

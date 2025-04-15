@@ -8,20 +8,21 @@
         } }
 define custom entity ZR_PODATAANALYSIS
 {
+  key UUID                          : sysuuid_x16;
       @UI                           : { lineItem: [ { position: 90, label: '購買発注番号' } ], selectionField: [ { position: 30 } ] }
       @Consumption                  : {valueHelpDefinition: [{ entity:{ element: 'PurchaseOrder', name: 'ZC_PurchaseOrderAPI'}}],
                   filter            : { multipleSelections: true } }
       @EndUserText.label            : '購買発注番号'
-  key PurchaseOrder                 : abap.char(10);
+      PurchaseOrder                 : abap.char(10);
 
       @UI                           : { lineItem: [ { position: 100, label: '行明細番号 ' } ]}
       @EndUserText.label            : '行明細番号 '
-  key PurchaseOrderItem             : abap.char(5);
+      PurchaseOrderItem             : abap.char(5);
 
       @UI                           : { lineItem: [ { position: 900, label: '行明細番号 ' } ]}
       @EndUserText.label            : '行明細番号 '
       @UI.hidden                    : true
-  key SequentialNmbrOfSuplrConf     : abap.numc(4);
+      SequentialNmbrOfSuplrConf     : abap.numc(4);
 
       @UI                           : { lineItem: [ { position: 10, label: '伝票タイプ' } ]}
       @EndUserText.label            : '伝票タイプ'
@@ -350,4 +351,9 @@ define custom entity ZR_PODATAANALYSIS
       @EndUserText.label            : 'PurchaseOrderItemCategory'
       @UI.hidden                    : true
       PurchaseOrderItemCategory     : abap.char(1);
+
+      // ADD BEGIN BY XINLEI XU 2025/04/09
+      FromMRPTable                  : abap_boolean; // 同期済のMRPデータ使用
+      DynamicData                   : abap.string;
+      // ADD END BY XINLEI XU 2025/04/09
 }

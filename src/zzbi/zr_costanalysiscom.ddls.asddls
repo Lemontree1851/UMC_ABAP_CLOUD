@@ -20,10 +20,16 @@ define root custom entity ZR_COSTANALYSISCOM
       @Consumption.valueHelpDefinition: [ { entity: { name: 'ZC_CustomerVH', element: 'Customer' } } ]
       Customer            : kunnr;
       CustomerName        : abap.char( 40 );
-      @Semantics          : { amount : {currencyCode: 'Currency'} }
-      EstimatedPrice      : abap.curr(15,2);
-      @Semantics          : { amount : {currencyCode: 'Currency'} }
-      FinalPrice          : abap.curr(15,2);
+
+      // MOD BEGIN BY XINLEI XU 2025/04/10
+      //      @Semantics          : { amount : {currencyCode: 'Currency'} }
+      //      EstimatedPrice      : abap.curr(15,2);
+      //      @Semantics          : { amount : {currencyCode: 'Currency'} }
+      //      FinalPrice          : abap.curr(15,2);
+      EstimatedPrice      : abap.dec(15,2);
+      FinalPrice          : abap.dec(15,2);
+      // MOD END BY XINLEI XU 2025/04/10
+
       FinalPostingDate    : abap.char( 8 );
       FinalSupplier       : abap.char( 10 );
       FixedSupplier       : abap.char( 40 );
@@ -38,4 +44,10 @@ define root custom entity ZR_COSTANALYSISCOM
       sales_d_no          : abap.char(25);
       profitcenter        : abap.char(20);
       profitcentername    : abap.char(40);
+
+      // ADD BEGIN BY XINLEI XU 2025/04/10
+      FinalSupplierName   : abap.char(80);
+      FinalPurchaseOrder  : ebeln;
+      FixedSupplierName   : abap.char(1000);
+      // ADD END BY XINLEI XU 2025/04/10
 }

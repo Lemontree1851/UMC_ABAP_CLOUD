@@ -29,7 +29,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BI006_REPORT IMPLEMENTATION.
+CLASS zcl_bi006_report IMPLEMENTATION.
 
 
   METHOD extract_filter.
@@ -39,7 +39,6 @@ CLASS ZCL_BI006_REPORT IMPLEMENTATION.
           ls_fiscalyear   TYPE LINE OF ty_t_fiscalyear,
           ls_fiscalperiod TYPE LINE OF ty_t_fiscalperiod,
           ls_plant        TYPE LINE OF ty_t_plant.
-
 
     DATA(lt_filter_cond) = io_request->get_filter( )->get_as_ranges( ).
 
@@ -103,7 +102,6 @@ CLASS ZCL_BI006_REPORT IMPLEMENTATION.
       lr_fiscalyear   TYPE ty_t_fiscalyear,
       lr_fiscalperiod TYPE ty_t_fiscalperiod,
       lr_plant        TYPE ty_t_plant,
-
       lt_data         TYPE STANDARD TABLE OF zi_bi006_report WITH DEFAULT KEY.
 
     "Step 1 Extract Filter
@@ -122,15 +120,25 @@ CLASS ZCL_BI006_REPORT IMPLEMENTATION.
     ENDTRY.
 
     "Step 2. Get Data
-    DATA(lo_data_handler) = NEW zcl_bi006_data( ).
-    lo_data_handler->get_data( EXPORTING ir_companycode = lr_companycode
-                                         ir_fiscalyear = lr_fiscalyear
-                                         ir_fiscalperiod = lr_fiscalperiod
-                                         ir_plant = lr_plant
-                                         ir_product = lr_product
-                                         ir_customer = lr_customer
-                               IMPORTING et_data = lt_data
-                             ).
+*&--MOD BEGIN BY XINLEI XU 2025/04/03 直接从JOB结果表中取值
+*    DATA(lo_data_handler) = NEW zcl_bi006_data( ).
+*    lo_data_handler->get_data( EXPORTING ir_companycode = lr_companycode
+*                                         ir_fiscalyear = lr_fiscalyear
+*                                         ir_fiscalperiod = lr_fiscalperiod
+*                                         ir_plant = lr_plant
+*                                         ir_product = lr_product
+*                                         ir_customer = lr_customer
+*                               IMPORTING et_data = lt_data ).
+    SELECT *
+      FROM zi_bi006_report_job WITH PRIVILEGED ACCESS
+     WHERE companycode IN @lr_companycode
+       AND fiscalyear IN @lr_fiscalyear
+       AND fiscalperiod IN @lr_fiscalperiod
+       AND plant IN @lr_plant
+       AND product IN @lr_product
+       AND customer IN @lr_customer
+      INTO CORRESPONDING FIELDS OF TABLE @lt_data.
+*&--MOD END BY XINLEI XU 2025/04/03
 
     "Step 3. Sorting, Paging
     io_response->set_total_number_of_records( lines( lt_data ) ).
@@ -150,5 +158,6 @@ CLASS ZCL_BI006_REPORT IMPLEMENTATION.
         ct_data   = lt_data ).
 
     io_response->set_data( lt_data ).
+
   ENDMETHOD.
 ENDCLASS.

@@ -252,7 +252,8 @@ CLASS zcl_query_inventoryrequirement IMPLEMENTATION.
                 DATA(lv_showdemand) = ls_filter_cond-range[ 1 ]-low.
 *&--ADD BEGIN BY XINLEI XU 2025/03/14
               WHEN 'FROMMRPTABLE'.
-                DATA(lv_frommrptable) = ls_filter_cond-range[ 1 ]-low.
+                DATA lv_frommrptable TYPE zc_inventoryrequirement-frommrptable.
+                lv_frommrptable = ls_filter_cond-range[ 1 ]-low.
 *&--ADD END BY XINLEI XU 2025/03/14
               WHEN OTHERS.
             ENDCASE.

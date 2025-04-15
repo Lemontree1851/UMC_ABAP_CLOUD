@@ -55,6 +55,7 @@ CLASS zcl_http_material_001 IMPLEMENTATION.
 
     DATA:
       lo_root_exc   TYPE REF TO cx_root,
+      lr_product    TYPE RANGE OF matnr,
       ls_req        TYPE ty_req,
       ls_res        TYPE ty_res,
       ls_material   TYPE ty_material,
@@ -70,7 +71,11 @@ CLASS zcl_http_material_001 IMPLEMENTATION.
       lc_msgid      TYPE string VALUE 'ZPP_001',
       lc_msgty      TYPE string VALUE 'E',
       lc_alpha_in   TYPE string VALUE 'IN',
-      lc_alpha_out  TYPE string VALUE 'OUT'.
+      lc_alpha_out  TYPE string VALUE 'OUT',
+      lc_asterisk   TYPE string VALUE '*',
+      lc_sign_i     TYPE c LENGTH 1 VALUE 'I',
+      lc_option_eq  TYPE c LENGTH 2 VALUE 'EQ',
+      lc_option_cp  TYPE c LENGTH 2 VALUE 'CP'.
 
     GET TIME STAMP FIELD DATA(lv_timestamp_start).
 
@@ -120,10 +125,17 @@ CLASS zcl_http_material_001 IMPLEMENTATION.
         ENDIF.
 
         IF lv_product IS NOT INITIAL.
+          FIND lc_asterisk IN lv_product.
+          IF sy-subrc = 0.
+            lr_product = VALUE #( sign = lc_sign_i option = lc_option_cp ( low = lv_product ) ).
+          ELSE.
+            lr_product = VALUE #( sign = lc_sign_i option = lc_option_eq ( low = lv_product ) ).
+          ENDIF.
+
           "Check product and plant of input parameter must be existent
           SELECT COUNT(*)
             FROM i_productplantbasic WITH PRIVILEGED ACCESS
-           WHERE product = @lv_product
+           WHERE product IN @lr_product
              AND plant = @lv_plant.
           IF sy-subrc <> 0.
             "プラント&1品目&2存在しません！
@@ -178,8 +190,8 @@ CLASS zcl_http_material_001 IMPLEMENTATION.
             LEFT OUTER JOIN i_productvaluationbasic WITH PRIVILEGED ACCESS AS d
               ON d~product = a~product
              AND d~valuationarea = a~plant
-           WHERE a~product = @lv_product
-             AND a~plant = @lv_plant
+           WHERE a~plant = @lv_plant
+             AND a~product IN @lr_product
             INTO TABLE @DATA(lt_product).
         ELSE.
           "Obtain data of product

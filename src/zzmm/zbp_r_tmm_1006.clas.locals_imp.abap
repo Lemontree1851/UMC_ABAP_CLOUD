@@ -476,6 +476,56 @@ CLASS lhc_purchasereq IMPLEMENTATION.
               ENDIF.
             ENDIF.
           ENDIF.
+
+*&--ADD BEGIN BY XINLEI XU 2025/04/07 CR#4358
+          CASE <record>-('AccountType').
+            WHEN 'A'.
+              " 勘定設定カテゴリはAですので、G/L勘定と資産番号を入力してください。
+              IF <record>-('GlAccount') IS INITIAL OR <record>-('AssetNo') IS INITIAL.
+                is_error = abap_true.
+                MESSAGE e037(zmm_001) WITH <record>-('AccountType') TEXT-020 INTO lv_msg.
+                lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
+              ENDIF.
+
+            WHEN 'F'.
+              " 勘定設定カテゴリはFですので、G/L勘定と指図番号を入力してください。
+              IF <record>-('GlAccount') IS INITIAL OR <record>-('OrderId') IS INITIAL.
+                is_error = abap_true.
+                MESSAGE e037(zmm_001) WITH <record>-('AccountType') TEXT-021 INTO lv_msg.
+                lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
+              ENDIF.
+
+            WHEN 'K' OR 'X'.
+              " 勘定設定カテゴリはK、Xですので、G/L勘定と原価センタを入力してください。
+              IF <record>-('GlAccount') IS INITIAL OR <record>-('CostCenter') IS INITIAL.
+                is_error = abap_true.
+                MESSAGE e037(zmm_001) WITH <record>-('AccountType') TEXT-022 INTO lv_msg.
+                lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
+              ENDIF.
+
+            WHEN 'P'.
+              " 勘定設定カテゴリはPですので、G/L勘定とWBS要素を入力してください。
+              IF <record>-('GlAccount') IS INITIAL OR <record>-('WbsElemnt') IS INITIAL.
+                is_error = abap_true.
+                MESSAGE e037(zmm_001) WITH <record>-('AccountType') TEXT-023 INTO lv_msg.
+                lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
+              ENDIF.
+
+            WHEN OTHERS.
+          ENDCASE.
+
+          IF <record>-('CompanyCode') = '1100' AND <record>-('OrderType') = 'ZB90' AND <record>-('ReturnItem') IS INITIAL.
+            is_error = abap_true.
+            MESSAGE e038(zmm_001) INTO lv_msg.
+            lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
+          ENDIF.
+
+          IF <record>-('CompanyCode') = '1400' AND <record>-('OrderType') = 'ZH90' AND <record>-('ReturnItem') IS INITIAL.
+            is_error = abap_true.
+            MESSAGE e038(zmm_001) INTO lv_msg.
+            lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
+          ENDIF.
+*&--ADD END BY XINLEI XU 2025/04/07 CR#4358
         ENDIF.
       ENDIF.
 

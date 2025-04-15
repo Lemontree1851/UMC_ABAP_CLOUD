@@ -66,11 +66,9 @@ CLASS ZCL_JOB_FACTORY_HOLIDAY IMPLEMENTATION.
       lt_pp1018 TYPE TABLE OF ztpp_1018,
       ls_pp1018 LIKE LINE OF lt_pp1018.
 
-
-    SELECT
-      plant
-    FROM i_plant WITH PRIVILEGED ACCESS
-    INTO TABLE @DATA(lt_plant).
+    SELECT plant
+      FROM i_plant WITH PRIVILEGED ACCESS
+      INTO TABLE @DATA(lt_plant)."#EC CI_NOWHERE
 
     LOOP AT lt_plant INTO DATA(ls_plant).
       lv_date = cl_abap_context_info=>get_system_date( ).

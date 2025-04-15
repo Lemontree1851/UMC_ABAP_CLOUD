@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
+CLASS zcl_paidpaycalculation IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -21,7 +21,10 @@ CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
     DATA:
       lv_fiscalyearperiod TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
       lv_poper            TYPE poper,
-      lv_rate(10)         TYPE p DECIMALS 2.
+      lv_rate(10)         TYPE p DECIMALS 2,
+      lv_length           TYPE i,
+      lv_length1          TYPE i,
+      lv_length2          TYPE i.
 
 * Get filter range
     TRY.
@@ -67,6 +70,16 @@ CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
           INTO TABLE @DATA(lt_1010).
         IF sy-subrc = 0.
           LOOP AT lt_1010 INTO DATA(ls_1010).
+            lv_length = strlen( ls_1010-product ).
+            lv_length1 = lv_length - 1.
+            lv_length2 = lv_length - 4.
+
+            IF ls_1010-product+lv_length1(1) = '2'
+           AND ( lv_length2 >= 0
+             AND ls_1010-product+lv_length2(1) = ':' ).
+            ELSE.
+              CONTINUE.
+            ENDIF.
             ls_output-ztype = lv_ztype.
             ls_output-companycode = ls_1010-companycode.
             ls_output-fiscalyear = ls_1010-fiscalyear.

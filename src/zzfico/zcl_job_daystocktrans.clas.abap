@@ -71,7 +71,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
+CLASS zcl_job_daystocktrans IMPLEMENTATION.
 
 
   METHOD add_message_to_log.
@@ -192,7 +192,7 @@ CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
 
 *   会社コード Parameterの存在Check
     SELECT SINGLE currency
-      FROM i_companycode
+      FROM i_companycode WITH PRIVILEGED ACCESS
      WHERE companycode IN @lr_companycode
      INTO @DATA(lv_currency).
 
@@ -208,7 +208,7 @@ CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
 
 *   プラント Parameterの存在Check
     SELECT SINGLE COUNT( * )
-      FROM i_plant
+      FROM i_plant WITH PRIVILEGED ACCESS
      WHERE plant IN @lr_plant.
     IF sy-subrc <> 0.
       CLEAR lv_msg.

@@ -178,11 +178,12 @@ CLASS lhc_zr_tmm_1011 IMPLEMENTATION.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
       ENDIF.
 
-      IF <lfs_data>-storagelocation IS INITIAL.
-        MESSAGE e009(zmm_020) INTO lv_msg.
-        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
-      ENDIF.
-
+*&--DEL BEGIN BY XINLEI XU 2025/04/10
+*      IF <lfs_data>-storagelocation IS INITIAL.
+*        MESSAGE e009(zmm_020) INTO lv_msg.
+*        lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
+*      ENDIF.
+*&--DEL END BY XINLEI XU 2025/04/10
 
       IF lv_message IS NOT INITIAL.
         <lfs_data>-status = 'E'.

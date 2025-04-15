@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
+CLASS zcl_paidpaydocument IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -46,7 +46,9 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
       lv_poper            TYPE poper,
       lv_year             TYPE c LENGTH 4,
       lv_month            TYPE monat,
-      lv_length           TYPE i.
+      lv_length           TYPE i,
+      lv_length1          TYPE i,
+      lv_length2          TYPE i.
 
 * Get filter range
     TRY.
@@ -147,22 +149,39 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
          WHERE plant IN @lr_plant
           INTO TABLE @DATA(lt_product).
 
-        "Filter 6th = 'D'
+        "Filter 品目コードの最後4桁固定「：**2」
         LOOP AT lt_product INTO DATA(ls_product).
-*          DATA(lv_matnr) = zzcl_common_utils=>conversion_matn1(
-*                                                EXPORTING iv_alpha = 'OUT'
-*                                                          iv_input = ls_product-product ).
-*          IF lv_matnr+0(5) <> 'D'.
-*            DELETE lt_product.
-*            CONTINUE.
-*          ENDIF.
           lv_length = strlen( ls_product-product ).
-          lv_length = lv_length - 1.
-          IF ls_product-product+lv_length(1) <> '2'.
+          lv_length1 = lv_length - 1.
+          lv_length2 = lv_length - 4.
+
+          IF ls_product-product+lv_length1(1) = '2'
+         AND ( lv_length2 >= 0
+           AND ls_product-product+lv_length2(1) = ':' ).
+          ELSE.
             DELETE lt_product.
             CONTINUE.
           ENDIF.
         ENDLOOP.
+
+        IF lt_product IS NOT INITIAL.
+          SELECT product
+            FROM i_product
+            FOR ALL ENTRIES IN @lt_product
+           WHERE product = @lt_product-product
+             AND producttype = 'ZROH'
+            INTO TABLE @DATA(lt_mara).
+
+          SORT lt_mara BY product.
+          LOOP AT lt_product INTO ls_product.
+            READ TABLE lt_mara WITH KEY product = ls_product-product
+                               BINARY SEARCH TRANSPORTING NO FIELDS.
+            IF sy-subrc <> 0.
+              DELETE lt_product.
+              CONTINUE.
+            ENDIF.
+          ENDLOOP.
+        ENDIF.
 
 * 2.03 Get last 2 characters of mrpresponsible
         IF lt_product IS NOT INITIAL.
@@ -171,21 +190,23 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
                  mrpresponsible
             FROM i_productplantbasic WITH PRIVILEGED ACCESS
             FOR ALL ENTRIES IN @lt_product
-           WHERE plant = @lt_product-plant
+           WHERE plant IN @lr_plant
+             AND product = @lt_product-product
             INTO TABLE @lt_mrp.
-
-          LOOP AT lt_mrp ASSIGNING FIELD-SYMBOL(<lfs_mrp>).
-            DATA(lv_len) = strlen( <lfs_mrp>-mrpresponsible ) - 2.
-            IF lv_len < 0.
-              CONTINUE.
-            ENDIF.
-            lrs_sort-sign = 'I'.
-            lrs_sort-option = 'EQ'.
-            lrs_sort-low = <lfs_mrp>-mrpresponsible+lv_len(2).
-            APPEND lrs_sort TO lr_sort.
-            CLEAR: lrs_sort.
-          ENDLOOP.
         ENDIF.
+
+        LOOP AT lt_mrp ASSIGNING FIELD-SYMBOL(<lfs_mrp>).
+          DATA(lv_len) = strlen( <lfs_mrp>-mrpresponsible ) - 2.
+          IF lv_len < 0.
+            CONTINUE.
+          ENDIF.
+          lrs_sort-sign = 'I'.
+          lrs_sort-option = 'EQ'.
+          lrs_sort-low = <lfs_mrp>-mrpresponsible+lv_len(2).
+          APPEND lrs_sort TO lr_sort.
+          CLEAR: lrs_sort.
+        ENDLOOP.
+
         IF lr_sort IS NOT INITIAL.
           SELECT businesspartner,
                  businesspartnername,

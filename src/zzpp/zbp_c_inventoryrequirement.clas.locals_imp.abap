@@ -147,7 +147,7 @@ CLASS lhc_zc_inventoryrequirement IMPLEMENTATION.
           ls_result-scheduleend = ls_schedule-schedule_end.
         ENDIF.
       ELSE.
-        SELECT CAST( MAX( last_changed_at ) AS CHAR ) FROM ztbc_1020 INTO @DATA(lv_tstmpl).
+        SELECT CAST( MAX( last_changed_at ) AS CHAR ) FROM ztbc_1020 INTO @DATA(lv_tstmpl). "#EC CI_NOWHERE
         IF lv_tstmpl IS NOT INITIAL.
           ls_result-scheduleend = lv_tstmpl+0(14).
         ENDIF.

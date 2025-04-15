@@ -210,8 +210,13 @@
      <SPRSL>E</SPRSL>
      <ARBGB>ZBC_001</ARBGB>
      <MSGNR>033</MSGNR>
-     <TEXT>
-キーが同じインスタンスはすでに登録されています</TEXT>
+     <TEXT> キーが同じインスタンスはすでに登録されています</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZBC_001</ARBGB>
+     <MSGNR>034</MSGNR>
+     <TEXT>No authority for shipping point &amp;1.</TEXT>
     </T100>
    </T100>
   </asx:values>

@@ -29,7 +29,7 @@ define behavior for ZC_TBC1016 alias AccessBtn
 define behavior for ZC_TBC1007_1 alias User
 {
   //  use update;
-  //  use delete;
+  use delete;
 
   use association _Role { with draft; }
 }

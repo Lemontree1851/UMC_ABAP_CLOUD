@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
+CLASS zcl_query_salesdocumentlist IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -346,7 +346,8 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
 
            b~orderrelatedbillingstatus,
            b~requestedquantityinbaseunit,
-           b~transitplant
+           b~transitplant,
+           a~billingcompanycode
       FROM i_salesdocument WITH PRIVILEGED ACCESS AS a
      INNER JOIN i_salesdocumentitem WITH PRIVILEGED ACCESS AS b
         ON b~salesdocument = a~salesdocument
@@ -474,6 +475,8 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
                a~billingdocumentitem,
                a~referencesddocument,
                a~referencesddocumentitem,
+               a~salesdocument,
+               a~salesdocumentitem,
                a~billingquantityinbaseunit
           FROM i_billingdocumentitem WITH PRIVILEGED ACCESS AS a
          INNER JOIN i_billingdocument WITH PRIVILEGED ACCESS AS b
@@ -481,6 +484,8 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
            FOR ALL ENTRIES IN @lt_deliverydocumentitem
          WHERE a~referencesddocument = @lt_deliverydocumentitem-deliverydocument
            AND a~referencesddocumentitem = @lt_deliverydocumentitem-deliverydocumentitem
+           AND a~salesdocument = @lt_deliverydocumentitem-referencesddocument
+           AND a~salesdocumentitem = @lt_deliverydocumentitem-referencesddocumentitem
            AND b~billingdocumentiscancelled = @abap_false
            AND b~cancelledbillingdocument = @abap_false
           INTO TABLE @DATA(lt_billingdocumentitem_dn). "#EC CI_NO_TRANSFORM
@@ -491,6 +496,7 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
                a~materialdocumentitem,
                a~goodsmovementtype,
                a~debitcreditcode,
+               a~companycode,
                a~deliverydocument,
                a~deliverydocumentitem
           FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS AS a
@@ -531,9 +537,9 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
     SORT lt_salesdocitempricingelement BY salesdocument salesdocumentitem conditiontype.
     SORT lt_deliverydocumentitem BY referencesddocument referencesddocumentitem goodsmovementstatus goodsmovementtype.
     SORT lt_deliverydocumentitem_bs BY referencesddocument referencesddocumentitem deliveryrelatedbillingstatus.
-    SORT lt_billingdocumentitem_dn BY referencesddocument referencesddocumentitem.
+    SORT lt_billingdocumentitem_dn BY referencesddocument referencesddocumentitem salesdocument salesdocumentitem.
     SORT lt_billingdocumentitem_so BY salesdocument salesdocumentitem.
-    SORT lt_materialdocumentitem BY deliverydocument deliverydocumentitem goodsmovementtype debitcreditcode.
+    SORT lt_materialdocumentitem BY deliverydocument deliverydocumentitem goodsmovementtype debitcreditcode companycode.
 
     LOOP AT lt_salesdocumentitem INTO DATA(ls_salesdocumentitem).
       CLEAR ls_data.
@@ -767,11 +773,15 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
             "Read data of billing document item(DN billing)
             READ TABLE lt_billingdocumentitem_dn TRANSPORTING NO FIELDS WITH KEY referencesddocument = ls_deliverydocumentitem-deliverydocument
                                                                                  referencesddocumentitem = ls_deliverydocumentitem-deliverydocumentitem
+                                                                                 salesdocument = ls_deliverydocumentitem-referencesddocument
+                                                                                 salesdocumentitem = ls_deliverydocumentitem-referencesddocumentitem
                                                                         BINARY SEARCH.
             IF sy-subrc = 0.
               LOOP AT lt_billingdocumentitem_dn INTO DATA(ls_billingdocumentitem_dn) FROM sy-tabix.
                 IF ls_billingdocumentitem_dn-referencesddocument <> ls_deliverydocumentitem-deliverydocument
-                OR ls_billingdocumentitem_dn-referencesddocumentitem <> ls_deliverydocumentitem-deliverydocumentitem.
+                OR ls_billingdocumentitem_dn-referencesddocumentitem <> ls_deliverydocumentitem-deliverydocumentitem
+                OR ls_billingdocumentitem_dn-salesdocument <> ls_deliverydocumentitem-referencesddocument
+                OR ls_billingdocumentitem_dn-salesdocumentitem <> ls_deliverydocumentitem-referencesddocumentitem.
                   EXIT.
                 ENDIF.
 
@@ -822,6 +832,7 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
                                                                                    deliverydocumentitem = ls_deliverydocumentitem-deliverydocumentitem
                                                                                    goodsmovementtype = lsc_gmtype-b601
                                                                                    debitcreditcode = lsc_debitcreditcode-h
+                                                                                   companycode = ls_salesdocumentitem-billingcompanycode
                                                                           BINARY SEARCH.
                 IF sy-subrc = 0.
                   DATA(lv_flag_b601) = abap_true.
@@ -832,6 +843,7 @@ CLASS ZCL_QUERY_SALESDOCUMENTLIST IMPLEMENTATION.
                                                                                    deliverydocumentitem = ls_deliverydocumentitem-deliverydocumentitem
                                                                                    goodsmovementtype = lsc_gmtype-b687
                                                                                    debitcreditcode = lsc_debitcreditcode-h
+                                                                                   companycode = ls_salesdocumentitem-billingcompanycode
                                                                           BINARY SEARCH.
                 IF sy-subrc = 0.
                   DATA(lv_flag_b687) = abap_true.

@@ -150,7 +150,8 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
            d~maximumorderquantity,
            d~supplierconfirmationcontrolkey,
            d~taxcode,
-           d~currency AS currency_plnt,
+*           d~currency AS currency_plnt,
+           d~currency AS currency_record, " MOD BY XINLEI XU 2025/04/07
            d~netpriceamount,
            d~materialpriceunitqty,
            d~pricingdatecontrol,
@@ -369,7 +370,8 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
                conditionquantity,
                conditionratevalue,
                creationdate AS creationdate_2,
-               pricingscalebasis
+               pricingscalebasis,
+               conditioncurrency " ADD BY XINLEI XU 2025/04/07
         FROM i_purgprcgconditionrecord WITH PRIVILEGED ACCESS
          FOR ALL ENTRIES IN @lt_recdvalidity
        WHERE conditionrecord = @lt_recdvalidity-conditionrecord
@@ -383,7 +385,8 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
                conditionsequentialnumber,
                conditionscaleline,
                conditionratevalue,
-               conditionscalequantity
+               conditionscalequantity,
+               conditioncurrency  " ADD BY XINLEI XU 2025/04/07
           FROM i_purgprcgcndnrecordscale WITH PRIVILEGED ACCESS
            FOR ALL ENTRIES IN @lt_recdvalidity
          WHERE conditionrecord = @lt_recdvalidity-conditionrecord
@@ -412,10 +415,12 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
                                                                              valuationarea = ls_data-plant
                                                                              BINARY SEARCH.
       IF sy-subrc = 0.
-        ls_data-unitprice_plnt = zzcl_common_utils=>conversion_amount( iv_alpha    = zzcl_common_utils=>lc_alpha_in
-                                                                       iv_currency = ls_productvaluation-currency
-                                                                       iv_input    = ls_productvaluation-standardprice ).
-
+*&--MOD BEGIN BY XINLEI XU 2025/04/07 BUG Fixed
+*        ls_data-unitprice_plnt = zzcl_common_utils=>conversion_amount( iv_alpha    = zzcl_common_utils=>lc_alpha_in
+*                                                                       iv_currency = ls_productvaluation-currency
+*                                                                       iv_input    = ls_productvaluation-standardprice ).
+        ls_data-unitprice_plnt    = ls_productvaluation-standardprice.
+*&--MOD END BY XINLEI XU 2025/04/07 BUG Fixed
         ls_data-valuationclass    = ls_productvaluation-valuationclass.
         ls_data-priceunitqty      = ls_productvaluation-priceunitqty.
         ls_data-currency_standard = ls_productvaluation-currency.
@@ -495,6 +500,7 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
           IF sy-subrc = 0.
             ls_data-creationdate_2 = ls_conditionrecord-creationdate_2.
             ls_data-materialpriceunitqty = ls_conditionrecord-conditionquantity.
+            ls_data-currency_plnt = ls_conditionrecord-conditioncurrency. " ADD BY XINLEI XU 2025/04/07
 
             IF ls_conditionrecord-pricingscalebasis IS INITIAL.
               ls_data-conditionratevalue = ls_conditionrecord-conditionratevalue.
@@ -522,10 +528,17 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
                 ls_data-taxprice = 0.
               ENDIF.
 
-              lv_price = abs( ls_data-unitprice_standard - ls_data-standardpurchaseorderquantity ).
+*&--ADD BGIN BY XINLEI XU 2025/04/07
+              DATA(lv_unitprice_standard1) = zzcl_common_utils=>conversion_amount( iv_alpha    = zzcl_common_utils=>lc_alpha_out
+                                                                                   iv_currency = ls_data-Currency_standard
+                                                                                   iv_input    = ls_data-unitprice_standard ).
+*&--ADD END BY XINLEI XU 2025/04/07
+*              lv_price = abs( ls_data-unitprice_standard - ls_data-standardpurchaseorderquantity ).
+              lv_price = abs( lv_unitprice_standard1 - ls_data-standardpurchaseorderquantity ).
 
               IF lv_price IS NOT INITIAL AND ls_data-unitprice_standard IS NOT INITIAL.
-                lv_rate = lv_price / ls_data-unitprice_standard.
+*                lv_rate = lv_price / ls_data-unitprice_standard.
+                lv_rate = lv_price / lv_unitprice_standard1.
 
                 " 转换为百分比形式
                 lv_rate = lv_rate * 100.
@@ -551,6 +564,7 @@ CLASS zcl_purinfomasterlist IMPLEMENTATION.
               LOOP AT lt_recordscale INTO DATA(ls_recordscale) WHERE conditionrecord = ls_recdvalidity-conditionrecord.
                 ls_data-conditionscalequantity = ls_recordscale-conditionscalequantity.
                 ls_data-conditionratevalue = ls_recordscale-conditionratevalue.
+                ls_data-currency_plnt = ls_recordscale-conditioncurrency. " ADD BY XINLEI XU 2025/04/07
 
                 IF ls_data-materialpriceunitqty <> 0.
                   lv_unitprice_plnt = zzcl_common_utils=>conversion_amount( iv_alpha    = zzcl_common_utils=>lc_alpha_out

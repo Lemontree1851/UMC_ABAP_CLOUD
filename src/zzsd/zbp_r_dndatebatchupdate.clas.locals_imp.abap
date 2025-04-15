@@ -48,8 +48,13 @@ CLASS lhc_deliverydocumentlist IMPLEMENTATION.
 *      lt_records     TYPE TABLE OF zr_dndatebatchupdate,
       ls_record_temp LIKE LINE OF lt_records,
       ls_error_v2    TYPE zzcl_odata_utils=>gty_error,
-      lv_extdate     TYPE c LENGTH 10,
-      lv_intdate     TYPE c LENGTH 10,
+*&--MOD BEGIN BY XINLEI XU 2025/04/02
+*      lv_extdate     TYPE c LENGTH 10,
+*      lv_intdate     TYPE c LENGTH 10,
+      lv_extdate     TYPE string,
+      lv_intdate     TYPE string,
+      lv_date_str    TYPE string,
+*&--MOD END BY XINLEI XU 2025/04/02
       lv_timestampl  TYPE timestampl,
       lv_message     TYPE string.
 
@@ -121,84 +126,102 @@ CLASS lhc_deliverydocumentlist IMPLEMENTATION.
           SORT lt_materialdocument BY deliverydocument ASCENDING.
         ENDIF.
 
+*&--ADD BEGIN BY XINLEI XU 2025/04/02 Authorization Check
+        READ TABLE lt_records INTO DATA(ls_record) INDEX 1.
+        DATA(lv_shippingpoint) = zzcl_common_utils=>get_shippingpoint_by_user( ls_record-useremail ).
+*&--ADD END BY XINLEI XU 2025/04/02
+
         LOOP AT lt_records ASSIGNING <fs_record>.
 
-          IF <fs_record>-intcoextactltransfofctrldtetme IS NOT INITIAL.
+*&--ADD BEGIN BY XINLEI XU 2025/04/02 Authorization Check
+          IF NOT lv_shippingpoint CS <fs_record>-shippingpoint.
+            <fs_record>-status = 'E'.
+            MESSAGE e034(zbc_001) WITH <fs_record>-shippingpoint INTO lv_message.
+            <fs_record>-message = zzcl_common_utils=>merge_message( iv_message1 = <fs_record>-message
+                                                                    iv_message2 = lv_message
+                                                                    iv_symbol = ';' ).
+          ENDIF.
+*&--ADD END BY XINLEI XU 2025/04/02
+
+          IF  <fs_record>-intcoextactltransfofctrldtetme IS NOT INITIAL
+          AND <fs_record>-intcoextactltransfofctrldtetme <> 1.  "1 => "NULL"
             lv_extdate = <fs_record>-intcoextactltransfofctrldtetme.
             CONDENSE lv_extdate NO-GAPS.
+            lv_extdate = lv_extdate+0(8). " ADD BY XINLEI XU 2025/04/02
           ELSE.
             CLEAR lv_extdate.
           ENDIF.
 
-          IF <fs_record>-intcointactltransfofctrldtetme IS NOT INITIAL.
+          IF  <fs_record>-intcointactltransfofctrldtetme IS NOT INITIAL
+          AND <fs_record>-intcointactltransfofctrldtetme <> 1.  "1 => "NULL"
             lv_intdate = <fs_record>-intcointactltransfofctrldtetme.
             CONDENSE lv_intdate NO-GAPS.
+            lv_intdate = lv_intdate+0(8). " ADD BY XINLEI XU 2025/04/02
           ELSE.
             CLEAR lv_intdate.
           ENDIF.
 
-          CONDENSE lv_intdate NO-GAPS.
-
-*     出荷伝票チェック
-          READ TABLE lt_deliverydocument INTO DATA(ls_dn)
-            WITH KEY deliverydocument = <fs_record>-deliverydocument BINARY SEARCH.
-
+          " 出荷伝票チェック
+          READ TABLE lt_deliverydocument INTO DATA(ls_dn) WITH KEY deliverydocument = <fs_record>-deliverydocument BINARY SEARCH.
           IF sy-subrc NE 0.
             <fs_record>-status = 'E'.
-*       {出荷伝票}は存在しません。
+            " {出荷伝票}は存在しません。
             MESSAGE e016(zsd_001) WITH |{ <fs_record>-deliverydocument ALPHA = OUT }| INTO lv_message.
-            <fs_record>-message = zzcl_common_utils=>merge_message(  iv_message1 = <fs_record>-message
-                                                                          iv_message2 = lv_message
-                                                                          iv_symbol = ';' ).
+            <fs_record>-message = zzcl_common_utils=>merge_message( iv_message1 = <fs_record>-message
+                                                                    iv_message2 = lv_message
+                                                                    iv_symbol = ';' ).
           ENDIF.
 
-*     外部実績日付は実出庫移動日付より早い場合
+          " 外部実績日付は実出庫移動日付より早い場合
           IF CONV datum( CONV string( <fs_record>-intcoextactltransfofctrldtetme ) ) < <fs_record>-actualgoodsmovementdate
           AND <fs_record>-intcoextactltransfofctrldtetme IS NOT INITIAL
           AND <fs_record>-intcoextactltransfofctrldtetme <> 1.  "1 => "NULL"
             <fs_record>-status = 'E'.
-*       外部実績日付&1は実出庫移動日付より早い。ご確認ください。
+            " 外部実績日付&1は実出庫移動日付より早い。ご確認ください。
             MESSAGE e017(zsd_001) WITH lv_extdate INTO lv_message.
-            <fs_record>-message = zzcl_common_utils=>merge_message(  iv_message1 = <fs_record>-message
-                                                                          iv_message2 = lv_message
-                                                                          iv_symbol = ';' ).
+            <fs_record>-message = zzcl_common_utils=>merge_message( iv_message1 = <fs_record>-message
+                                                                    iv_message2 = lv_message
+                                                                    iv_symbol = ';' ).
           ENDIF.
 
-*     内部実績日付は実出庫移動日付より早い場合
+          " 内部実績日付は実出庫移動日付より早い場合
           IF CONV datum( CONV string( <fs_record>-intcointactltransfofctrldtetme ) ) < <fs_record>-actualgoodsmovementdate
           AND <fs_record>-intcointactltransfofctrldtetme IS NOT INITIAL
           AND <fs_record>-intcointactltransfofctrldtetme <> 1.  "1 => "NULL"
             <fs_record>-status = 'E'.
-*       内部実績日付&1は実出庫移動日付より早い。ご確認ください。
+            " 内部実績日付&1は実出庫移動日付より早い。ご確認ください。
             MESSAGE e018(zsd_001) WITH lv_intdate INTO lv_message.
-            <fs_record>-message = zzcl_common_utils=>merge_message(  iv_message1 = <fs_record>-message
-                                                                          iv_message2 = lv_message
-                                                                          iv_symbol = ';' ).
+            <fs_record>-message = zzcl_common_utils=>merge_message( iv_message1 = <fs_record>-message
+                                                                    iv_message2 = lv_message
+                                                                    iv_symbol = ';' ).
           ENDIF.
 
-*     内部実績日付は外部実績日付より早い場合、
+          " 内部実績日付は外部実績日付より早い場合、
           IF CONV datum( CONV string( <fs_record>-intcointactltransfofctrldtetme ) ) < CONV datum( CONV string( <fs_record>-intcoextactltransfofctrldtetme ) )
           AND <fs_record>-intcointactltransfofctrldtetme IS NOT INITIAL
-          AND <fs_record>-intcointactltransfofctrldtetme <> 1.  "1 => "NULL"
+          AND <fs_record>-intcointactltransfofctrldtetme <> 1   "1 => "NULL"
+*&--ADD BEGIN BY XINLEI XU 2025/04/02
+          AND <fs_record>-intcoextactltransfofctrldtetme IS NOT INITIAL
+          AND <fs_record>-intcoextactltransfofctrldtetme <> 1.  "1 => "NULL"
+*&--ADD END BY XINLEI XU 2025/04/02
             <fs_record>-status = 'E'.
-*       内部実績日付&1は実出庫移動日付より早い。ご確認ください。
+            " 内部実績日付&1は外部実績日付より早い。ご確認ください。
             MESSAGE e019(zsd_001) WITH lv_intdate INTO lv_message.
-            <fs_record>-message = zzcl_common_utils=>merge_message(  iv_message1 = <fs_record>-message
-                                                                          iv_message2 = lv_message
-                                                                          iv_symbol = ';' ).
+            <fs_record>-message = zzcl_common_utils=>merge_message( iv_message1 = <fs_record>-message
+                                                                    iv_message2 = lv_message
+                                                                    iv_symbol = ';' ).
           ENDIF.
 
-*         内部移転による在庫移動の会計伝票はすでに生成された場合、内部実績日付(IntcoIntActlTransfOfCtrlDteTme)　は更新できないように制御
+          " 内部移転による在庫移動の会計伝票はすでに生成された場合、内部実績日付(IntcoIntActlTransfOfCtrlDteTme)　は更新できないように制御
           IF <fs_record>-intcointactltransfofctrldtetme IS NOT INITIAL.
-            READ TABLE lt_materialdocument TRANSPORTING NO FIELDS
-              WITH KEY deliverydocument = <fs_record>-deliverydocument BINARY SEARCH.
+            READ TABLE lt_materialdocument TRANSPORTING NO FIELDS WITH KEY deliverydocument = <fs_record>-deliverydocument BINARY SEARCH.
             IF sy-subrc = 0.
               <fs_record>-status = 'E'.
-*       {出荷伝票}は内部転記済みのため、実績日は更新できない。
+              " {出荷伝票}は内部転記済みのため、実績日は更新できない。
               MESSAGE e021(zsd_001) WITH |{ <fs_record>-deliverydocument ALPHA = OUT }| INTO lv_message.
-              <fs_record>-message = zzcl_common_utils=>merge_message(  iv_message1 = <fs_record>-message
-                                                                            iv_message2 = lv_message
-                                                                            iv_symbol = ';' ).
+              <fs_record>-message = zzcl_common_utils=>merge_message( iv_message1 = <fs_record>-message
+                                                                      iv_message2 = lv_message
+                                                                      iv_symbol = ';' ).
             ENDIF.
           ENDIF.
 
@@ -223,22 +246,53 @@ CLASS lhc_deliverydocumentlist IMPLEMENTATION.
           ls_sd1010-deliverydate = <fs_record>-deliverydate.
           ls_sd1010-actualgoodsmovementdate = <fs_record>-actualgoodsmovementdate.
           ls_sd1010-overallgoodsmovementstatus = <fs_record>-overallgoodsmovementstatus.
-          IF <fs_record>-intcoextplndtransfofctrldtetme IS NOT INITIAL.
-            ls_sd1010-intcoextplndtransfofctrldtetme = <fs_record>-intcoextplndtransfofctrldtetme.
-            CONDENSE ls_sd1010-intcoextplndtransfofctrldtetme NO-GAPS.
+
+*&--MOD BEGIN BY XINLEI XU 2025/04/02 BUG Fixed
+*          IF <fs_record>-intcoextplndtransfofctrldtetme IS NOT INITIAL.
+*            ls_sd1010-intcoextplndtransfofctrldtetme = <fs_record>-intcoextplndtransfofctrldtetme.
+*            CONDENSE ls_sd1010-intcoextplndtransfofctrldtetme NO-GAPS.
+*          ENDIF.
+*          IF <fs_record>-intcoextactltransfofctrldtetme IS NOT INITIAL.
+*            ls_sd1010-intcoextactltransfofctrldtetme = <fs_record>-intcoextactltransfofctrldtetme.
+*            CONDENSE ls_sd1010-intcoextactltransfofctrldtetme NO-GAPS.
+*          ENDIF.
+*          IF <fs_record>-intcointplndtransfofctrldtetme IS NOT INITIAL.
+*            ls_sd1010-intcointplndtransfofctrldtetme = <fs_record>-intcointplndtransfofctrldtetme.
+*            CONDENSE ls_sd1010-intcointplndtransfofctrldtetme NO-GAPS.
+*          ENDIF.
+*          IF <fs_record>-intcointactltransfofctrldtetme IS NOT INITIAL.
+*            ls_sd1010-intcointactltransfofctrldtetme = <fs_record>-intcointactltransfofctrldtetme.
+*            CONDENSE ls_sd1010-intcointactltransfofctrldtetme NO-GAPS.
+*          ENDIF.
+          CLEAR lv_date_str.
+          IF  <fs_record>-intcoextplndtransfofctrldtetme IS NOT INITIAL
+          AND <fs_record>-intcoextplndtransfofctrldtetme <> 1.  "1 => "NULL"
+            lv_date_str = <fs_record>-intcoextplndtransfofctrldtetme.
+            CONDENSE lv_date_str NO-GAPS.
+            ls_sd1010-intcoextplndtransfofctrldtetme = lv_date_str+0(8).
           ENDIF.
-          IF <fs_record>-intcoextactltransfofctrldtetme IS NOT INITIAL.
-            ls_sd1010-intcoextactltransfofctrldtetme = <fs_record>-intcoextactltransfofctrldtetme.
-            CONDENSE ls_sd1010-intcoextactltransfofctrldtetme NO-GAPS.
+          CLEAR lv_date_str.
+          IF  <fs_record>-intcoextactltransfofctrldtetme IS NOT INITIAL
+          AND <fs_record>-intcoextactltransfofctrldtetme <> 1.  "1 => "NULL"
+            lv_date_str = <fs_record>-intcoextactltransfofctrldtetme.
+            CONDENSE lv_date_str NO-GAPS.
+            ls_sd1010-intcoextactltransfofctrldtetme = lv_date_str+0(8).
           ENDIF.
-          IF <fs_record>-intcointplndtransfofctrldtetme IS NOT INITIAL.
-            ls_sd1010-intcointplndtransfofctrldtetme = <fs_record>-intcointplndtransfofctrldtetme.
-            CONDENSE ls_sd1010-intcointplndtransfofctrldtetme NO-GAPS.
+          CLEAR lv_date_str.
+          IF  <fs_record>-intcointplndtransfofctrldtetme IS NOT INITIAL
+          AND <fs_record>-intcointplndtransfofctrldtetme <> 1.  "1 => "NULL"
+            lv_date_str = <fs_record>-intcointplndtransfofctrldtetme.
+            CONDENSE lv_date_str NO-GAPS.
+            ls_sd1010-intcointplndtransfofctrldtetme = lv_date_str+0(8).
           ENDIF.
-          IF <fs_record>-intcointactltransfofctrldtetme IS NOT INITIAL.
-            ls_sd1010-intcointactltransfofctrldtetme = <fs_record>-intcointactltransfofctrldtetme.
-            CONDENSE ls_sd1010-intcointactltransfofctrldtetme NO-GAPS.
+          CLEAR lv_date_str.
+          IF  <fs_record>-intcointactltransfofctrldtetme IS NOT INITIAL
+          AND <fs_record>-intcointactltransfofctrldtetme <> 1.  "1 => "NULL"
+            lv_date_str = <fs_record>-intcointactltransfofctrldtetme.
+            CONDENSE lv_date_str NO-GAPS.
+            ls_sd1010-intcointactltransfofctrldtetme = lv_date_str+0(8).
           ENDIF.
+*&--MOD END BY XINLEI XU 2025/04/02 BUG Fixed
 
           CLEAR ls_update_request.
           IF ls_dn-billoflading IS INITIAL.
@@ -254,7 +308,6 @@ CLASS lhc_deliverydocumentlist IMPLEMENTATION.
           ls_sd1010-created_at = lv_timestampl.
           MODIFY ztsd_1010 FROM @ls_sd1010.
           CLEAR ls_sd1010.
-
 
 *      ls_update_request-header_data-_Bill_Of_Lading = ls_dn-BillOfLading.
 *      ls_update_request-header_data-_actual_goods_movement_date = |{ ls_dn-actualgoodsmovementdate+0(4) }-{ ls_dn-actualgoodsmovementdate+4(2) }-{ ls_dn-actualgoodsmovementdate+6(2) }T00:00:01|.
@@ -275,8 +328,7 @@ CLASS lhc_deliverydocumentlist IMPLEMENTATION.
 *        ) )->to_string( ).
 
           DATA(lv_requestbody) = /ui2/cl_json=>serialize( data = ls_update_request
-                                                          pretty_name = /ui2/cl_json=>pretty_mode-camel_case
-                                                           ).
+                                                          pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
 
           REPLACE ALL OCCURRENCES OF 'headerData' IN lv_requestbody WITH 'd'.
 
@@ -288,7 +340,7 @@ CLASS lhc_deliverydocumentlist IMPLEMENTATION.
                                                        ev_response    = DATA(lv_response) ).
           IF lv_status_code = 204.
             UPDATE ztsd_1010 SET is_extension_used = @abap_true
-              WHERE deliverydocument = @<fs_record>-deliverydocument.
+             WHERE deliverydocument = @<fs_record>-deliverydocument.
 
             "DN更新成功しました。
             MESSAGE s020(zsd_001) WITH |{ <fs_record>-deliverydocument ALPHA = OUT }| INTO lv_message.
@@ -301,8 +353,8 @@ CLASS lhc_deliverydocumentlist IMPLEMENTATION.
 
             <fs_record>-status = 'E'.
             <fs_record>-message = zzcl_common_utils=>merge_message( iv_message1 = <fs_record>-message
-                                                                         iv_message2 = ls_error_v2-error-message-value
-                                                                         iv_symbol   = ';' ).
+                                                                    iv_message2 = ls_error_v2-error-message-value
+                                                                    iv_symbol   = ';' ).
           ENDIF.
         ENDLOOP.
 

@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_poacceptance_report IMPLEMENTATION.
+CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

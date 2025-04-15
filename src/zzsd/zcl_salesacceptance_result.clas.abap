@@ -16,7 +16,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_salesacceptance_result IMPLEMENTATION.
+CLASS ZCL_SALESACCEPTANCE_RESULT IMPLEMENTATION.
 
 
   METHOD convert_amount.

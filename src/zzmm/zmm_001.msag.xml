@@ -230,6 +230,18 @@
      <MSGNR>036</MSGNR>
      <TEXT>発注品番、仕入先品目コード、品目テキストは少なくとも一つを入力してください</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>037</MSGNR>
+     <TEXT>The account type is &amp;1, please enter the G/L account and &amp;2.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>038</MSGNR>
+     <TEXT>This is a return order, please enter return item.</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

@@ -102,20 +102,20 @@ CLASS lhc_accessbtn IMPLEMENTATION.
 
 ENDCLASS.
 
-CLASS lsc_zr_tbc1005 DEFINITION INHERITING FROM cl_abap_behavior_saver.
-
-  PROTECTED SECTION.
-
-    METHODS save_modified REDEFINITION.
-
-ENDCLASS.
-
-CLASS lsc_zr_tbc1005 IMPLEMENTATION.
-
-  METHOD save_modified.
-  ENDMETHOD.
-
-ENDCLASS.
+*CLASS lsc_zr_tbc1005 DEFINITION INHERITING FROM cl_abap_behavior_saver.
+*
+*  PROTECTED SECTION.
+*
+*    METHODS save_modified REDEFINITION.
+*
+*ENDCLASS.
+*
+*CLASS lsc_zr_tbc1005 IMPLEMENTATION.
+*
+*  METHOD save_modified.
+*  ENDMETHOD.
+*
+*ENDCLASS.
 
 CLASS lhc_role DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.

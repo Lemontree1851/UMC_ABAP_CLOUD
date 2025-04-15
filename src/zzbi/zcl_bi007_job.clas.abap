@@ -17,11 +17,21 @@ CLASS zcl_bi007_job DEFINITION
           mr_plant         TYPE RANGE OF werks_d,
           mr_prod          TYPE RANGE OF matnr,
           mr_cust          TYPE RANGE OF kunnr.
+
+*&--ADD BEGIN BY XINLEI XU 2025/04/03
+    CLASS-METHODS:
+      init_application_log,
+      add_message_to_log IMPORTING i_text TYPE cl_bali_free_text_setter=>ty_text
+                                   i_type TYPE cl_bali_free_text_setter=>ty_severity OPTIONAL
+                         RAISING   cx_bali_runtime.
+    CLASS-DATA:
+      mo_application_log TYPE REF TO if_bali_log.
+*&--ADD END BY XINLEI XU 2025/04/03
 ENDCLASS.
 
 
 
-CLASS ZCL_BI007_JOB IMPLEMENTATION.
+CLASS zcl_bi007_job IMPLEMENTATION.
 
 
   METHOD if_apj_dt_exec_object~get_parameters.
@@ -51,6 +61,10 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
 
 
   METHOD if_apj_rt_exec_object~execute.
+
+    " create log handle
+    init_application_log(  ).
+
     "Step 1. Extract selection
     LOOP AT it_parameters INTO DATA(ls_para).
       CASE ls_para-selname.
@@ -63,8 +77,12 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
         WHEN 'S_PLANT'.
           APPEND CORRESPONDING #( ls_para ) TO mr_plant.
         WHEN 'S_PROD'.
+          ls_para-low  = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = ls_para-low ).
+          ls_para-high = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = ls_para-high ).
           APPEND CORRESPONDING #( ls_para ) TO mr_prod.
         WHEN 'S_CUST'.
+          ls_para-low = |{ ls_para-low  ALPHA = IN }|.
+          ls_para-low = |{ ls_para-high ALPHA = IN }|.
           APPEND CORRESPONDING #( ls_para ) TO mr_cust.
       ENDCASE.
     ENDLOOP.
@@ -83,9 +101,9 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
       GET TIME STAMP FIELD DATA(lv_timestamp_local).
       lv_datetime     = lv_timestamp_local.
       lv_date_local   = lv_datetime+0(8).
-      zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date = lv_date_local
-                                         IMPORTING ev_year   = lv_gjahr
-                                                   ev_period = lv_poper ).
+      zzcl_common_utils=>get_fiscal_year_period( EXPORTING iv_date   = lv_date_local
+                                                 IMPORTING ev_year   = lv_gjahr
+                                                           ev_period = lv_poper ).
       lv_popern2      = lv_poper.
       lv_date_local   = lv_gjahr && lv_popern2 && '01'.
       lv_date_local   = lv_date_local - 1.
@@ -101,8 +119,6 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
       lmr_monat-option = 'EQ'.
       lmr_monat-low    = lv_date_local+4(2).
       APPEND lmr_monat TO mr_monat.
-
-
     ENDIF.
 
     "Step 2. Get Data
@@ -113,77 +129,172 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
                                                 ir_forcastperiod = mr_forcastperiod
                                                 ir_plant = mr_plant
                                                 ir_product = mr_prod
-                                                ir_customer = mr_cust
-                                              ).
+                                                ir_customer = mr_cust ).
     DATA lt_data TYPE STANDARD TABLE OF zi_bi007_report.
     lo_data_handler->get_data( IMPORTING et_data = lt_data ).
 
     "Step 3. Update Table
-    IF lt_data IS NOT INITIAL.
-      DATA: lt_save_data TYPE STANDARD TABLE OF ztbi_bi007_j01.
-      lt_save_data = CORRESPONDING #( lt_data MAPPING actual_price = actualprice
-                                                      company_code = companycode
-                                                      company_code_name = companycodename
-                                                      currency = currency
-                                                      customer = customer
-                                                      customer_name = customername
-                                                      fiscal_period = forcastfiscalperiod
-                                                      fiscal_year = forcastfiscalyear
-                                                      fiscal_year_month = fiscalyearmonth
-                                                      inventory_amount = inventoryamount
-                                                      period = forcastperiod
-                                                      plant = plant
-                                                      plant_name = plantname
-                                                      product = product
-                                                      product_name = productname
-                                                      product_type = producttype
-                                                      product_type_name = producttypename
-                                                      profit_center = profitcenter
-                                                      profit_center_name = profitcentername
-                                                      qty = qty
-                                                      type = type
-                                                      valuation_area = valuationarea
-                                                      base_year_month = basefiscalyearmonth
-                                    ).
+    DATA: lt_save_data TYPE STANDARD TABLE OF ztbi_bi007_j01.
+    lt_save_data = CORRESPONDING #( lt_data MAPPING actual_price = actualprice
+                                                    company_code = companycode
+                                                    company_code_name = companycodename
+                                                    currency = currency
+                                                    customer = customer
+                                                    customer_name = customername
+                                                    fiscal_period = forcastfiscalperiod
+                                                    fiscal_year = forcastfiscalyear
+                                                    fiscal_year_month = fiscalyearmonth
+                                                    inventory_amount = inventoryamount
+                                                    period = forcastperiod
+                                                    plant = plant
+                                                    plant_name = plantname
+                                                    product = product
+                                                    product_name = productname
+                                                    product_type = producttype
+                                                    product_type_name = producttypename
+                                                    profit_center = profitcenter
+                                                    profit_center_name = profitcentername
+                                                    qty = qty
+                                                    type = type
+                                                    valuation_area = valuationarea
+                                                    base_year_month = basefiscalyearmonth ).
 
-      "先删除上个月的预测数据，只保留上月执行的当月预测
-      DATA: lv_last_base_year_month TYPE c LENGTH 6,
-            lv_last_base_year       TYPE gjahr,
-            lv_last_base_month      TYPE c LENGTH 2,
-            lv_base_year            TYPE c LENGTH 4,
-            lv_base_month           TYPE c LENGTH 2.
+    "先删除上个月的预测数据，只保留上月执行的当月预测
+    DATA: lv_last_base_year_month TYPE c LENGTH 6,
+          lv_last_base_year       TYPE gjahr,
+          lv_last_base_month      TYPE c LENGTH 2,
+          lv_base_year            TYPE c LENGTH 4,
+          lv_base_month           TYPE c LENGTH 2.
 
-      READ TABLE mr_year INTO DATA(ls_year) INDEX 1.
-      IF sy-subrc = 0.
-        lv_base_year = ls_year-low.
+    READ TABLE mr_year INTO DATA(ls_year) INDEX 1.
+    IF sy-subrc = 0.
+      lv_base_year = ls_year-low.
+    ENDIF.
+
+    READ TABLE mr_monat INTO DATA(ls_monat) INDEX 1.
+    IF sy-subrc = 0.
+      lv_base_month = ls_monat-low.
+    ENDIF.
+
+    IF lv_base_year IS NOT INITIAL AND lv_base_month IS NOT INITIAL.
+      IF lv_base_month = '01'.
+        lv_last_base_year = lv_base_year - 1.
+        lv_last_base_month = '12'.
+      ELSE.
+        lv_last_base_month = lv_base_month - 1.
+        lv_last_base_year = lv_base_year.
       ENDIF.
 
-      READ TABLE mr_monat INTO DATA(ls_monat) INDEX 1.
-      IF sy-subrc = 0.
-        lv_base_month = ls_monat-low.
+      IF strlen( lv_last_base_month ) < 2.
+        lv_last_base_month = '0' && lv_last_base_month.
       ENDIF.
+      lv_last_base_year_month = |{ lv_last_base_year }{ lv_last_base_month }|.
+    ENDIF.
 
-      IF lv_base_year IS NOT INITIAL AND lv_base_month IS NOT INITIAL.
-        IF lv_base_month = '01'.
-          lv_last_base_year = lv_base_year - 1.
-          lv_last_base_month = '12'.
-        ELSE.
-          lv_last_base_month = lv_base_month - 1.
-          lv_last_base_year = lv_base_year.
-        ENDIF.
-
-        IF strlen( lv_last_base_month ) < 2.
-          lv_last_base_month = '0' && lv_last_base_month.
-        ENDIF.
-        lv_last_base_year_month = |{ lv_last_base_year }{ lv_last_base_month }|.
-      ENDIF.
-
-
-      IF lv_last_base_year_month IS NOT INITIAL AND lv_base_year IS NOT INITIAL AND lv_base_month IS NOT INITIAL.
+    IF lv_last_base_year_month IS NOT INITIAL AND lv_base_year IS NOT INITIAL AND lv_base_month IS NOT INITIAL.
+*&--ADD BEGIN BY XINLEI XU 2025/04/08
+      SELECT COUNT(*)
+        FROM ztbi_bi007_j01
+       WHERE base_year_month = @lv_last_base_year_month AND ( fiscal_year <> @lv_base_year OR period <> @lv_base_month )
+        INTO @DATA(lv_count1).
+      IF lv_count1 > 0.
         DELETE FROM ztbi_bi007_j01 WHERE base_year_month = @lv_last_base_year_month AND ( fiscal_year <> @lv_base_year OR period <> @lv_base_month ).
       ENDIF.
-
-      MODIFY ztbi_bi007_j01 FROM TABLE @lt_save_data.
     ENDIF.
+
+    TRY.
+        add_message_to_log( i_text = |YearMonth: { lv_base_year }、{ lv_base_month }|
+                            i_type = 'S' ).
+      CATCH cx_bali_runtime ##NO_HANDLER.
+    ENDTRY.
+
+    IF lv_base_year IS NOT INITIAL AND lv_base_month IS NOT INITIAL.
+      DATA(lv_base_year_month) = |{ lv_base_year }{ lv_base_month }|.
+
+      TRY.
+          add_message_to_log( i_text = |YearMonth: { lv_base_year_month }|
+                              i_type = 'S' ).
+        CATCH cx_bali_runtime ##NO_HANDLER.
+      ENDTRY.
+
+      SELECT COUNT(*)
+        FROM ztbi_bi007_j01
+       WHERE company_code IN @mr_bukrs
+         AND base_year_month = @lv_base_year_month
+         AND plant IN @mr_plant
+         AND product IN @mr_prod
+         AND customer IN @mr_cust
+        INTO @DATA(lv_count2).
+      IF lv_count2 > 0.
+        DELETE FROM ztbi_bi007_j01 WHERE company_code IN @mr_bukrs
+                                     AND base_year_month = @lv_base_year_month
+                                     AND plant IN @mr_plant
+                                     AND product IN @mr_prod
+                                     AND customer IN @mr_cust.
+      ENDIF.
+    ENDIF.
+
+    TRY.
+        add_message_to_log( i_text = |テーブル ZTBI_BI007_J01 データ { lv_count1 + lv_count2 }件削除。|
+                            i_type = 'S' ).
+      CATCH cx_bali_runtime ##NO_HANDLER.
+    ENDTRY.
+*&--ADD END BY XINLEI XU 2025/04/08
+
+    MODIFY ztbi_bi007_j01 FROM TABLE @lt_save_data.
+*&--ADD BEGIN BY XINLEI XU 2025/04/03
+    IF sy-subrc = 0.
+      COMMIT WORK.
+    ELSE.
+      ROLLBACK WORK.
+      TRY.
+          add_message_to_log( i_text = |テーブル ZTBI_BI007_J01 データの更新に失敗しました。|
+                              i_type = 'E' ).
+        CATCH cx_bali_runtime ##NO_HANDLER.
+      ENDTRY.
+      RETURN.
+    ENDIF.
+
+    TRY.
+        add_message_to_log( i_text = |テーブル ZTBI_BI007_J01 データ { lines( lt_save_data ) }件更新。|
+                            i_type = 'S' ).
+      CATCH cx_bali_runtime ##NO_HANDLER.
+    ENDTRY.
+*&--ADD END BY XINLEI XU 2025/04/03
   ENDMETHOD.
+
+  METHOD init_application_log.
+*&--ADD BEGIN BY XINLEI XU 2025/04/03
+    TRY.
+        mo_application_log = cl_bali_log=>create_with_header(
+                               header = cl_bali_header_setter=>create( object    = 'ZZ_LOG_BI007'
+                                                                       subobject = 'ZZ_LOG_BI007_SUB' ) ).
+      CATCH cx_bali_runtime ##NO_HANDLER.
+    ENDTRY.
+  ENDMETHOD.
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime ##NO_HANDLER.
+    ENDTRY.
+*&--ADD END BY XINLEI XU 2025/04/03
+  ENDMETHOD.
+
 ENDCLASS.

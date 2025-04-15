@@ -15,18 +15,13 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
-
     TYPES:
-
       BEGIN OF ts_workflow,
-
         sapbusinessobjectnodekey1   TYPE  string,
         workflowinternalid          TYPE  string,
         workflowexternalstatus      TYPE  string,
         sapobjectnoderepresentation TYPE string,
-
       END OF ts_workflow,
-
       tt_workflow TYPE STANDARD TABLE OF ts_workflow WITH DEFAULT KEY,
 
       BEGIN OF ts_workflow_d,
@@ -38,11 +33,10 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
       END OF ts_workflow_api,
 *---------------------------------------------------------------------------
       BEGIN OF ts_workflowdetail,
-
-        workflowinternalid     TYPE  string,
-        workflowtaskinternalid TYPE  string,
-        workflowtaskresult     TYPE  string,
-
+        workflowinternalid         TYPE string,
+        workflowtaskinternalid     TYPE string,
+        workflowtaskexternalstatus TYPE string, " ADD BY XINLEI XU 2025/04/10
+        workflowtaskresult         TYPE string,
       END OF ts_workflowdetail,
 
       tt_workflowdetail TYPE STANDARD TABLE OF ts_workflowdetail WITH DEFAULT KEY,
@@ -54,9 +48,6 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
       BEGIN OF ts_workflowdetail_api,
         d TYPE ts_workflowdetail_d,
       END OF ts_workflowdetail_api,
-
-
-
 
       BEGIN OF ty_tline,
         tdformat TYPE c LENGTH 2,
@@ -72,7 +63,6 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         mrpelementreschedulingdate TYPE string,
         exceptionmessagenumber     TYPE string,
         mrpelementavailyorrqmtdate TYPE string,
-
       END OF ty_d,
 
       BEGIN OF ty_message,
@@ -89,7 +79,6 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         d     TYPE ty_d,
         error TYPE ty_error,
       END OF ty_res_api,
-
       tt_tline TYPE STANDARD TABLE OF ty_tline.
 
     TYPES:
@@ -98,23 +87,18 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         mrparea  TYPE string,
       END OF ty_response_s,
 
-
       BEGIN OF ty_response_ss,
         d TYPE ty_response_s,
       END OF ty_response_ss.
 
-    DATA:ls_response_ss TYPE ty_response_ss,
-         lt_response_ss TYPE STANDARD TABLE OF ty_response_ss.
 
 **********************************************************************
     TYPES:
-
       BEGIN OF ts_mrp_api,  "api structue
-
         material                   TYPE matnr,
         mrpplant                   TYPE werks_d,
-        mrpelementopenquantity     TYPE c LENGTH 16,
-        mrpavailablequantity       TYPE c LENGTH 16,
+        mrpelementopenquantity     TYPE menge_d,
+        mrpavailablequantity       TYPE menge_d,
         mrpelement                 TYPE c LENGTH 12,
         mrpelementitem             TYPE c LENGTH 5,
         mrpelementavailyorrqmtdate TYPE datum,
@@ -126,10 +110,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         exceptionmessagenumber     TYPE string,
         mrpelementscheduleline     TYPE n LENGTH 4,
         exceptionmessagetext       TYPE string,
-
-
       END OF ts_mrp_api,
-
       tt_mrp_api TYPE STANDARD TABLE OF ts_mrp_api WITH DEFAULT KEY,
 
       BEGIN OF ts_mrp_d,
@@ -152,23 +133,6 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         error TYPE ts_error,
       END OF ts_res_mrp_api,
 
-      BEGIN OF ts_mrp_api_boi,  "api structue
-        material                   TYPE matnr,
-        mrpplant                   TYPE werks_d,
-        mrpelementopenquantity(9)  TYPE p DECIMALS 3,
-        mrpavailablequantity(9)    TYPE p DECIMALS 3,
-        mrpelement                 TYPE c LENGTH 12,
-        mrpelementavailyorrqmtdate TYPE string,
-        mrpelementcategory         TYPE c LENGTH 2,
-        mrpelementdocumenttype     TYPE c LENGTH 4,
-        productionversion          TYPE c LENGTH 4,
-        sourcemrpelement           TYPE c LENGTH 12,
-        mrpelementitem             TYPE c LENGTH 6,
-        mrpelementscheduleline     TYPE c LENGTH 4,
-        exceptionmessagenumber     TYPE c LENGTH 2,
-      END OF ts_mrp_api_boi,
-      tt_mrp_api_boi TYPE STANDARD TABLE OF ts_mrp_api_boi WITH DEFAULT KEY,
-
 *----------------------------------------------uweb调用参考 pickinglist。
       BEGIN OF ty_response_res,
         po_no       TYPE c LENGTH 10,
@@ -188,14 +152,12 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 **********************************************************************
     DATA:
       lt_mrp_api     TYPE STANDARD TABLE OF ts_mrp_api,
-      ls_mrp_api     TYPE ts_mrp_api,
       ls_res_mrp_api TYPE ts_res_mrp_api.
 
     DATA:
-      "lt_result          type STANDARD TABLE OF zr_podataanalysis,
+      lt_response        TYPE STANDARD TABLE OF zr_podataanalysis,
       lt_data            TYPE STANDARD TABLE OF zr_podataanalysis,
       lw_data            LIKE LINE OF lt_data,
-      lt_output          TYPE STANDARD TABLE OF zr_podataanalysis,
       lr_purchaseorder   TYPE RANGE OF zr_podataanalysis-purchaseorder       ,       "購買発注番号
       lr_poitem          TYPE RANGE OF zr_podataanalysis-purchaseorderitem     ,       "Item
       lr_supplier        TYPE RANGE OF i_purchaseorderapi01-supplier            ,       "仕入先
@@ -217,8 +179,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
       ls_intartinum      LIKE LINE OF  lr_intartinum,
       ls_extref          LIKE LINE OF  lr_extref,
       ls_createdbyuser   LIKE LINE OF  lr_createdbyuser,
-      ls_category        LIKE LINE OF  lr_category,
-      ls_res_api         TYPE ty_res_api.
+      ls_category        LIKE LINE OF  lr_category.
 
     DATA:
       lr_correspncinternalreference TYPE RANGE OF  i_purchaseorderapi01-correspncinternalreference,
@@ -243,32 +204,17 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
       ls_old_range LIKE LINE OF lr_purchasinggroup.               " 原来的 range 表的条目
 
     DATA:
-         lt_tlines       TYPE tt_tline.
+      lv_dur  TYPE i,
+      lv_days TYPE i.
 
     DATA:
-      lv_dur     TYPE i,
-      lv_days    TYPE i,
-      lv_befdays TYPE d.
-
-    DATA:
-        lv_mrpdate       TYPE d.
-
-    DATA:
-      lo_root_exc TYPE REF TO cx_root,
-      lv_path     TYPE string,
-      i           TYPE i,
-      lv_status   TYPE c LENGTH 1,
-      lv_message  TYPE string,
-      lv_valid    TYPE budat.
+      lv_path     TYPE string.
 
     CONSTANTS:
-      lc_msgid     TYPE string VALUE 'ZMM_001',
-      lc_msgty     TYPE string VALUE 'E',
       lc_alpha_in  TYPE string VALUE 'IN',
       lc_alpha_out TYPE string VALUE 'OUT'.
 
-    DATA :
-      lv_matnr           TYPE matnr,
+    DATA:
       lv_sup             TYPE i_purchaseorderapi01-supplier,
       lv_sup_h           TYPE i_purchaseorderapi01-supplier,
       lv_purchaseorder   TYPE i_purchaseorderapi01-purchaseorder,
@@ -283,13 +229,6 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
       lt_workflowdetail_api TYPE STANDARD TABLE OF ts_workflowdetail,
       ls_res_workflow       TYPE ts_workflow_api,
       ls_res_workflowdetail TYPE ts_workflowdetail_api.
-
-    DATA:
-      lt_mrp_api_boi TYPE STANDARD TABLE OF ts_mrp_api_boi,
-      ls_mrp_api_boi TYPE ts_mrp_api_boi.
-
-    DATA:
-      lv_conf            TYPE n LENGTH 4.
 
     DATA:
       lv_pathoverview TYPE string,
@@ -311,11 +250,6 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         CATCH cx_rap_query_filter_no_range INTO DATA(lx_no_sel_option).
       ENDTRY.
 
-*      DATA(lv_top)    = io_request->get_paging( )->get_page_size( ).
-*      DATA(lv_skip)   = io_request->get_paging( )->get_offset( ).
-*      DATA(lt_fields) = io_request->get_requested_elements( ).
-*      DATA(lt_sort)   = io_request->get_sort_elements( ).
-
       DATA(lv_poalldis) = '1'. "1全部显示，2po=残 3 po不等于残
 
       LOOP AT lt_filter_cond INTO DATA(ls_filter_cond).
@@ -336,17 +270,21 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
               CLEAR ls_purchaseorder.
 
             WHEN 'POPOITEM'.
-              ls_purchaseorder-sign = str_rec_l_range-sign.
-              ls_purchaseorder-option = str_rec_l_range-option.
-              ls_purchaseorder-low = str_rec_l_range-low(10).   " 前10位作为PURCHASEORDER
+              TRY.
+                  ls_purchaseorder-sign = str_rec_l_range-sign.
+                  ls_purchaseorder-option = str_rec_l_range-option.
+                  ls_purchaseorder-low = str_rec_l_range-low(10).   " 前10位作为PURCHASEORDER
 
-              ls_poitem-sign = str_rec_l_range-sign.
-              ls_poitem-option = str_rec_l_range-option.
-              ls_poitem-low = str_rec_l_range-low+10(5).        " 后5位作为POITEM
+                  ls_poitem-sign = str_rec_l_range-sign.
+                  ls_poitem-option = str_rec_l_range-option.
+                  ls_poitem-low = str_rec_l_range-low+10(5).        " 后5位作为POITEM
 
-              " 将对应的值加入到各自的range表
-              APPEND ls_purchaseorder TO lr_purchaseorder.
-              APPEND ls_poitem TO lr_poitem.
+                  " 将对应的值加入到各自的range表
+                  APPEND ls_purchaseorder TO lr_purchaseorder.
+                  APPEND ls_poitem TO lr_poitem.
+                  ##NO_HANDLER
+                CATCH cx_root.
+              ENDTRY.
 
               " 清空临时变量
               CLEAR: ls_purchaseorder, ls_poitem.
@@ -382,7 +320,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
               APPEND ls_plant TO lr_plant.
               CLEAR ls_plant.
 
-            WHEN 'MRPCONTROLLERNAME'.
+            WHEN 'MRPRESPONSIBLE'.
               MOVE-CORRESPONDING str_rec_l_range TO ls_mrpresponsible.
               APPEND ls_mrpresponsible TO lr_mrpresponsible.
               CLEAR ls_mrpresponsible.
@@ -454,6 +392,12 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
               ELSEIF str_rec_l_range-low = '3'.
                 lv_poalldis = '3'.
               ENDIF.
+
+*&--ADD BEGIN BY XINLEI XU 2025/04/09
+            WHEN 'FROMMRPTABLE'.
+              DATA lv_frommrptable TYPE zr_podataanalysis-frommrptable.
+              lv_frommrptable = str_rec_l_range-low.
+*&--ADD END BY XINLEI XU 2025/04/09
             WHEN OTHERS.
           ENDCASE.
         ENDLOOP.
@@ -757,53 +701,84 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 *        lv_filter = |{ lv_filter })|.
 *      ENDIF.
 
-      DATA(lv_select) = |Material,MRPArea,MRPPlant,MRPElementOpenQuantity,MRPElementAvailyOrRqmtDate,| &&
-                        |MRPElement,MRPElementItem,SourceMRPElement,MRPElementCategory,MRPElementDocumentType,| &&
-                        |ProductionVersion,MRPElementScheduleLine,MRPElementReschedulingDate,ExceptionMessageNumber,ExceptionMessageText|.
-      lv_path = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?sap-language={ zzcl_common_utils=>get_current_language( ) }|.
+      IF lv_frommrptable = abap_false.
+        DATA(lv_select) = |Material,MRPArea,MRPPlant,MRPElementOpenQuantity,MRPElementAvailyOrRqmtDate,| &&
+                          |MRPElement,MRPElementItem,SourceMRPElement,MRPElementCategory,MRPElementDocumentType,| &&
+                          |ProductionVersion,MRPElementScheduleLine,MRPElementReschedulingDate,ExceptionMessageNumber,ExceptionMessageText|.
+        lv_path = |/API_MRP_MATERIALS_SRV_01/SupplyDemandItems?sap-language={ zzcl_common_utils=>get_current_language( ) }|.
 
-      CLEAR lv_filter.
+        CLEAR lv_filter.
 
-      IF lines( lt_material ) < 30.
-        CLEAR lv_count.
-        LOOP AT lt_material INTO DATA(ls_material_v).
-          lv_count += 1.
-          IF lv_count = 1.
-            lv_filter = |(Material eq '{ ls_material_v-material }'|.
+        IF lines( lt_material ) < 30.
+          CLEAR lv_count.
+          LOOP AT lt_material INTO DATA(ls_material_v).
+            lv_count += 1.
+            IF lv_count = 1.
+              lv_filter = |(Material eq '{ ls_material_v-material }'|.
+            ELSE.
+              lv_filter = |{ lv_filter } or Material eq '{ ls_material_v-material }'|.
+            ENDIF.
+          ENDLOOP.
+          lv_filter = |{ lv_filter })|.
+        ENDIF.
+
+        LOOP AT lt_plant INTO DATA(ls_plant_v).
+          IF lv_filter IS NOT INITIAL.
+            DATA(lv_new_filter) = |{ lv_filter } and (MRPPlant eq '{ ls_plant_v-plant }' and MRPArea eq '{ ls_plant_v-plant }')|.
           ELSE.
-            lv_filter = |{ lv_filter } or Material eq '{ ls_material_v-material }'|.
+            lv_new_filter = |(MRPPlant eq '{ ls_plant_v-plant }' and MRPArea eq '{ ls_plant_v-plant }')|.
           ENDIF.
+
+          " MRP数据取得
+          zzcl_common_utils=>request_api_v2(
+                EXPORTING
+                  iv_path        = lv_path
+                  iv_method      = if_web_http_client=>get
+                  iv_filter      = lv_new_filter
+                  iv_select      = lv_select
+                IMPORTING
+                  ev_status_code = DATA(lv_stat_code)
+                  ev_response    = DATA(lv_resbody_api) ).
+
+          IF lv_stat_code = '200'.
+            CLEAR ls_res_mrp_api.
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+                                       CHANGING  data = ls_res_mrp_api ).
+
+            APPEND LINES OF ls_res_mrp_api-d-results TO lt_mrp_api.
+          ENDIF.
+          CLEAR lv_new_filter.
         ENDLOOP.
-        lv_filter = |{ lv_filter })|.
+*&--ADD BEGIN BY XINLEI XU 2025/04/09
+      ELSE.
+        SELECT material,
+               mrpplant,
+               mrpelementopenquantity,
+               mrpavailablequantity,
+               mrpelement,
+               mrpelementitem,
+               mrpelementavailyorrqmtdate,
+               mrpelementcategory,
+               mrpelementdocumenttype,
+               productionversion,
+               sourcemrpelement,
+               mrpelementreschedulingdate,
+               exceptionmessagenumber,
+               mrpelementscheduleline,
+               exceptionmessagetext
+          FROM ztbc_1020
+           FOR ALL ENTRIES IN @lt_result
+         WHERE material = @lt_result-material
+           AND mrpplant = @lt_result-plant
+          INTO CORRESPONDING FIELDS OF TABLE @lt_mrp_api. "#EC CI_FAE_NO_LINES_OK
+
+        LOOP AT lt_mrp_api ASSIGNING FIELD-SYMBOL(<lfs_mrp_api>).
+          <lfs_mrp_api>-mrpelement = |{ <lfs_mrp_api>-mrpelement ALPHA = OUT }|.
+          <lfs_mrp_api>-mrpelementitem = |{ <lfs_mrp_api>-mrpelementitem ALPHA = OUT }|.
+        ENDLOOP.
       ENDIF.
+*&--ADD END BY XINLEI XU 2025/04/09
 
-      LOOP AT lt_plant INTO DATA(ls_plant_v).
-        IF lv_filter IS NOT INITIAL.
-          DATA(lv_new_filter) = |{ lv_filter } and (MRPPlant eq '{ ls_plant_v-plant }' and MRPArea eq '{ ls_plant_v-plant }')|.
-        ELSE.
-          lv_new_filter = |(MRPPlant eq '{ ls_plant_v-plant }' and MRPArea eq '{ ls_plant_v-plant }')|.
-        ENDIF.
-
-        " MRP数据取得
-        zzcl_common_utils=>request_api_v2(
-              EXPORTING
-                iv_path        = lv_path
-                iv_method      = if_web_http_client=>get
-                iv_filter      = lv_new_filter
-                iv_select      = lv_select
-              IMPORTING
-                ev_status_code = DATA(lv_stat_code)
-                ev_response    = DATA(lv_resbody_api) ).
-
-        IF lv_stat_code = '200'.
-          CLEAR ls_res_mrp_api.
-          /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
-                                     CHANGING  data = ls_res_mrp_api ).
-
-          APPEND LINES OF ls_res_mrp_api-d-results TO lt_mrp_api.
-        ENDIF.
-        CLEAR lv_new_filter.
-      ENDLOOP.
       SORT lt_mrp_api BY mrpelement mrpelementitem mrpelementscheduleline mrpelementcategory.
 *&--MOD END BY XINLEI XU 2025/03/04
 
@@ -876,9 +851,11 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
 
       " 审批状态取得取得
       lv_pathoverview = |/YY1_WORKFLOWSTATUSOVERVIEW_CDS/YY1_WorkflowStatusOverview|.
+      DATA(lv_filter_wf) = |SAPObjectNodeRepresentation eq 'PurchaseOrder'|.  " ADD BY XINLEI XU 2025/04/10
       zzcl_common_utils=>request_api_v2(
         EXPORTING
           iv_path        = lv_pathoverview
+          iv_filter      = lv_filter_wf
           iv_method      = if_web_http_client=>get
           iv_format      = 'json'
         IMPORTING
@@ -889,7 +866,10 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
                                    CHANGING data = ls_res_workflow ).
 
         APPEND LINES OF ls_res_workflow-d-results TO lt_workflow_api.
-        SORT lt_workflow_api BY sapbusinessobjectnodekey1 sapobjectnoderepresentation.
+*&--MOD BEGIN BY XINLEI XU 2025/04/10 BUG Fixed
+*        SORT lt_workflow_api BY sapbusinessobjectnodekey1 sapobjectnoderepresentation.
+        SORT lt_workflow_api BY sapbusinessobjectnodekey1 workflowinternalid DESCENDING.
+*&--MOD END BY XINLEI XU 2025/04/10
       ENDIF.
 
       " 审批详情取得
@@ -907,8 +887,12 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
                                    CHANGING data = ls_res_workflowdetail ).
 
         APPEND LINES OF ls_res_workflowdetail-d-results TO lt_workflowdetail_api.
-        SORT lt_workflowdetail_api BY workflowinternalid workflowtaskinternalid DESCENDING.
-        DELETE ADJACENT DUPLICATES FROM lt_workflowdetail_api COMPARING workflowinternalid.
+*&--MOD BEGIN BY XINLEI XU 2025/04/10 BUG Fixed
+*        SORT lt_workflowdetail_api BY workflowinternalid workflowtaskinternalid DESCENDING.
+*        DELETE ADJACENT DUPLICATES FROM lt_workflowdetail_api COMPARING workflowinternalid.
+        DELETE lt_workflowdetail_api WHERE workflowtaskexternalstatus = 'CANCELLED'.
+        SORT lt_workflowdetail_api BY workflowinternalid.
+*&--MOD END BY XINLEI XU 2025/04/10
       ENDIF.
 
       DATA:
@@ -1159,7 +1143,7 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         ENDIF.
 
         " 2.26 承認サイト
-        READ TABLE lt_workflow_api INTO DATA(lw_workflow) WITH KEY sapbusinessobjectnodekey1 = lw_data-purchaseorder sapobjectnoderepresentation = 'PurchaseOrder' BINARY SEARCH.
+        READ TABLE lt_workflow_api INTO DATA(lw_workflow) WITH KEY sapbusinessobjectnodekey1 = lw_data-purchaseorder BINARY SEARCH.
         IF sy-subrc = 0.
           READ TABLE lt_workflowdetail_api INTO DATA(lw_workflow_d) WITH KEY workflowinternalid = lw_workflow-workflowinternalid BINARY SEARCH.
           " 如果能在detail中取到WorkflowTaskInternalID
@@ -1318,19 +1302,30 @@ CLASS zcl_podataanalysis IMPLEMENTATION.
         DELETE lt_data WHERE ponokoru = 0.
       ENDIF.
 
+*&--ADD BEGIN BY XINLEI XU 2025/04/09
+      APPEND INITIAL LINE TO lt_response ASSIGNING FIELD-SYMBOL(<lfs_response>).
+      TRY.
+          <lfs_response>-uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+          ##NO_HANDLER
+        CATCH cx_uuid_error.
+          " handle exception
+      ENDTRY.
+      <lfs_response>-dynamicdata = /ui2/cl_json=>serialize( data = lt_data ).
+*&--ADD END BY XINLEI XU 2025/04/09
+
       IF io_request->is_total_numb_of_rec_requested(  ) .
-        io_response->set_total_number_of_records( lines( lt_data ) ).
+        io_response->set_total_number_of_records( lines( lt_response ) ).
       ENDIF.
 
       "Sort
       zzcl_odata_utils=>orderby( EXPORTING it_order = io_request->get_sort_elements( )
-                                 CHANGING  ct_data  = lt_data ).
+                                 CHANGING  ct_data  = lt_response ).
 
       " Paging
       zzcl_odata_utils=>paging( EXPORTING io_paging = io_request->get_paging(  )
-                                CHANGING  ct_data   = lt_data ).
+                                CHANGING  ct_data   = lt_response ).
 
-      io_response->set_data( lt_data ).
+      io_response->set_data( lt_response ).
     ENDIF.
 
   ENDMETHOD.

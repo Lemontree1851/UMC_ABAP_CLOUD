@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_creditmantable IMPLEMENTATION.
+CLASS ZCL_CREDITMANTABLE IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

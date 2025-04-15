@@ -3,7 +3,9 @@
 define custom entity ZCE_OFLIST
   // with parameters parameter_name : parameter_type
 {
+      @Consumption.valueHelpDefinition: [ { entity: { name: 'ZI_PRODUCT_VH', element: 'Product' } } ]
   key Product                       : matnr;
+      @Consumption.valueHelpDefinition: [ { entity: { name: 'I_PlantStdVH', element: 'Plant' } } ]
   key Plant                         : werks_d;
   key MRPArea                       : abap.char(10);
   key PlndIndepRqmtType             : abap.char(4);

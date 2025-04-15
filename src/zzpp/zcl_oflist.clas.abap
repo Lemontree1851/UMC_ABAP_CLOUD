@@ -68,7 +68,7 @@ CLASS zcl_oflist IMPLEMENTATION.
           root~requirementsegment,
           root~plndindeprqmtperiod,
           root~periodtype,
-          cust_mat2~materialbycustomer,
+*          cust_mat2~materialbycustomer,
           root~workingdaydate AS requirementdate,
           pir_bik~plndindeprqmtisactive,
           root~plannedquantity,
@@ -80,8 +80,10 @@ CLASS zcl_oflist IMPLEMENTATION.
         FROM i_plndindeprqmtitemtp WITH PRIVILEGED ACCESS AS root
         LEFT OUTER JOIN i_plndindeprqmtbyintkey WITH PRIVILEGED ACCESS AS pir_bik
           ON root~plndindeprqmtinternalid = pir_bik~plndindeprqmtinternalid
-        LEFT OUTER JOIN i_customermaterial_2 WITH PRIVILEGED ACCESS  AS cust_mat2
-          ON root~product = cust_mat2~product
+*&--DEL BEGIN BY XINLEI XU 2025/04/08 BUG Fixed
+*        LEFT OUTER JOIN i_customermaterial_2 WITH PRIVILEGED ACCESS  AS cust_mat2
+*          ON root~product = cust_mat2~product
+*&--DEL END BY XINLEI XU 2025/04/08
         LEFT OUTER JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS product_plant
           ON root~product = product_plant~product
           AND root~plant = product_plant~plant
@@ -101,7 +103,7 @@ CLASS zcl_oflist IMPLEMENTATION.
           AND root~product IN @r_product
           AND root~plndindeprqmtversion IN @r_plndindeprqmtversion
           AND root~workingdaydate IN @r_requirementdate
-          AND cust_mat2~materialbycustomer IN @r_materialbycustomer
+*          AND cust_mat2~materialbycustomer IN @r_materialbycustomer
           AND pir_bik~plndindeprqmtisactive IN @r_plndindeprqmtisactive
         INTO TABLE @DATA(lt_pir_item).
 
@@ -124,8 +126,22 @@ CLASS zcl_oflist IMPLEMENTATION.
           <fs_pir_key>-requirementplan = |{ <fs_pir_key>-requirementplan ALPHA = IN }|.
         ENDLOOP.
 
-        "获取备注
-        IF lt_pir_item IS NOT INITIAL.
+        IF lt_pir_key IS NOT INITIAL.
+*&--ADD BEGIN BY XINLEI XU 2025/04/08 BUG Fixed
+          SELECT salesorganization,
+                 distributionchannel,
+                 customer,
+                 product,
+                 materialbycustomer
+            FROM i_customermaterial_2 WITH PRIVILEGED ACCESS
+             FOR ALL ENTRIES IN @lt_pir_key
+           WHERE product = @lt_pir_key-product
+             AND customer = @lt_pir_key-requirementplan
+            INTO TABLE @DATA(lt_customermaterial).
+          SORT lt_customermaterial BY product customer.
+*&--ADD END BY XINLEI XU 2025/04/08
+
+          "获取备注
 *&--MOD BEGIN BY XINLEI XU 2025/02/26
 *          SELECT material,
 *                 plant,
@@ -192,6 +208,20 @@ CLASS zcl_oflist IMPLEMENTATION.
         CLEAR: ls_oflist,lt_oflist.
         LOOP AT lt_pir_item INTO DATA(ls_pir_item).
           MOVE-CORRESPONDING ls_pir_item TO ls_oflist.
+
+*&--ADD BEGIN BY XINLEI XU 2025/04/08 BUG Fixed
+          DATA(lv_customer) = ls_pir_item-requirementplan.
+          lv_customer = |{ lv_customer ALPHA = IN }|.
+          READ TABLE lt_customermaterial INTO DATA(ls_customermaterial) WITH KEY product = ls_pir_item-product
+                                                                                 customer = lv_customer BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_oflist-materialbycustomer = ls_customermaterial-materialbycustomer.
+          ENDIF.
+          IF ls_oflist-materialbycustomer NOT IN r_materialbycustomer.
+            CONTINUE.
+          ENDIF.
+*&--ADD END BY XINLEI XU 2025/04/08
+
           CLEAR ls_oflist-mfgorderconfirmationentrydate.
           "符合要求的才填充【最終生産実績登録日】
           IF ls_pir_item-plndindeprqmtversion = '01' AND is_process = abap_true.
@@ -208,8 +238,6 @@ CLASS zcl_oflist IMPLEMENTATION.
 
           "备注
           IF ls_pir_item-plndindeprqmtversion = '01'. " ADD BY XINLEI XU 2025/02/26
-            DATA(lv_customer) = ls_pir_item-requirementplan.
-            lv_customer = |{ lv_customer ALPHA = IN }|.
 *&--ADD BEGIN BY XINLEI XU 2025/02/26
             READ TABLE lt_pp1012_temp INTO DATA(ls_pp1012_temp) WITH KEY material = ls_pir_item-product
                                                                          plant = ls_pir_item-plant

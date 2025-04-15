@@ -113,7 +113,7 @@ ENDCLASS.
 
 
 
-CLASS zzcl_wf_utils IMPLEMENTATION.
+CLASS ZZCL_WF_UTILS IMPLEMENTATION.
 
 
   METHOD add_approval_history.

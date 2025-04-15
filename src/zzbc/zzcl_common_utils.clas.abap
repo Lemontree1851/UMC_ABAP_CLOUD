@@ -234,6 +234,10 @@ CLASS zzcl_common_utils DEFINITION
                                    month            TYPE i DEFAULT 0
                                    day              TYPE i DEFAULT 0
                          RETURNING VALUE(calc_date) TYPE datum,
+      "! Copy from CL_ABAP_DATFM~MONTHS_BETWEEN_TWO_DATES(not released)
+      months_between_two_dates IMPORTING iv_date_from     TYPE datum
+                                         iv_date_to       TYPE datum
+                               RETURNING VALUE(rv_months) TYPE int4,
 
       get_access_token IMPORTING iv_token_url          TYPE string
                                  iv_client_id          TYPE string
@@ -345,7 +349,7 @@ ENDCLASS.
 
 
 
-CLASS ZZCL_COMMON_UTILS IMPLEMENTATION.
+CLASS zzcl_common_utils IMPLEMENTATION.
 
 
   METHOD add_interface_log.
@@ -401,6 +405,38 @@ CLASS ZZCL_COMMON_UTILS IMPLEMENTATION.
                                         io_calculation = xco_cp_time=>date_calculation->ultimo )->as( xco_cp_time=>format->abap )->value.
   ENDMETHOD.
 
+  METHOD months_between_two_dates .
+
+* local data
+    DATA:
+      BEGIN OF ld_date_from,
+        jjjj(4) TYPE n,
+        mm(2)   TYPE n,
+        tt(2)   TYPE n,
+      END   OF ld_date_from,
+      BEGIN OF ld_date_to,
+        jjjj(4) TYPE n,
+        mm(2)   TYPE n,
+        tt(2)   TYPE n,
+      END   OF ld_date_to,
+      ld_date TYPE datum.
+
+* reset return
+    CLEAR rv_months.
+
+* go on, if import exists
+    CHECK NOT ( iv_date_from IS INITIAL )
+      AND NOT ( iv_date_to   IS INITIAL ).
+
+* set local dates
+    ld_date_from = iv_date_from.
+    ld_date_to   = iv_date_to.
+
+* calculate months
+    rv_months =   ( ld_date_to-jjjj - ld_date_from-jjjj ) * 12
+                + ( ld_date_to-mm   - ld_date_from-mm   ).
+
+  ENDMETHOD.                    "MONTHS_BETWEEN_TWO_DATES
 
   METHOD conversion_amount.
     DATA: int_shift      TYPE i,
@@ -690,7 +726,7 @@ CLASS ZZCL_COMMON_UTILS IMPLEMENTATION.
               ENDIF.
 
             WHEN 'V4'.
-              REPLACE ALL OCCURRENCES OF `@odata.metadataEtag` IN ev_response WITH 'etag'.
+              REPLACE ALL OCCURRENCES OF `@odata.etag` IN ev_response WITH 'etag'.
               /ui2/cl_json=>deserialize( EXPORTING json = ev_response
                                                    pretty_name = /ui2/cl_json=>pretty_mode-camel_case
                                          CHANGING  data = ls_odatav4_result ).
@@ -713,37 +749,6 @@ CLASS ZZCL_COMMON_UTILS IMPLEMENTATION.
         ev_response = lx_root->get_text(  ).
     ENDTRY.
   ENDMETHOD.                                             "#EC CI_VALPAR
-
-
-  METHOD get_begindate_of_month.
-    IF is_valid_date( iv_date ).
-      rv_month_begin_date(6) = iv_date(6).
-      rv_month_begin_date+6(2) = frist.
-    ENDIF.
-  ENDMETHOD.
-
-
-  METHOD get_company_by_user.
-    SELECT uuid,
-           mail,
-           companycode
-      FROM zc_tbc1012
-     WHERE mail = @iv_email
-     INTO TABLE @DATA(lt_assign_company).
-
-    SORT lt_assign_company BY companycode.
-    DELETE ADJACENT DUPLICATES FROM lt_assign_company COMPARING companycode.
-
-    LOOP AT lt_assign_company INTO DATA(ls_assign_company).
-      CONDENSE ls_assign_company-companycode NO-GAPS.
-      IF rv_company IS INITIAL.
-        rv_company = ls_assign_company-companycode.
-      ELSE.
-        rv_company = rv_company && '&' && ls_assign_company-companycode.
-      ENDIF.
-    ENDLOOP.
-  ENDMETHOD.
-
 
   METHOD get_csrf_token.
     DATA(lv_path) = iv_path.
@@ -801,6 +806,35 @@ CLASS ZZCL_COMMON_UTILS IMPLEMENTATION.
         ev_response = lx_root->get_text(  ).
     ENDTRY.
   ENDMETHOD.                                             "#EC CI_VALPAR
+
+  METHOD get_begindate_of_month.
+    IF is_valid_date( iv_date ).
+      rv_month_begin_date(6) = iv_date(6).
+      rv_month_begin_date+6(2) = frist.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD get_company_by_user.
+    SELECT uuid,
+           mail,
+           companycode
+      FROM zc_tbc1012
+     WHERE mail = @iv_email
+     INTO TABLE @DATA(lt_assign_company).
+
+    SORT lt_assign_company BY companycode.
+    DELETE ADJACENT DUPLICATES FROM lt_assign_company COMPARING companycode.
+
+    LOOP AT lt_assign_company INTO DATA(ls_assign_company).
+      CONDENSE ls_assign_company-companycode NO-GAPS.
+      IF rv_company IS INITIAL.
+        rv_company = ls_assign_company-companycode.
+      ELSE.
+        rv_company = rv_company && '&' && ls_assign_company-companycode.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
 
 
   METHOD get_current_language.
@@ -1454,20 +1488,20 @@ CLASS ZZCL_COMMON_UTILS IMPLEMENTATION.
           lo_request->set_text( iv_body ).
         ENDIF.
 
-*&--DEL BEGIN BY XINLEI XU 2025/03/05 If-Match/If-None-Match header not supported for this resource
-*        IF iv_etag IS NOT INITIAL.
-*          DATA(lv_etag) = iv_etag.
-*        ELSEIF iv_method = if_web_http_client=>patch.
-*          get_api_etag( EXPORTING iv_odata_version = 'V4'
-*                                  iv_path          = lv_path
-*                        IMPORTING ev_status_code   = ev_status_code
-*                                  ev_response      = ev_response
-*                                  ev_etag          = lv_etag ).
-*        ENDIF.
-*        IF lv_etag IS NOT INITIAL.
-*          lo_request->set_header_field( i_name = 'If-Match' i_value = lv_etag ).
-*        ENDIF.
-*&--DEL END BY XINLEI XU 2025/03/05
+        IF iv_etag IS NOT INITIAL.
+          DATA(lv_etag) = iv_etag.
+        ELSEIF iv_method = if_web_http_client=>patch.
+          get_api_etag( EXPORTING iv_odata_version = 'V4'
+                                  iv_path          = lv_path
+                        IMPORTING ev_status_code   = ev_status_code
+                                  ev_response      = ev_response
+                                  ev_etag          = lv_etag ).
+        ENDIF.
+        " If-Match/If-None-Match header not supported for this resource
+        FIND 'api_supplierconfirmation' IN lv_path.
+        IF sy-subrc <> 0 AND lv_etag IS NOT INITIAL.
+          lo_request->set_header_field( i_name = 'If-Match' i_value = lv_etag ).
+        ENDIF.
 
         IF iv_csrf_token IS INITIAL.
           lo_http_client->set_csrf_token(  ).
@@ -1476,71 +1510,6 @@ CLASS ZZCL_COMMON_UTILS IMPLEMENTATION.
         ENDIF.
 
         DATA(lo_response) = lo_http_client->execute( iv_method ).
-
-        ev_status_code = lo_response->get_status( )-code.
-        ev_response = lo_response->get_text(  ).
-
-        lo_http_client->close(  ).
-
-      CATCH cx_web_message_error INTO DATA(lx_web_message_error).
-        ev_status_code = 500.
-        ev_response = lx_web_message_error->get_text(  ).
-      CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
-        ev_status_code = 500.
-        ev_response = lx_web_http_client_error->get_text(  ).
-      CATCH cx_root INTO DATA(lx_root).
-        ev_status_code = 500.
-        ev_response = lx_root->get_text(  ).
-    ENDTRY.
-  ENDMETHOD.                                             "#EC CI_VALPAR
-
-
-  METHOD s3_attachment.
-    TRY.
-        DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
-        " Get UWEB Access configuration
-        SELECT SINGLE *
-          FROM zc_tbc1001
-         WHERE zid = 'ZBC005'
-           AND zvalue1 = @lv_system_url
-          INTO @DATA(ls_config).              "#EC CI_ALL_FIELDS_NEEDED
-
-        CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
-        CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
-        CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
-        CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
-        ##NO_HANDLER
-      CATCH cx_abap_context_info_error.
-        "handle exception
-        RETURN.
-    ENDTRY.
-
-    get_access_token( EXPORTING iv_token_url     = CONV #( ls_config-zvalue3 )
-                                iv_client_id     = CONV #( ls_config-zvalue4 )
-                                iv_client_secret = CONV #( ls_config-zvalue5 )
-                      IMPORTING ev_status_code   = ev_status_code
-                                ev_response      = ev_response
-                                es_response      = DATA(ls_response) ).
-    IF ls_response IS INITIAL.
-      RETURN.
-    ENDIF.
-
-    DATA(lv_path) = |/odata/v4/Common/{ iv_path }|.
-    TRY.
-        DATA(lo_dest) = cl_http_destination_provider=>create_by_url( CONV #( ls_config-zvalue2 ) ).
-        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_dest ).
-        DATA(lo_request) = lo_http_client->get_http_request(   ).
-
-        lo_http_client->enable_path_prefix( ).
-        lo_request->set_uri_path( EXPORTING i_uri_path = lv_path ).
-
-        lo_request->set_header_field( i_name = 'Accept' i_value = 'application/json' ).
-        lo_request->set_header_field( i_name = 'Content-Type' i_value = 'application/json' ).
-        lo_request->set_header_field( i_name = 'Authorization' i_value = |{ ls_response-token_type } { ls_response-access_token }| ).
-
-        lo_request->set_text( iv_body ).
-
-        DATA(lo_response) = lo_http_client->execute( if_web_http_client=>post ).
 
         ev_status_code = lo_response->get_status( )-code.
         ev_response = lo_response->get_text(  ).
@@ -1606,4 +1575,68 @@ CLASS ZZCL_COMMON_UTILS IMPLEMENTATION.
                                                 unit_in_not_found    = 07
                                                 unit_out_not_found   = 08 ).
   ENDMETHOD.
+
+  METHOD s3_attachment.
+    TRY.
+        DATA(lv_system_url) = cl_abap_context_info=>get_system_url( ).
+        " Get UWEB Access configuration
+        SELECT SINGLE *
+          FROM zc_tbc1001
+         WHERE zid = 'ZBC005'
+           AND zvalue1 = @lv_system_url
+          INTO @DATA(ls_config).              "#EC CI_ALL_FIELDS_NEEDED
+
+        CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
+        CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
+        CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
+        CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
+        ##NO_HANDLER
+      CATCH cx_abap_context_info_error.
+        "handle exception
+        RETURN.
+    ENDTRY.
+
+    get_access_token( EXPORTING iv_token_url     = CONV #( ls_config-zvalue3 )
+                                iv_client_id     = CONV #( ls_config-zvalue4 )
+                                iv_client_secret = CONV #( ls_config-zvalue5 )
+                      IMPORTING ev_status_code   = ev_status_code
+                                ev_response      = ev_response
+                                es_response      = DATA(ls_response) ).
+    IF ls_response IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    DATA(lv_path) = |/odata/v4/Common/{ iv_path }|.
+    TRY.
+        DATA(lo_dest) = cl_http_destination_provider=>create_by_url( CONV #( ls_config-zvalue2 ) ).
+        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_dest ).
+        DATA(lo_request) = lo_http_client->get_http_request(   ).
+
+        lo_http_client->enable_path_prefix( ).
+        lo_request->set_uri_path( EXPORTING i_uri_path = lv_path ).
+
+        lo_request->set_header_field( i_name = 'Accept' i_value = 'application/json' ).
+        lo_request->set_header_field( i_name = 'Content-Type' i_value = 'application/json' ).
+        lo_request->set_header_field( i_name = 'Authorization' i_value = |{ ls_response-token_type } { ls_response-access_token }| ).
+
+        lo_request->set_text( iv_body ).
+
+        DATA(lo_response) = lo_http_client->execute( if_web_http_client=>post ).
+
+        ev_status_code = lo_response->get_status( )-code.
+        ev_response = lo_response->get_text(  ).
+
+        lo_http_client->close(  ).
+
+      CATCH cx_web_message_error INTO DATA(lx_web_message_error).
+        ev_status_code = 500.
+        ev_response = lx_web_message_error->get_text(  ).
+      CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
+        ev_status_code = 500.
+        ev_response = lx_web_http_client_error->get_text(  ).
+      CATCH cx_root INTO DATA(lx_root).
+        ev_status_code = 500.
+        ev_response = lx_root->get_text(  ).
+    ENDTRY.
+  ENDMETHOD.                                             "#EC CI_VALPAR
 ENDCLASS.

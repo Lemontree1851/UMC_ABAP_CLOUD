@@ -306,10 +306,9 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
       ls_res     TYPE ty_res,
       lv_path    TYPE string.
 
-    SELECT
-      *
-    FROM ztpp_1018
-    INTO TABLE @DATA(lt_factorycalendar).
+    SELECT *
+      FROM ztpp_1018
+      INTO TABLE @DATA(lt_factorycalendar)."#EC CI_NOWHERE
     SORT lt_factorycalendar BY plant holiday_date.
 
     "有些日期不是工作日，sap会自动变成节日的前一个工作日，但业务需求要后一个工作日，所以需要手动更改为后一个工作日

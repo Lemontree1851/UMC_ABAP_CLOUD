@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_ecn IMPLEMENTATION.
+CLASS ZCL_ECN IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
