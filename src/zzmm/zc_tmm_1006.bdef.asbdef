@@ -9,4 +9,5 @@ define behavior for ZC_TMM_1006 alias PurchaseReq
   use action batchProcess;
   use action createPurchaseOrder;
   use action handleFile;
+  use action deletePR; // ADD BY XINLEI XU 2025/04/21 CR#4359
 }

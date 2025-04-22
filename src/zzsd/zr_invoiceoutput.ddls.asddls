@@ -6,8 +6,9 @@ define root view entity ZR_INVOICEOUTPUT
   association [0..1] to I_Customer                     as _Customer          on  $projection.soldtoparty = _Customer.Customer
   association [0..1] to I_AddlCompanyCodeInformation   as _AddiCompnay       on  $projection.salesorganization         = _AddiCompnay.CompanyCode
                                                                              and _AddiCompnay.CompanyCodeParameterType = 'JPCCRP'
-  association [0..1] to I_SalesDocumentItem            as _SalesDocumentItem on  $projection.SalesDocument = _SalesDocumentItem.SalesDocument
+  association [0..1] to I_SalesDocumentItem            as _SalesDocumentItem on  $projection.SalesDocument     = _SalesDocumentItem.SalesDocument
                                                                              and $projection.SalesDocumentItem = _SalesDocumentItem.SalesDocumentItem
+  association [0..1] to I_SalesDocument                as _SalesDocument     on  $projection.SalesDocument = _SalesDocument.SalesDocument
   association [0..*] to I_BillingDocumentItemPrcgElmnt as _PrcElemtPrice     on  $projection.BillingDocument            = _PrcElemtPrice.BillingDocument
                                                                              and $projection.BillingDocumentItem        = _PrcElemtPrice.BillingDocumentItem
                                                                              and _PrcElemtPrice.ConditionInactiveReason = ''
@@ -30,7 +31,7 @@ define root view entity ZR_INVOICEOUTPUT
       _Head.PayerParty,
       BillToParty,
       @EndUserText.label: '出荷ポイント'
-      cast( ShippingPoint as abap.char(4) ) as ShippingPoint,
+      cast( ShippingPoint as abap.char(4) )    as ShippingPoint,
       SalesOffice,
       cast( Product as matnr preserving type ) as Product,
       BillingQuantity,
@@ -43,12 +44,21 @@ define root view entity ZR_INVOICEOUTPUT
       case when _PrcElemtRate.ConditionRateValue = 10
         then NetAmount
         else cast(0 as abap.curr(15,2))
-      end as NetAmount10,
+      end                                      as NetAmount10,
       @Semantics.amount.currencyCode: 'TransactionCurrency'
       case when _PrcElemtRate.ConditionRateValue <> 10
         then NetAmount
         else cast(0 as abap.curr(15,2))
-      end as NetAmountExclude,
+      end                                      as NetAmountExclude,
+      
+      // ADD BEGIN BY XINLEI XU 2025/04/18 CM#4423
+      case when _SalesDocumentItem.PurchaseOrderByCustomer is null or _SalesDocumentItem.PurchaseOrderByCustomer = ''
+           then _SalesDocument.PurchaseOrderByCustomer
+           else _SalesDocumentItem.PurchaseOrderByCustomer
+           end                                 as PurchaseOrderByCustomer,
+      YY1_ItemRemarks_1_BDI,
+      // ADD END BY XINLEI XU 2025/04/18 CM#4423
+      
       _Head,
       _Customer,
       _AddiCompnay,

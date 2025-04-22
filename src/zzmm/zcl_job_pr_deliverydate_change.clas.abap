@@ -22,7 +22,10 @@ CLASS zcl_job_pr_deliverydate_change DEFINITION
 ENDCLASS.
 
 
-CLASS zcl_job_pr_deliverydate_change IMPLEMENTATION.
+
+CLASS ZCL_JOB_PR_DELIVERYDATE_CHANGE IMPLEMENTATION.
+
+
   METHOD add_message_to_log.
     TRY.
         IF sy-batch = abap_true.
@@ -56,7 +59,8 @@ CLASS zcl_job_pr_deliverydate_change IMPLEMENTATION.
                                   datatype       = 'C'
                                   length         = 4
                                   param_text     = 'Plant'
-                                  changeable_ind = abap_true ) ).
+                                  changeable_ind = abap_true
+                                  mandatory_ind  = abap_true ) ).
     " Return the default parameters values here
     " et_parameter_val
   ENDMETHOD.
@@ -258,6 +262,7 @@ CLASS zcl_job_pr_deliverydate_change IMPLEMENTATION.
                     MESSAGE ID lv_msg_class TYPE 'S' NUMBER lv_msg_number INTO lv_error_message.
                   ENDIF.
                 ENDIF.
+                ##NO_HANDLER
               CATCH cx_root.
             ENDTRY.
 

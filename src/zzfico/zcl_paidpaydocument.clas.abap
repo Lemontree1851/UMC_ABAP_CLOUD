@@ -42,6 +42,7 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
 
     DATA:
       lv_amount(9)        TYPE p DECIMALS 2,
+      lv_rate(9)          TYPE p DECIMALS 2,
       lv_fiscalyearperiod TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
       lv_poper            TYPE poper,
       lv_year             TYPE c LENGTH 4,
@@ -102,7 +103,9 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
           ls_output-profitcentername = ls_1011-profitcentername.  "利益センタテキスト
           ls_output-purgrpamount = ls_1011-purgrpamount. "当期購買グループ別仕入金額
           ls_output-chargeableamount = ls_1011-chargeableamount. "当期有償支給品仕入金額
-          ls_output-chargeablerate = ls_1011-chargeablerate.  "当期仕入率
+          lv_rate = ls_1011-chargeablerate * 100.
+          ls_output-chargeablerate = lv_rate.  "当期仕入率
+          CONDENSE ls_output-chargeablerate.
           ls_output-previousstockamount = ls_1011-previousstocktotal. "在庫金額（前期末）
           ls_output-currentstockamount = ls_1011-currentstockpaid. "在庫金額（当期末）-有償支給品
           ls_output-currentstocksemi = ls_1011-currentstocksemi.  "在庫金額（当期末）-半製品
@@ -112,7 +115,9 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
           ls_output-paidmaterialcost = ls_1011-paidmaterialcost.  "払いだし材料費
           ls_output-customerrevenue = ls_1011-customerrevenue.  "該当得意先の総売上高
           ls_output-revenue = ls_1011-revenue.  "会社レベルの総売上高
-          ls_output-revenuerate = ls_1011-revenuerate.  "総売上金額占有率
+          lv_rate = ls_1011-revenuerate * 100.
+          ls_output-revenuerate = lv_rate.  "総売上金額占有率
+          CONDENSE ls_output-revenuerate.
           ls_output-currency = ls_1011-currency.
           ls_output-gjahr1 = ls_1011-gjahr1.
           ls_output-belnr1 = ls_1011-belnr1.
@@ -217,7 +222,7 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
         ENDIF.
 
         IF lt_bp IS NOT INITIAL.
-          SELECT customer,
+          SELECT customer,   "#EC CI_NO_TRANSFORM
                  companycode
             FROM i_customercompany WITH PRIVILEGED ACCESS
             FOR ALL ENTRIES IN @lt_bp
@@ -227,7 +232,7 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
         ENDIF.
 
         IF lt_kunnr IS NOT INITIAL.
-          SELECT supplier,
+          SELECT supplier,     "#EC CI_NO_TRANSFORM
                  companycode
             FROM i_suppliercompany
             FOR ALL ENTRIES IN @lt_kunnr
@@ -410,6 +415,7 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
                         customer = ls_1013-customer
                         supplier = ls_1013-supplier BINARY SEARCH.
           IF sy-subrc <> 0.
+            "新数据，在点击过账后更新进addon表，因为在query中无法对addon table使用增删改
             ls_output-ztype = lv_ztype.
             ls_output-companycode = ls_1013-companycode.
             ls_output-fiscalyear = ls_1013-fiscalyear.
@@ -424,11 +430,8 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
                                                          iv_currency = ls_1013-currency
                                                          iv_input = ls_1013-ar ).
             CONDENSE ls_output-ar NO-GAPS.
-            IF ls_1013-ap < 0.
-              ls_1013-ap = -1 * ls_1013-ap.
-            ELSE.
-              ls_1013-ap = ls_1013-ap.
-            ENDIF.
+            "AP取反
+            ls_1013-ap = -1 * ls_1013-ap.
             ls_output-ap = zzcl_common_utils=>conversion_amount(
                                                          iv_alpha = 'OUT'
                                                          iv_currency = ls_1013-currency
@@ -445,6 +448,7 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
             ls_output-gjahr8 = ls_1013-gjahr4.
             APPEND ls_output TO lt_output.
           ELSE.
+            "如果addon表中已存在，用addon表的数据
             MOVE-CORRESPONDING ls_table TO ls_output.
             ls_output-ar = zzcl_common_utils=>conversion_amount(
                                                          iv_alpha = 'OUT'
@@ -469,6 +473,19 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
             APPEND ls_output TO lt_output.
           ENDIF.
           CLEAR: ls_output.
+        ENDLOOP.
+
+        LOOP AT lt_output ASSIGNING FIELD-SYMBOL(<lfs_output>).
+          lv_length = strlen( <lfs_output>-ar ) - 1.
+          IF <lfs_output>-ar+lv_length(1) = '-'.
+            <lfs_output>-ar = |{ <lfs_output>-ar+lv_length(1) }{ <lfs_output>-ar(lv_length) }|.
+          ENDIF.
+
+          lv_length = strlen( <lfs_output>-ap ) - 1.
+          IF <lfs_output>-ap+lv_length(1) = '-'.
+            <lfs_output>-ap = |{ <lfs_output>-ap+lv_length(1) }{ <lfs_output>-ap(lv_length) }|.
+          ENDIF.
+
         ENDLOOP.
     ENDCASE.
 

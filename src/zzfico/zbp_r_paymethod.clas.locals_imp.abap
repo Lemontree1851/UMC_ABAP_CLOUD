@@ -68,7 +68,13 @@ CLASS lhc_paymethod DEFINITION INHERITING FROM cl_abap_behavior_handler.
                         RETURNING VALUE(rv_msg) TYPE string.
     METHODS execute1  CHANGING ct_data TYPE lty_zr_paymethod_sum
                       RAISING  zzcx_custom_exception.
-
+    "job改成存自建表的模式
+    METHODS job_tab  CHANGING ct_data TYPE lty_zr_paymethod_sum.
+    "job改成存自建表的模式
+    METHODS jobschd_tab              IMPORTING cv_uuid   TYPE sysuuid_x16 OPTIONAL
+                                     CHANGING  cs_run    TYPE ty_zr_paymethod_sum
+                                               ct_data   TYPE lty_zr_paymethod
+                                               file_uuid TYPE sysuuid_x16 .
 
 ENDCLASS.
 
@@ -1103,5 +1109,243 @@ INTO TABLE @DATA(lt_paymentterms).                      "#EC CI_NOWHERE
           " handle exception
       ENDTRY.
     ENDIF.
+  ENDMETHOD.
+  METHOD job_tab.
+      TYPES:BEGIN OF lty_excel,
+            uuid TYPE zr_paymethod-uuid,
+          END OF lty_excel,
+          lty_excel_t TYPE TABLE OF lty_excel.
+    DATA lt_excel TYPE lty_excel_t.
+    DATA ls_excel TYPE lty_excel.
+    DATA:lt_data TYPE lty_zr_paymethod.
+    DATA:lv_file_uuid TYPE sysuuid_x16.
+    DATA:lv_check_succ TYPE string.
+    DATA:lv_message TYPE string.
+    DATA lv_timestamp TYPE tzntstmpl.
+       DATA:lv_date TYPE bldat.
+    DATA:lv_time TYPE uzeit.
+
+    MESSAGE s022(zfico_001) INTO lv_check_succ .
+    LOOP AT ct_data INTO DATA(cs_data1) .
+      IF cs_data1-status = 'E' .
+        MESSAGE s024(zfico_001) INTO lv_message .
+        cs_data1-status  = 'E'.
+        cs_data1-message = lv_message.
+      ENDIF.
+      IF cs_data1-message NE lv_check_succ AND cs_data1-status = ''.
+        MESSAGE s023(zfico_001) INTO lv_message .
+        cs_data1-status  = 'E'.
+        cs_data1-message = lv_message.
+      ENDIF.
+      MODIFY ct_data FROM cs_data1 TRANSPORTING status message.
+    ENDLOOP.
+
+    TRY.
+        DATA(lv_uuid_all) = cl_system_uuid=>create_uuid_x16_static(  ).
+      CATCH cx_uuid_error INTO DATA(e1) ##NO_HANDLER.
+        "handle exception
+    ENDTRY.
+
+    LOOP AT ct_data INTO DATA(cs_data) WHERE status = ''..
+      cs_data-supplier = |{ cs_data-supplier ALPHA = IN }| .
+      getdata( EXPORTING cs_run = cs_data IMPORTING ct_data = lt_data ).
+      TRY.
+          DATA(lv_uuid) = cl_system_uuid=>create_uuid_x16_static(  ).
+        CATCH cx_uuid_error INTO DATA(e) ##NO_HANDLER.
+          "handle exception
+      ENDTRY.
+
+      LOOP AT lt_data INTO DATA(ls_data).
+        ls_data-accountingclerkphonenumber = cs_data-accountingclerkphonenumber.
+        ls_data-uuid = lv_uuid.
+        MODIFY lt_data FROM ls_data TRANSPORTING accountingclerkphonenumber uuid .
+      ENDLOOP.
+
+      jobschd_tab( EXPORTING cv_uuid = lv_uuid_all CHANGING cs_run = cs_data  ct_data = lt_data file_uuid = lv_file_uuid  ).
+
+      cs_data-message =  'Job' && ` ` && lv_file_uuid && ` ` &&  'scheduled'.
+      MODIFY ct_data FROM cs_data TRANSPORTING status message.
+    ENDLOOP.
+
+    ls_excel-uuid  = lv_uuid.
+
+     SELECT SINGLE *
+      FROM zzc_dtimp_conf
+     WHERE object = 'ZDATAIMPORT_PAYMETHOD'
+      INTO @DATA(ls_file_conf).
+    IF sy-subrc = 0.
+      " FILE_CONTENT must be populated with the complete file content of the .XLSX file
+      " whose content shall be processed programmatically.
+      DATA(lo_document) = xco_cp_xlsx=>document->for_file_content( ls_file_conf-templatecontent ).
+      DATA(lo_write_access) = lo_document->write_access(  ).
+      DATA(lo_worksheet) = lo_write_access->get_workbook( )->worksheet->at_position( 1 ).
+
+      DATA(lo_selection_pattern) = xco_cp_xlsx_selection=>pattern_builder->simple_from_to(
+        )->from_column( xco_cp_xlsx=>coordinate->for_alphabetic_value( ls_file_conf-startcolumn )
+        )->from_row( xco_cp_xlsx=>coordinate->for_numeric_value( ls_file_conf-startrow )
+        )->get_pattern( ).
+
+      lo_worksheet->select( lo_selection_pattern
+        )->row_stream(
+        )->operation->write_from( REF #( lt_excel )
+        )->execute( ).
+
+      DATA(lv_file) = lo_write_access->get_file_content( ).
+      DATA: lv_job_template_name TYPE cl_apj_rt_api=>ty_template_name VALUE 'ZZ_JT_DATAIMPORT',
+            ls_job_start_info    TYPE cl_apj_rt_api=>ty_start_info,
+            lt_job_parameters    TYPE cl_apj_rt_api=>tt_job_parameter_value,
+            lv_job_name          TYPE cl_apj_rt_api=>ty_jobname,
+            lv_job_count         TYPE cl_apj_rt_api=>ty_jobcount.
+      TRY.
+          lv_uuid = cl_system_uuid=>create_uuid_x16_static(  ).
+        CATCH cx_uuid_error INTO DATA(e2) ##NO_HANDLER.
+          "handle exception
+      ENDTRY.
+      GET TIME STAMP FIELD lv_timestamp.
+
+      TRY.
+          DATA(lv_timezone) = cl_abap_context_info=>get_user_time_zone( ).
+          "时间戳格式转换成日期格式
+          CONVERT TIME STAMP lv_timestamp TIME ZONE lv_timezone INTO DATE lv_date TIME lv_time .
+        CATCH cx_abap_context_info_error INTO DATA(e11) ##NO_HANDLER.
+          "handle exception
+      ENDTRY.
+
+      INSERT INTO zzt_dtimp_files VALUES @( VALUE #( uuid_file = lv_uuid
+                                                    uuid_conf     = ls_file_conf-uuidconf
+                                                    file_mime_type   = |application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|
+                                                    file_name   = |FICO-015支払方法変更_{ lv_date }_{ lv_time }|
+                                                    file_content    = lv_file
+                                                    job_name  = lv_job_name
+                                                    job_count = lv_job_count
+                                                    created_by      = sy-uname
+                                                    created_at      = lv_timestamp
+                                                    last_changed_by = sy-uname
+                                                    last_changed_at = lv_timestamp
+                                                    local_last_changed_at = lv_timestamp ) ).
+      TRY.
+          ls_job_start_info-start_immediately = abap_true.
+
+          lt_job_parameters = VALUE #( ( name    = 'P_ID'
+                                         t_value = VALUE #( ( sign   = 'I'
+                                                              option = 'EQ'
+                                                              low    = lv_uuid ) ) ) ).
+          " Schedule job
+          cl_apj_rt_api=>schedule_job(
+            EXPORTING
+              iv_job_template_name   = lv_job_template_name
+              iv_job_text            = |Batch Data Import Job of { lv_uuid }|
+              is_start_info          = ls_job_start_info
+              it_job_parameter_value = lt_job_parameters
+            IMPORTING
+              ev_jobname             = lv_job_name
+              ev_jobcount            = lv_job_count ).
+          INSERT INTO zzt_dtimp_start VALUES @( VALUE #( uuid_file       = lv_uuid
+                                                         created_by      = sy-uname
+                                                         created_at      = lv_timestamp
+                                                         last_changed_by = sy-uname
+                                                         last_changed_at = lv_timestamp
+                                                         local_last_changed_at = lv_timestamp ) ).
+        CATCH cx_apj_rt INTO DATA(lo_apj_rt) ##NO_HANDLER.
+
+
+        CATCH cx_root INTO DATA(lo_root) ##NO_HANDLER.
+
+      ENDTRY.
+
+      "file_uuid = lv_job_name.
+    LOOP AT ct_data INTO cs_data WHERE status = ''..
+
+      cs_data-message =  'Job' && ` ` && lv_job_name && ` ` &&  'scheduled'.
+      MODIFY ct_data FROM cs_data TRANSPORTING status message.
+    ENDLOOP.
+
+    ENDIF.
+
+
+
+  ENDMETHOD.
+  METHOD jobschd_tab.
+
+    TYPES:BEGIN OF lty_export,
+            "uuid                        TYPE zr_paymethod-uuid,
+            accountingdocument          TYPE zr_paymethod-accountingdocument,
+            fiscalyear                  TYPE zr_paymethod-fiscalyear,
+            companycode                 TYPE zr_paymethod-companycode,
+            accountingdocumentitem      TYPE zr_paymethod-accountingdocumentitem,
+            postingdate                 TYPE zr_paymethod-postingdate,
+            amountincompanycodecurrency TYPE zr_paymethod-amountincompanycodecurrency,
+            companycodecurrency         TYPE zr_paymethod-companycodecurrency,
+            accountingclerkphonenumber  TYPE zr_paymethod-accountingclerkphonenumber,
+            accountingclerkfaxnumber    TYPE zr_paymethod-accountingclerkfaxnumber,
+            paymentmethod_a             TYPE zr_paymethod-paymentmethod_a,
+            conditiondate               TYPE zr_paymethod-postingdate,
+            supplier                    TYPE zr_paymethod-supplier,
+            lastdate                    TYPE zr_paymethod-lastdate,
+            netduedate                  TYPE zr_paymethod-netduedate,
+            paymentmethod               TYPE zr_paymethod-paymentmethod,
+            paymentterms                TYPE zr_paymethod-paymentterms,
+
+
+          END OF lty_export,
+          lty_export_t TYPE TABLE OF lty_export.
+    DATA lt_export TYPE lty_export_t.
+
+    DATA:lv_message TYPE string.
+    DATA:lv_month(10) TYPE c.
+
+    DATA:lt_ztfi_1023 TYPE STANDARD TABLE OF ztfi_1023.
+    DATA:ls_ztfi_1023 TYPE ztfi_1023.
+
+    SELECT
+        paymentterms,
+        paymenttermsvaliditymonthday,"????
+        paymentmethod,
+        bslndtecalcaddlmnths,
+        cashdiscount1dayofmonth,
+        cashdiscount1additionalmonths
+    FROM i_paymenttermsconditions
+    INTO TABLE @DATA(lt_paymentterms).                  "#EC CI_NOWHERE
+    SORT lt_paymentterms BY paymentterms paymenttermsvaliditymonthday.
+
+    lt_export = CORRESPONDING #( ct_data ).
+
+    LOOP AT lt_export INTO DATA(ls_export).
+      READ TABLE lt_paymentterms INTO DATA(ls_paymentterms) WITH KEY paymentterms = ls_export-accountingclerkphonenumber BINARY SEARCH.
+      IF sy-subrc = 0.
+        CLEAR lv_month.
+        ls_export-paymentmethod_a = ls_paymentterms-paymentmethod.
+
+        DATA:lv_data_temp TYPE aedat.
+        DATA:lv_next_start TYPE aedat.
+        DATA:lv_d(2) TYPE c.
+        DATA:lv_m TYPE i.
+        lv_data_temp = ls_export-lastdate.
+        lv_data_temp = zzcl_common_utils=>get_begindate_of_month( EXPORTING iv_date = ls_export-lastdate ).
+
+        lv_m = ls_paymentterms-bslndtecalcaddlmnths + ls_paymentterms-cashdiscount1additionalmonths.
+        lv_next_start = zzcl_common_utils=>calc_date_add( EXPORTING date = lv_data_temp month = lv_m ).
+
+        IF ls_paymentterms-cashdiscount1dayofmonth < 10.
+          lv_d = '0' && ls_paymentterms-cashdiscount1dayofmonth.
+        ELSE.
+          lv_d = ls_paymentterms-cashdiscount1dayofmonth.
+        ENDIF.
+        ls_export-conditiondate = lv_next_start+0(6) &&  lv_d.
+
+      ENDIF.
+      ls_export-amountincompanycodecurrency = zzcl_common_utils=>conversion_amount(
+                                    iv_alpha = 'OUT'
+                                    iv_currency = ls_export-companycodecurrency
+                                    iv_input = ls_export-amountincompanycodecurrency ).
+      MODIFY  lt_export FROM  ls_export TRANSPORTING conditiondate paymentmethod_a amountincompanycodecurrency.
+      MOVE-CORRESPONDING ls_export TO ls_ztfi_1023.
+      ls_ztfi_1023-uuid_all = cv_uuid.
+      APPEND ls_ztfi_1023 TO lt_ztfi_1023.
+    ENDLOOP.
+
+
+
+
   ENDMETHOD.
 ENDCLASS.

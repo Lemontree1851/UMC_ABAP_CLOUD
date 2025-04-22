@@ -400,7 +400,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     ENDIF.
 * 2.05 BPマスタから得意先の有償支給得意先BPコードとBPテキスト
     IF lt_bp IS NOT INITIAL.
-      SELECT customer,
+      SELECT customer,                             "#EC CI_NO_TRANSFORM
              companycode
         FROM i_customercompany WITH PRIVILEGED ACCESS
         FOR ALL ENTRIES IN @lt_bp
@@ -409,7 +409,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         INTO TABLE @DATA(lt_kunnr).
     ENDIF.
     IF lt_kunnr IS NOT INITIAL.
-      SELECT supplier,
+      SELECT supplier,                             "#EC CI_NO_TRANSFORM
              companycode
         FROM i_suppliercompany
         FOR ALL ENTRIES IN @lt_kunnr
@@ -438,7 +438,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
         INTO TABLE @DATA(lt_prctr).
       IF sy-subrc = 0.
 * 2.09 利益センタのテキスト
-        SELECT profitcenter,
+        SELECT profitcenter,                       "#EC CI_NO_TRANSFORM
                profitcentername
           FROM i_profitcentertext WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_prctr
@@ -468,7 +468,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
 
     lv_previousperiod = ls_1001-zvalue3 - 1.
     IF lv_previousperiod <> 0.
-      SELECT companycode,
+      SELECT companycode,                          "#EC CI_NO_TRANSFORM
              fiscalyear,
              period,
              profitcenter,
@@ -531,7 +531,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     ENDLOOP.
 
 * edit date for ekbe
-    lv_from = cv_gjahr && '01' && '01'.
+    lv_from = ls_v3-fiscalyearstartdate.
     lv_to = ls_v3-fiscalperiodenddate.
 
 * 2.15 有償支給品の仕入れ金額
@@ -589,23 +589,26 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     DATA(lt_product_tmp) = lt_product[].
     DO.
 * find the upper bom code
-      SELECT billofmaterial,
-             billofmaterialvariant,
-             billofmaterialitemnodenumber,
-             bominstceinternalchangenumber,
-             billofmaterialcomponent
-        FROM i_billofmaterialitemdex_3 WITH PRIVILEGED ACCESS
-        FOR ALL ENTRIES IN @lt_product_tmp
-       WHERE billofmaterialcomponent = @lt_product_tmp-product
-         AND isdeleted = @space
-        INTO TABLE @DATA(lt_up).
-      " Exit loop if not find upper bom
-      IF sy-subrc <> 0.
-        EXIT.
+      IF lt_product_tmp IS NOT INITIAL.
+        SELECT billofmaterial,                "#EC CI_FAE_LINES_ENSURED
+               billofmaterialvariant,
+               billofmaterialitemnodenumber,
+               bominstceinternalchangenumber,
+               billofmaterialcomponent
+          FROM i_billofmaterialitemdex_3 WITH PRIVILEGED ACCESS
+          FOR ALL ENTRIES IN @lt_product_tmp
+         WHERE billofmaterialcomponent = @lt_product_tmp-product
+           AND isdeleted = @space
+          INTO TABLE @DATA(lt_up).
+
+        " Exit loop if not find upper bom
+        IF sy-subrc <> 0.
+          EXIT.
+        ENDIF.
       ENDIF.
 * get material number by bom code
       IF lt_up IS NOT INITIAL.
-        SELECT billofmaterial,
+        SELECT billofmaterial,        "#EC CI_NO_TRANSFORM
                billofmaterialvariant,
                material,
                plant,
@@ -619,7 +622,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       ENDIF.
 * get the cost bom to check
       IF lt_expode IS NOT INITIAL.
-        SELECT costingreferenceobject,
+        SELECT costingreferenceobject,     "#EC CI_NO_TRANSFORM
                costestimate,
                costingtype,
                costingdate,
@@ -765,7 +768,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
 * 3.09前期末在庫金額を取得
     lv_lastyear = cv_gjahr - 1.
     IF lt_prctr IS NOT INITIAL.
-      SELECT companycode,
+      SELECT companycode,      "#EC CI_NO_TRANSFORM
              fiscalyear,
              period,
              profitcenter,
@@ -784,7 +787,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       IF sy-subrc <> 0
      AND lt_prctr IS NOT INITIAL.
 * 3.10 前期末在庫金額を取得する
-        SELECT companycode,
+        SELECT companycode,     "#EC CI_NO_TRANSFORM
                fiscalyear,
                period,
                profitcenter,
@@ -870,7 +873,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     ENDIF.
     IF lt_prodcostno IS NOT INITIAL.
 * 3.15上位品番の原価計算ロットサイズ
-      SELECT costingreferenceobject,
+      SELECT costingreferenceobject,   "#EC CI_NO_TRANSFORM
              costestimate,
              costingtype,
              costingdate,
@@ -890,31 +893,6 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       DELETE ADJACENT DUPLICATES FROM lt_lotsize COMPARING costestimate.
     ENDIF.
 * 3.16 上位品番の標準原価-材料費を取得
-*      SELECT costingreferenceobject,
-*             costestimate,
-*             costingtype,
-*             costingdate,
-*             costingversion,
-*             valuationvariant,
-*             costisenteredmanually,
-*             costingitem,
-*             plant,
-*             product,
-*             totalpriceincompanycodecrcy,
-*             baseunit,
-*             quantityinbaseunit,
-*             transfercostestimate,
-*             transfercostingdate
-*        FROM i_productcostestimateitem WITH PRIVILEGED ACCESS
-*        FOR ALL ENTRIES IN @lt_prodcostno
-*       WHERE costestimate = @lt_prodcostno-prodcostestnumber
-*         AND costingdate <= @ls_v3-fiscalperiodenddate
-*         AND ( costingitemcategory = 'M'
-*            OR costingitemcategory = 'I' )
-*        INTO TABLE @DATA(lt_costitem).
-*      SORT lt_costitem BY product
-*                          costingdate DESCENDING.
-*      DELETE ADJACENT DUPLICATES FROM lt_costitem COMPARING product.
     IF  lt_lotsize IS NOT INITIAL.
       SELECT costestimate,
              costingtype,
@@ -937,7 +915,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
 * 4.01会計仕訳から有償支給得意先の会計伝票(Customer from 2.04)
 * 4.02会計仕訳から有償支給得意先の売上高金額(GLAccount=4*/ProfitCenter from 2.09)
     IF lt_kunnr IS NOT INITIAL.
-      SELECT sourceledger,
+      SELECT sourceledger,  "#EC CI_NO_TRANSFORM
              companycode,
              fiscalyear,
              accountingdocument,
@@ -992,7 +970,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
     ENDLOOP.
 * 購買グループ仕入れ金額sum
 
-    lv_from = cv_gjahr && '01' && '01'.
+    lv_from = ls_v3-fiscalyearstartdate.
     lv_to = ls_v3-fiscalperiodstartdate.
 
     SORT lt_ekbe_ekgrp BY purchasinggroup.
@@ -1032,8 +1010,8 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
                      REFERENCE INTO DATA(member_matnr).
       LOOP AT GROUP member_matnr ASSIGNING FIELD-SYMBOL(<lfs_matnr>).
         "本年初-上个月末
-        IF <lfs_member>-postingdate >= lv_from
-       AND <lfs_member>-postingdate < lv_to.
+        IF <lfs_matnr>-postingdate >= lv_from
+       AND <lfs_matnr>-postingdate < lv_to.
           IF <lfs_matnr>-debitcreditcode = 'S'.
             lv_amt2 = lv_amt2 + <lfs_matnr>-purordamountincompanycodecrcy.
           ELSE.
@@ -1041,7 +1019,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
           ENDIF.
         ENDIF.
         "当前期间
-        IF <lfs_member>-postingdate+4(2) = ls_v3-fiscalperiodstartdate+4(2).
+        IF <lfs_matnr>-postingdate+4(2) = ls_v3-fiscalperiodstartdate+4(2).
           IF <lfs_matnr>-debitcreditcode = 'S'.
             lv_amt = lv_amt + <lfs_matnr>-purordamountincompanycodecrcy.
           ELSE.

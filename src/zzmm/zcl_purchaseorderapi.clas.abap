@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_purchaseorderapi IMPLEMENTATION.
+CLASS ZCL_PURCHASEORDERAPI IMPLEMENTATION.
 
 
   METHOD if_sadl_exit_calc_element_read~calculate.

@@ -15,6 +15,8 @@ CLASS lhc_purchasereq DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys FOR ACTION purchasereq~createpurchaseorder RESULT result.
     METHODS handlefile FOR MODIFY
       IMPORTING keys FOR ACTION purchasereq~handlefile RESULT result.
+    METHODS deletepr FOR MODIFY
+      IMPORTING keys FOR ACTION purchasereq~deletepr RESULT result.
     METHODS mandotarycheck
       CHANGING
         records   TYPE data
@@ -384,6 +386,16 @@ CLASS lhc_purchasereq IMPLEMENTATION.
             CONTINUE.
           ENDIF.
 *&--ADD END BY XINLEI XU 2025/02/24
+
+*&--ADD BEGIN BY XINLEI XU 2025/04/22 CR#4359 当购买申请类型=4时，依頼部署，拠点，購買依頼者、購入目的，四个字段不需要做必输性检查
+          IF <record>-('PrType') = '4' AND ( required-field = 'ApplyDepart' OR
+                                             required-field = 'Kyoten' OR
+                                             required-field = 'PrBy' OR
+                                             required-field = 'BuyPurpoose' ).
+            CONTINUE.
+          ENDIF.
+*&--ADD END BY XINLEI XU 2025/04/22 CR#4359
+
           IF <record>-(required-field) IS INITIAL.
             is_error = abap_true.
             " 明细界面单条值处理时会用到此消息
@@ -602,6 +614,10 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         ENDCASE.
       WHEN '3'."製作指示書
         prefix = 'ESE'.
+*&--ADD BEGIN BY XINLEI XU 2025/04/22 CR#4359
+      WHEN '4'."調達G専用
+        prefix = 'PUR'.
+*&--ADD END BY XINLEI XU 2025/04/22 CR#4359
     ENDCASE.
     CHECK prefix IS NOT INITIAL.
     "get_number_next获得的流水号是根据每天流水的，但我们需要每月的流水所以每次只传当月1号
@@ -752,10 +768,12 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         purchaseorder TYPE ebeln,
       END OF ty_response.
 
-    DATA: ls_request  TYPE ty_purchase_order,
-          lt_request  TYPE TABLE OF ty_purchase_order,
-          ls_item     TYPE ty_purchase_order_item,
-          ls_response TYPE ty_response.
+    DATA: ls_request     TYPE ty_purchase_order,
+          lt_request     TYPE TABLE OF ty_purchase_order,
+          ls_item        TYPE ty_purchase_order_item,
+          ls_response    TYPE ty_response,
+          lv_requestbody TYPE string.
+
     "去重数据，得到抬头数据
     DATA(records_key) = records.
     SORT records_key BY ordertype supplier companycode purchaseorg purchasegrp currency.
@@ -810,7 +828,7 @@ CLASS lhc_purchasereq IMPLEMENTATION.
         INTO TABLE @DATA(lt_purinfo_record).
       SORT lt_purinfo_record BY material supplier plant purchasingorganization.
     ENDIF.
-*&--ADD BEGIN BY XINLEI XU 2025/02/13
+*&--ADD END BY XINLEI XU 2025/02/13
 
     DATA is_returns_item(5) TYPE c.
     DATA is_free_of_charge(5) TYPE c.
@@ -818,48 +836,48 @@ CLASS lhc_purchasereq IMPLEMENTATION.
     DATA lv_order_item TYPE i.
     DATA lv_item TYPE i.
     "填充request数据
-    LOOP AT records_key INTO DATA(record_key).
-      "抬头数据
-      ls_request-purchase_order_type = record_key-ordertype.
-      ls_request-purchase_order_date = cl_abap_context_info=>get_system_date( ).
-      ls_request-company_code = record_key-companycode.
-      ls_request-purchasing_organization = record_key-purchaseorg.
-      ls_request-purchasing_group = record_key-purchasegrp.
-      ls_request-supplier = record_key-supplier.
-      ls_request-document_currency = record_key-currency.
-      ls_request-correspnc_internal_reference = record_key-polinkby.
-      "行项目数据
-      CLEAR ls_request-to_purchase_order_item.
-      CLEAR: lt_mm1006,lv_order_item,lv_item.
-      LOOP AT records INTO record_temp WHERE ordertype = record_key-ordertype AND supplier = record_key-supplier AND companycode = record_key-companycode
-        AND purchaseorg = record_key-purchaseorg AND purchasegrp = record_key-purchasegrp AND currency = record_key-currency.
-*&--MOD BEGIN BY XINLEI XU 2025/02/25 按照10,20,30的规则採番
-*       lv_order_item = lv_order_item + 1.
-        lv_item += 1.
-        lv_order_item = lv_item * 10.
-*&--MOD END BY XINLEI XU 2025/02/25
-        IF record_temp-returnitem IS NOT INITIAL.
+
+*&--ADD BEGIN BY XINLEI XU 2025/04/16 CR#4357
+    DATA(lv_path) = |/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrder?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+
+    READ TABLE records INTO DATA(record) INDEX 1.
+    IF sy-subrc = 0 AND record-companycode = '1400'.
+      LOOP AT records INTO record.
+        "抬头数据
+        CLEAR ls_request.
+        ls_request-purchase_order_type = record-ordertype.
+        ls_request-purchase_order_date = cl_abap_context_info=>get_system_date( ).
+        ls_request-company_code = record-companycode.
+        ls_request-purchasing_organization = record-purchaseorg.
+        ls_request-purchasing_group = record-purchasegrp.
+        ls_request-supplier = record-supplier.
+        ls_request-document_currency = record-currency.
+        ls_request-correspnc_internal_reference = record-polinkby.
+
+        "行项目数据
+        lv_order_item = 10.
+
+        IF record-returnitem IS NOT INITIAL.
           is_returns_item = 'true'.
         ELSE.
           is_returns_item = 'false'.
         ENDIF.
-        IF record_temp-free IS NOT INITIAL.
+        IF record-free IS NOT INITIAL.
           is_free_of_charge = 'true'.
         ELSE.
           is_free_of_charge = 'false'.
         ENDIF.
 
-*&--ADD BEGIN BY XINLEI XU 2025/02/13
-        DATA(lv_matid) = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = record_temp-matid ).
-        DATA(lv_supplier) = |{ record_temp-supplier ALPHA = IN }|.
+        DATA(lv_matid) = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = record-matid ).
+        DATA(lv_supplier) = |{ record-supplier ALPHA = IN }|.
 
         READ TABLE lt_product INTO DATA(ls_product) WITH KEY product = lv_matid BINARY SEARCH.
         IF sy-subrc = 0.
-          record_temp-matdesc = COND #( WHEN record_temp-matdesc IS NOT INITIAL THEN record_temp-matdesc ELSE ls_product-productname ).
-          record_temp-materialgroup = COND #( WHEN record_temp-materialgroup IS NOT INITIAL THEN record_temp-materialgroup ELSE ls_product-productgroup ).
-          IF record_temp-unit IS INITIAL.
+          record-matdesc = COND #( WHEN record-matdesc IS NOT INITIAL THEN record-matdesc ELSE ls_product-productname ).
+          record-materialgroup = COND #( WHEN record-materialgroup IS NOT INITIAL THEN record-materialgroup ELSE ls_product-productgroup ).
+          IF record-unit IS INITIAL.
             TRY.
-                record_temp-unit = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = ls_product-baseunit ).
+                record-unit = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = ls_product-baseunit ).
                 ##NO_HANDLER
               CATCH zzcx_custom_exception.
                 " handle exception
@@ -867,133 +885,293 @@ CLASS lhc_purchasereq IMPLEMENTATION.
           ENDIF.
         ENDIF.
 
-        IF record_temp-location IS INITIAL.
+        IF record-location IS INITIAL.
           READ TABLE lt_product_location INTO DATA(ls_product_location) WITH KEY product = lv_matid
-                                                                                 plant   = record_temp-plant BINARY SEARCH.
+                                                                                 plant   = record-plant BINARY SEARCH.
           IF sy-subrc = 0.
-            record_temp-location = ls_product_location-storagelocation.
+            record-location = ls_product_location-storagelocation.
           ENDIF.
         ENDIF.
 
         READ TABLE lt_purinfo_record INTO DATA(ls_purinfo_record) WITH KEY material = lv_matid
                                                                            supplier = lv_supplier
-                                                                           plant    = record_temp-plant
-                                                                           purchasingorganization = record_temp-purchaseorg BINARY SEARCH.
+                                                                           plant    = record-plant
+                                                                           purchasingorganization = record-purchaseorg BINARY SEARCH.
         IF sy-subrc = 0.
-          record_temp-tax = COND #( WHEN record_temp-tax IS NOT INITIAL THEN record_temp-tax ELSE ls_purinfo_record-taxcode ).
+          record-tax = COND #( WHEN record-tax IS NOT INITIAL THEN record-tax ELSE ls_purinfo_record-taxcode ).
 
-          IF record_temp-currency IS INITIAL.
-            record_temp-currency = ls_purinfo_record-currency.
-            record_key-currency = ls_purinfo_record-currency.
+          IF record-currency IS INITIAL.
+            record-currency = ls_purinfo_record-currency.
             ls_request-document_currency = ls_purinfo_record-currency.
           ENDIF.
         ENDIF.
-*&--ADD BEGIN BY XINLEI XU 2025/02/13
 
-        "行项目数据
-        APPEND VALUE #( purchase_order_item           = lv_order_item
-                        material                      = record_temp-matid
-                        purchase_order_item_text      = record_temp-matdesc
-                        account_assignment_category   = record_temp-accounttype
-                        purchase_order_item_category  = record_temp-itemcategory
-                        order_quantity                = record_temp-quantity
-                        plant                         = record_temp-plant
-                        storage_location              = record_temp-location
-                        material_group                = record_temp-materialgroup
-                        purchase_order_quantity_unit  = record_temp-unit
-                        net_price_amount              = record_temp-price
-                        document_currency             = record_temp-currency
-                        net_price_quantity            = record_temp-unitprice
-                        order_price_unit              = record_temp-unit
-                        is_returns_item               = is_returns_item
-                        is_free_of_charge             = is_free_of_charge
-                        requisitioner_name            = record_temp-prby
-                        requirement_tracking          = record_temp-prno
-                        international_article_number  = record_temp-ean
-                        tax_code                      = record_temp-tax
+        APPEND VALUE #( purchase_order_item          = lv_order_item
+                        material                     = record-matid
+                        purchase_order_item_text     = record-matdesc
+                        account_assignment_category  = record-accounttype
+                        purchase_order_item_category = record-itemcategory
+                        order_quantity               = record-quantity
+                        plant                        = record-plant
+                        storage_location             = record-location
+                        material_group               = record-materialgroup
+                        purchase_order_quantity_unit = record-unit
+                        net_price_amount             = record-price
+                        document_currency            = record-currency
+                        net_price_quantity           = record-unitprice
+                        order_price_unit             = record-unit
+                        is_returns_item              = is_returns_item
+                        is_free_of_charge            = is_free_of_charge
+                        requisitioner_name           = record-prby
+                        " MOD BEGIN BY XINLEI XU 2025/04/22 CR#4359
+                        " requirement_tracking       = record_temp-prno
+                        requirement_tracking         = COND #( WHEN record-trackno IS INITIAL THEN record-prno ELSE record-trackno )
+                        " MOD END BY XINLEI XU 2025/04/22 CR#4359
+                        international_article_number = record-ean
+                        tax_code                     = record-tax
                         "计划行
                         to_schedule_line = VALUE #( ( purchase_order_item = lv_order_item
                                                       schedule_line = 1
-                                                      schedule_line_delivery_date = record_temp-deliverydate
-                                                      schedule_line_order_quantity = record_temp-quantity
-                                                      purchase_order_quantity_unit = record_temp-unit ) )
+                                                      schedule_line_delivery_date = record-deliverydate
+                                                      schedule_line_order_quantity = record-quantity
+                                                      purchase_order_quantity_unit = record-unit ) )
                         "科目分配
-                        to_account_assignment = VALUE #( (  purchase_order_item = sy-tabix
+                        to_account_assignment = VALUE #( (  purchase_order_item = lv_order_item
                                                             account_assignment_number = 1
-                                                            cost_center = record_temp-costcenter
-                                                            g_l_account = record_temp-glaccount
-                                                            " MOD BEGIN BY XINLEI XU 2025/01/17 WBSElementInternalID Obsolete
-                                                            " w_b_s_element_internal_i_d = record_temp-wbselemnt
-                                                            w_b_s_element_external_i_d = record_temp-wbselemnt
-                                                            " MOD BEGIN BY XINLEI XU 2025/01/17
-                                                            order_i_d = record_temp-orderid
-                                                            master_fixed_asset = record_temp-assetno
-                                                            tax_code = record_temp-tax ) )
+                                                            cost_center = record-costcenter
+                                                            g_l_account = record-glaccount
+                                                            w_b_s_element_external_i_d = record-wbselemnt
+                                                            order_i_d = record-orderid
+                                                            master_fixed_asset = record-assetno
+                                                            tax_code = record-tax ) )
                         "行项目长文本
                         to_item_note = VALUE #( ( purchase_order_item = lv_order_item
                                                   text_object_type = 'F01'
                                                   language = sy-langu
-                                                  plain_long_text = record_temp-itemtext ) )
+                                                  plain_long_text = record-itemtext ) )
                          ) TO ls_request-to_purchase_order_item.
-        record_temp-purchaseorderitem = lv_order_item.
-        MODIFY records FROM record_temp.
-        APPEND VALUE #( uuid = record_temp-uuid purchaseorderitem = record_temp-purchaseorderitem ) TO lt_mm1006.
+
+        CLEAR lv_requestbody.
+        lv_requestbody = xco_cp_json=>data->from_abap( ls_request )->apply( VALUE #(
+          ( xco_cp_json=>transformation->underscore_to_pascal_case )
+        ) )->to_string( ).
+
+        REPLACE ALL OCCURRENCES OF `IsFreeOfCharge`      IN lv_requestbody  WITH `PurchasingItemIsFreeOfCharge`.
+        REPLACE ALL OCCURRENCES OF `ToPurchaseOrderItem` IN lv_requestbody  WITH `_PurchaseOrderItem`.
+        REPLACE ALL OCCURRENCES OF `ToScheduleLine`      IN lv_requestbody  WITH `_PurchaseOrderScheduleLineTP`.
+        REPLACE ALL OCCURRENCES OF `ToAccountAssignment` IN lv_requestbody  WITH `_PurOrdAccountAssignment`.
+        REPLACE ALL OCCURRENCES OF `ToItemNote`          IN lv_requestbody  WITH `_PurchaseOrderItemNote`.
+        REPLACE ALL OCCURRENCES OF `"false"`             IN lv_requestbody  WITH `false`.
+        REPLACE ALL OCCURRENCES OF `"true"`              IN lv_requestbody  WITH `true`.
+
+        zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+                                                     iv_method      = if_web_http_client=>post
+                                                     iv_body        = lv_requestbody
+                                           IMPORTING ev_status_code = DATA(lv_status_code)
+                                                     ev_response    = DATA(lv_response) ).
+        IF lv_status_code = 201.
+          /ui2/cl_json=>deserialize(  EXPORTING json = lv_response
+                                      CHANGING  data = ls_response ).
+          " 購買伝票登録成功しました。
+          MESSAGE s018(zmm_001) WITH ls_response-purchaseorder INTO lv_message.
+          record-type = 'S'.
+          record-message = lv_message.
+          record-purchaseorder = ls_response-purchaseorder.
+          record-purchaseorderitem = lv_order_item.
+          " PO创建成功后需要更改审批状态为4送信済
+          record-approvestatus = '4'.
+          MODIFY records FROM record TRANSPORTING type message purchaseorder purchaseorderitem approvestatus
+           WHERE prno = record-prno AND pritem = record-pritem.
+
+          "将PO号更新到ZTMM_1006
+          MODIFY ENTITIES OF zr_tmm_1006 IN LOCAL MODE
+          ENTITY purchasereq
+          UPDATE FIELDS ( purchaseorder purchaseorderitem approvestatus )
+          WITH CORRESPONDING #( records ).
+        ELSE.
+          record-type = 'E'.
+          record-message = zzcl_common_utils=>parse_error_v4( lv_response ).
+          MODIFY records FROM record TRANSPORTING type message WHERE prno = record-prno AND pritem = record-pritem.
+        ENDIF.
+        CLEAR: lv_status_code,lv_response.
       ENDLOOP.
-*      APPEND ls_request TO lt_request.
-*      CLEAR ls_request.
+    ELSE.
+*&--ADD END BY XINLEI XU 2025/04/16
+      LOOP AT records_key INTO DATA(record_key).
+        "抬头数据
+        CLEAR: ls_request.
+        ls_request-purchase_order_type = record_key-ordertype.
+        ls_request-purchase_order_date = cl_abap_context_info=>get_system_date( ).
+        ls_request-company_code = record_key-companycode.
+        ls_request-purchasing_organization = record_key-purchaseorg.
+        ls_request-purchasing_group = record_key-purchasegrp.
+        ls_request-supplier = record_key-supplier.
+        ls_request-document_currency = record_key-currency.
+        ls_request-correspnc_internal_reference = record_key-polinkby.
+        "行项目数据
+        CLEAR ls_request-to_purchase_order_item.
+        CLEAR: lt_mm1006,lv_order_item,lv_item.
+        LOOP AT records INTO record_temp WHERE ordertype = record_key-ordertype AND supplier = record_key-supplier AND companycode = record_key-companycode
+          AND purchaseorg = record_key-purchaseorg AND purchasegrp = record_key-purchasegrp AND currency = record_key-currency.
+*&--MOD BEGIN BY XINLEI XU 2025/02/25 按照10,20,30的规则採番
+*       lv_order_item = lv_order_item + 1.
+          lv_item += 1.
+          lv_order_item = lv_item * 10.
+*&--MOD END BY XINLEI XU 2025/02/25
+          IF record_temp-returnitem IS NOT INITIAL.
+            is_returns_item = 'true'.
+          ELSE.
+            is_returns_item = 'false'.
+          ENDIF.
+          IF record_temp-free IS NOT INITIAL.
+            is_free_of_charge = 'true'.
+          ELSE.
+            is_free_of_charge = 'false'.
+          ENDIF.
 
-      "将abap数据转换成json格式，同时json格式区分大小写,所以通过underscore_to_pascal_case将下划线之后的字符大写
-      DATA(lv_requestbody) = xco_cp_json=>data->from_abap( ls_request )->apply( VALUE #(
-        ( xco_cp_json=>transformation->underscore_to_pascal_case )
-      ) )->to_string( ).
+*&--ADD BEGIN BY XINLEI XU 2025/02/13
+          lv_matid = zzcl_common_utils=>conversion_matn1( iv_alpha = zzcl_common_utils=>lc_alpha_in iv_input = record_temp-matid ).
+          lv_supplier = |{ record_temp-supplier ALPHA = IN }|.
 
-      REPLACE ALL OCCURRENCES OF `IsFreeOfCharge`           IN lv_requestbody  WITH `PurchasingItemIsFreeOfCharge`.
-      REPLACE ALL OCCURRENCES OF `ToPurchaseOrderItem`      IN lv_requestbody  WITH `_PurchaseOrderItem`.
-      REPLACE ALL OCCURRENCES OF `ToScheduleLine`           IN lv_requestbody  WITH `_PurchaseOrderScheduleLineTP`.
-      REPLACE ALL OCCURRENCES OF `ToAccountAssignment`      IN lv_requestbody  WITH `_PurOrdAccountAssignment`.
-      REPLACE ALL OCCURRENCES OF `ToItemNote`               IN lv_requestbody  WITH `_PurchaseOrderItemNote`.
-      REPLACE ALL OCCURRENCES OF `"false"`                  IN lv_requestbody  WITH `false`.
-      REPLACE ALL OCCURRENCES OF `"true"`                   IN lv_requestbody  WITH `true`.
+          READ TABLE lt_product INTO ls_product WITH KEY product = lv_matid BINARY SEARCH.
+          IF sy-subrc = 0.
+            record_temp-matdesc = COND #( WHEN record_temp-matdesc IS NOT INITIAL THEN record_temp-matdesc ELSE ls_product-productname ).
+            record_temp-materialgroup = COND #( WHEN record_temp-materialgroup IS NOT INITIAL THEN record_temp-materialgroup ELSE ls_product-productgroup ).
+            IF record_temp-unit IS INITIAL.
+              TRY.
+                  record_temp-unit = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input = ls_product-baseunit ).
+                  ##NO_HANDLER
+                CATCH zzcx_custom_exception.
+                  " handle exception
+              ENDTRY.
+            ENDIF.
+          ENDIF.
 
-      DATA(lv_path) = |/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrder?sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+          IF record_temp-location IS INITIAL.
+            READ TABLE lt_product_location INTO ls_product_location WITH KEY product = lv_matid
+                                                                             plant   = record_temp-plant BINARY SEARCH.
+            IF sy-subrc = 0.
+              record_temp-location = ls_product_location-storagelocation.
+            ENDIF.
+          ENDIF.
 
-      zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
-                                                   iv_method      = if_web_http_client=>post
-                                                   iv_body        = lv_requestbody
-                                         IMPORTING ev_status_code = DATA(lv_status_code)
-                                                   ev_response    = DATA(lv_response) ).
-      IF lv_status_code = 201.
-*        xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
-*          ( xco_cp_json=>transformation->pascal_case_to_underscore )
-*          ( xco_cp_json=>transformation->boolean_to_abap_bool )
-*        ) )->write_to( REF #( ls_response ) ).
-        /ui2/cl_json=>deserialize(  EXPORTING json = lv_response
-                                    CHANGING  data = ls_response ).
-        "返回消息文本
-        " 購買伝票登録成功しました。
-        MESSAGE s018(zmm_001) WITH ls_response-purchaseorder INTO lv_message.
-        record_temp-type = 'S'.
-        record_temp-message = lv_message.
-        record_temp-purchaseorder = ls_response-purchaseorder.
-        " PO创建成功后需要更改审批状态为4送信済
-        record_temp-approvestatus = '4'.
-        MODIFY records FROM record_temp TRANSPORTING type message purchaseorder approvestatus WHERE ordertype = record_key-ordertype
-          AND supplier = record_key-supplier AND companycode = record_key-companycode AND purchaseorg = record_key-purchaseorg
-          AND purchasegrp = record_key-purchasegrp AND currency = record_key-currency.
+          READ TABLE lt_purinfo_record INTO ls_purinfo_record WITH KEY material = lv_matid
+                                                                       supplier = lv_supplier
+                                                                       plant    = record_temp-plant
+                                                                       purchasingorganization = record_temp-purchaseorg BINARY SEARCH.
+          IF sy-subrc = 0.
+            record_temp-tax = COND #( WHEN record_temp-tax IS NOT INITIAL THEN record_temp-tax ELSE ls_purinfo_record-taxcode ).
 
-        "将PO号更新到ZTMM_1006
-        MODIFY ENTITIES OF zr_tmm_1006 IN LOCAL MODE
-        ENTITY purchasereq
-        UPDATE FIELDS ( purchaseorder purchaseorderitem approvestatus )
-        WITH CORRESPONDING #( records ).
-      ELSE.
-        record_temp-type = 'E'.
-        record_temp-message = zzcl_common_utils=>parse_error_v4( lv_response ).
-        MODIFY records FROM record_temp TRANSPORTING type message WHERE ordertype = record_key-ordertype
-          AND supplier = record_key-supplier AND companycode = record_key-companycode AND purchaseorg = record_key-purchaseorg
-          AND purchasegrp = record_key-purchasegrp AND currency = record_key-currency.
-      ENDIF.
-    ENDLOOP.
+            IF record_temp-currency IS INITIAL.
+              record_temp-currency = ls_purinfo_record-currency.
+              record_key-currency = ls_purinfo_record-currency.
+              ls_request-document_currency = ls_purinfo_record-currency.
+            ENDIF.
+          ENDIF.
+*&--ADD BEGIN BY XINLEI XU 2025/02/13
+
+          "行项目数据
+          APPEND VALUE #( purchase_order_item          = lv_order_item
+                          material                     = record_temp-matid
+                          purchase_order_item_text     = record_temp-matdesc
+                          account_assignment_category  = record_temp-accounttype
+                          purchase_order_item_category = record_temp-itemcategory
+                          order_quantity               = record_temp-quantity
+                          plant                        = record_temp-plant
+                          storage_location             = record_temp-location
+                          material_group               = record_temp-materialgroup
+                          purchase_order_quantity_unit = record_temp-unit
+                          net_price_amount             = record_temp-price
+                          document_currency            = record_temp-currency
+                          net_price_quantity           = record_temp-unitprice
+                          order_price_unit             = record_temp-unit
+                          is_returns_item              = is_returns_item
+                          is_free_of_charge            = is_free_of_charge
+                          requisitioner_name           = record_temp-prby
+                          " MOD BEGIN BY XINLEI XU 2025/04/22 CR#4359
+                          " requirement_tracking       = record_temp-prno
+                          requirement_tracking         = COND #( WHEN record_temp-trackno IS INITIAL THEN record_temp-prno ELSE record_temp-trackno )
+                          " MOD END BY XINLEI XU 2025/04/22 CR#4359
+                          international_article_number = record_temp-ean
+                          tax_code                     = record_temp-tax
+                          "计划行
+                          to_schedule_line = VALUE #( ( purchase_order_item = lv_order_item
+                                                        schedule_line = 1
+                                                        schedule_line_delivery_date = record_temp-deliverydate
+                                                        schedule_line_order_quantity = record_temp-quantity
+                                                        purchase_order_quantity_unit = record_temp-unit ) )
+                          "科目分配
+                          to_account_assignment = VALUE #( (  purchase_order_item = lv_order_item
+                                                              account_assignment_number = 1
+                                                              cost_center = record_temp-costcenter
+                                                              g_l_account = record_temp-glaccount
+                                                              " MOD BEGIN BY XINLEI XU 2025/01/17 WBSElementInternalID Obsolete
+                                                              " w_b_s_element_internal_i_d = record_temp-wbselemnt
+                                                              w_b_s_element_external_i_d = record_temp-wbselemnt
+                                                              " MOD BEGIN BY XINLEI XU 2025/01/17
+                                                              order_i_d = record_temp-orderid
+                                                              master_fixed_asset = record_temp-assetno
+                                                              tax_code = record_temp-tax ) )
+                          "行项目长文本
+                          to_item_note = VALUE #( ( purchase_order_item = lv_order_item
+                                                    text_object_type = 'F01'
+                                                    language = sy-langu
+                                                    plain_long_text = record_temp-itemtext ) )
+                           ) TO ls_request-to_purchase_order_item.
+          record_temp-purchaseorderitem = lv_order_item.
+          MODIFY records FROM record_temp.
+          APPEND VALUE #( uuid = record_temp-uuid purchaseorderitem = record_temp-purchaseorderitem ) TO lt_mm1006.
+        ENDLOOP.
+
+        "将abap数据转换成json格式，同时json格式区分大小写,所以通过underscore_to_pascal_case将下划线之后的字符大写
+        CLEAR lv_requestbody.
+        lv_requestbody = xco_cp_json=>data->from_abap( ls_request )->apply( VALUE #(
+          ( xco_cp_json=>transformation->underscore_to_pascal_case )
+        ) )->to_string( ).
+
+        REPLACE ALL OCCURRENCES OF `IsFreeOfCharge`           IN lv_requestbody  WITH `PurchasingItemIsFreeOfCharge`.
+        REPLACE ALL OCCURRENCES OF `ToPurchaseOrderItem`      IN lv_requestbody  WITH `_PurchaseOrderItem`.
+        REPLACE ALL OCCURRENCES OF `ToScheduleLine`           IN lv_requestbody  WITH `_PurchaseOrderScheduleLineTP`.
+        REPLACE ALL OCCURRENCES OF `ToAccountAssignment`      IN lv_requestbody  WITH `_PurOrdAccountAssignment`.
+        REPLACE ALL OCCURRENCES OF `ToItemNote`               IN lv_requestbody  WITH `_PurchaseOrderItemNote`.
+        REPLACE ALL OCCURRENCES OF `"false"`                  IN lv_requestbody  WITH `false`.
+        REPLACE ALL OCCURRENCES OF `"true"`                   IN lv_requestbody  WITH `true`.
+
+        CLEAR: lv_status_code,lv_response.
+        zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+                                                     iv_method      = if_web_http_client=>post
+                                                     iv_body        = lv_requestbody
+                                           IMPORTING ev_status_code = lv_status_code
+                                                     ev_response    = lv_response ).
+        IF lv_status_code = 201.
+          /ui2/cl_json=>deserialize(  EXPORTING json = lv_response
+                                      CHANGING  data = ls_response ).
+          " 返回消息文本
+          " 購買伝票登録成功しました。
+          MESSAGE s018(zmm_001) WITH ls_response-purchaseorder INTO lv_message.
+          record_temp-type = 'S'.
+          record_temp-message = lv_message.
+          record_temp-purchaseorder = ls_response-purchaseorder.
+          " PO创建成功后需要更改审批状态为4送信済
+          record_temp-approvestatus = '4'.
+          MODIFY records FROM record_temp TRANSPORTING type message purchaseorder approvestatus WHERE ordertype = record_key-ordertype
+            AND supplier = record_key-supplier AND companycode = record_key-companycode AND purchaseorg = record_key-purchaseorg
+            AND purchasegrp = record_key-purchasegrp AND currency = record_key-currency.
+
+          "将PO号更新到ZTMM_1006
+          MODIFY ENTITIES OF zr_tmm_1006 IN LOCAL MODE
+          ENTITY purchasereq
+          UPDATE FIELDS ( purchaseorder purchaseorderitem approvestatus )
+          WITH CORRESPONDING #( records ).
+        ELSE.
+          record_temp-type = 'E'.
+          record_temp-message = zzcl_common_utils=>parse_error_v4( lv_response ).
+          MODIFY records FROM record_temp TRANSPORTING type message WHERE ordertype = record_key-ordertype
+            AND supplier = record_key-supplier AND companycode = record_key-companycode AND purchaseorg = record_key-purchaseorg
+            AND purchasegrp = record_key-purchasegrp AND currency = record_key-currency.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
 
     "返回结果
     lv_json = /ui2/cl_json=>serialize( records ).
@@ -1176,6 +1354,36 @@ CLASS lhc_purchasereq IMPLEMENTATION.
 
       CLEAR: lv_request_body, ev_status_code, ev_response.
     ENDLOOP.
+  ENDMETHOD.
+
+  METHOD deletepr.
+*&--ADD BEGIN BY XINLEI XU 2025/04/22 CR#4359
+    DATA: records TYPE TABLE OF ty_batchupload,
+          record  LIKE LINE OF records,
+          lv_msg  TYPE string.
+
+    LOOP AT keys INTO DATA(key).
+      CLEAR records.
+      /ui2/cl_json=>deserialize(  EXPORTING json = key-%param-zzkey
+                                  CHANGING  data = records ).
+
+      LOOP AT records TRANSPORTING NO FIELDS WHERE approvestatus <> '1'. " 登録済 (1)
+      ENDLOOP.
+      IF sy-subrc = 0.
+        APPEND VALUE #( %cid   = key-%cid
+                        %param = VALUE #( zzkey = 'E' ) ) TO result.
+      ELSE.
+        MODIFY ENTITIES OF zr_tmm_1006 IN LOCAL MODE
+        ENTITY purchasereq
+        DELETE FROM CORRESPONDING #( records )
+        FAILED DATA(ls_failed).
+        IF ls_failed IS INITIAL.
+          APPEND VALUE #( %cid   = key-%cid
+                          %param = VALUE #( zzkey = 'S' ) ) TO result.
+        ENDIF.
+      ENDIF.
+    ENDLOOP.
+*&--ADD END BY XINLEI XU 2025/04/22 CR#4359
   ENDMETHOD.
 
 ENDCLASS.

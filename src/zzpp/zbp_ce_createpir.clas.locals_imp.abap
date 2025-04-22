@@ -200,39 +200,89 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
     ENDLOOP.
   ENDMETHOD.
   METHOD get_shipping_data.
+"""begin annotate by zoukun at 20250418 修改取值逻辑
+*    SELECT
+**      dnitem~deliverydocument,
+**      dnitem~deliverydocumentitem,
+*      i_salesorder~soldtoparty AS customer,
+*      dnitem~plant,
+*      dnitem~product AS material,
+*      dnitem~productavailabilitydate,
+*      CAST( substring( dnitem~productavailabilitydate, 1, 6 ) AS NUMC( 6 ) )  AS month,
+**      dnitem~goodsmovementtype,
+*      SUM( CASE WHEN dnitem~goodsmovementtype = '688' OR dnitem~goodsmovementtype = '602'
+*        THEN matdoc2~quantityinbaseunit * -1
+*        ELSE matdoc2~quantityinbaseunit
+*      END ) AS quantityinbaseunit
+**      matdoc2~QUANTITYINBASEUNIT
+*    FROM i_deliverydocumentitem AS dnitem
+*    LEFT JOIN i_salesorder
+*      ON dnitem~referencesddocument = i_salesorder~salesorder
+*    LEFT JOIN i_materialdocumentitem_2 AS matdoc2
+*      ON matdoc2~deliverydocument = dnitem~deliverydocument
+*      AND matdoc2~deliverydocumentitem = dnitem~deliverydocumentitem
+*      AND matdoc2~isautomaticallycreated <> 'X'
+*      AND matdoc2~goodsmovementtype IN ( '687', '688', '601', '602' )
+*    WHERE i_salesorder~soldtoparty = @iv_customer
+*    AND dnitem~plant = @iv_plant
+*    AND dnitem~product = @iv_material
+*    AND dnitem~productavailabilitydate >= @iv_startdate
+*    AND dnitem~productavailabilitydate <= @iv_enddate
+*    GROUP BY  i_salesorder~soldtoparty,
+*              dnitem~plant,
+*              dnitem~product,
+*              dnitem~productavailabilitydate
+*    INTO TABLE @DATA(lt_shipping).
+"""end annotate by zoukun at 20250418 修改取值逻辑
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"""begin add by zoukun at 20250418 修改取值逻辑
     SELECT
-*      dnitem~deliverydocument,
-*      dnitem~deliverydocumentitem,
+      dnitem~deliverydocument,
+      dnitem~deliverydocumentitem,
       i_salesorder~soldtoparty AS customer,
       dnitem~plant,
       dnitem~product AS material,
       dnitem~productavailabilitydate,
       CAST( substring( dnitem~productavailabilitydate, 1, 6 ) AS NUMC( 6 ) )  AS month,
-*      dnitem~goodsmovementtype,
-      SUM( CASE WHEN dnitem~goodsmovementtype = '688' OR dnitem~goodsmovementtype = '602'
-        THEN matdoc2~quantityinbaseunit * -1
-        ELSE matdoc2~quantityinbaseunit
-      END ) AS quantityinbaseunit
-*      matdoc2~QUANTITYINBASEUNIT
+      dnitem~goodsmovementtype,
+      gmt~basicmovementtypereference
     FROM i_deliverydocumentitem AS dnitem
     LEFT JOIN i_salesorder
       ON dnitem~referencesddocument = i_salesorder~salesorder
-    LEFT JOIN i_materialdocumentitem_2 AS matdoc2
-      ON matdoc2~deliverydocument = dnitem~deliverydocument
-      AND matdoc2~deliverydocumentitem = dnitem~deliverydocumentitem
-      AND matdoc2~isautomaticallycreated <> 'X'
-      AND matdoc2~goodsmovementtype IN ( '687', '688', '601', '602' )
+    LEFT JOIN i_goodsmovementtype AS gmt
+      ON gmt~goodsmovementtype = dnitem~goodsmovementtype
     WHERE i_salesorder~soldtoparty = @iv_customer
-    AND dnitem~plant = @iv_plant
-    AND dnitem~product = @iv_material
-    AND dnitem~productavailabilitydate >= @iv_startdate
-    AND dnitem~productavailabilitydate <= @iv_enddate
-    GROUP BY  i_salesorder~soldtoparty,
-              dnitem~plant,
-              dnitem~product,
-              dnitem~productavailabilitydate
-    INTO TABLE @DATA(lt_shipping).
+      AND dnitem~plant = @iv_plant
+      AND dnitem~product = @iv_material
+      AND dnitem~productavailabilitydate >= @iv_startdate
+      AND dnitem~productavailabilitydate <= @iv_enddate
+    INTO TABLE @DATA(lt_dnitem).
 
+    SELECT
+    lt_dnitem~customer,
+    lt_dnitem~plant,
+    lt_dnitem~material,
+    lt_dnitem~productavailabilitydate,
+    lt_dnitem~month,
+    SUM( CASE WHEN gmt~isreversalmovementtype = 'X'
+      THEN matdoc2~quantityinbaseunit * -1
+      ELSE matdoc2~quantityinbaseunit
+    END ) AS quantityinbaseunit
+    FROM i_materialdocumentitem_2 AS matdoc2
+    LEFT JOIN i_goodsmovementtype AS gmt
+      ON gmt~goodsmovementtype = matdoc2~goodsmovementtype
+    INNER JOIN @lt_dnitem AS lt_dnitem
+      ON  matdoc2~deliverydocument = lt_dnitem~deliverydocument
+      AND matdoc2~deliverydocumentitem = lt_dnitem~deliverydocumentitem
+      AND gmt~basicmovementtypereference = lt_dnitem~basicmovementtypereference
+    WHERE matdoc2~isautomaticallycreated <> 'X'
+    GROUP BY  lt_dnitem~customer,
+              lt_dnitem~plant,
+              lt_dnitem~material,
+              lt_dnitem~productavailabilitydate,
+              lt_dnitem~month
+    INTO TABLE @DATA(lt_shipping).
+"""end add by zoukun at 20250418 修改取值逻辑
     MOVE-CORRESPONDING lt_shipping TO rt_shipping_data.
 *    "获取内表结构
 *    data(lo_table_type) = cast cl_abap_tabledescr( cl_abap_tabledescr=>describe_by_data( lt_shipping ) ).
@@ -308,7 +358,7 @@ CLASS lhc_zce_createpir IMPLEMENTATION.
 
     SELECT *
       FROM ztpp_1018
-      INTO TABLE @DATA(lt_factorycalendar)."#EC CI_NOWHERE
+      INTO TABLE @DATA(lt_factorycalendar).             "#EC CI_NOWHERE
     SORT lt_factorycalendar BY plant holiday_date.
 
     "有些日期不是工作日，sap会自动变成节日的前一个工作日，但业务需求要后一个工作日，所以需要手动更改为后一个工作日

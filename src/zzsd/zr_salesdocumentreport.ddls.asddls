@@ -23,7 +23,7 @@ define root custom entity ZR_SALESDOCUMENTREPORT
         selectionField               : [ { position: 60 } ]
       }
   key plantype                       : abap.char(10);
-  key YearDate                       : abap.char(6);
+  key YearDate                       : abap.char(14);  // 格式：年月_会计年月
 
       @Consumption.filter            : {selectionType: #SINGLE, multipleSelections: false }
       @Consumption.valueHelpDefinition:[{entity:{ name: 'ZC_SalesPlanVersion0_VH', element: 'SalesPlanVersion'} }]
@@ -80,26 +80,37 @@ define root custom entity ZR_SALESDOCUMENTREPORT
 
       SalesPlanUnit_c                : abap.char(10);
       CompanyCode                    : bukrs;
+      
+      //MOD BEGIN BY XINLEI XU 2025/04/16 CR#4277
+      //@Semantics.amount.currencyCode : 'currency'
+      //materialcost2000_n             : abap.curr(15,2); //材料费
+      //@Semantics.amount.currencyCode : 'currency'
+      //materialcost2000per_n          : abap.curr(15,2); //贡献利润(单价)
+      //@Semantics.amount.currencyCode : 'currency1'
+      //Manufacturingcost_n            : abap.curr(20,2); //加工费
+      //@Semantics.amount.currencyCode : 'currency1'
+      //Manufacturingcostper_n         : abap.curr(20,2); //销售总利润(单价)
+      materialcost2000_n             : abap.dec(15,2); //材料费
+      materialcost2000per_n          : abap.dec(15,2); //贡献利润(单价)
+      Manufacturingcost_n            : abap.dec(20,2); //加工费
+      Manufacturingcostper_n         : abap.dec(20,2); //销售总利润(单价)
+      //MOD END BY XINLEI XU 2025/04/16 CR#4277
 
-      @Semantics.amount.currencyCode : 'currency'
-      materialcost2000_n             : abap.curr(15,2); //材料费
-      @Semantics.amount.currencyCode : 'currency'
-      materialcost2000per_n          : abap.curr(15,2); //贡献利润(单价):单价 - 材料费
-      @Semantics.amount.currencyCode : 'currency1'
-      Manufacturingcost_n            : abap.curr(20,2); //6
-      @Semantics.amount.currencyCode : 'currency1'
-      Manufacturingcostper_n         : abap.curr(20,2); //销售总利润(单价)：单价 - 材料费 - 加工费
-
-      @Semantics.amount.currencyCode : 'ConditionRateValueUnit'
-      ConditionRateValue_n           : abap.curr(11,2); //单价
       @Semantics.quantity.unitOfMeasure: 'SalesPlanUnit'
       salesplanamountindspcrcy_n     : abap.quan(15,3); //QTY  SalesPlanQuantity
-      @Semantics.amount.currencyCode : 'DisplayCurrency1'
-      SalesAmount_n                  : abap.curr(20,2); //销售额
-      @Semantics.amount.currencyCode : 'DisplayCurrency2'
-      ContributionProfitTotal_n      : abap.curr(20,2); //贡献利润
-      @Semantics.amount.currencyCode : 'DisplayCurrency3'
-      GrossProfitTotal_n             : abap.curr(20,2); //销售总利润
-
-
+      
+      //MOD BEGIN BY XINLEI XU 2025/04/16 CR#4277
+      //@Semantics.amount.currencyCode : 'ConditionRateValueUnit'
+      //ConditionRateValue_n           : abap.curr(11,2); //单价
+      //@Semantics.amount.currencyCode : 'DisplayCurrency1'
+      //SalesAmount_n                  : abap.curr(20,2); //销售额
+      //@Semantics.amount.currencyCode : 'DisplayCurrency2'
+      //ContributionProfitTotal_n      : abap.curr(20,2); //贡献利润
+      //@Semantics.amount.currencyCode : 'DisplayCurrency3'
+      //GrossProfitTotal_n             : abap.curr(20,2); //销售总利润
+      ConditionRateValue_n           : abap.dec(11,2); //单价
+      SalesAmount_n                  : abap.dec(20,2); //销售额
+      ContributionProfitTotal_n      : abap.dec(20,2); //贡献利润
+      GrossProfitTotal_n             : abap.dec(20,2); //销售总利润
+      //MOD END BY XINLEI XU 2025/04/16 CR#4277
 }

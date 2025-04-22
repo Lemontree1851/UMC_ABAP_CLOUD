@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_productionplan IMPLEMENTATION.
+CLASS ZCL_PRODUCTIONPLAN IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -159,6 +159,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
       ls_ecn_api      TYPE ts_ecn,
       ls_res_ecn      TYPE ts_ecn_api,
       lt_tmpdb        TYPE STANDARD TABLE OF ts_tmpdb,
+      lt_tmpdb_bak    TYPE STANDARD TABLE OF ts_tmpdb,
       ls_tmpdb        TYPE ts_tmpdb,
       "output
       lt_output       TYPE STANDARD TABLE OF zr_productionplan,
@@ -207,6 +208,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
       lv_atp_t      TYPE menge_d,
       lv_sum        TYPE menge_d,
       lv_field      TYPE menge_d,
+      lv_field1(12) TYPE p,
       lv_field2(12) TYPE p.
 
     FIELD-SYMBOLS:
@@ -483,7 +485,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
         INTO TABLE @DATA(lt_operation).
     ENDIF.
 * 2.6 ~ 2.13
-    "只有getitem单独读物料才能返回availableqty.
+*    "只有getitem单独读物料才能返回availableqty.
 *    LOOP AT lt_bom INTO ls_bom.
 *      READ ENTITIES OF i_supplydemanditemtp PRIVILEGED
 *            ENTITY supplydemanditem
@@ -514,8 +516,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
 *    ENDLOOP.
 
 *****如果一次性读大量物料，或者拆成少量物料分多次调用BOI，都会有内存不足的报错(ST22)，
-*****因此VC，FE，AR，SB的类型改成从cds取数计算
-    "只有GetPeggingWithItems能读取到VC和FE类型
+*    "只有GetPeggingWithItems能读取到VC和FE类型
 *    LOOP AT lt_bom_tmp INTO ls_bom.
 *      ls_para_p-%param-mrparea = ls_bom-plant.
 *      ls_para_p-%param-mrpplant = ls_bom-plant.
@@ -547,62 +548,7 @@ CLASS zcl_productionplan IMPLEMENTATION.
 *        ENDLOOP.
 *      ENDLOOP.
 *    ENDIF.
-** 2.8 過去～今月までの受注取得
-** 2.9 今月～未来までの受注取得
-*    SELECT a~salesorder,
-*           a~salesorderitem,
-*           b~scheduleline,
-*           a~originallyrequestedmaterial,
-*           a~plant,
-*           b~productavailabilitydate,
-*           b~requestedrqmtqtyinbaseunit
-*      FROM i_salesorderitem WITH PRIVILEGED ACCESS AS a
-*      INNER JOIN i_salesorderscheduleline WITH PRIVILEGED ACCESS AS b
-*        ON ( a~salesorder = b~salesorder
-*         AND a~salesorderitem = b~salesorderitem )
-*      FOR ALL ENTRIES IN @lt_bom
-*     WHERE a~originallyrequestedmaterial = @lt_bom-idnrk
-*       AND a~plant = @lt_bom-plant
-*       AND b~requestedrqmtqtyinbaseunit <> 0
-*      INTO TABLE @DATA(lt_so).
-*
-*    LOOP AT lt_so INTO DATA(ls_so).
-*      ls_mrp_api-material = ls_so-originallyrequestedmaterial.
-*      ls_mrp_api-mrpplant = ls_so-plant.
-*      ls_mrp_api-mrpelementopenquantity = ls_so-requestedrqmtqtyinbaseunit.
-*      ls_mrp_api-mrpelementavailyorrqmtdate = ls_so-productavailabilitydate.
-*      ls_mrp_api-mrpelementcategory = 'VC'.
-*      APPEND ls_mrp_api TO lt_mrp_pegging.
-*      CLEAR: ls_mrp_api.
-*    ENDLOOP.
-*
-** 2.12 製造指図取得 FE
-*    SELECT manufacturingorder,
-*           manufacturingorderitem,
-*           product,
-*           productionplant,
-*           productionversion,
-*           mfgorderplannedstartdate,
-*           mfgorderitemgoodsreceiptqty,
-*           mfgorderplannedtotalqty
-*      FROM i_manufacturingorderitem WITH PRIVILEGED ACCESS
-*      FOR ALL ENTRIES IN @lt_bom
-*     WHERE product = @lt_bom-idnrk
-*       AND productionplant = @lt_bom-plant
-*       AND orderitemisnotrelevantformrp <> 'X'
-*      INTO TABLE @DATA(lt_order).
-*
-*    LOOP AT lt_order INTO DATA(ls_order).
-*      ls_mrp_api-material = ls_order-product.
-*      ls_mrp_api-mrpplant = ls_order-productionplant.
-*      ls_mrp_api-mrpelementopenquantity = ls_order-mfgorderplannedtotalqty - ls_order-mfgorderitemgoodsreceiptqty.
-*      ls_mrp_api-mrpelementavailyorrqmtdate = ls_order-mfgorderplannedstartdate.
-*      ls_mrp_api-mrpelementcategory = 'FE'.
-*      IF ls_mrp_api-mrpelementopenquantity <> 0.
-*        APPEND ls_mrp_api TO lt_mrp_pegging.
-*        CLEAR: ls_mrp_api.
-*      ENDIF.
-*    ENDLOOP.
+* 调用API的效率比BOI快，就换成API分批次读取
     DATA(lv_select) = |Material,MRPPlant,MRPElementOpenQuantity,MRPAvailableQuantity,| &&
                       |MRPElement,MRPElementAvailyOrRqmtDate,MRPElementCategory,MRPElementDocumentType,| &&
                       |ProductionVersion,SourceMRPElement|.
@@ -926,34 +872,6 @@ CLASS zcl_productionplan IMPLEMENTATION.
         CLEAR: ls_require.
       ENDIF.
     ENDLOOP.
-*    SELECT a~reservation,
-*           a~reservationitem,
-*           a~recordtype,
-*           b~plannedorder,
-*           a~matlcomprequirementdate,
-*           a~material,
-*           a~plant,
-*           a~requiredquantity
-*      FROM i_plannedordercomponent WITH PRIVILEGED ACCESS AS a
-*      INNER JOIN i_plannedorder WITH PRIVILEGED ACCESS AS b
-*        ON ( a~plannedorder = b~plannedorder )
-*      FOR ALL ENTRIES IN @lt_bom
-*     WHERE a~material = @lt_bom-idnrk
-*       AND a~plant = @lt_bom-plant
-*       AND b~plannedorderisfirm = 'X'
-*       INTO TABLE @DATA(lt_planord).
-*
-*    LOOP AT lt_planord INTO DATA(ls_planord).
-*      ls_require-material = ls_planord-material.
-*      ls_require-mrpplant = ls_planord-plant.
-*      ls_require-mrpelementopenquantity = ls_planord-requiredquantity.
-*      ls_require-mrpelementavailyorrqmtdate = ls_planord-matlcomprequirementdate.
-*      ls_require-mrpelementcategory = 'SB'.
-*      IF ls_require-mrpelementopenquantity <> 0.
-*        APPEND ls_require TO lt_require.
-*        CLEAR: ls_require.
-*      ENDIF.
-*    ENDLOOP.
 
 * 2.13 入出庫予定取得
     "LOOP AT lt_mrp_pegging INTO ls_mrp_api
@@ -964,33 +882,6 @@ CLASS zcl_productionplan IMPLEMENTATION.
       APPEND ls_reserve TO lt_reserve.
       CLEAR: ls_reserve.
     ENDLOOP.
-*    SELECT reservation,
-*           reservationitem,
-*           recordtype,
-*           material,
-*           plant,
-*           matlcomprequirementdate,
-*           requiredquantity,
-*           withdrawnquantity
-*      FROM i_mfgorderoperationcomponent WITH PRIVILEGED ACCESS
-*      FOR ALL ENTRIES IN @lt_bom
-*     WHERE material = @lt_bom-idnrk
-*       AND plant = @lt_bom-plant
-*       AND matlcompismarkedfordeletion <> 'X'
-*      INTO TABLE @DATA(lt_mfgord).
-*
-*    LOOP AT lt_mfgord INTO DATA(ls_mfgord).
-*      ls_reserve-material = ls_mfgord-material.
-*      ls_reserve-mrpplant = ls_mfgord-plant.
-*      ls_reserve-mrpelementopenquantity = ls_mfgord-requiredquantity - ls_mfgord-withdrawnquantity.
-*      ls_reserve-mrpelementavailyorrqmtdate = ls_mfgord-matlcomprequirementdate.
-*      ls_reserve-mrpelementcategory = 'AR'.
-*      IF ls_reserve-mrpelementopenquantity <> 0.
-*        ls_reserve-mrpelementopenquantity = abs( ls_reserve-mrpelementopenquantity ).
-*        APPEND ls_reserve TO lt_require.
-*        CLEAR: ls_reserve.
-*      ENDIF.
-*    ENDLOOP.
 
 * 2.14 出荷計画取得
     lt_bom_tmp[] = lt_bom[].
@@ -1492,16 +1383,17 @@ CLASS zcl_productionplan IMPLEMENTATION.
             ASSIGN COMPONENT ls_tmpdb-rqdat OF STRUCTURE <ls_tab> TO <l_field>.
             IF sy-subrc = 0.
               <l_field> = lv_sum + ls_tmpdb-rqmng.
-
               lv_sum = <l_field>.
             ENDIF.
           ENDLOOP.
+          APPEND LINES OF lt_tmpdb TO lt_tmpdb_bak.
           CLEAR: lv_sum, lt_tmpdb.
       ENDCASE.
       UNASSIGN: <l_field>, <l_field2>.
     ENDLOOP.
 
 * edit Output
+    SORT lt_tmpdb_bak BY matnr idnrk rqdat.
     LOOP AT <lt_tab> ASSIGNING <ls_tab>.
       ASSIGN COMPONENT 'PLANT' OF STRUCTURE <ls_tab> TO <l_plant>.
       ASSIGN COMPONENT 'MATNR' OF STRUCTURE <ls_tab> TO <l_matnr>.
@@ -1643,22 +1535,27 @@ CLASS zcl_productionplan IMPLEMENTATION.
 
         ENDIF.
 
-        IF <l_plantype> = 'Z'  "理論在庫:如果当天为空，就等于之前有值的一天
+        IF <l_plantype> = 'Z'  "理論在庫:如果当天为空,就等于之前的天
        AND <l_field> IS ASSIGNED
        AND <l_field2> IS ASSIGNED.
-          IF <l_field> <> 0.
-            lv_field2 = <l_field>.
-            <l_field2> = lv_field2.
-            CONDENSE <l_field2> NO-GAPS.
-          ELSE.
-            <l_field2> = '0'.
-            CONDENSE <l_field2> NO-GAPS.
+          IF lv_index = 1.
+            lv_field1 = <l_stockqty>.
           ENDIF.
+          READ TABLE lt_tmpdb_bak INTO ls_tmpdb
+               WITH KEY matnr = <l_matnr>
+                        idnrk = <l_idnrk>
+                        rqdat+1(8) = lv_day BINARY SEARCH.
+          IF sy-subrc = 0.
+            lv_field1 = lv_field1 + ls_tmpdb-rqmng.
+          ENDIF.
+
+          <l_field2> = lv_field1.
+          CONDENSE <l_field2> NO-GAPS.
         ENDIF.
       ENDDO.
 
       APPEND ls_output TO lt_output.
-      CLEAR: ls_output, lv_index, lv_datum, lv_day, lv_dayc, lv_field.
+      CLEAR: ls_output, lv_index, lv_datum, lv_day, lv_dayc, lv_field, lv_field1.
     ENDLOOP.
 
 

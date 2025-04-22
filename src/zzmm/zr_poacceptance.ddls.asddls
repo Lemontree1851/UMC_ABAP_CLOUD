@@ -180,7 +180,7 @@ define root custom entity ZR_POACCEPTANCE
       @UI                            : { lineItem: [ { position: 170 } ] }
       @EndUserText.label             : '{@i18n>NetPrice1}'
       @Consumption.filter.hidden     : true
-      NetPrice1                      : abap.char(13);
+      NetPrice1                      : abap.char(25);
 
       //取引通貨
       @UI                            : { lineItem: [ { position: 180 } ] }
@@ -220,7 +220,7 @@ define root custom entity ZR_POACCEPTANCE
       @Semantics.amount.currencyCode : 'DocumentCurrency'
       @EndUserText.label             : '{@i18n>NetAmount}'
       @Consumption.filter.hidden     : true
-      NetAmount                      : abap.curr(13,2);
+      NetAmount                      : abap.curr(23,2);
 
       //価格単位
       @UI                            : { lineItem: [ { position: 240 } ] }
@@ -285,7 +285,7 @@ define root custom entity ZR_POACCEPTANCE
       @Semantics.amount.currencyCode : 'DocumentCurrency'
       @EndUserText.label             : '{@i18n>TaxExcludedPrice}'
       @Consumption.filter.hidden     : true
-      TaxExcludedPrice               : abap.curr(13,2);
+      TaxExcludedPrice               : abap.curr(23,2);
 
       @UI                            : { lineItem: [ { position: 350 } ] }
       @EndUserText.label             : '{@i18n>TaxCode}'
@@ -354,21 +354,21 @@ define root custom entity ZR_POACCEPTANCE
       @Semantics.amount.currencyCode : 'DocumentCurrency'
       @EndUserText.label             : '{@i18n>InvoiceAmtInPurOrdTransacCrcy}'
       @Consumption.filter.hidden     : true
-      InvoiceAmtInPurOrdTransacCrcy  : abap.curr(13,2);
+      InvoiceAmtInPurOrdTransacCrcy  : abap.curr(23,2);
 
       //消費税額
       @UI                            : { lineItem: [ { position: 490 } ] }
       @Semantics.amount.currencyCode : 'DocumentCurrency'
       @EndUserText.label             : '{@i18n>VAT1}'
       @Consumption.filter.hidden     : true
-      VAT1                           : abap.curr(13,2);
+      VAT1                           : abap.curr(23,2);
 
       //請求書金額（税込）
       @UI                            : { lineItem: [ { position: 500 } ] }
       @Semantics.amount.currencyCode : 'DocumentCurrency'
       @EndUserText.label             : '{@i18n>InvoiceAmount}'
       @Consumption.filter.hidden     : true
-      InvoiceAmount                  : abap.curr(13,2);
+      InvoiceAmount                  : abap.curr(23,2);
 
       //請求書伝票の転記日付
       @UI                            : { lineItem: [ { position: 510 } ] }
@@ -390,25 +390,25 @@ define root custom entity ZR_POACCEPTANCE
       @UI                            : { lineItem: [ { position: 540 } ] }
       @EndUserText.label             : '{@i18n>NetPrice2}'
       @Consumption.filter.hidden     : true
-      NetPrice2                      : abap.char(13);
+      NetPrice2                      : abap.char(25);
 
       //円換算後単価(PO)
       @UI                            : { lineItem: [ { position: 550 } ] }
       @EndUserText.label             : '{@i18n>NetPrice3}'
       @Consumption.filter.hidden     : true
-      NetPrice3                      : abap.char(13);
+      NetPrice3                      : abap.char(25);
 
       //円換算後税込金額（檢收）
       @UI                            : { lineItem: [ { position: 560 } ] }
       @EndUserText.label             : '{@i18n>NetAmount3}'
       @Consumption.filter.hidden     : true
-      NetAmount3                     : abap.char(13);
+      NetAmount3                     : abap.char(25);
 
       //円換算後税額（檢收）
       @UI                            : { lineItem: [ { position: 570 } ] }
       @EndUserText.label             : '{@i18n>VAT2}'
       @Consumption.filter.hidden     : true
-      VAT2                           : abap.char(13);
+      VAT2                           : abap.char(25);
 
       //参照伝票
       @UI                            : { lineItem: [ { position: 580 } ] }

@@ -10,7 +10,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_query_inventory_aging IMPLEMENTATION.
+CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

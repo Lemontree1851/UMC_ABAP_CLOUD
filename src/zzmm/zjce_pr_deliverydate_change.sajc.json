@@ -10,7 +10,8 @@
   },
   "parameters": [
     {
-      "name": "P_PLANT"
+      "name": "P_PLANT",
+      "mandatory": true
     }
   ]
 }

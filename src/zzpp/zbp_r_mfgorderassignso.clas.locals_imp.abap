@@ -100,7 +100,8 @@ CLASS lhc_zr_mfgorderassignso IMPLEMENTATION.
                             AND sum~salesorderitem = soitem~salesdocumentitem
        WHERE soitem~plant = @ls_request-production_plant
          AND soitem~material = @ls_request-material
-         AND soitem~salesdocumentrjcnreason <> 'C'
+*        AND soitem~salesdocumentrjcnreason <> 'C'
+         AND soitem~sddocumentrejectionstatus <> 'C'
          AND soitem~deliverystatus <> 'C'
         INTO CORRESPONDING FIELDS OF TABLE @lt_response.
 

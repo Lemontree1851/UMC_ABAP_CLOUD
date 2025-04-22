@@ -31,7 +31,8 @@ CLASS ZCL_GET_UWMS_MCARD IMPLEMENTATION.
            END OF ty_response.
 
     DATA: lt_original_data TYPE STANDARD TABLE OF zc_materialstockvh WITH DEFAULT KEY.
-    DATA: ls_response TYPE ty_response.
+    DATA: ls_response TYPE ty_response,
+          lt_api_data TYPE TABLE OF ty_response_res.
 
     lt_original_data = CORRESPONDING #( it_original_data ).
 
@@ -43,23 +44,25 @@ CLASS ZCL_GET_UWMS_MCARD IMPLEMENTATION.
          WHERE zid = 'ZBC002'
            AND zvalue1 = @lv_system_url
           INTO TABLE @DATA(lt_config).
-
-        SORT lt_config BY zvalue6. " Plant
         ##NO_HANDLER
       CATCH cx_abap_context_info_error.
         "handle exception
     ENDTRY.
 
-    LOOP AT lt_original_data ASSIGNING FIELD-SYMBOL(<fs_original_data>).
-      READ TABLE lt_config INTO DATA(ls_config) WITH KEY zvalue6 = <fs_original_data>-plant BINARY SEARCH.
-      IF sy-subrc = 0.
-        DATA(lv_filter) = |PLANT_ID eq '{ <fs_original_data>-plant }' and MAT_ID eq '{ <fs_original_data>-material }' and LOC_ID eq '{ <fs_original_data>-storagelocation }'|.
-        CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
-        CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
-        CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
-        CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
-        zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/INV03_HT_LIST|
-                                                                iv_odata_filter  = lv_filter
+    SORT lt_config BY zvalue2.
+    DELETE ADJACENT DUPLICATES FROM lt_config COMPARING zvalue2.
+
+    LOOP AT lt_config INTO DATA(ls_config).
+      CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
+      CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
+      CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
+      CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
+
+      DATA(lv_top)  = 1000.
+      DATA(lv_skip) = -1000.
+      DO.
+        lv_skip += 1000.
+        zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/INV03_HT_LIST?$top={ lv_top }&$skip={ lv_skip }|
                                                                 iv_token_url     = CONV #( ls_config-zvalue3 )
                                                                 iv_client_id     = CONV #( ls_config-zvalue4 )
                                                                 iv_client_secret = CONV #( ls_config-zvalue5 )
@@ -67,15 +70,31 @@ CLASS ZCL_GET_UWMS_MCARD IMPLEMENTATION.
                                                       IMPORTING ev_status_code   = DATA(lv_status_code)
                                                                 ev_response      = DATA(lv_response) ).
         IF lv_status_code = 200.
-          xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
-            ( xco_cp_json=>transformation->boolean_to_abap_bool )
-          ) )->write_to( REF #( ls_response ) ).
+          CLEAR ls_response.
+          /ui2/cl_json=>deserialize( EXPORTING json = lv_response
+                                               pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+                                     CHANGING  data = ls_response ).
 
           IF ls_response-d-results IS NOT INITIAL.
-            <fs_original_data>-m_card_quantity = ls_response-d-results[ 1 ]-upn_qty.
-            <fs_original_data>-m_card          = ls_response-d-results[ 1 ]-mat_is_upn.
+            APPEND LINES OF ls_response-d-results TO lt_api_data.
+          ELSE.
+            EXIT.
           ENDIF.
+        ELSE.
+          EXIT.
         ENDIF.
+        CLEAR: lv_status_code, lv_response.
+      ENDDO.
+    ENDLOOP.
+    SORT lt_api_data BY plant_id mat_id loc_id.
+
+    LOOP AT lt_original_data ASSIGNING FIELD-SYMBOL(<fs_original_data>).
+      READ TABLE lt_api_data INTO DATA(ls_api_data) WITH KEY plant_id = <fs_original_data>-plant
+                                                             mat_id = <fs_original_data>-material
+                                                             loc_id = <fs_original_data>-storagelocation BINARY SEARCH.
+      IF sy-subrc = 0.
+        <fs_original_data>-m_card_quantity = ls_api_data-upn_qty.
+        <fs_original_data>-m_card          = ls_api_data-mat_is_upn.
       ENDIF.
     ENDLOOP.
 

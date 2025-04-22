@@ -124,7 +124,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_podata_004 IMPLEMENTATION.
+CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.

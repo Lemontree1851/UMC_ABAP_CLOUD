@@ -48,7 +48,8 @@ CLASS ZCL_QUERY_PICKINGLIST_STD IMPLEMENTATION.
           lt_data     TYPE TABLE OF zc_pickinglist_std,
           lt_detail   TYPE TABLE OF lty_detail,
           lr_material TYPE RANGE OF zc_pickinglist_std-material.
-    DATA: ls_response TYPE ty_response.
+    DATA: ls_response TYPE ty_response,
+          lt_api_data TYPE TABLE OF ty_response_res.
     DATA: lv_rowno TYPE i,
           lv_index TYPE i.
     DATA: lv_required_quantity TYPE menge_d,
@@ -157,12 +158,51 @@ CLASS ZCL_QUERY_PICKINGLIST_STD IMPLEMENTATION.
            WHERE zid = 'ZBC002'
              AND zvalue1 = @lv_system_url
             INTO TABLE @DATA(lt_config).
-
-          SORT lt_config BY zvalue6. " Plant
           ##NO_HANDLER
         CATCH cx_abap_context_info_error.
           "handle exception
       ENDTRY.
+
+*&--ADD BEGIN BY XINLEI XU 2025/04/16 性能优化
+      SORT lt_config BY zvalue2.
+      DELETE ADJACENT DUPLICATES FROM lt_config COMPARING zvalue2.
+
+      LOOP AT lt_config INTO DATA(ls_config).
+        CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
+        CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
+        CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
+        CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
+
+        DATA(lv_top)  = 1000.
+        DATA(lv_skip) = -1000.
+        DO.
+          lv_skip += 1000.
+          zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/INV03_HT_LIST?$top={ lv_top }&$skip={ lv_skip }|
+                                                                  iv_token_url     = CONV #( ls_config-zvalue3 )
+                                                                  iv_client_id     = CONV #( ls_config-zvalue4 )
+                                                                  iv_client_secret = CONV #( ls_config-zvalue5 )
+                                                                  iv_authtype      = 'OAuth2.0'
+                                                        IMPORTING ev_status_code   = DATA(lv_status_code)
+                                                                  ev_response      = DATA(lv_response) ).
+          IF lv_status_code = 200.
+            CLEAR ls_response.
+            /ui2/cl_json=>deserialize( EXPORTING json = lv_response
+                                                 pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+                                       CHANGING  data = ls_response ).
+
+            IF ls_response-d-results IS NOT INITIAL.
+              APPEND LINES OF ls_response-d-results TO lt_api_data.
+            ELSE.
+              EXIT.
+            ENDIF.
+          ELSE.
+            EXIT.
+          ENDIF.
+          CLEAR: lv_status_code, lv_response.
+        ENDDO.
+      ENDLOOP.
+      SORT lt_api_data BY plant_id mat_id loc_id.
+*&--ADD END BY XINLEI XU 2025/04/16
 
       SELECT product,
              productname
@@ -346,35 +386,46 @@ CLASS ZCL_QUERY_PICKINGLIST_STD IMPLEMENTATION.
           lv_rowno += 1.
           ls_data-rowno = lv_rowno.
           ls_data-totalshortfallquantity = ls_data-totalrequiredquantity - ls_data-storagelocationtostock.
-          ls_data-totaltransferquantity  = ls_data-totalshortfallquantity.
+*&--MOD BEGIN BY XINLEI XU 2025/04/16 CM#4446 移動数量に先行出庫数量を追加
+          "ls_data-totaltransferquantity  = ls_data-totalshortfallquantity.
+          ls_data-totaltransferquantity  = ls_data-totalshortfallquantity + ls_data-gr_slipsquantity.
+*&--MOD END BY XINLEI XU 2025/04/16 CM#4446
 
-          READ TABLE lt_config INTO DATA(ls_config) WITH KEY zvalue6 = ls_data-plant BINARY SEARCH.
-          IF sy-subrc = 0 AND ls_data-storagelocationfrom IS NOT INITIAL.
-            DATA(lv_filter) = |PLANT_ID eq '{ ls_data-plant }' and MAT_ID eq '{ ls_data-material }' and LOC_ID eq '{ ls_data-storagelocationfrom }'|.
-            CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
-            CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
-            CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
-            CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
-            zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/INV03_HT_LIST|
-                                                                    iv_odata_filter  = lv_filter
-                                                                    iv_token_url     = CONV #( ls_config-zvalue3 )
-                                                                    iv_client_id     = CONV #( ls_config-zvalue4 )
-                                                                    iv_client_secret = CONV #( ls_config-zvalue5 )
-                                                                    iv_authtype      = 'OAuth2.0'
-                                                          IMPORTING ev_status_code   = DATA(lv_status_code)
-                                                                    ev_response      = DATA(lv_response) ).
-            IF lv_status_code = 200.
-              xco_cp_json=>data->from_string( lv_response )->apply( VALUE #(
-*                ( xco_cp_json=>transformation->pascal_case_to_underscore )
-                ( xco_cp_json=>transformation->boolean_to_abap_bool )
-              ) )->write_to( REF #( ls_response ) ).
-
-              IF ls_response-d-results IS NOT INITIAL.
-                ls_data-m_card_quantity = ls_response-d-results[ 1 ]-upn_qty.
-                ls_data-m_card          = ls_response-d-results[ 1 ]-mat_is_upn.
-              ENDIF.
-            ENDIF.
+*&--MOD BEGIN BY XINLEI XU 2025/04/16 性能优化
+*          READ TABLE lt_config INTO DATA(ls_config) WITH KEY zvalue6 = ls_data-plant BINARY SEARCH.
+*          IF sy-subrc = 0 AND ls_data-storagelocationfrom IS NOT INITIAL.
+*            DATA(lv_filter) = |PLANT_ID eq '{ ls_data-plant }' and MAT_ID eq '{ ls_data-material }' and LOC_ID eq '{ ls_data-storagelocationfrom }'|.
+*            CONDENSE ls_config-zvalue2 NO-GAPS. " ODATA_URL
+*            CONDENSE ls_config-zvalue3 NO-GAPS. " TOKEN_URL
+*            CONDENSE ls_config-zvalue4 NO-GAPS. " CLIENT_ID
+*            CONDENSE ls_config-zvalue5 NO-GAPS. " CLIENT_SECRET
+*            zzcl_common_utils=>get_externalsystems_cdata( EXPORTING iv_odata_url     = |{ ls_config-zvalue2 }/odata/v2/TableService/INV03_HT_LIST|
+*                                                                    iv_odata_filter  = lv_filter
+*                                                                    iv_token_url     = CONV #( ls_config-zvalue3 )
+*                                                                    iv_client_id     = CONV #( ls_config-zvalue4 )
+*                                                                    iv_client_secret = CONV #( ls_config-zvalue5 )
+*                                                                    iv_authtype      = 'OAuth2.0'
+*                                                          IMPORTING ev_status_code   = DATA(lv_status_code)
+*                                                                    ev_response      = DATA(lv_response) ).
+*            IF lv_status_code = 200.
+*              /ui2/cl_json=>deserialize( EXPORTING json = lv_response
+*                                                   pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+*                                         CHANGING  data = ls_response ).
+*
+*              IF ls_response-d-results IS NOT INITIAL.
+*                ls_data-m_card_quantity = ls_response-d-results[ 1 ]-upn_qty.
+*                ls_data-m_card          = ls_response-d-results[ 1 ]-mat_is_upn.
+*              ENDIF.
+*            ENDIF.
+*          ENDIF.
+          READ TABLE lt_api_data INTO DATA(ls_api_data) WITH KEY plant_id = ls_data-plant
+                                                                 mat_id = ls_data-material
+                                                                 loc_id = ls_data-storagelocationfrom BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_data-m_card_quantity = ls_api_data-upn_qty.
+            ls_data-m_card          = ls_api_data-mat_is_upn.
           ENDIF.
+*&--MOD END BY XINLEI XU 2025/04/16
 
           SORT lt_detail BY requisition_date manufacturing_order.
           CLEAR lv_required_quantity.
@@ -420,9 +471,12 @@ CLASS ZCL_QUERY_PICKINGLIST_STD IMPLEMENTATION.
             ENDTRY.
           ENDLOOP.
 
-          ls_data-detailsjson = xco_cp_json=>data->from_abap( lt_detail )->apply( VALUE #(
-            ( xco_cp_json=>transformation->underscore_to_pascal_case )
-          ) )->to_string( ).
+*&--MOD BEGIN BY XINLEI XU 2025/04/16 性能优化
+*          ls_data-detailsjson = xco_cp_json=>data->from_abap( lt_detail )->apply( VALUE #(
+*            ( xco_cp_json=>transformation->underscore_to_pascal_case )
+*          ) )->to_string( ).
+          ls_data-detailsjson = /ui2/cl_json=>serialize( data = lt_detail ).
+*&--MOD END BY XINLEI XU 2025/04/16
 
           APPEND ls_data TO lt_data.
         ENDIF.

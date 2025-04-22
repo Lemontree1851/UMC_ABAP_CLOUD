@@ -7,19 +7,13 @@
      INTERFACES if_sadl_exit_calc_element_read.
    PROTECTED SECTION.
    PRIVATE SECTION.
-ENDCLASS.
+ ENDCLASS.
 
 
 
-CLASS ZCL_ATTACHMENT IMPLEMENTATION.
-
+ CLASS zcl_attachment IMPLEMENTATION.
 
    METHOD if_sadl_exit_calc_element_read~calculate.
-
-
-
-
-
      TYPES:
        BEGIN OF ty_results,
          archivedocumentid TYPE string,
@@ -36,7 +30,11 @@ CLASS ZCL_ATTACHMENT IMPLEMENTATION.
      DATA:ls_res_api  TYPE ty_res_api.
 
      DATA:lt_original_data TYPE STANDARD TABLE OF zr_prworkflowitem WITH DEFAULT KEY.
+     DATA: lv_costcenter TYPE i_costcentertext-costcenter,
+           lv_glaccount  TYPE i_glaccounttextincompanycode-glaccount.
+
      lt_original_data = CORRESPONDING #( it_original_data ).
+
      LOOP AT lt_original_data ASSIGNING FIELD-SYMBOL(<fs_original_data>).
 
 *&--MOD BEGIN BY XINLEI XU 2025/03/07
@@ -77,11 +75,30 @@ CLASS ZCL_ATTACHMENT IMPLEMENTATION.
          <fs_original_data>-zattachment = 'なし'.
        ENDIF.
 *&--MOD END BY XINLEI XU 2025/03/07
+
+*&--ADD BEGIN BY XINLEI XU 2025/04/23 CR#4359
+      CLEAR: lv_costcenter,
+             lv_glaccount.
+
+      lv_costcenter = |{ <fs_original_data>-costcenter ALPHA = IN }|.
+      SELECT SINGLE costcentername
+        FROM i_costcentertext WITH PRIVILEGED ACCESS
+       WHERE costcenter = @lv_costcenter
+         AND language = @sy-langu
+        INTO @<fs_original_data>-costcentername.
+
+      lv_glaccount = |{ <fs_original_data>-glaccount ALPHA = IN }|.
+      SELECT SINGLE glaccountname
+        FROM i_glaccounttextincompanycode WITH PRIVILEGED ACCESS
+       WHERE glaccount = @lv_glaccount
+         AND companycode = @<fs_original_data>-companycode
+         AND language = @sy-langu
+        INTO @<fs_original_data>-glaccountname.
+*&--ADD END BY XINLEI XU 2025/04/23 CR#4359
      ENDLOOP.
 
      ct_calculated_data = CORRESPONDING #(  lt_original_data ).
    ENDMETHOD.
-
 
    METHOD if_sadl_exit_calc_element_read~get_calculation_info.
      LOOP AT it_requested_calc_elements ASSIGNING FIELD-SYMBOL(<fs_calc_element>).
@@ -90,8 +107,7 @@ CLASS ZCL_ATTACHMENT IMPLEMENTATION.
            INSERT `PRNO` INTO TABLE et_requested_orig_elements.
            INSERT `PRITEM` INTO TABLE et_requested_orig_elements.
            INSERT `UUID` INTO TABLE et_requested_orig_elements.
-
        ENDCASE.
      ENDLOOP.
    ENDMETHOD.
-ENDCLASS.
+ ENDCLASS.

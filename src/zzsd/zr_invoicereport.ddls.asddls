@@ -33,7 +33,10 @@ define root view entity ZR_INVOICEREPORT
       _main._SalesDocumentItem.MaterialByCustomer,
       _main._AddiCompnay.CompanyCodeParameterValue,
       _main._Customer.PostalCode,
-      _main._Customer.CityName,
+      //MOD BEGIN BY XINLEI XU 2025/04/18 CM#4423
+      //_main._Customer.CityName,
+      concat_with_space( _main._Customer.CityName, _main._Customer.StreetName, 1 ) as CityName,
+      //MOD END BY XINLEI XU 2025/04/18
       _main._Customer.CustomerName,
       _main._Customer.FaxNumber,
       _main._Customer.TelephoneNumber1,
@@ -61,5 +64,10 @@ define root view entity ZR_INVOICEREPORT
       concat_with_space(_main._BC1001.zvalue3, _main._BC1001.zvalue4, 1)                            as TheCompanyCity,
       // ADD END BY XINLEI XU 2025/04/03
 
+      // ADD BEGIN BY XINLEI XU 2025/04/18 CM#4423
+      _main.PurchaseOrderByCustomer, 
+      _main.YY1_ItemRemarks_1_BDI,
+      // ADD END BY XINLEI XU 2025/04/18 CM#4423
+      
       _main._BC1001
 }

@@ -143,26 +143,25 @@ CLASS ZZCL_WF_UTILS IMPLEMENTATION.
     "修改订单状态
     IF iv_approvalstatus IS NOT INITIAL.
       UPDATE ztmm_1006
-       SET approve_status = @iv_approvalstatus
-      WHERE workflow_id = @iv_workflowid
-      AND application_id = @iv_applicationid
-      AND instance_id = @iv_instanceid.
+         SET approve_status = @iv_approvalstatus
+       WHERE workflow_id = @iv_workflowid
+         AND application_id = @iv_applicationid
+         AND instance_id = @iv_instanceid.
     ENDIF.
     "承认撤回 标记删除过往审批历史
     IF iv_reject = abap_true.
       UPDATE ztmm_1006
-       SET apply_date = '',
-           apply_time = ''
-      WHERE workflow_id = @iv_workflowid
-      AND application_id = @iv_applicationid
-      AND instance_id = @iv_instanceid.
+         SET apply_date = '00000000',
+             apply_time = ''
+       WHERE workflow_id = @iv_workflowid
+         AND application_id = @iv_applicationid
+         AND instance_id = @iv_instanceid.
 
       UPDATE ztbc_1011
-       SET del = @abap_true
-      WHERE workflow_id = @iv_workflowid
-      AND application_id = @iv_applicationid
-      AND instance_id = @iv_instanceid.
-
+         SET del = @abap_true
+       WHERE workflow_id = @iv_workflowid
+         AND application_id = @iv_applicationid
+         AND instance_id = @iv_instanceid.
     ENDIF.
   ENDMETHOD.
 
@@ -175,17 +174,17 @@ CLASS ZZCL_WF_UTILS IMPLEMENTATION.
       FROM zc_wf_approvaluser
      WHERE workflowid    = @iv_workflowid
        AND applicationid = @iv_applicationid
-       AND node        = @iv_currentnode
-       AND emailaddress = @iv_email
+       AND node          = @iv_currentnode
+       AND emailaddress  = @iv_email
       INTO TABLE @DATA(lt_approvaluser).
 
     IF lt_approvaluser IS INITIAL.
       SELECT SINGLE nodename
-    FROM zc_wf_approvalnode
-   WHERE workflowid    = @iv_workflowid
-     AND applicationid = @iv_applicationid
-     AND node          = @iv_currentnode
-    INTO @DATA(lv_nodename).
+        FROM zc_wf_approvalnode
+       WHERE workflowid    = @iv_workflowid
+         AND applicationid = @iv_applicationid
+         AND node          = @iv_currentnode
+        INTO @DATA(lv_nodename).
       ev_error = 'X'.
       MESSAGE s012(zbc_001) WITH iv_currentnode lv_nodename INTO ev_errortext.
     ENDIF.
@@ -323,12 +322,11 @@ CLASS ZZCL_WF_UTILS IMPLEMENTATION.
             INTO @DATA(ls_prworkflow_sum).    "#EC CI_ALL_FIELDS_NEEDED
 
             DATA:lv_curr TYPE p LENGTH 16 DECIMALS 2.
-            lv_curr    = ls_prworkflow_sum-amount_sum.
+            lv_curr = ls_prworkflow_sum-amount_sum.
             lv_curr = zzcl_common_utils=>conversion_amount(
                                                    iv_alpha = 'OUT'
                                                    iv_currency = ls_prworkflow_sum-currency
                                                    iv_input = lv_curr ).
-
             TRY .
                 SELECT SINGLE applicationid
                 FROM zc_wf_approvalpath
@@ -336,7 +334,7 @@ CLASS ZZCL_WF_UTILS IMPLEMENTATION.
                  AND knttp       = @ls_ztmm_1006-account_type
                  AND costcenter  = @ls_ztmm_1006-cost_center
                  AND amountfrom <= @lv_curr
-                 AND ( amountto   >= @lv_curr OR amountto IS INITIAL )
+                 AND ( amountto >= @lv_curr OR amountto IS INITIAL )
                 INTO @lv_applicationid.
                 "如果等于K 优先找能对应costcenter的 找不到 找costcenter为空的
                 IF sy-subrc <> 0 AND ls_ztmm_1006-account_type = 'K'.
@@ -348,7 +346,6 @@ CLASS ZZCL_WF_UTILS IMPLEMENTATION.
                    AND amountfrom <= @lv_curr
                    AND ( amountto   >= @lv_curr OR amountto IS INITIAL )
                   INTO @lv_applicationid.
-
                 ENDIF.
 
                 ev_applicationid = lv_applicationid.
@@ -358,9 +355,7 @@ CLASS ZZCL_WF_UTILS IMPLEMENTATION.
                 ev_error = 'X'.
                 ev_errortext = rv_error_text.
             ENDTRY.
-
           ENDIF.
-
         ENDIF.
       WHEN OTHERS.
 

@@ -105,7 +105,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
+CLASS zcl_http_paidpay_002 IMPLEMENTATION.
 
 
   METHOD cancel.
@@ -208,8 +208,8 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
     IF lv_header = 'CREATE'.
       DATA(lt_create) = ls_create_in-to_create-items.
       LOOP AT lt_create INTO DATA(ls_create).
-         lv_ap = ls_create-ap.
-         lv_ar = ls_create-ar.
+        lv_ap = ls_create-ap.
+        lv_ar = ls_create-ar.
 *        ls_create-customer = | { ls_create-customer ALPHA = IN } |.
 *        ls_create-supplier = | { ls_create-supplier ALPHA = IN } |.
         IF lv_ap >= lv_ar.
@@ -220,58 +220,28 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
         lv_cr = -1 * lv_dr.
 * 1st document
         i += 1.
-        ls_deep-%cid = |My%CID_{ i }|.
-
-        ls_deep-%param-companycode = ls_create-companycode.
-        ls_deep-%param-accountingdocumenttype = 'Z2'.
-        ls_deep-%param-documentdate = ls_create-postingdate1.
-        ls_deep-%param-postingdate = ls_create-postingdate1.
-        ls_deep-%param-createdbyuser = sy-uname.
-
-        ls_deep-%param-_apitems =
-          VALUE #(
-            ( glaccountlineitem = |001|
-              supplier = ls_create-supplier
-              _currencyamount =
-                VALUE #( ( currencyrole = '00' journalentryitemamount = lv_dr currency = ls_create-currency ) )
-            )
-          ).
-        ls_deep-%param-_aritems =
-          VALUE #(
-            ( glaccountlineitem = |002|
-              customer = ls_create-customer
-              _currencyamount =
-                VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr currency = ls_create-currency ) )
-            )
-          ).
-        APPEND ls_deep TO lt_deep.
-        post( CHANGING ct_deep = lt_deep
-                       cs_response = ls_response
-                       cv_fail = lv_fail
-                       cv_i = i ).
-        CLEAR: ls_deep, lt_deep.
-* 2nd document: 上記仕訳の逆仕訳
-        IF lv_fail IS INITIAL.
-          i += 1.
+        IF lv_dr <> 0
+        OR lv_cr <> 0.
           ls_deep-%cid = |My%CID_{ i }|.
 
           ls_deep-%param-companycode = ls_create-companycode.
           ls_deep-%param-accountingdocumenttype = 'Z2'.
-          ls_deep-%param-documentdate = ls_create-postingdate2.
-          ls_deep-%param-postingdate = ls_create-postingdate2.
+          ls_deep-%param-documentdate = ls_create-postingdate1.
+          ls_deep-%param-postingdate = ls_create-postingdate1.
           ls_deep-%param-createdbyuser = sy-uname.
-          ls_deep-%param-_aritems =
+
+          ls_deep-%param-_apitems =
             VALUE #(
               ( glaccountlineitem = |001|
-                customer = ls_create-customer
+                supplier = ls_create-supplier
                 _currencyamount =
                   VALUE #( ( currencyrole = '00' journalentryitemamount = lv_dr currency = ls_create-currency ) )
               )
             ).
-          ls_deep-%param-_apitems =
+          ls_deep-%param-_aritems =
             VALUE #(
               ( glaccountlineitem = |002|
-                supplier = ls_create-supplier
+                customer = ls_create-customer
                 _currencyamount =
                   VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr currency = ls_create-currency ) )
               )
@@ -283,6 +253,42 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
                          cv_i = i ).
           CLEAR: ls_deep, lt_deep.
         ENDIF.
+* 2nd document: 上記仕訳の逆仕訳
+        IF lv_fail IS INITIAL.
+          i += 1.
+          IF lv_dr <> 0
+          OR lv_cr <> 0.
+            ls_deep-%cid = |My%CID_{ i }|.
+
+            ls_deep-%param-companycode = ls_create-companycode.
+            ls_deep-%param-accountingdocumenttype = 'Z2'.
+            ls_deep-%param-documentdate = ls_create-postingdate2.
+            ls_deep-%param-postingdate = ls_create-postingdate2.
+            ls_deep-%param-createdbyuser = sy-uname.
+            ls_deep-%param-_aritems =
+              VALUE #(
+                ( glaccountlineitem = |001|
+                  customer = ls_create-customer
+                  _currencyamount =
+                    VALUE #( ( currencyrole = '00' journalentryitemamount = lv_dr currency = ls_create-currency ) )
+                )
+              ).
+            ls_deep-%param-_apitems =
+              VALUE #(
+                ( glaccountlineitem = |002|
+                  supplier = ls_create-supplier
+                  _currencyamount =
+                    VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr currency = ls_create-currency ) )
+                )
+              ).
+            APPEND ls_deep TO lt_deep.
+            post( CHANGING ct_deep = lt_deep
+                           cs_response = ls_response
+                           cv_fail = lv_fail
+                           cv_i = i ).
+            CLEAR: ls_deep, lt_deep.
+          ENDIF.
+        ENDIF.
 * 3rd document
         IF lv_ap > lv_ar.
           lv_dr = lv_ap - lv_ar.
@@ -290,63 +296,69 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
         ENDIF.
 
         i += 1.
-        ls_deep-%cid = |My%CID_{ i }|.
-
-        ls_deep-%param-companycode = ls_create-companycode.
-        ls_deep-%param-accountingdocumenttype = 'Z2'.
-        ls_deep-%param-documentdate = ls_create-postingdate1.
-        ls_deep-%param-postingdate = ls_create-postingdate1.
-        ls_deep-%param-createdbyuser = sy-uname.
-        ls_deep-%param-_apitems =
-          VALUE #(
-            ( glaccountlineitem = |001|
-              supplier = ls_create-supplier
-              _currencyamount =
-                VALUE #( ( currencyrole = '00' journalentryitemamount = lv_dr currency = ls_create-currency ) )
-            )
-            ( glaccountlineitem = |002|
-              supplier = ls_create-supplier
-              glaccount = '0021101000'
-              _currencyamount =
-                VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr currency = ls_create-currency ) )
-            )
-          ).
-        APPEND ls_deep TO lt_deep.
-        post( CHANGING ct_deep = lt_deep
-                       cs_response = ls_response
-                       cv_fail = lv_fail
-                       cv_i = i ).
-        CLEAR: ls_deep, lt_deep.
-* 4th document
-        IF lv_fail IS INITIAL.
-          i += 1.
+        IF lv_dr <> 0
+        OR lv_cr <> 0.
           ls_deep-%cid = |My%CID_{ i }|.
 
           ls_deep-%param-companycode = ls_create-companycode.
           ls_deep-%param-accountingdocumenttype = 'Z2'.
-          ls_deep-%param-documentdate = ls_create-postingdate2.
-          ls_deep-%param-postingdate = ls_create-postingdate2.
+          ls_deep-%param-documentdate = ls_create-postingdate1.
+          ls_deep-%param-postingdate = ls_create-postingdate1.
           ls_deep-%param-createdbyuser = sy-uname.
           ls_deep-%param-_apitems =
             VALUE #(
               ( glaccountlineitem = |001|
                 supplier = ls_create-supplier
-                glaccount = '0021101000'
                 _currencyamount =
                   VALUE #( ( currencyrole = '00' journalentryitemamount = lv_dr currency = ls_create-currency ) )
               )
               ( glaccountlineitem = |002|
                 supplier = ls_create-supplier
+                glaccount = '0021101000'
                 _currencyamount =
                   VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr currency = ls_create-currency ) )
               )
             ).
           APPEND ls_deep TO lt_deep.
           post( CHANGING ct_deep = lt_deep
-                        cs_response = ls_response
-                        cv_fail = lv_fail
-                        cv_i = i ).
+                         cs_response = ls_response
+                         cv_fail = lv_fail
+                         cv_i = i ).
           CLEAR: ls_deep, lt_deep.
+        ENDIF.
+* 4th document
+        IF lv_fail IS INITIAL.
+          i += 1.
+          IF lv_dr <> 0
+          OR lv_cr <> 0.
+            ls_deep-%cid = |My%CID_{ i }|.
+
+            ls_deep-%param-companycode = ls_create-companycode.
+            ls_deep-%param-accountingdocumenttype = 'Z2'.
+            ls_deep-%param-documentdate = ls_create-postingdate2.
+            ls_deep-%param-postingdate = ls_create-postingdate2.
+            ls_deep-%param-createdbyuser = sy-uname.
+            ls_deep-%param-_apitems =
+              VALUE #(
+                ( glaccountlineitem = |001|
+                  supplier = ls_create-supplier
+                  glaccount = '0021101000'
+                  _currencyamount =
+                    VALUE #( ( currencyrole = '00' journalentryitemamount = lv_dr currency = ls_create-currency ) )
+                )
+                ( glaccountlineitem = |002|
+                  supplier = ls_create-supplier
+                  _currencyamount =
+                    VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr currency = ls_create-currency ) )
+                )
+              ).
+            APPEND ls_deep TO lt_deep.
+            post( CHANGING ct_deep = lt_deep
+                          cs_response = ls_response
+                          cv_fail = lv_fail
+                          cv_i = i ).
+            CLEAR: ls_deep, lt_deep.
+          ENDIF.
         ENDIF.
 * Edit output response
         ls_response-_company_code = ls_create-companycode.
@@ -369,27 +381,29 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
         FROM i_journalentry
         FOR ALL ENTRIES IN @lt_cancel
        WHERE companycode = @lt_cancel-companycode
-         AND fiscalyear = @lt_cancel-fiscalyear
-         AND ( accountingdocument = @lt_cancel-belnr1
-            OR accountingdocument = @lt_cancel-belnr2
-            OR accountingdocument = @lt_cancel-belnr3
-            OR accountingdocument = @lt_cancel-belnr4 )
+         AND ( ( fiscalyear = @lt_cancel-gjahr1
+             AND accountingdocument = @lt_cancel-belnr1 )
+            OR ( fiscalyear = @lt_cancel-gjahr2
+             AND accountingdocument = @lt_cancel-belnr2 )
+            OR ( fiscalyear = @lt_cancel-gjahr3
+             AND accountingdocument = @lt_cancel-belnr3 )
+            OR ( fiscalyear = @lt_cancel-gjahr4
+             AND accountingdocument = @lt_cancel-belnr4 ) )
         INTO TABLE @DATA(lt_bkpf).
 
-      SORT lt_bkpf BY companycode fiscalyear accountingdocument.
       LOOP AT lt_cancel INTO DATA(ls_cancel).
 * 1st document
         READ TABLE lt_bkpf INTO DATA(ls_bkpf)
              WITH KEY companycode = ls_cancel-companycode
-                      fiscalyear = ls_cancel-fiscalyear
-                      accountingdocument = ls_cancel-belnr1 BINARY SEARCH.
+                      fiscalyear = ls_cancel-gjahr1
+                      accountingdocument = ls_cancel-belnr1.
         IF sy-subrc = 0.
           ls_deep_rev-%key-accountingdocument = ls_cancel-belnr1.
           ls_deep_rev-%key-companycode = ls_cancel-companycode.
-          ls_deep_rev-%key-fiscalyear = ls_cancel-fiscalyear.
+          ls_deep_rev-%key-fiscalyear = ls_cancel-gjahr1.
           ls_deep_rev-accountingdocument = ls_cancel-belnr1.
           ls_deep_rev-companycode = ls_cancel-companycode.
-          ls_deep_rev-fiscalyear = ls_cancel-fiscalyear.
+          ls_deep_rev-fiscalyear = ls_cancel-gjahr1.
           ls_deep_rev-%param = VALUE #(
                                  postingdate = ls_bkpf-postingdate
                                  reversalreason = '01'
@@ -410,15 +424,15 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
         IF lv_fail IS INITIAL.
           READ TABLE lt_bkpf INTO ls_bkpf
                        WITH KEY companycode = ls_cancel-companycode
-                                fiscalyear = ls_cancel-fiscalyear
-                                accountingdocument = ls_cancel-belnr2 BINARY SEARCH.
+                                fiscalyear = ls_cancel-gjahr2
+                                accountingdocument = ls_cancel-belnr2.
           IF sy-subrc = 0.
             ls_deep_rev-%key-accountingdocument = ls_cancel-belnr2.
             ls_deep_rev-%key-companycode = ls_cancel-companycode.
-            ls_deep_rev-%key-fiscalyear = ls_cancel-fiscalyear.
+            ls_deep_rev-%key-fiscalyear = ls_cancel-gjahr2.
             ls_deep_rev-accountingdocument = ls_cancel-belnr2.
             ls_deep_rev-companycode = ls_cancel-companycode.
-            ls_deep_rev-fiscalyear = ls_cancel-fiscalyear.
+            ls_deep_rev-fiscalyear = ls_cancel-gjahr2.
             ls_deep_rev-%param = VALUE #(
                                    postingdate = ls_bkpf-postingdate
                                    reversalreason = '01'
@@ -440,15 +454,15 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
         IF lv_fail IS INITIAL.
           READ TABLE lt_bkpf INTO ls_bkpf
                        WITH KEY companycode = ls_cancel-companycode
-                                fiscalyear = ls_cancel-fiscalyear
-                                accountingdocument = ls_cancel-belnr3 BINARY SEARCH.
+                                fiscalyear = ls_cancel-gjahr3
+                                accountingdocument = ls_cancel-belnr3.
           IF sy-subrc = 0.
             ls_deep_rev-%key-accountingdocument = ls_cancel-belnr3.
             ls_deep_rev-%key-companycode = ls_cancel-companycode.
-            ls_deep_rev-%key-fiscalyear = ls_cancel-fiscalyear.
+            ls_deep_rev-%key-fiscalyear = ls_cancel-gjahr3.
             ls_deep_rev-accountingdocument = ls_cancel-belnr3.
             ls_deep_rev-companycode = ls_cancel-companycode.
-            ls_deep_rev-fiscalyear = ls_cancel-fiscalyear.
+            ls_deep_rev-fiscalyear = ls_cancel-gjahr3.
             ls_deep_rev-%param = VALUE #(
                                    postingdate = ls_bkpf-postingdate
                                    reversalreason = '01'
@@ -470,15 +484,15 @@ CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
         IF lv_fail IS INITIAL.
           READ TABLE lt_bkpf INTO ls_bkpf
                        WITH KEY companycode = ls_cancel-companycode
-                                fiscalyear = ls_cancel-fiscalyear
-                                accountingdocument = ls_cancel-belnr4 BINARY SEARCH.
+                                fiscalyear = ls_cancel-gjahr4
+                                accountingdocument = ls_cancel-belnr4.
           IF sy-subrc = 0.
             ls_deep_rev-%key-accountingdocument = ls_cancel-belnr4.
             ls_deep_rev-%key-companycode = ls_cancel-companycode.
-            ls_deep_rev-%key-fiscalyear = ls_cancel-fiscalyear.
+            ls_deep_rev-%key-fiscalyear = ls_cancel-gjahr4.
             ls_deep_rev-accountingdocument = ls_cancel-belnr4.
             ls_deep_rev-companycode = ls_cancel-companycode.
-            ls_deep_rev-fiscalyear = ls_cancel-fiscalyear.
+            ls_deep_rev-fiscalyear = ls_cancel-gjahr4.
             ls_deep_rev-%param = VALUE #(
                                    postingdate = ls_bkpf-postingdate
                                    reversalreason = '01'

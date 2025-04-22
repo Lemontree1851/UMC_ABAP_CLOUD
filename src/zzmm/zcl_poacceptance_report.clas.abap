@@ -309,7 +309,8 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
                purghistdocumentcreationtime,
                quantity,
                purchaseorderamount,
-               invoiceamtinpurordtransaccrcy
+               invoiceamtinpurordtransaccrcy,
+               invoiceamountinfrgncurrency
           FROM i_purchaseorderhistoryapi01 WITH PRIVILEGED ACCESS
           FOR ALL ENTRIES IN @lt_po
          WHERE purchaseorder = @lt_po-purchaseorder
@@ -689,15 +690,29 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
 
           IF ls_ekbe-debitcreditcode = 'S'.
             ls_output-quantity2 = ls_ekbe-quantity.
-            "請求書金額（税込）
-            ls_output-invoiceamtinpurordtransaccrcy = ls_ekbe-invoiceamtinpurordtransaccrcy.
-            "消費税額
-            ls_output-vat1 = ls_ekbe-invoiceamtinpurordtransaccrcy * lv_rate / 100.
+            "請求書金額
+            IF ls_ekbe-invoiceamtinpurordtransaccrcy <> 0.
+              ls_output-invoiceamtinpurordtransaccrcy = ls_ekbe-invoiceamtinpurordtransaccrcy.
+              "消費税額
+              ls_output-vat1 = ls_ekbe-invoiceamtinpurordtransaccrcy * lv_rate / 100.
+            ELSE.
+              ls_output-invoiceamtinpurordtransaccrcy = ls_ekbe-invoiceamountinfrgncurrency.
+              "消費税額
+              ls_output-vat1 = ls_ekbe-invoiceamountinfrgncurrency * lv_rate / 100.
+            ENDIF.
           ELSE.
             ls_output-quantity2 = -1 * ls_ekbe-quantity.
-            ls_output-invoiceamtinpurordtransaccrcy = -1 * ls_ekbe-invoiceamtinpurordtransaccrcy.
-            ls_output-vat1 = -1 * ls_ekbe-invoiceamtinpurordtransaccrcy * lv_rate / 100.
+            IF ls_ekbe-invoiceamtinpurordtransaccrcy <> 0.
+              ls_output-invoiceamtinpurordtransaccrcy = -1 * ls_ekbe-invoiceamtinpurordtransaccrcy.
+              "消費税額
+              ls_output-vat1 = -1 * ls_ekbe-invoiceamtinpurordtransaccrcy * lv_rate / 100.
+            ELSE.
+              ls_output-invoiceamtinpurordtransaccrcy = -1 * ls_ekbe-invoiceamountinfrgncurrency.
+              "消費税額
+              ls_output-vat1 = -1 * ls_ekbe-invoiceamountinfrgncurrency * lv_rate / 100.
+            ENDIF.
           ENDIF.
+          "請求書金額（税込）
           ls_output-invoiceamount = ls_output-invoiceamtinpurordtransaccrcy + ls_output-vat1.
         ENDIF.
 
@@ -740,7 +755,7 @@ CLASS ZCL_POACCEPTANCE_REPORT IMPLEMENTATION.
         CLEAR: ls_output, ls_po, ls_product,
                ls_purchasinggroup, ls_bp, ls_eket,
                ls_ekes, ls_ekkn, ls_ekbe, ls_matdoc,
-               ls_invoice, ls_bkpf.
+               ls_invoice, ls_bkpf, lv_rate.
       ENDLOOP.
 * --2. PO without material document or invoice
 

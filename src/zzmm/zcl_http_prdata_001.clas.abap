@@ -60,7 +60,9 @@ CLASS zcl_http_prdata_001 DEFINITION
 ENDCLASS.
 
 
-CLASS zcl_http_prdata_001 IMPLEMENTATION.
+
+CLASS ZCL_HTTP_PRDATA_001 IMPLEMENTATION.
+
 
   METHOD if_http_service_extension~handle_request.
     TYPES: BEGIN OF ty_mrp_record,
@@ -298,5 +300,4 @@ CLASS zcl_http_prdata_001 IMPLEMENTATION.
                                 i_value = lc_content_type ).
 *    ENDIF.
   ENDMETHOD.
-
 ENDCLASS.

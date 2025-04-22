@@ -30,7 +30,7 @@ define root custom entity ZR_PAIDPAYDOCUMENT
       PurGrpAmount        : abap.curr(16,2); //当期購買グループ別仕入金額
       @Semantics.amount.currencyCode : 'Currency'
       ChargeableAmount    : abap.curr(16,2); //当期有償支給品仕入金額
-      ChargeableRate      : abap.dec(9,5); //当期仕入率
+      ChargeableRate      : abap.char(15); //当期仕入率
       @Semantics.amount.currencyCode : 'Currency'
       PreviousStockAmount : abap.curr(16,2); //在庫金額（前期末）
       @Semantics.amount.currencyCode : 'Currency'
@@ -49,7 +49,7 @@ define root custom entity ZR_PAIDPAYDOCUMENT
       CustomerRevenue     : abap.curr(16,2); //該当得意先の総売上高
       @Semantics.amount.currencyCode : 'Currency'
       Revenue             : abap.curr(16,2); //会社レベルの総売上高
-      RevenueRate         : abap.dec(9,5); //"総売上金額占有率
+      RevenueRate         : abap.char(15); //"総売上金額占有率
       AP                  : abap.char(23);  //買掛金金額
       AR                  : abap.char(23);  //売掛金金額
       Currency            : abap.cuky;

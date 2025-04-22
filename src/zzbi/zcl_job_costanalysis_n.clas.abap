@@ -272,6 +272,7 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
             lv_fiscalperiod     TYPE i_fiscalyearperiodforvariant-fiscalperiod,
             lv_next_start       TYPE datum,
             lv_next_end         TYPE datum,
+            lv_dat              TYPE d,  "Add 20250422
             lv_next_start_c(19) TYPE c,
             lv_next_end_c(19)   TYPE c.
 
@@ -620,7 +621,7 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
       SELECT plant,
              plantname
         FROM i_plant WITH PRIVILEGED ACCESS
-        INTO TABLE @DATA(lt_plantname).
+        INTO TABLE @DATA(lt_plantname).                 "#EC CI_NOWHERE
       SORT lt_plantname BY plant.
 
       SELECT product,
@@ -633,7 +634,7 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
       SELECT companycode,
              companycodename
         FROM i_companycode WITH PRIVILEGED ACCESS
-        INTO TABLE @DATA(lt_companycodename).
+        INTO TABLE @DATA(lt_companycodename).           "#EC CI_NOWHERE
       SORT lt_companycodename BY companycode.
 *&--ADD END BY XINLEI XU 2025/04/10
 
@@ -750,7 +751,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
       SORT lt_basic BY plant material.
 
 *    販売請求書から当月製品の販売数量を取得
-      SELECT bil~companycode,         "会社コード
+      SELECT bil~billingdocument,       "Add 20250422
+             bil~billingdocumentitem,   "Add 20250422
+             bil~companycode,         "会社コード
              bil~billingdocumentdate, "請求書日付
              bil~product AS material, "製品
              bil~billingquantity,     "請求書数量
@@ -769,6 +772,23 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
         INTO TABLE @DATA(lt_bil).
       SORT lt_bil BY material.
 
+******Add start 20250422**************************************
+      DATA: ls_bil LIKE LINE OF lt_bil.
+      DATA(lt_bil_tmp) = lt_bil.
+      CLEAR: lt_bil.
+      LOOP AT lt_bil_tmp INTO DATA(ls_tmp)
+                              GROUP BY ( material = ls_tmp-material )
+                              REFERENCE INTO DATA(member).
+        LOOP AT GROUP member ASSIGNING FIELD-SYMBOL(<lfs_member>).
+          ls_bil-billingquantity = ls_bil-billingquantity + <lfs_member>-billingquantity.
+        ENDLOOP.
+        ls_bil-companycode = <lfs_member>-companycode.
+        ls_bil-billingquantityunit = <lfs_member>-billingquantityunit.
+        ls_bil-material = <lfs_member>-material.
+        APPEND ls_bil TO lt_bil.
+        CLEAR: ls_bil.
+      ENDLOOP.
+******Add end 20250422****************************************
 *    品目マスタからMRP管理者を抽出
       SELECT mrp~plant,
              mrp~product AS material,
@@ -784,6 +804,31 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
 *&--MOD END BY XINLEI XU 2025/02/24
        INTO TABLE @DATA(lt_mrp).
       SORT lt_mrp BY plant material.
+
+******Add start 20250422*************************
+      lv_dat = cl_abap_context_info=>get_system_date( ).
+
+      SELECT costestimate,
+             currencyrole,
+             material,
+             valuationarea,
+             materialpriceunitqty,
+             currency,
+             actualprice
+        FROM i_inventorypricebykeydate( p_calendardate = @lv_dat )
+        WITH PRIVILEGED ACCESS
+        FOR ALL ENTRIES IN @lt_qms_t07_quotation_d
+       WHERE currencyrole = '10'
+         AND ledger = '0L'
+         AND valuationarea = @lt_qms_t07_quotation_d-plant
+         AND material = @lt_qms_t07_quotation_d-material_number
+        INTO TABLE @DATA(lt_actual).
+      SORT lt_actual BY costestimate DESCENDING
+                        material
+                        valuationarea.
+      DELETE ADJACENT DUPLICATES FROM lt_actual COMPARING costestimate material valuationarea.
+      SORT lt_actual BY material valuationarea.
+******Add end 20250422***************************
     ENDIF.
 
 *     得意先BPコードと名称を抽出
@@ -893,13 +938,23 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
       ENDLOOP.
 *&--MOD END BY XINLEI XU 2025/04/01
 
-      READ TABLE lt_basic ASSIGNING FIELD-SYMBOL(<lfs_basic>) WITH KEY plant    = <lfs_qmst07>-plant
+******Add start 20250422******************************
+      READ TABLE lt_actual INTO DATA(ls_actual)
+           WITH KEY material = <lfs_qmst07>-material_number
+                    valuationarea = <lfs_qmst07>-plant BINARY SEARCH.
+
+******Add end 20250422********************************
+
+      read TABLE lt_basic ASSIGNING field-symbol(<lfs_basic>) WITH KEY plant    = <lfs_qmst07>-plant
                                                                        material = <lfs_qmst07>-material_number BINARY SEARCH.
       IF sy-subrc = 0.
         CLEAR:lv_price1,lv_price2.
         TRY.
             lv_price1 = <lfs_basic>-standardprice / <lfs_basic>-priceunitqty.
-            lv_price2 = <lfs_basic>-movingaverageprice / <lfs_basic>-priceunitqty.
+******Modify start 20250422****************************
+*            lv_price2 = <lfs_basic>-movingaverageprice / <lfs_basic>-priceunitqty.
+            lv_price2 = ls_actual-ActualPrice / ls_actual-MaterialPriceUnitQty.
+******Modify end 20250422******************************
 
             lv_price1 = zzcl_common_utils=>conversion_amount(
                                           iv_alpha = 'OUT'
@@ -959,6 +1014,8 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
       ls_data-quo_version  = <lfs_qmst07>-quo_version.
       ls_data-sales_d_no   = <lfs_qmst07>-sales_d_no.
       APPEND ls_data TO lt_data.
+
+      CLEAR: ls_actual.  "Add 20250422
     ENDLOOP.
 
     IF lt_data IS NOT INITIAL.
@@ -992,7 +1049,8 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
              mfgorder~productionsupervisor,
              mfgorder~companycode,
              mfgorder~totalactualcost,
-             mfgorder~mfgorderconfirmedyieldqty AS yieldqty
+             mfgorder~mfgorderconfirmedyieldqty AS yieldqty,
+             mfgorder~orderid       "Add 20250422
         FROM ztfi_1020 AS mfgorder
 *&--MOD BEGIN BY XINLEI XU 2025/02/24
 *      JOIN @lt_qms_t02_quo_d AS t02
@@ -1006,7 +1064,9 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
         INTO TABLE @DATA(lt_mfgorder).
 
 *      販売請求書から当月製品の販売数量を取得
-      SELECT bill~companycode,
+      SELECT bill~billingdocument,     "Add 20250422
+             bill~billingdocumentitem, "Add 20250422
+             bill~companycode,
              bill~billingdocumentdate,
              bill~product,
              bill~billingquantity,
@@ -1025,6 +1085,23 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
        INTO TABLE @DATA(lt_bill).
       SORT lt_bill BY product.
 
+******Add start 20250422***************************************
+      DATA: ls_bill LIKE LINE OF lt_bill.
+      DATA(lt_bill_tmp) = lt_bill.
+      CLEAR: lt_bill.
+      LOOP AT lt_bill_tmp INTO DATA(ls_bill_tmp)
+                              GROUP BY ( material = ls_bill_tmp-product )
+                              REFERENCE INTO DATA(mem).
+        LOOP AT GROUP mem ASSIGNING FIELD-SYMBOL(<lfs_mem>).
+          ls_bill-billingquantity = ls_bill-billingquantity + <lfs_mem>-billingquantity.
+        ENDLOOP.
+        ls_bill-companycode = <lfs_mem>-companycode.
+        ls_bill-billingquantityunit = <lfs_mem>-billingquantityunit.
+        ls_bill-product = <lfs_mem>-product.
+        APPEND ls_bill TO lt_bill.
+        CLEAR: ls_bill.
+      ENDLOOP.
+******Add end 20250422*****************************************
       SELECT basic~valuationarea AS plant,"プラント
              basic~product,             "部品
              basic~currency             "会社コード通貨
@@ -1040,9 +1117,13 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
         INTO TABLE @DATA(lt_basic2).
       SORT lt_basic2 BY plant product.
     ENDIF.
-
+******Add start 20250422***************************
+    DATA: lv_orderid TYPE c LENGTH 10.
+    SORT lt_mfgorder BY orderid product producedproduct.
+******Add end 20250422*****************************
     LOOP AT lt_qms_t02_quo_d ASSIGNING FIELD-SYMBOL(<lfs_t02>).
-      CLEAR ls_dataj.
+      CLEAR: ls_dataj,
+             lv_orderid.  "Add 20250422
       ls_dataj-zyear       = mv_year.
       ls_dataj-zmonth      = mv_month.
       ls_dataj-yearmonth   = lv_yearmonth.
@@ -1086,10 +1167,12 @@ CLASS zcl_job_costanalysis_n IMPLEMENTATION.
             ls_dataj-actualprice_fat = ls_dataj-actualprice_fat + <lfs_mfgorder>-totalactualcost.
         ENDCASE.
 
-        IF <lfs_mfgorder>-product = <lfs_mfgorder>-producedproduct.
+        IF <lfs_mfgorder>-product = <lfs_mfgorder>-producedproduct
+       AND <lfs_mfgorder>-orderid <> lv_orderid.    "Add 20250422
           CONDENSE ls_dataj-yieldqty NO-GAPS.
           ls_dataj-yieldqty = ls_dataj-yieldqty + <lfs_mfgorder>-yieldqty.
         ENDIF.
+        lv_orderid = <lfs_mfgorder>-orderid.  "Add 20250422
       ENDLOOP.
       CONDENSE ls_dataj-yieldqty NO-GAPS.
 

@@ -21,7 +21,7 @@
     <item>
      <ID>I</ID>
      <KEY>002</KEY>
-     <ENTRY>Automatic approval</ENTRY>
+     <ENTRY>Automatic Confirmed/Approval</ENTRY>
      <LENGTH>50</LENGTH>
     </item>
    </TPOOL>
@@ -38,7 +38,7 @@
       <item>
        <ID>I</ID>
        <KEY>002</KEY>
-       <ENTRY>自動承認</ENTRY>
+       <ENTRY>自動確認/承認</ENTRY>
        <LENGTH>50</LENGTH>
       </item>
      </TEXTPOOL>

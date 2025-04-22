@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_paidpaycalculation IMPLEMENTATION.
+CLASS ZCL_PAIDPAYCALCULATION IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.

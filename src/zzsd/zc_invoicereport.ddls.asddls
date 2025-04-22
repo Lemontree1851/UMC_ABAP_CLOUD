@@ -53,6 +53,11 @@ define root view entity ZC_INVOICEREPORT
           _BC1001.zvalue7 as TheCompanyName,
 
           TheCompanyCity, // ADD BY XINLEI XU 2025/04/03
+          
+          // ADD BEGIN BY XINLEI XU 2025/04/18 CM#4423
+          PurchaseOrderByCustomer, 
+          YY1_ItemRemarks_1_BDI,
+          // ADD END BY XINLEI XU 2025/04/18 CM#4423
 
           //  汇款地址 vbrk tx05 长文本
           // 效率太低，且报表不展示,只打印时获取，考虑在调用打印的actin返回数据之后再获取一下文本

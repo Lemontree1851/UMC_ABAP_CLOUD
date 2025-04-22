@@ -12,7 +12,8 @@ ENDCLASS.
 
 
 
-CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
+CLASS ZCL_QUERY_SALESDOCUMENTREPORT IMPLEMENTATION.
+
 
   METHOD if_rap_query_provider~select.
 
@@ -186,6 +187,13 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
               lc_zzcm(4)      TYPE c VALUE 'ZZCM',
               lc_zygp(4)      TYPE c VALUE 'ZYGP',
               lc_zzgp(4)      TYPE c VALUE 'ZZGP'.
+
+    DATA: lv_conditionratevalue_n(15)   TYPE p DECIMALS 2,
+          lv_conditionquantity1(10)     TYPE p DECIMALS 2,
+          lv_materialcost2000per_n(15)  TYPE p DECIMALS 2,
+          lv_conditionquantity2(10)     TYPE p DECIMALS 2,
+          lv_manufacturingcostper_n(15) TYPE p DECIMALS 2,
+          lv_conditionquantity3(10)     TYPE p DECIMALS 2.
 *&--ADD END BY XINLEI XU 2025/04/15 CR#4277
 
     TRY.
@@ -618,6 +626,7 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
 *&--MOD BEGIN BY XINLEI XU 2025/04/15 CR#4277
 *     WHERE conditiontype = 'ZYR0' " 'ZYP0' MOD BY XINLEI XU 2025/02/16
       WHERE conditiontype IN ( @lc_zyr0, @lc_zycm, @lc_zygp )
+        AND conditiontable = '305'
 *&--MOD END BY XINLEI XU 2025/04/15 CR#4277
         AND conditionisdeleted = @space
         AND conditionvaliditystartdate LE @lv_endda
@@ -642,6 +651,7 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
 *&--MOD BEGIN BY XINLEI XU 2025/04/15 CR#4277
 *     WHERE conditiontype IN ('PPR0','ZZR0')
       WHERE conditiontype IN ( @lc_ppr0, @lc_zzr0, @lc_zzcm, @lc_zzgp )
+        AND conditiontable = '305'
 *&--MOD END BY XINLEI XU 2025/04/15 CR#4277
         AND conditionisdeleted = @space
         AND conditionvaliditystartdate LE @lv_endda
@@ -692,7 +702,12 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
             ls_result_p-conditionscalequantity       = ls_slsprcgconditionrecord-conditionscalequantity.
             ls_result_p-conditionscaleamount         = ls_slsprcgconditionrecord-conditionscaleamount.
             ls_result_p-conditionscaleamountcurrency = ls_slsprcgconditionrecord-conditionscaleamountcurrency.
-            ls_result_p-conditioncurrency = ls_slsprcgconditionrecord-conditioncurrency.
+            ls_result_p-conditioncurrency            = ls_slsprcgconditionrecord-conditioncurrency.
+*&--ADD BEGIN BY XINLEI XU 2025/04/16 CR#4277
+          ELSE.
+            DELETE ls_res_api-d-results.
+            CONTINUE.
+*&--ADD END BY XINLEI XU 2025/04/16 CR#4277
           ENDIF.
           ls_result_p-customer = |{ ls_result_p-customer ALPHA = IN }|.
           ls_result_p-material = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = 'IN'
@@ -912,6 +927,13 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
       lv_endda_m = zzcl_common_utils=>get_enddate_of_month( lv_endda ).
 
       LOOP AT lt_result INTO DATA(ls_result) WHERE salesplanperiodname = ls_months-month.
+        CLEAR: lv_conditionratevalue_n,
+               lv_materialcost2000per_n,
+               lv_manufacturingcostper_n,
+               lv_conditionquantity1,
+               lv_conditionquantity2,
+               lv_conditionquantity3.
+
         ls_output-salesorganization = ls_result-salesorganization.
         ls_output-customer = ls_result-soldtoparty.
         ls_output-yeardate = ls_months-month.
@@ -1006,12 +1028,17 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
               ls_output-manufacturingcost_n = ls_productcostcom-process_amount / ls_productcostestimate-costinglotsize.
             ENDIF.
             ls_output-currency1 = ls_productcostestimate-controllingareacurrency.
-
+            ls_output-manufacturingcost_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
+                                                                                  iv_currency = ls_output-currency1
+                                                                                  iv_input = ls_output-manufacturingcost_n ).
             " 材料费
             IF ls_productcostestimate-costinglotsize IS NOT INITIAL.
               ls_output-materialcost2000_n = ls_productcostcom-raw_amount / ls_productcostestimate-costinglotsize.
             ENDIF.
             ls_output-currency = ls_productcostestimate-controllingareacurrency.
+            ls_output-materialcost2000_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
+                                                                                 iv_currency = ls_output-currency
+                                                                                 iv_input = ls_output-materialcost2000_n ).
           ENDIF.
         ENDIF.
 *&--MOD END BY XINLEI XU 2025/02/19
@@ -1028,6 +1055,9 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
         IF sy-subrc = 0.
           ls_output-salesamount_n = ls_result1-salesplanamountindspcrcy.
           ls_output-displaycurrency1 = ls_result1-displaycurrency.
+          ls_output-salesamount_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
+                                                                          iv_currency = ls_output-displaycurrency1
+                                                                          iv_input = ls_output-salesamount_n ).
         ENDIF.
 
         READ TABLE lt_result2 INTO DATA(ls_result2) WITH KEY salesorganization   = ls_result-salesorganization
@@ -1042,6 +1072,9 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
         IF sy-subrc = 0.
           ls_output-contributionprofittotal_n = ls_result2-salesplanamountindspcrcy.
           ls_output-displaycurrency2 = ls_result2-displaycurrency.
+          ls_output-contributionprofittotal_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
+                                                                                      iv_currency = ls_output-displaycurrency2
+                                                                                      iv_input = ls_output-contributionprofittotal_n ).
         ENDIF.
 
         READ TABLE lt_result3 INTO DATA(ls_result3) WITH KEY salesorganization   = ls_result-salesorganization
@@ -1056,6 +1089,9 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
         IF sy-subrc = 0.
           ls_output-grossprofittotal_n = ls_result3-salesplanamountindspcrcy.
           ls_output-displaycurrency3 = ls_result3-displaycurrency.
+          ls_output-grossprofittotal_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
+                                                                               iv_currency = ls_output-displaycurrency3
+                                                                               iv_input = ls_output-grossprofittotal_n ).
         ENDIF.
         READ TABLE lt_result0 INTO DATA(ls_result0_temp) WITH KEY salesorganization   = ls_result-salesorganization
                                                                   salesoffice         = ls_result-salesoffice
@@ -1100,8 +1136,12 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
                 ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
                                                                                        iv_currency = ls_tiered-conditionscaleamountcurrency
                                                                                        iv_input = ls_tiered-conditionscaleamount ).
+*&--ADD BEGIN BY XINLEI XU 2025/04/16
+                lv_conditionratevalue_n = ls_output-conditionratevalue_n.
+                lv_conditionquantity1 = ls_tiered-conditionquantity.
+*&--ADD END BY XINLEI XU 2025/04/16
                 ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_tiered-conditionquantity.
-                ls_output-displaycurrency1 = ls_305-conditionratevalueunit.
+                ls_output-displaycurrency1 = ls_tiered-conditionscaleamountcurrency.
                 "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
                 EXIT.
               ENDLOOP.
@@ -1109,6 +1149,10 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
               ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
                                                                                      iv_currency = ls_305-conditionratevalueunit
                                                                                      iv_input = ls_305-conditionratevalue ).
+*&--ADD BEGIN BY XINLEI XU 2025/04/16
+              lv_conditionratevalue_n = ls_output-conditionratevalue_n.
+              lv_conditionquantity1 = ls_305-conditionquantity.
+*&--ADD END BY XINLEI XU 2025/04/16
               ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_305-conditionquantity.
               ls_output-displaycurrency1 = ls_305-conditionratevalueunit.
             ENDIF.
@@ -1145,7 +1189,9 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
                 ls_output-materialcost2000per_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
                                                                                         iv_currency = ls_tiered-conditionscaleamountcurrency
                                                                                         iv_input = ls_tiered-conditionscaleamount ).
-                ls_output-materialcost2000per_n = ls_output-materialcost2000per_n / ls_tiered-conditionquantity.
+                lv_materialcost2000per_n = ls_output-materialcost2000per_n.
+                lv_conditionquantity2 = ls_tiered-conditionquantity.
+                ls_output-materialcost2000per_n = ceil( ls_output-materialcost2000per_n / ls_tiered-conditionquantity * 100 ) / 100.
                 "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
                 EXIT.
               ENDLOOP.
@@ -1153,7 +1199,9 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
               ls_output-materialcost2000per_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
                                                                                       iv_currency = ls_305-conditionratevalueunit
                                                                                       iv_input = ls_305-conditionratevalue ).
-              ls_output-materialcost2000per_n = ls_output-materialcost2000per_n / ls_305-conditionquantity.
+              lv_materialcost2000per_n = ls_output-materialcost2000per_n.
+              lv_conditionquantity2 = ls_305-conditionquantity.
+              ls_output-materialcost2000per_n = ceil( ls_output-materialcost2000per_n / ls_305-conditionquantity * 100 ) / 100.
             ENDIF.
             "之前排序过 有效起止日期被包含在对象月中且日期最大的那条
             EXIT.
@@ -1187,7 +1235,9 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
                 ls_output-manufacturingcostper_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
                                                                                          iv_currency = ls_tiered-conditionscaleamountcurrency
                                                                                          iv_input = ls_tiered-conditionscaleamount ).
-                ls_output-manufacturingcostper_n = ls_output-manufacturingcostper_n / ls_tiered-conditionquantity.
+                lv_manufacturingcostper_n = ls_output-manufacturingcostper_n.
+                lv_conditionquantity3 = ls_tiered-conditionquantity.
+                ls_output-manufacturingcostper_n = ceil( ls_output-manufacturingcostper_n / ls_tiered-conditionquantity * 100 ) / 100.
                 "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
                 EXIT.
               ENDLOOP.
@@ -1195,7 +1245,9 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
               ls_output-manufacturingcostper_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
                                                                                        iv_currency = ls_305-conditionratevalueunit
                                                                                        iv_input = ls_305-conditionratevalue ).
-              ls_output-manufacturingcostper_n = ls_output-manufacturingcostper_n / ls_305-conditionquantity.
+              lv_manufacturingcostper_n = ls_output-manufacturingcostper_n.
+              lv_conditionquantity3 = ls_305-conditionquantity.
+              ls_output-manufacturingcostper_n = ceil( ls_output-manufacturingcostper_n / ls_305-conditionquantity * 100 ) / 100.
             ENDIF.
             "之前排序过 有效起止日期被包含在对象月中且日期最大的那条
             EXIT.
@@ -1234,8 +1286,12 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
                 ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
                                                                                        iv_currency = ls_tiered-conditionscaleamountcurrency
                                                                                        iv_input = ls_tiered-conditionscaleamount ).
+*&--ADD BEGIN BY XINLEI XU 2025/04/16
+                lv_conditionratevalue_n = ls_output-conditionratevalue_n.
+                lv_conditionquantity1 = ls_tiered-conditionquantity.
+*&--ADD END BY XINLEI XU 2025/04/16
                 ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_tiered-conditionquantity.
-                ls_output-displaycurrency1 = ls_305-conditionratevalueunit.
+                ls_output-displaycurrency1 = ls_tiered-conditionscaleamountcurrency.
                 "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
                 EXIT.
               ENDLOOP.
@@ -1244,6 +1300,10 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
               ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
                                                                                      iv_currency = ls_305-conditionratevalueunit
                                                                                      iv_input = ls_305-conditionratevalue ).
+*&--ADD BEGIN BY XINLEI XU 2025/04/16
+              lv_conditionratevalue_n = ls_output-conditionratevalue_n.
+              lv_conditionquantity1 = ls_305-conditionquantity.
+*&--ADD END BY XINLEI XU 2025/04/16
               ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_305-conditionquantity.
               ls_output-displaycurrency1 = ls_305-conditionratevalueunit.
             ENDIF.
@@ -1279,8 +1339,12 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
                   ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
                                                                                          iv_currency = ls_tiered-conditionscaleamountcurrency
                                                                                          iv_input = ls_tiered-conditionscaleamount ).
+*&--ADD BEGIN BY XINLEI XU 2025/04/16
+                  lv_conditionratevalue_n = ls_output-conditionratevalue_n.
+                  lv_conditionquantity1 = ls_tiered-conditionquantity.
+*&--ADD END BY XINLEI XU 2025/04/16
                   ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_tiered-conditionquantity.
-                  ls_output-displaycurrency1 = ls_305-conditionratevalueunit.
+                  ls_output-displaycurrency1 = ls_tiered-conditionscaleamountcurrency.
                   "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
                   EXIT.
                 ENDLOOP.
@@ -1289,14 +1353,19 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
                 ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
                                                                                        iv_currency = ls_305-conditionratevalueunit
                                                                                        iv_input = ls_305-conditionratevalue ).
+*&--ADD BEGIN BY XINLEI XU 2025/04/16
+                lv_conditionratevalue_n = ls_output-conditionratevalue_n.
+                lv_conditionquantity1 = ls_305-conditionquantity.
+*&--ADD END BY XINLEI XU 2025/04/16
                 ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_305-conditionquantity.
                 ls_output-displaycurrency1 = ls_305-conditionratevalueunit.
               ENDIF.
               "之前排序过 有效起止日期被包含在对象月中且日期最大的那条
               EXIT.
             ENDLOOP.
-
-*&--ADD BEGIN BY XINLEI XU 2025/04/15 CR#4277
+          ENDIF.
+*&--AD BEGIN BY XINLEI XU 2025/04/15 CR#4277
+          IF lv_has_ppr0 = abap_false.
             " 贡献利润(单价)
             LOOP AT ls_res_api-d-results INTO ls_305 WHERE conditiontype                = lc_zzcm
                                                        AND salesorganization            = ls_result-salesorganization
@@ -1325,7 +1394,9 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
                   ls_output-materialcost2000per_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
                                                                                           iv_currency = ls_tiered-conditionscaleamountcurrency
                                                                                           iv_input = ls_tiered-conditionscaleamount ).
-                  ls_output-materialcost2000per_n = ls_output-materialcost2000per_n / ls_tiered-conditionquantity.
+                  lv_materialcost2000per_n = ls_output-materialcost2000per_n.
+                  lv_conditionquantity2 = ls_tiered-conditionquantity.
+                  ls_output-materialcost2000per_n = ceil( ls_output-materialcost2000per_n / ls_tiered-conditionquantity * 100 ) / 100.
                   "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
                   EXIT.
                 ENDLOOP.
@@ -1333,7 +1404,9 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
                 ls_output-materialcost2000per_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
                                                                                         iv_currency = ls_305-conditionratevalueunit
                                                                                         iv_input = ls_305-conditionratevalue ).
-                ls_output-materialcost2000per_n = ls_output-materialcost2000per_n / ls_305-conditionquantity.
+                lv_materialcost2000per_n = ls_output-materialcost2000per_n.
+                lv_conditionquantity2 = ls_305-conditionquantity.
+                ls_output-materialcost2000per_n = ceil( ls_output-materialcost2000per_n / ls_305-conditionquantity * 100 ) / 100.
               ENDIF.
               "之前排序过 有效起止日期被包含在对象月中且日期最大的那条
               EXIT.
@@ -1365,9 +1438,11 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
                                                    AND conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d
                                                    AND conditionscalequantity <= ls_result0_temp-salesplanquantity.
                   ls_output-manufacturingcostper_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
-                                                                                           iv_currency = ls_tiered-conditionscaleamountcurrency
-                                                                                           iv_input = ls_tiered-conditionscaleamount ).
-                  ls_output-manufacturingcostper_n = ls_output-manufacturingcostper_n / ls_tiered-conditionquantity.
+                                                                                          iv_currency = ls_tiered-conditionscaleamountcurrency
+                                                                                          iv_input = ls_tiered-conditionscaleamount ).
+                  lv_manufacturingcostper_n = ls_output-manufacturingcostper_n.
+                  lv_conditionquantity3 = ls_tiered-conditionquantity.
+                  ls_output-manufacturingcostper_n = ceil( ls_output-manufacturingcostper_n / ls_tiered-conditionquantity * 100 ) / 100.
                   "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
                   EXIT.
                 ENDLOOP.
@@ -1375,7 +1450,9 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
                 ls_output-manufacturingcostper_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
                                                                                          iv_currency = ls_305-conditionratevalueunit
                                                                                          iv_input = ls_305-conditionratevalue ).
-                ls_output-manufacturingcostper_n = ls_output-manufacturingcostper_n / ls_305-conditionquantity.
+                lv_manufacturingcostper_n = ls_output-manufacturingcostper_n.
+                lv_conditionquantity3 = ls_305-conditionquantity.
+                ls_output-manufacturingcostper_n = ceil( ls_output-manufacturingcostper_n / ls_305-conditionquantity * 100 ) / 100.
               ENDIF.
               "之前排序过 有效起止日期被包含在对象月中且日期最大的那条
               EXIT.
@@ -1384,37 +1461,25 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
           ENDIF.
         ENDIF.
 
-*&--ADD BEGIN BY XINLEI XU 2025/02/19
-        DATA(lv_conditionratevalue_n) = zzcl_common_utils=>conversion_amount( iv_alpha = 'IN'
-                                                                              iv_currency = ls_output-displaycurrency1
-                                                                              iv_input = ls_output-conditionratevalue_n ).
-*&--ADD END BY XINLEI XU 2025/02/19
-
-*&--MOD BEGIN BY XINLEI XU 2025/02/19
+*&--MOD BEGIN BY XINLEI XU 2025/04/15 CR#4277
 *        "贡献利润(单价):单价 - 材料费
 *        ls_output-materialcost2000per_n = ls_output-conditionratevalue_n - ls_output-materialcost2000_n.
 *        "销售总利润(单价)：单价 - 材料费 - 加工费
 *        ls_output-manufacturingcostper_n = ls_output-conditionratevalue_n - ls_output-materialcost2000_n - ls_output-manufacturingcost_n.
-
-*&--MOD BEGIN BY XINLEI XU 2025/04/15 CR#4277
-*        "贡献利润(单价):单价 - 材料费
-*        ls_output-materialcost2000per_n = lv_conditionratevalue_n - ls_output-materialcost2000_n.
-*        "销售总利润(单价)：单价 - 材料费 - 加工费
-*        ls_output-manufacturingcostper_n = lv_conditionratevalue_n - ls_output-materialcost2000_n - ls_output-manufacturingcost_n.
-**&--MOD END BY XINLEI XU 2025/02/19
         IF lv_ztype1 = 'A'.
-          " 贡献利润(单价)：固定取条件类型 ZYCM
-          " 销售总利润(单价)：固定取条件类型 ZYGP
+          "贡献利润(单价): ZYCM
+          "销售总利润(单价): ZYGP
         ELSEIF lv_ztype1 = 'B'.
           IF lv_has_ppr0 = abap_true.
             "贡献利润(单价):单价 - 材料费
-            ls_output-materialcost2000per_n = lv_conditionratevalue_n - ls_output-materialcost2000_n.
-            "销售总利润(单价)：单价 - 材料费 - 加工费
-            ls_output-manufacturingcostper_n = lv_conditionratevalue_n - ls_output-materialcost2000_n - ls_output-manufacturingcost_n.
+            ls_output-materialcost2000per_n = ls_output-conditionratevalue_n - ls_output-materialcost2000_n.
+            "销售总利润(单价):单价 - 材料费
+            ls_output-manufacturingcostper_n = ls_output-conditionratevalue_n - ls_output-materialcost2000_n - ls_output-manufacturingcost_n.
           ELSE.
-            " 贡献利润(单价)：固定取条件类型 ZZCM
-            " 销售总利润(单价)：固定取条件类型 ZZGP
+            "贡献利润(单价): ZZCM
+            "销售总利润(单价): ZZGP
           ENDIF.
+          CLEAR lv_has_ppr0.
         ENDIF.
 *&--MOD END BY XINLEI XU 2025/04/15 CR#4277
 
@@ -1430,19 +1495,36 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
         IF sy-subrc = 0.
           "QTY
           ls_output-salesplanamountindspcrcy_n = ls_result0-salesplanquantity.
-          ls_output-salesplanunit              = ls_result0-salesplanunit.
+          ls_output-salesplanunit = ls_result0-salesplanunit.
 
+*&--MOD BEGIN BY XINLEI XU 2025/04/16
           "销售额
-          ls_output-salesamount_n    = ls_result0-salesplanquantity * ls_output-conditionratevalue_n.
-          ls_output-displaycurrency1 = ls_output-conditionratevalueunit.
-
+          "ls_output-salesamount_n = ls_result0-salesplanquantity * ls_output-conditionratevalue_n.
           "贡献利润
-          ls_output-contributionprofittotal_n = ls_result0-salesplanquantity * ls_output-materialcost2000per_n."
-          ls_output-displaycurrency2          = ls_output-currency.
-
+          "ls_output-contributionprofittotal_n = ls_result0-salesplanquantity * ls_output-materialcost2000per_n.
           "销售总利润
-          ls_output-grossprofittotal_n = ls_result0-salesplanquantity * ls_output-manufacturingcostper_n.
-          ls_output-displaycurrency3   = ls_output-currency1.
+          "ls_output-grossprofittotal_n = ls_result0-salesplanquantity * ls_output-manufacturingcostper_n.
+
+          IF lv_conditionquantity1 IS NOT INITIAL.
+            ls_output-salesamount_n = ls_result0-salesplanquantity / lv_conditionquantity1 * lv_conditionratevalue_n.
+          ELSE.
+            ls_output-salesamount_n = ls_result0-salesplanquantity * ls_output-conditionratevalue_n.
+          ENDIF.
+          IF lv_conditionquantity2 IS NOT INITIAL.
+            ls_output-contributionprofittotal_n = ls_result0-salesplanquantity / lv_conditionquantity2 * lv_materialcost2000per_n.
+          ELSE.
+            ls_output-contributionprofittotal_n = ls_result0-salesplanquantity * ls_output-materialcost2000per_n.
+          ENDIF.
+          IF lv_conditionquantity3 IS NOT INITIAL.
+            ls_output-grossprofittotal_n = ls_result0-salesplanquantity / lv_conditionquantity3 * lv_manufacturingcostper_n.
+          ELSE.
+            ls_output-grossprofittotal_n = ls_result0-salesplanquantity * ls_output-manufacturingcostper_n.
+          ENDIF.
+*&--MOD END BY XINLEI XU 2025/04/16
+
+          ls_output-displaycurrency1 = ls_output-conditionratevalueunit.
+          ls_output-displaycurrency2 = ls_output-currency.
+          ls_output-displaycurrency3 = ls_output-currency1.
         ENDIF.
 
         "数据再处理！！！ 防止影响上面mapping
@@ -1555,6 +1637,19 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
 
     SORT lt_output BY salesorganization customer profitcenter salesoffice salesgroup product createdbyuser plantype yeardate.
 
+*&--ADD BEGIN BY XINLEI XU 2025/04/17
+    LOOP AT lt_output ASSIGNING FIELD-SYMBOL(<lfs_output>).
+      zzcl_common_utils=>get_fiscal_year_period(
+        EXPORTING
+          iv_date   = |{ <lfs_output>-yeardate }01|
+        IMPORTING
+          ev_year   = DATA(lv_fiscalyear)
+          ev_period = DATA(lv_fiscalperiod) ).
+
+      <lfs_output>-yeardate = |{ <lfs_output>-yeardate }_{ lv_fiscalyear }{ lv_fiscalperiod }|.
+    ENDLOOP.
+*&--ADD END BY XINLEI XU 2025/04/17
+
     IF io_request->is_total_numb_of_rec_requested(  ) .
       io_response->set_total_number_of_records( lines( lt_output ) ).
     ENDIF.
@@ -1570,5 +1665,4 @@ CLASS zcl_query_salesdocumentreport IMPLEMENTATION.
     io_response->set_data( lt_output ).
 
   ENDMETHOD.
-
 ENDCLASS.

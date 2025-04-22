@@ -23,12 +23,16 @@ authorization master ( global )
   LocalLastChangedBy,
   LocalLastChangedAt,
   LatCahangedAt;
+
   field ( numbering : managed ) UUID;
+
   static action batchProcess parameter zr_upload_parameter result [1] zr_upload_parameter;
 
   static action createPurchaseOrder parameter zr_upload_parameter result [1] zr_upload_parameter;
 
   static action handleFile parameter zr_upload_parameter result [1] zr_upload_parameter;
+
+  static action deletePR parameter zr_upload_parameter result [1] zr_upload_parameter; // ADD BY XINLEI XU 2025/04/21 CR#4359
 
   validation checkRecords on save
   {

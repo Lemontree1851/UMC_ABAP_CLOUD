@@ -3,6 +3,7 @@
 {
 "FROM":
 [
+"I_SUPPLIER",
 "ZR_PRWORKFLOWITEM"
 ],
 "ASSOCIATED":

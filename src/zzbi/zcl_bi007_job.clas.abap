@@ -7,6 +7,7 @@ CLASS zcl_bi007_job DEFINITION
 
     INTERFACES if_apj_dt_exec_object .
     INTERFACES if_apj_rt_exec_object .
+    INTERFACES if_oo_adt_classrun .
   PROTECTED SECTION.
   PRIVATE SECTION.
     DATA: mr_bukrs         TYPE RANGE OF bukrs,
@@ -31,7 +32,32 @@ ENDCLASS.
 
 
 
-CLASS zcl_bi007_job IMPLEMENTATION.
+CLASS ZCL_BI007_JOB IMPLEMENTATION.
+
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime ##NO_HANDLER.
+    ENDTRY.
+*&--ADD END BY XINLEI XU 2025/04/03
+  ENDMETHOD.
 
 
   METHOD if_apj_dt_exec_object~get_parameters.
@@ -173,7 +199,10 @@ CLASS zcl_bi007_job IMPLEMENTATION.
 
     READ TABLE mr_monat INTO DATA(ls_monat) INDEX 1.
     IF sy-subrc = 0.
-      lv_base_month = ls_monat-low.
+******Modify start on 20250418*******************
+*      lv_base_month = ls_monat-low.
+      lv_base_month = ls_monat-low+1(2).
+******Modify end on 20250418*******************
     ENDIF.
 
     IF lv_base_year IS NOT INITIAL AND lv_base_month IS NOT INITIAL.
@@ -202,9 +231,44 @@ CLASS zcl_bi007_job IMPLEMENTATION.
       ENDIF.
     ENDIF.
 
+*****Add start on 20250418************************
+    DATA:
+      lv_start_year      TYPE gjahr,
+      lv_start_poper     TYPE monat,
+      lv_start_yearmonth TYPE c LENGTH 6,
+      lv_end_year        TYPE gjahr,
+      lv_end_poper       TYPE monat,
+      lv_end_yearmonth   TYPE c LENGTH 6,
+      lv_diff            TYPE i.
+
+    IF lv_base_month = '12'.
+      lv_start_year = lv_base_year + 1.
+      lv_start_poper = '01'.
+    ELSE.
+      lv_start_year = lv_base_year.
+      lv_start_poper = lv_base_month + 1.
+    ENDIF.
+    lv_start_yearmonth = |{ lv_start_year }{ lv_start_poper }|.
+
+    lv_end_poper = lv_start_poper + 11.
+    lv_diff = lv_end_poper - 12.
+    IF lv_diff = 0.
+      lv_end_year = lv_start_year.
+      lv_end_poper = '12'.
+    ELSE.
+      lv_end_year = lv_start_year + 1.
+      lv_end_poper = lv_diff.
+    ENDIF.
+    lv_end_yearmonth = |{ lv_end_year }{ lv_end_poper }|.
+*****Add end on 20250418***************************************
+
     TRY.
-        add_message_to_log( i_text = |YearMonth: { lv_base_year }、{ lv_base_month }|
+******Modify start on 20250418**********************************
+*        add_message_to_log( i_text = |YearMonth: { lv_base_year }、{ lv_base_month }|
+*                            i_type = 'S' ).
+        add_message_to_log( i_text = |YearMonth: { lv_start_yearmonth } - { lv_end_yearmonth }|
                             i_type = 'S' ).
+******Modify end on 20250418************************************
       CATCH cx_bali_runtime ##NO_HANDLER.
     ENDTRY.
 
@@ -212,8 +276,12 @@ CLASS zcl_bi007_job IMPLEMENTATION.
       DATA(lv_base_year_month) = |{ lv_base_year }{ lv_base_month }|.
 
       TRY.
-          add_message_to_log( i_text = |YearMonth: { lv_base_year_month }|
+******Modify start on 20250418**********************************
+*          add_message_to_log( i_text = |YearMonth: { lv_base_year_month }|
+*                              i_type = 'S' ).
+          add_message_to_log( i_text = |YearMonth: { lv_start_yearmonth } - { lv_end_yearmonth }|
                               i_type = 'S' ).
+******Modify end on 20250418************************************
         CATCH cx_bali_runtime ##NO_HANDLER.
       ENDTRY.
 
@@ -225,6 +293,7 @@ CLASS zcl_bi007_job IMPLEMENTATION.
          AND product IN @mr_prod
          AND customer IN @mr_cust
         INTO @DATA(lv_count2).
+
       IF lv_count2 > 0.
         DELETE FROM ztbi_bi007_j01 WHERE company_code IN @mr_bukrs
                                      AND base_year_month = @lv_base_year_month
@@ -263,6 +332,36 @@ CLASS zcl_bi007_job IMPLEMENTATION.
 *&--ADD END BY XINLEI XU 2025/04/03
   ENDMETHOD.
 
+
+  METHOD if_oo_adt_classrun~main.
+    DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
+    lt_parameters = VALUE #( ( selname = 'S_BUKRS'
+                               kind    = if_apj_dt_exec_object=>select_option
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1100' )
+                             ( selname      = 'P_YEAR'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '2024' )
+
+                             ( selname = 'P_MONAT'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '12' )
+                            ).
+    TRY.
+        if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
+
+        if_apj_rt_exec_object~execute( lt_parameters ).
+      CATCH cx_root INTO DATA(lo_root).
+        out->write( |Exception has occured: { lo_root->get_text(  ) }| ).
+    ENDTRY.
+  ENDMETHOD.
+
+
   METHOD init_application_log.
 *&--ADD BEGIN BY XINLEI XU 2025/04/03
     TRY.
@@ -272,29 +371,4 @@ CLASS zcl_bi007_job IMPLEMENTATION.
       CATCH cx_bali_runtime ##NO_HANDLER.
     ENDTRY.
   ENDMETHOD.
-
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '1' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-      CATCH cx_bali_runtime ##NO_HANDLER.
-    ENDTRY.
-*&--ADD END BY XINLEI XU 2025/04/03
-  ENDMETHOD.
-
 ENDCLASS.

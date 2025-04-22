@@ -324,33 +324,29 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
           ls_item_a-purchasinggroup = ls_data-purchasinggroup.
           ls_item_a-currency = ls_data-currency.
           ls_item_a-ztype = cv_ztype.
-          IF ls_data-paidmaterialcost <= ls_data-customerrevenue.
-            lv_less = ls_data-paidmaterialcost.
-          ELSE.
-            lv_less = ls_data-customerrevenue.
+* 金额属性的字段，有时候前端传入会后面加0，所以这里直接取table里的值，不需要转IN
+          READ TABLE lt_table1011 INTO ls_1011
+               WITH KEY companycode = ls_data-companycode
+                        fiscalyear = ls_data-fiscalyear
+                        period = ls_data-period
+                        customer = ls_data-customer
+                        supplier = ls_data-supplier
+                        profitcenter = ls_data-profitcenter
+                        purchasinggroup = ls_data-purchasinggroup.
+          IF sy-subrc = 0.
+            IF ls_1011-paidmaterialcost <= ls_1011-customerrevenue.
+              lv_less = ls_1011-paidmaterialcost.
+            ELSE.
+              lv_less = ls_1011-customerrevenue.
+            ENDIF.
+            ls_item_a-chargeable = lv_less.
+            ls_item_a-currentstockamount = ls_1011-currentstockpaid.
+            ls_item_a-currentstocksemi = ls_1011-currentstocksemi.
+            ls_item_a-currentstockfin = ls_1011-currentstockfin.
+            ls_item_a-currentstocktotal = ls_1011-currentstocktotal.
           ENDIF.
-          ls_item_a-chargeable = zzcl_common_utils=>conversion_amount(
-                                            iv_alpha = 'IN'
-                                            iv_currency = ls_data-currency
-                                            iv_input = lv_less ).
-          ls_item_a-currentstockamount = zzcl_common_utils=>conversion_amount(
-                                            iv_alpha = 'IN'
-                                            iv_currency = ls_data-currency
-                                            iv_input = ls_data-currentstockamount ).
-          ls_item_a-currentstocksemi = zzcl_common_utils=>conversion_amount(
-                                            iv_alpha = 'IN'
-                                            iv_currency = ls_data-currency
-                                            iv_input = ls_data-currentstocksemi ).
-          ls_item_a-currentstockfin = zzcl_common_utils=>conversion_amount(
-                                            iv_alpha = 'IN'
-                                            iv_currency = ls_data-currency
-                                            iv_input = ls_data-currentstockfin ).
-          ls_item_a-currentstocktotal = zzcl_common_utils=>conversion_amount(
-                                            iv_alpha = 'IN'
-                                            iv_currency = ls_data-currency
-                                            iv_input = ls_data-currentstocktotal ).
           APPEND ls_item_a TO lt_item_a.
-          CLEAR: ls_item_a.
+          CLEAR: ls_item_a, ls_1011.
         ENDLOOP.
         ls_create_a-to_create-items = lt_item_a.
 * Call API
@@ -487,6 +483,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
           ls_item_b-supplier = ls_data-supplier.
           ls_item_b-currency = ls_data-currency.
           ls_item_b-ztype = cv_ztype.
+          "金额是char型，前端传入的值就不会有时候后面加0，需要转一下IN
           ls_item_b-ap = zzcl_common_utils=>conversion_amount(
                                             iv_alpha = 'IN'
                                             iv_currency = ls_data-currency

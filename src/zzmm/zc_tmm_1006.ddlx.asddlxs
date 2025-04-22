@@ -36,6 +36,7 @@ annotate view ZC_TMM_1006 with
     position: 20 , 
     label: 'PrType'
   } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_WF_PrType_VH', element: 'Zvalue1' } }]
   PrType;
   
   @UI.lineItem: [ {
@@ -58,6 +59,7 @@ annotate view ZC_TMM_1006 with
     position: 40 , 
     label: 'Supplier'
   } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_SupplierVH', element: 'Supplier' } }]
   Supplier;
   
   @UI.lineItem: [ {
@@ -91,6 +93,7 @@ annotate view ZC_TMM_1006 with
     position: 70 , 
     label: 'PurchaseGrp'
   } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_PurchasingGroup', element: 'PurchasingGroup' } }]
   PurchaseGrp;
   
   @UI.lineItem: [ {
@@ -102,6 +105,7 @@ annotate view ZC_TMM_1006 with
     position: 80 , 
     label: 'Plant'
   } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'I_Plant', element: 'Plant' } }]
   Plant;
   
   @UI.lineItem: [ {
@@ -223,6 +227,7 @@ annotate view ZC_TMM_1006 with
     position: 190 , 
     label: 'DeliveryDate'
   } ]
+  @Consumption.filter.selectionType: #INTERVAL
   DeliveryDate;
   
   @UI.lineItem: [ {
@@ -278,6 +283,7 @@ annotate view ZC_TMM_1006 with
     position: 240 , 
     label: 'CostCenter'
   } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_CostCenterVH', element: 'CostCenter' } }]
   CostCenter;
   
   @UI.lineItem: [ {
@@ -422,6 +428,16 @@ annotate view ZC_TMM_1006 with
     label: 'IsLink'
   } ]
   IsLink;
+  
+  // ADD BEGIN BY XINLEI XU 2025/04/21 CR#4359
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_WF_Location_VH', element: 'Zvalue1' } }]
+  Kyoten;
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ApproveStatus_VH', element: 'Zvalue1' } }]
+  ApproveStatus;
+  @Consumption.filter.selectionType: #INTERVAL
+  CreatedAt;
+  // ADD END BY XINLEI XU 2025/04/21 CR#4359
+  
   @UI.hidden: true
   LocalLastChangedAt;
 }

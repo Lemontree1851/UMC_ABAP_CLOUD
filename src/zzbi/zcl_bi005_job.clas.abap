@@ -87,7 +87,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BI005_JOB IMPLEMENTATION.
+CLASS zcl_bi005_job IMPLEMENTATION.
 
 
   METHOD add_message_to_log.
@@ -131,7 +131,6 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
                                   param_text     = 'プラント'
                                   changeable_ind = abap_true
                                   mandatory_ind  = abap_true )
-
                                   ( selname      = 'P_GJAHR'
                                   kind           = if_apj_dt_exec_object=>parameter
                                   datatype       = 'numb'
@@ -159,6 +158,8 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
       lr_plant          TYPE RANGE OF werks_d,
       ls_companycode    LIKE LINE OF lr_companycode,
       ls_plant          LIKE LINE OF lr_plant,
+      lr_matnr          TYPE RANGE OF matnr,
+      ls_matnr          LIKE LINE OF lr_matnr,
       ls_podataanalysis TYPE ty_podataanalysis_api,
       lt_podataanalysis TYPE tt_results,
       lv_gjahr          TYPE gjahr,
@@ -326,11 +327,8 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
      WHERE a~companycode IN @lr_companycode
        AND a~plant       IN @lr_plant
        AND yearmonth    = @lv_lastyearperiod
-*       AND ( a~material   = '-10P-1.25V(21):AS0'
-*        OR   a~material   = 'C0403C4641A00-SMTB'
-*        OR   a~material   = 'EC0403C4641A00-FAT'
-*        OR   a~material   = 'C0403B5000A05-MFAT'
-*        OR   a~material   = '7LC02244300' )
+****test
+       "AND a~material = 'DK38N-A0100'
       INTO TABLE @DATA(lt_1016).
 
     IF sy-subrc <> 0.
@@ -699,10 +697,25 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
           ls_bi1003-productdescription = <fs_l_1016>-productname.
 
           ls_bi1003-balanceopenning = <fs_l_1016>-valuationquantity.    "Balance（期首）
+********Add start 20250421********************************************
+          READ TABLE lt_supply INTO ls_supply
+                      WITH KEY yearmonth = <fs_l_demand>-yearmonth
+                               plant     = <fs_l_demand>-plant
+                               material  = <fs_l_1016>-material BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_bi1003-supply = ls_supply-supplyquantity.
+            READ TABLE lt_bi1003 ASSIGNING FIELD-SYMBOL(<fs_l_bi1003>)
+                 WITH KEY yearmonth = ls_bi1003-yearmonth
+                          plant     = ls_bi1003-plant
+                          product   = ls_bi1003-product.
+            IF sy-subrc <> 0.
+              <fs_l_1016>-valuationquantity = <fs_l_1016>-valuationquantity + ls_supply-supplyquantity.
+            ENDIF.
+          ENDIF.
+********Add end 20250421**********************************************
           ls_bi1003-demand          = <fs_l_demand>-demandquantity.     "Demand
           ls_bi1003-balanceclosing  = <fs_l_1016>-valuationquantity     "Balance（期末）
                                     - <fs_l_demand>-demandquantity.
-
           ls_bi1003-unit   = <fs_l_1016>-unit.     "数量単位
           ls_bi1003-standardprice = <fs_l_1016>-standardprice.            "標準原価
           ls_bi1003-actualprice   = <fs_l_1016>-movingaverageprice.       "実際原価
@@ -717,7 +730,7 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
           <fs_l_1016>-valuationquantity = ls_bi1003-balanceclosing.
 
 *         製品
-          READ TABLE lt_bi1003 ASSIGNING FIELD-SYMBOL(<fs_l_bi1003>)
+          READ TABLE lt_bi1003 ASSIGNING <fs_l_bi1003>
             WITH KEY yearmonth = ls_bi1003-yearmonth
                      plant     = ls_bi1003-plant
                      product   = ls_bi1003-product.
@@ -743,12 +756,32 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
             ls_bi1003-productdescription = <fs_l_1016>-productname.
             ls_bi1003-unit               = <fs_l_1016>-unit.     "数量単位
             ls_bi1003-balanceopenning = <fs_l_1016>-valuationquantity.    "Balance（期首）
-            ls_bi1003-demand          = <fs_l_1016>-valuationquantity.    "Demand
+******Modify start 20250422****************************
+            "ls_bi1003-demand          = <fs_l_1016>-valuationquantity.    "Demand
+            ls_bi1003-demand = <fs_l_demand>-demandquantity.
+******Modify end 20250422******************************
             ls_bi1003-balanceclosing  = 0.                                "Balance（期末）
             ls_bi1003-closinginventorytotal = 0.                            "期末在庫金額
             ls_bi1003-standardprice = <fs_l_1016>-standardprice.            "標準原価
             ls_bi1003-actualprice   = <fs_l_1016>-movingaverageprice.       "実際原価
             ls_bi1003-companycodecurrency = <fs_l_1016>-displaycurrency.    "通貨
+********Add start 20250421********************************************
+            READ TABLE lt_supply INTO ls_supply
+                        WITH KEY yearmonth = ls_bi1003-yearmonth
+                                 plant     = ls_bi1003-plant
+                                 material  = ls_bi1003-product BINARY SEARCH.
+            IF sy-subrc = 0.
+              ls_bi1003-supply = ls_supply-supplyquantity.
+*              READ TABLE lt_bi1003 ASSIGNING <fs_l_bi1003>
+*                   WITH KEY yearmonth = ls_bi1003-yearmonth
+*                            plant     = ls_bi1003-plant
+*                            product   = ls_bi1003-product.
+*              IF sy-subrc <> 0.
+*                <fs_l_1016>-valuationquantity = <fs_l_1016>-valuationquantity + ls_supply-supplyquantity.
+*              ENDIF.
+            ENDIF.
+********Add end 20250421**********************************************
+
 *             製品
             READ TABLE lt_bi1003 ASSIGNING <fs_l_bi1003>
               WITH KEY yearmonth = ls_bi1003-yearmonth
@@ -834,8 +867,20 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
                                BINARY SEARCH.
                     IF sy-subrc = 0.
                       ls_bi1003-supply = ls_supply-supplyquantity.
-                      ls_bi1003-balanceclosing  = ls_bi1003-balanceclosing     "Balance（期末）
-                                                + ls_bi1003-supply.
+********Modify start 20250421**********************************************
+*                      ls_bi1003-balanceclosing  = ls_bi1003-balanceclosing     "Balance（期末）
+*                                                  + ls_bi1003-supply.
+                      READ TABLE lt_bi1003 ASSIGNING <fs_l_bi1003>
+                           WITH KEY yearmonth = ls_bi1003-yearmonth
+                                    plant     = ls_bi1003-plant
+                                    product   = ls_bi1003-product.
+                      IF sy-subrc <> 0.
+                        ls_bi1003-balanceclosing  = ls_bi1003-balanceclosing     "Balance（期末）
+                                                  + ls_bi1003-supply.
+                      ELSE.
+                        ls_bi1003-balanceclosing  = ls_bi1003-balanceclosing.
+                      ENDIF.
+********Modify end 20250421************************************************
                       <fs_l_1016>-valuationquantity = ls_bi1003-balanceclosing.
                     ENDIF.
                   ENDIF.
@@ -917,7 +962,10 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
       BY yearmonth ASCENDING
          plant     ASCENDING
          product   ASCENDING.
-
+*******Add start 20250421********************
+    DATA(lt_bi1003_tmp) = lt_bi1003.
+    CLEAR: lt_bi1003.
+*******Add end 20250421**********************
     LOOP AT lt_1016_tmp ASSIGNING <fs_l_1016>.
 *&--ADD BEGIN BY XINLEI XU 2025/01/15
       CLEAR ls_bi1003.
@@ -954,7 +1002,10 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
       ls_bi1003-balanceclosing  = ls_bi1003-balanceopenning.                        "Balance（期末）
 
       DO 12 TIMES.
-        READ TABLE lt_bi1003 ASSIGNING <fs_l_bi1003>
+********Modify start 20250421*****************************
+        "READ TABLE lt_bi1003 ASSIGNING <fs_l_bi1003>
+        READ TABLE lt_bi1003_tmp ASSIGNING <fs_l_bi1003>
+********Modify end 20250421*******************************
           WITH KEY yearmonth = ls_bi1003-yearmonth
                    plant     = ls_bi1003-plant
                    product   = ls_bi1003-product.
@@ -1011,6 +1062,22 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
 *          ls_bi1003 = <fs_l_bi1003>.
 *          ls_bi1003-balanceopenning = <fs_l_bi1003>-balanceclosing.
 *&--DEL END BY XINLEI XU 2025/01/15
+
+******Add start 20250421*************************
+        ELSE.
+          ls_bi1003-balanceopenning = ls_bi1003-balanceclosing.
+          ls_bi1003-supply = <fs_l_bi1003>-supply.
+          ls_bi1003-demand = <fs_l_bi1003>-demand.
+          ls_bi1003-balanceclosing = ls_bi1003-balanceopenning + ls_bi1003-supply
+                                   - ls_bi1003-demand.
+          IF ls_bi1003-actualprice IS NOT INITIAL.
+            ls_bi1003-closinginventorytotal = ls_bi1003-actualprice * ls_bi1003-balanceclosing.
+          ELSE.
+            ls_bi1003-closinginventorytotal = ls_bi1003-standardprice * ls_bi1003-balanceclosing.
+          ENDIF.
+          APPEND ls_bi1003 TO lt_bi1003.
+          UNASSIGN <fs_l_bi1003>.
+******Add end 20250421***************************
         ENDIF.
         IF ls_bi1003-yearmonth = |{ lv_gjahr }012|.
           ls_bi1003-yearmonth = |{ lv_gjahr + 1 }001|.
@@ -1102,16 +1169,16 @@ CLASS ZCL_BI005_JOB IMPLEMENTATION.
 *                               sign    = 'I'
 *                               option  = 'EQ'
 *                               low     = '1400' )
-*                               ( selname = 'P_GJAHR'
-*                               kind    = if_apj_dt_exec_object=>parameter
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '2024' )
-*                               ( selname = 'P_POPER'
-*                               kind    = if_apj_dt_exec_object=>parameter
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '009' )
+                               ( selname = 'P_GJAHR'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '2025' )
+                               ( selname = 'P_POPER'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '002' )
                                 ).
     TRY.
         if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).

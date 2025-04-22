@@ -46,7 +46,7 @@ CLASS zcl_http_podata_005 DEFINITION
         items TYPE STANDARD TABLE OF ty_output WITH EMPTY KEY,
       END OF ty_output1,
 
-      ty_output_table TYPE STANDARD TABLE OF ty_output WITH EMPTY KEY.
+      ty_output_table TYPE STANDARD TABLE OF ty_output WITH DEFAULT KEY.
 
 
     TYPES:BEGIN OF ty_get_result,
@@ -126,7 +126,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_podata_005 IMPLEMENTATION.
+CLASS ZCL_HTTP_PODATA_005 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -155,7 +155,7 @@ CLASS zcl_http_podata_005 IMPLEMENTATION.
            BEGIN OF ty_item_tp,
              po_item TYPE string,
              "ext_ref TYPE string,
-             line_tp TYPE STANDARD TABLE OF ty_head WITH NON-UNIQUE DEFAULT KEY,
+             line_tp TYPE STANDARD TABLE OF ty_head WITH EMPTY KEY,
            END OF ty_item_tp,
 
            BEGIN OF ty_json_data,
@@ -180,6 +180,16 @@ DATA:
       ls_supplier_confirmation TYPE ty_supplier_confirmation,
       lt_supplier_confirmation_item TYPE TABLE OF ty_supplier_confirmation_item.
 
+"error str
+TYPES: BEGIN OF ty_error,
+         code    TYPE string,
+         message TYPE string,
+         target  TYPE string,
+       END OF ty_error,
+       BEGIN OF ty_data,
+         error TYPE ty_error,
+       END OF ty_data.
+DATA ls_error TYPE ty_data.
 
 
     DATA(lv_req_body) = request->get_text( ).
@@ -366,7 +376,7 @@ DATA:
           " 比较每日的纳品数量与发注数
           READ TABLE lt_deletecode WITH KEY purchaseorder     = ls_req-pono
                                             purchaseorderitem = ls_req-dno INTO DATA(ls_deletecode_item).
-
+          clear:lt_name_mappings[].
           IF lv_sum_qty <= ls_deletecode_item-orderquantity.
             READ TABLE lt_already_confirm INTO DATA(ls_confrim_line) WITH KEY purchaseorder = ls_req-pono
                                                                               purchaseorderitem = ls_req-dno
@@ -407,7 +417,7 @@ DATA:
                   r_json        = lv_json_string.
 
             ELSEIF ls_req-ztype = 'N'.
-              LOOP AT lt_req INTO DATA(ls_new) WHERE pono = lw_req1-pono  and dno = lw_req1-dno.
+              LOOP AT lt_req INTO DATA(ls_new) WHERE pono = ls_req-pono  and dno = ls_req-dno.
                   lv_head-delivery_date = ls_new-deliverydate.
                   lv_head-confirmed_quantity = ls_new-quantity.
                   lv_head-purchase_order_quantity_unit = 'PCS'.
@@ -464,6 +474,8 @@ DATA:
                   name_mappings = lt_name_mappings
                 RECEIVING
                   r_json        = lv_json_string.
+
+               CLEAR:lv_json,lv_item-line_tp[].
             ENDIF.
 
 
@@ -479,6 +491,7 @@ DATA:
                                                           IMPORTING ev_status_code = lv_status_code
                                                                     ev_response    = lv_response ).
 
+
               WHEN 'I'.
                 DATA(lv_i_path) = |/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001/ConfirmationItem| &&
                                   |/{ ls_confrim_line-supplierconfirmation }/{ ls_confrim_line-supplierconfirmationitem }/_SupplierConfirmationLineTP|.
@@ -490,6 +503,7 @@ DATA:
                                                                     iv_body        = lv_json_string
                                                           IMPORTING ev_status_code = lv_status_code
                                                                     ev_response    = lv_response ).
+
               WHEN 'U'.
                  DATA(lv_u_path) = |/api_supplierconfirmation/srvd_a2x/sap/supplierconfirmation/0001/ConfirmationLine| &&
                                                   |/{ ls_confrim_line-supplierconfirmation }/{ ls_confrim_line-supplierconfirmationitem }/{ ls_confrim_line-SequentialNmbrOfSuplrConf }|.
@@ -501,8 +515,17 @@ DATA:
                                                                     ev_response    = lv_response ).
 
             ENDCASE.
+            if lv_status_code ne '200' and lv_status_code ne '201'.
+                      CALL METHOD /ui2/cl_json=>deserialize
+                        EXPORTING
+                            json = lv_response
+                         CHANGING
+                            data = ls_error.
 
-
+                lv_text = ls_error-error-message.
+                lv_error = 'X'.
+                exit.
+            endif.
           ELSE.
             lv_text = '納期回答合計数量は購買発注の発注数を超過します. データをチェックしてください.'.
             lv_error = 'X'.
