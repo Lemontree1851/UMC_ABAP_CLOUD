@@ -111,7 +111,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_paidpay_001 IMPLEMENTATION.
+CLASS ZCL_HTTP_PAIDPAY_001 IMPLEMENTATION.
 
 
   METHOD cancel.
@@ -319,21 +319,29 @@ CLASS zcl_http_paidpay_001 IMPLEMENTATION.
                   glaccount = '0013600000'
                   _currencyamount =
                     VALUE #( ( currencyrole = '00' journalentryitemamount = lv_dr currency = ls_create-currency ) )
+                  _profitabilitysupplement =
+                    VALUE #( profitcenter = ls_create-profitcenter )
                 )
                 ( glaccountlineitem = |002|
                   glaccount = '0013100010'
                   _currencyamount =
                     VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr currency = ls_create-currency ) )
+                  _profitabilitysupplement =
+                    VALUE #( profitcenter = ls_create-profitcenter )
                 )
                 ( glaccountlineitem = |003|
-                  glaccount = '0013300000'
+                  glaccount = '0013300010'
                   _currencyamount =
                     VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr1 currency = ls_create-currency ) )
+                  _profitabilitysupplement =
+                    VALUE #( profitcenter = ls_create-profitcenter )
                 )
                 ( glaccountlineitem = |004|
                   glaccount = '0013400010'
                   _currencyamount =
                     VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr2 currency = ls_create-currency ) )
+                  _profitabilitysupplement =
+                    VALUE #( profitcenter = ls_create-profitcenter )
                 )
               ).
             APPEND ls_deep TO lt_deep.
@@ -369,21 +377,29 @@ CLASS zcl_http_paidpay_001 IMPLEMENTATION.
                   glaccount = '0013600000'
                   _currencyamount =
                     VALUE #( ( currencyrole = '00' journalentryitemamount = lv_dr currency = ls_create-currency ) )
+                  _profitabilitysupplement =
+                    VALUE #( profitcenter = ls_create-profitcenter )
                 )
                 ( glaccountlineitem = |002|
                   glaccount = '0013100010'
                   _currencyamount =
                     VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr currency = ls_create-currency ) )
+                  _profitabilitysupplement =
+                    VALUE #( profitcenter = ls_create-profitcenter )
                 )
                 ( glaccountlineitem = |003|
-                  glaccount = '0013300000'
+                  glaccount = '0013300010'
                   _currencyamount =
                     VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr1 currency = ls_create-currency ) )
+                  _profitabilitysupplement =
+                    VALUE #( profitcenter = ls_create-profitcenter )
                 )
                 ( glaccountlineitem = |004|
                   glaccount = '0013400010'
                   _currencyamount =
                     VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr2 currency = ls_create-currency ) )
+                  _profitabilitysupplement =
+                    VALUE #( profitcenter = ls_create-profitcenter )
                 )
               ).
             APPEND ls_deep TO lt_deep.

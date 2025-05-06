@@ -1,11 +1,11 @@
-class ZCL_PURCHASECONFRIM_001 definition
-  public
-  final
-  create public .
+CLASS zcl_purchaseconfrim_001 DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
 
-public section.
-protected section.
-private section.
+  PUBLIC SECTION.
+  PROTECTED SECTION.
+  PRIVATE SECTION.
 ENDCLASS.
 
 

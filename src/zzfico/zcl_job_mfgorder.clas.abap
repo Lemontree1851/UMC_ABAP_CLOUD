@@ -50,7 +50,7 @@ CLASS zcl_job_mfgorder DEFINITION
         companycode                TYPE string,
         costcenter                 TYPE string,
         activitytype               TYPE string,
-        currency                   TYPE string,
+        currency                   TYPE waerk,
         controllingarea            TYPE string,
         validitystartfiscalyear    TYPE string,
         validitystartfiscalperiod  TYPE string,
@@ -74,7 +74,7 @@ CLASS zcl_job_mfgorder DEFINITION
         companycode                TYPE string,
         costcenter                 TYPE string,
         activitytype               TYPE string,
-        currency                   TYPE string,
+        currency                   TYPE waerk,
         controllingarea            TYPE string,
         validitystartfiscalyear    TYPE string,
         validitystartfiscalperiod  TYPE string,
@@ -313,11 +313,11 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
         ENDIF.
       ENDIF.
 *     Parameterのプラント
-      IF ls_parameters-selname = 'P_YEAR1' AND ls_parameters-low is NOT INITIAL.
+      IF ls_parameters-selname = 'P_YEAR1' AND ls_parameters-low IS NOT INITIAL.
         lv_calendaryear = ls_parameters-low.
       ENDIF.
 *     Parameterのプラント
-      IF ls_parameters-selname = 'P_MONTH1' AND ls_parameters-low is NOT INITIAL.
+      IF ls_parameters-selname = 'P_MONTH1' AND ls_parameters-low IS NOT INITIAL.
         lv_calendarmonth = ls_parameters-low.
         lv_calendarmonth_s =  |{ lv_calendarmonth ALPHA = OUT }|.
         CONDENSE lv_calendarmonth_s.
@@ -336,9 +336,9 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
     ENDLOOP.
 
     "没输入月份的case
-    LOOP AT it_parameters INTO DATA(ls_parameters_temp) WHERE selname = 'P_MONTH1' AND low is NOT INITIAL.
+    LOOP AT it_parameters INTO DATA(ls_parameters_temp) WHERE selname = 'P_MONTH1' AND low IS NOT INITIAL.
     ENDLOOP.
-     IF sy-subrc <> 0 .
+    IF sy-subrc <> 0 .
       "默认上个月
       DATA:lv_date_local TYPE aedat,
            lv_datetime   TYPE string.
@@ -409,28 +409,29 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
                                kind    = if_apj_dt_exec_object=>parameter
                                sign    = 'I'
                                option  = 'EQ'
-                               low     = '1400' )
-*
-*                               ( selname = 'P_PLANT'
-*                               kind    = if_apj_dt_exec_object=>parameter
-*                               sign    = 'I'
-*                               option  = 'EQ'
-*                               low     = '1100' )
+                               low     = '1100' )
+
+                               ( selname = 'P_PLANT'
+                               kind    = if_apj_dt_exec_object=>parameter
+                               sign    = 'I'
+                               option  = 'EQ'
+                               low     = '1100' )
+
                                ( selname = 'P_YEAR1'
                                kind    = if_apj_dt_exec_object=>parameter
                                sign    = 'I'
                                option  = 'EQ'
-                               low     = '' )
+                               low     = '2024' )
                                                               ( selname = 'P_MONTH1'
                                kind    = if_apj_dt_exec_object=>parameter
                                sign    = 'I'
                                option  = 'EQ'
-                               low     = '' )
+                               low     = '11' )
                                                               ( selname = 'P_TABEL'
                                kind    = if_apj_dt_exec_object=>parameter
                                sign    = 'I'
                                option  = 'EQ'
-                               low     = '1' )
+                               low     = '' )
 
                                ).
     TRY.
@@ -485,6 +486,7 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
       WITH PRIVILEGED ACCESS
       WHERE plant IN @lr_plant
       AND companycode IN @lr_companycode
+      AND curplanprojslsordvalnstrategy IS INITIAL  "Add 20250423
       INTO TABLE @lt_mfgorderactlplantgtldgrcost.
 
       ls_mfgorderactlplantgtldgrcost-yearperiod = lv_period.
@@ -1249,29 +1251,46 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
         "??validityendfiscalyear
         "??validityendfiscalperiod
         IF sy-subrc = 0.
-          "ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount. "'実際賃率'
-          "IF ls_actualcostrate-costratescalefactor IS NOT INITIAL.
-          "ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount / ls_actualcostrate-costratescalefactor ."'実際賃率'
-          ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount  ."'実際賃率'
-
-          "ls_mfgorder_001-currency2 = ls_actualcostrate-currency.
+******Modify start 20250423***************************************************
+*          "ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount. "'実際賃率'
+*          "IF ls_actualcostrate-costratescalefactor IS NOT INITIAL.
+*          "ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount / ls_actualcostrate-costratescalefactor ."'実際賃率'
+*          ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount  ."'実際賃率'
+*
+*          ls_mfgorder_001-currency2 = ls_actualcostrate-currency.
+*          ls_mfgorder_001-costratescalefactor2 = ls_actualcostrate-costratescalefactor.
+*          "ENDIF.
+*          "ls_mfgorder_001-actualcostrate = lv_curr.
+*
+*          "IF ls_actualcostrate-costratescalefactor IS NOT INITIAL.
+*          "ls_mfgorder_001-totalactualcost  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_actualcostrate-costratescalefactor. "'加工費実績合計'
+*          ls_mfgorder_001-totalactualcost  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_actualcostrate-costratescalefactor. "'加工費実績合計'
+*
+*          "ENDIF.
+*
+*
+*          READ TABLE lt_sum_qty INTO DATA(ls_sum_qty1) WITH KEY product = ls_mfgorder_001-product BINARY SEARCH.
+*          IF sy-subrc = 0 AND ls_sum_qty1-mfgorderconfirmedyieldqty IS NOT INITIAL AND ls_actualcostrate-costratescalefactor IS NOT INITIAL.
+*            "ls_mfgorder_001-actualcost1pc  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_sum_qty1-mfgorderconfirmedyieldqty / ls_actualcostrate-costratescalefactor. "'加工費実績（1単位）'
+*            ls_mfgorder_001-actualcost1pc  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_sum_qty1-mfgorderconfirmedyieldqty / ls_actualcostrate-costratescalefactor. "'加工費実績（1単位）'
+*          ENDIF.
+          ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount. "'実際賃率'
+          ls_mfgorder_001-actualcostrate = zzcl_common_utils=>conversion_amount(
+              iv_alpha = 'IN'
+              iv_currency = ls_actualcostrate-currency
+              iv_input =  ls_mfgorder_001-actualcostrate ).
           ls_mfgorder_001-costratescalefactor2 = ls_actualcostrate-costratescalefactor.
-          "ENDIF.
-          "ls_mfgorder_001-actualcostrate = lv_curr.
-
-          "IF ls_actualcostrate-costratescalefactor IS NOT INITIAL.
-          "ls_mfgorder_001-totalactualcost  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_actualcostrate-costratescalefactor. "'加工費実績合計'
-          ls_mfgorder_001-totalactualcost  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_actualcostrate-costratescalefactor. "'加工費実績合計'
-
-          "ENDIF.
-
-
+          ls_mfgorder_001-currency2 = ls_actualcostrate-currency.
+          IF ls_actualcostrate-costratescalefactor IS NOT INITIAL.
+            ls_mfgorder_001-totalactualcost  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_actualcostrate-costratescalefactor. "'加工費実績合計'
+            "ls_mfgorder_001-totalactualcost  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit. "'加工費実績合計'
+          ENDIF.
           READ TABLE lt_sum_qty INTO DATA(ls_sum_qty1) WITH KEY product = ls_mfgorder_001-product BINARY SEARCH.
           IF sy-subrc = 0 AND ls_sum_qty1-mfgorderconfirmedyieldqty IS NOT INITIAL AND ls_actualcostrate-costratescalefactor IS NOT INITIAL.
-            "ls_mfgorder_001-actualcost1pc  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_sum_qty1-mfgorderconfirmedyieldqty / ls_actualcostrate-costratescalefactor. "'加工費実績（1単位）'
             ls_mfgorder_001-actualcost1pc  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_sum_qty1-mfgorderconfirmedyieldqty / ls_actualcostrate-costratescalefactor. "'加工費実績（1単位）'
+            "ls_mfgorder_001-actualcost1pc  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_sum_qty1-mfgorderconfirmedyieldqty. "'加工費実績（1単位）'
           ENDIF.
-
+******Modify end 20250423************************************************
         ENDIF.
 
 
@@ -1285,13 +1304,24 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
         "??validityendfiscalyear
         "??validityendfiscalperiod
         IF sy-subrc = 0.
-          "IF ls_plancostrate-costratescalefactor IS NOT INITIAL.
-          "ls_mfgorder_001-plancostrate = ls_plancostrate-costratevarblamount / ls_plancostrate-costratescalefactor. "'計画賃率'
-          ls_mfgorder_001-plancostrate = ls_plancostrate-costratevarblamount . "'計画賃率'
+******Modify start 20250423*********************************************
+*          "IF ls_plancostrate-costratescalefactor IS NOT INITIAL.
+*          "ls_mfgorder_001-plancostrate = ls_plancostrate-costratevarblamount / ls_plancostrate-costratescalefactor. "'計画賃率'
+*          ls_mfgorder_001-plancostrate = ls_plancostrate-costratevarblamount . "'計画賃率'
+*
+*          ls_mfgorder_001-currency1  = ls_plancostrate-currency.
+*          ls_mfgorder_001-costratescalefactor1 = ls_plancostrate-costratescalefactor.
+*          "ENDIF.
+          "API取出的是OUT的amount，所以要选转IN
+          ls_mfgorder_001-plancostrate = ls_plancostrate-costratevarblamount. "'計画賃率'
+          ls_mfgorder_001-plancostrate = zzcl_common_utils=>conversion_amount(
+           iv_alpha = 'IN'
+          iv_currency = ls_plancostrate-currency
+          iv_input =  ls_mfgorder_001-plancostrate ).
 
-          "ls_mfgorder_001-currency1  = ls_plancostrate-currency.
+          ls_mfgorder_001-currency1  = ls_plancostrate-currency.
           ls_mfgorder_001-costratescalefactor1 = ls_plancostrate-costratescalefactor.
-          "ENDIF.
+******Modify end 20250423***********************************************
         ENDIF.
         ls_mfgorder_001-product = zzcl_common_utils=>conversion_matn1(
                            EXPORTING iv_alpha = 'OUT'
@@ -1367,19 +1397,45 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
        WHERE language = 'J'
        INTO TABLE @DATA(lt_plant).
       SORT lt_plant BY plant.
+
+******Modify start 20250423***************************
+*      "BPマスタから得意先のBPコードとBPテキストを抽出
+*      SELECT
+*      businesspartner,
+*      businesspartnername
+*      FROM i_businesspartner
+*      WITH PRIVILEGED ACCESS
+*      FOR ALL ENTRIES IN @lt_billingdocumentitem
+*      WHERE businesspartner = @lt_billingdocumentitem-soldtoparty
+*      INTO TABLE @DATA(lt_businesspartner).
+*      SORT lt_businesspartner BY businesspartner.
+
+      SELECT            "#EC CI_NO_TRANSFORM
+      product,
+      plant,
+      mrpresponsible
+      FROM i_productplantbasic
+      WITH PRIVILEGED ACCESS
+      FOR ALL ENTRIES IN @lt_billingdocumentitem
+      WHERE product = @lt_billingdocumentitem-product
+      "and MRPArea = ???
+      INTO TABLE @DATA(lt_productplantmrp).
+      SORT lt_productplantmrp BY product plant.
+
       "BPマスタから得意先のBPコードとBPテキストを抽出
       SELECT
       businesspartner,
-      businesspartnername
+      businesspartnername,
+      searchterm2
       FROM i_businesspartner
       WITH PRIVILEGED ACCESS
-      FOR ALL ENTRIES IN @lt_billingdocumentitem
-      WHERE businesspartner = @lt_billingdocumentitem-soldtoparty
+      WHERE searchterm2 IS NOT INITIAL
       INTO TABLE @DATA(lt_businesspartner).
-      SORT lt_businesspartner BY businesspartner.
+      SORT lt_businesspartner BY searchterm2.
+******Modify end 20250423*****************************
 
       "品目マスタから品目テキストを抽出
-      SELECT
+      SELECT              "#EC CI_NO_TRANSFORM
       product,
       productdescription
       FROM
@@ -1461,7 +1517,7 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
       "ENDTRY.
 
       ls_mfgorder_002-product = ls_data-product.
-      ls_mfgorder_002-soldtoparty = ls_data-soldtoparty.
+      "ls_mfgorder_002-soldtoparty = ls_data-soldtoparty. "Del 20250423
       "'会社コードテキスト'
       READ TABLE lt_companycode INTO DATA(ls_companycode) WITH KEY companycode = ls_data-companycode BINARY SEARCH.
       IF sy-subrc = 0.
@@ -1477,12 +1533,33 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
       IF sy-subrc = 0.
         ls_mfgorder_002-productdescription = ls_productdescription-productdescription."'製品テキスト'
       ENDIF.
-      READ TABLE lt_businesspartner INTO DATA(ls_businesspartner) WITH KEY businesspartner = ls_mfgorder_002-soldtoparty BINARY SEARCH.
+
+******Modify start 20250423*****************************
+*      READ TABLE lt_businesspartner INTO DATA(ls_businesspartner) WITH KEY businesspartner = ls_mfgorder_002-soldtoparty BINARY SEARCH.
+*      IF sy-subrc = 0.
+*        ls_mfgorder_002-soldtoparty = |{ ls_mfgorder_002-soldtoparty ALPHA = OUT }|."'年月'
+*        "'得意先テキスト'
+*        ls_mfgorder_002-businesspartnername = ls_businesspartner-businesspartnername.
+*      ENDIF.
+      READ TABLE lt_productplantmrp INTO DATA(ls_productplantmrp) WITH KEY product = ls_mfgorder_002-product plant = ls_data-plant BINARY SEARCH.
       IF sy-subrc = 0.
-        ls_mfgorder_002-soldtoparty = |{ ls_mfgorder_002-soldtoparty ALPHA = OUT }|."'年月'
-        "'得意先テキスト'
-        ls_mfgorder_002-businesspartnername = ls_businesspartner-businesspartnername.
+        DATA:lv_str2(2) TYPE c.
+        DATA:lv_i TYPE i.
+        CLEAR lv_str2.
+        lv_i = strlen( ls_productplantmrp-mrpresponsible ).
+        lv_i = lv_i - 2.
+        IF lv_i >= 0.
+          lv_str2 = ls_productplantmrp-mrpresponsible+lv_i(2).
+          READ TABLE lt_businesspartner INTO DATA(ls_businesspartner) WITH KEY searchterm2 = lv_str2 BINARY SEARCH.
+          IF sy-subrc = 0.
+            "'得意先'
+            ls_mfgorder_002-soldtoparty = |{ ls_businesspartner-businesspartner ALPHA = OUT }|.
+            "'得意先テキスト'
+            ls_mfgorder_002-businesspartnername = ls_businesspartner-businesspartnername.
+          ENDIF.
+        ENDIF.
       ENDIF.
+******Modify end 20250423*******************************
 
       ls_mfgorder_002-product = zzcl_common_utils=>conversion_matn1(
                                    EXPORTING iv_alpha = 'OUT'
@@ -1565,7 +1642,7 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
       SORT lt_plant BY plant.
 
       "品目マスタから品目テキストを抽出
-      SELECT
+      SELECT                "#EC CI_NO_TRANSFORM
       product,
       productdescription
       FROM
@@ -1590,7 +1667,7 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
 *        INTO TABLE @DATA(lt_productplantmrp).
 *        SORT lt_productplantmrp BY product plant.
 
-      SELECT
+      SELECT                 "#EC CI_NO_TRANSFORM
       product,
       plant,
       mrpresponsible
@@ -1614,7 +1691,7 @@ CLASS ZCL_JOB_MFGORDER IMPLEMENTATION.
       SORT lt_businesspartner BY searchterm2.
 
       "品目マスタから製品が属される利益センタを抽出
-      SELECT
+      SELECT                    "#EC CI_NO_TRANSFORM
       profitcenter,
       profitcentername AS profitcenterlongname
       FROM i_profitcentertext

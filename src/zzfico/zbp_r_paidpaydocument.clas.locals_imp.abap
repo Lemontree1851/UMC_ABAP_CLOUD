@@ -313,27 +313,35 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
              AND purchasinggroup = @ct_data-purchasinggroup
             INTO TABLE @DATA(lt_table1011).
         ENDIF.
-        LOOP AT ct_data INTO DATA(ls_data).
-          ls_item_a-companycode = ls_data-companycode.
-          ls_item_a-fiscalyear = ls_data-fiscalyear.
+        LOOP AT ct_data ASSIGNING <lfs_data>.
+          ls_item_a-companycode = <lfs_data>-companycode.
+          ls_item_a-fiscalyear = <lfs_data>-fiscalyear.
           ls_item_a-postingdate1 = lv_postdate1.
           ls_item_a-postingdate2 = lv_postdate2.
-          ls_item_a-customer = ls_data-customer.
-          ls_item_a-supplier = ls_data-supplier.
-          ls_item_a-profitcenter = ls_data-profitcenter.
-          ls_item_a-purchasinggroup = ls_data-purchasinggroup.
-          ls_item_a-currency = ls_data-currency.
+          ls_item_a-customer = <lfs_data>-customer.
+          ls_item_a-supplier = <lfs_data>-supplier.
+          ls_item_a-profitcenter = <lfs_data>-profitcenter.
+          ls_item_a-purchasinggroup = <lfs_data>-purchasinggroup.
+          ls_item_a-currency = <lfs_data>-currency.
           ls_item_a-ztype = cv_ztype.
 * 金额属性的字段，有时候前端传入会后面加0，所以这里直接取table里的值，不需要转IN
           READ TABLE lt_table1011 INTO ls_1011
-               WITH KEY companycode = ls_data-companycode
-                        fiscalyear = ls_data-fiscalyear
-                        period = ls_data-period
-                        customer = ls_data-customer
-                        supplier = ls_data-supplier
-                        profitcenter = ls_data-profitcenter
-                        purchasinggroup = ls_data-purchasinggroup.
+               WITH KEY companycode = <lfs_data>-companycode
+                        fiscalyear = <lfs_data>-fiscalyear
+                        period = <lfs_data>-period
+                        customer = <lfs_data>-customer
+                        supplier = <lfs_data>-supplier
+                        profitcenter = <lfs_data>-profitcenter
+                        purchasinggroup = <lfs_data>-purchasinggroup.
           IF sy-subrc = 0.
+            IF ls_1011-belnr1 IS NOT INITIAL
+            OR ls_1011-belnr2 IS NOT INITIAL
+            OR ls_1011-belnr3 IS NOT INITIAL
+            OR ls_1011-belnr4 IS NOT INITIAL.
+              <lfs_data>-status = 'E'.
+              <lfs_data>-message = '純額処理がすにで転記済みなので、再転記の場合、まず取消転記を実行してください。'.
+              CONTINUE.
+            ENDIF.
             IF ls_1011-paidmaterialcost <= ls_1011-customerrevenue.
               lv_less = ls_1011-paidmaterialcost.
             ELSE.
@@ -348,94 +356,104 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
           APPEND ls_item_a TO lt_item_a.
           CLEAR: ls_item_a, ls_1011.
         ENDLOOP.
-        ls_create_a-to_create-items = lt_item_a.
+        IF lt_item_a IS NOT INITIAL.
+          ls_create_a-to_create-items = lt_item_a.
 * Call API
-        TRY.
-            lv_url = cl_abap_context_info=>get_system_url( ) && '/sap/bc/http/sap/Z_HTTP_PAIDPAY_001'.
-            lv_url = 'https://' && lv_url.
-            DATA(lo_destination) = cl_http_destination_provider=>create_by_url( i_url = lv_url ).
-          CATCH cx_abap_context_info_error INTO DATA(lx_context_error).
-            IF sy-subrc = 0. ENDIF.
-          CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
-            IF sy-subrc = 0. ENDIF.
-        ENDTRY.
+          TRY.
+              lv_url = cl_abap_context_info=>get_system_url( ) && '/sap/bc/http/sap/Z_HTTP_PAIDPAY_001'.
+              lv_url = 'https://' && lv_url.
+              DATA(lo_destination) = cl_http_destination_provider=>create_by_url( i_url = lv_url ).
+            CATCH cx_abap_context_info_error INTO DATA(lx_context_error).
+              IF sy-subrc = 0. ENDIF.
+            CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
+              IF sy-subrc = 0. ENDIF.
+          ENDTRY.
 
-        TRY.
-            DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_destination ).
+          TRY.
+              DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_destination ).
 
-            lo_http_client->get_http_request(  )->set_authorization_basic(
-            i_username = lv_username
-            i_password = lv_pwd ).
+              lo_http_client->get_http_request(  )->set_authorization_basic(
+              i_username = lv_username
+              i_password = lv_pwd ).
 
-          CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
-            IF sy-subrc = 0. ENDIF.
-        ENDTRY.
-        DATA(lo_http_request) = lo_http_client->get_http_request( ).
-        /ui2/cl_json=>serialize(
-            EXPORTING
-              data = ls_create_a
-              compress = 'X'
-              pretty_name = /ui2/cl_json=>pretty_mode-camel_case
-            RECEIVING
-              r_json = DATA(json_post) ).
+            CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
+              IF sy-subrc = 0. ENDIF.
+          ENDTRY.
+          DATA(lo_http_request) = lo_http_client->get_http_request( ).
+          /ui2/cl_json=>serialize(
+              EXPORTING
+                data = ls_create_a
+                compress = 'X'
+                pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+              RECEIVING
+                r_json = DATA(json_post) ).
 
-        lo_http_request->set_text( json_post ).
-        lo_http_request->set_header_field( i_name = 'Content-Type' i_value = 'text/xml' ).
-        lo_http_request->set_header_field( i_name = 'action' i_value = 'CREATE' ).
+          lo_http_request->set_text( json_post ).
+          lo_http_request->set_header_field( i_name = 'Content-Type' i_value = 'text/xml' ).
+          lo_http_request->set_header_field( i_name = 'action' i_value = 'CREATE' ).
 
-        TRY.
-            DATA(lo_response) = lo_http_client->execute( i_method = if_web_http_client=>post ).
-          CATCH cx_web_http_client_error INTO DATA(lx_http_error).
-            IF sy-subrc = 0. ENDIF.
-        ENDTRY.
-        lo_response->get_status( RECEIVING r_value = DATA(ls_http_status) ).
-        IF ls_http_status-code = 200
-        OR ls_http_status-code = 201.
-          DATA(lv_string) = lo_response->get_text( ).
-          lv_string = '[' && lv_string && ']'.
-          /ui2/cl_json=>deserialize(
-                          EXPORTING json = lv_string
-                          CHANGING data = lt_output_a ).
-          READ TABLE lt_output_a INTO DATA(ls_output_a) INDEX 1.
-          DATA(lt_a) = ls_output_a-items.
+          TRY.
+              DATA(lo_response) = lo_http_client->execute( i_method = if_web_http_client=>post ).
+            CATCH cx_web_http_client_error INTO DATA(lx_http_error).
+              IF sy-subrc = 0. ENDIF.
+          ENDTRY.
+          lo_response->get_status( RECEIVING r_value = DATA(ls_http_status) ).
+          IF ls_http_status-code = 200
+          OR ls_http_status-code = 201.
+            DATA(lv_string) = lo_response->get_text( ).
+            lv_string = '[' && lv_string && ']'.
+            /ui2/cl_json=>deserialize(
+                            EXPORTING json = lv_string
+                            CHANGING data = lt_output_a ).
+            READ TABLE lt_output_a INTO DATA(ls_output_a) INDEX 1.
+            DATA(lt_a) = ls_output_a-items.
 
-          LOOP AT ct_data ASSIGNING <lfs_data>.
-            READ TABLE lt_a INTO DATA(ls_a)
-                 WITH KEY companycode = <lfs_data>-companycode
-                          customer = <lfs_data>-customer
-                          supplier = <lfs_data>-supplier
-                          profitcenter = <lfs_data>-profitcenter
-                          purchasinggroup = <lfs_data>-purchasinggroup.
-            IF sy-subrc = 0.
-              <lfs_data>-belnr1 = ls_a-document1.
-              <lfs_data>-gjahr1 = ls_a-fiscalyear1.
-              <lfs_data>-belnr2 = ls_a-document2.
-              <lfs_data>-gjahr2 = ls_a-fiscalyear2.
-              <lfs_data>-belnr3 = ls_a-document3.
-              <lfs_data>-gjahr3 = ls_a-fiscalyear3.
-              <lfs_data>-belnr4 = ls_a-document4.
-              <lfs_data>-gjahr4 = ls_a-fiscalyear4.
-              <lfs_data>-message = ls_a-message.
-              <lfs_data>-status = ls_a-status.
-            ENDIF.
-          ENDLOOP.
-        ELSE.
-          lv_string = lo_response->get_text( ).
-          LOOP AT ct_data ASSIGNING <lfs_data>.
-            <lfs_data>-status = 'E'.
-            <lfs_data>-message = lv_string.
-          ENDLOOP.
+            LOOP AT ct_data ASSIGNING <lfs_data>.
+              READ TABLE lt_a INTO DATA(ls_a)
+                   WITH KEY companycode = <lfs_data>-companycode
+                            customer = <lfs_data>-customer
+                            supplier = <lfs_data>-supplier
+                            profitcenter = <lfs_data>-profitcenter
+                            purchasinggroup = <lfs_data>-purchasinggroup.
+              IF sy-subrc = 0.
+                <lfs_data>-belnr1 = ls_a-document1.
+                <lfs_data>-gjahr1 = ls_a-fiscalyear1.
+                <lfs_data>-belnr2 = ls_a-document2.
+                <lfs_data>-gjahr2 = ls_a-fiscalyear2.
+                <lfs_data>-belnr3 = ls_a-document3.
+                <lfs_data>-gjahr3 = ls_a-fiscalyear3.
+                <lfs_data>-belnr4 = ls_a-document4.
+                <lfs_data>-gjahr4 = ls_a-fiscalyear4.
+                <lfs_data>-message = ls_a-message.
+                <lfs_data>-status = ls_a-status.
+              ENDIF.
+            ENDLOOP.
+          ELSE.
+            lv_string = lo_response->get_text( ).
+            LOOP AT ct_data ASSIGNING <lfs_data>.
+              READ TABLE lt_item_a INTO ls_item_a
+                   WITH KEY companycode = <lfs_data>-companycode
+                            customer = <lfs_data>-customer
+                            supplier = <lfs_data>-supplier
+                            profitcenter = <lfs_data>-profitcenter
+                            purchasinggroup = <lfs_data>-purchasinggroup.
+              IF sy-subrc = 0.
+                <lfs_data>-status = 'E'.
+                <lfs_data>-message = lv_string.
+              ENDIF.
+            ENDLOOP.
+          ENDIF.
         ENDIF.
 * Modify DB
         LOOP AT lt_table1011 INTO ls_1011.
-          READ TABLE ct_data INTO ls_data
-               WITH KEY companycode = ls_data-companycode
-                        fiscalyear = ls_data-fiscalyear
-                        period = ls_data-period
-                        customer = ls_data-customer
-                        supplier = ls_data-supplier
-                        profitcenter = ls_data-profitcenter
-                        purchasinggroup = ls_data-purchasinggroup.
+          READ TABLE ct_data INTO DATA(ls_data)
+               WITH KEY companycode = ls_1011-companycode
+                        fiscalyear = ls_1011-fiscalyear
+                        period = ls_1011-period
+                        customer = ls_1011-customer
+                        supplier = ls_1011-supplier
+                        profitcenter = ls_1011-profitcenter
+                        purchasinggroup = ls_1011-purchasinggroup.
           IF sy-subrc = 0.
             ls_1011-belnr1 = ls_data-belnr1.
             ls_1011-gjahr1 = ls_data-gjahr1.
@@ -474,147 +492,151 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
             INTO TABLE @DATA(lt_table1013).
         ENDIF.
 
-        LOOP AT ct_data INTO ls_data.
-          ls_item_b-companycode = ls_data-companycode.
-          ls_item_b-fiscalyear = ls_data-fiscalyear.
+        LOOP AT ct_data ASSIGNING <lfs_data>.
+          READ TABLE lt_table1013 INTO ls_1013
+               WITH KEY companycode = <lfs_data>-companycode
+                        fiscalyear = <lfs_data>-fiscalyear
+                        period = <lfs_data>-period
+                        customer = <lfs_data>-customer
+                        supplier = <lfs_data>-supplier.
+          IF sy-subrc = 0.
+            IF ls_1013-belnr1 IS NOT INITIAL
+            OR ls_1013-belnr2 IS NOT INITIAL
+            OR ls_1013-belnr3 IS NOT INITIAL
+            OR ls_1013-belnr4 IS NOT INITIAL.
+              <lfs_data>-status = 'E'.
+              <lfs_data>-message = '純額処理がすにで転記済みなので、再転記の場合、まず取消転記を実行してください。'.
+              CONTINUE.
+            ENDIF.
+          ENDIF.
+          ls_item_b-companycode = <lfs_data>-companycode.
+          ls_item_b-fiscalyear = <lfs_data>-fiscalyear.
           ls_item_b-postingdate1 = lv_postdate1.
           ls_item_b-postingdate2 = lv_postdate2.
-          ls_item_b-customer = ls_data-customer.
-          ls_item_b-supplier = ls_data-supplier.
-          ls_item_b-currency = ls_data-currency.
+          ls_item_b-customer = <lfs_data>-customer.
+          ls_item_b-supplier = <lfs_data>-supplier.
+          ls_item_b-currency = <lfs_data>-currency.
           ls_item_b-ztype = cv_ztype.
           "金额是char型，前端传入的值就不会有时候后面加0，需要转一下IN
           ls_item_b-ap = zzcl_common_utils=>conversion_amount(
                                             iv_alpha = 'IN'
-                                            iv_currency = ls_data-currency
-                                            iv_input = ls_data-ap ).
+                                            iv_currency = <lfs_data>-currency
+                                            iv_input = <lfs_data>-ap ).
           ls_item_b-ar = zzcl_common_utils=>conversion_amount(
                                             iv_alpha = 'IN'
-                                            iv_currency = ls_data-currency
-                                            iv_input = ls_data-ar ).
+                                            iv_currency = <lfs_data>-currency
+                                            iv_input = <lfs_data>-ar ).
           APPEND ls_item_b TO lt_item_b.
           CLEAR: ls_item_b.
         ENDLOOP.
-        ls_create_b-to_create-items = lt_item_b.
+        IF lt_item_b IS NOT INITIAL.
+          ls_create_b-to_create-items = lt_item_b.
 * Call API
-        TRY.
-            lv_url = cl_abap_context_info=>get_system_url( ) && '/sap/bc/http/sap/Z_HTTP_PAIDPAY_002'.
-            lv_url = 'https://' && lv_url.
-            lo_destination = cl_http_destination_provider=>create_by_url( i_url = lv_url ).
-          CATCH cx_abap_context_info_error INTO lx_context_error.
-            IF sy-subrc = 0. ENDIF.
-          CATCH cx_http_dest_provider_error INTO lx_http_dest_provider_error.
-            IF sy-subrc = 0. ENDIF.
-        ENDTRY.
+          TRY.
+              lv_url = cl_abap_context_info=>get_system_url( ) && '/sap/bc/http/sap/Z_HTTP_PAIDPAY_002'.
+              lv_url = 'https://' && lv_url.
+              lo_destination = cl_http_destination_provider=>create_by_url( i_url = lv_url ).
+            CATCH cx_abap_context_info_error INTO lx_context_error.
+              IF sy-subrc = 0. ENDIF.
+            CATCH cx_http_dest_provider_error INTO lx_http_dest_provider_error.
+              IF sy-subrc = 0. ENDIF.
+          ENDTRY.
 
-        TRY.
-            lo_http_client = cl_web_http_client_manager=>create_by_http_destination( lo_destination ).
+          TRY.
+              lo_http_client = cl_web_http_client_manager=>create_by_http_destination( lo_destination ).
 
-            lo_http_client->get_http_request(  )->set_authorization_basic(
-            i_username = lv_username
-            i_password = lv_pwd ).
+              lo_http_client->get_http_request(  )->set_authorization_basic(
+              i_username = lv_username
+              i_password = lv_pwd ).
 
-          CATCH cx_web_http_client_error INTO lx_web_http_client_error.
-            IF sy-subrc = 0. ENDIF.
-        ENDTRY.
-        lo_http_request = lo_http_client->get_http_request( ).
-        /ui2/cl_json=>serialize(
-            EXPORTING
-              data = ls_create_b
-              compress = 'X'
-              pretty_name = /ui2/cl_json=>pretty_mode-camel_case
-            RECEIVING
-              r_json = json_post ).
+            CATCH cx_web_http_client_error INTO lx_web_http_client_error.
+              IF sy-subrc = 0. ENDIF.
+          ENDTRY.
+          lo_http_request = lo_http_client->get_http_request( ).
+          /ui2/cl_json=>serialize(
+              EXPORTING
+                data = ls_create_b
+                compress = 'X'
+                pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+              RECEIVING
+                r_json = json_post ).
 
-        lo_http_request->set_text( json_post ).
-        lo_http_request->set_header_field( i_name = 'Content-Type' i_value = 'text/xml' ).
-        lo_http_request->set_header_field( i_name = 'action' i_value = 'CREATE' ).
+          lo_http_request->set_text( json_post ).
+          lo_http_request->set_header_field( i_name = 'Content-Type' i_value = 'text/xml' ).
+          lo_http_request->set_header_field( i_name = 'action' i_value = 'CREATE' ).
 
-        TRY.
-            lo_response = lo_http_client->execute( i_method = if_web_http_client=>post ).
-          CATCH cx_web_http_client_error INTO lx_http_error.
-            IF sy-subrc = 0. ENDIF.
-        ENDTRY.
-        lo_response->get_status( RECEIVING r_value = ls_http_status ).
-        IF ls_http_status-code = 200
-        OR ls_http_status-code = 201.
-          lv_string = lo_response->get_text( ).
-          lv_string = '[' && lv_string && ']'.
-          /ui2/cl_json=>deserialize(
-                          EXPORTING json = lv_string
-                          CHANGING data = lt_output_b ).
-          READ TABLE lt_output_b INTO DATA(ls_output_b) INDEX 1.
-          DATA(lt_b) = ls_output_b-items.
-          SORT lt_b BY companycode customer supplier.
+          TRY.
+              lo_response = lo_http_client->execute( i_method = if_web_http_client=>post ).
+            CATCH cx_web_http_client_error INTO lx_http_error.
+              IF sy-subrc = 0. ENDIF.
+          ENDTRY.
+          lo_response->get_status( RECEIVING r_value = ls_http_status ).
+          IF ls_http_status-code = 200
+          OR ls_http_status-code = 201.
+            lv_string = lo_response->get_text( ).
+            lv_string = '[' && lv_string && ']'.
+            /ui2/cl_json=>deserialize(
+                            EXPORTING json = lv_string
+                            CHANGING data = lt_output_b ).
+            READ TABLE lt_output_b INTO DATA(ls_output_b) INDEX 1.
+            DATA(lt_b) = ls_output_b-items.
+            SORT lt_b BY companycode customer supplier.
 
-          LOOP AT ct_data ASSIGNING <lfs_data>.
-            READ TABLE lt_b INTO DATA(ls_b)
-                 WITH KEY companycode = <lfs_data>-companycode
-                          customer = <lfs_data>-customer
-                          supplier = <lfs_data>-supplier BINARY SEARCH.
-            IF sy-subrc = 0.
-              <lfs_data>-belnr5 = ls_b-document1.
-              <lfs_data>-gjahr5 = ls_b-fiscalyear1.
-              <lfs_data>-belnr6 = ls_b-document2.
-              <lfs_data>-gjahr6 = ls_b-fiscalyear2.
-              <lfs_data>-belnr7 = ls_b-document3.
-              <lfs_data>-gjahr7 = ls_b-fiscalyear3.
-              <lfs_data>-belnr8 = ls_b-document4.
-              <lfs_data>-gjahr8 = ls_b-fiscalyear4.
-              <lfs_data>-message = ls_b-message.
-              <lfs_data>-status = ls_b-status.
-            ENDIF.
-          ENDLOOP.
-        ELSE.
-          lv_string = lo_response->get_text( ).
-          LOOP AT ct_data ASSIGNING <lfs_data>.
-            <lfs_data>-status = 'E'.
-            <lfs_data>-message = lv_string.
-          ENDLOOP.
-        ENDIF.
-
-* Modify DB
-        LOOP AT lt_table1013 INTO ls_1013.
-          READ TABLE ct_data INTO ls_data
-               WITH KEY companycode = ls_data-companycode
-                        fiscalyear = ls_data-fiscalyear
-                        period = ls_data-period
-                        customer = ls_data-customer
-                        supplier = ls_data-supplier.
-          IF sy-subrc = 0.
-            ls_1013-belnr1 = ls_data-belnr5.
-            ls_1013-gjahr1 = ls_data-gjahr5.
-            ls_1013-belnr2 = ls_data-belnr6.
-            ls_1013-gjahr2 = ls_data-gjahr6.
-            ls_1013-belnr3 = ls_data-belnr7.
-            ls_1013-gjahr3 = ls_data-gjahr7.
-            ls_1013-belnr4 = ls_data-belnr8.
-            ls_1013-gjahr4 = ls_data-gjahr8.
-            ls_1013-message = ls_data-message.
-            APPEND ls_1013 TO lt_1013.
-            CLEAR: ls_1013.
+            LOOP AT ct_data ASSIGNING <lfs_data>.
+              READ TABLE lt_b INTO DATA(ls_b)
+                   WITH KEY companycode = <lfs_data>-companycode
+                            customer = <lfs_data>-customer
+                            supplier = <lfs_data>-supplier BINARY SEARCH.
+              IF sy-subrc = 0.
+                <lfs_data>-belnr5 = ls_b-document1.
+                <lfs_data>-gjahr5 = ls_b-fiscalyear1.
+                <lfs_data>-belnr6 = ls_b-document2.
+                <lfs_data>-gjahr6 = ls_b-fiscalyear2.
+                <lfs_data>-belnr7 = ls_b-document3.
+                <lfs_data>-gjahr7 = ls_b-fiscalyear3.
+                <lfs_data>-belnr8 = ls_b-document4.
+                <lfs_data>-gjahr8 = ls_b-fiscalyear4.
+                <lfs_data>-message = ls_b-message.
+                <lfs_data>-status = ls_b-status.
+              ENDIF.
+            ENDLOOP.
+          ELSE.
+            lv_string = lo_response->get_text( ).
+            LOOP AT ct_data ASSIGNING <lfs_data>.
+              READ TABLE lt_item_b INTO ls_item_b
+                   WITH KEY companycode = <lfs_data>-companycode
+                            customer = <lfs_data>-customer
+                            supplier = <lfs_data>-supplier.
+              IF sy-subrc = 0.
+                <lfs_data>-status = 'E'.
+                <lfs_data>-message = lv_string.
+              ENDIF.
+            ENDLOOP.
           ENDIF.
-        ENDLOOP.
-        IF sy-subrc <> 0.
-          LOOP AT ct_data INTO ls_data.
-            MOVE-CORRESPONDING ls_data TO ls_1013.
-            ls_1013-belnr1 = ls_data-belnr5.
-            ls_1013-gjahr1 = ls_data-gjahr5.
-            ls_1013-belnr2 = ls_data-belnr6.
-            ls_1013-gjahr2 = ls_data-gjahr6.
-            ls_1013-belnr3 = ls_data-belnr7.
-            ls_1013-gjahr3 = ls_data-gjahr7.
-            ls_1013-belnr4 = ls_data-belnr8.
-            ls_1013-gjahr4 = ls_data-gjahr8.
-            ls_1013-message = ls_data-message.
-            APPEND ls_1013 TO lt_1013.
-            CLEAR: ls_1013.
-          ENDLOOP.
         ENDIF.
+* Modify DB
+        LOOP AT ct_data INTO ls_data.
+          MOVE-CORRESPONDING ls_data TO ls_1013.
+          ls_1013-ap = ls_data-ap.
+          ls_1013-ar = ls_data-ar.
+          ls_1013-belnr1 = ls_data-belnr5.
+          ls_1013-gjahr1 = ls_data-gjahr5.
+          ls_1013-belnr2 = ls_data-belnr6.
+          ls_1013-gjahr2 = ls_data-gjahr6.
+          ls_1013-belnr3 = ls_data-belnr7.
+          ls_1013-gjahr3 = ls_data-gjahr7.
+          ls_1013-belnr4 = ls_data-belnr8.
+          ls_1013-gjahr4 = ls_data-gjahr8.
+          ls_1013-message = ls_data-message.
+          APPEND ls_1013 TO lt_1013.
+          CLEAR: ls_1013.
+        ENDLOOP.
+
 * Modify DB
         IF lt_1013 IS NOT INITIAL.
           MODIFY ztfi_1013 FROM TABLE @lt_1013.
         ENDIF.
+
       WHEN OTHERS.
     ENDCASE.
 
@@ -775,7 +797,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
             <lfs_data>-message = lv_string.
           ENDLOOP.
         ENDIF.
-
+* Modify DB
         LOOP AT lt_table1011 INTO ls_1011.
           READ TABLE ct_data INTO ls_data
                WITH KEY companycode = ls_data-companycode
@@ -829,14 +851,14 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
           ls_item_b-period = ls_data-period.
           ls_item_b-customer = ls_data-customer.
           ls_item_b-supplier = ls_data-supplier.
-          ls_item_b-belnr1 = ls_data-belnr1.
-          ls_item_b-gjahr1 = ls_data-gjahr1.
-          ls_item_b-belnr2 = ls_data-belnr2.
-          ls_item_b-gjahr2 = ls_data-gjahr2.
-          ls_item_b-belnr3 = ls_data-belnr3.
-          ls_item_b-gjahr3 = ls_data-gjahr3.
-          ls_item_b-belnr4 = ls_data-belnr4.
-          ls_item_b-gjahr4 = ls_data-gjahr4.
+          ls_item_b-belnr1 = ls_data-belnr5.
+          ls_item_b-gjahr1 = ls_data-gjahr5.
+          ls_item_b-belnr2 = ls_data-belnr6.
+          ls_item_b-gjahr2 = ls_data-gjahr6.
+          ls_item_b-belnr3 = ls_data-belnr7.
+          ls_item_b-gjahr3 = ls_data-gjahr7.
+          ls_item_b-belnr4 = ls_data-belnr8.
+          ls_item_b-gjahr4 = ls_data-gjahr8.
           APPEND ls_item_b TO lt_item_b.
           CLEAR: ls_item_b.
         ENDLOOP.

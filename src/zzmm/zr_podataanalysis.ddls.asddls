@@ -115,7 +115,7 @@ define custom entity ZR_PODATAANALYSIS
 
       @UI                           : { lineItem: [ { position: 230, label: '供給者部門テキスト' } ]}
       @EndUserText.label            : '供給者部門テキスト'
-      SupplierSubrangetext          : abap.char(50);
+      SupplierSubrangeText          : abap.char(50);
 
       @UI                           : { lineItem: [ { position: 240, label: '品目グループ' } ]}
       @EndUserText.label            : '品目グループ'
@@ -208,7 +208,7 @@ define custom entity ZR_PODATAANALYSIS
 
       @UI                           : { lineItem: [ { position: 440, label: '購買納入日付' } ]}
       @EndUserText.label            : '購買納入日付'
-      MRPDILIVERYDATE               : abap.dats;
+      MRPDeliveryDate               : abap.dats;
 
       @UI                           : { lineItem: [ { position: 450, label: ' 生産計画日付' } ]}
       @EndUserText.label            : ' 生産計画日付'
@@ -256,7 +256,7 @@ define custom entity ZR_PODATAANALYSIS
 
       @UI                           : { lineItem: [ { position: 550, label: '承認テキスト' } ]}
       @EndUserText.label            : '承認テキスト'
-      Taskresulttext                : abap.char(15);
+      TaskResultText                : abap.char(15);
 
       @UI                           : { lineItem: [ { position: 560, label: 'PO登録者' } ], selectionField: [ { position: 130 } ] }
       @Consumption.filter           : { mandatory: false }
@@ -305,7 +305,7 @@ define custom entity ZR_PODATAANALYSIS
 
       @UI                           : { lineItem: [ { position: 650, label: '注文書発行' } ]}
       @EndUserText.label            : '注文書発行'
-      Porelease                     : abap.char(10);
+      PORelease                     : abap.char(10);
 
       @UI                           : { lineItem: [ { position: 660, label: '価格設定日制御' } ]}
       @EndUserText.label            : '価格設定日制御'

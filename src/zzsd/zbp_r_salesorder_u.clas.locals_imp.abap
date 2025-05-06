@@ -154,6 +154,7 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
         delivery_date            TYPE string,
         delivery_time            TYPE string,
 *        actual_goods_movement_date TYPE string,
+        bill_of_lading           TYPE string,
       END OF ty_update_header,
 
       BEGIN OF ty_update_item,
@@ -304,19 +305,46 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
         "判定可以指定的字段是否有输入值，如果没则不需要修改DN
         DATA lv_need_change TYPE abap_bool.
         lv_need_change = abap_false.
-        IF record_key-currplannedgoodsissuedate IS NOT INITIAL OR record_key-currdeliverydate IS NOT INITIAL.
+*&--MOD BEGIN BY XINLEI XU 2025/04/25
+*        IF record_key-currplannedgoodsissuedate IS NOT INITIAL OR record_key-currdeliverydate IS NOT INITIAL.
+*          lv_need_change = abap_true.
+*        ENDIF.
+*        IF lv_need_change = abap_true.
+*          CLEAR ls_update_request.
+*          IF record_key-currplannedgoodsissuedate IS NOT INITIAL.
+*            ls_update_request-header_data-planned_goods_issue_date = format_date_to_odata( record_key-currplannedgoodsissuedate ).
+*            ls_update_request-header_data-goods_issue_time = 'PT00H00M00S'.
+*          ENDIF.
+*          IF record_key-currdeliverydate IS NOT INITIAL.
+*            ls_update_request-header_data-delivery_date = format_date_to_odata( record_key-currdeliverydate ).
+*            ls_update_request-header_data-delivery_time = 'PT00H00M00S'.
+*          ENDIF.
+        CLEAR ls_update_request.
+        IF record_key-currplannedgoodsissuedate IS NOT INITIAL.
+          ls_update_request-header_data-planned_goods_issue_date = format_date_to_odata( record_key-currplannedgoodsissuedate ).
+          ls_update_request-header_data-goods_issue_time = 'PT00H00M00S'.
           lv_need_change = abap_true.
         ENDIF.
+        IF record_key-currdeliverydate IS NOT INITIAL.
+          ls_update_request-header_data-delivery_date = format_date_to_odata( record_key-currdeliverydate ).
+          ls_update_request-header_data-delivery_time = 'PT00H00M00S'.
+          lv_need_change = abap_true.
+        ENDIF.
+
+        DATA: lv_deliverydocument TYPE i_deliverydocument-deliverydocument.
+        lv_deliverydocument = |{ ls_response-d-delivery_document ALPHA = IN }|.
+        SELECT SINGLE logisticsexecutionscenario
+          FROM i_deliverydocument WITH PRIVILEGED ACCESS
+         WHERE deliverydocument = @lv_deliverydocument
+          INTO @DATA(lv_scenario).
+        IF sy-subrc = 0 AND ( lv_scenario = '2' OR lv_scenario = '4' ).
+          ls_update_request-header_data-bill_of_lading = 'SD015'.  " 目的： 触发增强 YY1_DNEXTENSION
+          lv_need_change = abap_true.
+          CLEAR: lv_deliverydocument,lv_scenario.
+        ENDIF.
+
         IF lv_need_change = abap_true.
-          CLEAR ls_update_request.
-          IF record_key-currplannedgoodsissuedate IS NOT INITIAL.
-            ls_update_request-header_data-planned_goods_issue_date = format_date_to_odata( record_key-currplannedgoodsissuedate ).
-            ls_update_request-header_data-goods_issue_time = 'PT00H00M00S'.
-          ENDIF.
-          IF record_key-currdeliverydate IS NOT INITIAL.
-            ls_update_request-header_data-delivery_date = format_date_to_odata( record_key-currdeliverydate ).
-            ls_update_request-header_data-delivery_time = 'PT00H00M00S'.
-          ENDIF.
+*&--MOD END BY XINLEI XU 2025/04/25
           "将数据转换成json格式
           lv_requestbody = xco_cp_json=>data->from_abap( ls_update_request )->apply( VALUE #(
               ( xco_cp_json=>transformation->underscore_to_pascal_case )

@@ -43,7 +43,7 @@ CLASS ZCL_GET_UWMS_MCARD IMPLEMENTATION.
           FROM zc_tbc1001
          WHERE zid = 'ZBC002'
            AND zvalue1 = @lv_system_url
-          INTO TABLE @DATA(lt_config).
+          INTO TABLE @DATA(lt_config).        "#EC CI_ALL_FIELDS_NEEDED
         ##NO_HANDLER
       CATCH cx_abap_context_info_error.
         "handle exception

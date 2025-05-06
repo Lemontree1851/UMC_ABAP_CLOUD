@@ -692,6 +692,18 @@
      <MSGNR>113</MSGNR>
      <TEXT>&amp;1を送信してください</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>114</MSGNR>
+     <TEXT>当月＆前月の転記日付しか処理できません！</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>115</MSGNR>
+     <TEXT>前月の業務処理締め日は &amp;1 です！</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

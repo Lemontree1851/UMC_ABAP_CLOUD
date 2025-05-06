@@ -100,7 +100,7 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
         mrpelementopenquantity     TYPE menge_d,
         mrpavailablequantity       TYPE menge_d,
         mrpelement                 TYPE c LENGTH 12,
-        mrpelementitem             TYPE c LENGTH 5,
+        mrpelementitem             TYPE c LENGTH 6, " 5, MOD BY XINLEI XU 2025/04/23 BUG Fixed
         mrpelementavailyorrqmtdate TYPE datum,
         mrpelementcategory         TYPE c LENGTH 2,
         mrpelementdocumenttype     TYPE c LENGTH 4,
@@ -974,38 +974,25 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
             lw_data-mrpelementreschedulingdate = lw_mrp-mrpelementreschedulingdate.
           ENDIF.
 
-
           CLEAR lv_dur.
           "2.12　生産可能日付 PossibleProductionDate
           "回答納期  GoodsReceiptDurationInDays（入庫処理時間）稼働日
           IF lw_result-deliverydate IS NOT INITIAL .
-*          AND lw_result-goodsreceiptdurationindays IS NOT INITIAL.
-
             IF lw_result-goodsreceiptdurationindays = 0.
-
               lw_data-possibleproductiondate = lw_result-deliverydate.
-
             ELSE.
-
               lv_dur = lw_result-goodsreceiptdurationindays.  "入庫処理時間（稼働日）
-
-
               READ TABLE lt_factorycalendar INTO DATA(lw_factory) WITH KEY plant = lw_data-plant BINARY SEARCH .
-
-              IF sy-subrc = 0 .
-
+              IF sy-subrc = 0.
                 TRY.
                     DATA(lo_fcal_run) = cl_fhc_calendar_runtime=>create_factorycalendar_runtime( iv_factorycalendar_id = lw_factory-factorycalendarid ).
                     lw_data-possibleproductiondate = lo_fcal_run->add_workingdays_to_date(  iv_start = lw_result-deliverydate iv_number_of_workingdays = lv_dur  ).
-
                     ##NO_HANDLER
                   CATCH cx_fhc_runtime.
                     "handle exception
                 ENDTRY.
-
               ENDIF.
               CLEAR lv_days.
-
 *              lw_data-possibleproductiondate = zzcl_common_utils=>calc_date_add(
 *                  EXPORTING
 *                    date  = lw_result-deliverydate  "回答納期
@@ -1015,97 +1002,28 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
 *              lw_data-possibleproductiondate = zzcl_common_utils=>get_workingday( iv_date = lw_data-possibleproductiondate
 *                                               iv_next = abap_false
 *                                               iv_plant = lw_data-plant ).
-
             ENDIF.
-
           ENDIF.
 
           CLEAR lv_dur.
-
-          "日期型 不能判断initial 还有数字型
-*          IF lw_result-goodsreceiptdurationindays IS NOT INITIAL AND lw_mrp-mrpelementreschedulingdate IS NOT INITIAL.
-
           IF lw_result-goodsreceiptdurationindays = 0.
-            lw_data-mrpdiliverydate = lw_mrp-mrpelementreschedulingdate.
-
+            lw_data-mrpdeliverydate = lw_mrp-mrpelementreschedulingdate.
           ELSE.
-
             lv_dur = lw_result-goodsreceiptdurationindays.  "入庫処理時間（稼働日）
-
             CLEAR lw_factory.
             READ TABLE lt_factorycalendar INTO lw_factory WITH KEY plant = lw_data-plant BINARY SEARCH .
-
             IF sy-subrc = 0 .
-
               TRY.
                   CLEAR lo_fcal_run.
                   lo_fcal_run = cl_fhc_calendar_runtime=>create_factorycalendar_runtime( iv_factorycalendar_id = lw_factory-factorycalendarid ).
-                  lw_data-mrpdiliverydate = lo_fcal_run->subtract_workingdays_from_date(  iv_start = lw_mrp-mrpelementreschedulingdate iv_number_of_workingdays = lv_dur  ).
-
+                  lw_data-mrpdeliverydate = lo_fcal_run->subtract_workingdays_from_date( iv_start = lw_mrp-mrpelementreschedulingdate iv_number_of_workingdays = lv_dur ).
                   ##NO_HANDLER
                 CATCH cx_fhc_runtime.
                   "handle exception
               ENDTRY.
-
             ENDIF.
             CLEAR lv_days.
           ENDIF.
-*          ENDIF.
-          "          comment by wz 20241227 顾问日期变更
-*          IF lw_mrp-mrpelementavailyorrqmtdate IS NOT INITIAL.
-*            lw_data-possibleproductiondate = lw_mrp-mrpelementavailyorrqmtdate.
-*
-*            IF lw_mrp-exceptionmessagetext IS NOT INITIAL.
-*              DATA(lv_length) = strlen( lw_mrp-exceptionmessagetext ).
-*              IF lv_length = 33.
-*                DATA(lv_yy) = lw_mrp-exceptionmessagetext+30(2).
-*                DATA(lv_dd) = lw_mrp-exceptionmessagetext+27(2).
-*                DATA(lv_mm) = lw_mrp-exceptionmessagetext+24(2).
-*                DATA(lv_date) = |20{ lv_yy }{ lv_mm }{ lv_dd } |.
-*                lw_data-mrpdiliverydate = lv_date.
-*              ENDIF.
-*              CLEAR:lv_yy,lv_dd,lv_mm,lv_date,lv_length.
-*            ENDIF.
-*          ENDIF.
-          "comment by wz 20241227 顾问日期变更
-
-*        "2.12　生産可能日付   生産可能日付=回答納期＋入庫処理時間（稼働日） 然后需要使用工厂日期
-*        CLEAR lv_dur.
-*        lv_dur = lw_result-goodsreceiptdurationindays.  "入庫処理時間（稼働日）
-*
-*        IF lv_dur <> 0 AND lw_result-deliverydate IS NOT INITIAL.
-*          lw_data-possibleproductiondate = zzcl_common_utils=>calc_date_add(
-*            EXPORTING
-*              date  = lw_result-deliverydate  "回答納期
-*              day   = lv_dur                  "入庫処理時間（稼働日）
-*            ).
-*
-*          lw_data-possibleproductiondate = zzcl_common_utils=>get_workingday( iv_date = lw_data-possibleproductiondate
-*                                                        iv_next = abap_false
-*                                                        iv_plant = lw_data-plant ).
-*        ELSE.
-*          "采用
-*          lw_data-possibleproductiondate = zzcl_common_utils=>get_workingday( iv_date = lw_result-deliverydate
-*                                                        iv_next = abap_false
-*                                                        iv_plant = lw_data-plant ).
-*        ENDIF.
-
-*          IF lw_mrp-mrpelementavailyorrqmtdate IS NOT INITIAL AND lw_data-mrpelementreschedulingdate IS NOT INITIAL .
-**            lv_dur = lw_mrp-mrpelementavailyorrqmtdate.   "入庫処理時間
-*            "購買納入日付
-**            lw_data-mrpdiliverydate = zzcl_common_utils=>calc_date_subtract(
-**              EXPORTING
-**                date      = lw_data-mrpelementreschedulingdate
-**                day       = lv_dur
-**            ).
-**            lw_data-mrpdiliverydate = zzcl_common_utils=>get_workingday( iv_date = lw_data-mrpdiliverydate
-**                                                                    iv_next = abap_false
-**                                                                    iv_plant = lw_data-plant ).
-*          ELSE.
-*            IF lw_mrp-mrpelementreschedulingdate IS NOT INITIAL.
-*              lw_data-mrpdiliverydate = lw_mrp-mrpelementreschedulingdate.
-*            ENDIF.
-*          ENDIF.
         ENDIF.
 
         " 2.21 MC要求

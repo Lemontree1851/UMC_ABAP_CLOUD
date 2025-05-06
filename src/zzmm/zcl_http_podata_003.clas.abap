@@ -170,6 +170,8 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
     IF lv_req_body IS NOT INITIAL.
       xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
           ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    ELSE.
+      RETURN.
     ENDIF.
 
     lv_plant     = ls_req-plant.

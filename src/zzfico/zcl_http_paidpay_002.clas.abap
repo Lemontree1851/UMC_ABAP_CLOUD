@@ -105,7 +105,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_paidpay_002 IMPLEMENTATION.
+CLASS ZCL_HTTP_PAIDPAY_002 IMPLEMENTATION.
 
 
   METHOD cancel.
@@ -293,41 +293,8 @@ CLASS zcl_http_paidpay_002 IMPLEMENTATION.
         IF lv_ap > lv_ar.
           lv_dr = lv_ap - lv_ar.
           lv_cr = -1 * lv_dr.
-        ENDIF.
 
-        i += 1.
-        IF lv_dr <> 0
-        OR lv_cr <> 0.
-          ls_deep-%cid = |My%CID_{ i }|.
 
-          ls_deep-%param-companycode = ls_create-companycode.
-          ls_deep-%param-accountingdocumenttype = 'Z2'.
-          ls_deep-%param-documentdate = ls_create-postingdate1.
-          ls_deep-%param-postingdate = ls_create-postingdate1.
-          ls_deep-%param-createdbyuser = sy-uname.
-          ls_deep-%param-_apitems =
-            VALUE #(
-              ( glaccountlineitem = |001|
-                supplier = ls_create-supplier
-                _currencyamount =
-                  VALUE #( ( currencyrole = '00' journalentryitemamount = lv_dr currency = ls_create-currency ) )
-              )
-              ( glaccountlineitem = |002|
-                supplier = ls_create-supplier
-                glaccount = '0021101000'
-                _currencyamount =
-                  VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr currency = ls_create-currency ) )
-              )
-            ).
-          APPEND ls_deep TO lt_deep.
-          post( CHANGING ct_deep = lt_deep
-                         cs_response = ls_response
-                         cv_fail = lv_fail
-                         cv_i = i ).
-          CLEAR: ls_deep, lt_deep.
-        ENDIF.
-* 4th document
-        IF lv_fail IS INITIAL.
           i += 1.
           IF lv_dr <> 0
           OR lv_cr <> 0.
@@ -335,29 +302,63 @@ CLASS zcl_http_paidpay_002 IMPLEMENTATION.
 
             ls_deep-%param-companycode = ls_create-companycode.
             ls_deep-%param-accountingdocumenttype = 'Z2'.
-            ls_deep-%param-documentdate = ls_create-postingdate2.
-            ls_deep-%param-postingdate = ls_create-postingdate2.
+            ls_deep-%param-documentdate = ls_create-postingdate1.
+            ls_deep-%param-postingdate = ls_create-postingdate1.
             ls_deep-%param-createdbyuser = sy-uname.
             ls_deep-%param-_apitems =
               VALUE #(
                 ( glaccountlineitem = |001|
                   supplier = ls_create-supplier
-                  glaccount = '0021101000'
                   _currencyamount =
                     VALUE #( ( currencyrole = '00' journalentryitemamount = lv_dr currency = ls_create-currency ) )
                 )
                 ( glaccountlineitem = |002|
                   supplier = ls_create-supplier
+                  glaccount = '0021101000'
                   _currencyamount =
                     VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr currency = ls_create-currency ) )
                 )
               ).
             APPEND ls_deep TO lt_deep.
             post( CHANGING ct_deep = lt_deep
-                          cs_response = ls_response
-                          cv_fail = lv_fail
-                          cv_i = i ).
+                           cs_response = ls_response
+                           cv_fail = lv_fail
+                           cv_i = i ).
             CLEAR: ls_deep, lt_deep.
+          ENDIF.
+* 4th document
+          IF lv_fail IS INITIAL.
+            i += 1.
+            IF lv_dr <> 0
+            OR lv_cr <> 0.
+              ls_deep-%cid = |My%CID_{ i }|.
+
+              ls_deep-%param-companycode = ls_create-companycode.
+              ls_deep-%param-accountingdocumenttype = 'Z2'.
+              ls_deep-%param-documentdate = ls_create-postingdate2.
+              ls_deep-%param-postingdate = ls_create-postingdate2.
+              ls_deep-%param-createdbyuser = sy-uname.
+              ls_deep-%param-_apitems =
+                VALUE #(
+                  ( glaccountlineitem = |001|
+                    supplier = ls_create-supplier
+                    glaccount = '0021101000'
+                    _currencyamount =
+                      VALUE #( ( currencyrole = '00' journalentryitemamount = lv_dr currency = ls_create-currency ) )
+                  )
+                  ( glaccountlineitem = |002|
+                    supplier = ls_create-supplier
+                    _currencyamount =
+                      VALUE #( ( currencyrole = '00' journalentryitemamount = lv_cr currency = ls_create-currency ) )
+                  )
+                ).
+              APPEND ls_deep TO lt_deep.
+              post( CHANGING ct_deep = lt_deep
+                            cs_response = ls_response
+                            cv_fail = lv_fail
+                            cv_i = i ).
+              CLEAR: ls_deep, lt_deep.
+            ENDIF.
           ENDIF.
         ENDIF.
 * Edit output response

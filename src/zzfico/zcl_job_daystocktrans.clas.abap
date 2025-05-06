@@ -152,6 +152,7 @@ CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
       lv_datetime          TYPE string,
       lv_gjahr             TYPE gjahr,
       lv_poper             TYPE poper,
+      lv_dat               TYPE d,  "Add 20250423
       lv_msg               TYPE cl_bali_free_text_setter=>ty_text.
 
     " 获取日志对象
@@ -319,6 +320,50 @@ CLASS ZCL_JOB_DAYSTOCKTRANS IMPLEMENTATION.
                             plant           ASCENDING
                             businesspartner ASCENDING.
 *                            producttype     ASCENDING.
+
+******Add start 20250423******************************
+    lv_dat = cl_abap_context_info=>get_system_date( ).
+    IF lt_productplant IS NOT INITIAL.
+      SELECT costestimate,
+             currencyrole,
+             material,
+             valuationarea,
+             materialpriceunitqty,
+             currency,
+             actualprice
+        FROM i_inventorypricebykeydate( p_calendardate = @lv_dat )
+        WITH PRIVILEGED ACCESS
+        FOR ALL ENTRIES IN @lt_productplant
+       WHERE currencyrole = '10'
+         AND ledger = '0L'
+         AND valuationarea = @lt_productplant-plant
+         AND material = @lt_productplant-product
+        INTO TABLE @DATA(lt_actual).
+      SORT lt_actual BY costestimate DESCENDING
+                        material
+                        valuationarea.
+      DELETE ADJACENT DUPLICATES FROM lt_actual COMPARING costestimate material valuationarea.
+      SORT lt_actual BY material valuationarea.
+
+      LOOP AT lt_productplant ASSIGNING FIELD-SYMBOL(<lfs_product>).
+        READ TABLE lt_actual INTO DATA(ls_actual)
+           WITH KEY material = <lfs_product>-product
+                    valuationarea = <lfs_product>-plant BINARY SEARCH.
+        <lfs_product>-movingaverageprice = ls_actual-actualprice.
+        IF ls_actual-actualprice <> 0.
+          IF ls_actual-materialpriceunitqty <> 0.
+            <lfs_product>-averageprice = ls_actual-actualprice / ls_actual-materialpriceunitqty.
+            <lfs_product>-movingaverageprice = ls_actual-actualprice / ls_actual-materialpriceunitqty.
+          ENDIF.
+        ELSE.
+          IF <lfs_product>-priceunitqty <> 0.
+            <lfs_product>-averageprice = <lfs_product>-standardprice / <lfs_product>-priceunitqty.
+          ENDIF.
+        ENDIF.
+        CLEAR: ls_actual.
+      ENDLOOP.
+    ENDIF.
+******Add end 20250423********************************
 
 *   前月の販売製品の販売数量及び売上高抽
     SELECT a~companycode,

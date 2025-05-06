@@ -152,12 +152,11 @@ CLASS ZCL_HTTP_USAP_002 IMPLEMENTATION.
         data(lv_reqbody_api) = /ui2/cl_json=>serialize( data = ls_outbound
                                                     compress = 'X'
                                                     pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
-        zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader({ lv_parameter })|
-                                                     iv_method      = if_web_http_client=>get
-                                                     iv_etag        = lv_etag
-                                           IMPORTING ev_status_code = DATA(lv_status_code)
-                                                     ev_response    = DATA(lv_response)
-                                                     ev_etag        = lv_etag ).
+        zzcl_common_utils=>get_api_etag( EXPORTING iv_odata_version = 'V2'
+                                                   iv_path          = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader({ lv_parameter })|
+                                         IMPORTING ev_status_code   = DATA(lv_status_code)
+                                                   ev_response      = DATA(lv_response)
+                                                   ev_etag          = lv_etag ).
         IF lv_etag IS INITIAL.
           ls_response-_status = 'E'.
           ls_response-_message = 'No Etag for update'.
@@ -186,12 +185,11 @@ CLASS ZCL_HTTP_USAP_002 IMPLEMENTATION.
         ENDIF.
 * Post
         CLEAR: lv_etag.
-        zzcl_common_utils=>request_api_v2( EXPORTING iv_path        = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader({ lv_parameter })|
-                                                     iv_method      = if_web_http_client=>get
-                                                     iv_etag        = lv_etag
-                                           IMPORTING ev_status_code = lv_status_code
-                                                     ev_response    = lv_response
-                                                     ev_etag        = lv_etag ).
+        zzcl_common_utils=>get_api_etag( EXPORTING iv_odata_version = 'V2'
+                                                   iv_path          = |/API_OUTBOUND_DELIVERY_SRV;v=0002/A_OutbDeliveryHeader({ lv_parameter })|
+                                         IMPORTING ev_status_code   = lv_status_code
+                                                   ev_response      = lv_response
+                                                   ev_etag          = lv_etag ).
         IF lv_etag IS INITIAL.
           ls_response-_status = 'E'.
           ls_response-_message = 'No Etag for post'.

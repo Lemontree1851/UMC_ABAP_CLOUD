@@ -125,6 +125,84 @@
       </RSFDO>
      </DOCUMENTATION>
     </item>
+    <item>
+     <FUNCNAME>ZZFM_DTIMP_TPP1023</FUNCNAME>
+     <SHORT_TEXT>移行専用_製造指図リリース</SHORT_TEXT>
+     <IMPORT>
+      <RSIMP>
+       <PARAMETER>IO_DATA</PARAMETER>
+       <OPTIONAL>X</OPTIONAL>
+       <TYP>REF TO DATA</TYP>
+       <REF_CLASS>X</REF_CLASS>
+      </RSIMP>
+      <RSIMP>
+       <PARAMETER>IV_STRUC</PARAMETER>
+       <OPTIONAL>X</OPTIONAL>
+       <TYP>ZZE_STRUCTURENAME</TYP>
+      </RSIMP>
+     </IMPORT>
+     <EXPORT>
+      <RSEXP>
+       <PARAMETER>EO_DATA</PARAMETER>
+       <REFERENCE>X</REFERENCE>
+       <TYP>REF TO DATA</TYP>
+       <REF_CLASS>X</REF_CLASS>
+      </RSEXP>
+     </EXPORT>
+     <DOCUMENTATION>
+      <RSFDO>
+       <PARAMETER>IO_DATA</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+      <RSFDO>
+       <PARAMETER>IV_STRUC</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+      <RSFDO>
+       <PARAMETER>EO_DATA</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+     </DOCUMENTATION>
+    </item>
+    <item>
+     <FUNCNAME>ZZFM_DTIMP_TPP1024</FUNCNAME>
+     <SHORT_TEXT>移行専用_製造指図_構成品目変更</SHORT_TEXT>
+     <IMPORT>
+      <RSIMP>
+       <PARAMETER>IO_DATA</PARAMETER>
+       <OPTIONAL>X</OPTIONAL>
+       <TYP>REF TO DATA</TYP>
+       <REF_CLASS>X</REF_CLASS>
+      </RSIMP>
+      <RSIMP>
+       <PARAMETER>IV_STRUC</PARAMETER>
+       <OPTIONAL>X</OPTIONAL>
+       <TYP>ZZE_STRUCTURENAME</TYP>
+      </RSIMP>
+     </IMPORT>
+     <EXPORT>
+      <RSEXP>
+       <PARAMETER>EO_DATA</PARAMETER>
+       <REFERENCE>X</REFERENCE>
+       <TYP>REF TO DATA</TYP>
+       <REF_CLASS>X</REF_CLASS>
+      </RSEXP>
+     </EXPORT>
+     <DOCUMENTATION>
+      <RSFDO>
+       <PARAMETER>IO_DATA</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+      <RSFDO>
+       <PARAMETER>IV_STRUC</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+      <RSFDO>
+       <PARAMETER>EO_DATA</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+     </DOCUMENTATION>
+    </item>
    </FUNCTIONS>
    <I18N_TPOOL>
     <item>

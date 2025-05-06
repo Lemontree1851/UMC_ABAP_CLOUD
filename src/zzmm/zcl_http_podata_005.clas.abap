@@ -233,7 +233,7 @@ DATA ls_error TYPE ty_data.
         INTO TABLE @DATA(lt_unit).
 
       IF lt_unit IS NOT INITIAL.
-        SELECT unitofmeasure, unitofmeasureisocode
+        SELECT unitofmeasure, unitofmeasureisocode "#EC CI_NO_TRANSFORM
            FROM i_unitofmeasure WITH PRIVILEGED ACCESS
            FOR ALL ENTRIES IN @lt_unit
            WHERE unitofmeasure = @lt_unit-purchaseorderquantityunit

@@ -145,17 +145,17 @@ CLASS lhc_pochange IMPLEMENTATION.
 
 * Authorization Check
 *    DATA(lv_user_email) = zzcl_common_utils=>get_email_by_uname( ). " DEL BY XINLEI XU 2025/03/17
-    DATA(lv_plant) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
-    lv_ekorg = zzcl_common_utils=>get_purchorg_by_user( lv_user_email ).
+    DATA(lv_plant_check) = zzcl_common_utils=>get_plant_by_user( lv_user_email ).
+    DATA(lv_ekorg_check) = zzcl_common_utils=>get_purchorg_by_user( lv_user_email ).
 
     LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<lfs_data>).
-      IF NOT lv_plant CS <lfs_data>-plant.
+      IF NOT lv_plant_check CS <lfs_data>-plant.
         lv_status = 'E'.
         MESSAGE e027(zbc_001) WITH <lfs_data>-plant INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
       ENDIF.
 
-      IF NOT lv_ekorg CS <lfs_data>-purchasingorganization.
+      IF NOT lv_ekorg_check CS <lfs_data>-purchasingorganization.
         lv_status = 'E'.
         MESSAGE e030(zbc_001) WITH <lfs_data>-purchasingorganization INTO lv_msg.
         lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = '/' ).
@@ -248,6 +248,7 @@ CLASS lhc_pochange IMPLEMENTATION.
 * Check if delete firstly
       "Deletion indicator
       IF ls_data-purchasingdocumentdeletioncode IS NOT INITIAL.
+        CLEAR: ls_item_delete, lt_item_delete.
         ls_item_delete-%key-purchaseorder = lv_po.
         ls_item_delete-%key-purchaseorderitem = ls_data-purchaseorderitem.
         ls_item_delete-purchaseorder = lv_po.
@@ -264,7 +265,7 @@ CLASS lhc_pochange IMPLEMENTATION.
           lv_status = 'S'.
         ELSE.
           lv_status = 'E'.
-          LOOP AT ls_del_reported-purchaseorder INTO DATA(ls_del).
+          LOOP AT ls_del_reported-purchaseorderitem INTO DATA(ls_del).
             DATA(lv_msgty) = ls_del-%msg->if_t100_dyn_msg~msgty.
             IF lv_msgty = 'A'
             OR lv_msgty = 'E'.

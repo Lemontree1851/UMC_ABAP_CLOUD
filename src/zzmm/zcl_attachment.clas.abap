@@ -7,11 +7,12 @@
      INTERFACES if_sadl_exit_calc_element_read.
    PROTECTED SECTION.
    PRIVATE SECTION.
- ENDCLASS.
+ENDCLASS.
 
 
 
- CLASS zcl_attachment IMPLEMENTATION.
+CLASS ZCL_ATTACHMENT IMPLEMENTATION.
+
 
    METHOD if_sadl_exit_calc_element_read~calculate.
      TYPES:
@@ -100,6 +101,7 @@
      ct_calculated_data = CORRESPONDING #(  lt_original_data ).
    ENDMETHOD.
 
+
    METHOD if_sadl_exit_calc_element_read~get_calculation_info.
      LOOP AT it_requested_calc_elements ASSIGNING FIELD-SYMBOL(<fs_calc_element>).
        CASE <fs_calc_element>.
@@ -110,4 +112,4 @@
        ENDCASE.
      ENDLOOP.
    ENDMETHOD.
- ENDCLASS.
+ENDCLASS.

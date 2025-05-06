@@ -39,6 +39,8 @@ FUNCTION zzfm_dtimp_tpp1022.
     ls_data-basic_start_date = <line>-('basic_start_date').
     ls_data-basic_end_date   = <line>-('basic_end_date').
 
+    ls_data-order_number = |{ ls_data-order_number ALPHA = IN }|.
+
     SELECT SINGLE *
       FROM i_manufacturingorder WITH PRIVILEGED ACCESS
      WHERE manufacturingorder = @ls_data-order_number
@@ -46,7 +48,6 @@ FUNCTION zzfm_dtimp_tpp1022.
 *&--ADD END BY XINLEI XU 2025/02/28
 
     TRY.
-        ls_data-order_number = |{ ls_data-order_number ALPHA = IN }|.
         ls_data-material = zzcl_common_utils=>conversion_matn1( EXPORTING iv_alpha = lc_alpha_in iv_input = ls_data-material ).
 
 *&--ADD BEGIN BY XINLEI XU 2025/02/28

@@ -239,873 +239,874 @@ CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
 *****************************************************************
 *       Get Data
 *****************************************************************
-      DATA:lv_fromfiscalyearperiod TYPE fins_fyearperiod.
-      DATA:lv_tofiscalyearperiod TYPE fins_fyearperiod.
-      DATA:lv_period TYPE fins_fyearperiod.
-      DATA:lt_mfgorderactlplantgtldgrcost TYPE STANDARD TABLE OF ty_data.
-      DATA:ls_mfgorderactlplantgtldgrcost TYPE ty_data.
-      DATA:lt_component TYPE STANDARD TABLE OF ty_data1.
-      DATA:ls_component TYPE ty_data1.
-      DATA:lt_data TYPE STANDARD TABLE OF ty_data.
-      DATA:lt_sum_qty TYPE STANDARD TABLE OF ty_data2.
-      DATA:ls_sum_qty TYPE ty_data2.
-
-      IF lv_calendaryear IS NOT INITIAL AND lv_calendarmonth IS NOT INITIAL.
-
-        CLEAR lv_period.
-        lv_period = lv_calendaryear && '0' && lv_calendarmonth.
-        "包含完成品和半制品
-        SELECT
-          orderid,                           "key
-          partnercostcenter,                 "key
-          partnercostctractivitytype,        "key
-          unitofmeasure,                     "key
-          plant,                             "key
-          orderitem,                         "key
-          workcenterinternalid,              "key
-          orderoperation,                    "key
-          glaccount,                         "key
-          curplanprojslsordvalnstrategy,     "key
-          companycode,
-          producedproduct,
-          planqtyincostsourceunit,
-          actualqtyincostsourceunit
-        FROM i_mfgorderactlplantgtldgrcost(
-                   p_fromfiscalyearperiod    = @lv_period,
-                   p_tofiscalyearperiod      = @lv_period,
-                   p_ledger                  = '0L',
-                   p_currencyrole            = '10',
-                   p_targetcostvariant       = '000' )
-        WITH PRIVILEGED ACCESS
-        WHERE plant IN @lr_plant
-        AND companycode IN @lr_companycode
-        and CURPLANPROJSLSORDVALNSTRATEGY is INITIAL
-        INTO TABLE @lt_mfgorderactlplantgtldgrcost.
-
-        ls_mfgorderactlplantgtldgrcost-yearperiod = lv_period.
-        MODIFY lt_mfgorderactlplantgtldgrcost FROM ls_mfgorderactlplantgtldgrcost
-        TRANSPORTING yearperiod WHERE orderid IS NOT INITIAL.
-
-        APPEND LINES OF lt_mfgorderactlplantgtldgrcost TO lt_data.
-        CLEAR lt_mfgorderactlplantgtldgrcost.
-
-      ENDIF.
-
-      IF lt_data IS NOT INITIAL.
-
-        "matnr 范围
-        DATA(lt_matnr) = lt_data.
-        SORT lt_matnr BY producedproduct.
-        DELETE ADJACENT DUPLICATES FROM lt_matnr COMPARING producedproduct.
-
-
-        "成品信息
-        SELECT
-         a~product
-         FROM i_product WITH PRIVILEGED ACCESS AS a
-         JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS b
-         ON a~product = b~product
-         FOR ALL ENTRIES IN @lt_matnr
-         WHERE a~product =  @lt_matnr-producedproduct
-         "AND plant IN @lr_plant
-         AND producttype = 'ZFRT'
-         INTO TABLE @DATA(lt_productplant).
-        SORT lt_productplant BY product.
-        DELETE ADJACENT DUPLICATES FROM lt_productplant COMPARING product.
-
-        "order 范围
-        DATA(lt_order) = lt_data.
-        SORT lt_order BY orderid.
-        DELETE ADJACENT DUPLICATES FROM lt_order COMPARING orderid.
-
-        "从BOM list中提取产品的半成品信息
-*        SELECT
-*          assembly, "上层
-*          material "下层
-*        FROM i_mfgorderoperationcomponent
-*        WITH PRIVILEGED ACCESS
-*         FOR ALL ENTRIES IN @lt_order
-*        WHERE manufacturingorder = @lt_order-orderid
-*        AND plant IN @lr_plant
-*        AND companycode IN @lr_companycode
-*        AND materialisdirectlyproduced = 'X'
-*         INTO TABLE @lt_component.
-*        SORT lt_component BY material.
-
-
-        DATA:lv_isassembly TYPE c VALUE 'X'.
-
-        "从会计科目表明细中提取主要材料和辅助材料的帐户和金额合计
-        lv_path = |/API_BILL_OF_MATERIAL_SRV;v=0002/MaterialBOMItem?$filter=IsAssembly%20eq%20'{ lv_isassembly }'|.
-        "Call API
-        zzcl_common_utils=>request_api_v2(
-          EXPORTING
-           iv_path        = lv_path
-            iv_method      = if_web_http_client=>get
-            iv_format      = 'json'
-            iv_select = 'BillOfMaterialComponent,Material'
-          IMPORTING
-            ev_status_code = DATA(lv_stat_code3)
-            ev_response    = DATA(lv_resbody_api3) ).
-        TRY.
-            "JSON->ABAP
-            "  xco_cp_json=>data->from_string( lv_resbody_api3 )->apply( VALUE #(
-            "      ( xco_cp_json=>transformation->underscore_to_camel_case ) ) )->write_to( REF #( ls_res_api3 ) ).
-            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api3
-               CHANGING  data = ls_res_api3 ).
-            LOOP AT ls_res_api3-d-results INTO DATA(ls_result3).
-
-              "IF  ls_result3-plant IN lr_plant.
-              CLEAR ls_component.
-              "ls_component-assembly = ls_result3-billofmaterialcomponent.
-              "ls_component-material = ls_result3-material.
-              ls_component-assembly = ls_result3-material.
-              ls_component-material = ls_result3-billofmaterialcomponent.
-              APPEND ls_component TO lt_component.
-
-              " ENDIF.
-            ENDLOOP.
-            SORT lt_component BY material assembly.
-            DELETE ADJACENT DUPLICATES FROM lt_component COMPARING material assembly.
-
-          CATCH cx_root INTO DATA(lx_root3) ##NO_HANDLER.
-        ENDTRY.
-
-
-        DATA:lv_next TYPE i_mfgorderactlplantgtldgrcost-producedproduct.
-
-        LOOP AT lt_component INTO ls_component.
-          DO 20 TIMES.
-            IF lv_next IS INITIAL.
-              lv_next = ls_component-assembly.
-            ENDIF.
-            READ TABLE lt_productplant INTO DATA(ls_productplant) WITH KEY product = lv_next BINARY SEARCH.
-            IF sy-subrc = 0.
-              "当前就是顶层物料
-              ls_component-zfrtproduct = lv_next.
-              MODIFY lt_component FROM ls_component TRANSPORTING zfrtproduct.
-              CLEAR lv_next.
-              EXIT.
-            ELSE.
-              "不是顶层物料继续向下找
-              READ TABLE lt_component INTO DATA(ls_component_next) WITH KEY material = lv_next BINARY SEARCH.
-              IF sy-subrc = 0.
-                lv_next = ls_component_next-assembly.
-              ENDIF.
-            ENDIF.
-          ENDDO.
-          CLEAR lv_next.
-        ENDLOOP.
-
-        "抽取当月完成品工单的实际入库数量（ 此时包含半成品 ）
-        IF lt_order IS NOT INITIAL.
-          SELECT
-            manufacturingorder,
-            product,
-            mfgorderconfirmedyieldqty,
-            productionunit,
-            productionsupervisor
-          FROM i_manufacturingorder
-          WITH PRIVILEGED ACCESS
-           FOR ALL ENTRIES IN @lt_order
-          WHERE manufacturingorder = @lt_order-orderid
-          "AND productionplant IN @lr_plant
-          AND companycode IN @lr_companycode
-           INTO TABLE @DATA(lt_manufacturingorder).
-          SORT lt_manufacturingorder BY manufacturingorder.
-          LOOP AT lt_manufacturingorder INTO DATA(ls_manufacturingorder).
-            "READ TABLE lt_productplant TRANSPORTING NO FIELDS WITH KEY product = ls_manufacturingorder-product BINARY SEARCH.
-            "IF sy-subrc = 0.
-            CLEAR ls_sum_qty.
-            ls_sum_qty-product = ls_manufacturingorder-product.
-            ls_sum_qty-mfgorderconfirmedyieldqty = ls_manufacturingorder-mfgorderconfirmedyieldqty.
-            ls_sum_qty-productionsupervisor = ls_manufacturingorder-productionsupervisor.
-            COLLECT ls_sum_qty INTO lt_sum_qty.
-            "ENDIF.
-          ENDLOOP.
-          SORT lt_sum_qty BY product.
-        ENDIF.
-        "提取月末时的实际工资率和计划工资率
-        lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$filter=ValidityStartFiscalYear%20eq%20'{ lv_calendaryear }'%20and%20ValidityStartFiscalPeriod%20eq%20'{ lv_calendarmonth_s }'&$top=5000|.
-        "Call API
-*        zzcl_common_utils=>request_api_v4(
-*          EXPORTING
-*            iv_path        = lv_path
-*            iv_method      = if_web_http_client=>get
-*          IMPORTING
-*            ev_status_code = DATA(lv_stat_code)
-*            ev_response    = DATA(lv_resbody_api) ).
-*        TRY.
-*            "JSON->ABAP
-*            "xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
-*            "   ( xco_cp_json=>transformation->boolean_to_abap_bool ) ) )->write_to( REF #( ls_res_api ) ).
-*            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
-*                               CHANGING  data = ls_res_api ).
+*****************Del start 20250423*******************************
+*      DATA:lv_fromfiscalyearperiod TYPE fins_fyearperiod.
+*      DATA:lv_tofiscalyearperiod TYPE fins_fyearperiod.
+*      DATA:lv_period TYPE fins_fyearperiod.
+*      DATA:lt_mfgorderactlplantgtldgrcost TYPE STANDARD TABLE OF ty_data.
+*      DATA:ls_mfgorderactlplantgtldgrcost TYPE ty_data.
+*      DATA:lt_component TYPE STANDARD TABLE OF ty_data1.
+*      DATA:ls_component TYPE ty_data1.
+*      DATA:lt_data TYPE STANDARD TABLE OF ty_data.
+*      DATA:lt_sum_qty TYPE STANDARD TABLE OF ty_data2.
+*      DATA:ls_sum_qty TYPE ty_data2.
 *
-*          CATCH cx_root INTO DATA(lx_root1) ##NO_HANDLER.
-*        ENDTRY.
-
-        lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$filter=ValidityStartFiscalYear%20eq%20'{ lv_calendaryear }'%20and%20ValidityStartFiscalPeriod%20eq%20'{ lv_calendarmonth_s }'&$top=5000|.
-        "Call API
-*        zzcl_common_utils=>request_api_v4(
+*      IF lv_calendaryear IS NOT INITIAL AND lv_calendarmonth IS NOT INITIAL.
+*
+*        CLEAR lv_period.
+*        lv_period = lv_calendaryear && '0' && lv_calendarmonth.
+*        "包含完成品和半制品
+*        SELECT
+*          orderid,                           "key
+*          partnercostcenter,                 "key
+*          partnercostctractivitytype,        "key
+*          unitofmeasure,                     "key
+*          plant,                             "key
+*          orderitem,                         "key
+*          workcenterinternalid,              "key
+*          orderoperation,                    "key
+*          glaccount,                         "key
+*          curplanprojslsordvalnstrategy,     "key
+*          companycode,
+*          producedproduct,
+*          planqtyincostsourceunit,
+*          actualqtyincostsourceunit
+*        FROM i_mfgorderactlplantgtldgrcost(
+*                   p_fromfiscalyearperiod    = @lv_period,
+*                   p_tofiscalyearperiod      = @lv_period,
+*                   p_ledger                  = '0L',
+*                   p_currencyrole            = '10',
+*                   p_targetcostvariant       = '000' )
+*        WITH PRIVILEGED ACCESS
+*        WHERE plant IN @lr_plant
+*        AND companycode IN @lr_companycode
+*        and CURPLANPROJSLSORDVALNSTRATEGY is INITIAL
+*        INTO TABLE @lt_mfgorderactlplantgtldgrcost.
+*
+*        ls_mfgorderactlplantgtldgrcost-yearperiod = lv_period.
+*        MODIFY lt_mfgorderactlplantgtldgrcost FROM ls_mfgorderactlplantgtldgrcost
+*        TRANSPORTING yearperiod WHERE orderid IS NOT INITIAL.
+*
+*        APPEND LINES OF lt_mfgorderactlplantgtldgrcost TO lt_data.
+*        CLEAR lt_mfgorderactlplantgtldgrcost.
+*
+*      ENDIF.
+*
+*      IF lt_data IS NOT INITIAL.
+*
+*        "matnr 范围
+*        DATA(lt_matnr) = lt_data.
+*        SORT lt_matnr BY producedproduct.
+*        DELETE ADJACENT DUPLICATES FROM lt_matnr COMPARING producedproduct.
+*
+*
+*        "成品信息
+*        SELECT
+*         a~product
+*         FROM i_product WITH PRIVILEGED ACCESS AS a
+*         JOIN i_productplantbasic WITH PRIVILEGED ACCESS AS b
+*         ON a~product = b~product
+*         FOR ALL ENTRIES IN @lt_matnr
+*         WHERE a~product =  @lt_matnr-producedproduct
+*         "AND plant IN @lr_plant
+*         AND producttype = 'ZFRT'
+*         INTO TABLE @DATA(lt_productplant).
+*        SORT lt_productplant BY product.
+*        DELETE ADJACENT DUPLICATES FROM lt_productplant COMPARING product.
+*
+*        "order 范围
+*        DATA(lt_order) = lt_data.
+*        SORT lt_order BY orderid.
+*        DELETE ADJACENT DUPLICATES FROM lt_order COMPARING orderid.
+*
+*        "从BOM list中提取产品的半成品信息
+**        SELECT
+**          assembly, "上层
+**          material "下层
+**        FROM i_mfgorderoperationcomponent
+**        WITH PRIVILEGED ACCESS
+**         FOR ALL ENTRIES IN @lt_order
+**        WHERE manufacturingorder = @lt_order-orderid
+**        AND plant IN @lr_plant
+**        AND companycode IN @lr_companycode
+**        AND materialisdirectlyproduced = 'X'
+**         INTO TABLE @lt_component.
+**        SORT lt_component BY material.
+*
+*
+*        DATA:lv_isassembly TYPE c VALUE 'X'.
+*
+*        "从会计科目表明细中提取主要材料和辅助材料的帐户和金额合计
+*        lv_path = |/API_BILL_OF_MATERIAL_SRV;v=0002/MaterialBOMItem?$filter=IsAssembly%20eq%20'{ lv_isassembly }'|.
+*        "Call API
+*        zzcl_common_utils=>request_api_v2(
 *          EXPORTING
-*            iv_path        = lv_path
+*           iv_path        = lv_path
 *            iv_method      = if_web_http_client=>get
 *            iv_format      = 'json'
+*            iv_select = 'BillOfMaterialComponent,Material'
 *          IMPORTING
-*            ev_status_code = DATA(lv_stat_code1)
-*            ev_response    = DATA(lv_resbody_api1) ).
+*            ev_status_code = DATA(lv_stat_code3)
+*            ev_response    = DATA(lv_resbody_api3) ).
 *        TRY.
 *            "JSON->ABAP
-*            "xco_cp_json=>data->from_string( lv_resbody_api1 )->apply( VALUE #(
-*            "   ( xco_cp_json=>transformation->boolean_to_abap_bool ) ) )->write_to( REF #( ls_res_api1 ) ).
-*            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
-*                     CHANGING  data = ls_res_api1 ).
+*            "  xco_cp_json=>data->from_string( lv_resbody_api3 )->apply( VALUE #(
+*            "      ( xco_cp_json=>transformation->underscore_to_camel_case ) ) )->write_to( REF #( ls_res_api3 ) ).
+*            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api3
+*               CHANGING  data = ls_res_api3 ).
+*            LOOP AT ls_res_api3-d-results INTO DATA(ls_result3).
 *
-*          CATCH cx_root INTO DATA(lx_root2) ##NO_HANDLER.
+*              "IF  ls_result3-plant IN lr_plant.
+*              CLEAR ls_component.
+*              "ls_component-assembly = ls_result3-billofmaterialcomponent.
+*              "ls_component-material = ls_result3-material.
+*              ls_component-assembly = ls_result3-material.
+*              ls_component-material = ls_result3-billofmaterialcomponent.
+*              APPEND ls_component TO lt_component.
+*
+*              " ENDIF.
+*            ENDLOOP.
+*            SORT lt_component BY material assembly.
+*            DELETE ADJACENT DUPLICATES FROM lt_component COMPARING material assembly.
+*
+*          CATCH cx_root INTO DATA(lx_root3) ##NO_HANDLER.
 *        ENDTRY.
-
-
-************************************************************************
-*    Actual cost START
-************************************************************************
-
-        DATA(lv_top) = 5000.
-        DATA(lv_skip) = 0.
-        DATA(lv_while) = abap_on.
-        DATA:lv_filter TYPE string.
-        DATA(lv_index_max) = 20.
-* first case start&end的year等于输入year
-        CLEAR ls_res_api_sum.
-        WHILE lv_while IS NOT INITIAL.
-          CLEAR lv_while.
-          IF sy-index > lv_index_max.
-            EXIT.
-          ENDIF.
-          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-          lv_filter = | ValidityStartFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalYear eq '{ lv_calendaryear }' and ValidityStartFiscalPeriod le '{ lv_calendarmonth_s }' and ValidityEndFiscalPeriod ge '{ lv_calendarmonth_s }'|.
-          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
-                                                       iv_method      = if_web_http_client=>get
-                                                       "iv_select      = lv_select
-                                                       iv_filter      = lv_filter
-                                                       iv_format      = 'json'
-                                             IMPORTING ev_status_code = DATA(lv_stat_code)
-                                                       ev_response    = DATA(lv_resbody_api) ).
-          IF lv_stat_code = 200.
-            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api WITH `count`.
-            CLEAR ls_res_api_temp.
-            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
-                               CHANGING  data = ls_res_api_temp ).
-
-            APPEND LINES OF ls_res_api_temp-value TO ls_res_api-value.
-            APPEND LINES OF ls_res_api_temp-value TO ls_res_api_sum-value.
-            IF lines( ls_res_api_sum-value ) < ls_res_api_temp-count.
-              lv_while = abap_on.
-              lv_top = ls_res_api_temp-count - lines( ls_res_api_temp-value ).
-              lv_skip = 5000 * sy-index.
-            ENDIF.
-          ENDIF.
-        ENDWHILE.
-
-* second case start的year小于输入的year，end的year等于输入year
-        CLEAR ls_res_api_sum.
-        lv_while = abap_on.
-                lv_skip = 0.
-        lv_top = 5000.
-        WHILE lv_while IS NOT INITIAL.
-          CLEAR lv_while.
-          IF sy-index > lv_index_max.
-            EXIT.
-          ENDIF.
-          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-         lv_filter = | ValidityStartFiscalYear lt '{ lv_calendaryear }' and ValidityEndFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalPeriod ge '{ lv_calendarmonth_s }'|.
-          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
-                                                       iv_method      = if_web_http_client=>get
-                                                       "iv_select      = lv_select
-                                                       iv_filter      = lv_filter
-                                                       iv_format      = 'json'
-                                             IMPORTING ev_status_code = lv_stat_code
-                                                       ev_response    = lv_resbody_api ).
-          IF lv_stat_code = 200.
-            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api WITH `count`.
-            CLEAR ls_res_api_temp.
-            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
-                               CHANGING  data = ls_res_api_temp ).
-
-            APPEND LINES OF ls_res_api_temp-value TO ls_res_api-value.
-            APPEND LINES OF ls_res_api_temp-value TO ls_res_api_sum-value.
-            IF lines( ls_res_api_sum-value ) < ls_res_api_temp-count.
-              lv_while = abap_on.
-              lv_top = ls_res_api_temp-count - lines( ls_res_api_temp-value ).
-              lv_skip = 5000 * sy-index.
-            ENDIF.
-          ENDIF.
-        ENDWHILE.
-* third case start的year等于输入的year，end的year大于输入year
-        CLEAR ls_res_api_sum.
-        lv_while = abap_on.
-                        lv_skip = 0.
-        lv_top = 5000.
-        WHILE lv_while IS NOT INITIAL.
-          CLEAR lv_while.
-          IF sy-index > lv_index_max.
-            EXIT.
-          ENDIF.
-          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-          lv_filter = | ValidityStartFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalYear gt '{ lv_calendaryear }' and ValidityStartFiscalPeriod le '{ lv_calendarmonth_s }'|.
-          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
-                                                       iv_method      = if_web_http_client=>get
-                                                       "iv_select      = lv_select
-                                                       iv_filter      = lv_filter
-                                                       iv_format      = 'json'
-                                             IMPORTING ev_status_code = lv_stat_code
-                                                       ev_response    = lv_resbody_api ).
-          IF lv_stat_code = 200.
-            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api WITH `count`.
-            CLEAR ls_res_api_temp.
-            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
-                               CHANGING  data = ls_res_api_temp ).
-
-            APPEND LINES OF ls_res_api_temp-value TO ls_res_api-value.
-            APPEND LINES OF ls_res_api_temp-value TO ls_res_api_sum-value.
-            IF lines( ls_res_api_sum-value ) < ls_res_api_temp-count.
-              lv_while = abap_on.
-              lv_top = ls_res_api_temp-count - lines( ls_res_api_temp-value ).
-              lv_skip = 5000 * sy-index.
-            ENDIF.
-          ENDIF.
-        ENDWHILE.
-* fourth case start的year小于输入的year end的year大于输入year
-        CLEAR ls_res_api_sum.
-        lv_while = abap_on.
-                        lv_skip = 0.
-        lv_top = 5000.
-        WHILE lv_while IS NOT INITIAL.
-          CLEAR lv_while.
-          IF sy-index > lv_index_max.
-            EXIT.
-          ENDIF.
-          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-          lv_filter = | ValidityStartFiscalYear lt '{ lv_calendaryear }' and ValidityEndFiscalYear gt '{ lv_calendaryear }'|.
-          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
-                                                       iv_method      = if_web_http_client=>get
-                                                       "iv_select      = lv_select
-                                                       iv_filter      = lv_filter
-                                                       iv_format      = 'json'
-                                             IMPORTING ev_status_code = lv_stat_code
-                                                       ev_response    = lv_resbody_api ).
-          IF lv_stat_code = 200.
-            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api WITH `count`.
-            CLEAR ls_res_api_temp.
-            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
-                               CHANGING  data = ls_res_api_temp ).
-
-            APPEND LINES OF ls_res_api_temp-value TO ls_res_api-value.
-            APPEND LINES OF ls_res_api_temp-value TO ls_res_api_sum-value.
-            IF lines( ls_res_api_sum-value ) < ls_res_api_temp-count.
-              lv_while = abap_on.
-              lv_top = ls_res_api_temp-count - lines( ls_res_api_temp-value ).
-              lv_skip = 5000 * sy-index.
-            ENDIF.
-          ENDIF.
-        ENDWHILE.
-************************************************************************
-*    Actual cost END
-************************************************************************
-************************************************************************
-*    Plan cost START
-************************************************************************
-
-
-* first case start&end的year等于输入year
-        CLEAR ls_res_api1_sum.
-        lv_while = abap_on.
-                        lv_skip = 0.
-        lv_top = 5000.
-        WHILE lv_while IS NOT INITIAL.
-          CLEAR lv_while.
-          IF sy-index > lv_index_max.
-            EXIT.
-          ENDIF.
-          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-          lv_filter = | ValidityStartFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalYear eq '{ lv_calendaryear }' and ValidityStartFiscalPeriod le '{ lv_calendarmonth_s }' and ValidityEndFiscalPeriod ge '{ lv_calendarmonth_s }'|.
-          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
-                                                       iv_method      = if_web_http_client=>get
-                                                       "iv_select      = lv_select
-                                                       iv_filter      = lv_filter
-                                                       iv_format      = 'json'
-                                             IMPORTING ev_status_code = DATA(lv_stat_code1)
-                                                       ev_response    = DATA(lv_resbody_api1) ).
-          IF lv_stat_code = 200.
-            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api1 WITH `count`.
-            CLEAR ls_res_api1_temp.
-            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
-                               CHANGING  data = ls_res_api1_temp ).
-
-            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1-value.
-            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1_sum-value.
-            IF lines( ls_res_api1_sum-value ) < ls_res_api1_temp-count.
-              lv_while = abap_on.
-              lv_top = ls_res_api1_temp-count - lines( ls_res_api1_temp-value ).
-              lv_skip = 5000 * sy-index.
-            ENDIF.
-          ENDIF.
-        ENDWHILE.
-* second case start的year小于输入的year，end的year等于输入year
-        CLEAR ls_res_api1_sum.
-        lv_while = abap_on.
-                        lv_skip = 0.
-        lv_top = 5000.
-        WHILE lv_while IS NOT INITIAL.
-          CLEAR lv_while.
-          IF sy-index > lv_index_max.
-            EXIT.
-          ENDIF.
-          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-          lv_filter = | ValidityStartFiscalYear lt '{ lv_calendaryear }' and ValidityEndFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalPeriod ge '{ lv_calendarmonth_s }'|.
-          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
-                                                       iv_method      = if_web_http_client=>get
-                                                       "iv_select      = lv_select
-                                                       iv_filter      = lv_filter
-                                                       iv_format      = 'json'
-                                             IMPORTING ev_status_code = lv_stat_code1
-                                                       ev_response    = lv_resbody_api1 ).
-          IF lv_stat_code = 200.
-            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api1 WITH `count`.
-            CLEAR ls_res_api1_temp.
-            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
-                               CHANGING  data = ls_res_api1_temp ).
-
-            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1-value.
-            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1_sum-value.
-            IF lines( ls_res_api1_sum-value ) < ls_res_api1_temp-count.
-              lv_while = abap_on.
-              lv_top = ls_res_api1_temp-count - lines( ls_res_api1_temp-value ).
-              lv_skip = 5000 * sy-index.
-            ENDIF.
-          ENDIF.
-        ENDWHILE.
-* third case start的year等于输入的year，end的year大于输入year
-        CLEAR ls_res_api1_sum.
-        lv_while = abap_on.
-                        lv_skip = 0.
-        lv_top = 5000.
-        WHILE lv_while IS NOT INITIAL.
-          CLEAR lv_while.
-          IF sy-index > lv_index_max.
-            EXIT.
-          ENDIF.
-          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-          lv_filter = | ValidityStartFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalYear gt '{ lv_calendaryear }' and ValidityStartFiscalPeriod le '{ lv_calendarmonth_s }'|.
-          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
-                                                       iv_method      = if_web_http_client=>get
-                                                       "iv_select      = lv_select
-                                                       iv_filter      = lv_filter
-                                                       iv_format      = 'json'
-                                             IMPORTING ev_status_code = lv_stat_code1
-                                                       ev_response    = lv_resbody_api1 ).
-          IF lv_stat_code = 200.
-            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api1 WITH `count`.
-            CLEAR ls_res_api1_temp.
-            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
-                               CHANGING  data = ls_res_api1_temp ).
-
-            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1-value.
-            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1_sum-value.
-            IF lines( ls_res_api1_sum-value ) < ls_res_api1_temp-count.
-              lv_while = abap_on.
-              lv_top = ls_res_api1_temp-count - lines( ls_res_api1_temp-value ).
-              lv_skip = 5000 * sy-index.
-            ENDIF.
-          ENDIF.
-        ENDWHILE.
-* fourth case start的year小于输入的year end的year大于输入year
-        CLEAR ls_res_api1_sum.
-        lv_while = abap_on.
-                        lv_skip = 0.
-        lv_top = 5000.
-        WHILE lv_while IS NOT INITIAL.
-          CLEAR lv_while.
-          IF sy-index > lv_index_max.
-            EXIT.
-          ENDIF.
-          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
-          lv_filter = | ValidityStartFiscalYear lt '{ lv_calendaryear }' and ValidityEndFiscalYear gt '{ lv_calendaryear }'|.
-          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
-                                                       iv_method      = if_web_http_client=>get
-                                                       "iv_select      = lv_select
-                                                       iv_filter      = lv_filter
-                                                       iv_format      = 'json'
-                                             IMPORTING ev_status_code = lv_stat_code1
-                                                       ev_response    = lv_resbody_api1 ).
-          IF lv_stat_code = 200.
-            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api1 WITH `count`.
-            CLEAR ls_res_api1_temp.
-            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
-                               CHANGING  data = ls_res_api1_temp ).
-
-            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1-value.
-            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1_sum-value.
-            IF lines( ls_res_api1_sum-value ) < ls_res_api1_temp-count.
-              lv_while = abap_on.
-              lv_top = ls_res_api1_temp-count - lines( ls_res_api1_temp-value ).
-              lv_skip = 5000 * sy-index.
-            ENDIF.
-          ENDIF.
-        ENDWHILE.
-************************************************************************
-*   Plan cost END
-************************************************************************
-
-
-        "CostCenter 范围
-        DATA(lt_costc) = lt_data.
-        SORT lt_costc BY partnercostcenter.
-        DELETE ADJACENT DUPLICATES FROM lt_costc COMPARING partnercostcenter.
-        IF lt_costc IS NOT INITIAL.
-          "提取成本中心工序信息 提取成本中心文本
-          SELECT
-          a~costcenter,
-          department,
-          costcenterdescription
-          FROM
-          i_costcenter WITH PRIVILEGED ACCESS AS a
-          JOIN i_costcentertext WITH PRIVILEGED ACCESS AS b
-          ON a~costcenter = b~costcenter
-          FOR ALL ENTRIES IN @lt_costc
-          WHERE a~costcenter = @lt_costc-partnercostcenter
-          AND b~language = 'J'
-          "and ControllingArea = ???
-          "and ValidityEndDate = ???
-          INTO TABLE @DATA(lt_costcenter).
-          SORT lt_costcenter BY costcenter.
-        ENDIF.
-        "提取活动类型文本
-        SELECT
-        costctractivitytype,
-        costctractivitytypename
-        FROM
-        i_costcenteractivitytypetext
-        WITH PRIVILEGED ACCESS
-        WHERE language = 'J'
-        "and ControllingArea = ???
-        "and ValidityEndDate = ???
-        INTO TABLE @DATA(lt_costcenteractivitytypetext).
-        SORT lt_costcenteractivitytypetext BY costctractivitytype.
-        IF lt_productplant IS NOT INITIAL.
-          "品目マスタから品目テキストを抽出
-          SELECT
-          product,
-          productdescription
-          FROM
-          i_productdescription
-          WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_productplant
-          WHERE product = @lt_productplant-product
-          AND language  = 'J'
-          INTO TABLE @DATA(lt_productdescription).
-          SORT lt_productdescription BY product.
-        ENDIF.
-        IF lt_productplant IS NOT INITIAL.
+*
+*
+*        DATA:lv_next TYPE i_mfgorderactlplantgtldgrcost-producedproduct.
+*
+*        LOOP AT lt_component INTO ls_component.
+*          DO 20 TIMES.
+*            IF lv_next IS INITIAL.
+*              lv_next = ls_component-assembly.
+*            ENDIF.
+*            READ TABLE lt_productplant INTO DATA(ls_productplant) WITH KEY product = lv_next BINARY SEARCH.
+*            IF sy-subrc = 0.
+*              "当前就是顶层物料
+*              ls_component-zfrtproduct = lv_next.
+*              MODIFY lt_component FROM ls_component TRANSPORTING zfrtproduct.
+*              CLEAR lv_next.
+*              EXIT.
+*            ELSE.
+*              "不是顶层物料继续向下找
+*              READ TABLE lt_component INTO DATA(ls_component_next) WITH KEY material = lv_next BINARY SEARCH.
+*              IF sy-subrc = 0.
+*                lv_next = ls_component_next-assembly.
+*              ENDIF.
+*            ENDIF.
+*          ENDDO.
+*          CLEAR lv_next.
+*        ENDLOOP.
+*
+*        "抽取当月完成品工单的实际入库数量（ 此时包含半成品 ）
+*        IF lt_order IS NOT INITIAL.
+*          SELECT
+*            manufacturingorder,
+*            product,
+*            mfgorderconfirmedyieldqty,
+*            productionunit,
+*            productionsupervisor
+*          FROM i_manufacturingorder
+*          WITH PRIVILEGED ACCESS
+*           FOR ALL ENTRIES IN @lt_order
+*          WHERE manufacturingorder = @lt_order-orderid
+*          "AND productionplant IN @lr_plant
+*          AND companycode IN @lr_companycode
+*           INTO TABLE @DATA(lt_manufacturingorder).
+*          SORT lt_manufacturingorder BY manufacturingorder.
+*          LOOP AT lt_manufacturingorder INTO DATA(ls_manufacturingorder).
+*            "READ TABLE lt_productplant TRANSPORTING NO FIELDS WITH KEY product = ls_manufacturingorder-product BINARY SEARCH.
+*            "IF sy-subrc = 0.
+*            CLEAR ls_sum_qty.
+*            ls_sum_qty-product = ls_manufacturingorder-product.
+*            ls_sum_qty-mfgorderconfirmedyieldqty = ls_manufacturingorder-mfgorderconfirmedyieldqty.
+*            ls_sum_qty-productionsupervisor = ls_manufacturingorder-productionsupervisor.
+*            COLLECT ls_sum_qty INTO lt_sum_qty.
+*            "ENDIF.
+*          ENDLOOP.
+*          SORT lt_sum_qty BY product.
+*        ENDIF.
+*        "提取月末时的实际工资率和计划工资率
+*        lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$filter=ValidityStartFiscalYear%20eq%20'{ lv_calendaryear }'%20and%20ValidityStartFiscalPeriod%20eq%20'{ lv_calendarmonth_s }'&$top=5000|.
+*        "Call API
+**        zzcl_common_utils=>request_api_v4(
+**          EXPORTING
+**            iv_path        = lv_path
+**            iv_method      = if_web_http_client=>get
+**          IMPORTING
+**            ev_status_code = DATA(lv_stat_code)
+**            ev_response    = DATA(lv_resbody_api) ).
+**        TRY.
+**            "JSON->ABAP
+**            "xco_cp_json=>data->from_string( lv_resbody_api )->apply( VALUE #(
+**            "   ( xco_cp_json=>transformation->boolean_to_abap_bool ) ) )->write_to( REF #( ls_res_api ) ).
+**            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+**                               CHANGING  data = ls_res_api ).
+**
+**          CATCH cx_root INTO DATA(lx_root1) ##NO_HANDLER.
+**        ENDTRY.
+*
+*        lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$filter=ValidityStartFiscalYear%20eq%20'{ lv_calendaryear }'%20and%20ValidityStartFiscalPeriod%20eq%20'{ lv_calendarmonth_s }'&$top=5000|.
+*        "Call API
+**        zzcl_common_utils=>request_api_v4(
+**          EXPORTING
+**            iv_path        = lv_path
+**            iv_method      = if_web_http_client=>get
+**            iv_format      = 'json'
+**          IMPORTING
+**            ev_status_code = DATA(lv_stat_code1)
+**            ev_response    = DATA(lv_resbody_api1) ).
+**        TRY.
+**            "JSON->ABAP
+**            "xco_cp_json=>data->from_string( lv_resbody_api1 )->apply( VALUE #(
+**            "   ( xco_cp_json=>transformation->boolean_to_abap_bool ) ) )->write_to( REF #( ls_res_api1 ) ).
+**            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
+**                     CHANGING  data = ls_res_api1 ).
+**
+**          CATCH cx_root INTO DATA(lx_root2) ##NO_HANDLER.
+**        ENDTRY.
+*
+*
+*************************************************************************
+**    Actual cost START
+*************************************************************************
+*
+*        DATA(lv_top) = 5000.
+*        DATA(lv_skip) = 0.
+*        DATA(lv_while) = abap_on.
+*        DATA:lv_filter TYPE string.
+*        DATA(lv_index_max) = 20.
+** first case start&end的year等于输入year
+*        CLEAR ls_res_api_sum.
+*        WHILE lv_while IS NOT INITIAL.
+*          CLEAR lv_while.
+*          IF sy-index > lv_index_max.
+*            EXIT.
+*          ENDIF.
+*          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+*          lv_filter = | ValidityStartFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalYear eq '{ lv_calendaryear }' and ValidityStartFiscalPeriod le '{ lv_calendarmonth_s }' and ValidityEndFiscalPeriod ge '{ lv_calendarmonth_s }'|.
+*          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+*                                                       iv_method      = if_web_http_client=>get
+*                                                       "iv_select      = lv_select
+*                                                       iv_filter      = lv_filter
+*                                                       iv_format      = 'json'
+*                                             IMPORTING ev_status_code = DATA(lv_stat_code)
+*                                                       ev_response    = DATA(lv_resbody_api) ).
+*          IF lv_stat_code = 200.
+*            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api WITH `count`.
+*            CLEAR ls_res_api_temp.
+*            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+*                               CHANGING  data = ls_res_api_temp ).
+*
+*            APPEND LINES OF ls_res_api_temp-value TO ls_res_api-value.
+*            APPEND LINES OF ls_res_api_temp-value TO ls_res_api_sum-value.
+*            IF lines( ls_res_api_sum-value ) < ls_res_api_temp-count.
+*              lv_while = abap_on.
+*              lv_top = ls_res_api_temp-count - lines( ls_res_api_temp-value ).
+*              lv_skip = 5000 * sy-index.
+*            ENDIF.
+*          ENDIF.
+*        ENDWHILE.
+*
+** second case start的year小于输入的year，end的year等于输入year
+*        CLEAR ls_res_api_sum.
+*        lv_while = abap_on.
+*                lv_skip = 0.
+*        lv_top = 5000.
+*        WHILE lv_while IS NOT INITIAL.
+*          CLEAR lv_while.
+*          IF sy-index > lv_index_max.
+*            EXIT.
+*          ENDIF.
+*          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+*         lv_filter = | ValidityStartFiscalYear lt '{ lv_calendaryear }' and ValidityEndFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalPeriod ge '{ lv_calendarmonth_s }'|.
+*          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+*                                                       iv_method      = if_web_http_client=>get
+*                                                       "iv_select      = lv_select
+*                                                       iv_filter      = lv_filter
+*                                                       iv_format      = 'json'
+*                                             IMPORTING ev_status_code = lv_stat_code
+*                                                       ev_response    = lv_resbody_api ).
+*          IF lv_stat_code = 200.
+*            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api WITH `count`.
+*            CLEAR ls_res_api_temp.
+*            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+*                               CHANGING  data = ls_res_api_temp ).
+*
+*            APPEND LINES OF ls_res_api_temp-value TO ls_res_api-value.
+*            APPEND LINES OF ls_res_api_temp-value TO ls_res_api_sum-value.
+*            IF lines( ls_res_api_sum-value ) < ls_res_api_temp-count.
+*              lv_while = abap_on.
+*              lv_top = ls_res_api_temp-count - lines( ls_res_api_temp-value ).
+*              lv_skip = 5000 * sy-index.
+*            ENDIF.
+*          ENDIF.
+*        ENDWHILE.
+** third case start的year等于输入的year，end的year大于输入year
+*        CLEAR ls_res_api_sum.
+*        lv_while = abap_on.
+*                        lv_skip = 0.
+*        lv_top = 5000.
+*        WHILE lv_while IS NOT INITIAL.
+*          CLEAR lv_while.
+*          IF sy-index > lv_index_max.
+*            EXIT.
+*          ENDIF.
+*          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+*          lv_filter = | ValidityStartFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalYear gt '{ lv_calendaryear }' and ValidityStartFiscalPeriod le '{ lv_calendarmonth_s }'|.
+*          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+*                                                       iv_method      = if_web_http_client=>get
+*                                                       "iv_select      = lv_select
+*                                                       iv_filter      = lv_filter
+*                                                       iv_format      = 'json'
+*                                             IMPORTING ev_status_code = lv_stat_code
+*                                                       ev_response    = lv_resbody_api ).
+*          IF lv_stat_code = 200.
+*            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api WITH `count`.
+*            CLEAR ls_res_api_temp.
+*            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+*                               CHANGING  data = ls_res_api_temp ).
+*
+*            APPEND LINES OF ls_res_api_temp-value TO ls_res_api-value.
+*            APPEND LINES OF ls_res_api_temp-value TO ls_res_api_sum-value.
+*            IF lines( ls_res_api_sum-value ) < ls_res_api_temp-count.
+*              lv_while = abap_on.
+*              lv_top = ls_res_api_temp-count - lines( ls_res_api_temp-value ).
+*              lv_skip = 5000 * sy-index.
+*            ENDIF.
+*          ENDIF.
+*        ENDWHILE.
+** fourth case start的year小于输入的year end的year大于输入year
+*        CLEAR ls_res_api_sum.
+*        lv_while = abap_on.
+*                        lv_skip = 0.
+*        lv_top = 5000.
+*        WHILE lv_while IS NOT INITIAL.
+*          CLEAR lv_while.
+*          IF sy-index > lv_index_max.
+*            EXIT.
+*          ENDIF.
+*          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/ActualCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+*          lv_filter = | ValidityStartFiscalYear lt '{ lv_calendaryear }' and ValidityEndFiscalYear gt '{ lv_calendaryear }'|.
+*          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+*                                                       iv_method      = if_web_http_client=>get
+*                                                       "iv_select      = lv_select
+*                                                       iv_filter      = lv_filter
+*                                                       iv_format      = 'json'
+*                                             IMPORTING ev_status_code = lv_stat_code
+*                                                       ev_response    = lv_resbody_api ).
+*          IF lv_stat_code = 200.
+*            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api WITH `count`.
+*            CLEAR ls_res_api_temp.
+*            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api
+*                               CHANGING  data = ls_res_api_temp ).
+*
+*            APPEND LINES OF ls_res_api_temp-value TO ls_res_api-value.
+*            APPEND LINES OF ls_res_api_temp-value TO ls_res_api_sum-value.
+*            IF lines( ls_res_api_sum-value ) < ls_res_api_temp-count.
+*              lv_while = abap_on.
+*              lv_top = ls_res_api_temp-count - lines( ls_res_api_temp-value ).
+*              lv_skip = 5000 * sy-index.
+*            ENDIF.
+*          ENDIF.
+*        ENDWHILE.
+*************************************************************************
+**    Actual cost END
+*************************************************************************
+*************************************************************************
+**    Plan cost START
+*************************************************************************
+*
+*
+** first case start&end的year等于输入year
+*        CLEAR ls_res_api1_sum.
+*        lv_while = abap_on.
+*                        lv_skip = 0.
+*        lv_top = 5000.
+*        WHILE lv_while IS NOT INITIAL.
+*          CLEAR lv_while.
+*          IF sy-index > lv_index_max.
+*            EXIT.
+*          ENDIF.
+*          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+*          lv_filter = | ValidityStartFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalYear eq '{ lv_calendaryear }' and ValidityStartFiscalPeriod le '{ lv_calendarmonth_s }' and ValidityEndFiscalPeriod ge '{ lv_calendarmonth_s }'|.
+*          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+*                                                       iv_method      = if_web_http_client=>get
+*                                                       "iv_select      = lv_select
+*                                                       iv_filter      = lv_filter
+*                                                       iv_format      = 'json'
+*                                             IMPORTING ev_status_code = DATA(lv_stat_code1)
+*                                                       ev_response    = DATA(lv_resbody_api1) ).
+*          IF lv_stat_code = 200.
+*            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api1 WITH `count`.
+*            CLEAR ls_res_api1_temp.
+*            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
+*                               CHANGING  data = ls_res_api1_temp ).
+*
+*            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1-value.
+*            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1_sum-value.
+*            IF lines( ls_res_api1_sum-value ) < ls_res_api1_temp-count.
+*              lv_while = abap_on.
+*              lv_top = ls_res_api1_temp-count - lines( ls_res_api1_temp-value ).
+*              lv_skip = 5000 * sy-index.
+*            ENDIF.
+*          ENDIF.
+*        ENDWHILE.
+** second case start的year小于输入的year，end的year等于输入year
+*        CLEAR ls_res_api1_sum.
+*        lv_while = abap_on.
+*                        lv_skip = 0.
+*        lv_top = 5000.
+*        WHILE lv_while IS NOT INITIAL.
+*          CLEAR lv_while.
+*          IF sy-index > lv_index_max.
+*            EXIT.
+*          ENDIF.
+*          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+*          lv_filter = | ValidityStartFiscalYear lt '{ lv_calendaryear }' and ValidityEndFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalPeriod ge '{ lv_calendarmonth_s }'|.
+*          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+*                                                       iv_method      = if_web_http_client=>get
+*                                                       "iv_select      = lv_select
+*                                                       iv_filter      = lv_filter
+*                                                       iv_format      = 'json'
+*                                             IMPORTING ev_status_code = lv_stat_code1
+*                                                       ev_response    = lv_resbody_api1 ).
+*          IF lv_stat_code = 200.
+*            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api1 WITH `count`.
+*            CLEAR ls_res_api1_temp.
+*            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
+*                               CHANGING  data = ls_res_api1_temp ).
+*
+*            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1-value.
+*            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1_sum-value.
+*            IF lines( ls_res_api1_sum-value ) < ls_res_api1_temp-count.
+*              lv_while = abap_on.
+*              lv_top = ls_res_api1_temp-count - lines( ls_res_api1_temp-value ).
+*              lv_skip = 5000 * sy-index.
+*            ENDIF.
+*          ENDIF.
+*        ENDWHILE.
+** third case start的year等于输入的year，end的year大于输入year
+*        CLEAR ls_res_api1_sum.
+*        lv_while = abap_on.
+*                        lv_skip = 0.
+*        lv_top = 5000.
+*        WHILE lv_while IS NOT INITIAL.
+*          CLEAR lv_while.
+*          IF sy-index > lv_index_max.
+*            EXIT.
+*          ENDIF.
+*          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+*          lv_filter = | ValidityStartFiscalYear eq '{ lv_calendaryear }' and ValidityEndFiscalYear gt '{ lv_calendaryear }' and ValidityStartFiscalPeriod le '{ lv_calendarmonth_s }'|.
+*          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+*                                                       iv_method      = if_web_http_client=>get
+*                                                       "iv_select      = lv_select
+*                                                       iv_filter      = lv_filter
+*                                                       iv_format      = 'json'
+*                                             IMPORTING ev_status_code = lv_stat_code1
+*                                                       ev_response    = lv_resbody_api1 ).
+*          IF lv_stat_code = 200.
+*            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api1 WITH `count`.
+*            CLEAR ls_res_api1_temp.
+*            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
+*                               CHANGING  data = ls_res_api1_temp ).
+*
+*            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1-value.
+*            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1_sum-value.
+*            IF lines( ls_res_api1_sum-value ) < ls_res_api1_temp-count.
+*              lv_while = abap_on.
+*              lv_top = ls_res_api1_temp-count - lines( ls_res_api1_temp-value ).
+*              lv_skip = 5000 * sy-index.
+*            ENDIF.
+*          ENDIF.
+*        ENDWHILE.
+** fourth case start的year小于输入的year end的year大于输入year
+*        CLEAR ls_res_api1_sum.
+*        lv_while = abap_on.
+*                        lv_skip = 0.
+*        lv_top = 5000.
+*        WHILE lv_while IS NOT INITIAL.
+*          CLEAR lv_while.
+*          IF sy-index > lv_index_max.
+*            EXIT.
+*          ENDIF.
+*          lv_path = |/api_cost_rate/srvd_a2x/sap/costrate/0001/PlanCostRate?$count=true&$top={ lv_top }&$skip={ lv_skip }&sap-language={ zzcl_common_utils=>get_current_language(  ) }|.
+*          lv_filter = | ValidityStartFiscalYear lt '{ lv_calendaryear }' and ValidityEndFiscalYear gt '{ lv_calendaryear }'|.
+*          zzcl_common_utils=>request_api_v4( EXPORTING iv_path        = lv_path
+*                                                       iv_method      = if_web_http_client=>get
+*                                                       "iv_select      = lv_select
+*                                                       iv_filter      = lv_filter
+*                                                       iv_format      = 'json'
+*                                             IMPORTING ev_status_code = lv_stat_code1
+*                                                       ev_response    = lv_resbody_api1 ).
+*          IF lv_stat_code = 200.
+*            REPLACE ALL OCCURRENCES OF `@odata.count` IN lv_resbody_api1 WITH `count`.
+*            CLEAR ls_res_api1_temp.
+*            /ui2/cl_json=>deserialize( EXPORTING json = lv_resbody_api1
+*                               CHANGING  data = ls_res_api1_temp ).
+*
+*            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1-value.
+*            APPEND LINES OF ls_res_api1_temp-value TO ls_res_api1_sum-value.
+*            IF lines( ls_res_api1_sum-value ) < ls_res_api1_temp-count.
+*              lv_while = abap_on.
+*              lv_top = ls_res_api1_temp-count - lines( ls_res_api1_temp-value ).
+*              lv_skip = 5000 * sy-index.
+*            ENDIF.
+*          ENDIF.
+*        ENDWHILE.
+*************************************************************************
+**   Plan cost END
+*************************************************************************
+*
+*
+*        "CostCenter 范围
+*        DATA(lt_costc) = lt_data.
+*        SORT lt_costc BY partnercostcenter.
+*        DELETE ADJACENT DUPLICATES FROM lt_costc COMPARING partnercostcenter.
+*        IF lt_costc IS NOT INITIAL.
+*          "提取成本中心工序信息 提取成本中心文本
+*          SELECT
+*          a~costcenter,
+*          department,
+*          costcenterdescription
+*          FROM
+*          i_costcenter WITH PRIVILEGED ACCESS AS a
+*          JOIN i_costcentertext WITH PRIVILEGED ACCESS AS b
+*          ON a~costcenter = b~costcenter
+*          FOR ALL ENTRIES IN @lt_costc
+*          WHERE a~costcenter = @lt_costc-partnercostcenter
+*          AND b~language = 'J'
+*          "and ControllingArea = ???
+*          "and ValidityEndDate = ???
+*          INTO TABLE @DATA(lt_costcenter).
+*          SORT lt_costcenter BY costcenter.
+*        ENDIF.
+*        "提取活动类型文本
+*        SELECT
+*        costctractivitytype,
+*        costctractivitytypename
+*        FROM
+*        i_costcenteractivitytypetext
+*        WITH PRIVILEGED ACCESS
+*        WHERE language = 'J'
+*        "and ControllingArea = ???
+*        "and ValidityEndDate = ???
+*        INTO TABLE @DATA(lt_costcenteractivitytypetext).
+*        SORT lt_costcenteractivitytypetext BY costctractivitytype.
+*        IF lt_productplant IS NOT INITIAL.
+*          "品目マスタから品目テキストを抽出
+*          SELECT
+*          product,
+*          productdescription
+*          FROM
+*          i_productdescription
+*          WITH PRIVILEGED ACCESS
+*          FOR ALL ENTRIES IN @lt_productplant
+*          WHERE product = @lt_productplant-product
+*          AND language  = 'J'
+*          INTO TABLE @DATA(lt_productdescription).
+*          SORT lt_productdescription BY product.
+*        ENDIF.
+*        IF lt_productplant IS NOT INITIAL.
+**          "品目マスタからMRP管理者を抽出
+**          SELECT
+**          product,
+**          plant,
+**          mrpresponsible
+**          FROM i_productplantmrp
+**          WITH PRIVILEGED ACCESS
+**          FOR ALL ENTRIES IN @lt_productplant
+**          WHERE product = @lt_productplant-product
+**          "and MRPArea = ???
+**          INTO TABLE @DATA(lt_productplantmrp).
+**          SORT lt_productplantmrp BY product plant.
+*
 *          "品目マスタからMRP管理者を抽出
 *          SELECT
 *          product,
 *          plant,
 *          mrpresponsible
-*          FROM i_productplantmrp
+*          FROM i_productplantbasic
 *          WITH PRIVILEGED ACCESS
 *          FOR ALL ENTRIES IN @lt_productplant
 *          WHERE product = @lt_productplant-product
 *          "and MRPArea = ???
 *          INTO TABLE @DATA(lt_productplantmrp).
 *          SORT lt_productplantmrp BY product plant.
-
-          "品目マスタからMRP管理者を抽出
-          SELECT
-          product,
-          plant,
-          mrpresponsible
-          FROM i_productplantbasic
-          WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_productplant
-          WHERE product = @lt_productplant-product
-          "and MRPArea = ???
-          INTO TABLE @DATA(lt_productplantmrp).
-          SORT lt_productplantmrp BY product plant.
-
-        ENDIF.
-        "BPマスタから得意先のBPコードとBPテキストを抽出
-        SELECT
-        businesspartner,
-        businesspartnername,
-        searchterm2
-        FROM i_businesspartner
-        WITH PRIVILEGED ACCESS
-        WHERE searchterm2 IS NOT INITIAL
-        INTO TABLE @DATA(lt_businesspartner).
-        SORT lt_businesspartner BY searchterm2.
-        IF lt_productplant IS NOT INITIAL.
-          "品目マスタから製品が属される利益センタを抽出
+*
+*        ENDIF.
+*        "BPマスタから得意先のBPコードとBPテキストを抽出
+*        SELECT
+*        businesspartner,
+*        businesspartnername,
+*        searchterm2
+*        FROM i_businesspartner
+*        WITH PRIVILEGED ACCESS
+*        WHERE searchterm2 IS NOT INITIAL
+*        INTO TABLE @DATA(lt_businesspartner).
+*        SORT lt_businesspartner BY searchterm2.
+*        IF lt_productplant IS NOT INITIAL.
+*          "品目マスタから製品が属される利益センタを抽出
+**          SELECT
+**          plant,
+**          product,
+**          profitcenter
+**          FROM i_profitcentertoproduct
+**          WITH PRIVILEGED ACCESS
+**          FOR ALL ENTRIES IN @lt_productplant
+**          WHERE product = @lt_productplant-product
+**          "AND ValidityStartDate  = ????
+**          INTO TABLE @DATA(lt_profitcentertoproduct).
+**          SORT lt_profitcentertoproduct BY plant product.
+*
+*          "品目マスタから製品が属される利益センタを抽出
 *          SELECT
 *          plant,
 *          product,
 *          profitcenter
-*          FROM i_profitcentertoproduct
+*          FROM i_productplantbasic
 *          WITH PRIVILEGED ACCESS
 *          FOR ALL ENTRIES IN @lt_productplant
 *          WHERE product = @lt_productplant-product
 *          "AND ValidityStartDate  = ????
 *          INTO TABLE @DATA(lt_profitcentertoproduct).
 *          SORT lt_profitcentertoproduct BY plant product.
-
-          "品目マスタから製品が属される利益センタを抽出
-          SELECT
-          plant,
-          product,
-          profitcenter
-          FROM i_productplantbasic
-          WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_productplant
-          WHERE product = @lt_productplant-product
-          "AND ValidityStartDate  = ????
-          INTO TABLE @DATA(lt_profitcentertoproduct).
-          SORT lt_profitcentertoproduct BY plant product.
-
-        ENDIF.
-        IF lt_profitcentertoproduct IS NOT INITIAL.
-          "品目マスタから製品が属される利益センタを抽出
-          SELECT
-          profitcenter,
-          profitcentername AS profitcenterlongname
-          FROM i_profitcentertext
-          WITH PRIVILEGED ACCESS
-          FOR ALL ENTRIES IN @lt_profitcentertoproduct
-          WHERE profitcenter = @lt_profitcentertoproduct-profitcenter
-          AND language = 'J'
-          "AND ControllingArea  = ????
-          "AND ValidityEndDate  = ????
-          INTO TABLE @DATA(lt_profitcentertext).
-          SORT lt_profitcentertext BY profitcenter.
-        ENDIF.
-        IF lt_data IS NOT INITIAL.
-          SELECT companycode, companycodename
-          FROM i_companycode
-          WITH PRIVILEGED ACCESS
-          WHERE language = 'J'
-          INTO TABLE @DATA(lt_companycode).
-          SORT lt_companycode BY companycode.
-
-          SELECT plant, plantname
-           FROM i_plant
-           WITH PRIVILEGED ACCESS
-           WHERE language = 'J'
-           INTO TABLE @DATA(lt_plant).
-          SORT lt_plant BY plant.
-        ENDIF.
-
-        LOOP AT lt_data INTO DATA(ls_data).
-
-          CLEAR ls_mfgorder_001.
-
-          "'年月' YearMonth
-          "'会社コード' Companycode
-          "'プラント' Plant
-          "'製品' Product
-          "'得意先' BusinessPartner
-          "'利益センタ' ProfitCenter
-          "'原価センタ' CostCenter
-          "'活動タイプ' ActivityType
-          "'会社コードテキスト' CompanycodeText
-          "'プラントテキスト' PlantText
-          "'製品テキスト' ProductDescription
-          "'入庫数量' MfgOrderConfirmedYieldQty
-          "'得意先テキスト' BusinessPartnerName
-          "'利益センタテキスト' ProfitCenterLongName
-          "'原価センタテキスト' CostCenterDescription
-          "'活動タイプテキスト' CostCtrActivityTypeName
-          "'部署（工程）' Department
-          "'計画工数' PlanQtyInCostSourceUnit
-          "'実績工数' ActualQtyInCostSourceUnit
-          "'工数単位' UnitOfMeasure
-          "'計画賃率' PlanCostRate
-          "'実際賃率' ActualCostRate
-          "'加工費実績合計' TotalActualCost
-          "'加工費実績（1単位）' ActualCost1PC
-          ls_mfgorder_001-calendaryear = |{ lv_calendaryear ALPHA = IN }|."'年月'
-          ls_mfgorder_001-calendarmonth = |{ lv_calendarmonth ALPHA = IN }|."'年月'
-          ls_mfgorder_001-yearmonth = ls_data-yearperiod."'年月'
-          ls_mfgorder_001-companycode = ls_data-companycode."'会社コード'
-          ls_mfgorder_001-plant = ls_data-plant."'プラント'
-          ls_mfgorder_001-costcenter = ls_data-partnercostcenter. "'原価センタ'
-          ls_mfgorder_001-activitytype = ls_data-partnercostctractivitytype."'活動タイプ'
-          ls_mfgorder_001-planqtyincostsourceunit   = ls_data-planqtyincostsourceunit. "'計画工数'
-          ls_mfgorder_001-actualqtyincostsourceunit = ls_data-actualqtyincostsourceunit."'実績工数'
-          "ls_mfgorder_001-unitofmeasure             = ls_data-unitofmeasure."'工数単位'
-
-          "'製品'
-          READ TABLE lt_productplant INTO ls_productplant WITH KEY product = ls_data-producedproduct BINARY SEARCH.
-          IF sy-subrc = 0.
-            "当前就是顶层物料
-            ls_mfgorder_001-product = ls_data-producedproduct."'製品'
-          ELSE.
-            "不是顶层物料找关系
-            READ TABLE lt_component INTO ls_component_next WITH KEY material = ls_data-producedproduct BINARY SEARCH.
-            IF sy-subrc = 0.
-              ls_mfgorder_001-product = ls_component_next-zfrtproduct."'製品'
-            ENDIF.
-          ENDIF.
-
-          "'得意先' "'得意先テキスト'
-          READ TABLE lt_productplantmrp INTO DATA(ls_productplantmrp) WITH KEY product = ls_mfgorder_001-product plant = ls_data-plant BINARY SEARCH.
-          IF sy-subrc = 0.
-            DATA:lv_str2(2) TYPE c.
-            DATA:lv_i TYPE i.
-            CLEAR lv_str2.
-            lv_i = strlen( ls_productplantmrp-mrpresponsible ).
-            lv_i = lv_i - 2.
-            IF lv_i >= 0.
-              lv_str2 = ls_productplantmrp-mrpresponsible+lv_i(2).
-              READ TABLE lt_businesspartner INTO DATA(ls_businesspartner) WITH KEY searchterm2 = lv_str2 BINARY SEARCH.
-              IF sy-subrc = 0.
-
-                "'得意先'
-                ls_mfgorder_001-businesspartner = ls_businesspartner-businesspartner.
-                "'得意先テキスト'
-                ls_mfgorder_001-businesspartnername = ls_businesspartner-businesspartnername.
-              ENDIF.
-            ENDIF.
-          ENDIF.
-
-          "'利益センタ'
-          READ TABLE lt_profitcentertoproduct INTO DATA(ls_profitcentertoproduct) WITH KEY plant = ls_data-plant product = ls_mfgorder_001-product BINARY SEARCH.
-          IF sy-subrc = 0.
-            ls_mfgorder_001-profitcenter = ls_profitcentertoproduct-profitcenter."'利益センタ'
-            "'利益センタテキスト'
-            READ TABLE lt_profitcentertext INTO DATA(ls_profitcentertext) WITH KEY profitcenter = ls_profitcentertoproduct-profitcenter BINARY SEARCH.
-            IF sy-subrc = 0.
-              ls_mfgorder_001-profitcenterlongname = ls_profitcentertext-profitcenterlongname."'利益センタテキスト'
-            ENDIF.
-          ENDIF.
-          "'会社コードテキスト'
-          READ TABLE lt_companycode INTO DATA(ls_companycode) WITH KEY companycode = ls_data-companycode BINARY SEARCH.
-          IF sy-subrc = 0.
-            ls_mfgorder_001-companycodetext = ls_companycode-companycodename."'会社コードテキスト'
-          ENDIF.
-          "'プラントテキスト'
-          READ TABLE lt_plant INTO DATA(ls_plant) WITH KEY plant = ls_data-plant BINARY SEARCH.
-          IF sy-subrc = 0.
-            ls_mfgorder_001-planttext = ls_plant-plantname."'プラントテキスト'
-          ENDIF.
-          "'製品テキスト'
-          READ TABLE lt_productdescription INTO DATA(ls_productdescription) WITH KEY product = ls_mfgorder_001-product BINARY SEARCH.
-          IF sy-subrc = 0.
-            ls_mfgorder_001-productdescription = ls_productdescription-productdescription."'製品テキスト'
-          ENDIF.
-
-          "'製品テキスト'
-          "用的是制品物料
-*          READ TABLE lt_sum_qty INTO ls_sum_qty WITH KEY product = ls_mfgorder_001-product BINARY SEARCH.
+*
+*        ENDIF.
+*        IF lt_profitcentertoproduct IS NOT INITIAL.
+*          "品目マスタから製品が属される利益センタを抽出
+*          SELECT
+*          profitcenter,
+*          profitcentername AS profitcenterlongname
+*          FROM i_profitcentertext
+*          WITH PRIVILEGED ACCESS
+*          FOR ALL ENTRIES IN @lt_profitcentertoproduct
+*          WHERE profitcenter = @lt_profitcentertoproduct-profitcenter
+*          AND language = 'J'
+*          "AND ControllingArea  = ????
+*          "AND ValidityEndDate  = ????
+*          INTO TABLE @DATA(lt_profitcentertext).
+*          SORT lt_profitcentertext BY profitcenter.
+*        ENDIF.
+*        IF lt_data IS NOT INITIAL.
+*          SELECT companycode, companycodename
+*          FROM i_companycode
+*          WITH PRIVILEGED ACCESS
+*          WHERE language = 'J'
+*          INTO TABLE @DATA(lt_companycode).
+*          SORT lt_companycode BY companycode.
+*
+*          SELECT plant, plantname
+*           FROM i_plant
+*           WITH PRIVILEGED ACCESS
+*           WHERE language = 'J'
+*           INTO TABLE @DATA(lt_plant).
+*          SORT lt_plant BY plant.
+*        ENDIF.
+*
+*        LOOP AT lt_data INTO DATA(ls_data).
+*
+*          CLEAR ls_mfgorder_001.
+*
+*          "'年月' YearMonth
+*          "'会社コード' Companycode
+*          "'プラント' Plant
+*          "'製品' Product
+*          "'得意先' BusinessPartner
+*          "'利益センタ' ProfitCenter
+*          "'原価センタ' CostCenter
+*          "'活動タイプ' ActivityType
+*          "'会社コードテキスト' CompanycodeText
+*          "'プラントテキスト' PlantText
+*          "'製品テキスト' ProductDescription
+*          "'入庫数量' MfgOrderConfirmedYieldQty
+*          "'得意先テキスト' BusinessPartnerName
+*          "'利益センタテキスト' ProfitCenterLongName
+*          "'原価センタテキスト' CostCenterDescription
+*          "'活動タイプテキスト' CostCtrActivityTypeName
+*          "'部署（工程）' Department
+*          "'計画工数' PlanQtyInCostSourceUnit
+*          "'実績工数' ActualQtyInCostSourceUnit
+*          "'工数単位' UnitOfMeasure
+*          "'計画賃率' PlanCostRate
+*          "'実際賃率' ActualCostRate
+*          "'加工費実績合計' TotalActualCost
+*          "'加工費実績（1単位）' ActualCost1PC
+*          ls_mfgorder_001-calendaryear = |{ lv_calendaryear ALPHA = IN }|."'年月'
+*          ls_mfgorder_001-calendarmonth = |{ lv_calendarmonth ALPHA = IN }|."'年月'
+*          ls_mfgorder_001-yearmonth = ls_data-yearperiod."'年月'
+*          ls_mfgorder_001-companycode = ls_data-companycode."'会社コード'
+*          ls_mfgorder_001-plant = ls_data-plant."'プラント'
+*          ls_mfgorder_001-costcenter = ls_data-partnercostcenter. "'原価センタ'
+*          ls_mfgorder_001-activitytype = ls_data-partnercostctractivitytype."'活動タイプ'
+*          ls_mfgorder_001-planqtyincostsourceunit   = ls_data-planqtyincostsourceunit. "'計画工数'
+*          ls_mfgorder_001-actualqtyincostsourceunit = ls_data-actualqtyincostsourceunit."'実績工数'
+*          "ls_mfgorder_001-unitofmeasure             = ls_data-unitofmeasure."'工数単位'
+*
+*          "'製品'
+*          READ TABLE lt_productplant INTO ls_productplant WITH KEY product = ls_data-producedproduct BINARY SEARCH.
 *          IF sy-subrc = 0.
-*            ls_mfgorder_001-mfgorderconfirmedyieldqty = ls_sum_qty-mfgorderconfirmedyieldqty."'製品テキスト'
-*            ls_mfgorder_001-productionsupervisor = ls_sum_qty-productionsupervisor."'製品テキスト'
+*            "当前就是顶层物料
+*            ls_mfgorder_001-product = ls_data-producedproduct."'製品'
+*          ELSE.
+*            "不是顶层物料找关系
+*            READ TABLE lt_component INTO ls_component_next WITH KEY material = ls_data-producedproduct BINARY SEARCH.
+*            IF sy-subrc = 0.
+*              ls_mfgorder_001-product = ls_component_next-zfrtproduct."'製品'
+*            ENDIF.
 *          ENDIF.
-          " READ TABLE lt_productplant TRANSPORTING NO FIELDS WITH KEY product = ls_data-producedproduct BINARY SEARCH.
-          " IF sy-subrc = 0.
-          READ TABLE lt_manufacturingorder INTO DATA(ls_manufacturingorder1) WITH KEY manufacturingorder =  ls_data-orderid BINARY SEARCH.
-          IF sy-subrc = 0.
-            ls_mfgorder_001-mfgorderconfirmedyieldqty = ls_manufacturingorder1-mfgorderconfirmedyieldqty."'製品テキスト'
-            ls_mfgorder_001-productionsupervisor = ls_manufacturingorder1-productionsupervisor."'製品テキスト'
-            ls_mfgorder_001-productionunit = ls_manufacturingorder1-productionunit.
-
-          ENDIF.
-          "ELSE.
-          "ls_mfgorder_001-mfgorderconfirmedyieldqty = lv_zero.
-          " ENDIF.
-          "'原価センタテキスト' "'部署（工程）'
-          READ TABLE lt_costcenter INTO DATA(ls_costcenter) WITH KEY costcenter = ls_data-partnercostcenter BINARY SEARCH.
-          IF sy-subrc = 0.
-            ls_mfgorder_001-costcenterdescription = ls_costcenter-costcenterdescription."'原価センタテキスト'
-            ls_mfgorder_001-department            = ls_costcenter-department."'部署（工程）'
-          ENDIF.
-          "'活動タイプテキスト'
-          READ TABLE lt_costcenteractivitytypetext INTO DATA(ls_costcenteractivitytypetext) WITH KEY costctractivitytype = ls_data-partnercostctractivitytype BINARY SEARCH.
-          IF sy-subrc = 0.
-            ls_mfgorder_001-costctractivitytypename = ls_costcenteractivitytypetext-costctractivitytypename."'活動タイプテキスト'
-          ENDIF.
-
-
-          "'実際賃率'
-          READ TABLE ls_res_api-value INTO DATA(ls_actualcostrate) WITH KEY companycode = ls_data-companycode
-                                                                            costcenter  = ls_data-partnercostcenter
-                                                                            activitytype = ls_data-partnercostctractivitytype.
-          "??controllingarea
-          "?? validitystartfiscalyear
-          "??validitystartfiscalperiod
-          "??validityendfiscalyear
-          "??validityendfiscalperiod
-          IF sy-subrc = 0.
-            ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount. "'実際賃率'
-            ls_mfgorder_001-actualcostrate = zzcl_common_utils=>conversion_amount(
-                iv_alpha = 'IN'
-                iv_currency = ls_actualcostrate-currency
-                iv_input =  ls_mfgorder_001-actualcostrate ).
-            ls_mfgorder_001-costratescalefactor2 = ls_actualcostrate-costratescalefactor.
-            ls_mfgorder_001-currency2 = ls_actualcostrate-currency.
-            IF ls_actualcostrate-costratescalefactor IS NOT INITIAL.
-              ls_mfgorder_001-totalactualcost  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_actualcostrate-costratescalefactor. "'加工費実績合計'
-              "ls_mfgorder_001-totalactualcost  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit. "'加工費実績合計'
-            ENDIF.
-            READ TABLE lt_sum_qty INTO DATA(ls_sum_qty1) WITH KEY product = ls_mfgorder_001-product BINARY SEARCH.
-            IF sy-subrc = 0 AND ls_sum_qty1-mfgorderconfirmedyieldqty IS NOT INITIAL AND ls_actualcostrate-costratescalefactor IS NOT INITIAL.
-              ls_mfgorder_001-actualcost1pc  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_sum_qty1-mfgorderconfirmedyieldqty / ls_actualcostrate-costratescalefactor. "'加工費実績（1単位）'
-              "ls_mfgorder_001-actualcost1pc  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_sum_qty1-mfgorderconfirmedyieldqty. "'加工費実績（1単位）'
-            ENDIF.
-
-          ENDIF.
-
-
-          "'計画賃率'
-          READ TABLE ls_res_api1-value INTO DATA(ls_plancostrate) WITH KEY companycode = ls_data-companycode
-                                                                            costcenter  = ls_data-partnercostcenter
-                                                                            activitytype = ls_data-partnercostctractivitytype.
-          "??controllingarea
-          "?? validitystartfiscalyear
-          "??validitystartfiscalperiod
-          "??validityendfiscalyear
-          "??validityendfiscalperiod
-          IF sy-subrc = 0.
-            "API取出的是OUT的amount，所以要选转IN
-            ls_mfgorder_001-plancostrate = ls_plancostrate-costratevarblamount. "'計画賃率'
-            ls_mfgorder_001-plancostrate = zzcl_common_utils=>conversion_amount(
-             iv_alpha = 'IN'
-            iv_currency = ls_plancostrate-currency
-            iv_input =  ls_mfgorder_001-plancostrate ).
-
-            ls_mfgorder_001-currency1  = ls_plancostrate-currency.
-            ls_mfgorder_001-costratescalefactor1 = ls_plancostrate-costratescalefactor.
-
-          ENDIF.
-          ls_mfgorder_001-product = zzcl_common_utils=>conversion_matn1(
-                             EXPORTING iv_alpha = 'OUT'
-                                       iv_input = ls_mfgorder_001-product ).
-          ls_mfgorder_001-producedproduct = zzcl_common_utils=>conversion_matn1(
-                             EXPORTING iv_alpha = 'OUT'
-                             iv_input = ls_data-producedproduct ).
-          " TRY.
-          "     ls_mfgorder_001-unitofmeasure             = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
-          "                                                                                         iv_input = ls_data-unitofmeasure ).
-          "
-          "     CATCH zzcx_custom_exception INTO DATA(lo_root_exc).
-          ls_mfgorder_001-unitofmeasure             = ls_data-unitofmeasure."'工数単位'
-          "   ENDTRY.
-          ls_mfgorder_001-businesspartner  = |{ ls_mfgorder_001-businesspartner  ALPHA = OUT }|.
-          ls_mfgorder_001-orderid = |{ ls_data-orderid ALPHA = OUT }|.
-          IF ls_mfgorder_001-product IS NOT INITIAL AND ls_mfgorder_001-costcenter IS NOT INITIAL.
-            APPEND ls_mfgorder_001 TO lt_mfgorder_001.
-          ENDIF.
-        ENDLOOP.
-      ENDIF.
-
+*
+*          "'得意先' "'得意先テキスト'
+*          READ TABLE lt_productplantmrp INTO DATA(ls_productplantmrp) WITH KEY product = ls_mfgorder_001-product plant = ls_data-plant BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            DATA:lv_str2(2) TYPE c.
+*            DATA:lv_i TYPE i.
+*            CLEAR lv_str2.
+*            lv_i = strlen( ls_productplantmrp-mrpresponsible ).
+*            lv_i = lv_i - 2.
+*            IF lv_i >= 0.
+*              lv_str2 = ls_productplantmrp-mrpresponsible+lv_i(2).
+*              READ TABLE lt_businesspartner INTO DATA(ls_businesspartner) WITH KEY searchterm2 = lv_str2 BINARY SEARCH.
+*              IF sy-subrc = 0.
+*
+*                "'得意先'
+*                ls_mfgorder_001-businesspartner = ls_businesspartner-businesspartner.
+*                "'得意先テキスト'
+*                ls_mfgorder_001-businesspartnername = ls_businesspartner-businesspartnername.
+*              ENDIF.
+*            ENDIF.
+*          ENDIF.
+*
+*          "'利益センタ'
+*          READ TABLE lt_profitcentertoproduct INTO DATA(ls_profitcentertoproduct) WITH KEY plant = ls_data-plant product = ls_mfgorder_001-product BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            ls_mfgorder_001-profitcenter = ls_profitcentertoproduct-profitcenter."'利益センタ'
+*            "'利益センタテキスト'
+*            READ TABLE lt_profitcentertext INTO DATA(ls_profitcentertext) WITH KEY profitcenter = ls_profitcentertoproduct-profitcenter BINARY SEARCH.
+*            IF sy-subrc = 0.
+*              ls_mfgorder_001-profitcenterlongname = ls_profitcentertext-profitcenterlongname."'利益センタテキスト'
+*            ENDIF.
+*          ENDIF.
+*          "'会社コードテキスト'
+*          READ TABLE lt_companycode INTO DATA(ls_companycode) WITH KEY companycode = ls_data-companycode BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            ls_mfgorder_001-companycodetext = ls_companycode-companycodename."'会社コードテキスト'
+*          ENDIF.
+*          "'プラントテキスト'
+*          READ TABLE lt_plant INTO DATA(ls_plant) WITH KEY plant = ls_data-plant BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            ls_mfgorder_001-planttext = ls_plant-plantname."'プラントテキスト'
+*          ENDIF.
+*          "'製品テキスト'
+*          READ TABLE lt_productdescription INTO DATA(ls_productdescription) WITH KEY product = ls_mfgorder_001-product BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            ls_mfgorder_001-productdescription = ls_productdescription-productdescription."'製品テキスト'
+*          ENDIF.
+*
+*          "'製品テキスト'
+*          "用的是制品物料
+**          READ TABLE lt_sum_qty INTO ls_sum_qty WITH KEY product = ls_mfgorder_001-product BINARY SEARCH.
+**          IF sy-subrc = 0.
+**            ls_mfgorder_001-mfgorderconfirmedyieldqty = ls_sum_qty-mfgorderconfirmedyieldqty."'製品テキスト'
+**            ls_mfgorder_001-productionsupervisor = ls_sum_qty-productionsupervisor."'製品テキスト'
+**          ENDIF.
+*          " READ TABLE lt_productplant TRANSPORTING NO FIELDS WITH KEY product = ls_data-producedproduct BINARY SEARCH.
+*          " IF sy-subrc = 0.
+*          READ TABLE lt_manufacturingorder INTO DATA(ls_manufacturingorder1) WITH KEY manufacturingorder =  ls_data-orderid BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            ls_mfgorder_001-mfgorderconfirmedyieldqty = ls_manufacturingorder1-mfgorderconfirmedyieldqty."'製品テキスト'
+*            ls_mfgorder_001-productionsupervisor = ls_manufacturingorder1-productionsupervisor."'製品テキスト'
+*            ls_mfgorder_001-productionunit = ls_manufacturingorder1-productionunit.
+*
+*          ENDIF.
+*          "ELSE.
+*          "ls_mfgorder_001-mfgorderconfirmedyieldqty = lv_zero.
+*          " ENDIF.
+*          "'原価センタテキスト' "'部署（工程）'
+*          READ TABLE lt_costcenter INTO DATA(ls_costcenter) WITH KEY costcenter = ls_data-partnercostcenter BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            ls_mfgorder_001-costcenterdescription = ls_costcenter-costcenterdescription."'原価センタテキスト'
+*            ls_mfgorder_001-department            = ls_costcenter-department."'部署（工程）'
+*          ENDIF.
+*          "'活動タイプテキスト'
+*          READ TABLE lt_costcenteractivitytypetext INTO DATA(ls_costcenteractivitytypetext) WITH KEY costctractivitytype = ls_data-partnercostctractivitytype BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            ls_mfgorder_001-costctractivitytypename = ls_costcenteractivitytypetext-costctractivitytypename."'活動タイプテキスト'
+*          ENDIF.
+*
+*
+*          "'実際賃率'
+*          READ TABLE ls_res_api-value INTO DATA(ls_actualcostrate) WITH KEY companycode = ls_data-companycode
+*                                                                            costcenter  = ls_data-partnercostcenter
+*                                                                            activitytype = ls_data-partnercostctractivitytype.
+*          "??controllingarea
+*          "?? validitystartfiscalyear
+*          "??validitystartfiscalperiod
+*          "??validityendfiscalyear
+*          "??validityendfiscalperiod
+*          IF sy-subrc = 0.
+*            ls_mfgorder_001-actualcostrate = ls_actualcostrate-costratefixedamount. "'実際賃率'
+*            ls_mfgorder_001-actualcostrate = zzcl_common_utils=>conversion_amount(
+*                iv_alpha = 'IN'
+*                iv_currency = ls_actualcostrate-currency
+*                iv_input =  ls_mfgorder_001-actualcostrate ).
+*            ls_mfgorder_001-costratescalefactor2 = ls_actualcostrate-costratescalefactor.
+*            ls_mfgorder_001-currency2 = ls_actualcostrate-currency.
+*            IF ls_actualcostrate-costratescalefactor IS NOT INITIAL.
+*              ls_mfgorder_001-totalactualcost  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_actualcostrate-costratescalefactor. "'加工費実績合計'
+*              "ls_mfgorder_001-totalactualcost  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit. "'加工費実績合計'
+*            ENDIF.
+*            READ TABLE lt_sum_qty INTO DATA(ls_sum_qty1) WITH KEY product = ls_mfgorder_001-product BINARY SEARCH.
+*            IF sy-subrc = 0 AND ls_sum_qty1-mfgorderconfirmedyieldqty IS NOT INITIAL AND ls_actualcostrate-costratescalefactor IS NOT INITIAL.
+*              ls_mfgorder_001-actualcost1pc  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_sum_qty1-mfgorderconfirmedyieldqty / ls_actualcostrate-costratescalefactor. "'加工費実績（1単位）'
+*              "ls_mfgorder_001-actualcost1pc  = ls_actualcostrate-costratefixedamount * ls_data-actualqtyincostsourceunit / ls_sum_qty1-mfgorderconfirmedyieldqty. "'加工費実績（1単位）'
+*            ENDIF.
+*
+*          ENDIF.
+*
+*
+*          "'計画賃率'
+*          READ TABLE ls_res_api1-value INTO DATA(ls_plancostrate) WITH KEY companycode = ls_data-companycode
+*                                                                            costcenter  = ls_data-partnercostcenter
+*                                                                            activitytype = ls_data-partnercostctractivitytype.
+*          "??controllingarea
+*          "?? validitystartfiscalyear
+*          "??validitystartfiscalperiod
+*          "??validityendfiscalyear
+*          "??validityendfiscalperiod
+*          IF sy-subrc = 0.
+*            "API取出的是OUT的amount，所以要选转IN
+*            ls_mfgorder_001-plancostrate = ls_plancostrate-costratevarblamount. "'計画賃率'
+*            ls_mfgorder_001-plancostrate = zzcl_common_utils=>conversion_amount(
+*             iv_alpha = 'IN'
+*            iv_currency = ls_plancostrate-currency
+*            iv_input =  ls_mfgorder_001-plancostrate ).
+*
+*            ls_mfgorder_001-currency1  = ls_plancostrate-currency.
+*            ls_mfgorder_001-costratescalefactor1 = ls_plancostrate-costratescalefactor.
+*
+*          ENDIF.
+*          ls_mfgorder_001-product = zzcl_common_utils=>conversion_matn1(
+*                             EXPORTING iv_alpha = 'OUT'
+*                                       iv_input = ls_mfgorder_001-product ).
+*          ls_mfgorder_001-producedproduct = zzcl_common_utils=>conversion_matn1(
+*                             EXPORTING iv_alpha = 'OUT'
+*                             iv_input = ls_data-producedproduct ).
+*          " TRY.
+*          "     ls_mfgorder_001-unitofmeasure             = zzcl_common_utils=>conversion_cunit( EXPORTING iv_alpha = lc_alpha_out
+*          "                                                                                         iv_input = ls_data-unitofmeasure ).
+*          "
+*          "     CATCH zzcx_custom_exception INTO DATA(lo_root_exc).
+*          ls_mfgorder_001-unitofmeasure             = ls_data-unitofmeasure."'工数単位'
+*          "   ENDTRY.
+*          ls_mfgorder_001-businesspartner  = |{ ls_mfgorder_001-businesspartner  ALPHA = OUT }|.
+*          ls_mfgorder_001-orderid = |{ ls_data-orderid ALPHA = OUT }|.
+*          IF ls_mfgorder_001-product IS NOT INITIAL AND ls_mfgorder_001-costcenter IS NOT INITIAL.
+*            APPEND ls_mfgorder_001 TO lt_mfgorder_001.
+*          ENDIF.
+*        ENDLOOP.
+*      ENDIF.
+*******************Del end 20250423**************************************
       " Filtering
 *      zzcl_odata_utils=>filtering( EXPORTING io_filter = io_request->get_filter(  )
 *                                    CHANGING  ct_data   = lt_mfgorder_001 ).
@@ -1125,7 +1126,21 @@ CLASS ZCL_MFGORDER_001 IMPLEMENTATION.
 *
 *      io_response->set_data( lt_mfgorder_001 ).
 
+******Add start 20250423*********************************
+      SELECT *
+        FROM ztfi_1020
+       WHERE companycode in @lr_companycode
+         AND plant in @lr_plant
+         AND calendaryear = @lv_calendaryear
+         AND calendarmonth = @lv_calendarmonth_s
+        INTO TABLE @DATA(lt_1020).
 
+      LOOP AT lt_1020 INTO DATA(ls_1020).
+        MOVE-CORRESPONDING ls_1020 TO ls_mfgorder_001.
+        APPEND ls_mfgorder_001 TO lt_mfgorder_001.
+        CLEAR ls_mfgorder_001.
+      ENDLOOP.
+******Add end 20250423***********************************
 
 
       SORT lt_mfgorder_001 BY yearmonth companycode plant product  businesspartner profitcenter costcenter  activitytype  orderid.

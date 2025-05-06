@@ -13,7 +13,8 @@ ENDCLASS.
 
 
 
-CLASS zcl_get_mm1006_data IMPLEMENTATION.
+CLASS ZCL_GET_MM1006_DATA IMPLEMENTATION.
+
 
   METHOD if_sadl_exit_calc_element_read~calculate.
     DATA: lt_original_data TYPE STANDARD TABLE OF zc_tmm_1006 WITH DEFAULT KEY.
@@ -47,7 +48,7 @@ CLASS zcl_get_mm1006_data IMPLEMENTATION.
 
   ENDMETHOD.
 
+
   METHOD if_sadl_exit_calc_element_read~get_calculation_info.
   ENDMETHOD.
-
 ENDCLASS.

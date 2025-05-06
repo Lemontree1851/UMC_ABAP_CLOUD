@@ -1994,7 +1994,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_http_podata_002 IMPLEMENTATION.
+CLASS ZCL_HTTP_PODATA_002 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.

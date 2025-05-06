@@ -430,6 +430,8 @@ annotate view ZC_TMM_1006 with
   IsLink;
   
   // ADD BEGIN BY XINLEI XU 2025/04/21 CR#4359
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_POLinkStatus_VH', element: 'Zvalue1' } }]
+  POLinkStatus;
   @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_WF_Location_VH', element: 'Zvalue1' } }]
   Kyoten;
   @Consumption.valueHelpDefinition: [{ entity: { name: 'ZC_ApproveStatus_VH', element: 'Zvalue1' } }]

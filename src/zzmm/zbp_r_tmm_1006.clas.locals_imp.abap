@@ -538,6 +538,14 @@ CLASS lhc_purchasereq IMPLEMENTATION.
             lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
           ENDIF.
 *&--ADD END BY XINLEI XU 2025/04/07 CR#4358
+
+*&--ADD BEGIN BY XINLEI XU 2025/04/23 CR#4359 当购买申请类型=4、承認要否≠2时报错
+          IF <record>-('PrType') = '4' AND <record>-('IsApprove') <> '2'.
+            is_error = abap_true.
+            MESSAGE e039(zmm_001) INTO lv_msg.
+            lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
+          ENDIF.
+*&--ADD END BY XINLEI XU 2025/04/23 CR#4359
         ENDIF.
       ENDIF.
 

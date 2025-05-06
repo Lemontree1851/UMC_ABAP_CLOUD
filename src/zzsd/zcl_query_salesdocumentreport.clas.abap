@@ -661,6 +661,30 @@ CLASS ZCL_QUERY_SALESDOCUMENTREPORT IMPLEMENTATION.
 
     SORT lt_slsprcgconditionrecord BY conditionrecord.
 
+*&--ADD BEGIN BY XINLEI XU 2025/04/27 阶梯价逻辑BUG Fixed
+    IF lt_slsprcgconditionrecord IS NOT INITIAL.
+      SELECT conditionrecord,
+             conditionsequentialnumber,
+             conditionscaleline,
+             conditionscalequantity,
+             conditionratevalue,
+             conditionrateamount,
+             conditioncurrency
+        FROM i_slsprcgcndnrecordscale WITH PRIVILEGED ACCESS
+         FOR ALL ENTRIES IN @lt_slsprcgconditionrecord
+       WHERE conditionrecord = @lt_slsprcgconditionrecord-conditionrecord
+        INTO TABLE @DATA(lt_recordscale).
+      SORT lt_recordscale BY conditionrecord conditionscalequantity DESCENDING.
+
+      SELECT a~conditionrecord,
+             COUNT( * ) AS count
+        FROM @lt_recordscale AS a
+       GROUP BY a~conditionrecord
+        INTO TABLE @DATA(lt_recordscale_count).
+      SORT lt_recordscale_count BY conditionrecord.
+    ENDIF.
+*&--ADD END BY XINLEI XU 2025/04/27
+
     "Obtain 305 condition table
 *&--MOD BEGIN BY XINLEI XU 2025/04/15 CR#4277
 *   lv_path = |/API_SLSPRICINGCONDITIONRECORD_SRV/A_SlsPrcgCndnRecdValidity?$filter=ConditionType%20eq%20'{ lc_ppr0 }'%20or%20ConditionType%20eq%20'{ lc_zzr0 }'%20or%20ConditionType%20eq%20'{ lc_zyr0 }'|.
@@ -1024,21 +1048,22 @@ CLASS ZCL_QUERY_SALESDOCUMENTREPORT IMPLEMENTATION.
                                                                              BINARY SEARCH.
           IF sy-subrc = 0.
             " 加工费
-            IF ls_productcostestimate-costinglotsize IS NOT INITIAL.
-              ls_output-manufacturingcost_n = ls_productcostcom-process_amount / ls_productcostestimate-costinglotsize.
-            ENDIF.
             ls_output-currency1 = ls_productcostestimate-controllingareacurrency.
             ls_output-manufacturingcost_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
-                                                                                  iv_currency = ls_output-currency1
-                                                                                  iv_input = ls_output-manufacturingcost_n ).
-            " 材料费
+                                                                                  iv_currency = ls_productcostestimate-controllingareacurrency
+                                                                                  iv_input = ls_productcostcom-process_amount ).
             IF ls_productcostestimate-costinglotsize IS NOT INITIAL.
-              ls_output-materialcost2000_n = ls_productcostcom-raw_amount / ls_productcostestimate-costinglotsize.
+              ls_output-manufacturingcost_n = ceil( ls_output-manufacturingcost_n / ls_productcostestimate-costinglotsize * 100 ) / 100.
             ENDIF.
+
+            " 材料费
             ls_output-currency = ls_productcostestimate-controllingareacurrency.
             ls_output-materialcost2000_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
-                                                                                 iv_currency = ls_output-currency
-                                                                                 iv_input = ls_output-materialcost2000_n ).
+                                                                                 iv_currency = ls_productcostestimate-controllingareacurrency
+                                                                                 iv_input = ls_productcostcom-raw_amount ).
+            IF ls_productcostestimate-costinglotsize IS NOT INITIAL.
+              ls_output-materialcost2000_n = ceil( ls_output-materialcost2000_n / ls_productcostestimate-costinglotsize * 100 ) / 100.
+            ENDIF.
           ENDIF.
         ENDIF.
 *&--MOD END BY XINLEI XU 2025/02/19
@@ -1116,35 +1141,50 @@ CLASS ZCL_QUERY_SALESDOCUMENTREPORT IMPLEMENTATION.
                                                            AND conditionquantityunit        = ls_result-salesplanunit
                                                            AND conditionvaliditystartdate_d LE ls_months-endda
                                                            AND conditionvalidityenddate_d   GE ls_months-begda.
-            "如果上述取值条件全部一致的条件有多行，视为有阶梯价
-            READ TABLE lt_collect TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result-salesorganization
-                                                                  distributionchannel = '10'
-                                                                  material = ls_result-product
-                                                                  customer = ls_result-soldtoparty
-                                                                  conditionquantityunit = ls_result-salesplanunit
-                                                                  conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d.
-            IF sy-subrc = 0.
-              LOOP AT lt_tiered INTO DATA(ls_tiered) WHERE conditiontype = 'ZYR0'
-                                                       AND salesorganization = ls_305-salesorganization
-                                                       AND distributionchannel = '10'
-                                                       AND material = ls_305-material
-                                                       AND customer = ls_305-customer
-                                                       AND conditionquantityunit = ls_result-salesplanunit
-                                                       AND conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d
-                                                       AND conditionscalequantity <= ls_result0_temp-salesplanquantity.
-                "单价有小数
-                ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
-                                                                                       iv_currency = ls_tiered-conditionscaleamountcurrency
-                                                                                       iv_input = ls_tiered-conditionscaleamount ).
-*&--ADD BEGIN BY XINLEI XU 2025/04/16
-                lv_conditionratevalue_n = ls_output-conditionratevalue_n.
-                lv_conditionquantity1 = ls_tiered-conditionquantity.
-*&--ADD END BY XINLEI XU 2025/04/16
-                ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_tiered-conditionquantity.
-                ls_output-displaycurrency1 = ls_tiered-conditionscaleamountcurrency.
-                "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
-                EXIT.
+*&--MOD BEGIN BY XINLEI XU 2025/04/27 阶梯价逻辑BUG Fixed
+*            "如果上述取值条件全部一致的条件有多行，视为有阶梯价
+*            READ TABLE lt_collect TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result-salesorganization
+*                                                                  distributionchannel = '10'
+*                                                                  material = ls_result-product
+*                                                                  customer = ls_result-soldtoparty
+*                                                                  conditionquantityunit = ls_result-salesplanunit
+*                                                                  conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d.
+*            IF sy-subrc = 0.
+*              LOOP AT lt_tiered INTO DATA(ls_tiered) WHERE conditiontype = 'ZYR0'
+*                                                       AND salesorganization = ls_305-salesorganization
+*                                                       AND distributionchannel = '10'
+*                                                       AND material = ls_305-material
+*                                                       AND customer = ls_305-customer
+*                                                       AND conditionquantityunit = ls_result-salesplanunit
+*                                                       AND conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d
+*                                                       AND conditionscalequantity <= ls_result0_temp-salesplanquantity.
+*                "单价有小数
+*                ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
+*                                                                                       iv_currency = ls_tiered-conditionscaleamountcurrency
+*                                                                                       iv_input = ls_tiered-conditionscaleamount ).
+**&--ADD BEGIN BY XINLEI XU 2025/04/16
+*                lv_conditionratevalue_n = ls_output-conditionratevalue_n.
+*                lv_conditionquantity1 = ls_tiered-conditionquantity.
+**&--ADD END BY XINLEI XU 2025/04/16
+*                ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_tiered-conditionquantity.
+*                ls_output-displaycurrency1 = ls_tiered-conditionscaleamountcurrency.
+*                "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
+*                EXIT.
+*              ENDLOOP.
+            READ TABLE lt_recordscale_count INTO DATA(ls_recordscale_count) WITH KEY conditionrecord = ls_305-conditionrecord BINARY SEARCH.
+            IF sy-subrc = 0 AND ls_recordscale_count-count > 1.
+              " 阶梯价格
+              LOOP AT lt_recordscale INTO DATA(ls_recordscale) WHERE conditionrecord = ls_305-conditionrecord.
+                IF ls_result0_temp-salesplanquantity >= ls_recordscale-conditionscalequantity.
+                  ls_output-conditionratevalue_n = ls_recordscale-conditionrateamount.
+                  lv_conditionratevalue_n = ls_output-conditionratevalue_n.
+                  lv_conditionquantity1 = ls_305-conditionquantity.
+                  ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_305-conditionquantity.
+                  ls_output-displaycurrency1 = ls_recordscale-conditioncurrency.
+                  EXIT.
+                ENDIF.
               ENDLOOP.
+*&--MOD END BY XINLEI XU 2025/04/27 阶梯价逻辑BUG Fixed
             ELSE.
               ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
                                                                                      iv_currency = ls_305-conditionratevalueunit
@@ -1170,30 +1210,17 @@ CLASS ZCL_QUERY_SALESDOCUMENTREPORT IMPLEMENTATION.
                                                      AND conditionquantityunit        = ls_result-salesplanunit
                                                      AND conditionvaliditystartdate_d LE ls_months-endda
                                                      AND conditionvalidityenddate_d   GE ls_months-begda.
-            "如果上述取值条件全部一致的条件有多行，视为有阶梯价
-            READ TABLE lt_collect TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result-salesorganization
-                                                                  distributionchannel = '10'
-                                                                  material = ls_result-product
-                                                                  customer = ls_result-soldtoparty
-                                                                  conditionquantityunit = ls_result-salesplanunit
-                                                                  conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d.
-            IF sy-subrc = 0.
-              LOOP AT lt_tiered INTO ls_tiered WHERE conditiontype = lc_zycm
-                                                 AND salesorganization = ls_305-salesorganization
-                                                 AND distributionchannel = '10'
-                                                 AND material = ls_305-material
-                                                 AND customer = ls_305-customer
-                                                 AND conditionquantityunit = ls_result-salesplanunit
-                                                 AND conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d
-                                                 AND conditionscalequantity <= ls_result0_temp-salesplanquantity.
-                ls_output-materialcost2000per_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
-                                                                                        iv_currency = ls_tiered-conditionscaleamountcurrency
-                                                                                        iv_input = ls_tiered-conditionscaleamount ).
-                lv_materialcost2000per_n = ls_output-materialcost2000per_n.
-                lv_conditionquantity2 = ls_tiered-conditionquantity.
-                ls_output-materialcost2000per_n = ceil( ls_output-materialcost2000per_n / ls_tiered-conditionquantity * 100 ) / 100.
-                "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
-                EXIT.
+            READ TABLE lt_recordscale_count INTO ls_recordscale_count WITH KEY conditionrecord = ls_305-conditionrecord BINARY SEARCH.
+            IF sy-subrc = 0 AND ls_recordscale_count-count > 1.
+              " 阶梯价格
+              LOOP AT lt_recordscale INTO ls_recordscale WHERE conditionrecord = ls_305-conditionrecord.
+                IF ls_result0_temp-salesplanquantity >= ls_recordscale-conditionscalequantity.
+                  ls_output-materialcost2000per_n = ls_recordscale-conditionrateamount.
+                  lv_materialcost2000per_n = ls_output-materialcost2000per_n.
+                  lv_conditionquantity2 = ls_305-conditionquantity.
+                  ls_output-materialcost2000per_n = ceil( ls_output-materialcost2000per_n / ls_305-conditionquantity * 100 ) / 100.
+                  EXIT.
+                ENDIF.
               ENDLOOP.
             ELSE.
               ls_output-materialcost2000per_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
@@ -1216,30 +1243,17 @@ CLASS ZCL_QUERY_SALESDOCUMENTREPORT IMPLEMENTATION.
                                                      AND conditionquantityunit        = ls_result-salesplanunit
                                                      AND conditionvaliditystartdate_d LE ls_months-endda
                                                      AND conditionvalidityenddate_d   GE ls_months-begda.
-            "如果上述取值条件全部一致的条件有多行，视为有阶梯价
-            READ TABLE lt_collect TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result-salesorganization
-                                                                  distributionchannel = '10'
-                                                                  material = ls_result-product
-                                                                  customer = ls_result-soldtoparty
-                                                                  conditionquantityunit = ls_result-salesplanunit
-                                                                  conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d.
-            IF sy-subrc = 0.
-              LOOP AT lt_tiered INTO ls_tiered WHERE conditiontype = lc_zygp
-                                                 AND salesorganization = ls_305-salesorganization
-                                                 AND distributionchannel = '10'
-                                                 AND material = ls_305-material
-                                                 AND customer = ls_305-customer
-                                                 AND conditionquantityunit = ls_result-salesplanunit
-                                                 AND conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d
-                                                 AND conditionscalequantity <= ls_result0_temp-salesplanquantity.
-                ls_output-manufacturingcostper_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
-                                                                                         iv_currency = ls_tiered-conditionscaleamountcurrency
-                                                                                         iv_input = ls_tiered-conditionscaleamount ).
-                lv_manufacturingcostper_n = ls_output-manufacturingcostper_n.
-                lv_conditionquantity3 = ls_tiered-conditionquantity.
-                ls_output-manufacturingcostper_n = ceil( ls_output-manufacturingcostper_n / ls_tiered-conditionquantity * 100 ) / 100.
-                "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
-                EXIT.
+            READ TABLE lt_recordscale_count INTO ls_recordscale_count WITH KEY conditionrecord = ls_305-conditionrecord BINARY SEARCH.
+            IF sy-subrc = 0 AND ls_recordscale_count-count > 1.
+              " 阶梯价格
+              LOOP AT lt_recordscale INTO ls_recordscale WHERE conditionrecord = ls_305-conditionrecord.
+                IF ls_result0_temp-salesplanquantity >= ls_recordscale-conditionscalequantity.
+                  ls_output-manufacturingcostper_n = ls_recordscale-conditionrateamount.
+                  lv_manufacturingcostper_n = ls_output-manufacturingcostper_n.
+                  lv_conditionquantity3 = ls_305-conditionquantity.
+                  ls_output-manufacturingcostper_n = ceil( ls_output-manufacturingcostper_n / ls_305-conditionquantity * 100 ) / 100.
+                  EXIT.
+                ENDIF.
               ENDLOOP.
             ELSE.
               ls_output-manufacturingcostper_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
@@ -1266,35 +1280,50 @@ CLASS ZCL_QUERY_SALESDOCUMENTREPORT IMPLEMENTATION.
 
             lv_has_ppr0 = abap_true. " ADD BY XINLEI XU 2025/04/15 CR#4277
 
-            "如果上述取值条件全部一致的条件有多行，视为有阶梯价
-            READ TABLE lt_collect TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result-salesorganization
-                                                                  distributionchannel = '10'
-                                                                  material = ls_result-product
-                                                                  customer = ls_result-soldtoparty
-                                                                  conditionquantityunit = ls_result-salesplanunit
-                                                                  conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d.
-            IF sy-subrc = 0.
-              LOOP AT lt_tiered INTO ls_tiered WHERE conditiontype = 'PPR0'
-                                                 AND salesorganization = ls_305-salesorganization
-                                                 AND distributionchannel = '10'
-                                                 AND material = ls_305-material
-                                                 AND customer = ls_305-customer
-                                                 AND conditionquantityunit = ls_result-salesplanunit
-                                                 AND conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d
-                                                 AND conditionscalequantity <= ls_result0_temp-salesplanquantity.
-                "单价有小数
-                ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
-                                                                                       iv_currency = ls_tiered-conditionscaleamountcurrency
-                                                                                       iv_input = ls_tiered-conditionscaleamount ).
-*&--ADD BEGIN BY XINLEI XU 2025/04/16
-                lv_conditionratevalue_n = ls_output-conditionratevalue_n.
-                lv_conditionquantity1 = ls_tiered-conditionquantity.
-*&--ADD END BY XINLEI XU 2025/04/16
-                ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_tiered-conditionquantity.
-                ls_output-displaycurrency1 = ls_tiered-conditionscaleamountcurrency.
-                "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
-                EXIT.
+*&--MOD BEGIN BY XINLEI XU 2025/04/27 阶梯价逻辑BUG Fixed
+*            "如果上述取值条件全部一致的条件有多行，视为有阶梯价
+*            READ TABLE lt_collect TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result-salesorganization
+*                                                                  distributionchannel = '10'
+*                                                                  material = ls_result-product
+*                                                                  customer = ls_result-soldtoparty
+*                                                                  conditionquantityunit = ls_result-salesplanunit
+*                                                                  conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d.
+*            IF sy-subrc = 0.
+*              LOOP AT lt_tiered INTO ls_tiered WHERE conditiontype = 'PPR0'
+*                                                 AND salesorganization = ls_305-salesorganization
+*                                                 AND distributionchannel = '10'
+*                                                 AND material = ls_305-material
+*                                                 AND customer = ls_305-customer
+*                                                 AND conditionquantityunit = ls_result-salesplanunit
+*                                                 AND conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d
+*                                                 AND conditionscalequantity <= ls_result0_temp-salesplanquantity.
+*                "单价有小数
+*                ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
+*                                                                                       iv_currency = ls_tiered-conditionscaleamountcurrency
+*                                                                                       iv_input = ls_tiered-conditionscaleamount ).
+**&--ADD BEGIN BY XINLEI XU 2025/04/16
+*                lv_conditionratevalue_n = ls_output-conditionratevalue_n.
+*                lv_conditionquantity1 = ls_tiered-conditionquantity.
+**&--ADD END BY XINLEI XU 2025/04/16
+*                ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_tiered-conditionquantity.
+*                ls_output-displaycurrency1 = ls_tiered-conditionscaleamountcurrency.
+*                "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
+*                EXIT.
+*              ENDLOOP.
+            READ TABLE lt_recordscale_count INTO ls_recordscale_count WITH KEY conditionrecord = ls_305-conditionrecord BINARY SEARCH.
+            IF sy-subrc = 0 AND ls_recordscale_count-count > 1.
+              " 阶梯价格
+              LOOP AT lt_recordscale INTO ls_recordscale WHERE conditionrecord = ls_305-conditionrecord.
+                IF ls_result0_temp-salesplanquantity >= ls_recordscale-conditionscalequantity.
+                  ls_output-conditionratevalue_n = ls_recordscale-conditionrateamount.
+                  lv_conditionratevalue_n = ls_output-conditionratevalue_n.
+                  lv_conditionquantity1 = ls_305-conditionquantity.
+                  ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_305-conditionquantity.
+                  ls_output-displaycurrency1 = ls_recordscale-conditioncurrency.
+                  EXIT.
+                ENDIF.
               ENDLOOP.
+*&--MOD END BY XINLEI XU 2025/04/27 阶梯价逻辑BUG Fixed
             ELSE.
               "单价有小数
               ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
@@ -1319,35 +1348,50 @@ CLASS ZCL_QUERY_SALESDOCUMENTREPORT IMPLEMENTATION.
                                                        AND conditionquantityunit = ls_result-salesplanunit
                                                        AND conditionvaliditystartdate_d LE ls_months-endda
                                                        AND conditionvalidityenddate_d GE ls_months-begda.
-              "如果上述取值条件全部一致的条件有多行，视为有阶梯价
-              READ TABLE lt_collect TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result-salesorganization
-                                                                    distributionchannel = '10'
-                                                                    material = ls_result-product
-                                                                    customer = ls_result-soldtoparty
-                                                                    conditionquantityunit = ls_result-salesplanunit
-                                                                    conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d.
-              IF sy-subrc = 0.
-                LOOP AT lt_tiered INTO ls_tiered WHERE conditiontype = 'ZZR0'
-                                                   AND salesorganization = ls_305-salesorganization
-                                                   AND distributionchannel = '10'
-                                                   AND material = ls_305-material
-                                                   AND customer = ls_305-customer
-                                                   AND conditionquantityunit = ls_result-salesplanunit
-                                                   AND conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d
-                                                   AND conditionscalequantity <= ls_result0_temp-salesplanquantity.
-                  "单价有小数
-                  ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
-                                                                                         iv_currency = ls_tiered-conditionscaleamountcurrency
-                                                                                         iv_input = ls_tiered-conditionscaleamount ).
-*&--ADD BEGIN BY XINLEI XU 2025/04/16
-                  lv_conditionratevalue_n = ls_output-conditionratevalue_n.
-                  lv_conditionquantity1 = ls_tiered-conditionquantity.
-*&--ADD END BY XINLEI XU 2025/04/16
-                  ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_tiered-conditionquantity.
-                  ls_output-displaycurrency1 = ls_tiered-conditionscaleamountcurrency.
-                  "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
-                  EXIT.
+*&--MOD BEGIN BY XINLEI XU 2025/04/27 阶梯价逻辑BUG Fixed
+*              "如果上述取值条件全部一致的条件有多行，视为有阶梯价
+*              READ TABLE lt_collect TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result-salesorganization
+*                                                                    distributionchannel = '10'
+*                                                                    material = ls_result-product
+*                                                                    customer = ls_result-soldtoparty
+*                                                                    conditionquantityunit = ls_result-salesplanunit
+*                                                                    conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d.
+*              IF sy-subrc = 0.
+*                LOOP AT lt_tiered INTO ls_tiered WHERE conditiontype = 'ZZR0'
+*                                                   AND salesorganization = ls_305-salesorganization
+*                                                   AND distributionchannel = '10'
+*                                                   AND material = ls_305-material
+*                                                   AND customer = ls_305-customer
+*                                                   AND conditionquantityunit = ls_result-salesplanunit
+*                                                   AND conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d
+*                                                   AND conditionscalequantity <= ls_result0_temp-salesplanquantity.
+*                  "单价有小数
+*                  ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
+*                                                                                         iv_currency = ls_tiered-conditionscaleamountcurrency
+*                                                                                         iv_input = ls_tiered-conditionscaleamount ).
+**&--ADD BEGIN BY XINLEI XU 2025/04/16
+*                  lv_conditionratevalue_n = ls_output-conditionratevalue_n.
+*                  lv_conditionquantity1 = ls_tiered-conditionquantity.
+**&--ADD END BY XINLEI XU 2025/04/16
+*                  ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_tiered-conditionquantity.
+*                  ls_output-displaycurrency1 = ls_tiered-conditionscaleamountcurrency.
+*                  "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
+*                  EXIT.
+*                ENDLOOP.
+              READ TABLE lt_recordscale_count INTO ls_recordscale_count WITH KEY conditionrecord = ls_305-conditionrecord BINARY SEARCH.
+              IF sy-subrc = 0 AND ls_recordscale_count-count > 1.
+                " 阶梯价格
+                LOOP AT lt_recordscale INTO ls_recordscale WHERE conditionrecord = ls_305-conditionrecord.
+                  IF ls_result0_temp-salesplanquantity >= ls_recordscale-conditionscalequantity.
+                    ls_output-conditionratevalue_n = ls_recordscale-conditionrateamount.
+                    lv_conditionratevalue_n = ls_output-conditionratevalue_n.
+                    lv_conditionquantity1 = ls_305-conditionquantity.
+                    ls_output-conditionratevalue_n = ls_output-conditionratevalue_n / ls_305-conditionquantity.
+                    ls_output-displaycurrency1 = ls_recordscale-conditioncurrency.
+                    EXIT.
+                  ENDIF.
                 ENDLOOP.
+*&--MOD END BY XINLEI XU 2025/04/27 阶梯价逻辑BUG Fixed
               ELSE.
                 "单价有小数
                 ls_output-conditionratevalue_n = zzcl_common_utils=>conversion_amount( iv_alpha = 'OUT'
@@ -1375,30 +1419,17 @@ CLASS ZCL_QUERY_SALESDOCUMENTREPORT IMPLEMENTATION.
                                                        AND conditionquantityunit        = ls_result-salesplanunit
                                                        AND conditionvaliditystartdate_d LE ls_months-endda
                                                        AND conditionvalidityenddate_d   GE ls_months-begda.
-              "如果上述取值条件全部一致的条件有多行，视为有阶梯价
-              READ TABLE lt_collect TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result-salesorganization
-                                                                    distributionchannel = '10'
-                                                                    material = ls_result-product
-                                                                    customer = ls_result-soldtoparty
-                                                                    conditionquantityunit = ls_result-salesplanunit
-                                                                    conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d.
-              IF sy-subrc = 0.
-                LOOP AT lt_tiered INTO ls_tiered WHERE conditiontype = lc_zzcm
-                                                   AND salesorganization = ls_305-salesorganization
-                                                   AND distributionchannel = '10'
-                                                   AND material = ls_305-material
-                                                   AND customer = ls_305-customer
-                                                   AND conditionquantityunit = ls_result-salesplanunit
-                                                   AND conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d
-                                                   AND conditionscalequantity <= ls_result0_temp-salesplanquantity.
-                  ls_output-materialcost2000per_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
-                                                                                          iv_currency = ls_tiered-conditionscaleamountcurrency
-                                                                                          iv_input = ls_tiered-conditionscaleamount ).
-                  lv_materialcost2000per_n = ls_output-materialcost2000per_n.
-                  lv_conditionquantity2 = ls_tiered-conditionquantity.
-                  ls_output-materialcost2000per_n = ceil( ls_output-materialcost2000per_n / ls_tiered-conditionquantity * 100 ) / 100.
-                  "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
-                  EXIT.
+              READ TABLE lt_recordscale_count INTO ls_recordscale_count WITH KEY conditionrecord = ls_305-conditionrecord BINARY SEARCH.
+              IF sy-subrc = 0 AND ls_recordscale_count-count > 1.
+                " 阶梯价格
+                LOOP AT lt_recordscale INTO ls_recordscale WHERE conditionrecord = ls_305-conditionrecord.
+                  IF ls_result0_temp-salesplanquantity >= ls_recordscale-conditionscalequantity.
+                    ls_output-materialcost2000per_n = ls_recordscale-conditionrateamount.
+                    lv_materialcost2000per_n = ls_output-materialcost2000per_n.
+                    lv_conditionquantity2 = ls_305-conditionquantity.
+                    ls_output-materialcost2000per_n = ceil( ls_output-materialcost2000per_n / ls_305-conditionquantity * 100 ) / 100.
+                    EXIT.
+                  ENDIF.
                 ENDLOOP.
               ELSE.
                 ls_output-materialcost2000per_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
@@ -1421,30 +1452,17 @@ CLASS ZCL_QUERY_SALESDOCUMENTREPORT IMPLEMENTATION.
                                                        AND conditionquantityunit        = ls_result-salesplanunit
                                                        AND conditionvaliditystartdate_d LE ls_months-endda
                                                        AND conditionvalidityenddate_d   GE ls_months-begda.
-              "如果上述取值条件全部一致的条件有多行，视为有阶梯价
-              READ TABLE lt_collect TRANSPORTING NO FIELDS WITH KEY salesorganization = ls_result-salesorganization
-                                                                    distributionchannel = '10'
-                                                                    material = ls_result-product
-                                                                    customer = ls_result-soldtoparty
-                                                                    conditionquantityunit = ls_result-salesplanunit
-                                                                    conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d.
-              IF sy-subrc = 0.
-                LOOP AT lt_tiered INTO ls_tiered WHERE conditiontype = lc_zzgp
-                                                   AND salesorganization = ls_305-salesorganization
-                                                   AND distributionchannel = '10'
-                                                   AND material = ls_305-material
-                                                   AND customer = ls_305-customer
-                                                   AND conditionquantityunit = ls_result-salesplanunit
-                                                   AND conditionvaliditystartdate_d = ls_305-conditionvaliditystartdate_d
-                                                   AND conditionscalequantity <= ls_result0_temp-salesplanquantity.
-                  ls_output-manufacturingcostper_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out
-                                                                                          iv_currency = ls_tiered-conditionscaleamountcurrency
-                                                                                          iv_input = ls_tiered-conditionscaleamount ).
-                  lv_manufacturingcostper_n = ls_output-manufacturingcostper_n.
-                  lv_conditionquantity3 = ls_tiered-conditionquantity.
-                  ls_output-manufacturingcostper_n = ceil( ls_output-manufacturingcostper_n / ls_tiered-conditionquantity * 100 ) / 100.
-                  "之前排序过 从阶梯数量小于等于计划数量的行中取阶梯数量最大的那一行
-                  EXIT.
+              READ TABLE lt_recordscale_count INTO ls_recordscale_count WITH KEY conditionrecord = ls_305-conditionrecord BINARY SEARCH.
+              IF sy-subrc = 0 AND ls_recordscale_count-count > 1.
+                " 阶梯价格
+                LOOP AT lt_recordscale INTO ls_recordscale WHERE conditionrecord = ls_305-conditionrecord.
+                  IF ls_result0_temp-salesplanquantity >= ls_recordscale-conditionscalequantity.
+                    ls_output-manufacturingcostper_n = ls_recordscale-conditionrateamount.
+                    lv_manufacturingcostper_n = ls_output-manufacturingcostper_n.
+                    lv_conditionquantity3 = ls_305-conditionquantity.
+                    ls_output-manufacturingcostper_n = ceil( ls_output-manufacturingcostper_n / ls_305-conditionquantity * 100 ) / 100.
+                    EXIT.
+                  ENDIF.
                 ENDLOOP.
               ELSE.
                 ls_output-manufacturingcostper_n = zzcl_common_utils=>conversion_amount( iv_alpha = zzcl_common_utils=>lc_alpha_out

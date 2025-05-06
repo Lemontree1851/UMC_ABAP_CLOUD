@@ -242,6 +242,12 @@
      <MSGNR>038</MSGNR>
      <TEXT>This is a return order, please enter return item.</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMM_001</ARBGB>
+     <MSGNR>039</MSGNR>
+     <TEXT>購買申請タイプは「4:購買G専用」なので、「承認要否」は承認不要はずです。データをチェックしてください。</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

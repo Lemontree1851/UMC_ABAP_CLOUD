@@ -178,9 +178,12 @@ CLASS ZCL_PICKINGLIST IMPLEMENTATION.
         ENDIF.
       ENDLOOP.
 
-      <fs_original_data>-detailsjson = xco_cp_json=>data->from_abap( lt_detail )->apply( VALUE #(
-        ( xco_cp_json=>transformation->underscore_to_pascal_case )
-      ) )->to_string( ).
+*&--MOD BEGIN BY XINLEI XU 2025/04/28 性能优化
+*      <fs_original_data>-detailsjson = xco_cp_json=>data->from_abap( lt_detail )->apply( VALUE #(
+*        ( xco_cp_json=>transformation->underscore_to_pascal_case )
+*      ) )->to_string( ).
+      <fs_original_data>-detailsjson = /ui2/cl_json=>serialize( data = lt_detail ).
+*&--MOD END BY XINLEI XU 2025/04/28
     ENDLOOP.
 
     ct_calculated_data = CORRESPONDING #( lt_original_data ).

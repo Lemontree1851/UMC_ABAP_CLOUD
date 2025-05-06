@@ -87,7 +87,6 @@ define root view entity ZC_TMM_1006
           @Consumption.filter.hidden: true
           IsApprove,
           SupplierMat,
-          @Consumption.filter.hidden: true
           PolinkBy,
           @Consumption.filter.hidden: true
           @UI.hidden: true

@@ -6,6 +6,8 @@
 define root view ZR_PAYMETHOD_CAL as select from I_OperationalAcctgDocItem as A 
 inner join I_SupplierCompany as B on
 A.CompanyCode = B.CompanyCode and A.Supplier = B.Supplier
+inner join I_JournalEntry as C on
+C.CompanyCode = A.CompanyCode and C.FiscalYear = A.FiscalYear and C.AccountingDocument = A.AccountingDocument
 {
     key A.CompanyCode,
     key A.AccountingDocument,
@@ -35,3 +37,5 @@ B.AccountingClerkPhoneNumber is not initial
 and A.ClearingItem is initial 
 and A.SpecialGLCode is initial    
 and A.FinancialAccountType = 'K'
+and C.IsReversal is initial
+and C.IsReversed is initial

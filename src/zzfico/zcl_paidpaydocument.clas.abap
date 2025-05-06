@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_paidpaydocument IMPLEMENTATION.
+CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -38,7 +38,11 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
       lr_blart_kunnr  TYPE RANGE OF blart,
       lrs_blart_kunnr LIKE LINE OF lr_blart_kunnr,
       lr_blart_lifnr  TYPE RANGE OF blart,
-      lrs_blart_lifnr LIKE LINE OF lr_blart_lifnr.
+      lrs_blart_lifnr LIKE LINE OF lr_blart_lifnr,
+      lr_saknr_kunnr  TYPE RANGE OF kunnr,
+      lrs_saknr_kunnr LIKE LINE OF lr_saknr_kunnr,
+      lr_saknr_lifnr  TYPE RANGE OF saknr,
+      lrs_saknr_lifnr LIKE LINE OF lr_saknr_lifnr.
 
     DATA:
       lv_amount(9)        TYPE p DECIMALS 2,
@@ -222,7 +226,7 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
         ENDIF.
 
         IF lt_bp IS NOT INITIAL.
-          SELECT customer,   "#EC CI_NO_TRANSFORM
+          SELECT customer,                         "#EC CI_NO_TRANSFORM
                  companycode
             FROM i_customercompany WITH PRIVILEGED ACCESS
             FOR ALL ENTRIES IN @lt_bp
@@ -232,7 +236,7 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
         ENDIF.
 
         IF lt_kunnr IS NOT INITIAL.
-          SELECT supplier,     "#EC CI_NO_TRANSFORM
+          SELECT supplier,                         "#EC CI_NO_TRANSFORM
                  companycode
             FROM i_suppliercompany
             FOR ALL ENTRIES IN @lt_kunnr
@@ -254,7 +258,7 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
 
         SELECT *
           FROM ztbc_1001
-         WHERE ( zid = 'ZFI008' OR zid = 'ZFI009' )
+         WHERE ( zid = 'ZFI008' OR zid = 'ZFI009' OR zid = 'ZFI011' OR zid = 'ZFI012' )
            AND zvalue1 = @lv_bukrs
           INTO TABLE @DATA(lt_1001).          "#EC CI_ALL_FIELDS_NEEDED
         LOOP AT lt_1001 INTO DATA(ls_1001).
@@ -272,6 +276,22 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
             lrs_blart_lifnr-low = ls_1001-zvalue2.
             APPEND lrs_blart_lifnr TO lr_blart_lifnr.
             CLEAR: lrs_blart_lifnr.
+          ENDIF.
+
+          IF ls_1001-zid = 'ZFI011'.  "customer
+            lrs_saknr_kunnr-sign = 'I'.
+            lrs_saknr_kunnr-option = 'EQ'.
+            lrs_saknr_kunnr-low = |{ ls_1001-zvalue2 ALPHA = IN }|.
+            APPEND lrs_saknr_kunnr TO lr_saknr_kunnr.
+            CLEAR: lrs_saknr_kunnr.
+          ENDIF.
+
+          IF ls_1001-zid = 'ZFI012'.  "supplier
+            lrs_saknr_lifnr-sign = 'I'.
+            lrs_saknr_lifnr-option = 'EQ'.
+            lrs_saknr_lifnr-low = |{ ls_1001-zvalue2 ALPHA = IN }|.
+            APPEND lrs_saknr_lifnr TO lr_saknr_lifnr.
+            CLEAR: lrs_saknr_lifnr.
           ENDIF.
         ENDLOOP.
 
@@ -294,11 +314,12 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
             FOR ALL ENTRIES IN @lt_kunnr
            WHERE sourceledger = '0L'
              AND companycode = @lv_bukrs
-             AND accountingdocumenttype IN @lr_blart_kunnr
+             "AND accountingdocumenttype IN @lr_blart_kunnr
              AND ( ( fiscalyear = @lv_gjahr AND fiscalperiod <= @lv_monat )
                  OR fiscalyear < @lv_gjahr )
              AND ledger = '0L'
              AND customer = @lt_kunnr-customer
+             AND glaccount IN @lr_saknr_kunnr
             INTO TABLE @DATA(lt_bseg_ar).          "#EC CI_NO_TRANSFORM
         ENDIF.
 
@@ -321,28 +342,28 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
             FOR ALL ENTRIES IN @lt_lifnr
            WHERE sourceledger = '0L'
              AND companycode = @lv_bukrs
-             AND accountingdocumenttype IN @lr_blart_lifnr
+             "AND accountingdocumenttype IN @lr_blart_lifnr
              AND ( ( fiscalyear = @lv_gjahr AND fiscalperiod <= @lv_monat )
                  OR fiscalyear < @lv_gjahr )
              AND ledger = '0L'
              AND supplier = @lt_lifnr-supplier
+             AND glaccount IN @lr_saknr_lifnr
             INTO TABLE @DATA(lt_bseg_ap).          "#EC CI_NO_TRANSFORM
         ENDIF.
 
-        SORT lt_bseg_ar BY companycode fiscalyear customer.
+        SORT lt_bseg_ar BY companycode customer.
         SORT lt_bp BY businesspartner.
         " Sum AR
         LOOP AT lt_bseg_ar INTO DATA(ls_ar)
                       GROUP BY ( companycode = ls_ar-companycode
-                                 fiscalyear = ls_ar-fiscalyear
-                                 cutomer = ls_ar-customer )
+                                 customer = ls_ar-customer )
                       REFERENCE INTO DATA(member_ar).
           LOOP AT GROUP member_ar ASSIGNING FIELD-SYMBOL(<lfs_ar>).
             lv_amount = lv_amount + <lfs_ar>-amountincompanycodecurrency.
           ENDLOOP.
           ls_1013-client = sy-mandt.
           ls_1013-companycode = <lfs_ar>-companycode.
-          ls_1013-fiscalyear = <lfs_ar>-fiscalyear.
+          ls_1013-fiscalyear = lv_gjahr.
           ls_1013-period = lv_monat.
           ls_1013-customer = <lfs_ar>-customer.
           ls_1013-currency = <lfs_ar>-companycodecurrency.
@@ -356,12 +377,11 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
           CLEAR: ls_1013, lv_amount.
         ENDLOOP.
 
-        SORT lt_bseg_ap BY companycode fiscalyear supplier.
-        SORT lt_1013 BY companycode fiscalyear customer.
+        SORT lt_bseg_ap BY companycode supplier.
+        SORT lt_1013 BY companycode customer.
         " Sum AP
         LOOP AT lt_bseg_ap INTO DATA(ls_ap)
                       GROUP BY ( companycode = ls_ap-companycode
-                                 fiscalyear = ls_ap-fiscalyear
                                  supplier = ls_ap-supplier )
                       REFERENCE INTO DATA(member_ap).
           LOOP AT GROUP member_ap ASSIGNING FIELD-SYMBOL(<lfs_ap>).
@@ -370,7 +390,6 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
 
           READ TABLE lt_1013 ASSIGNING FIELD-SYMBOL(<lfs_1013>)
                WITH KEY companycode = <lfs_ap>-companycode
-                        fiscalyear = <lfs_ap>-fiscalyear
                         customer = <lfs_ap>-supplier BINARY SEARCH.
           IF sy-subrc = 0.
             <lfs_1013>-supplier = <lfs_ap>-supplier.
@@ -383,7 +402,7 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
           ELSE.
             ls_1013-client = sy-mandt.
             ls_1013-companycode = <lfs_ap>-companycode.
-            ls_1013-fiscalyear = <lfs_ap>-fiscalyear.
+            ls_1013-fiscalyear = lv_gjahr.
             ls_1013-period = lv_monat.
             ls_1013-supplier = <lfs_ap>-supplier.
             ls_1013-currency = <lfs_ap>-companycodecurrency.
@@ -408,70 +427,54 @@ CLASS zcl_paidpaydocument IMPLEMENTATION.
         SORT lt_table BY companycode fiscalyear period customer supplier.
         "Edit output
         LOOP AT lt_1013 INTO ls_1013.
+          ls_output-ztype = lv_ztype.
+          ls_output-companycode = ls_1013-companycode.
+          ls_output-fiscalyear = ls_1013-fiscalyear.
+          ls_output-period = ls_1013-period.
+          ls_output-customer = ls_1013-customer.
+          ls_output-supplier = ls_1013-supplier.
+          ls_output-customername = ls_1013-customername.
+          ls_output-suppliername = ls_1013-suppliername.
+          ls_output-ar = ls_1013-ar.
+          ls_output-ar = zzcl_common_utils=>conversion_amount(
+                                                       iv_alpha = 'OUT'
+                                                       iv_currency = ls_1013-currency
+                                                       iv_input = ls_1013-ar ).
+          CONDENSE ls_output-ar NO-GAPS.
+          "AP取反
+          ls_1013-ap = -1 * ls_1013-ap.
+          ls_output-ap = zzcl_common_utils=>conversion_amount(
+                                                       iv_alpha = 'OUT'
+                                                       iv_currency = ls_1013-currency
+                                                       iv_input = ls_1013-ap ).
+          CONDENSE ls_output-ap NO-GAPS.
+          ls_output-currency = ls_1013-currency.
           READ TABLE lt_table INTO DATA(ls_table)
                WITH KEY companycode = ls_1013-companycode
                         fiscalyear = ls_1013-fiscalyear
                         period = ls_1013-period
                         customer = ls_1013-customer
                         supplier = ls_1013-supplier BINARY SEARCH.
-          IF sy-subrc <> 0.
-            "新数据，在点击过账后更新进addon表，因为在query中无法对addon table使用增删改
-            ls_output-ztype = lv_ztype.
-            ls_output-companycode = ls_1013-companycode.
-            ls_output-fiscalyear = ls_1013-fiscalyear.
-            ls_output-period = ls_1013-period.
-            ls_output-customer = ls_1013-customer.
-            ls_output-supplier = ls_1013-supplier.
-            ls_output-customername = ls_1013-customername.
-            ls_output-suppliername = ls_1013-suppliername.
-            ls_output-ar = ls_1013-ar.
-            ls_output-ar = zzcl_common_utils=>conversion_amount(
-                                                         iv_alpha = 'OUT'
-                                                         iv_currency = ls_1013-currency
-                                                         iv_input = ls_1013-ar ).
-            CONDENSE ls_output-ar NO-GAPS.
-            "AP取反
-            ls_1013-ap = -1 * ls_1013-ap.
-            ls_output-ap = zzcl_common_utils=>conversion_amount(
-                                                         iv_alpha = 'OUT'
-                                                         iv_currency = ls_1013-currency
-                                                         iv_input = ls_1013-ap ).
-            CONDENSE ls_output-ap NO-GAPS.
-            ls_output-currency = ls_1013-currency.
-            ls_output-belnr5 = ls_1013-belnr1.
-            ls_output-gjahr5 = ls_1013-gjahr1.
-            ls_output-belnr6 = ls_1013-belnr2.
-            ls_output-gjahr6 = ls_1013-gjahr2.
-            ls_output-belnr7 = ls_1013-belnr3.
-            ls_output-gjahr7 = ls_1013-gjahr3.
-            ls_output-belnr8 = ls_1013-belnr4.
-            ls_output-gjahr8 = ls_1013-gjahr4.
-            APPEND ls_output TO lt_output.
-          ELSE.
-            "如果addon表中已存在，用addon表的数据
-            MOVE-CORRESPONDING ls_table TO ls_output.
-            ls_output-ar = zzcl_common_utils=>conversion_amount(
-                                                         iv_alpha = 'OUT'
-                                                         iv_currency = ls_1013-currency
-                                                         iv_input = ls_table-ar ).
-            CONDENSE ls_output-ar NO-GAPS.
-            ls_output-ap = zzcl_common_utils=>conversion_amount(
-                                                         iv_alpha = 'OUT'
-                                                         iv_currency = ls_1013-currency
-                                                         iv_input = ls_table-ap ).
-            CONDENSE ls_output-ap NO-GAPS.
-            ls_output-ztype = lv_ztype.
-            ls_output-currency = ls_table-currency.
+          IF sy-subrc = 0.
             ls_output-belnr5 = ls_table-belnr1.
-            ls_output-gjahr5 = ls_table-gjahr1.
             ls_output-belnr6 = ls_table-belnr2.
-            ls_output-gjahr6 = ls_table-gjahr2.
             ls_output-belnr7 = ls_table-belnr3.
-            ls_output-gjahr7 = ls_table-gjahr3.
             ls_output-belnr8 = ls_table-belnr4.
-            ls_output-gjahr8 = ls_table-gjahr4.
-            APPEND ls_output TO lt_output.
+
+            IF ls_table-gjahr1 IS NOT INITIAL.
+              ls_output-gjahr5 = ls_table-gjahr1.
+            ENDIF.
+            IF ls_table-gjahr2 IS NOT INITIAL.
+              ls_output-gjahr6 = ls_table-gjahr2.
+            ENDIF.
+            IF ls_table-gjahr3 IS NOT INITIAL.
+              ls_output-gjahr7 = ls_table-gjahr3.
+            ENDIF.
+            IF ls_table-gjahr4 IS NOT INITIAL.
+              ls_output-gjahr8 = ls_table-gjahr4.
+            ENDIF.
           ENDIF.
+          APPEND ls_output TO lt_output.
           CLEAR: ls_output.
         ENDLOOP.
 

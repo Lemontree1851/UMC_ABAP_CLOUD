@@ -26,9 +26,9 @@ define root view entity ZR_PRWORKFLOWHIstory
           ltrim(   concat(    ApprovalHistory.current_node      ,   concat( '-' ,_ApprovalNode.node_name)      ) , '0'  ) as nodename,
           cast(case ApprovalHistory.approval_status
           when '2' then
-          concat('承認-', ltrim(   concat(    ApprovalHistory.current_node      ,   concat( '-' ,_ApprovalNode.node_name)      ) , '0'  ) )
+          concat('確認/承認-', ltrim(   concat(    ApprovalHistory.current_node      ,   concat( '-' ,_ApprovalNode.node_name)      ) , '0'  ) )
           when '3' then
-          concat('承認-', ltrim(   concat(    ApprovalHistory.current_node      ,   concat( '-' ,_ApprovalNode.node_name)      ) , '0'  ) )
+          concat('確認/承認-', ltrim(   concat(    ApprovalHistory.current_node      ,   concat( '-' ,_ApprovalNode.node_name)      ) , '0'  ) )
           when '1' then
           concat('却下-', ltrim(   concat(    ApprovalHistory.current_node      ,   concat( '-' ,_ApprovalNode.node_name)      ) , '0'  ) )
           else
