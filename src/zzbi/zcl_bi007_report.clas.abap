@@ -32,7 +32,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BI007_REPORT IMPLEMENTATION.
+CLASS zcl_bi007_report IMPLEMENTATION.
 
 
   METHOD extract_filter.
@@ -134,7 +134,8 @@ CLASS ZCL_BI007_REPORT IMPLEMENTATION.
           lr_forcastperiod TYPE ty_t_fiscalperiod,
           lr_plant         TYPE ty_t_plant,
           lr_baseyearmonth TYPE ty_t_baseyearmonth,
-          lt_data          TYPE STANDARD TABLE OF zi_bi007_report WITH DEFAULT KEY.
+          lt_data          TYPE STANDARD TABLE OF zi_bi007_report WITH DEFAULT KEY,
+          ls_data          TYPE zi_bi007_report.
 
     "Step 1 Extract Filter
     TRY.
@@ -175,8 +176,24 @@ CLASS ZCL_BI007_REPORT IMPLEMENTATION.
        AND plant IN @lr_plant
        AND product IN @lr_product
        AND customer IN @lr_customer
-      INTO CORRESPONDING FIELDS OF TABLE @lt_data.
+*      INTO CORRESPONDING FIELDS OF TABLE @lt_data. "Delete 20250527
+       INTO TABLE @DATA(lt_tmp).   "Add 20250527
 *&--MOD END BY XINLEI XU 2025/04/03
+
+******Add start 20250527****************************
+    LOOP AT lt_tmp INTO DATA(ls_tmp).
+      MOVE-CORRESPONDING ls_tmp TO ls_data.
+      ls_data-basefiscalyearmonth = ls_tmp-baseyearmonth.
+      ls_data-forcastperiod = ls_tmp-period.
+      ls_data-forcastfiscalperiod = ls_tmp-fiscalperiod.
+      ls_data-forcastfiscalyear = ls_tmp-fiscalyear.
+      ls_data-basefiscalyear = ls_tmp-baseyearmonth+0(4).
+      ls_data-baseperiod = ls_tmp-baseyearmonth+4(2).
+      APPEND ls_data TO lt_data.
+      CLEAR: ls_data.
+    ENDLOOP.
+    SORT lt_data BY companycode plant fiscalyearmonth basefiscalyearmonth product.
+******Add end 20250527*******************************
 
     "Step 3. Sorting, Paging
     io_response->set_total_number_of_records( lines( lt_data ) ).

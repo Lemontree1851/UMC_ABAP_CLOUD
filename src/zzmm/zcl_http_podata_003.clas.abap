@@ -132,8 +132,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
-
+CLASS zcl_http_podata_003 IMPLEMENTATION.
 
   METHOD if_http_service_extension~handle_request.
     DATA:
@@ -382,11 +381,20 @@ CLASS ZCL_HTTP_PODATA_003 IMPLEMENTATION.
           lw_result-sap_cd_by_text = |{ ls_username-lastname } { ls_username-firstname }|.
         ENDIF.
 
-
         READ TABLE lt_note INTO DATA(lw_note) WITH KEY purchaseorder = lw_poitems-purchaseorder purchaseorderitem = lw_poitems-purchaseorderitem BINARY SEARCH.
-        IF  sy-subrc = 0.
-          lw_result-plainlongtext = lw_note-plainlongtext .
+        IF sy-subrc = 0.
+*&--MOD BEGIN BY XINLEI XU 2025/05/26
+*          lw_result-plainlongtext = lw_note-plainlongtext.
+          FIND ' # ' IN lw_note-plainlongtext.
+          IF sy-subrc = 0.
+            SPLIT lw_note-plainlongtext AT ' # ' INTO TABLE DATA(lt_split).
+            lw_result-plainlongtext = lt_split[ lines( lt_split ) ].
+          ELSE.
+            lw_result-plainlongtext = lw_note-plainlongtext.
+          ENDIF.
         ENDIF.
+        CLEAR lt_split.
+*&--MOD END BY XINLEI XU 2025/05/26
 
         TRY.
             DATA(lv_unit1) = zzcl_common_utils=>conversion_cunit( iv_alpha = zzcl_common_utils=>lc_alpha_out iv_input =  lw_result-purchaseorderquantityunit ).

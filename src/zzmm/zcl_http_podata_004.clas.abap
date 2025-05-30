@@ -82,7 +82,12 @@ CLASS zcl_http_podata_004 DEFINITION
 
       BEGIN OF ty_output,
         items TYPE STANDARD TABLE OF ty_response WITH EMPTY KEY,
-      END OF ty_output.
+      END OF ty_output,
+
+      BEGIN OF ty_req,
+        plant      TYPE string,
+        time_stamp TYPE string,
+      END OF ty_req.
 
     INTERFACES if_http_service_extension .
   PROTECTED SECTION.
@@ -118,28 +123,44 @@ CLASS zcl_http_podata_004 DEFINITION
       lt_value   TYPE STANDARD TABLE OF if_web_http_request=>name_value_pairs,
       ls_value   TYPE if_web_http_request=>name_value_pairs.
 
-    DATA:lv_rate TYPE p DECIMALS 2.
+    DATA: lv_rate TYPE p DECIMALS 2.
+
+    DATA: ls_req       TYPE ty_req,
+          lv_plant     TYPE werks_d,
+          lv_timestamp TYPE timestamp.
 
 ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_PODATA_004 IMPLEMENTATION.
-
+CLASS zcl_http_podata_004 IMPLEMENTATION.
 
   METHOD if_http_service_extension~handle_request.
 
     DATA: lv_latest_date TYPE d.
-
-
     DATA: lv_amt TYPE i_supplierinvoicetaxapi01-taxamount.
-
 
     DATA(lv_sy_datum) = cl_abap_context_info=>get_system_date( ).
 
     lw_req-documentdate = lv_sy_datum.
 
     APPEND lw_req TO lt_req.
+
+*&--ADD BEGIN BY XINLEI XU 2025/05/30
+    "Obtain request data
+    DATA(lv_req_body) = request->get_text( ).
+
+    "JSON->ABAP
+    IF lv_req_body IS NOT INITIAL.
+      xco_cp_json=>data->from_string( lv_req_body )->apply( VALUE #(
+          ( xco_cp_json=>transformation->pascal_case_to_underscore ) ) )->write_to( REF #( ls_req ) ).
+    ELSE.
+      RETURN.
+    ENDIF.
+
+    lv_plant     = ls_req-plant.
+    lv_timestamp = ls_req-time_stamp.
+*&--ADD END BY XINLEI XU 2025/05/30
 
 *&--ADD BEGIN BY XINLEI XU 2025/02/21
     TRY.

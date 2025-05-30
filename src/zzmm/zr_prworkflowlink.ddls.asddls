@@ -9,12 +9,16 @@ define root view entity ZR_PRWORKFLOWLINK
   //association [0..*] to ZR_WF_ApprovalHistory as _ApprovalHistory on  ztmm_1006.workflow_id    = _ApprovalHistory.WorkflowId
   //                                                                and ztmm_1006.instance_id    = _ApprovalHistory.InstanceId
   //                                                                and ztmm_1006.application_id = _ApprovalHistory.ApplicationId
-  association [0..1] to ZC_WF_PrType_VH   as _PrType     on $projection.PrType = _PrType.Zvalue1
-  association [0..1] to ZC_WF_Location_VH as _Kyoten     on $projection.Kyoten = _Kyoten.Zvalue1
+  association [0..1] to ZC_WF_PrType_VH   as _PrType          on $projection.PrType = _PrType.Zvalue1
+  association [0..1] to ZC_WF_Location_VH as _Kyoten          on $projection.Kyoten = _Kyoten.Zvalue1
 
   // ADD BEGIN BY XINLEI XU 2025/02/24
-  association [0..*] to ZC_TMM_1012       as _Attachment on $projection.UUID = _Attachment.PrUuid
+  association [0..*] to ZC_TMM_1012       as _Attachment      on $projection.UUID = _Attachment.PrUuid
   // ADD END BY XINLEI XU 2025/02/24
+
+  // ADD BEGIN BY XINLEI XU 2025/05/07 CR#4359
+  association [0..1] to I_PurchasingGroup as _PurchasingGroup on $projection.PurchaseGrp = _PurchasingGroup.PurchasingGroup
+  // ADD END BY XINLEI XU 2025/05/07 CR#4359
 {
   key ztmm_1006.uuid                           as UUID,
       ztmm_1006.apply_depart                   as ApplyDepart,
@@ -84,5 +88,7 @@ define root view entity ZR_PRWORKFLOWLINK
 
       _PrType,
       _Kyoten,
-      _Attachment
+      _Attachment,
+
+      _PurchasingGroup // ADD BY XINLEI XU 2025/05/07 CR#4359
 }

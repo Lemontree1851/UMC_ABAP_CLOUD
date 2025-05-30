@@ -135,7 +135,8 @@ CLASS lhc_pochange IMPLEMENTATION.
       lv_status  TYPE c LENGTH 1,
       lv_msg     TYPE string,
       lv_message TYPE string,
-      lc_null    TYPE c VALUE '-'.
+      lc_null    TYPE c VALUE '-',
+      lv_index   TYPE i.
 
 *&--ADD BEGIN BY XINLEI XU 2025/03/17
     CHECK ct_data IS NOT INITIAL.
@@ -243,7 +244,9 @@ CLASS lhc_pochange IMPLEMENTATION.
       FROM i_language WITH PRIVILEGED ACCESS
      WHERE language = @sy-langu
       INTO @DATA(lv_langu).
+
 * Change Process
+    CLEAR lv_index.
     LOOP AT ct_data INTO ls_data.
 * Check if delete firstly
       "Deletion indicator
@@ -550,6 +553,7 @@ CLASS lhc_pochange IMPLEMENTATION.
       ENDIF.
 * --PO Item long text
       IF ls_data-longtext IS NOT INITIAL.
+        lv_index += 1.
         SELECT COUNT(*)
           FROM i_purchaseorderitemnotetp_2 WITH PRIVILEGED ACCESS
          WHERE purchaseorder = @lv_po
@@ -559,7 +563,7 @@ CLASS lhc_pochange IMPLEMENTATION.
         IF sy-subrc <> 0.
           ls_itemnote_create-%key-purchaseorder = lv_po.
           ls_itemnote_create-%key-purchaseorderitem = ls_data-purchaseorderitem.
-          ls_itemnote_create-%target = VALUE #( ( %cid = 'I001'
+          ls_itemnote_create-%target = VALUE #( ( %cid = |I00{ lv_index }| "'I001' MOD BY XINLEI XU 2025/05/21 BUG Fixed
                                                   purchaseorder = lv_po
                                                   purchaseorderitem = ls_data-purchaseorderitem
                                                   textobjecttype = 'F01'
@@ -567,25 +571,24 @@ CLASS lhc_pochange IMPLEMENTATION.
                                                   plainlongtext = ls_data-longtext ) ).
           APPEND ls_itemnote_create TO lt_itemnote_create.
         ELSE.
-          IF ls_data-longtext IS NOT INITIAL.
-            ls_itemnote_create-%key-purchaseorder = lv_po.
-            ls_itemnote_create-%key-purchaseorderitem = ls_data-purchaseorderitem.
+          ls_itemnote_create-%key-purchaseorder = lv_po.
+          ls_itemnote_create-%key-purchaseorderitem = ls_data-purchaseorderitem.
 
-            ls_itemnote_create-%target = VALUE #( ( %cid = 'I001'
-                                                    purchaseorder = lv_po
-                                                    purchaseorderitem = ls_data-purchaseorderitem
-                                                    textobjecttype = 'F01'
-                                                    language = sy-langu
-                                                    plainlongtext = '#' ) ).
-            APPEND ls_itemnote_create TO lt_itemnote_create.
-            ls_itemnote_create-%target = VALUE #( ( %cid = 'I002'
-                                                    purchaseorder = lv_po
-                                                    purchaseorderitem = ls_data-purchaseorderitem
-                                                    textobjecttype = 'F01'
-                                                    language = sy-langu
-                                                    plainlongtext = ls_data-longtext ) ).
-            APPEND ls_itemnote_create TO lt_itemnote_create.
-          ENDIF.
+          ls_itemnote_create-%target = VALUE #( ( %cid = |I00{ lv_index }| "'I001' MOD BY XINLEI XU 2025/05/21 BUG Fixed
+                                                  purchaseorder = lv_po
+                                                  purchaseorderitem = ls_data-purchaseorderitem
+                                                  textobjecttype = 'F01'
+                                                  language = sy-langu
+                                                  plainlongtext = '#' ) ).
+          APPEND ls_itemnote_create TO lt_itemnote_create.
+          lv_index += 1.
+          ls_itemnote_create-%target = VALUE #( ( %cid = |I00{ lv_index }| "'I001' MOD BY XINLEI XU 2025/05/21 BUG Fixed
+                                                  purchaseorder = lv_po
+                                                  purchaseorderitem = ls_data-purchaseorderitem
+                                                  textobjecttype = 'F01'
+                                                  language = sy-langu
+                                                  plainlongtext = ls_data-longtext ) ).
+          APPEND ls_itemnote_create TO lt_itemnote_create.
         ENDIF.
       ENDIF.
       CLEAR: ls_purchaseorder_update, ls_purchaseorderitem_update,

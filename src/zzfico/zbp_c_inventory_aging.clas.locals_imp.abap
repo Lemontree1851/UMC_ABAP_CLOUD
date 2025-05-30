@@ -142,6 +142,7 @@ CLASS lhc_inventoryaging DEFINITION INHERITING FROM cl_abap_behavior_handler.
       lc_goodsmovementtype_310   TYPE string VALUE '310',
       lc_debitcreditcode_s       TYPE string VALUE 'S',
       lc_fiyearvariant_v3        TYPE string VALUE 'V3',
+      lc_periodtype_m            TYPE string VALUE 'M',
       lc_dd_01                   TYPE n LENGTH 2 VALUE '01',
       lc_sign_i                  TYPE c LENGTH 1 VALUE 'I',
       lc_option_eq               TYPE c LENGTH 2 VALUE 'EQ',
@@ -388,6 +389,56 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         COLLECT ls_inventoryamtbyfsclperd INTO lt_inventoryamtbyfsclperd_sum.
       ENDLOOP.
 
+      lv_fiscalyearperiod = lv_fiscalyear && lv_fiscalperiod.
+
+      "Obtain data of fiscal year period for fiscal year variant
+      SELECT SINGLE
+             fiscalperiodstartdate,
+             fiscalperiodenddate
+        FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+       WHERE fiscalyearvariant = @lc_fiyearvariant_v3
+         AND fiscalyearperiod = @lv_fiscalyearperiod
+        INTO (@lv_fiscalperiodstartdate,@lv_fiscalperiodenddate).
+
+      "Obtain data of material stock for periods
+      SELECT material,
+             plant,
+             storagelocation,
+             batch,
+             supplier,
+             sddocument,
+             sddocumentitem,
+             wbselementinternalid,
+             customer,
+             inventorystocktype,
+             inventoryspecialstocktype,
+             fiscalyearvariant,
+             materialbaseunit,
+             matlwrhsstkqtyinmatlbaseunit
+        FROM i_materialstocktimeseries( p_startdate = @lv_fiscalperiodstartdate, p_enddate = @lv_fiscalperiodenddate, p_periodtype = @lc_periodtype_m ) WITH PRIVILEGED ACCESS "#EC CI_NO_TRANSFORM
+         FOR ALL ENTRIES IN @lt_productplantbasic
+       WHERE material = @lt_productplantbasic-product
+         AND plant = @lt_productplantbasic-valuationarea
+         AND companycode = @lt_productplantbasic-companycode
+         AND matlwrhsstkqtyinmatlbaseunit <> 0
+        INTO TABLE @DATA(lt_materialstocktimeseries).
+
+      SORT lt_inventoryamtbyfsclperd BY valuationarea material.
+
+      LOOP AT lt_materialstocktimeseries INTO DATA(ls_materialstocktimeseries).
+        "Read data of inventory amount for fiscal period
+        READ TABLE lt_inventoryamtbyfsclperd TRANSPORTING NO FIELDS WITH KEY valuationarea = ls_materialstocktimeseries-plant
+                                                                             material = ls_materialstocktimeseries-material
+                                                                    BINARY SEARCH.
+        IF sy-subrc <> 0.
+          CLEAR ls_inventoryamtbyfsclperd.
+          ls_inventoryamtbyfsclperd-material = ls_materialstocktimeseries-material.
+          ls_inventoryamtbyfsclperd-valuationarea = ls_materialstocktimeseries-plant.
+          ls_inventoryamtbyfsclperd-valuationquantity = ls_materialstocktimeseries-matlwrhsstkqtyinmatlbaseunit.
+          COLLECT ls_inventoryamtbyfsclperd INTO lt_inventoryamtbyfsclperd_sum.
+        ENDIF.
+      ENDLOOP.
+
       CLEAR lt_inventoryamtbyfsclperd.
 
       DATA lt_productplantbasic_tmp LIKE lt_productplantbasic.
@@ -420,21 +471,10 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
 *    DELETE lt_productplantbasic WHERE product <> 'ZTEST_RAW002'.
 
     IF lt_productplantbasic IS NOT INITIAL.
-      lv_fiscalyearperiod = lv_fiscalyear && lv_fiscalperiod.
-
-      "Obtain data of fiscal year period for fiscal year variant
-      SELECT SINGLE
-             fiscalperiodstartdate,
-             fiscalperiodenddate
-        FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
-       WHERE fiscalyearvariant = @lc_fiyearvariant_v3
-         AND fiscalyearperiod = @lv_fiscalyearperiod
-        INTO (@lv_fiscalperiodstartdate,@lv_fiscalperiodenddate).
-
       "Obtain data of inventory price by key date
       SELECT material,
              valuationarea,
-             actualprice,
+             inventoryprice, "actualprice,
              materialpriceunitqty
         FROM i_inventorypricebykeydate( p_calendardate = @lv_fiscalperiodenddate )  WITH PRIVILEGED ACCESS
          FOR ALL ENTRIES IN @lt_productplantbasic
@@ -977,7 +1017,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         ENDLOOP.
 
         DELETE lt_stock WHERE quantityinbaseunit = 0.
-        SORT lt_receipt2 BY plant material postingdate postingdate_receipt.
+*        SORT lt_receipt2 BY plant material postingdate postingdate_receipt.
 
         IF lt_stock IS NOT INITIAL.
           CLEAR lt_ztfi_1004_tmp.
@@ -1048,95 +1088,94 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
               ENDIF.
             ENDLOOP.
           ENDIF.
-        ENDIF.
 
-        SORT lt_receipt_qc BY plant material postingdate_receipt DESCENDING.
+          SORT lt_receipt_qc BY plant material postingdate_receipt DESCENDING.
 
-        "只保留累计入库数量>=期末库存数量的数据(期初库存扣减)
-        LOOP AT lt_stock ASSIGNING <fs_stock>.
-          READ TABLE lt_receipt_qc TRANSPORTING NO FIELDS WITH KEY plant = <fs_stock>-plant
-                                                                   material = <fs_stock>-material
-                                                          BINARY SEARCH.
-          IF sy-subrc = 0.
-            LOOP AT lt_receipt_qc ASSIGNING FIELD-SYMBOL(<fs_receipt>) FROM sy-tabix.
-              IF <fs_receipt>-plant <> <fs_stock>-plant
-              OR <fs_receipt>-material <> <fs_stock>-material.
-                EXIT.
-              ENDIF.
+          "只保留累计入库数量>=期末库存数量的数据(期初库存扣减)
+          LOOP AT lt_stock ASSIGNING <fs_stock>.
+            READ TABLE lt_receipt_qc TRANSPORTING NO FIELDS WITH KEY plant = <fs_stock>-plant
+                                                                     material = <fs_stock>-material
+                                                            BINARY SEARCH.
+            IF sy-subrc = 0.
+              LOOP AT lt_receipt_qc ASSIGNING FIELD-SYMBOL(<fs_receipt>) FROM sy-tabix.
+                IF <fs_receipt>-plant <> <fs_stock>-plant
+                OR <fs_receipt>-material <> <fs_stock>-material.
+                  EXIT.
+                ENDIF.
 
-              IF <fs_stock>-quantityinbaseunit >= <fs_receipt>-quantityinbaseunit.
-                <fs_stock>-quantityinbaseunit = <fs_stock>-quantityinbaseunit - <fs_receipt>-quantityinbaseunit.
-                lv_qty = <fs_receipt>-quantityinbaseunit.
-                CLEAR <fs_receipt>-quantityinbaseunit.
-              ELSE.
-                <fs_receipt>-quantityinbaseunit = <fs_receipt>-quantityinbaseunit - <fs_stock>-quantityinbaseunit.
-                lv_qty = <fs_stock>-quantityinbaseunit.
-                CLEAR <fs_stock>-quantityinbaseunit.
-              ENDIF.
+                IF <fs_stock>-quantityinbaseunit >= <fs_receipt>-quantityinbaseunit.
+                  <fs_stock>-quantityinbaseunit = <fs_stock>-quantityinbaseunit - <fs_receipt>-quantityinbaseunit.
+                  lv_qty = <fs_receipt>-quantityinbaseunit.
+                  CLEAR <fs_receipt>-quantityinbaseunit.
+                ELSE.
+                  <fs_receipt>-quantityinbaseunit = <fs_receipt>-quantityinbaseunit - <fs_stock>-quantityinbaseunit.
+                  lv_qty = <fs_stock>-quantityinbaseunit.
+                  CLEAR <fs_stock>-quantityinbaseunit.
+                ENDIF.
 
-              ls_receipt-plant = <fs_receipt>-plant.
-              ls_receipt-material = <fs_receipt>-material.
-              ls_receipt-postingdate = <fs_stock>-postingdate.
-              ls_receipt-postingdate_receipt = <fs_receipt>-postingdate_receipt.
-              ls_receipt-quantityinbaseunit = lv_qty.
-*              APPEND ls_receipt TO lt_receipt3.
-              COLLECT ls_receipt INTO lt_receipt2.
-              CLEAR ls_receipt.
+                ls_receipt-plant = <fs_receipt>-plant.
+                ls_receipt-material = <fs_receipt>-material.
+                ls_receipt-postingdate = <fs_stock>-postingdate.
+                ls_receipt-postingdate_receipt = <fs_receipt>-postingdate_receipt.
+                ls_receipt-quantityinbaseunit = lv_qty.
+*                APPEND ls_receipt TO lt_receipt3.
+                COLLECT ls_receipt INTO lt_receipt2.
+                CLEAR ls_receipt.
 
-              IF <fs_stock>-quantityinbaseunit = 0.
-                EXIT.
-              ENDIF.
-            ENDLOOP.
+                IF <fs_stock>-quantityinbaseunit = 0.
+                  EXIT.
+                ENDIF.
+              ENDLOOP.
 
-            DELETE lt_receipt_qc WHERE quantityinbaseunit = 0.
-          ENDIF.
-        ENDLOOP.
-      ENDIF.
-
-*      SORT lt_receipt3 BY plant material postingdate postingdate_receipt.
-      SORT lt_receipt2 BY plant material postingdate postingdate_receipt.
-
-      LOOP AT lt_receipt_309 INTO ls_receipt_309.
-        READ TABLE lt_receipt2 TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_309-issuingorreceivingplant
-                                                               material = ls_receipt_309-issgorrcvgmaterial
-                                                               postingdate = ls_receipt_309-postingdate
-                                                      BINARY SEARCH.
-        IF sy-subrc = 0.
-          LOOP AT lt_receipt2 INTO DATA(ls_receipt2) FROM sy-tabix.
-            IF ls_receipt2-plant <> ls_receipt_309-issuingorreceivingplant
-            OR ls_receipt2-material <> ls_receipt_309-issgorrcvgmaterial
-            OR ls_receipt2-postingdate <> ls_receipt_309-postingdate.
-              EXIT.
-            ENDIF.
-
-            IF ls_receipt_309-quantityinbaseunit >= ls_receipt2-quantityinbaseunit.
-              ls_receipt_309-quantityinbaseunit = ls_receipt_309-quantityinbaseunit - ls_receipt2-quantityinbaseunit.
-
-              ls_receipt_309new-plant = ls_receipt2-plant.
-              ls_receipt_309new-material = ls_receipt2-material.
-              ls_receipt_309new-postingdate = ls_receipt2-postingdate.
-              ls_receipt_309new-quantityinbaseunit = ls_receipt2-quantityinbaseunit.
-              ls_receipt_309new-postingdate_receipt = ls_receipt2-postingdate_receipt.
-              APPEND ls_receipt_309new TO lt_receipt_309new.
-              CLEAR ls_receipt_309new.
-            ELSE.
-              ls_receipt_309new-plant = ls_receipt2-plant.
-              ls_receipt_309new-material = ls_receipt2-material.
-              ls_receipt_309new-postingdate = ls_receipt2-postingdate.
-              ls_receipt_309new-quantityinbaseunit = ls_receipt_309-quantityinbaseunit.
-              ls_receipt_309new-postingdate_receipt = ls_receipt2-postingdate_receipt.
-              APPEND ls_receipt_309new TO lt_receipt_309new.
-              CLEAR ls_receipt_309new.
-
-              CLEAR ls_receipt_309-quantityinbaseunit.
-            ENDIF.
-
-            "扣减完毕
-            IF ls_receipt_309-quantityinbaseunit = 0.
-              EXIT.
+              DELETE lt_receipt_qc WHERE quantityinbaseunit = 0.
             ENDIF.
           ENDLOOP.
         ENDIF.
+
+*        SORT lt_receipt3 BY plant material postingdate postingdate_receipt.
+        SORT lt_receipt2 BY plant material postingdate postingdate_receipt.
+
+        LOOP AT lt_receipt_309 INTO ls_receipt_309.
+          READ TABLE lt_receipt2 TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_309-issuingorreceivingplant
+                                                                 material = ls_receipt_309-issgorrcvgmaterial
+                                                                 postingdate = ls_receipt_309-postingdate
+                                                        BINARY SEARCH.
+          IF sy-subrc = 0.
+            LOOP AT lt_receipt2 INTO DATA(ls_receipt2) FROM sy-tabix.
+              IF ls_receipt2-plant <> ls_receipt_309-issuingorreceivingplant
+              OR ls_receipt2-material <> ls_receipt_309-issgorrcvgmaterial
+              OR ls_receipt2-postingdate <> ls_receipt_309-postingdate.
+                EXIT.
+              ENDIF.
+
+              IF ls_receipt_309-quantityinbaseunit >= ls_receipt2-quantityinbaseunit.
+                ls_receipt_309-quantityinbaseunit = ls_receipt_309-quantityinbaseunit - ls_receipt2-quantityinbaseunit.
+
+                ls_receipt_309new-plant = ls_receipt2-plant.
+                ls_receipt_309new-material = ls_receipt2-material.
+                ls_receipt_309new-postingdate = ls_receipt2-postingdate.
+                ls_receipt_309new-quantityinbaseunit = ls_receipt2-quantityinbaseunit.
+                ls_receipt_309new-postingdate_receipt = ls_receipt2-postingdate_receipt.
+                APPEND ls_receipt_309new TO lt_receipt_309new.
+                CLEAR ls_receipt_309new.
+              ELSE.
+                ls_receipt_309new-plant = ls_receipt2-plant.
+                ls_receipt_309new-material = ls_receipt2-material.
+                ls_receipt_309new-postingdate = ls_receipt2-postingdate.
+                ls_receipt_309new-quantityinbaseunit = ls_receipt_309-quantityinbaseunit.
+                ls_receipt_309new-postingdate_receipt = ls_receipt2-postingdate_receipt.
+                APPEND ls_receipt_309new TO lt_receipt_309new.
+                CLEAR ls_receipt_309new.
+
+                CLEAR ls_receipt_309-quantityinbaseunit.
+              ENDIF.
+
+              "扣减完毕
+              IF ls_receipt_309-quantityinbaseunit = 0.
+                EXIT.
+              ENDIF.
+            ENDLOOP.
+          ENDIF.
 
 *        "不够，扣减期初库存
 *        IF ls_receipt_309-quantityinbaseunit > 0.
@@ -1181,36 +1220,11 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
 *            ENDLOOP.
 *          ENDIF.
 *        ENDIF.
-      ENDLOOP.
+        ENDLOOP.
+      ENDIF.
 
       "关联公司
       IF lt_receipt_vendor IS NOT INITIAL.
-        "Obtain data of fiscal year period for fiscal year variant
-        SELECT fiscalyearperiod,
-               fiscalyear,
-               fiscalperiod,
-               fiscalperiodstartdate,
-               fiscalperiodenddate
-          FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
-           FOR ALL ENTRIES IN @lt_receipt_vendor
-         WHERE fiscalperiodstartdate <= @lt_receipt_vendor-postingdate
-           AND fiscalperiodenddate >= @lt_receipt_vendor-postingdate
-           AND fiscalyearvariant = @lc_fiyearvariant_v3
-          INTO TABLE @DATA(lt_fiscalyearperiod_new).
-        IF sy-subrc = 0.
-          SELECT fiscalyearperiod,
-                 fiscalyear,
-                 fiscalperiod,
-                 nextfiscalperiod,
-                 nextfiscalperiodfiscalyear
-            FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS "#EC CI_NO_TRANSFORM
-             FOR ALL ENTRIES IN @lt_fiscalyearperiod_new
-           WHERE nextfiscalperiod = @lt_fiscalyearperiod_new-fiscalperiod
-             AND nextfiscalperiodfiscalyear = @lt_fiscalyearperiod_new-fiscalyear
-             AND fiscalyearvariant = @lc_fiyearvariant_v3
-            INTO TABLE @DATA(lt_fiscalyearperiod_last).
-        ENDIF.
-
         CLEAR lt_materialdocumentitem.
 
         "获取原始物料的库存
@@ -1257,13 +1271,39 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
             INTO TABLE @lt_materialdocumentitem_rev.
         ENDIF.
 
+        "Obtain data of fiscal year period for fiscal year variant
+        SELECT fiscalyearperiod,
+               fiscalyear,
+               fiscalperiod,
+               fiscalperiodstartdate,
+               fiscalperiodenddate
+          FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+           FOR ALL ENTRIES IN @lt_receipt_vendor
+         WHERE fiscalperiodstartdate <= @lt_receipt_vendor-postingdate
+           AND fiscalperiodenddate >= @lt_receipt_vendor-postingdate
+           AND fiscalyearvariant = @lc_fiyearvariant_v3
+          INTO TABLE @DATA(lt_fiscalyearperiod_new).
+        IF sy-subrc = 0.
+          SELECT fiscalyearperiod,
+                 fiscalyear,
+                 fiscalperiod,
+                 nextfiscalperiod,
+                 nextfiscalperiodfiscalyear
+            FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS "#EC CI_NO_TRANSFORM
+             FOR ALL ENTRIES IN @lt_fiscalyearperiod_new
+           WHERE nextfiscalperiod = @lt_fiscalyearperiod_new-fiscalperiod
+             AND nextfiscalperiodfiscalyear = @lt_fiscalyearperiod_new-fiscalyear
+             AND fiscalyearvariant = @lc_fiyearvariant_v3
+            INTO TABLE @DATA(lt_fiscalyearperiod_last).
+        ENDIF.
+
         CLEAR:
           lt_stock,
           lt_receipt_tmp.
 
-        SORT lt_fiscalyearperiod_last BY nextfiscalperiod nextfiscalperiodfiscalyear.
         SORT lt_materialdocumentitem BY plant material.
         SORT lt_materialdocumentitem_rev BY reversedmaterialdocumentyear reversedmaterialdocument reversedmaterialdocumentitem.
+        SORT lt_fiscalyearperiod_last BY nextfiscalperiod nextfiscalperiodfiscalyear.
 
         LOOP AT lt_receipt_vendor INTO DATA(ls_receipt_vendor).
           READ TABLE lt_materialdocumentitem TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_vendor-issuingorreceivingplant
@@ -1325,7 +1365,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
             ENDLOOP.
           ENDIF.
 
-          "获取过账日期的上个期间数据
+          "获取过账日期的上个期间数据（用于获取类别为B的期初数据）
           ls_entries-plant = ls_receipt_vendor-issuingorreceivingplant.
           ls_entries-material = ls_receipt_vendor-issgorrcvgmaterial.
           ls_entries-postingdate = ls_receipt_vendor-postingdate.
@@ -1346,144 +1386,156 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
             EXIT.
           ENDLOOP.
         ENDLOOP.
-      ENDIF.
 
-      IF lt_entries IS NOT INITIAL.
-        CLEAR lt_ztfi_1004_tmp.
+        IF lt_entries IS NOT INITIAL.
+          CLEAR lt_ztfi_1004_tmp.
 
-        "获取类别为B的期初数据
-        SELECT calendaryear,
-               calendarmonth,
-               plant,
-               material,
-               age,
-               qty
-          FROM ztfi_1004
-           FOR ALL ENTRIES IN @lt_entries
-         WHERE calendaryear = @lt_entries-calendaryear
-           AND calendarmonth = @lt_entries-calendarmonth
-           AND plant = @lt_entries-plant
-           AND material = @lt_entries-material
-           AND inventorytype = 'B'
-           AND ledger = @lv_ledger
-          INTO TABLE @lt_ztfi_1004_tmp.
+          "获取类别为B的期初数据
+          SELECT calendaryear,
+                 calendarmonth,
+                 plant,
+                 material,
+                 age,
+                 qty
+            FROM ztfi_1004
+             FOR ALL ENTRIES IN @lt_entries
+           WHERE calendaryear = @lt_entries-calendaryear
+             AND calendarmonth = @lt_entries-calendarmonth
+             AND plant = @lt_entries-plant
+             AND material = @lt_entries-material
+             AND inventorytype = 'B'
+             AND ledger = @lv_ledger
+            INTO TABLE @lt_ztfi_1004_tmp.
 
-        CLEAR lr_fiscalyearperiod.
+          CLEAR lr_fiscalyearperiod.
 
-        LOOP AT lt_ztfi_1004_tmp INTO ls_ztfi_1004_tmp.
-          lv_fiscalperiod_tmp = ls_ztfi_1004_tmp-calendarmonth.
-          lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && lv_fiscalperiod_tmp.
-          lr_fiscalyearperiod = VALUE #( BASE lr_fiscalyearperiod sign = lc_sign_i option = lc_option_eq ( low = lv_fiscalyearperiod ) ).
-        ENDLOOP.
-
-        IF lr_fiscalyearperiod IS NOT INITIAL.
-          CLEAR lt_fiscalyearperiodforvariant.
-
-          "Obtain data of fiscal year period for fiscal year variant
-          SELECT fiscalyearperiod,
-                 fiscalperiodstartdate,
-                 fiscalperiodenddate
-            FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
-           WHERE fiscalyearvariant = @lc_fiyearvariant_v3
-             AND fiscalyearperiod IN @lr_fiscalyearperiod
-            INTO TABLE @lt_fiscalyearperiodforvariant.
-
-          SORT lt_fiscalyearperiodforvariant BY fiscalyearperiod.
-
-          CLEAR lt_receipt_qc.
-
-          "期初数据转化为入库记录
           LOOP AT lt_ztfi_1004_tmp INTO ls_ztfi_1004_tmp.
             lv_fiscalperiod_tmp = ls_ztfi_1004_tmp-calendarmonth.
             lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && lv_fiscalperiod_tmp.
+            lr_fiscalyearperiod = VALUE #( BASE lr_fiscalyearperiod sign = lc_sign_i option = lc_option_eq ( low = lv_fiscalyearperiod ) ).
+          ENDLOOP.
 
-            READ TABLE lt_fiscalyearperiodforvariant INTO ls_fiscalyearperiodforvariant WITH KEY fiscalyearperiod = lv_fiscalyearperiod
-                                                                                        BINARY SEARCH.
-            IF sy-subrc = 0.
-              lv_age = ls_ztfi_1004_tmp-age - 1.
+          IF lr_fiscalyearperiod IS NOT INITIAL.
+            CLEAR lt_fiscalyearperiodforvariant.
 
-              "获取当前日期指定月数前的日期
-              zzcl_common_utils=>calc_date_subtract(
-                  EXPORTING
-                    date      = ls_fiscalyearperiodforvariant-fiscalperiodenddate
-                    month     = lv_age
-                  RECEIVING
-                    calc_date = ls_fiscalyearperiodforvariant-fiscalperiodenddate ).
+            "Obtain data of fiscal year period for fiscal year variant
+            SELECT fiscalyearperiod,
+                   fiscalperiodstartdate,
+                   fiscalperiodenddate
+              FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+             WHERE fiscalyearvariant = @lc_fiyearvariant_v3
+               AND fiscalyearperiod IN @lr_fiscalyearperiod
+              INTO TABLE @lt_fiscalyearperiodforvariant.
 
-              ls_qc_vendor-calendaryear = ls_ztfi_1004_tmp-calendaryear.
-              ls_qc_vendor-calendarmonth = ls_ztfi_1004_tmp-calendarmonth.
-              ls_qc_vendor-plant = ls_ztfi_1004_tmp-plant.
-              ls_qc_vendor-material = ls_ztfi_1004_tmp-material.
-              ls_qc_vendor-postingdate_receipt = ls_fiscalyearperiodforvariant-fiscalperiodenddate.
-              ls_qc_vendor-quantityinbaseunit = ls_ztfi_1004_tmp-qty.
-              COLLECT ls_qc_vendor INTO lt_qc_vendor.
-              CLEAR ls_qc_vendor.
-            ENDIF.
+            SORT lt_fiscalyearperiodforvariant BY fiscalyearperiod.
+
+            "B类型期初数据转化为入库记录
+            LOOP AT lt_ztfi_1004_tmp INTO ls_ztfi_1004_tmp.
+              lv_fiscalperiod_tmp = ls_ztfi_1004_tmp-calendarmonth.
+              lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && lv_fiscalperiod_tmp.
+
+              READ TABLE lt_fiscalyearperiodforvariant INTO ls_fiscalyearperiodforvariant WITH KEY fiscalyearperiod = lv_fiscalyearperiod
+                                                                                          BINARY SEARCH.
+              IF sy-subrc = 0.
+                lv_age = ls_ztfi_1004_tmp-age - 1.
+
+                "获取当前日期指定月数前的日期
+                zzcl_common_utils=>calc_date_subtract(
+                    EXPORTING
+                      date      = ls_fiscalyearperiodforvariant-fiscalperiodenddate
+                      month     = lv_age
+                    RECEIVING
+                      calc_date = ls_fiscalyearperiodforvariant-fiscalperiodenddate ).
+
+                ls_qc_vendor-calendaryear = ls_ztfi_1004_tmp-calendaryear.
+                ls_qc_vendor-calendarmonth = ls_ztfi_1004_tmp-calendarmonth.
+                ls_qc_vendor-plant = ls_ztfi_1004_tmp-plant.
+                ls_qc_vendor-material = ls_ztfi_1004_tmp-material.
+                ls_qc_vendor-postingdate_receipt = ls_fiscalyearperiodforvariant-fiscalperiodenddate.
+                ls_qc_vendor-quantityinbaseunit = ls_ztfi_1004_tmp-qty.
+                COLLECT ls_qc_vendor INTO lt_qc_vendor.
+                CLEAR ls_qc_vendor.
+              ENDIF.
+            ENDLOOP.
+          ENDIF.
+
+          SORT lt_qc_vendor BY calendaryear calendarmonth plant material postingdate_receipt.
+
+          LOOP AT lt_receipt_vendor INTO ls_receipt_vendor.
+            "获取过账日期所在的期间
+            LOOP AT lt_fiscalyearperiod_new INTO ls_fiscalyearperiod_new WHERE fiscalperiodstartdate <= ls_receipt_vendor-postingdate
+                                                                           AND fiscalperiodenddate >= ls_receipt_vendor-postingdate.
+              "获取过账日期所在的期间的上一个期间
+              READ TABLE lt_fiscalyearperiod_last INTO ls_fiscalyearperiod_last WITH KEY nextfiscalperiod = ls_fiscalyearperiod_new-fiscalperiod
+                                                                                         nextfiscalperiodfiscalyear = ls_fiscalyearperiod_new-fiscalyear
+                                                                                BINARY SEARCH.
+              IF sy-subrc = 0.
+                READ TABLE lt_qc_vendor TRANSPORTING NO FIELDS WITH KEY calendaryear = ls_fiscalyearperiod_last-fiscalyear
+                                                                        calendarmonth = ls_fiscalyearperiod_last-fiscalperiod
+                                                                        plant = ls_receipt_vendor-issuingorreceivingplant
+                                                                        material = ls_receipt_vendor-issgorrcvgmaterial
+                                                               BINARY SEARCH.
+*               存在关联公司期初数据
+                IF sy-subrc = 0.
+                  LOOP AT lt_qc_vendor INTO ls_qc_vendor FROM sy-tabix.
+                    IF ls_qc_vendor-calendaryear <> ls_fiscalyearperiod_last-fiscalyear
+                    OR ls_qc_vendor-calendarmonth <> ls_fiscalyearperiod_last-fiscalperiod
+                    OR ls_qc_vendor-plant <> ls_receipt_vendor-issuingorreceivingplant
+                    OR ls_qc_vendor-material <> ls_receipt_vendor-issgorrcvgmaterial.
+                      EXIT.
+                    ENDIF.
+
+                    IF ls_receipt_vendor-quantityinbaseunit >= ls_qc_vendor-quantityinbaseunit.
+                      ls_receipt_vendor-quantityinbaseunit = ls_receipt_vendor-quantityinbaseunit - ls_qc_vendor-quantityinbaseunit.
+
+                      ls_receipt-plant = ls_receipt_vendor-issuingorreceivingplant.
+                      ls_receipt-material = ls_receipt_vendor-issgorrcvgmaterial.
+                      ls_receipt-postingdate = ls_receipt_vendor-postingdate.
+                      ls_receipt-quantityinbaseunit = ls_qc_vendor-quantityinbaseunit.
+                      ls_receipt-postingdate_receipt = ls_qc_vendor-postingdate_receipt.
+                      APPEND ls_receipt TO lt_receipt4.
+                      CLEAR ls_receipt.
+                    ELSE.
+                      ls_receipt-plant = ls_receipt_vendor-issuingorreceivingplant.
+                      ls_receipt-material = ls_receipt_vendor-issgorrcvgmaterial.
+                      ls_receipt-postingdate = ls_receipt_vendor-postingdate.
+                      ls_receipt-quantityinbaseunit = ls_receipt_vendor-quantityinbaseunit.
+                      ls_receipt-postingdate_receipt = ls_qc_vendor-postingdate_receipt.
+                      APPEND ls_receipt TO lt_receipt4.
+                      CLEAR ls_receipt.
+
+                      CLEAR ls_receipt_vendor-quantityinbaseunit.
+                    ENDIF.
+
+                    "扣减完毕
+                    IF ls_receipt_vendor-quantityinbaseunit = 0.
+                      EXIT.
+                    ENDIF.
+                  ENDLOOP.
+
+                  "关联公司期初数据也不够扣减，则剩下部分直接作为对应账龄
+                  IF ls_receipt_vendor-quantityinbaseunit > 0.
+                    ls_receipt-plant = ls_receipt_vendor-issuingorreceivingplant.
+                    ls_receipt-material = ls_receipt_vendor-issgorrcvgmaterial.
+                    ls_receipt-postingdate = ls_receipt_vendor-postingdate.
+                    ls_receipt-quantityinbaseunit = ls_receipt_vendor-quantityinbaseunit.
+                    ls_receipt-postingdate_receipt = ls_qc_vendor-postingdate_receipt.
+                    APPEND ls_receipt TO lt_receipt4.
+                    CLEAR ls_receipt.
+                  ENDIF.
+                ENDIF.
+              ENDIF.
+
+              EXIT.
+            ENDLOOP.
           ENDLOOP.
         ENDIF.
-      ENDIF.
 
-      SORT lt_stock BY plant material postingdate.
-      SORT lt_receipt_tmp BY plant material postingdate postingdate_receipt DESCENDING.
-      SORT lt_qc_vendor BY calendaryear calendarmonth plant material postingdate_receipt.
+        SORT lt_stock BY plant material postingdate.
+        SORT lt_receipt_tmp BY plant material postingdate postingdate_receipt DESCENDING.
 
-      "只保留累计入库数量>=期末库存数量的数据(入库记录扣减)
-      LOOP AT lt_stock ASSIGNING <fs_stock>.
-        "获取过账日期所在的期间
-        LOOP AT lt_fiscalyearperiod_new INTO ls_fiscalyearperiod_new WHERE fiscalperiodstartdate <= <fs_stock>-postingdate
-                                                                     AND fiscalperiodenddate >= <fs_stock>-postingdate.
-          EXIT.
-        ENDLOOP.
-        IF sy-subrc = 0.
-          "获取过账日期所在的期间的上一个期间
-          READ TABLE lt_fiscalyearperiod_last INTO ls_fiscalyearperiod_last WITH KEY nextfiscalperiod = ls_fiscalyearperiod_new-fiscalperiod
-                                                                                     nextfiscalperiodfiscalyear = ls_fiscalyearperiod_new-fiscalyear
-                                                                            BINARY SEARCH.
-          IF sy-subrc = 0.
-            READ TABLE lt_qc_vendor TRANSPORTING NO FIELDS WITH KEY calendaryear = ls_fiscalyearperiod_last-fiscalyear
-                                                                    calendarmonth = ls_fiscalyearperiod_last-fiscalperiod
-                                                                    plant = <fs_stock>-plant
-                                                                    material = <fs_stock>-material
-                                                           BINARY SEARCH.
-            IF sy-subrc = 0.
-              LOOP AT lt_qc_vendor INTO ls_qc_vendor FROM sy-tabix.
-                IF ls_qc_vendor-calendaryear <> ls_fiscalyearperiod_last-fiscalyear
-                OR ls_qc_vendor-calendarmonth <> ls_fiscalyearperiod_last-fiscalperiod
-                OR ls_qc_vendor-plant <> <fs_stock>-plant
-                OR ls_qc_vendor-material <> <fs_stock>-material.
-                  EXIT.
-                ENDIF.
-
-                IF <fs_stock>-quantityinbaseunit >= ls_qc_vendor-quantityinbaseunit.
-                  <fs_stock>-quantityinbaseunit = <fs_stock>-quantityinbaseunit - ls_qc_vendor-quantityinbaseunit.
-
-                  ls_receipt-plant = <fs_stock>-plant.
-                  ls_receipt-material = <fs_stock>-material.
-                  ls_receipt-postingdate = <fs_stock>-postingdate.
-                  ls_receipt-quantityinbaseunit = ls_qc_vendor-quantityinbaseunit.
-                  ls_receipt-postingdate_receipt = ls_qc_vendor-postingdate_receipt.
-                  APPEND ls_receipt TO lt_receipt4.
-                  CLEAR ls_receipt.
-                ELSE.
-                  ls_receipt-plant = <fs_stock>-plant.
-                  ls_receipt-material = <fs_stock>-material.
-                  ls_receipt-postingdate = <fs_stock>-postingdate.
-                  ls_receipt-quantityinbaseunit = <fs_stock>-quantityinbaseunit.
-                  ls_receipt-postingdate_receipt = ls_qc_vendor-postingdate_receipt.
-                  APPEND ls_receipt TO lt_receipt4.
-                  CLEAR ls_receipt.
-
-                  CLEAR <fs_stock>-quantityinbaseunit.
-                ENDIF.
-
-                "扣减完毕
-                IF <fs_stock>-quantityinbaseunit = 0.
-                  EXIT.
-                ENDIF.
-              ENDLOOP.
-            ENDIF.
-          ENDIF.
-        ELSE.
+        "只保留累计入库数量>=期末库存数量的数据(入库记录扣减)
+        LOOP AT lt_stock ASSIGNING <fs_stock>.
           READ TABLE lt_receipt_tmp TRANSPORTING NO FIELDS WITH KEY plant = <fs_stock>-plant
                                                                     material = <fs_stock>-material
                                                                     postingdate = <fs_stock>-postingdate
@@ -1517,170 +1569,262 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
               ENDIF.
             ENDLOOP.
           ENDIF.
-        ENDIF.
-      ENDLOOP.
-
-      DELETE lt_stock WHERE quantityinbaseunit = 0.
-      SORT lt_receipt4 BY plant material postingdate postingdate_receipt DESCENDING.
-
-      IF lt_stock IS NOT INITIAL.
-        CLEAR lt_ztfi_1004_tmp.
-
-        "获取类别为A的期初数据
-        SELECT calendaryear,
-               calendarmonth,
-               plant,
-               material,
-               age,
-               qty
-          FROM ztfi_1004
-           FOR ALL ENTRIES IN @lt_stock
-         WHERE plant = @lt_stock-plant
-           AND material = @lt_stock-material
-           AND inventorytype = 'A'
-           AND ledger = @lv_ledger
-          INTO TABLE @lt_ztfi_1004_tmp.
-
-        CLEAR lr_fiscalyearperiod.
-
-        LOOP AT lt_ztfi_1004_tmp INTO ls_ztfi_1004_tmp.
-          lv_fiscalperiod_tmp = ls_ztfi_1004_tmp-calendarmonth.
-          lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && lv_fiscalperiod_tmp.
-          lr_fiscalyearperiod = VALUE #( BASE lr_fiscalyearperiod sign = lc_sign_i option = lc_option_eq ( low = lv_fiscalyearperiod ) ).
         ENDLOOP.
 
-        IF lr_fiscalyearperiod IS NOT INITIAL.
-          CLEAR lt_fiscalyearperiodforvariant.
+*      "只保留累计入库数量>=期末库存数量的数据(入库记录扣减)
+*      LOOP AT lt_stock ASSIGNING <fs_stock>.
+*        "获取过账日期所在的期间
+*        LOOP AT lt_fiscalyearperiod_new INTO ls_fiscalyearperiod_new WHERE fiscalperiodstartdate <= <fs_stock>-postingdate
+*                                                                       AND fiscalperiodenddate >= <fs_stock>-postingdate.
+*          EXIT.
+*        ENDLOOP.
+*        IF sy-subrc = 0.
+*          "获取过账日期所在的期间的上一个期间
+*          READ TABLE lt_fiscalyearperiod_last INTO ls_fiscalyearperiod_last WITH KEY nextfiscalperiod = ls_fiscalyearperiod_new-fiscalperiod
+*                                                                                     nextfiscalperiodfiscalyear = ls_fiscalyearperiod_new-fiscalyear
+*                                                                            BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            READ TABLE lt_qc_vendor TRANSPORTING NO FIELDS WITH KEY calendaryear = ls_fiscalyearperiod_last-fiscalyear
+*                                                                    calendarmonth = ls_fiscalyearperiod_last-fiscalperiod
+*                                                                    plant = <fs_stock>-plant
+*                                                                    material = <fs_stock>-material
+*                                                           BINARY SEARCH.
+*            IF sy-subrc = 0.
+*              LOOP AT lt_qc_vendor INTO ls_qc_vendor FROM sy-tabix.
+*                IF ls_qc_vendor-calendaryear <> ls_fiscalyearperiod_last-fiscalyear
+*                OR ls_qc_vendor-calendarmonth <> ls_fiscalyearperiod_last-fiscalperiod
+*                OR ls_qc_vendor-plant <> <fs_stock>-plant
+*                OR ls_qc_vendor-material <> <fs_stock>-material.
+*                  EXIT.
+*                ENDIF.
+*
+*                IF <fs_stock>-quantityinbaseunit >= ls_qc_vendor-quantityinbaseunit.
+*                  <fs_stock>-quantityinbaseunit = <fs_stock>-quantityinbaseunit - ls_qc_vendor-quantityinbaseunit.
+*
+*                  ls_receipt-plant = <fs_stock>-plant.
+*                  ls_receipt-material = <fs_stock>-material.
+*                  ls_receipt-postingdate = <fs_stock>-postingdate.
+*                  ls_receipt-quantityinbaseunit = ls_qc_vendor-quantityinbaseunit.
+*                  ls_receipt-postingdate_receipt = ls_qc_vendor-postingdate_receipt.
+*                  APPEND ls_receipt TO lt_receipt4.
+*                  CLEAR ls_receipt.
+*                ELSE.
+*                  ls_receipt-plant = <fs_stock>-plant.
+*                  ls_receipt-material = <fs_stock>-material.
+*                  ls_receipt-postingdate = <fs_stock>-postingdate.
+*                  ls_receipt-quantityinbaseunit = <fs_stock>-quantityinbaseunit.
+*                  ls_receipt-postingdate_receipt = ls_qc_vendor-postingdate_receipt.
+*                  APPEND ls_receipt TO lt_receipt4.
+*                  CLEAR ls_receipt.
+*
+*                  CLEAR <fs_stock>-quantityinbaseunit.
+*                ENDIF.
+*
+*                "扣减完毕
+*                IF <fs_stock>-quantityinbaseunit = 0.
+*                  EXIT.
+*                ENDIF.
+*              ENDLOOP.
+*            ENDIF.
+*          ENDIF.
+*        ELSE.
+*          READ TABLE lt_receipt_tmp TRANSPORTING NO FIELDS WITH KEY plant = <fs_stock>-plant
+*                                                                    material = <fs_stock>-material
+*                                                                    postingdate = <fs_stock>-postingdate
+*                                                           BINARY SEARCH.
+*          IF sy-subrc = 0.
+*            LOOP AT lt_receipt_tmp INTO ls_receipt_tmp FROM sy-tabix.
+*              IF ls_receipt_tmp-plant <> <fs_stock>-plant
+*              OR ls_receipt_tmp-material <> <fs_stock>-material
+*              OR ls_receipt_tmp-postingdate <> <fs_stock>-postingdate.
+*                EXIT.
+*              ENDIF.
+*
+*              IF <fs_stock>-quantityinbaseunit >= ls_receipt_tmp-quantityinbaseunit.
+*                <fs_stock>-quantityinbaseunit = <fs_stock>-quantityinbaseunit - ls_receipt_tmp-quantityinbaseunit.
+*                lv_qty = ls_receipt_tmp-quantityinbaseunit.
+*              ELSE.
+*                lv_qty = <fs_stock>-quantityinbaseunit.
+*                CLEAR <fs_stock>-quantityinbaseunit.
+*              ENDIF.
+*
+*              ls_receipt-plant = ls_receipt_tmp-plant.
+*              ls_receipt-material = ls_receipt_tmp-material.
+*              ls_receipt-postingdate = ls_receipt_tmp-postingdate.
+*              ls_receipt-postingdate_receipt = ls_receipt_tmp-postingdate_receipt.
+*              ls_receipt-quantityinbaseunit = lv_qty.
+*              APPEND ls_receipt TO lt_receipt4.
+*              CLEAR ls_receipt.
+*
+*              IF <fs_stock>-quantityinbaseunit = 0.
+*                EXIT.
+*              ENDIF.
+*            ENDLOOP.
+*          ENDIF.
+*        ENDIF.
+*      ENDLOOP.
 
-          "Obtain data of fiscal year period for fiscal year variant
-          SELECT fiscalyearperiod,
-                 fiscalperiodstartdate,
-                 fiscalperiodenddate
-            FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
-           WHERE fiscalyearvariant = @lc_fiyearvariant_v3
-             AND fiscalyearperiod IN @lr_fiscalyearperiod
-            INTO TABLE @lt_fiscalyearperiodforvariant.
+        DELETE lt_stock WHERE quantityinbaseunit = 0.
+*      SORT lt_receipt4 BY plant material postingdate postingdate_receipt DESCENDING.
 
-          SORT lt_fiscalyearperiodforvariant BY fiscalyearperiod.
+        IF lt_stock IS NOT INITIAL.
+          CLEAR lt_ztfi_1004_tmp.
 
-          CLEAR lt_receipt_qc.
+          "获取类别为A的期初数据
+          SELECT calendaryear,
+                 calendarmonth,
+                 plant,
+                 material,
+                 age,
+                 qty
+            FROM ztfi_1004
+             FOR ALL ENTRIES IN @lt_stock
+           WHERE plant = @lt_stock-plant
+             AND material = @lt_stock-material
+             AND inventorytype = 'A'
+             AND ledger = @lv_ledger
+            INTO TABLE @lt_ztfi_1004_tmp.
 
-          "期初数据转化为入库记录
+          CLEAR lr_fiscalyearperiod.
+
           LOOP AT lt_ztfi_1004_tmp INTO ls_ztfi_1004_tmp.
-            lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && ls_ztfi_1004_tmp-calendarmonth.
+            lv_fiscalperiod_tmp = ls_ztfi_1004_tmp-calendarmonth.
+            lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && lv_fiscalperiod_tmp.
+            lr_fiscalyearperiod = VALUE #( BASE lr_fiscalyearperiod sign = lc_sign_i option = lc_option_eq ( low = lv_fiscalyearperiod ) ).
+          ENDLOOP.
 
-            READ TABLE lt_fiscalyearperiodforvariant INTO ls_fiscalyearperiodforvariant WITH KEY fiscalyearperiod = lv_fiscalyearperiod
-                                                                                        BINARY SEARCH.
+          IF lr_fiscalyearperiod IS NOT INITIAL.
+            CLEAR lt_fiscalyearperiodforvariant.
+
+            "Obtain data of fiscal year period for fiscal year variant
+            SELECT fiscalyearperiod,
+                   fiscalperiodstartdate,
+                   fiscalperiodenddate
+              FROM i_fiscalyearperiodforvariant WITH PRIVILEGED ACCESS
+             WHERE fiscalyearvariant = @lc_fiyearvariant_v3
+               AND fiscalyearperiod IN @lr_fiscalyearperiod
+              INTO TABLE @lt_fiscalyearperiodforvariant.
+
+            SORT lt_fiscalyearperiodforvariant BY fiscalyearperiod.
+
+            CLEAR lt_receipt_qc.
+
+            "期初数据转化为入库记录
+            LOOP AT lt_ztfi_1004_tmp INTO ls_ztfi_1004_tmp.
+              lv_fiscalyearperiod = ls_ztfi_1004_tmp-calendaryear && ls_ztfi_1004_tmp-calendarmonth.
+
+              READ TABLE lt_fiscalyearperiodforvariant INTO ls_fiscalyearperiodforvariant WITH KEY fiscalyearperiod = lv_fiscalyearperiod
+                                                                                          BINARY SEARCH.
+              IF sy-subrc = 0.
+                lv_age = ls_ztfi_1004_tmp-age - 1.
+
+                "获取当前日期指定月数前的日期
+                zzcl_common_utils=>calc_date_subtract(
+                    EXPORTING
+                      date      = ls_fiscalyearperiodforvariant-fiscalperiodenddate
+                      month     = lv_age
+                    RECEIVING
+                      calc_date = ls_fiscalyearperiodforvariant-fiscalperiodenddate ).
+
+                ls_receipt-plant = ls_ztfi_1004_tmp-plant.
+                ls_receipt-material = ls_ztfi_1004_tmp-material.
+                ls_receipt-postingdate_receipt = ls_fiscalyearperiodforvariant-fiscalperiodenddate.
+                ls_receipt-quantityinbaseunit = ls_ztfi_1004_tmp-qty.
+                COLLECT ls_receipt INTO lt_receipt_qc.
+                CLEAR ls_receipt.
+              ENDIF.
+            ENDLOOP.
+          ENDIF.
+
+          SORT lt_receipt_qc BY plant material postingdate_receipt DESCENDING.
+
+          "只保留累计入库数量>=期末库存数量的数据(期初库存扣减)
+          LOOP AT lt_stock ASSIGNING <fs_stock>.
+            READ TABLE lt_receipt_qc TRANSPORTING NO FIELDS WITH KEY plant = <fs_stock>-plant
+                                                                     material = <fs_stock>-material
+                                                            BINARY SEARCH.
             IF sy-subrc = 0.
-              lv_age = ls_ztfi_1004_tmp-age - 1.
+              LOOP AT lt_receipt_qc ASSIGNING <fs_receipt> FROM sy-tabix.
+                IF <fs_receipt>-plant <> <fs_stock>-plant
+                OR <fs_receipt>-material <> <fs_stock>-material.
+                  EXIT.
+                ENDIF.
 
-              "获取当前日期指定月数前的日期
-              zzcl_common_utils=>calc_date_subtract(
-                  EXPORTING
-                    date      = ls_fiscalyearperiodforvariant-fiscalperiodenddate
-                    month     = lv_age
-                  RECEIVING
-                    calc_date = ls_fiscalyearperiodforvariant-fiscalperiodenddate ).
+                IF <fs_stock>-quantityinbaseunit >= <fs_receipt>-quantityinbaseunit.
+                  <fs_stock>-quantityinbaseunit = <fs_stock>-quantityinbaseunit - <fs_receipt>-quantityinbaseunit.
+                  lv_qty = <fs_receipt>-quantityinbaseunit.
+                  CLEAR <fs_receipt>-quantityinbaseunit.
+                ELSE.
+                  <fs_receipt>-quantityinbaseunit = <fs_receipt>-quantityinbaseunit - <fs_stock>-quantityinbaseunit.
+                  lv_qty = <fs_stock>-quantityinbaseunit.
+                  CLEAR <fs_stock>-quantityinbaseunit.
+                ENDIF.
 
-              ls_receipt-plant = ls_ztfi_1004_tmp-plant.
-              ls_receipt-material = ls_ztfi_1004_tmp-material.
-              ls_receipt-postingdate_receipt = ls_fiscalyearperiodforvariant-fiscalperiodenddate.
-              ls_receipt-quantityinbaseunit = ls_ztfi_1004_tmp-qty.
-              COLLECT ls_receipt INTO lt_receipt_qc.
-              CLEAR ls_receipt.
+                ls_receipt-plant = <fs_receipt>-plant.
+                ls_receipt-material = <fs_receipt>-material.
+                ls_receipt-postingdate = <fs_stock>-postingdate.
+                ls_receipt-postingdate_receipt = <fs_receipt>-postingdate_receipt.
+                ls_receipt-quantityinbaseunit = lv_qty.
+*                APPEND ls_receipt TO lt_receipt5.
+                COLLECT ls_receipt INTO lt_receipt4.
+                CLEAR ls_receipt.
+
+                IF <fs_stock>-quantityinbaseunit = 0.
+                  EXIT.
+                ENDIF.
+              ENDLOOP.
+
+              DELETE lt_receipt_qc WHERE quantityinbaseunit = 0.
             ENDIF.
           ENDLOOP.
         ENDIF.
-      ENDIF.
 
-      SORT lt_receipt_qc BY plant material postingdate_receipt DESCENDING.
+*        SORT lt_receipt5 BY plant material postingdate postingdate_receipt.
+        SORT lt_receipt4 BY plant material postingdate postingdate_receipt.
 
-      "只保留累计入库数量>=期末库存数量的数据(期初库存扣减)
-      LOOP AT lt_stock ASSIGNING <fs_stock>.
-        READ TABLE lt_receipt_qc TRANSPORTING NO FIELDS WITH KEY plant = <fs_stock>-plant
-                                                                 material = <fs_stock>-material
+        LOOP AT lt_receipt_vendor INTO ls_receipt_vendor.
+          READ TABLE lt_receipt4 TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_vendor-issuingorreceivingplant
+                                                                 material = ls_receipt_vendor-issgorrcvgmaterial
+                                                                 postingdate = ls_receipt_vendor-postingdate
                                                         BINARY SEARCH.
-        IF sy-subrc = 0.
-          LOOP AT lt_receipt_qc ASSIGNING <fs_receipt> FROM sy-tabix.
-            IF <fs_receipt>-plant <> <fs_stock>-plant
-            OR <fs_receipt>-material <> <fs_stock>-material.
-              EXIT.
-            ENDIF.
+          IF sy-subrc = 0.
+            LOOP AT lt_receipt4 INTO DATA(ls_receipt4) FROM sy-tabix.
+              IF ls_receipt4-plant <> ls_receipt_vendor-issuingorreceivingplant
+              OR ls_receipt4-material <> ls_receipt_vendor-issgorrcvgmaterial
+              OR ls_receipt4-postingdate <> ls_receipt_vendor-postingdate.
+                EXIT.
+              ENDIF.
 
-            IF <fs_stock>-quantityinbaseunit >= <fs_receipt>-quantityinbaseunit.
-              <fs_stock>-quantityinbaseunit = <fs_stock>-quantityinbaseunit - <fs_receipt>-quantityinbaseunit.
-              lv_qty = <fs_receipt>-quantityinbaseunit.
-              CLEAR <fs_receipt>-quantityinbaseunit.
-            ELSE.
-              <fs_receipt>-quantityinbaseunit = <fs_receipt>-quantityinbaseunit - <fs_stock>-quantityinbaseunit.
-              lv_qty = <fs_stock>-quantityinbaseunit.
-              CLEAR <fs_stock>-quantityinbaseunit.
-            ENDIF.
+              IF ls_receipt_vendor-quantityinbaseunit >= ls_receipt4-quantityinbaseunit.
+                ls_receipt_vendor-quantityinbaseunit = ls_receipt_vendor-quantityinbaseunit - ls_receipt4-quantityinbaseunit.
 
-            ls_receipt-plant = <fs_receipt>-plant.
-            ls_receipt-material = <fs_receipt>-material.
-            ls_receipt-postingdate = <fs_stock>-postingdate.
-            ls_receipt-postingdate_receipt = <fs_receipt>-postingdate_receipt.
-            ls_receipt-quantityinbaseunit = lv_qty.
-*            APPEND ls_receipt TO lt_receipt5.
-            COLLECT ls_receipt INTO lt_receipt4.
-            CLEAR ls_receipt.
+                ls_receipt_vennew-plant = ls_receipt4-plant.
+                ls_receipt_vennew-material = ls_receipt4-material.
+                ls_receipt_vennew-postingdate = ls_receipt4-postingdate.
+                ls_receipt_vennew-quantityinbaseunit = ls_receipt4-quantityinbaseunit.
+                ls_receipt_vennew-postingdate_receipt = ls_receipt4-postingdate_receipt.
+                APPEND ls_receipt_vennew TO lt_receipt_vennew.
+                CLEAR ls_receipt_vennew.
+              ELSE.
+                ls_receipt_vennew-plant = ls_receipt4-plant.
+                ls_receipt_vennew-material = ls_receipt4-material.
+                ls_receipt_vennew-postingdate = ls_receipt4-postingdate.
+                ls_receipt_vennew-quantityinbaseunit = ls_receipt_vendor-quantityinbaseunit.
+                ls_receipt_vennew-postingdate_receipt = ls_receipt4-postingdate_receipt.
+                APPEND ls_receipt_vennew TO lt_receipt_vennew.
+                CLEAR ls_receipt_vennew.
 
-            IF <fs_stock>-quantityinbaseunit = 0.
-              EXIT.
-            ENDIF.
-          ENDLOOP.
+                CLEAR ls_receipt_vendor-quantityinbaseunit.
+              ENDIF.
 
-          DELETE lt_receipt_qc WHERE quantityinbaseunit = 0.
-        ENDIF.
-      ENDLOOP.
+              "扣减完毕
+              IF ls_receipt_vendor-quantityinbaseunit = 0.
+                EXIT.
+              ENDIF.
+            ENDLOOP.
+          ENDIF.
 
-*      SORT lt_receipt5 BY plant material postingdate postingdate_receipt.
-      SORT lt_receipt4 BY plant material postingdate postingdate_receipt.
-
-      LOOP AT lt_receipt_vendor INTO ls_receipt_vendor.
-        READ TABLE lt_receipt4 TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_vendor-issuingorreceivingplant
-                                                               material = ls_receipt_vendor-issgorrcvgmaterial
-                                                               postingdate = ls_receipt_vendor-postingdate
-                                                      BINARY SEARCH.
-        IF sy-subrc = 0.
-          LOOP AT lt_receipt4 INTO DATA(ls_receipt4) FROM sy-tabix.
-            IF ls_receipt4-plant <> ls_receipt_vendor-issuingorreceivingplant
-            OR ls_receipt4-material <> ls_receipt_vendor-issgorrcvgmaterial
-            OR ls_receipt4-postingdate <> ls_receipt_vendor-postingdate.
-              EXIT.
-            ENDIF.
-
-            IF ls_receipt_vendor-quantityinbaseunit >= ls_receipt4-quantityinbaseunit.
-              ls_receipt_vendor-quantityinbaseunit = ls_receipt_vendor-quantityinbaseunit - ls_receipt4-quantityinbaseunit.
-
-              ls_receipt_vennew-plant = ls_receipt4-plant.
-              ls_receipt_vennew-material = ls_receipt4-material.
-              ls_receipt_vennew-postingdate = ls_receipt4-postingdate.
-              ls_receipt_vennew-quantityinbaseunit = ls_receipt4-quantityinbaseunit.
-              ls_receipt_vennew-postingdate_receipt = ls_receipt4-postingdate_receipt.
-              APPEND ls_receipt_vennew TO lt_receipt_vennew.
-              CLEAR ls_receipt_vennew.
-            ELSE.
-              ls_receipt_vennew-plant = ls_receipt4-plant.
-              ls_receipt_vennew-material = ls_receipt4-material.
-              ls_receipt_vennew-postingdate = ls_receipt4-postingdate.
-              ls_receipt_vennew-quantityinbaseunit = ls_receipt_vendor-quantityinbaseunit.
-              ls_receipt_vennew-postingdate_receipt = ls_receipt4-postingdate_receipt.
-              APPEND ls_receipt_vennew TO lt_receipt_vennew.
-              CLEAR ls_receipt_vennew.
-
-              CLEAR ls_receipt_vendor-quantityinbaseunit.
-            ENDIF.
-
-            "扣减完毕
-            IF ls_receipt_vendor-quantityinbaseunit = 0.
-              EXIT.
-            ENDIF.
-          ENDLOOP.
-        ENDIF.
-
-        "不够，扣减期初库存
+          "不够，扣减期初库存
 *        IF ls_receipt_vendor-quantityinbaseunit > 0.
 *          READ TABLE lt_receipt5 TRANSPORTING NO FIELDS WITH KEY plant = ls_receipt_vendor-issuingorreceivingplant
 *                                                                 material = ls_receipt_vendor-issgorrcvgmaterial
@@ -1723,7 +1867,8 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
 *            ENDLOOP.
 *          ENDIF.
 *        ENDIF.
-      ENDLOOP.
+        ENDLOOP.
+      ENDIF.
 
       "类309和关联公司数据
       lt_receipt_tmp = lt_receipt.
@@ -1776,13 +1921,13 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
               OR ls_receipt_vennew-material <> ls_receipt_tmp-issgorrcvgmaterial
               OR ls_receipt_vennew-postingdate <> ls_receipt_tmp-postingdate.
                 EXIT.
-
-                ls_receipt_tmp2 = ls_receipt_tmp.
-                ls_receipt_tmp2-postingdate = ls_receipt_vennew-postingdate_receipt.
-                ls_receipt_tmp2-quantityinbaseunit = ls_receipt_vennew-quantityinbaseunit.
-                APPEND ls_receipt_tmp2 TO lt_receipt_tmp2.
-                CLEAR ls_receipt_tmp2.
               ENDIF.
+
+              ls_receipt_tmp2 = ls_receipt_tmp.
+              ls_receipt_tmp2-postingdate = ls_receipt_vennew-postingdate_receipt.
+              ls_receipt_tmp2-quantityinbaseunit = ls_receipt_vennew-quantityinbaseunit.
+              APPEND ls_receipt_tmp2 TO lt_receipt_tmp2.
+              CLEAR ls_receipt_tmp2.
             ENDLOOP.
 
             READ TABLE lt_receipt ASSIGNING <fs_receipt> WITH KEY plant = ls_receipt_tmp-plant
@@ -1855,7 +2000,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
             lv_age = lv_months + 1.
 
             IF lv_age > lc_maxage_36.
-              lv_age = lc_maxage_36.
+              lv_age = lc_maxage_36 + 1.
             ENDIF.
 
             ls_ztfi_1019_db-age = lv_age.
@@ -1902,7 +2047,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
               lv_age = lv_months + 1.
 
               IF lv_age > lc_maxage_36.
-                lv_age = lc_maxage_36.
+                lv_age = lc_maxage_36 + 1.
               ENDIF.
 
               ls_ztfi_1019_db-age = lv_age.
@@ -1949,7 +2094,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
                                                                                              valuationarea = <fs_ztfi_1019_db>-plant
                                                                                     BINARY SEARCH.
         IF sy-subrc = 0.
-          <fs_ztfi_1019_db>-actualcost           = ls_inventorypricebykeydate-actualprice.
+          <fs_ztfi_1019_db>-actualcost           = ls_inventorypricebykeydate-inventoryprice. "actualprice.
           <fs_ztfi_1019_db>-materialpriceunitqty = ls_inventorypricebykeydate-materialpriceunitqty.
         ENDIF.
 
@@ -1978,7 +2123,7 @@ CLASS lhc_inventoryaging IMPLEMENTATION.
         ENDIF.
 
         "Read data of root product
-        READ TABLE lt_finalproductinfo into ls_finalproductinfo WITH KEY product = <fs_ztfi_1019_db>-product
+        READ TABLE lt_finalproductinfo INTO ls_finalproductinfo WITH KEY product = <fs_ztfi_1019_db>-product
                                                                          plant = <fs_ztfi_1019_db>-plant
                                                                 BINARY SEARCH.
         IF sy-subrc = 0.

@@ -10,8 +10,7 @@ define custom entity ZR_PODATAANALYSIS
 {
   key UUID                          : sysuuid_x16;
       @UI                           : { lineItem: [ { position: 90, label: '購買発注番号' } ], selectionField: [ { position: 30 } ] }
-      @Consumption                  : {valueHelpDefinition: [{ entity:{ element: 'PurchaseOrder', name: 'ZC_PurchaseOrderAPI'}}],
-                  filter            : { multipleSelections: true } }
+      @Consumption                  : { valueHelpDefinition: [{ entity:{ element: 'PurchaseOrder', name: 'ZC_PurchaseOrderAPI' } }] }
       @EndUserText.label            : '購買発注番号'
       PurchaseOrder                 : abap.char(10);
 
@@ -29,8 +28,7 @@ define custom entity ZR_PODATAANALYSIS
       PurchaseOrderType             : abap.char(4);
 
       @UI                           : { lineItem: [ { position: 20, label: '購買グループ' } ], selectionField: [ { position: 10 } ] }
-      @Consumption                  : {valueHelpDefinition: [{ entity:{ element: 'PurchasingGroup', name: 'I_PurchasingGroup'}}],
-                  filter            : { multipleSelections: true, selectionType: #SINGLE } }
+      @Consumption                  : { valueHelpDefinition: [{ entity:{ element: 'PurchasingGroup', name: 'I_PurchasingGroup' } }] }
       @EndUserText.label            : '購買グループ'
       PurchasingGroup               : abap.char(3);
 
@@ -100,8 +98,7 @@ define custom entity ZR_PODATAANALYSIS
       Customer                      : abap.char(10);
 
       @UI                           : { lineItem: [ { position: 200, label: '仕入先コード' } ], selectionField: [ { position: 60 } ] }
-      @Consumption                  : {valueHelpDefinition: [{ entity:{ element: 'Supplier', name: 'ZC_SupplierVH'}}],
-                  filter            : { multipleSelections: true, selectionType: #SINGLE } }
+      @Consumption                  : { valueHelpDefinition: [{ entity:{ element: 'Supplier', name: 'ZC_SupplierVH' } }] }
       @EndUserText.label            : '仕入先コード'
       Supplier                      : abap.char(10);
 
@@ -122,8 +119,7 @@ define custom entity ZR_PODATAANALYSIS
       MaterialGroup                 : abap.char(9);
 
       @UI                           : { lineItem: [ { position: 250, label: '品目コード' } ], selectionField: [ { position: 70 } ] }
-      @Consumption                  : {valueHelpDefinition: [{ entity:{ element: 'Product', name: 'ZI_PRODUCT_VH'}}],
-                  filter            : { multipleSelections: true, selectionType: #SINGLE } }
+      @Consumption                  : { valueHelpDefinition: [{ entity:{ element: 'Product', name: 'ZI_PRODUCT_VH' } }] }
       @EndUserText.label            : '品目コード'
       Material                      : abap.char(40);
 
@@ -132,7 +128,6 @@ define custom entity ZR_PODATAANALYSIS
       PurchaseOrderItemText         : abap.char(40);
 
       @UI                           : { lineItem: [ { position: 270, label: '仕入先品目コード' } ], selectionField: [ { position: 80 } ] }
-      @Consumption.filter           : { mandatory: false }
       @EndUserText.label            : '仕入先品目コード'
       SupplierMaterialNumber        : abap.char(35);
 
@@ -269,16 +264,13 @@ define custom entity ZR_PODATAANALYSIS
       CorrespncInternalReference    : abap.char(12);
 
       @UI                           : { lineItem: [ { position: 580, label: 'プラント' } ], selectionField: [ { position: 150 } ] }
-
-      @Consumption                  : {valueHelpDefinition: [{ entity:{ element: 'Plant', name: 'I_PlantStdVH'}}],
+      @Consumption                  : { valueHelpDefinition: [{ entity:{ element: 'Plant', name: 'I_PlantStdVH'}}],
                   filter            : { multipleSelections: false, selectionType: #SINGLE } }
-
       @EndUserText.label            : 'プラント'
       Plant                         : werks_d;
 
       @UI                           : { lineItem: [ { position: 590, label: '保管場所' } ], selectionField: [ { position: 160 } ]}
-      @Consumption                  : {valueHelpDefinition: [{ entity:{ element: 'StorageLocation', name: 'I_StorageLocationStdVH'}}],
-                  filter            : { multipleSelections: true, selectionType: #SINGLE } }
+      @Consumption                  : { valueHelpDefinition: [{ entity:{ element: 'StorageLocation', name: 'I_StorageLocationStdVH' } }] }
       @EndUserText.label            : '保管場所'
       StorageLocation               : lgort_d;
 

@@ -10,7 +10,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
+CLASS zcl_query_inventory_aging IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -67,6 +67,7 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
         a034 TYPE ztfi_1019-age VALUE '034',
         a035 TYPE ztfi_1019-age VALUE '035',
         a036 TYPE ztfi_1019-age VALUE '036',
+        a037 TYPE ztfi_1019-age VALUE '037',
       END OF lsc_age,
 
       lc_chargeablesupplyflag_y TYPE string VALUE 'Y',
@@ -409,6 +410,9 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
             WHEN lsc_age-a036.
               ls_data-quantitymonth36 = ls_ztfi_1019-qty.
               ls_data-amountmonth36   = ls_ztfi_1019-qty * lv_actualprice."ls_data-actualcost.
+            WHEN lsc_age-a037.
+              ls_data-quantitymonth37 = ls_ztfi_1019-qty.
+              ls_data-amountmonth37   = ls_ztfi_1019-qty * lv_actualprice."ls_data-actualcost.
           ENDCASE.
 
           lv_totalamount = lv_totalamount + ls_ztfi_1019-qty * lv_actualprice.
@@ -497,6 +501,8 @@ CLASS ZCL_QUERY_INVENTORY_AGING IMPLEMENTATION.
               ls_data-amountmonth35 = ls_data-amountmonth35 + lv_totalamount.
             WHEN lsc_age-a036.
               ls_data-amountmonth36 = ls_data-amountmonth36 + lv_totalamount.
+            WHEN lsc_age-a037.
+              ls_data-amountmonth37 = ls_data-amountmonth37 + lv_totalamount.
           ENDCASE.
         ENDIF.
 

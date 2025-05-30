@@ -124,11 +124,13 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
 
     CHECK cs_data-messageitems IS INITIAL.
 
+    DATA(lv_language) = zzcl_common_utils=>get_current_language( ).
+
     LOOP AT cs_data-items ASSIGNING FIELD-SYMBOL(<fs_item>).
       lv_manufacturingorder = |{ <fs_item>-manufacturingorder ALPHA = IN }|.
 
       "/API_PRODUCTION_ORDER_2_SRV/A_ProductionOrder_2?$filter
-      lv_path = |/API_PRODUCTION_ORDER_2_SRV/A_ProductionOrder_2?$filter=ManufacturingOrder eq '{ lv_manufacturingorder }'|.
+      lv_path = |/API_PRODUCTION_ORDER_2_SRV/A_ProductionOrder_2?$filter=ManufacturingOrder eq '{ lv_manufacturingorder }'&sap-language={ lv_language }|.
 
       "获取ETag
       zzcl_common_utils=>get_api_etag(  EXPORTING iv_odata_version = lc_odata_version_v2
@@ -140,7 +142,7 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
         DATA(lv_error) = abap_true.
       ELSE.
         "/API_PRODUCTION_ORDER_2_SRV/ReleaseOrder
-        lv_path = |/API_PRODUCTION_ORDER_2_SRV/ReleaseOrder?ManufacturingOrder='{ lv_manufacturingorder }'|.
+        lv_path = |/API_PRODUCTION_ORDER_2_SRV/ReleaseOrder?ManufacturingOrder='{ lv_manufacturingorder }'&sap-language=JA|.
 
         "Call API of releasing production order
         zzcl_common_utils=>request_api_v2(
@@ -190,7 +192,9 @@ CLASS lhc_zc_productionorder IMPLEMENTATION.
                         description = lv_message ) TO cs_data-messageitems.
       ENDIF.
 
-      CLEAR lv_message.
+      CLEAR:
+        lv_error,
+        lv_message.
     ENDLOOP.
   ENDMETHOD.
 

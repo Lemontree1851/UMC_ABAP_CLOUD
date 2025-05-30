@@ -60,7 +60,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BI007_DATA IMPLEMENTATION.
+CLASS zcl_bi007_data IMPLEMENTATION.
 
 
   METHOD constructor.
@@ -100,7 +100,7 @@ CLASS ZCL_BI007_DATA IMPLEMENTATION.
     DATA: lv_base_year  TYPE gjahr,
           lv_base_poper TYPE poper,
           lv_yearmonth  TYPE c LENGTH 6,
-          lv_yearpoper TYPE c LENGTH 7.
+          lv_yearpoper  TYPE c LENGTH 7.
 
     READ TABLE mr_fiscalyear INTO DATA(ls_fiscalyear) INDEX 1.
     IF sy-subrc = 0.
@@ -159,6 +159,8 @@ CLASS ZCL_BI007_DATA IMPLEMENTATION.
           lv_calc_flag             TYPE abap_bool,
           ls_data                  LIKE LINE OF et_data,
           lt_inventory_group       LIKE lt_inventory,
+          lt_inventory1            LIKE lt_inventory,
+          lt_inventory2            LIKE lt_inventory,
           lv_book_total            TYPE ztbi_1003-demand,
           lv_inventory_total       TYPE ztfi_1019-qty.
 
@@ -180,6 +182,7 @@ CLASS ZCL_BI007_DATA IMPLEMENTATION.
 
     SORT lt_inventory BY companycode ASCENDING plant ASCENDING product ASCENDING customer ASCENDING fiscalyearmonth ASCENDING age DESCENDING.
     SORT lt_book BY companycode plant product yearmonth.
+
 
     LOOP AT lt_inventory_group INTO DATA(ls_inventory).
       "The first run forcast constants
@@ -348,7 +351,6 @@ CLASS ZCL_BI007_DATA IMPLEMENTATION.
       ENDDO.
 
     ENDLOOP.
-
     DELETE et_data WHERE forcastfiscalyear NOT IN mr_forcastyear OR forcastperiod NOT IN mr_forcastperiod.
 
 

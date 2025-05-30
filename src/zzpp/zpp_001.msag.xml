@@ -704,6 +704,12 @@
      <MSGNR>115</MSGNR>
      <TEXT>前月の業務処理締め日は &amp;1 です！</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZPP_001</ARBGB>
+     <MSGNR>116</MSGNR>
+     <TEXT>前月へ転記できません！</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

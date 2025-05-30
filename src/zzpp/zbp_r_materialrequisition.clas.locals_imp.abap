@@ -1178,16 +1178,22 @@ CLASS lhc_materialrequisition IMPLEMENTATION.
                           subtitle    = lv_message
                           description = lv_message ) TO cs_data-messageitems.
         ELSE.
-          IF  iv_model = lc_event_posting
-          AND ls_temp-mrstatus <> '31'
-          AND ls_temp-linewarehousestatus <> 'X'
-          AND ls_temp-uwms_poststatus <> 'P'.
-            MESSAGE e107(zpp_001) WITH ls_temp-materialrequisitionno INTO lv_message.
-            APPEND VALUE #( type        = lc_type_e
-                            title       = TEXT-001
-                            subtitle    = lv_message
-                            description = lv_message ) TO cs_data-messageitems.
-          ENDIF .
+          IF iv_model = lc_event_posting.
+*&--MOD BEGIN BY XINLEI XU 2025/05/22
+*          AND ls_temp-mrstatus <> '31'
+*          AND ls_temp-linewarehousestatus <> 'X'
+*          AND ls_temp-uwms_poststatus <> 'P'.
+            IF ls_temp-type = '31' OR ls_temp-linewarehousestatus = 'X'.
+
+            ELSEIF ls_temp-uwms_poststatus <> 'P'.
+*&--MOD BEGIN BY XINLEI XU 2025/05/22
+              MESSAGE e107(zpp_001) WITH ls_temp-materialrequisitionno INTO lv_message.
+              APPEND VALUE #( type        = lc_type_e
+                              title       = TEXT-001
+                              subtitle    = lv_message
+                              description = lv_message ) TO cs_data-messageitems.
+            ENDIF.
+          ENDIF.
         ENDIF.
       ENDLOOP.
       IF cs_data-messageitems IS NOT INITIAL.

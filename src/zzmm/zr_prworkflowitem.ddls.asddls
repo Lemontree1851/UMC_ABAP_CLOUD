@@ -1,4 +1,4 @@
-@AccessControl.authorizationCheck: #CHECK
+@AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'Purchase Requisition Workflow'
 define root view entity ZR_PRWORKFLOWITEM
   as select from ztmm_1006

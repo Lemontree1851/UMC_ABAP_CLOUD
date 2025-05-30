@@ -338,7 +338,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                 ( companycode = lv_company1 field = 'Kyoten' field_name = TEXT-015 )
                                 ( companycode = lv_company1 field = 'BuyPurpoose' field_name = TEXT-014 )
                                 ( companycode = lv_company1 field = 'PolinkBy' field_name = TEXT-018 )
-                                ( companycode = lv_company1 field = 'PrBy' field_name = TEXT-019 ) ).
+                                ( companycode = lv_company1 field = 'PrBy' field_name = TEXT-019 )
+                                ( companycode = lv_company1 field = 'UnitPrice' field_name = TEXT-025 ) ). " ADD BY XINLEI XU 2025/05/15
 
     required_fields = VALUE #( BASE required_fields
                                 ( companycode = lv_company2 field = 'ApplyDepart' field_name = TEXT-016 )
@@ -353,7 +354,8 @@ CLASS lhc_purchasereq IMPLEMENTATION.
                                 ( companycode = lv_company2 field = 'Quantity' field_name = TEXT-010 )
                                 ( companycode = lv_company2 field = 'Price' field_name = TEXT-011 )
                                 ( companycode = lv_company2 field = 'PolinkBy' field_name = TEXT-018 )
-                                ( companycode = lv_company2 field = 'PrBy' field_name = TEXT-019 ) ).
+                                ( companycode = lv_company2 field = 'PrBy' field_name = TEXT-019 )
+                                ( companycode = lv_company2 field = 'UnitPrice' field_name = TEXT-025 ) ). " ADD BY XINLEI XU 2025/05/15
     LOOP AT records ASSIGNING FIELD-SYMBOL(<record>).
       " 没起作用，不知为何前端状态消息不会自动清除，添加清除状态消息的代码也不起作用
 *      APPEND VALUE #( %key     = <record>-('%key')
@@ -547,6 +549,14 @@ CLASS lhc_purchasereq IMPLEMENTATION.
           ENDIF.
 *&--ADD END BY XINLEI XU 2025/04/23 CR#4359
         ENDIF.
+
+*&--ADD BEGIN BY XINLEI XU 2025/05/15
+        IF <record>-('IsApprove') = '1' AND <record>-('Currency') IS INITIAL. " 承認要 通貨コード 必输
+          is_error = abap_true.
+          MESSAGE e009(zmm_001) WITH TEXT-024 INTO lv_msg.
+          lv_message = zzcl_common_utils=>merge_message( iv_message1 = lv_message iv_message2 = lv_msg iv_symbol = ';' ).
+        ENDIF.
+*&--ADD END BY XINLEI XU 2025/05/15
       ENDIF.
 
       " 标识当前行有错误
@@ -1366,18 +1376,29 @@ CLASS lhc_purchasereq IMPLEMENTATION.
 
   METHOD deletepr.
 *&--ADD BEGIN BY XINLEI XU 2025/04/22 CR#4359
-    DATA: records TYPE TABLE OF ty_batchupload,
-          record  LIKE LINE OF records,
-          lv_msg  TYPE string.
+    DATA: records      TYPE TABLE OF ty_batchupload,
+          record       LIKE LINE OF records,
+          lv_has_error TYPE abap_boolean,
+          lv_msg       TYPE string.
 
     LOOP AT keys INTO DATA(key).
-      CLEAR records.
+      CLEAR: records, lv_has_error.
       /ui2/cl_json=>deserialize(  EXPORTING json = key-%param-zzkey
                                   CHANGING  data = records ).
 
-      LOOP AT records TRANSPORTING NO FIELDS WHERE approvestatus <> '1'. " 登録済 (1)
+      LOOP AT records TRANSPORTING NO FIELDS WHERE isapprove = '1' AND approvestatus <> '1'. " 登録済 (1)
       ENDLOOP.
       IF sy-subrc = 0.
+        lv_has_error = abap_true.
+      ENDIF.
+
+      LOOP AT records TRANSPORTING NO FIELDS WHERE isapprove = '2' AND approvestatus <> '3'. " 承認済 (3)
+      ENDLOOP.
+      IF sy-subrc = 0.
+        lv_has_error = abap_true.
+      ENDIF.
+
+      IF lv_has_error = abap_true.
         APPEND VALUE #( %cid   = key-%cid
                         %param = VALUE #( zzkey = 'E' ) ) TO result.
       ELSE.

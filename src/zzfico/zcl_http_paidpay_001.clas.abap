@@ -111,7 +111,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_PAIDPAY_001 IMPLEMENTATION.
+CLASS zcl_http_paidpay_001 IMPLEMENTATION.
 
 
   METHOD cancel.
@@ -259,8 +259,9 @@ CLASS ZCL_HTTP_PAIDPAY_001 IMPLEMENTATION.
 * 2nd document
         IF lv_fail IS INITIAL.
           i += 1.
-          IF lv_dr <> 0
-          OR lv_cr <> 0.
+          IF ( lv_dr <> 0
+            OR lv_cr <> 0 )
+         AND ls_create-period <> '12'.
             ls_deep-%cid = |My%CID_{ i }|.
             ls_deep-%param-companycode = ls_create-companycode.
             ls_deep-%param-accountingdocumenttype = 'Z0'.

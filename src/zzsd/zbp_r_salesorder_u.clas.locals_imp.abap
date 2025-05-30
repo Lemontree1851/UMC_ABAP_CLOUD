@@ -331,17 +331,17 @@ CLASS lhc_salesorderfordn IMPLEMENTATION.
           lv_need_change = abap_true.
         ENDIF.
 
-        DATA: lv_deliverydocument TYPE i_deliverydocument-deliverydocument.
-        lv_deliverydocument = |{ ls_response-d-delivery_document ALPHA = IN }|.
-        SELECT SINGLE logisticsexecutionscenario
-          FROM i_deliverydocument WITH PRIVILEGED ACCESS
-         WHERE deliverydocument = @lv_deliverydocument
-          INTO @DATA(lv_scenario).
-        IF sy-subrc = 0 AND ( lv_scenario = '2' OR lv_scenario = '4' ).
-          ls_update_request-header_data-bill_of_lading = 'SD015'.  " 目的： 触发增强 YY1_DNEXTENSION
-          lv_need_change = abap_true.
-          CLEAR: lv_deliverydocument,lv_scenario.
-        ENDIF.
+*        DATA: lv_deliverydocument TYPE i_deliverydocument-deliverydocument.
+*        lv_deliverydocument = |{ ls_response-d-delivery_document ALPHA = IN }|.
+*        SELECT SINGLE logisticsexecutionscenario
+*          FROM i_deliverydocument WITH PRIVILEGED ACCESS
+*         WHERE deliverydocument = @lv_deliverydocument
+*          INTO @DATA(lv_scenario).
+*        IF sy-subrc = 0 AND ( lv_scenario = '2' OR lv_scenario = '4' ).
+*          ls_update_request-header_data-bill_of_lading = 'SD015'.  " 目的： 触发增强 YY1_DNEXTENSION
+*          lv_need_change = abap_true.
+*          CLEAR: lv_deliverydocument,lv_scenario.
+*        ENDIF.
 
         IF lv_need_change = abap_true.
 *&--MOD END BY XINLEI XU 2025/04/25

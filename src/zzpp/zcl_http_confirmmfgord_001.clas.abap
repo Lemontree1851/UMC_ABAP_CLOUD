@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
+CLASS zcl_http_confirmmfgord_001 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -115,12 +115,14 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
       ls_error                     TYPE zzcl_odata_utils=>gty_error,
       lv_fiscalyearperiod_previous TYPE i_fiscalyearperiodforvariant-fiscalyearperiod,
       lv_period                    TYPE i_fiscalyearperiodforvariant-fiscalperiod,
-      lv_date                      TYPE d.
+      lv_date                      TYPE d,
+      lv_value                     TYPE string.
 
     CONSTANTS:
       lc_zid_zpp005       TYPE ztbc_1001-zid VALUE 'ZPP005',
       lc_zid_zpp020       TYPE ztbc_1001-zid VALUE 'ZPP020',
       lc_zid_zpp021       TYPE ztbc_1001-zid VALUE 'ZPP021',
+      lc_datfm_5          TYPE xudatfm       VALUE '5',
       lc_fiyearvariant_v3 TYPE string        VALUE 'V3',
       lc_msgid            TYPE string        VALUE 'ZPP_001',
       lc_msgty            TYPE string        VALUE 'E',
@@ -443,29 +445,45 @@ CLASS ZCL_HTTP_CONFIRMMFGORD_001 IMPLEMENTATION.
                AND zvalue1 = @ls_ztpp_1004-plant
               INTO @DATA(lv_workday_no).
 
-            DATA(lv_number_of_workingdays) = CONV int4( lv_workday_no ).
+            "カスタマテーブル設定しない＆value2=空欄場合に、チェック対象外になる
+            IF lv_workday_no IS NOT INITIAL.
+              DATA(lv_number_of_workingdays) = CONV int4( lv_workday_no ).
 
-            IF lv_number_of_workingdays > 0.
-              IF zzcl_common_utils=>is_workingday( iv_plant = ls_ztpp_1004-plant iv_date = lv_date ) = abap_true.
-                lv_number_of_workingdays = lv_number_of_workingdays - 1.
-              ENDIF.
+              IF lv_number_of_workingdays > 0.
+                IF zzcl_common_utils=>is_workingday( iv_plant = ls_ztpp_1004-plant iv_date = lv_date ) = abap_true.
+                  lv_number_of_workingdays = lv_number_of_workingdays - 1.
+                ENDIF.
 
-              "Get specific working day of current month
-              DO lv_number_of_workingdays TIMES.
-                "Get working day
-                zzcl_common_utils=>get_workingday(
-                  EXPORTING
-                    iv_date       = lv_date
-                    iv_next       = abap_true
-                    iv_plant      = ls_ztpp_1004-plant
-                  RECEIVING
-                    rv_workingday = lv_date
-                ).
-              ENDDO.
+                "Get specific working day of current month
+                DO lv_number_of_workingdays TIMES.
+                  "Get working day
+                  zzcl_common_utils=>get_workingday(
+                    EXPORTING
+                      iv_date       = lv_date
+                      iv_next       = abap_true
+                      iv_plant      = ls_ztpp_1004-plant
+                    RECEIVING
+                      rv_workingday = lv_date
+                  ).
+                ENDDO.
 
-              IF lv_system_date > lv_date.
-                "前月の業務処理締め日は &1 です！
-                MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 115 WITH lv_date INTO ls_res-_msg.
+                IF lv_system_date > lv_date.
+                  TRY.
+                      cl_abap_datfm=>conv_date_int_to_ext(
+                        EXPORTING im_datint    = lv_date
+                                  im_datfmdes  = lc_datfm_5
+                        IMPORTING ex_datext    = lv_value ).
+                    CATCH cx_abap_datfm_format_unknown.
+                      lv_value = lv_date.
+                  ENDTRY.
+
+                  "前月の業務処理締め日は &1 です！
+                  MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 115 WITH lv_value INTO ls_res-_msg.
+                  RAISE EXCEPTION TYPE cx_abap_invalid_value.
+                ENDIF.
+              ELSEIF lv_number_of_workingdays = 0.
+                "前月へ転記できません！
+                MESSAGE ID lc_msgid TYPE lc_msgty NUMBER 116 INTO ls_res-_msg.
                 RAISE EXCEPTION TYPE cx_abap_invalid_value.
               ENDIF.
             ENDIF.

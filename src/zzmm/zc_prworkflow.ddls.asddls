@@ -39,5 +39,8 @@ define root view entity ZC_PRWORKFLOW
       _ApplyDepart.Zvalue2    as ApplyDepartText,
       @UI.hidden: true
       @EndUserText.label: '拠点テキスト'
-      _Kyoten.Zvalue2         as KyotenText
+      _Kyoten.Zvalue2         as KyotenText,
+
+      @Consumption.filter.hidden: true
+      _PurchasingGroup.PurchasingGroupName // ADD BY XINLEI XU 2025/05/07 CR#4359
 }

@@ -1423,7 +1423,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       ENDLOOP.
       ls_kunnramt-profitcenter = <lfs_customer>-profitcenter.
       ls_kunnramt-customer = <lfs_customer>-customer.
-      ls_kunnramt-amt = abs( lv_amt ).
+      ls_kunnramt-amt = -1 * lv_amt.  "取反
       APPEND ls_kunnramt TO lt_kunnramt.
       CLEAR: ls_kunnramt, lv_amt.
     ENDLOOP.
@@ -1769,6 +1769,8 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       LOOP AT GROUP member ASSIGNING FIELD-SYMBOL(<lfs_member>).
         IF <lfs_member>-product <> lv_matnr.
           lv_currentstockamt = lv_currentstockamt + <lfs_member>-currentstockamount. "在庫金額（当期末）-有償支給品
+          lv_chargeable = <lfs_member>-chargeableamount + <lfs_member>-chargeableamount2
+                        + lv_chargeable. "当期有償支給品仕入れ金額
         ENDIF.
         lv_matnr = <lfs_member>-product.
 
@@ -1830,15 +1832,18 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
                   + lv_purgrp.
       ls_1011-purgrpamount = lv_purgrp.
 
-      lv_chargeable = <lfs_member>-chargeableamount + <lfs_member>-chargeableamount1 + <lfs_member>-chargeableamount2
-                    + lv_chargeable. "当期有償支給品仕入れ金額
+      lv_chargeable = <lfs_member>-chargeableamount1 + lv_chargeable. "当期有償支給品仕入れ金額
       ls_1011-chargeableamount = lv_chargeable.   "当期有償支給品仕入金額
 
       READ TABLE lt_grpchg INTO ls_grpchg
            WITH KEY purchasinggroup = <lfs_member>-purchasinggroup.
-      IF lv_purgrp <> 0.
+      IF sy-subrc = 0
+     AND lv_purgrp <> 0.
         ls_1011-chargeablerate = ls_grpchg-chargeable / lv_purgrp.  "当期仕入率
         lv_rate = ls_1011-chargeablerate.
+        IF lv_rate < 0.
+          lv_rate = 0.
+        ENDIF.
       ENDIF.
 
       ls_1011-previousstocktotal = <lfs_member>-previousstockamount.  "在庫金額（前期末）-合計
@@ -1858,6 +1863,9 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       "総売上金額占有率
       IF ls_1011-revenue <> 0.
         ls_1011-revenuerate = ls_1011-customerrevenue / ls_1011-revenue.
+        IF ls_1011-revenuerate < 0.
+          ls_1011-revenuerate = 0.
+        ENDIF.
       ENDIF.
       ls_1011-currency = <lfs_member>-currency.
       ls_1011-companycode = <lfs_member>-companycode.
@@ -1874,7 +1882,7 @@ CLASS lhc_paipaycalculation IMPLEMENTATION.
       ls_1011-profitcentername = <lfs_member>-profitcentername.
       APPEND ls_1011 TO lt_1011.
       CLEAR: ls_1011, lv_purgrp, lv_chargeable, lv_currentstockamt,
-             lv_semi, lv_fin.
+             lv_semi, lv_fin, lv_matnr.
     ENDLOOP.
 
 * Insert DB

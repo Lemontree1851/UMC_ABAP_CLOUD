@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
+CLASS zcl_podataanalysis IMPLEMENTATION.
 
 
   METHOD if_rap_query_provider~select.
@@ -169,6 +169,7 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
       lr_category        TYPE RANGE OF zr_podataanalysis-accountassignmentcategory   ,       "勘定設定 Categ.
       lr_intartinum      TYPE RANGE OF zr_podataanalysis-internationalarticlenumber,         "海外PO番号/回収管理番号
       lr_extref          TYPE RANGE OF zr_podataanalysis-correspncexternalreference ,  "旧購買発注番号明細
+      lr_popoitem        TYPE RANGE OF zr_podataanalysis-popoitem ,  "旧購買発注番号明細
       ls_purchaseorder   LIKE LINE OF  lr_purchaseorder,
       ls_poitem          LIKE LINE OF  lr_poitem,
       ls_supplier        LIKE LINE OF  lr_supplier,
@@ -178,6 +179,7 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
       ls_mrpresponsible  LIKE LINE OF  lr_mrpresponsible,
       ls_intartinum      LIKE LINE OF  lr_intartinum,
       ls_extref          LIKE LINE OF  lr_extref,
+      ls_popoitem        LIKE LINE OF  lr_popoitem,
       ls_createdbyuser   LIKE LINE OF  lr_createdbyuser,
       ls_category        LIKE LINE OF  lr_category.
 
@@ -269,25 +271,30 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
               APPEND ls_purchaseorder TO lr_purchaseorder.
               CLEAR ls_purchaseorder.
 
+*&--MOD BEGIN BY XINLEI XU 2025/05/22 BUG Fixed
             WHEN 'POPOITEM'.
-              TRY.
-                  ls_purchaseorder-sign = str_rec_l_range-sign.
-                  ls_purchaseorder-option = str_rec_l_range-option.
-                  ls_purchaseorder-low = str_rec_l_range-low(10).   " 前10位作为PURCHASEORDER
+*              TRY.
+*                  ls_purchaseorder-sign = str_rec_l_range-sign.
+*                  ls_purchaseorder-option = str_rec_l_range-option.
+*                  ls_purchaseorder-low = str_rec_l_range-low(10).   " 前10位作为PURCHASEORDER
+*
+*                  ls_poitem-sign = str_rec_l_range-sign.
+*                  ls_poitem-option = str_rec_l_range-option.
+*                  ls_poitem-low = str_rec_l_range-low+10(5).        " 后5位作为POITEM
+*
+*                  " 将对应的值加入到各自的range表
+*                  APPEND ls_purchaseorder TO lr_purchaseorder.
+*                  APPEND ls_poitem TO lr_poitem.
+*                  ##NO_HANDLER
+*                CATCH cx_root.
+*              ENDTRY.
+*              " 清空临时变量
+*              CLEAR: ls_purchaseorder, ls_poitem.
 
-                  ls_poitem-sign = str_rec_l_range-sign.
-                  ls_poitem-option = str_rec_l_range-option.
-                  ls_poitem-low = str_rec_l_range-low+10(5).        " 后5位作为POITEM
-
-                  " 将对应的值加入到各自的range表
-                  APPEND ls_purchaseorder TO lr_purchaseorder.
-                  APPEND ls_poitem TO lr_poitem.
-                  ##NO_HANDLER
-                CATCH cx_root.
-              ENDTRY.
-
-              " 清空临时变量
-              CLEAR: ls_purchaseorder, ls_poitem.
+              MOVE-CORRESPONDING str_rec_l_range TO ls_popoitem.
+              APPEND ls_popoitem TO lr_popoitem.
+              CLEAR ls_popoitem.
+*&--MOD END BY XINLEI XU 2025/05/22 BUG Fixed
 
             WHEN 'SUPPLIER'.
               MOVE-CORRESPONDING str_rec_l_range TO ls_supplier.
@@ -365,8 +372,6 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
               MOVE-CORRESPONDING str_rec_l_range TO ls_extref.
               APPEND ls_extref TO lr_extref.
               CLEAR ls_extref.
-
-              "end add by wz 20241227
 
             WHEN 'DELIVERYDATE'."回答納期
               MOVE-CORRESPONDING str_rec_l_range TO ls_deliverydate.
@@ -537,7 +542,7 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
       SELECT *
         FROM zc_podataanalysis WITH PRIVILEGED ACCESS
        WHERE purchaseorder IN @lr_purchaseorder
-         AND purchaseorderitem IN @lr_poitem
+       " AND purchaseorderitem IN @lr_poitem DEL BY XINLEI XU 2025/05/22
          AND supplier IN @lr_sup
          AND purchasinggroup IN @lr_purchasinggroup
          AND material IN @lr_material
@@ -554,6 +559,7 @@ CLASS ZCL_PODATAANALYSIS IMPLEMENTATION.
          AND accountassignmentcategory IN @lr_category
          AND internationalarticlenumber IN @lr_intartinum
          AND correspncexternalreference IN @lr_extref
+         AND popoitem IN @lr_popoitem
         INTO TABLE @DATA(lt_result).
 **********************************************************************
 * MOD END BY XINLEI XU

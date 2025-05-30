@@ -1,6 +1,7 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: '月別在庫推移'
 @Metadata.allowExtensions: true
+@Analytics.dataCategory: #CUBE
 define root view entity ZR_MONTHSTOCKTRANS
   as select from ztfi_1016
 {

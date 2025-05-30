@@ -181,6 +181,10 @@ define root custom entity ZC_INVENTORY_AGING
       @Semantics.amount.currencyCode : 'Currency'
       AmountMonth36        : abap.dec( 15, 2 );
       @Semantics.quantity.unitOfMeasure: 'BaseUnit'
+      QuantityMonth37      : menge_d;
+      @Semantics.amount.currencyCode : 'Currency'
+      AmountMonth37        : abap.dec( 15, 2 );
+      @Semantics.quantity.unitOfMeasure: 'BaseUnit'
       QuantityUnspecified  : menge_d;
       @Semantics.amount.currencyCode : 'Currency'
       AmountUnspecified    : abap.dec( 15, 2 );

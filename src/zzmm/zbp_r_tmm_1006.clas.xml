@@ -149,7 +149,19 @@
     <item>
      <ID>I</ID>
      <KEY>023</KEY>
-     <ENTRY>WBS Elemnt</ENTRY>
+     <ENTRY>WBS Element</ENTRY>
+     <LENGTH>50</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
+     <KEY>024</KEY>
+     <ENTRY>Currency</ENTRY>
+     <LENGTH>50</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
+     <KEY>025</KEY>
+     <ENTRY>Unit Price</ENTRY>
      <LENGTH>50</LENGTH>
     </item>
    </TPOOL>
@@ -287,6 +299,18 @@
        <ID>I</ID>
        <KEY>023</KEY>
        <ENTRY>WBS要素</ENTRY>
+       <LENGTH>50</LENGTH>
+      </item>
+      <item>
+       <ID>I</ID>
+       <KEY>024</KEY>
+       <ENTRY>通貨コード</ENTRY>
+       <LENGTH>50</LENGTH>
+      </item>
+      <item>
+       <ID>I</ID>
+       <KEY>025</KEY>
+       <ENTRY>価格単位</ENTRY>
        <LENGTH>50</LENGTH>
       </item>
      </TEXTPOOL>

@@ -258,26 +258,10 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
 
         SELECT *
           FROM ztbc_1001
-         WHERE ( zid = 'ZFI008' OR zid = 'ZFI009' OR zid = 'ZFI011' OR zid = 'ZFI012' )
+         WHERE ( zid = 'ZFI011' OR zid = 'ZFI012' )
            AND zvalue1 = @lv_bukrs
           INTO TABLE @DATA(lt_1001).          "#EC CI_ALL_FIELDS_NEEDED
         LOOP AT lt_1001 INTO DATA(ls_1001).
-          IF ls_1001-zid = 'ZFI008'.  "customer
-            lrs_blart_kunnr-sign = 'I'.
-            lrs_blart_kunnr-option = 'EQ'.
-            lrs_blart_kunnr-low = ls_1001-zvalue2.
-            APPEND lrs_blart_kunnr TO lr_blart_kunnr.
-            CLEAR: lrs_blart_kunnr.
-          ENDIF.
-
-          IF ls_1001-zid = 'ZFI009'.  "supplier
-            lrs_blart_lifnr-sign = 'I'.
-            lrs_blart_lifnr-option = 'EQ'.
-            lrs_blart_lifnr-low = ls_1001-zvalue2.
-            APPEND lrs_blart_lifnr TO lr_blart_lifnr.
-            CLEAR: lrs_blart_lifnr.
-          ENDIF.
-
           IF ls_1001-zid = 'ZFI011'.  "customer
             lrs_saknr_kunnr-sign = 'I'.
             lrs_saknr_kunnr-option = 'EQ'.
@@ -314,7 +298,6 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
             FOR ALL ENTRIES IN @lt_kunnr
            WHERE sourceledger = '0L'
              AND companycode = @lv_bukrs
-             "AND accountingdocumenttype IN @lr_blart_kunnr
              AND ( ( fiscalyear = @lv_gjahr AND fiscalperiod <= @lv_monat )
                  OR fiscalyear < @lv_gjahr )
              AND ledger = '0L'
@@ -342,7 +325,6 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
             FOR ALL ENTRIES IN @lt_lifnr
            WHERE sourceledger = '0L'
              AND companycode = @lv_bukrs
-             "AND accountingdocumenttype IN @lr_blart_lifnr
              AND ( ( fiscalyear = @lv_gjahr AND fiscalperiod <= @lv_monat )
                  OR fiscalyear < @lv_gjahr )
              AND ledger = '0L'
@@ -425,6 +407,7 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
           INTO TABLE @DATA(lt_table).
 
         SORT lt_table BY companycode fiscalyear period customer supplier.
+        SORT lt_lifnr BY supplier.
         "Edit output
         LOOP AT lt_1013 INTO ls_1013.
           ls_output-ztype = lv_ztype.
@@ -432,9 +415,22 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
           ls_output-fiscalyear = ls_1013-fiscalyear.
           ls_output-period = ls_1013-period.
           ls_output-customer = ls_1013-customer.
-          ls_output-supplier = ls_1013-supplier.
           ls_output-customername = ls_1013-customername.
-          ls_output-suppliername = ls_1013-suppliername.
+          IF ls_1013-supplier IS NOT INITIAL.
+            ls_output-supplier = ls_1013-supplier.
+            ls_output-suppliername = ls_1013-suppliername.
+          ELSE.
+            READ TABLE lt_lifnr INTO DATA(ls_lifnr)
+                 WITH KEY supplier = ls_1013-customer BINARY SEARCH.
+            IF sy-subrc = 0.
+              ls_output-supplier = ls_lifnr-supplier.
+              READ TABLE lt_bp INTO ls_bp
+                 WITH KEY businesspartner = ls_lifnr-supplier BINARY SEARCH.
+              IF sy-subrc = 0.
+                ls_output-suppliername = ls_bp-businesspartnername.
+              ENDIF.
+            ENDIF.
+          ENDIF.
           ls_output-ar = ls_1013-ar.
           ls_output-ar = zzcl_common_utils=>conversion_amount(
                                                        iv_alpha = 'OUT'
@@ -473,7 +469,10 @@ CLASS ZCL_PAIDPAYDOCUMENT IMPLEMENTATION.
             IF ls_table-gjahr4 IS NOT INITIAL.
               ls_output-gjahr8 = ls_table-gjahr4.
             ENDIF.
+            ls_output-status = ls_table-status.
+            ls_output-message = ls_table-message.
           ENDIF.
+
           APPEND ls_output TO lt_output.
           CLEAR: ls_output.
         ENDLOOP.

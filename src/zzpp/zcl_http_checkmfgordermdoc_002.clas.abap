@@ -11,7 +11,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
+CLASS zcl_http_checkmfgordermdoc_002 IMPLEMENTATION.
 
 
   METHOD if_http_service_extension~handle_request.
@@ -246,8 +246,8 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
                    plant,
                    storagelocation,
                    batch,
-                   salesorder,
-                   salesorderitem,
+                   specialstockidfgsalesorder,"salesorder,
+                   specialstockidfgsalesorderitem,"salesorderitem,
                    wbselementinternalid,
                    quantityinbaseunit
               FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
@@ -295,8 +295,8 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
                    AND plant = @lt_materialdocumentitem-plant
                    AND storagelocation = @lt_materialdocumentitem-storagelocation
                    AND batch = @lt_materialdocumentitem-batch
-                   AND sddocument = @lt_materialdocumentitem-salesorder
-                   AND sddocumentitem = @lt_materialdocumentitem-salesorderitem
+                   AND sddocument = @lt_materialdocumentitem-specialstockidfgsalesorder"salesorder
+                   AND sddocumentitem = @lt_materialdocumentitem-specialstockidfgsalesorderitem"salesorderitem
                    AND wbselementinternalid = @lt_materialdocumentitem-wbselementinternalid
                    AND inventorystocktype = @lc_stocktype_01
                   INTO TABLE @lt_stock.            "#EC CI_NO_TRANSFORM
@@ -334,8 +334,8 @@ CLASS ZCL_HTTP_CHECKMFGORDERMDOC_002 IMPLEMENTATION.
       ls_require-plant                = ls_materialdocumentitem-plant.
       ls_require-storagelocation      = ls_materialdocumentitem-storagelocation.
       ls_require-batch                = ls_materialdocumentitem-batch.
-      ls_require-salesorder           = ls_materialdocumentitem-salesorder.
-      ls_require-salesorderitem       = ls_materialdocumentitem-salesorderitem.
+      ls_require-salesorder           = ls_materialdocumentitem-specialstockidfgsalesorder."salesorder.
+      ls_require-salesorderitem       = ls_materialdocumentitem-specialstockidfgsalesorderitem."salesorderitem.
       ls_require-wbselementinternalid = ls_materialdocumentitem-wbselementinternalid.
       ls_require-quantityinbaseunit   = ls_materialdocumentitem-quantityinbaseunit.
       COLLECT ls_require INTO lt_require.

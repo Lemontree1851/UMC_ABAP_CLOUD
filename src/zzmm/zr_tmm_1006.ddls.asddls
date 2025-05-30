@@ -9,23 +9,30 @@ define root view entity ZR_TMM_1006
                                                             and _User.Email  = _AssignPurchaseOrg.Mail
                                                             and _User.Email  = _AssignPlant.Mail
                                                             and _User.UserID = $session.user
-  association [0..1] to ZC_WF_PrType_VH         as _PrTypeText         on  $projection.PrType = _PrTypeText.Zvalue1
-  association [0..1] to ZC_WF_ApplyDepart_VH    as _ApplyDepartText    on  $projection.ApplyDepart = _ApplyDepartText.Zvalue1
-  association [0..1] to ztbc_1001               as _OrderTypeText      on  $projection.OrderType = _OrderTypeText.zvalue1
-                                                                       and _OrderTypeText.zid    = 'ZMM003'
-  association [0..1] to ztbc_1001               as _BuyPurposeText     on  $projection.BuyPurpoose = _BuyPurposeText.zvalue1
-                                                                       and _BuyPurposeText.zid     = 'ZMM002'
-  association [0..1] to ZC_WF_Location_VH       as _KyotenText         on  $projection.Kyoten = _KyotenText.Zvalue1
-  association [0..1] to ZC_WF_ApprovalStatus_VH as _ApprovalStatusText on  $projection.ApproveStatus = _ApprovalStatusText.Zvalue1
+  association [0..1] to ZC_WF_PrType_VH              as _PrTypeText         on  $projection.PrType = _PrTypeText.Zvalue1
+  association [0..1] to ZC_WF_ApplyDepart_VH         as _ApplyDepartText    on  $projection.ApplyDepart = _ApplyDepartText.Zvalue1
+
+  // MOD BEGIN BY XINLEI XU 2025/05/14
+  //  association [0..1] to ztbc_1001               as _OrderTypeText      on  $projection.OrderType = _OrderTypeText.zvalue1
+  //                                                                       and _OrderTypeText.zid    = 'ZMM003'
+  association [0..1] to I_PurchasingDocumentTypeText as _OrderTypeText      on  $projection.OrderType                     = _OrderTypeText.PurchasingDocumentType
+                                                                            and _OrderTypeText.PurchasingDocumentCategory = 'F'
+                                                                            and _OrderTypeText.Language                   = $session.system_language
+  // MOD BEGIN BY XINLEI XU 2025/05/14
+
+  association [0..1] to ztbc_1001                    as _BuyPurposeText     on  $projection.BuyPurpoose = _BuyPurposeText.zvalue1
+                                                                            and _BuyPurposeText.zid     = 'ZMM002'
+  association [0..1] to ZC_WF_Location_VH            as _KyotenText         on  $projection.Kyoten = _KyotenText.Zvalue1
+  association [0..1] to ZC_WF_ApprovalStatus_VH      as _ApprovalStatusText on  $projection.ApproveStatus = _ApprovalStatusText.Zvalue1
 
   // ADD BEGIN BY XINLEI XU 2025/02/21
-  association [0..*] to ZC_TMM_1012             as _Attachment         on  $projection.UUID = _Attachment.PrUuid
+  association [0..*] to ZC_TMM_1012                  as _Attachment         on  $projection.UUID = _Attachment.PrUuid
   // ADD END BY XINLEI XU 2025/02/21
 
   // ADD BEGIN BY XINLEI XU 2025/04/22 CR#4359
-  association [0..1] to I_Supplier              as _Supplier           on  $projection.Supplier = _Supplier.Supplier
-  association [0..1] to I_PurchasingGroup       as _PurchasingGroup    on  $projection.PurchaseGrp = _PurchasingGroup.PurchasingGroup
-  association [0..1] to ZC_BusinessUserEmail    as _UserEmail          on  $projection.LocalCreatedBy = _UserEmail.UserID
+  association [0..1] to I_Supplier                   as _Supplier           on  $projection.Supplier = _Supplier.Supplier
+  association [0..1] to I_PurchasingGroup            as _PurchasingGroup    on  $projection.PurchaseGrp = _PurchasingGroup.PurchasingGroup
+  association [0..1] to ZC_BusinessUserEmail         as _UserEmail          on  $projection.LocalCreatedBy = _UserEmail.UserID
   // ADD END BY XINLEI XU 2025/04/22 CR#4359
 {
   key _main.uuid                                                                   as UUID,
@@ -102,7 +109,8 @@ define root view entity ZR_TMM_1006
       _main.application_id                                                         as ApplicationId,
       _ApplyDepartText.Zvalue2                                                     as ApplyDepartText,
       _PrTypeText.Zvalue2                                                          as PrTypeText,
-      _OrderTypeText.zvalue3                                                       as OrderTypeText,
+      // _OrderTypeText.zvalue3                                                       as OrderTypeText,
+      _OrderTypeText.PurchasingDocumentTypeName                                    as OrderTypeText,
       _BuyPurposeText.zvalue3                                                      as BuyPurposeText,
       _KyotenText.Zvalue2                                                          as KyotenText,
       _ApprovalStatusText.Zvalue2                                                  as ApproveStatusText,

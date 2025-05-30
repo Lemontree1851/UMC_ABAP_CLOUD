@@ -15,6 +15,7 @@ define root view entity ZC_PRWORKFLOWLINK
       Supplier,
       CompanyCode,
       PurchaseOrg,
+      @ObjectModel.text.element: ['PurchasingGroupName']
       PurchaseGrp,
       Plant,
       Currency,
@@ -71,6 +72,8 @@ define root view entity ZC_PRWORKFLOWLINK
       _PrType.Zvalue2 as PrTypeText,
       @UI.hidden: true
       _Kyoten.Zvalue2 as KyotenText,
+      @UI.hidden: true
+      _PurchasingGroup.PurchasingGroupName, // ADD BY XINLEI XU 2025/05/07 CR#4359
 
       _Attachment
 }

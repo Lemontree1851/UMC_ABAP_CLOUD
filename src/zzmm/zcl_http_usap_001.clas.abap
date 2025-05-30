@@ -651,6 +651,8 @@ CLASS ZCL_HTTP_USAP_001 IMPLEMENTATION.
          AND isautomaticallycreated = @space
         INTO TABLE @DATA(lt_mdoc).
 
+      DATA: lv_material_document TYPE i_materialdocumentitem_2-materialdocument.
+
       LOOP AT lt_cancel  ASSIGNING FIELD-SYMBOL(<lfs_cancel>)
               GROUP BY ( uwmskey = <lfs_cancel>-uwmskey )
               REFERENCE INTO DATA(cancel).
@@ -662,7 +664,22 @@ CLASS ZCL_HTTP_USAP_001 IMPLEMENTATION.
             ls_response-_uwms_key = ls_cancel-uwmskey.
             ls_response-_item_no = ls_cancel-itemno.
             ls_response-_message = TEXT-001 && ls_cancel-materialdocument && TEXT-002.
-            ls_response-_status = 'E'.
+            ls_response-_status = 'S'. " 'E'. " MOD BY XINLEI XU 2025/05/12 bug fixed
+
+*&--ADD BEGIN BY XINLEI XU 2025/05/12
+            IF ls_cancel-materialdocument IS NOT INITIAL.
+              lv_material_document = |{ ls_cancel-materialdocument ALPHA = IN }|.
+              SELECT SINGLE materialdocumentyear,
+                            materialdocument,
+                            materialdocumentitem
+                FROM i_materialdocumentitem_2 WITH PRIVILEGED ACCESS
+               WHERE invtrymgmtreferencedocument = @lv_material_document
+                INTO @DATA(ls_cancel_document).
+              ls_response-_material_document = |{ ls_cancel_document-materialdocument ALPHA = OUT }|.
+              ls_response-_material_document_year = ls_cancel_document-materialdocumentyear.
+            ENDIF.
+*&--ADD END BY XINLEI XU 2025/05/12
+
             APPEND ls_response TO es_response-items.
             CLEAR: ls_response.
             CONTINUE.

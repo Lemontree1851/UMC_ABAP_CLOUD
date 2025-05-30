@@ -7,6 +7,7 @@ CLASS lhc_paidpaydocument DEFINITION INHERITING FROM cl_abap_behavior_handler.
       BEGIN OF ts_item1_a,
         companycode        TYPE string,
         fiscalyear         TYPE string,
+        period             TYPE string,
         postingdate1       TYPE string,
         postingdate2       TYPE string,
         customer           TYPE string,
@@ -316,6 +317,7 @@ CLASS lhc_paidpaydocument IMPLEMENTATION.
         LOOP AT ct_data ASSIGNING <lfs_data>.
           ls_item_a-companycode = <lfs_data>-companycode.
           ls_item_a-fiscalyear = <lfs_data>-fiscalyear.
+          ls_item_a-period = <lfs_data>-period.
           ls_item_a-postingdate1 = lv_postdate1.
           ls_item_a-postingdate2 = lv_postdate2.
           ls_item_a-customer = <lfs_data>-customer.

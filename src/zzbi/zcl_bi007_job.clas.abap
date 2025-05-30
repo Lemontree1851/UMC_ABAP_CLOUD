@@ -32,38 +32,17 @@ ENDCLASS.
 
 
 
-CLASS ZCL_BI007_JOB IMPLEMENTATION.
-
-
-  METHOD add_message_to_log.
-    TRY.
-        IF sy-batch = abap_true.
-          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
-                                 severity = COND #( WHEN i_type IS NOT INITIAL
-                                                    THEN i_type
-                                                    ELSE if_bali_constants=>c_severity_status )
-                                 text     = i_text ).
-
-          lo_free_text->set_detail_level( detail_level = '1' ).
-
-          mo_application_log->add_item( item = lo_free_text ).
-
-          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
-                                                     assign_to_current_appl_job = abap_true ).
-
-        ELSE.
-*          mo_out->write( i_text ).
-        ENDIF.
-      CATCH cx_bali_runtime ##NO_HANDLER.
-    ENDTRY.
-*&--ADD END BY XINLEI XU 2025/04/03
-  ENDMETHOD.
+CLASS zcl_bi007_job IMPLEMENTATION.
 
 
   METHOD if_apj_dt_exec_object~get_parameters.
     et_parameter_def = VALUE #( ( selname = 'S_BUKRS' changeable_ind = abap_true kind = if_apj_dt_exec_object=>select_option datatype = 'BUKRS' length = 4 param_text = 'Company Code' )
-                                ( selname = 'P_YEAR'  changeable_ind = abap_true kind = if_apj_dt_exec_object=>parameter mandatory_ind = '' datatype = 'GJAHR' length = 4 param_text = 'Fiscal Year' )
-                                ( selname = 'P_MONAT' changeable_ind = abap_true kind = if_apj_dt_exec_object=>parameter mandatory_ind = '' datatype = 'POPER' length = 3 param_text = 'Fiscal Period' )
+******Modify Start 20250523*********************
+*                                ( selname = 'P_YEAR'  changeable_ind = abap_true kind = if_apj_dt_exec_object=>parameter mandatory_ind = '' datatype = 'GJAHR' length = 4 param_text = 'Fiscal Year' )
+*                                ( selname = 'P_MONAT' changeable_ind = abap_true kind = if_apj_dt_exec_object=>parameter mandatory_ind = '' datatype = 'POPER' length = 3 param_text = 'Fiscal Period' )
+                                ( selname = 'S_YEAR'  changeable_ind = abap_true kind = if_apj_dt_exec_object=>select_option datatype = 'GJAHR' length = 4 param_text = 'Fiscal Year' )
+                                ( selname = 'S_MONAT' changeable_ind = abap_true kind = if_apj_dt_exec_object=>select_option datatype = 'POPER' length = 3 param_text = 'Fiscal Period' )
+******Modify End 20250523***********************
                                 ( selname = 'S_PLANT' changeable_ind = abap_true kind = if_apj_dt_exec_object=>select_option datatype = 'WERKS_D' length = 4 param_text = 'Plant' )
                                 ( selname = 'S_PROD' changeable_ind = abap_true kind = if_apj_dt_exec_object=>select_option datatype = 'MATNR' length = 40 param_text = 'Product' )
                                 ( selname = 'S_CUST' changeable_ind = abap_true kind = if_apj_dt_exec_object=>select_option datatype = 'KUNNR' length = 10 param_text = 'Customer' )
@@ -82,7 +61,6 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
 *    et_parameter_val = VALUE #( ( selname = 'P_YEAR' sign = 'I' option = 'EQ' low = ls_fiscaldate-fiscalyear )
 *                                ( selname = 'P_MONAT' sign = 'I' option = 'EQ' low = ls_fiscaldate-fiscalperiod )
 *                              ).
-
   ENDMETHOD.
 
 
@@ -96,9 +74,15 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
       CASE ls_para-selname.
         WHEN 'S_BUKRS'.
           APPEND CORRESPONDING #( ls_para ) TO mr_bukrs.
-        WHEN 'P_YEAR'.
+******Modify Start 20250523**************
+        "WHEN 'P_YEAR'.
+        WHEN 'S_YEAR'.
+******Modify End 20250523****************
           APPEND CORRESPONDING #( ls_para ) TO mr_year.
-        WHEN 'P_MONAT'.
+******Modify Start 20250523**************
+        "WHEN 'P_MONAT'.
+        WHEN 'S_MONAT'.
+******Modify End 20250523****************
           APPEND CORRESPONDING #( ls_para ) TO mr_monat.
         WHEN 'S_PLANT'.
           APPEND CORRESPONDING #( ls_para ) TO mr_plant.
@@ -114,7 +98,10 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
     ENDLOOP.
 
     "Step 1.1 Default YEAR&MONAT
-    READ TABLE it_parameters TRANSPORTING NO FIELDS WITH KEY selname = 'P_MONAT'.
+******Modify Start 20250523*******************
+*    READ TABLE it_parameters TRANSPORTING NO FIELDS WITH KEY selname = 'P_MONAT'.
+    READ TABLE it_parameters TRANSPORTING NO FIELDS WITH KEY selname = 'S_MONAT'.
+******Modify End 20250523*********************
     IF sy-subrc <> 0 .
       DATA:lv_date_local TYPE aedat.
       DATA:lv_datetime   TYPE string.
@@ -332,6 +319,39 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
 *&--ADD END BY XINLEI XU 2025/04/03
   ENDMETHOD.
 
+  METHOD init_application_log.
+*&--ADD BEGIN BY XINLEI XU 2025/04/03
+    TRY.
+        mo_application_log = cl_bali_log=>create_with_header(
+                               header = cl_bali_header_setter=>create( object    = 'ZZ_LOG_BI007'
+                                                                       subobject = 'ZZ_LOG_BI007_SUB' ) ).
+      CATCH cx_bali_runtime ##NO_HANDLER.
+    ENDTRY.
+  ENDMETHOD.
+
+  METHOD add_message_to_log.
+    TRY.
+        IF sy-batch = abap_true.
+          DATA(lo_free_text) = cl_bali_free_text_setter=>create(
+                                 severity = COND #( WHEN i_type IS NOT INITIAL
+                                                    THEN i_type
+                                                    ELSE if_bali_constants=>c_severity_status )
+                                 text     = i_text ).
+
+          lo_free_text->set_detail_level( detail_level = '1' ).
+
+          mo_application_log->add_item( item = lo_free_text ).
+
+          cl_bali_log_db=>get_instance( )->save_log( log = mo_application_log
+                                                     assign_to_current_appl_job = abap_true ).
+
+        ELSE.
+*          mo_out->write( i_text ).
+        ENDIF.
+      CATCH cx_bali_runtime ##NO_HANDLER.
+    ENDTRY.
+*&--ADD END BY XINLEI XU 2025/04/03
+  ENDMETHOD.
 
   METHOD if_oo_adt_classrun~main.
     DATA lt_parameters TYPE if_apj_rt_exec_object=>tt_templ_val.
@@ -340,17 +360,17 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
                                sign    = 'I'
                                option  = 'EQ'
                                low     = '1100' )
-                             ( selname      = 'P_YEAR'
-                               kind    = if_apj_dt_exec_object=>parameter
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '2024' )
-
-                             ( selname = 'P_MONAT'
-                               kind    = if_apj_dt_exec_object=>parameter
-                               sign    = 'I'
-                               option  = 'EQ'
-                               low     = '12' )
+*                             ( selname      = 'S_YEAR'
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '2025' )
+*
+*                             ( selname = 'S_MONAT'
+*                               kind    = if_apj_dt_exec_object=>select_option
+*                               sign    = 'I'
+*                               option  = 'EQ'
+*                               low     = '01' )
                             ).
     TRY.
         if_apj_dt_exec_object~get_parameters( IMPORTING et_parameter_val = lt_parameters ).
@@ -361,14 +381,4 @@ CLASS ZCL_BI007_JOB IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-
-  METHOD init_application_log.
-*&--ADD BEGIN BY XINLEI XU 2025/04/03
-    TRY.
-        mo_application_log = cl_bali_log=>create_with_header(
-                               header = cl_bali_header_setter=>create( object    = 'ZZ_LOG_BI007'
-                                                                       subobject = 'ZZ_LOG_BI007_SUB' ) ).
-      CATCH cx_bali_runtime ##NO_HANDLER.
-    ENDTRY.
-  ENDMETHOD.
 ENDCLASS.
